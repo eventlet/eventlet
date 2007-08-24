@@ -21,8 +21,8 @@ Eventlet runs on Python version 2.3 or greater, with the following dependenceis:
 == getting started ==
 
 % python
->>> import eventlet.api
->>> help(eventlet.api)
+>>> from eventlet import api
+>>> help(api)
 
 Also, look at the examples in the examples directory.
 

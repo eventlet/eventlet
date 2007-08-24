@@ -266,13 +266,8 @@ class Request(object):
             environ = dict(
                 REQUEST_METHOD='POST',
                 QUERY_STRING=self._query or '')
-            if (hasattr(self, 'resource') and
-                hasattr(self.resource, 'getFieldStorage')):
-                self._field_storage = self.resource.getFieldStorage(
-                    self, fl, headers, environ)
-            else:
-                self._field_storage = cgi.FieldStorage(
-                    fl, headers, environ=environ)
+
+            self._field_storage = cgi.FieldStorage(fl, headers, environ=environ)
 
         return self._field_storage
 
