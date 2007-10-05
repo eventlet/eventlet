@@ -416,7 +416,10 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     raise NotImplementedError("Handler failed to write response to request: %s" % request)
                 
                 if not hasattr(self, '_cached_body'):
-                    request.read_body() ## read & discard body
+                    try:
+                        request.read_body() ## read & discard body
+                    except:
+                        pass
                     continue
             except socket.error, e:
                 # Broken pipe, connection reset by peer

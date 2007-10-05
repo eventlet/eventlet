@@ -31,7 +31,7 @@ import time
 import urlparse
 
 
-from mx.DateTime import Parser
+#from mx.DateTime import Parser
 
 
 _old_HTTPConnection = httplib.HTTPConnection
@@ -212,12 +212,17 @@ class Gone(ConnectionError):
     pass
 
 
+class NotModified(ConnectionError):
+    pass
+
+
 status_to_error_map = {
     500: InternalServerError,
     410: Gone,
     404: NotFound,
     403: Forbidden,
     202: Accepted,
+    304: NotModified,
 }
 
 scheme_to_factory_map = {
@@ -294,28 +299,48 @@ def request(connection, method, url, body='', headers=None, dumper=None, loader=
     return body
 
 
-def make_suite(dumper, loader, fallback_content_type):
-    def get(url, headers=None, use_proxy=False, verbose=False, ok=None):
+def make_safe_loader(loader):
+    def safe_loader(what):
+        try:
+            return loader(what)
+        except Exception, e:
+            return None
+    return safe_loader
+
+
+class HttpSuite(object):
+    def __init__(self, dumper, loader, fallback_content_type):
+        self.dumper = dumper
+        self.loader = loader
+        self.fallback_content_type = fallback_content_type
+
+    def head(self, url, headers=None, use_proxy=False, verbose=False, ok=None):
+        if headers is None:
+            headers = {}
+        connection = connect(url)
+        return request(connection, 'HEAD', url, '', headers, None, None, use_proxy, verbose, ok)
+
+    def get(self, url, headers=None, use_proxy=False, verbose=False, ok=None):
         #import pdb; pdb.Pdb().set_trace()
         if headers is None:
             headers = {}
         connection = connect(url)
-        return request(connection, 'GET', url, '', headers, None, loader, use_proxy, verbose, ok)
+        return request(connection, 'GET', url, '', headers, None, self.loader, use_proxy, verbose, ok)
 
-    def put(url, data, headers=None, content_type=None, verbose=False, ok=None):
+    def put(self, url, data, headers=None, content_type=None, verbose=False, ok=None):
         if headers is None:
             headers = {}
         if content_type is not None:
             headers['content-type'] = content_type
         else:
-            headers['content-type'] = fallback_content_type
+            headers['content-type'] = self.fallback_content_type
         connection = connect(url)
-        return request(connection, 'PUT', url, data, headers, dumper, loader, verbose=verbose, ok=ok)
+        return request(connection, 'PUT', url, data, headers, self.dumper, make_safe_loader(self.loader), verbose=verbose, ok=ok)
 
-    def delete(url, verbose=False, ok=None):
+    def delete(self, url, verbose=False, ok=None):
         return request(connect(url), 'DELETE', url, verbose=verbose, ok=ok)
 
-    def post(url, data='', headers=None, content_type=None, verbose=False, ok=None):
+    def post(self, url, data='', headers=None, content_type=None, verbose=False, ok=None):
         connection = connect(url)
         if headers is None:
             headers = {}
@@ -323,12 +348,17 @@ def make_suite(dumper, loader, fallback_content_type):
             if content_type is not None:
                 headers['content-type'] = content_type
             else:
-                headers['content-type'] = fallback_content_type
-        return request(connect(url), 'POST', url, data, headers, dumper, loader, verbose=verbose, ok=ok)
-
-    return get, put, delete, post
+                headers['content-type'] = self.fallback_content_type
+        return request(connect(url), 'POST', url, data, headers, self.dumper, self.loader, verbose=verbose, ok=ok)
 
 
-get, put, delete, post = make_suite(str, None, 'text/plain')
+def make_suite(dumper, loader, fallback_content_type):
+    suite = HttpSuite(dumper, loader, fallback_content_type)
+    return suite.get, suite.put, suite.delete, suite.post
+
+
+suite = HttpSuite(str, None, 'text/plain')
+head, get, put, delete, post = (
+    suite.head, suite.get, suite.put, suite.delete, suite.post)
 
 
