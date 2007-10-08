@@ -42,6 +42,9 @@ class Process(object):
         self.command = command
         self.args = args
         self._dead_callback = dead_callback
+        self.run()
+
+    def run(self):
         self.dead = False
         self.started = False
         self.popen4 = None

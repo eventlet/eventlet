@@ -38,9 +38,12 @@ except ImportError:
         pylibsupport.emulate()
         greenlet = sys.modules['greenlet']
     except ImportError:
-        import stacklesssupport
-        stacklesssupport.emulate()
-        greenlet = sys.modules['greenlet']
+        try:
+            import stacklesssupport
+            stacklesssupport.emulate()
+            greenlet = sys.modules['greenlet']
+        except ImportError:
+            raise ImportError("Unable to find an implementation of greenlet.")
 
 from eventlet import greenlib, tls
 

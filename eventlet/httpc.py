@@ -50,7 +50,6 @@ def host_and_port_from_url(url):
     """
     host = None
     port = None
-    #print url
     parsed_url = urlparse.urlparse(url)
     try:
         host, port = parsed_url[1].split(':')
@@ -81,17 +80,26 @@ class HttpClient(httplib.HTTPConnection):
     old_putrequest = httplib.HTTPConnection.putrequest
     putrequest = better_putrequest
 
-
-def wrap_httplib_with_httpc():
-    httplib.HTTP._connection_class = httplib.HTTPConnection = HttpClient
-    httplib.HTTPS._connection_class = httplib.HTTPSConnection = HttpsClient
-
-
 class HttpsClient(httplib.HTTPSConnection):
+    """A subclass of httplib.HTTPSConnection which works around a bug
+    in the interaction between eventlet sockets and httplib. httplib relies
+    on gc to close the socket, causing the socket to be closed too early.
+
+    This is an awful hack and the bug should be fixed properly ASAP.
+    """
     def close(self):
         pass
     old_putrequest = httplib.HTTPSConnection.putrequest
     putrequest = better_putrequest
+
+
+def wrap_httplib_with_httpc():
+    """Replace httplib's implementations of these classes with our enhanced ones.
+
+    Needed to work around code that uses httplib directly."""
+    httplib.HTTP._connection_class = httplib.HTTPConnection = HttpClient
+    httplib.HTTPS._connection_class = httplib.HTTPSConnection = HttpsClient
+
 
 
 class FileScheme(object):
@@ -161,6 +169,10 @@ class FileScheme(object):
 
 
 class ConnectionError(Exception):
+    """Detailed exception class for reporting on http connection problems.
+
+    There are lots of subclasses so you can use closely-specified
+    exception clauses."""
     def __init__(self, method, host, port, path, status, reason, body):
         self.method = method
         self.host = host
@@ -180,6 +192,7 @@ class ConnectionError(Exception):
 
 
 class UnparseableResponse(ConnectionError):
+    """Raised when a loader cannot parse the response from the server."""
     def __init__(self, content_type, response):
         self.content_type = content_type
         self.response = response
@@ -193,22 +206,27 @@ class UnparseableResponse(ConnectionError):
 
 
 class Accepted(ConnectionError):
+    """ 202 Accepted """
     pass
 
         
 class NotFound(ConnectionError):
+    """ 404 Not Found """
     pass
 
 
 class Forbidden(ConnectionError):
+    """ 403 Forbidden """
     pass
 
 
 class InternalServerError(ConnectionError):
+    """ 500 Internal Server Error """
     pass
 
 
 class Gone(ConnectionError):
+    """ 410 Gone """
     pass
 
 
@@ -233,6 +251,12 @@ scheme_to_factory_map = {
 
 
 def make_connection(scheme, location, use_proxy):
+    """ Create a connection object to a host:port.
+
+    @param scheme Protocol, scheme, whatever you want to call it.  http, file, https are currently supported.
+    @param location Hostname and port number, formatted as host:port or http://host:port if you're so inclined.
+    @param use_proxy Connect to a proxy instead of the actual location.  Uses environment variables to decide where the proxy actually lives.
+    """
     if use_proxy:
         if "http_proxy" in os.environ:
             location = os.environ["http_proxy"]
@@ -241,7 +265,7 @@ def make_connection(scheme, location, use_proxy):
         else:
             location = "localhost:3128" #default to local squid
 
-    # run a little heuristic to see if it's an url, and if so parse out the hostpart
+    # run a little heuristic to see if location is an url, and if so parse out the hostpart
     if location.startswith('http'):
         _scheme, location, path, parameters, query, fragment = urlparse.urlparse(location)
             
@@ -251,11 +275,25 @@ def make_connection(scheme, location, use_proxy):
 
 
 def connect(url, use_proxy=False):
+    """ Create a connection object to the host specified in a url.  Convenience function for make_connection."""
     scheme, location, path, params, query, id = urlparse.urlparse(url)
     return make_connection(scheme, location, use_proxy)
 
 
 def request(connection, method, url, body='', headers=None, dumper=None, loader=None, use_proxy=False, verbose=False, ok=None):
+    """Make an http request to a url, for internal use mostly.
+
+    @param connection The connection (as returned by make_connection) to use for the request.
+    @param method HTTP method
+    @param url Full url to make request on.
+    @param body HTTP body, if necessary for the method.  Can be any object, assuming an appropriate dumper is also provided.
+    @param headers Dict of header name to header value
+    @param dumper Method that formats the body as a string.
+    @param loader Method that converts the response body into an object.
+    @param use_proxy Set to True if the connection is to a proxy.
+    @param verbose Set to true to change the return value of the function to: status, status_message, body
+    @param ok Set of valid response statuses.  If the returned status is not in this list, an exception is thrown.
+    """
     if ok is None:
         ok = (200, 201, 204)
     if headers is None:
@@ -271,10 +309,12 @@ def request(connection, method, url, body='', headers=None, dumper=None, loader=
         if scheme == 'file':
             use_proxy = False
 
-
-    if dumper is not None:
-        body = dumper(body)
-        headers['content-length'] = len(body)
+    if method in ('PUT', 'POST'):
+        if dumper is not None:
+            body = dumper(body)
+        # don't set content-length header because httplib does it for us in _send_request
+    else:
+        body = ''
 
     connection.request(method, url, body, headers)
     response = connection.getresponse()
@@ -286,13 +326,11 @@ def request(connection, method, url, body='', headers=None, dumper=None, loader=
 
     body = response.read()
 
-    if loader is None:
-        return body
-
-    try:
-        body = loader(body)
-    except Exception, e:
-        raise UnparseableResponse(loader, body)
+    if loader is not None:
+        try:
+            body = loader(body)
+        except Exception, e:
+            raise UnparseableResponse(loader, body)
 
     if verbose:
         return response.status, response.msg, body
@@ -324,7 +362,7 @@ class HttpSuite(object):
         #import pdb; pdb.Pdb().set_trace()
         if headers is None:
             headers = {}
-        connection = connect(url)
+        connection = connect(url, use_proxy)
         return request(connection, 'GET', url, '', headers, None, self.loader, use_proxy, verbose, ok)
 
     def put(self, url, data, headers=None, content_type=None, verbose=False, ok=None):
@@ -341,7 +379,6 @@ class HttpSuite(object):
         return request(connect(url), 'DELETE', url, verbose=verbose, ok=ok)
 
     def post(self, url, data='', headers=None, content_type=None, verbose=False, ok=None):
-        connection = connect(url)
         if headers is None:
             headers = {}
         if 'content-type' not in headers:
@@ -353,6 +390,7 @@ class HttpSuite(object):
 
 
 def make_suite(dumper, loader, fallback_content_type):
+    """ Return a tuple of methods for making http requests with automatic bidirectional formatting with a particular content-type."""
     suite = HttpSuite(dumper, loader, fallback_content_type)
     return suite.get, suite.put, suite.delete, suite.post
 

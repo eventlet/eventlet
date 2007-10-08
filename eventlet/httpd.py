@@ -295,7 +295,7 @@ class Request(object):
             typ, val, tb = sys.exc_info() 
             body = dict(type=str(typ), error=True, reason=str(val))
         self.response(response)
-        if type(body) is str:
+        if(type(body) is str and not self.response_written()):
             self.write(body)
             return
         try:
@@ -450,7 +450,7 @@ class Server(BaseHTTPServer.HTTPServer):
             self.log = self
 
     def write(self, something):
-        sys.stdout.write('%s\n' % (something, ))
+        sys.stdout.write('%s' % (something, ))
 
     def log_message(self, message):
         self.log.write(message)
@@ -463,7 +463,7 @@ class Server(BaseHTTPServer.HTTPServer):
         client_address, date_time, requestline, code, size, request_time
         """
         self.log.write(
-            '%s - - [%s] "%s" %s %s %.6f' % args)
+            '%s - - [%s] "%s" %s %s %.6f\n' % args)
 
 
 def server(sock, site, log=None, max_size=512):

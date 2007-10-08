@@ -86,7 +86,7 @@ class Hub(object):
                 pass
         if exc is not None:
             try:
-                exc()
+                exc(fileno)
             except self.runloop.SYSTEM_EXCEPTIONS:
                 self.squelch_exception(fileno, sys.exc_info())
 
@@ -157,7 +157,7 @@ class Hub(object):
         writers = self.writers
         excs = self.excs
         try:
-            r, w, ig = select.select(readers, writers, [], seconds)
+            r, w, ig = select.select(readers.keys(), writers.keys(), [], seconds)
         except select.error, e:
             if e.args[0] == errno.EINTR:
                 return
