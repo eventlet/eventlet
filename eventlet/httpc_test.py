@@ -58,6 +58,14 @@ class Site(object):
                 resp.write(k + '=' + v + '\n')
         req.write(resp.getvalue())
 
+    def handle_head(self, req):
+        req.set_header('x-head', 'hello')
+        path = req.path().lstrip('/')
+        try:
+            req.write('')
+        except KeyError:
+            req.response(404, body='Not found')
+
     def handle_put(self, req):
         req.set_header('x-put', 'hello')
         path = req.path().lstrip('/')
@@ -122,6 +130,15 @@ class TestHttpc(tests.TestCase):
     def test_get_query(self):
         response = httpc.get('http://localhost:31337/hello?foo=bar&foo=quux')
         self.assertEquals(response, 'hello worldfoo=bar\nfoo=quux\n')
+
+    def test_head_(self):
+        status, msg, body = httpc.head_('http://localhost:31337/hello')
+        self.assertEquals(status, 200)
+        self.assertEquals(msg.dict['x-head'], 'hello')
+        self.assertEquals(body, '')
+
+    def test_head(self):
+        self.assertEquals(httpc.head('http://localhost:31337/hello'), '')
 
     def test_post_(self):
         data = 'qunge'
