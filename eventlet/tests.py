@@ -24,6 +24,8 @@ THE SOFTWARE.
 """
 
 import atexit
+import errno
+import os
 import sys
 import unittest
 
@@ -34,3 +36,11 @@ TestCase = unittest.TestCase
 name = getattr(sys.modules['__main__'], '__name__', None)
 
 main = unittest.main
+
+
+def find_command(command):
+    for dir in os.getenv('PATH', '/usr/bin:/usr/sbin').split(os.pathsep):
+        p = os.path.join(dir, command)
+        if os.access(p, os.X_OK):
+            return p
+    raise IOError(errno.ENOENT, 'Command not found: %r' % command)

@@ -131,7 +131,9 @@ class TestHttpd(tests.TestCase):
 
     def test_005_run_apachebench(self):
         url = 'http://localhost:12346/'
-        out = processes.Process('/usr/sbin/ab', ['-c','64','-n','1024', '-k', url])
+        # ab is apachebench
+        out = processes.Process(tests.find_command('ab'),
+                                ['-c','64','-n','1024', '-k', url])
         print out.read()
 
 
