@@ -414,7 +414,13 @@ def make_suite(dumper, loader, fallback_content_type):
 
 
 suite = HttpSuite(str, None, 'text/plain')
-head, get, put, delete, post = (
-    suite.head, suite.get, suite.put, suite.delete, suite.post)
-
-
+delete = suite.delete
+delete_ = suite.delete_
+get = suite.get
+get_ = suite.get_
+head = suite.head
+head_ = suite.head_
+post = suite.post
+post_ = suite.post_
+put = suite.put
+put_ = suite.put_
