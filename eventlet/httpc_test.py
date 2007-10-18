@@ -52,9 +52,8 @@ class Site(object):
         req.write(resp.getvalue())
 
     def handle_post(self, req):
-        print req.read_body()
         req.set_header('x-post', 'hello')
-        req.write('hello world')
+        req.write(req.read_body())
 
     def handle_request(self, req):
         return getattr(self, 'handle_%s' % req.method().lower())(req)
@@ -88,10 +87,11 @@ class TestHttpc(tests.TestCase):
         self.assert_(response == 'foo=bar\nfoo=quux\n')
 
     def test_post_(self):
-        status, msg, body = httpc.post_('http://localhost:31337/',
-                                        data='qunge')
+        data = 'qunge'
+        status, msg, body = httpc.post_('http://localhost:31337/', data=data)
         self.assert_(status == 200)
         self.assert_(msg.dict['x-post'] == 'hello')
+        self.assert_(body == data)
         
 
 if __name__ == '__main__':
