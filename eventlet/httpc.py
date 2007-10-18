@@ -210,9 +210,14 @@ class Accepted(ConnectionError):
     """ 202 Accepted """
     pass
 
+
+class NotModified(ConnectionError):
+    """ 304 Not Modified """
+    pass
+
         
-class NotFound(ConnectionError):
-    """ 404 Not Found """
+class BadRequest(ConnectionError):
+    """ 400 Bad Request """
     pass
 
 
@@ -221,8 +226,8 @@ class Forbidden(ConnectionError):
     pass
 
 
-class InternalServerError(ConnectionError):
-    """ 500 Internal Server Error """
+class NotFound(ConnectionError):
+    """ 404 Not Found """
     pass
 
 
@@ -231,17 +236,19 @@ class Gone(ConnectionError):
     pass
 
 
-class NotModified(ConnectionError):
+class InternalServerError(ConnectionError):
+    """ 500 Internal Server Error """
     pass
 
 
 status_to_error_map = {
-    500: InternalServerError,
-    410: Gone,
-    404: NotFound,
-    403: Forbidden,
     202: Accepted,
     304: NotModified,
+    400: BadRequest,
+    403: Forbidden,
+    404: NotFound,
+    410: Gone,
+    500: InternalServerError,
 }
 
 scheme_to_factory_map = {

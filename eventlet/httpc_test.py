@@ -106,82 +106,83 @@ class TestHttpc(tests.TestCase):
         api.kill(self.victim)
 
     def test_get_bad_uri(self):
-        self.assertRaises(httpc.ConnectionError,
+        self.assertRaises(httpc.NotFound,
                           lambda: httpc.get('http://localhost:31337/b0gu5'))
 
     def test_get(self):
         response = httpc.get('http://localhost:31337/hello')
-        self.assert_(response == 'hello world')
+        self.assertEquals(response, 'hello world')
 
     def test_get_(self):
         status, msg, body = httpc.get_('http://localhost:31337/hello')
-        self.assert_(status == 200)
-        self.assert_(msg.dict['x-get'] == 'hello')
-        self.assert_(body == 'hello world')
+        self.assertEquals(status, 200)
+        self.assertEquals(msg.dict['x-get'], 'hello')
+        self.assertEquals(body, 'hello world')
 
     def test_get_query(self):
         response = httpc.get('http://localhost:31337/hello?foo=bar&foo=quux')
-        self.assert_(response == 'hello worldfoo=bar\nfoo=quux\n')
+        self.assertEquals(response, 'hello worldfoo=bar\nfoo=quux\n')
 
     def test_post_(self):
         data = 'qunge'
         status, msg, body = httpc.post_('http://localhost:31337/', data=data)
-        self.assert_(status == 200)
-        self.assert_(msg.dict['x-post'] == 'hello')
-        self.assert_(body == data)
+        self.assertEquals(status, 200)
+        self.assertEquals(msg.dict['x-post'], 'hello')
+        self.assertEquals(body, data)
 
     def test_post(self):
         data = 'qunge'
-        self.assert_(httpc.post('http://localhost:31337/', data=data) == data)
+        self.assertEquals(httpc.post('http://localhost:31337/', data=data),
+                          data)
 
     def test_put_bad_uri(self):
         self.assertRaises(
-            httpc.ConnectionError,
+            httpc.BadRequest,
             lambda: httpc.put('http://localhost:31337/', data=''))
 
     def test_put_empty(self):
         httpc.put('http://localhost:31337/empty', data='')
-        self.assert_(httpc.get('http://localhost:31337/empty') == '')
+        self.assertEquals(httpc.get('http://localhost:31337/empty'), '')
 
     def test_put_nonempty(self):
         data = 'nonempty'
         httpc.put('http://localhost:31337/nonempty', data=data)
-        self.assert_(httpc.get('http://localhost:31337/nonempty') == data)
+        self.assertEquals(httpc.get('http://localhost:31337/nonempty'), data)
 
     def test_put_01_create(self):
         data = 'goodbye world'
         status, msg, body = httpc.put_('http://localhost:31337/goodbye',
                                        data=data)
-        self.assert_(status == 201)
-        self.assert_(msg.dict['x-put'] == 'hello')
-        self.assert_(body is None)
-        self.assert_(httpc.get('http://localhost:31337/goodbye') == data)
+        self.assertEquals(status, 201)
+        self.assertEquals(msg.dict['x-put'], 'hello')
+        self.assertEquals(body, None)
+        self.assertEquals(httpc.get('http://localhost:31337/goodbye'), data)
 
     def test_put_02_modify(self):
         self.test_put_01_create()
         data = 'i really mean goodbye'
         status = httpc.put_('http://localhost:31337/goodbye', data=data)[0]
-        self.assert_(status == 204)
-        self.assert_(httpc.get('http://localhost:31337/goodbye') == data)
+        self.assertEquals(status, 204)
+        self.assertEquals(httpc.get('http://localhost:31337/goodbye'), data)
 
     def test_delete_(self):
         httpc.put('http://localhost:31337/killme', data='killme')
         status, msg, body = httpc.delete_('http://localhost:31337/killme')
-        self.assert_(status == 204)
+        self.assertEquals(status, 204)
         self.assertRaises(
-            httpc.ConnectionError,
+            httpc.NotFound,
             lambda: httpc.get('http://localhost:31337/killme'))
 
     def test_delete(self):
         httpc.put('http://localhost:31337/killme', data='killme')
-        self.assert_(httpc.delete('http://localhost:31337/killme') == '')
+        self.assertEquals(httpc.delete('http://localhost:31337/killme'), '')
         self.assertRaises(
-            httpc.ConnectionError,
+            httpc.NotFound,
             lambda: httpc.get('http://localhost:31337/killme'))
 
     def test_delete_bad_uri(self):
         self.assertRaises(
-            httpc.ConnectionError,
+            httpc.NotFound,
             lambda: httpc.delete('http://localhost:31337/b0gu5'))
         
         
