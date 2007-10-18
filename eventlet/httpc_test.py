@@ -27,6 +27,10 @@ from eventlet import httpc
 from eventlet import httpd
 from eventlet import processes
 from eventlet import util
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from StringIO import StringIO
 
 
 util.wrap_socket_with_coroutine_socket()
@@ -36,9 +40,24 @@ from eventlet import tests
 
 
 class Site(object):
-    def handle_request(self, req):
-        req.set_header('x-hello', 'hello')
+    def handle_get(self, req):
+        req.set_header('x-get', 'hello')
+        resp = StringIO()
+        pairs = req.get_query_pairs()
+        if pairs:
+            for k,v in pairs:
+                resp.write(k + '=' + v + '\n')
+        else:
+            resp.write('hello world')
+        req.write(resp.getvalue())
+
+    def handle_post(self, req):
+        print req.read_body()
+        req.set_header('x-post', 'hello')
         req.write('hello world')
+
+    def handle_request(self, req):
+        return getattr(self, 'handle_%s' % req.method().lower())(req)
 
     def adapt(self, obj, req):
         req.write(str(obj))
@@ -61,9 +80,19 @@ class TestHttpc(tests.TestCase):
     def test_get_(self):
         status, msg, body = httpc.get_('http://localhost:31337/')
         self.assert_(status == 200)
-        self.assert_(msg.dict['x-hello'] == 'hello')
+        self.assert_(msg.dict['x-get'] == 'hello')
         self.assert_(body == 'hello world')
 
+    def test_get_query(self):
+        response = httpc.get('http://localhost:31337/?foo=bar&foo=quux')
+        self.assert_(response == 'foo=bar\nfoo=quux\n')
+
+    def test_post_(self):
+        status, msg, body = httpc.post_('http://localhost:31337/',
+                                        data='qunge')
+        self.assert_(status == 200)
+        self.assert_(msg.dict['x-post'] == 'hello')
+        
 
 if __name__ == '__main__':
     tests.main()

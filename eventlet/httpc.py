@@ -281,62 +281,6 @@ def connect(url, use_proxy=False):
     return make_connection(scheme, location, use_proxy)
 
 
-def request_(connection, method, url, body='', headers=None, dumper=None, loader=None, use_proxy=False, ok=None):
-    """Make an http request to a url, for internal use mostly.
-
-    @param connection The connection (as returned by make_connection) to use for the request.
-    @param method HTTP method
-    @param url Full url to make request on.
-    @param body HTTP body, if necessary for the method.  Can be any object, assuming an appropriate dumper is also provided.
-    @param headers Dict of header name to header value
-    @param dumper Method that formats the body as a string.
-    @param loader Method that converts the response body into an object.
-    @param use_proxy Set to True if the connection is to a proxy.
-    @param ok Set of valid response statuses.  If the returned status is not in this list, an exception is thrown.
-    """
-    if ok is None:
-        ok = (200, 201, 204)
-    if headers is None:
-        headers = {}
-    if not use_proxy:
-        scheme, location, path, params, query, id = urlparse.urlparse(url)
-        url = path
-        if query:
-            url += "?" + query
-    else:
-        scheme, location, path, params, query, id = urlparse.urlparse(url)
-        headers.update({ "host" : location })
-        if scheme == 'file':
-            use_proxy = False
-
-    if method in ('PUT', 'POST'):
-        if dumper is not None:
-            body = dumper(body)
-        # don't set content-length header because httplib does it for us in _send_request
-    else:
-        body = ''
-
-    connection.request(method, url, body, headers)
-    response = connection.getresponse()
-    if (response.status not in ok):
-        klass = status_to_error_map.get(response.status, ConnectionError)
-        raise klass(
-            connection.method, connection.host, connection.port,
-            connection.path, response.status, response.reason, response.read())
-
-    body = response.read()
-
-    if loader is not None:
-        try:
-            body = loader(body)
-        except Exception, e:
-            raise UnparseableResponse(loader, body)
-
-    return response.status, response.msg, body
-
-def request(*args, **kwargs):
-    return request_(*args, **kwargs)[-1]
-
 def make_safe_loader(loader):
     def safe_loader(what):
         try:
@@ -352,10 +296,72 @@ class HttpSuite(object):
         self.loader = loader
         self.fallback_content_type = fallback_content_type
 
+    def request_(self, connection, method, url, body='', headers=None, dumper=None, loader=None, use_proxy=False, ok=None):
+        """Make an http request to a url, for internal use mostly.
+
+        @param connection The connection (as returned by make_connection) to use for the request.
+        @param method HTTP method
+        @param url Full url to make request on.
+        @param body HTTP body, if necessary for the method.  Can be any object, assuming an appropriate dumper is also provided.
+        @param headers Dict of header name to header value
+        @param dumper Method that formats the body as a string.
+        @param loader Method that converts the response body into an object.
+        @param use_proxy Set to True if the connection is to a proxy.
+        @param ok Set of valid response statuses.  If the returned status is not in this list, an exception is thrown.
+        """
+        if ok is None:
+            ok = (200, 201, 204)
+        if headers is None:
+            headers = {}
+        if not use_proxy:
+            scheme, location, path, params, query, id = urlparse.urlparse(url)
+            url = path
+            if query:
+                url += "?" + query
+        else:
+            scheme, location, path, params, query, id = urlparse.urlparse(url)
+            headers.update({ "host" : location })
+            if scheme == 'file':
+                use_proxy = False
+
+        if method in ('PUT', 'POST'):
+            if dumper is not None:
+                body = dumper(body)
+            # don't set content-length header because httplib does it
+            # for us in _send_request
+        else:
+            body = ''
+
+        response, body = self._get_response_body(connection, method, url,
+                                                 body, headers, ok)
+        
+        if loader is not None:
+            try:
+                body = loader(body)
+            except Exception, e:
+                raise UnparseableResponse(loader, body)
+
+        return response.status, response.msg, body
+
+    def _get_response_body(self, connection, method, url, body, headers, ok):
+        connection.request(method, url, body, headers)
+        response = connection.getresponse()
+        if response.status not in ok:
+            klass = status_to_error_map.get(response.status, ConnectionError)
+            raise klass(
+                connection.method, connection.host, connection.port,
+                connection.path, response.status, response.reason,
+                response.read())
+
+        return response, response.read()
+        
+    def request(self, *args, **kwargs):
+        return self.request_(*args, **kwargs)[-1]
+
     def head_(self, url, headers=None, use_proxy=False, ok=None):
-        return request_(connect(url, use_proxy), method='HEAD', url=url,
-                        body='', headers=headers, use_proxy=use_proxy,
-                        ok=ok)
+        return self.request_(connect(url, use_proxy), method='HEAD', url=url,
+                             body='', headers=headers, use_proxy=use_proxy,
+                             ok=ok)
 
     def head(self, *args, **kwargs):
         return self.head_(*args, **kwargs)[-1]
@@ -364,9 +370,9 @@ class HttpSuite(object):
         #import pdb; pdb.Pdb().set_trace()
         if headers is None:
             headers = {}
-        return request_(connect(url, use_proxy), method='GET', url=url,
-                        body='', headers=headers, loader=self.loader,
-                        use_proxy=use_proxy, ok=ok)
+        return self.request_(connect(url, use_proxy), method='GET', url=url,
+                             body='', headers=headers, loader=self.loader,
+                             use_proxy=use_proxy, ok=ok)
 
     def get(self, *args, **kwargs):
         return self.get_(*args, **kwargs)[-1]
@@ -378,9 +384,9 @@ class HttpSuite(object):
             headers['content-type'] = self.fallback_content_type
         else:
             headers['content-type'] = content_type
-        return request_(connect(url), method='PUT', url=url, body=data,
-                        headers=headers, dumper=self.dumper,
-                        loader=make_safe_loader(self.loader), ok=ok)
+        return self.request_(connect(url), method='PUT', url=url, body=data,
+                             headers=headers, dumper=self.dumper,
+                             loader=make_safe_loader(self.loader), ok=ok)
 
     def put(self, *args, **kwargs):
         return self.put_(*args, **kwargs)[-1]
@@ -399,9 +405,9 @@ class HttpSuite(object):
                 headers['content-type'] = self.fallback_content_type
             else:
                 headers['content-type'] = content_type
-        return request_(connect(url), method='POST', url=url, body=data,
-                        headers=headers, dumper=self.dumper,
-                        loader=self.loader, ok=ok)
+        return self.request_(connect(url), method='POST', url=url, body=data,
+                             headers=headers, dumper=self.dumper,
+                             loader=self.loader, ok=ok)
 
     def post(self, *args, **kwargs):
         return self.post_(*args, **kwargs)[-1]
@@ -424,3 +430,5 @@ post = suite.post
 post_ = suite.post_
 put = suite.put
 put_ = suite.put_
+request = suite.request
+request_ = suite.request_
