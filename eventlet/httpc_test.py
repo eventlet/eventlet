@@ -46,16 +46,14 @@ class Site(object):
     def handle_get(self, req):
         req.set_header('x-get', 'hello')
         resp = StringIO()
-        pairs = req.get_query_pairs()
         path = req.path().lstrip('/')
         try:
             resp.write(self.stuff[path])
         except KeyError:
             req.response(404, body='Not found')
             return
-        if pairs:
-            for k,v in pairs:
-                resp.write(k + '=' + v + '\n')
+        for k,v in req.get_query_pairs():
+            resp.write(k + '=' + v + '\n')
         req.write(resp.getvalue())
 
     def handle_head(self, req):
@@ -97,6 +95,11 @@ class Site(object):
         req.write(req.read_body())
 
     def handle_request(self, req):
+        if req.path().startswith('/redirect/'):
+            url = ('http://' + req.get_header('host') +
+                   req.uri().replace('/redirect/', '/'))
+            req.response(301, headers={'location': url}, body='')
+            return
         return getattr(self, 'handle_%s' % req.method().lower())(req)
 
     def adapt(self, obj, req):
@@ -119,6 +122,14 @@ class TestHttpc(tests.TestCase):
 
     def test_get(self):
         response = httpc.get('http://localhost:31337/hello')
+        self.assertEquals(response, 'hello world')
+
+    def test_get_301(self):
+        try:
+            httpc.get('http://localhost:31337/redirect/hello')
+            self.assert_(False)
+        except httpc.MovedPermanently, err:
+            response = err.retry()
         self.assertEquals(response, 'hello world')
 
     def test_get_(self):

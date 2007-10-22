@@ -174,7 +174,10 @@ class ConnectionError(Exception):
 
     There are lots of subclasses so you can use closely-specified
     exception clauses."""
-    def __init__(self, method, host, port, path, status, reason, body):
+    def __init__(self, method, host, port, path, status, reason, body,
+                 instance=None, connection=None, url='', headers={},
+                 dumper=None, loader=None, use_proxy=False, ok=None,
+                 response_headers={}):
         self.method = method
         self.host = host
         self.port = port
@@ -182,8 +185,20 @@ class ConnectionError(Exception):
         self.status = status
         self.reason = reason
         self.body = body
+        self.instance = instance
+        self.connection = connection
+        self.url = url
+        self.headers = headers
+        self.dumper = dumper
+        self.loader = loader
+        self.use_proxy = use_proxy
+        self.ok = ok
+        self.response_headers = response_headers
         Exception.__init__(self)
 
+    def location(self):
+        return self.response_headers.get('location')
+        
     def __repr__(self):
         return "ConnectionError(%r, %r, %r, %r, %r, %r, %r)" % (
             self.method, self.host, self.port,
@@ -208,6 +223,22 @@ class UnparseableResponse(ConnectionError):
 
 class Accepted(ConnectionError):
     """ 202 Accepted """
+    pass
+
+
+class Retriable(ConnectionError):
+    def retry_(self):
+        url = self.location() or self.url
+        return self.instance.request_(
+            connect(url, self.use_proxy), self.method, url, self.body,
+            self.headers, self.dumper, self.loader, self.use_proxy, self.ok)
+                                      
+    def retry(self):
+        return self.retry_()[-1]
+
+
+class MovedPermanently(Retriable):
+    """ 301 Moved Permanently """
     pass
 
 
@@ -243,6 +274,7 @@ class InternalServerError(ConnectionError):
 
 status_to_error_map = {
     202: Accepted,
+    301: MovedPermanently,
     304: NotModified,
     400: BadRequest,
     403: Forbidden,
@@ -340,7 +372,8 @@ class HttpSuite(object):
             body = ''
 
         response, body = self._get_response_body(connection, method, url,
-                                                 body, headers, ok)
+                                                 body, headers, ok, dumper,
+                                                 loader, use_proxy)
         
         if loader is not None:
             try:
@@ -350,7 +383,8 @@ class HttpSuite(object):
 
         return response.status, response.msg, body
 
-    def _get_response_body(self, connection, method, url, body, headers, ok):
+    def _get_response_body(self, connection, method, url, body, headers, ok,
+                           dumper, loader, use_proxy):
         connection.request(method, url, body, headers)
         response = connection.getresponse()
         if response.status not in ok:
@@ -358,7 +392,8 @@ class HttpSuite(object):
             raise klass(
                 connection.method, connection.host, connection.port,
                 connection.path, response.status, response.reason,
-                response.read())
+                response.read(), self, connection, url, headers, dumper,
+                loader, use_proxy, ok, response.msg.dict)
 
         return response, response.read()
         

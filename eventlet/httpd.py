@@ -76,6 +76,10 @@ class Request(object):
         self._reason_phrase = reason_phrase
         self.protocol.set_response_code(self, code, reason_phrase)
         if headers is not None:
+            try:
+                headers = headers.iteritems()
+            except AttributeError:
+                pass
             for key, value in headers:
                 self.set_header(key, value)
         if body is not None:
