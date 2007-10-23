@@ -43,6 +43,14 @@ class Site(object):
     def __init__(self):
         self.stuff = {'hello': 'hello world'}
 
+    def adapt(self, obj, req):
+        req.write(str(obj))
+
+    def handle_request(self, req):
+        return getattr(self, 'handle_%s' % req.method().lower())(req)
+
+
+class BasicSite(Site):
     def handle_get(self, req):
         req.set_header('x-get', 'hello')
         resp = StringIO()
@@ -94,125 +102,173 @@ class Site(object):
         req.set_header('x-post', 'hello')
         req.write(req.read_body())
 
-    def handle_request(self, req):
-        if req.path().startswith('/redirect/'):
-            url = ('http://' + req.get_header('host') +
-                   req.uri().replace('/redirect/', '/'))
-            req.response(301, headers={'location': url}, body='')
-            return
-        return getattr(self, 'handle_%s' % req.method().lower())(req)
 
-    def adapt(self, obj, req):
-        req.write(str(obj))
+class TestBase(object):
+    site_class = BasicSite
 
+    def base_url(self):
+        return 'http://localhost:31337/'
 
-class TestHttpc(tests.TestCase):
     def setUp(self):
         self.victim = api.spawn(httpd.server,
                                 api.tcp_listener(('0.0.0.0', 31337)),
-                                Site(),
+                                self.site_class(),
                                 max_size=128)
 
     def tearDown(self):
         api.kill(self.victim)
 
+
+class TestHttpc(TestBase, tests.TestCase):
     def test_get_bad_uri(self):
         self.assertRaises(httpc.NotFound,
-                          lambda: httpc.get('http://localhost:31337/b0gu5'))
+                          lambda: httpc.get(self.base_url() + 'b0gu5'))
 
     def test_get(self):
-        response = httpc.get('http://localhost:31337/hello')
-        self.assertEquals(response, 'hello world')
-
-    def test_get_301(self):
-        try:
-            httpc.get('http://localhost:31337/redirect/hello')
-            self.assert_(False)
-        except httpc.MovedPermanently, err:
-            response = err.retry()
+        response = httpc.get(self.base_url() + 'hello')
         self.assertEquals(response, 'hello world')
 
     def test_get_(self):
-        status, msg, body = httpc.get_('http://localhost:31337/hello')
+        status, msg, body = httpc.get_(self.base_url() + 'hello')
         self.assertEquals(status, 200)
         self.assertEquals(msg.dict['x-get'], 'hello')
         self.assertEquals(body, 'hello world')
 
     def test_get_query(self):
-        response = httpc.get('http://localhost:31337/hello?foo=bar&foo=quux')
+        response = httpc.get(self.base_url() + 'hello?foo=bar&foo=quux')
         self.assertEquals(response, 'hello worldfoo=bar\nfoo=quux\n')
 
     def test_head_(self):
-        status, msg, body = httpc.head_('http://localhost:31337/hello')
+        status, msg, body = httpc.head_(self.base_url() + 'hello')
         self.assertEquals(status, 200)
         self.assertEquals(msg.dict['x-head'], 'hello')
         self.assertEquals(body, '')
 
     def test_head(self):
-        self.assertEquals(httpc.head('http://localhost:31337/hello'), '')
+        self.assertEquals(httpc.head(self.base_url() + 'hello'), '')
 
     def test_post_(self):
         data = 'qunge'
-        status, msg, body = httpc.post_('http://localhost:31337/', data=data)
+        status, msg, body = httpc.post_(self.base_url() + '', data=data)
         self.assertEquals(status, 200)
         self.assertEquals(msg.dict['x-post'], 'hello')
         self.assertEquals(body, data)
 
     def test_post(self):
         data = 'qunge'
-        self.assertEquals(httpc.post('http://localhost:31337/', data=data),
+        self.assertEquals(httpc.post(self.base_url() + '', data=data),
                           data)
 
     def test_put_bad_uri(self):
         self.assertRaises(
             httpc.BadRequest,
-            lambda: httpc.put('http://localhost:31337/', data=''))
+            lambda: httpc.put(self.base_url() + '', data=''))
 
     def test_put_empty(self):
-        httpc.put('http://localhost:31337/empty', data='')
-        self.assertEquals(httpc.get('http://localhost:31337/empty'), '')
+        httpc.put(self.base_url() + 'empty', data='')
+        self.assertEquals(httpc.get(self.base_url() + 'empty'), '')
 
     def test_put_nonempty(self):
         data = 'nonempty'
-        httpc.put('http://localhost:31337/nonempty', data=data)
-        self.assertEquals(httpc.get('http://localhost:31337/nonempty'), data)
+        httpc.put(self.base_url() + 'nonempty', data=data)
+        self.assertEquals(httpc.get(self.base_url() + 'nonempty'), data)
 
     def test_put_01_create(self):
         data = 'goodbye world'
-        status, msg, body = httpc.put_('http://localhost:31337/goodbye',
+        status, msg, body = httpc.put_(self.base_url() + 'goodbye',
                                        data=data)
         self.assertEquals(status, 201)
         self.assertEquals(msg.dict['x-put'], 'hello')
         self.assertEquals(body, None)
-        self.assertEquals(httpc.get('http://localhost:31337/goodbye'), data)
+        self.assertEquals(httpc.get(self.base_url() + 'goodbye'), data)
 
     def test_put_02_modify(self):
         self.test_put_01_create()
         data = 'i really mean goodbye'
-        status = httpc.put_('http://localhost:31337/goodbye', data=data)[0]
+        status = httpc.put_(self.base_url() + 'goodbye', data=data)[0]
         self.assertEquals(status, 204)
-        self.assertEquals(httpc.get('http://localhost:31337/goodbye'), data)
+        self.assertEquals(httpc.get(self.base_url() + 'goodbye'), data)
 
     def test_delete_(self):
-        httpc.put('http://localhost:31337/killme', data='killme')
-        status, msg, body = httpc.delete_('http://localhost:31337/killme')
+        httpc.put(self.base_url() + 'killme', data='killme')
+        status, msg, body = httpc.delete_(self.base_url() + 'killme')
         self.assertEquals(status, 204)
         self.assertRaises(
             httpc.NotFound,
-            lambda: httpc.get('http://localhost:31337/killme'))
+            lambda: httpc.get(self.base_url() + 'killme'))
 
     def test_delete(self):
-        httpc.put('http://localhost:31337/killme', data='killme')
-        self.assertEquals(httpc.delete('http://localhost:31337/killme'), '')
+        httpc.put(self.base_url() + 'killme', data='killme')
+        self.assertEquals(httpc.delete(self.base_url() + 'killme'), '')
         self.assertRaises(
             httpc.NotFound,
-            lambda: httpc.get('http://localhost:31337/killme'))
+            lambda: httpc.get(self.base_url() + 'killme'))
 
     def test_delete_bad_uri(self):
         self.assertRaises(
             httpc.NotFound,
-            lambda: httpc.delete('http://localhost:31337/b0gu5'))
+            lambda: httpc.delete(self.base_url() + 'b0gu5'))
         
         
+class Site301(BasicSite):
+    def handle_request(self, req):
+        if req.path().startswith('/redirect/'):
+            url = ('http://' + req.get_header('host') +
+                   req.uri().replace('/redirect/', '/'))
+            req.response(301, headers={'location': url}, body='')
+            return
+        return Site.handle_request(self, req)
+
+
+class Site303(BasicSite):
+    def handle_request(self, req):
+        if req.path().startswith('/redirect/'):
+            url = ('http://' + req.get_header('host') +
+                   req.uri().replace('/redirect/', '/'))
+            req.response(303, headers={'location': url}, body='')
+            return
+        return Site.handle_request(self, req)
+
+
+class TestHttpc301(TestBase, tests.TestCase):
+    site_class = Site301
+
+    def base_url(self):
+        return 'http://localhost:31337/redirect/'
+
+    def test_get(self):
+        try:
+            httpc.get(self.base_url() + 'hello')
+            self.assert_(False)
+        except httpc.MovedPermanently, err:
+            response = err.retry()
+        self.assertEquals(response, 'hello world')
+    
+    def test_post(self):
+        data = 'qunge'
+        try:
+            response = httpc.post(self.base_url() + '', data=data)
+            self.assert_(False)
+        except httpc.MovedPermanently, err:
+            response = err.retry()
+        self.assertEquals(response, data)
+
+
+class TestHttpc303(TestBase, tests.TestCase):
+    site_class = Site303
+
+    def base_url(self):
+        return 'http://localhost:31337/redirect/'
+
+    def test_post(self):
+        data = 'hello world'
+        try:
+            response = httpc.post(self.base_url() + 'hello', data=data)
+            self.assert_(False)
+        except httpc.SeeOther, err:
+            response = err.retry()
+        self.assertEquals(response, data)
+
+
 if __name__ == '__main__':
     tests.main()

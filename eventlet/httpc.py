@@ -177,7 +177,7 @@ class ConnectionError(Exception):
     def __init__(self, method, host, port, path, status, reason, body,
                  instance=None, connection=None, url='', headers={},
                  dumper=None, loader=None, use_proxy=False, ok=None,
-                 response_headers={}):
+                 response_headers={}, req_body=''):
         self.method = method
         self.host = host
         self.port = port
@@ -194,6 +194,7 @@ class ConnectionError(Exception):
         self.use_proxy = use_proxy
         self.ok = ok
         self.response_headers = response_headers
+        self.req_body = req_body
         Exception.__init__(self)
 
     def location(self):
@@ -227,11 +228,18 @@ class Accepted(ConnectionError):
 
 
 class Retriable(ConnectionError):
+    def retry_method(self):
+        return self.method
+
+    def retry_url(self):
+        return self.location() or self.url()
+
     def retry_(self):
-        url = self.location() or self.url
+        url = self.retry_url()
         return self.instance.request_(
-            connect(url, self.use_proxy), self.method, url, self.body,
-            self.headers, self.dumper, self.loader, self.use_proxy, self.ok)
+            connect(url, self.use_proxy), self.retry_method(), url,
+            self.req_body, self.headers, self.dumper, self.loader,
+            self.use_proxy, self.ok)
                                       
     def retry(self):
         return self.retry_()[-1]
@@ -242,6 +250,13 @@ class MovedPermanently(Retriable):
     pass
 
 
+class SeeOther(Retriable):
+    """ 303 See Other """
+
+    def retry_method(self):
+        return 'GET'
+
+    
 class NotModified(ConnectionError):
     """ 304 Not Modified """
     pass
@@ -275,6 +290,7 @@ class InternalServerError(ConnectionError):
 status_to_error_map = {
     202: Accepted,
     301: MovedPermanently,
+    303: SeeOther,
     304: NotModified,
     400: BadRequest,
     403: Forbidden,
@@ -363,6 +379,7 @@ class HttpSuite(object):
             if scheme == 'file':
                 use_proxy = False
 
+        orig_body = body
         if method in ('PUT', 'POST'):
             if dumper is not None:
                 body = dumper(body)
@@ -373,7 +390,7 @@ class HttpSuite(object):
 
         response, body = self._get_response_body(connection, method, url,
                                                  body, headers, ok, dumper,
-                                                 loader, use_proxy)
+                                                 loader, use_proxy, orig_body)
         
         if loader is not None:
             try:
@@ -384,7 +401,7 @@ class HttpSuite(object):
         return response.status, response.msg, body
 
     def _get_response_body(self, connection, method, url, body, headers, ok,
-                           dumper, loader, use_proxy):
+                           dumper, loader, use_proxy, orig_body):
         connection.request(method, url, body, headers)
         response = connection.getresponse()
         if response.status not in ok:
@@ -393,7 +410,7 @@ class HttpSuite(object):
                 connection.method, connection.host, connection.port,
                 connection.path, response.status, response.reason,
                 response.read(), self, connection, url, headers, dumper,
-                loader, use_proxy, ok, response.msg.dict)
+                loader, use_proxy, ok, response.msg.dict, orig_body)
 
         return response, response.read()
         
