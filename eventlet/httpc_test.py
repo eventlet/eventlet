@@ -27,6 +27,7 @@ from eventlet import httpc
 from eventlet import httpd
 from eventlet import processes
 from eventlet import util
+from mx import DateTime
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -220,6 +221,24 @@ class Site301(BasicSite):
         return Site.handle_request(self, req)
 
 
+class Site302(BasicSite):
+    def handle_request(self, req):
+        if req.path().startswith('/expired/'):
+            url = ('http://' + req.get_header('host') +
+                   req.uri().replace('/expired/', '/'))
+            headers = {'location': url, 'expires': '0'}
+            req.response(302, headers=headers, body='')
+            return
+        if req.path().startswith('/expires/'):
+            url = ('http://' + req.get_header('host') +
+                   req.uri().replace('/expires/', '/'))
+            expires = (DateTime.gmt() + 100).gmticks()
+            headers = {'location': url, 'expires': httpc.to_http_time(expires)}
+            req.response(302, headers=headers, body='')
+            return
+        return Site.handle_request(self, req)
+
+
 class Site303(BasicSite):
     def handle_request(self, req):
         if req.path().startswith('/redirect/'):
@@ -252,6 +271,26 @@ class TestHttpc301(TestBase, tests.TestCase):
         except httpc.MovedPermanently, err:
             response = err.retry()
         self.assertEquals(response, data)
+
+
+class TestHttpc302(TestBase, tests.TestCase):
+    site_class = Site302
+
+    def test_get_expired(self):
+        try:
+            httpc.get(self.base_url() + 'expired/hello')
+            self.assert_(False)
+        except httpc.Found, err:
+            response = err.retry()
+        self.assertEquals(response, 'hello world')
+
+    def test_get_expires(self):
+        try:
+            httpc.get(self.base_url() + 'expires/hello')
+            self.assert_(False)
+        except httpc.Found, err:
+            response = err.retry()
+        self.assertEquals(response, 'hello world')
 
 
 class TestHttpc303(TestBase, tests.TestCase):

@@ -31,7 +31,7 @@ import time
 import urlparse
 
 
-from mx.DateTime import Parser
+from mx import DateTime
 
 
 _old_HTTPConnection = httplib.HTTPConnection
@@ -42,7 +42,9 @@ HTTP_TIME_FORMAT = '%a, %d %b %Y %H:%M:%S GMT'
 
 
 to_http_time = lambda t: time.strftime(HTTP_TIME_FORMAT, time.gmtime(t))
-from_http_time = lambda t: int(Parser.DateTimeFromString(t).gmticks())
+def from_http_time(t, defaultdate=None):
+    return int(DateTime.Parser.DateTimeFromString(
+        t, defaultdate=defaultdate).gmticks())
 
 def host_and_port_from_url(url):
     """@brief Simple function to get host and port from an http url.
@@ -200,6 +202,16 @@ class ConnectionError(Exception):
     def location(self):
         return self.response_headers.get('location')
         
+    def expired(self):
+        # 14.21 Expires
+        #
+        # HTTP/1.1 clients and caches MUST treat other invalid date
+        # formats, especially including the value "0", as in the past
+        # (i.e., "already expired").
+        expires = from_http_time(instance.response_headers.get('expires', '0'),
+                                 defaultdate=DateTime.Epoch)
+        return time.time() > expires
+
     def __repr__(self):
         return "ConnectionError(%r, %r, %r, %r, %r, %r, %r)" % (
             self.method, self.host, self.port,
@@ -250,6 +262,12 @@ class MovedPermanently(Retriable):
     pass
 
 
+class Found(Retriable):
+    """ 302 Found """
+
+    pass
+
+
 class SeeOther(Retriable):
     """ 303 See Other """
 
@@ -290,6 +308,7 @@ class InternalServerError(ConnectionError):
 status_to_error_map = {
     202: Accepted,
     301: MovedPermanently,
+    302: Found,
     303: SeeOther,
     304: NotModified,
     400: BadRequest,
@@ -407,10 +426,23 @@ class HttpSuite(object):
         if response.status not in ok:
             klass = status_to_error_map.get(response.status, ConnectionError)
             raise klass(
-                connection.method, connection.host, connection.port,
-                connection.path, response.status, response.reason,
-                response.read(), self, connection, url, headers, dumper,
-                loader, use_proxy, ok, response.msg.dict, orig_body)
+                method=connection.method,
+                host=connection.host,
+                port=connection.port,
+                path=connection.path,
+                status=response.status,
+                reason=response.reason,
+                body=response.read(),
+                instance=self,
+                connection=connection,
+                url=url,
+                headers=headers,
+                dumper=dumper,
+                loader=loader,
+                use_proxy=use_proxy,
+                ok=ok,
+                response_headers=response.msg.dict,
+                req_body=orig_body)
 
         return response, response.read()
         
