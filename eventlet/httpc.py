@@ -376,7 +376,8 @@ class HttpSuite(object):
         self.loader = loader
         self.fallback_content_type = fallback_content_type
 
-    def request_(self, connection, method, url, body='', headers=None, dumper=None, loader=None, use_proxy=False, ok=None):
+    def request_(self, connection, method, url, body='', headers=None,
+                 dumper=None, loader=None, use_proxy=False, ok=None, **kwargs):
         """Make an http request to a url, for internal use mostly.
 
         @param connection The connection (as returned by make_connection) to use for the request.
@@ -415,7 +416,8 @@ class HttpSuite(object):
 
         response, body = self._get_response_body(connection, method, url,
                                                  body, headers, ok, dumper,
-                                                 loader, use_proxy, orig_body)
+                                                 loader, use_proxy, orig_body,
+                                                 **kwargs)
         
         if loader is not None:
             try:
@@ -425,10 +427,8 @@ class HttpSuite(object):
 
         return response.status, response.msg, body
 
-    def _get_response_body(self, connection, method, url, body, headers, ok,
-                           dumper, loader, use_proxy, orig_body):
-        connection.request(method, url, body, headers)
-        response = connection.getresponse()
+    def _check_status(self, connection, response, url, headers, dumper, loader,
+                      use_proxy, ok, orig_body, **kwargs):
         if response.status not in ok:
             klass = status_to_error_map.get(response.status, ConnectionError)
             raise klass(
@@ -450,31 +450,39 @@ class HttpSuite(object):
                 response_headers=response.msg.dict,
                 req_body=orig_body)
 
+    def _get_response_body(self, connection, method, url, body, headers, ok,
+                           dumper, loader, use_proxy, orig_body, **kwargs):
+        connection.request(method, url, body, headers)
+        response = connection.getresponse()
+        self._check_status(connection, response, url, headers, dumper, loader,
+                           use_proxy, ok, orig_body, **kwargs)
+
         return response, response.read()
         
     def request(self, *args, **kwargs):
         return self.request_(*args, **kwargs)[-1]
 
-    def head_(self, url, headers=None, use_proxy=False, ok=None):
+    def head_(self, url, headers=None, use_proxy=False, ok=None, **kwargs):
         return self.request_(connect(url, use_proxy), method='HEAD', url=url,
                              body='', headers=headers, use_proxy=use_proxy,
-                             ok=ok)
+                             ok=ok, **kwargs)
 
     def head(self, *args, **kwargs):
         return self.head_(*args, **kwargs)[-1]
 
-    def get_(self, url, headers=None, use_proxy=False, ok=None):
+    def get_(self, url, headers=None, use_proxy=False, ok=None, **kwargs):
         #import pdb; pdb.Pdb().set_trace()
         if headers is None:
             headers = {}
         return self.request_(connect(url, use_proxy), method='GET', url=url,
                              body='', headers=headers, loader=self.loader,
-                             use_proxy=use_proxy, ok=ok)
+                             use_proxy=use_proxy, ok=ok, **kwargs)
 
     def get(self, *args, **kwargs):
         return self.get_(*args, **kwargs)[-1]
 
-    def put_(self, url, data, headers=None, content_type=None, ok=None):
+    def put_(self, url, data, headers=None, content_type=None, ok=None,
+             **kwargs):
         if headers is None:
             headers = {}
         if content_type is None:
@@ -483,18 +491,21 @@ class HttpSuite(object):
             headers['content-type'] = content_type
         return self.request_(connect(url), method='PUT', url=url, body=data,
                              headers=headers, dumper=self.dumper,
-                             loader=make_safe_loader(self.loader), ok=ok)
+                             loader=make_safe_loader(self.loader), ok=ok,
+                             **kwargs)
 
     def put(self, *args, **kwargs):
         return self.put_(*args, **kwargs)[-1]
 
-    def delete_(self, url, ok=None):
-        return request_(connect(url), method='DELETE', url=url, ok=ok)
+    def delete_(self, url, ok=None, **kwargs):
+        return request_(connect(url), method='DELETE', url=url, ok=ok,
+                        **kwargs)
 
     def delete(self, *args, **kwargs):
         return self.delete_(*args, **kwargs)[-1]
 
-    def post_(self, url, data='', headers=None, content_type=None, ok=None):
+    def post_(self, url, data='', headers=None, content_type=None, ok=None,
+              **kwargs):
         if headers is None:
             headers = {}
         if 'content-type' in headers:
@@ -504,7 +515,7 @@ class HttpSuite(object):
                 headers['content-type'] = content_type
         return self.request_(connect(url), method='POST', url=url, body=data,
                              headers=headers, dumper=self.dumper,
-                             loader=self.loader, ok=ok)
+                             loader=self.loader, ok=ok, **kwargs)
 
     def post(self, *args, **kwargs):
         return self.post_(*args, **kwargs)[-1]
