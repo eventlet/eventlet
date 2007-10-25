@@ -211,14 +211,20 @@ class TestHttpc(TestBase, tests.TestCase):
             lambda: httpc.delete(self.base_url() + 'b0gu5'))
         
         
-class Site301(BasicSite):
+class RedirectSite(BasicSite):
+    response_code = 301
+
     def handle_request(self, req):
         if req.path().startswith('/redirect/'):
             url = ('http://' + req.get_header('host') +
                    req.uri().replace('/redirect/', '/'))
-            req.response(301, headers={'location': url}, body='')
+            req.response(self.response_code, headers={'location': url},
+                         body='')
             return
         return Site.handle_request(self, req)
+
+class Site301(RedirectSite):
+    pass
 
 
 class Site302(BasicSite):
@@ -239,14 +245,12 @@ class Site302(BasicSite):
         return Site.handle_request(self, req)
 
 
-class Site303(BasicSite):
-    def handle_request(self, req):
-        if req.path().startswith('/redirect/'):
-            url = ('http://' + req.get_header('host') +
-                   req.uri().replace('/redirect/', '/'))
-            req.response(303, headers={'location': url}, body='')
-            return
-        return Site.handle_request(self, req)
+class Site303(RedirectSite):
+    response_code = 303
+
+
+class Site307(RedirectSite):
+    response_code = 307
 
 
 class TestHttpc301(TestBase, tests.TestCase):
@@ -305,6 +309,22 @@ class TestHttpc303(TestBase, tests.TestCase):
             response = httpc.post(self.base_url() + 'hello', data=data)
             self.assert_(False)
         except httpc.SeeOther, err:
+            response = err.retry()
+        self.assertEquals(response, data)
+
+
+class TestHttpc307(TestBase, tests.TestCase):
+    site_class = Site307
+
+    def base_url(self):
+        return 'http://localhost:31337/redirect/'
+
+    def test_post(self):
+        data = 'hello world'
+        try:
+            response = httpc.post(self.base_url() + 'hello', data=data)
+            self.assert_(False)
+        except httpc.TemporaryRedirect, err:
             response = err.retry()
         self.assertEquals(response, data)
 

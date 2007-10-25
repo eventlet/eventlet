@@ -279,6 +279,11 @@ class NotModified(ConnectionError):
     """ 304 Not Modified """
     pass
 
+
+class TemporaryRedirect(Retriable):
+    """ 307 Temporary Redirect """
+    pass
+
         
 class BadRequest(ConnectionError):
     """ 400 Bad Request """
@@ -311,6 +316,7 @@ status_to_error_map = {
     302: Found,
     303: SeeOther,
     304: NotModified,
+    307: TemporaryRedirect,
     400: BadRequest,
     403: Forbidden,
     404: NotFound,
