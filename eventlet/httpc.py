@@ -485,10 +485,11 @@ class HttpSuite(object):
              **kwargs):
         if headers is None:
             headers = {}
-        if content_type is None:
-            headers['content-type'] = self.fallback_content_type
-        else:
-            headers['content-type'] = content_type
+        if 'content-type' not in headers:
+            if content_type is None:
+                headers['content-type'] = self.fallback_content_type
+            else:
+                headers['content-type'] = content_type
         return self.request_(connect(url), method='PUT', url=url, body=data,
                              headers=headers, dumper=self.dumper,
                              loader=make_safe_loader(self.loader), ok=ok,
@@ -508,7 +509,7 @@ class HttpSuite(object):
               **kwargs):
         if headers is None:
             headers = {}
-        if 'content-type' in headers:
+        if 'content-type' not in headers:
             if content_type is None:
                 headers['content-type'] = self.fallback_content_type
             else:

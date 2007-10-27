@@ -405,6 +405,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.close_connection = True
                 continue
 
+            self._code = 200
             request = Request(self, self.command, self.path, self.headers)
             request.set_header('Server', self.version_string())
             request.set_header('Date', self.date_time_string())

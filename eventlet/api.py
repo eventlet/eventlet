@@ -231,6 +231,7 @@ def sleep(timeout=0):
 
 switch = greenlib.switch
 getcurrent = greenlet.getcurrent
+GreenletExit = greenlet.GreenletExit
 
 
 class Spew(object):

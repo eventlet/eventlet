@@ -24,7 +24,6 @@ THE SOFTWARE.
 
 import time
 import traceback
-import greenlet
 
 
 from eventlet import api
@@ -62,7 +61,7 @@ class event(object):
         occured.
         """
         if self._result is NOT_USED:
-            self._waiters[greenlet.getcurrent()] = True
+            self._waiters[api.getcurrent()] = True
             return api.get_hub().switch()
         if self._exc is not None:
             raise self._exc
@@ -93,6 +92,15 @@ class event(object):
         for waiter in self._waiters:
             hub.schedule_call(0, greenlib.switch, waiter, self._result)
 
+
+def execute(func, *args, **kw):
+    evt = event()
+    def _really_execute():
+        evt.send(func(*args, **kw))
+    api.spawn(_really_execute)
+    return evt
+
+
 class CoroutinePool(pools.Pool):
     """ Like a thread pool, but with coroutines. """
     def _main_loop(self, sender):
@@ -104,7 +112,7 @@ class CoroutinePool(pools.Pool):
                 result = func(*args, **kw)
                 if evt is not None:
                     evt.send(result)
-            except greenlet.GreenletExit:
+            except api.GreenletExit:
                 pass
             except Exception, e:
                 traceback.print_exc()

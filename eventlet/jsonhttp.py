@@ -29,4 +29,5 @@ import simplejson
 suite = httpc.HttpSuite(simplejson.dumps, simplejson.loads, 'application/json')
 head, get, put, delete, post = (
     suite.head, suite.get, suite.put, suite.delete, suite.post)
-
+head_, get_, put_, delete_, post_ = (
+    suite.head_, suite.get_, suite.put_, suite.delete_, suite.post_)
