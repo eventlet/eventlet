@@ -45,6 +45,22 @@ USE_ACCESS_LOG = True
 CONNECTION_CLOSED = (errno.EPIPE, errno.ECONNRESET)
 
 
+class ErrorResponse(Exception):
+    _responses = BaseHTTPServer.BaseHTTPRequestHandler.responses
+
+    def __init__(self, code, reason_phrase=None, headers=None, body=None):
+        self.code = code
+        if reason_phrase is None:
+            self.reason = self._responses[code][0]
+        else:
+            self.reason = reason_phrase
+        self.headers = headers
+        if body is None:
+            self.body = self._responses[code][1]
+        else:
+            self.body = body
+
+
 class Request(object):
     _method = None
     _path = None
@@ -415,7 +431,13 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 pass
 
             try:
-                self.server.site.handle_request(request)
+                try:
+                    self.server.site.handle_request(request)
+                except ErrorResponse, err:
+                    request.response(code=err.code,
+                                     reason_phrase=err.reason,
+                                     headers=err.headers,
+                                     body=err.body)
                 # throw an exception if it failed to write a body
                 if not request.response_written():
                     raise NotImplementedError("Handler failed to write response to request: %s" % request)
