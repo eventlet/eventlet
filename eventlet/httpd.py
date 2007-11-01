@@ -49,6 +49,7 @@ class ErrorResponse(Exception):
     _responses = BaseHTTPServer.BaseHTTPRequestHandler.responses
 
     def __init__(self, code, reason_phrase=None, headers=None, body=None):
+        Exception.__init__(self, reason_phrase)
         self.code = code
         if reason_phrase is None:
             self.reason = self._responses[code][0]
