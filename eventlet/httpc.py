@@ -307,7 +307,25 @@ class Gone(ConnectionError):
 
 class InternalServerError(ConnectionError):
     """ 500 Internal Server Error """
-    pass
+    def __repr__(self):
+        try:
+            import simplejson
+            body = simplejson.loads(self.body)
+        except:
+            traceback = self.body
+        else:
+            traceback = "Traceback (most recent call last):\n"
+            for frame in body['stack-trace']:
+                traceback += '  File "%s", line %s, in %s\n' % (
+                    frame['filename'], frame['lineno'], frame['method'])
+                for line in frame['code']:
+                    if line['lineno'] == frame['lineno']:
+                        traceback += '    %s' % (line['line'].lstrip(), )
+                        break
+            traceback += body['description']
+        return "The server raised an exception from our request:\n%s %s\n%s %s\n%s" % (
+            self.method, self.url, self.status, self.reason, traceback)
+    __str__ = __repr__
 
 
 status_to_error_map = {
