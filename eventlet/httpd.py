@@ -309,7 +309,7 @@ class Request(object):
 
     def error(self, response=None, body=None, log_traceback=True):
         if log_traceback:
-            traceback.print_exc()
+            traceback.print_exc(file=self.log)
         if response is None:
             response = 500
         if body is None:
@@ -322,7 +322,7 @@ class Request(object):
         try:
             produce(body, self)
         except Exception, e:
-            traceback.print_exc()
+            traceback.print_exc(file=self.log)
             if not self.response_written():
                 self.write('Internal Server Error')
 
@@ -484,7 +484,7 @@ class Server(BaseHTTPServer.HTTPServer):
         self.log.write(message)
 
     def log_exception(self, type, value, tb):
-        print ''.join(traceback.format_exception(type, value, tb))
+        self.log.write(''.join(traceback.format_exception(type, value, tb)))
 
     def write_access_log_line(self, *args):
         """Write a line to the access.log. Arguments:
@@ -498,7 +498,7 @@ def server(sock, site, log=None, max_size=512):
     pool = coros.CoroutinePool(max_size=max_size)
     serv = Server(sock, sock.getsockname(), site, log)
     try:
-        print "httpd starting up on", sock.getsockname()
+        serv.log.write("httpd starting up on %s\n" % (sock.getsockname(), ))
         while True:
             try:
                 new_sock, address = sock.accept()
@@ -506,7 +506,7 @@ def server(sock, site, log=None, max_size=512):
                 pool.execute_async(proto.handle)
             except KeyboardInterrupt:
                 api.get_hub().remove_descriptor(sock.fileno())
-                print "httpd exiting"
+                serv.log.write("httpd exiting\n")
                 break
     finally:
         try:
