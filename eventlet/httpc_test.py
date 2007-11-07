@@ -180,7 +180,7 @@ class TestHttpc(TestBase, tests.TestCase):
                                        data=data)
         self.assertEquals(status, 201)
         self.assertEquals(msg.dict['x-put'], 'hello')
-        self.assertEquals(body, None)
+        self.assertEquals(body, '')
         self.assertEquals(httpc.get(self.base_url() + 'goodbye'), data)
 
     def test_put_02_modify(self):

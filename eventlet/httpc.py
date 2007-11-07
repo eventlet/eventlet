@@ -171,36 +171,58 @@ class FileScheme(object):
             self.path, self.status, self.reason, '')
 
 
+class _Params(object):
+    def __init__(self, url, method, body='', headers=None, dumper=None,
+                 loader=None, use_proxy=False, ok=(), aux=None):
+        '''
+        @param connection The connection (as returned by make_connection) to use for the request.
+        @param method HTTP method
+        @param url Full url to make request on.
+        @param body HTTP body, if necessary for the method.  Can be any object, assuming an appropriate dumper is also provided.
+        @param headers Dict of header name to header value
+        @param dumper Method that formats the body as a string.
+        @param loader Method that converts the response body into an object.
+        @param use_proxy Set to True if the connection is to a proxy.
+        @param ok Set of valid response statuses.  If the returned status is not in this list, an exception is thrown.
+        '''
+        self.instance = None
+        self.url = url
+        self.path = url
+        self.method = method
+        self.body = body
+        if headers is None:
+            self.headers = {}
+        else:
+            self.headers = headers
+        self.dumper = dumper
+        self.loader = loader
+        self.use_proxy = use_proxy
+        self.ok = ok or (200, 201, 204)
+        self.orig_body = body
+        self.aux = aux
+
+
+class _LocalParams(_Params):
+    def __init__(self, params, **kwargs):
+        self._delegate = params
+        for k, v in kwargs.iteritems():
+            setattr(self, k, v)
+
+    def __getattr__(self, key):
+        return getattr(self._delegate, key)
+
+    
 class ConnectionError(Exception):
     """Detailed exception class for reporting on http connection problems.
 
     There are lots of subclasses so you can use closely-specified
     exception clauses."""
-    def __init__(self, method, host, port, path, status, reason, body,
-                 instance=None, connection=None, url='', headers={},
-                 dumper=None, loader=None, use_proxy=False, ok=None,
-                 response_headers={}, req_body=''):
-        self.method = method
-        self.host = host
-        self.port = port
-        self.path = path
-        self.status = status
-        self.reason = reason
-        self.body = body
-        self.instance = instance
-        self.connection = connection
-        self.url = url
-        self.headers = headers
-        self.dumper = dumper
-        self.loader = loader
-        self.use_proxy = use_proxy
-        self.ok = ok
-        self.response_headers = response_headers
-        self.req_body = req_body
+    def __init__(self, params):
+        self.params = params
         Exception.__init__(self)
 
     def location(self):
-        return self.response_headers.get('location')
+        return self.params.response.msg.dict.get('location')
         
     def expired(self):
         # 14.21 Expires
@@ -208,14 +230,16 @@ class ConnectionError(Exception):
         # HTTP/1.1 clients and caches MUST treat other invalid date
         # formats, especially including the value "0", as in the past
         # (i.e., "already expired").
-        expires = from_http_time(instance.response_headers.get('expires', '0'),
-                                 defaultdate=DateTime.Epoch)
+        expires = from_http_time(
+            self.params.response_headers.get('expires', '0'),
+            defaultdate=DateTime.Epoch)
         return time.time() > expires
 
     def __repr__(self):
-        return "ConnectionError(%r, %r, %r, %r, %r, %r, %r)" % (
-            self.method, self.host, self.port,
-            self.path, self.status, self.reason, self.body)
+        response = self.params.response
+        return "%s(url=%r, method=%r, status=%r, reason=%r, body=%r)" % (
+            self.__class__.__name__, self.params.url, self.params.method,
+            response.status, response.reason, self.params.body)
 
     __str__ = __repr__
 
@@ -241,17 +265,16 @@ class Accepted(ConnectionError):
 
 class Retriable(ConnectionError):
     def retry_method(self):
-        return self.method
+        return self.params.method
 
     def retry_url(self):
         return self.location() or self.url()
 
     def retry_(self):
-        url = self.retry_url()
-        return self.instance.request_(
-            connect(url, self.use_proxy), self.retry_method(), url,
-            self.req_body, self.headers, self.dumper, self.loader,
-            self.use_proxy, self.ok)
+        params = _LocalParams(self.params,
+            url=self.retry_url(),
+            method=self.retry_method())
+        return self.params.instance.request_(params)
                                       
     def retry(self):
         return self.retry_()[-1]
@@ -375,15 +398,19 @@ def make_connection(scheme, location, use_proxy):
 
 def connect(url, use_proxy=False):
     """ Create a connection object to the host specified in a url.  Convenience function for make_connection."""
-    scheme, location, path, params, query, id = urlparse.urlparse(url)
+    scheme, location = urlparse.urlparse(url)[:2]
     return make_connection(scheme, location, use_proxy)
 
 
 def make_safe_loader(loader):
+    if not callable(loader):
+        return loader
     def safe_loader(what):
         try:
             return loader(what)
-        except Exception, e:
+        except Exception:
+            import traceback
+            traceback.print_exc()
             return None
     return safe_loader
 
@@ -394,113 +421,84 @@ class HttpSuite(object):
         self.loader = loader
         self.fallback_content_type = fallback_content_type
 
-    def request_(self, connection, method, url, body='', headers=None,
-                 dumper=None, loader=None, use_proxy=False, ok=None, **kwargs):
-        """Make an http request to a url, for internal use mostly.
+    def request_(self, params):
+        '''Make an http request to a url, for internal use mostly.'''
 
-        @param connection The connection (as returned by make_connection) to use for the request.
-        @param method HTTP method
-        @param url Full url to make request on.
-        @param body HTTP body, if necessary for the method.  Can be any object, assuming an appropriate dumper is also provided.
-        @param headers Dict of header name to header value
-        @param dumper Method that formats the body as a string.
-        @param loader Method that converts the response body into an object.
-        @param use_proxy Set to True if the connection is to a proxy.
-        @param ok Set of valid response statuses.  If the returned status is not in this list, an exception is thrown.
-        """
-        if ok is None:
-            ok = (200, 201, 204)
-        if headers is None:
-            headers = {}
-        if not use_proxy:
-            scheme, location, path, params, query, id = urlparse.urlparse(url)
-            url = path
-            if query:
-                url += "?" + query
-        else:
-            scheme, location, path, params, query, id = urlparse.urlparse(url)
-            headers.update({ "host" : location })
+        params = _LocalParams(params, instance=self)
+
+        (scheme, location, path, parameters, query,
+         fragment) = urlparse.urlparse(params.url)
+
+        if params.use_proxy:
             if scheme == 'file':
-                use_proxy = False
+                params.use_proxy = False
+            else:
+                params.headers['host'] = location
 
-        orig_body = body
-        if method in ('PUT', 'POST'):
-            if dumper is not None:
-                body = dumper(body)
+        if not params.use_proxy:
+            params.path = path
+            if query:
+                params.path += '?' + query
+
+        params.orig_body = params.body
+
+        if params.method in ('PUT', 'POST'):
+            if params.dumper is not None:
+                params.body = params.dumper(params.body)
             # don't set content-length header because httplib does it
             # for us in _send_request
         else:
-            body = ''
+            params.body = ''
 
-        response, body = self._get_response_body(connection, method, url,
-                                                 body, headers, ok, dumper,
-                                                 loader, use_proxy, orig_body,
-                                                 **kwargs)
+        params.response, params.response_body = self._get_response_body(params)
+        response, body = params.response, params.response_body
         
-        if loader is not None:
+        if params.loader is not None:
             try:
-                body = loader(body)
+                body = params.loader(body)
             except Exception, e:
-                raise UnparseableResponse(loader, body)
+                raise UnparseableResponse(params.loader, body)
 
         return response.status, response.msg, body
 
-    def _check_status(self, connection, response, url, headers, dumper, loader,
-                      use_proxy, ok, orig_body, **kwargs):
-        if response.status not in ok:
+    def _check_status(self, params):
+        response = params.response
+        if response.status not in params.ok:
             klass = status_to_error_map.get(response.status, ConnectionError)
-            raise klass(
-                method=connection.method,
-                host=connection.host,
-                port=connection.port,
-                path=connection.path,
-                status=response.status,
-                reason=response.reason,
-                body=response.read(),
-                instance=self,
-                connection=connection,
-                url=url,
-                headers=headers,
-                dumper=dumper,
-                loader=loader,
-                use_proxy=use_proxy,
-                ok=ok,
-                response_headers=response.msg.dict,
-                req_body=orig_body)
+            raise klass(params)
 
-    def _get_response_body(self, connection, method, url, body, headers, ok,
-                           dumper, loader, use_proxy, orig_body, **kwargs):
-        connection.request(method, url, body, headers)
-        response = connection.getresponse()
-        self._check_status(connection, response, url, headers, dumper, loader,
-                           use_proxy, ok, orig_body, **kwargs)
+    def _get_response_body(self, params):
+        connection = connect(params.url, params.use_proxy)
+        connection.request(params.method, params.path, params.body,
+                           params.headers)
+        params.response = connection.getresponse()
+        params.response_body = params.response.read()
+        self._check_status(params)
 
-        return response, response.read()
+        return params.response, params.response_body
         
-    def request(self, *args, **kwargs):
-        return self.request_(*args, **kwargs)[-1]
+    def request(self, params):
+        return self.request_(params)[-1]
 
-    def head_(self, url, headers=None, use_proxy=False, ok=None, **kwargs):
-        return self.request_(connect(url, use_proxy), method='HEAD', url=url,
-                             body='', headers=headers, use_proxy=use_proxy,
-                             ok=ok, **kwargs)
+    def head_(self, url, headers=None, use_proxy=False, ok=None, aux=None):
+        return self.request_(_Params(url, 'HEAD', headers=headers,
+                                     use_proxy=use_proxy, ok=ok, aux=aux))
 
     def head(self, *args, **kwargs):
         return self.head_(*args, **kwargs)[-1]
 
-    def get_(self, url, headers=None, use_proxy=False, ok=None, **kwargs):
-        #import pdb; pdb.Pdb().set_trace()
+    def get_(self, url, headers=None, use_proxy=False, ok=None, aux=None):
         if headers is None:
             headers = {}
-        return self.request_(connect(url, use_proxy), method='GET', url=url,
-                             body='', headers=headers, loader=self.loader,
-                             use_proxy=use_proxy, ok=ok, **kwargs)
+        return self.request_(_Params(url, 'GET', headers=headers,
+                                     loader=make_safe_loader(self.loader),
+                                     use_proxy=use_proxy, ok=ok, aux=aux))
 
     def get(self, *args, **kwargs):
         return self.get_(*args, **kwargs)[-1]
 
     def put_(self, url, data, headers=None, content_type=None, ok=None,
-             **kwargs):
+             aux=None):
         if headers is None:
             headers = {}
         if 'content-type' not in headers:
@@ -508,23 +506,20 @@ class HttpSuite(object):
                 headers['content-type'] = self.fallback_content_type
             else:
                 headers['content-type'] = content_type
-        return self.request_(connect(url), method='PUT', url=url, body=data,
-                             headers=headers, dumper=self.dumper,
-                             loader=make_safe_loader(self.loader), ok=ok,
-                             **kwargs)
+        return self.request_(_Params(url, 'PUT', body=data, headers=headers,
+                                     ok=ok, aux=aux))
 
     def put(self, *args, **kwargs):
         return self.put_(*args, **kwargs)[-1]
 
-    def delete_(self, url, ok=None, **kwargs):
-        return request_(connect(url), method='DELETE', url=url, ok=ok,
-                        **kwargs)
+    def delete_(self, url, ok=None, aux=None):
+        return request_(_Params(url, 'DELETE', ok=ok, aux=aux))
 
     def delete(self, *args, **kwargs):
         return self.delete_(*args, **kwargs)[-1]
 
     def post_(self, url, data='', headers=None, content_type=None, ok=None,
-              **kwargs):
+              aux=None):
         if headers is None:
             headers = {}
         if 'content-type' not in headers:
@@ -532,9 +527,9 @@ class HttpSuite(object):
                 headers['content-type'] = self.fallback_content_type
             else:
                 headers['content-type'] = content_type
-        return self.request_(connect(url), method='POST', url=url, body=data,
+        return self.request_(_Params(url, 'POST', body=data,
                              headers=headers, dumper=self.dumper,
-                             loader=self.loader, ok=ok, **kwargs)
+                             loader=self.loader, ok=ok, aux=aux))
 
     def post(self, *args, **kwargs):
         return self.post_(*args, **kwargs)[-1]
