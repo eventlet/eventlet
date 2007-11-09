@@ -333,9 +333,9 @@ class InternalServerError(ConnectionError):
     def __repr__(self):
         try:
             import simplejson
-            body = simplejson.loads(self.body)
+            body = simplejson.loads(self.params.response_body)
         except:
-            traceback = self.body
+            traceback = self.params.response_body
         else:
             traceback = "Traceback (most recent call last):\n"
             for frame in body['stack-trace']:
@@ -347,8 +347,9 @@ class InternalServerError(ConnectionError):
                         break
             traceback += body['description']
         return "The server raised an exception from our request:\n%s %s\n%s %s\n%s" % (
-            self.method, self.url, self.status, self.reason, traceback)
+            self.params.method, self.params.url, self.params.response.status, self.params.response.reason, traceback)
     __str__ = __repr__
+
 
 
 status_to_error_map = {

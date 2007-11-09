@@ -329,5 +329,27 @@ class TestHttpc307(TestBase, tests.TestCase):
         self.assertEquals(response, data)
 
 
+class Site500(BasicSite):
+    def handle_request(self, req):
+        req.response(500, body="screw you world")
+        return
+
+class TestHttpc500(TestBase, tests.TestCase):
+    site_class = Site500
+
+    def base_url(self):
+        return 'http://localhost:31337/'
+
+    def test_get(self):
+        data = 'screw you world'
+        try:
+            response = httpc.get(self.base_url())
+            self.fail()
+        except httpc.InternalServerError, e:
+            self.assertEquals(e.params.response_body, data)
+            self.assert_(str(e).count(data))
+            self.assert_(repr(e).count(data))
+
+
 if __name__ == '__main__':
     tests.main()
