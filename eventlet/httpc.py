@@ -31,20 +31,34 @@ import time
 import urlparse
 
 
-from mx import DateTime
-
-
 _old_HTTPConnection = httplib.HTTPConnection
 _old_HTTPSConnection = httplib.HTTPSConnection
 
 
 HTTP_TIME_FORMAT = '%a, %d %b %Y %H:%M:%S GMT'
-
-
 to_http_time = lambda t: time.strftime(HTTP_TIME_FORMAT, time.gmtime(t))
-def from_http_time(t, defaultdate=None):
-    return int(DateTime.Parser.DateTimeFromString(
-        t, defaultdate=defaultdate).gmticks())
+
+try:
+
+    from mx import DateTime
+    def from_http_time(t, defaultdate=None):
+        return int(DateTime.Parser.DateTimeFromString(
+            t, defaultdate=defaultdate).gmticks())
+
+except ImportError:
+
+    import calendar
+    parse_formats = (HTTP_TIME_FORMAT, # RFC 1123
+                    '%A, %d-%b-%y %H:%M:%S GMT',  # RFC 850
+                    '%a %b %d %H:%M:%S %Y') # asctime
+    def from_http_time(t, defaultdate=None):
+        for parser in parse_formats:
+            try:
+                return calendar.timegm(time.strptime(t, parser))
+            except ValueError:
+                continue
+        return defaultdate     
+
 
 def host_and_port_from_url(url):
     """@brief Simple function to get host and port from an http url.

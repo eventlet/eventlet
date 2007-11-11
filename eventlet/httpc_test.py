@@ -27,7 +27,7 @@ from eventlet import httpc
 from eventlet import httpd
 from eventlet import processes
 from eventlet import util
-from mx import DateTime
+import time
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -111,9 +111,11 @@ class TestBase(object):
         return 'http://localhost:31337/'
 
     def setUp(self):
+        self.logfile = StringIO()
         self.victim = api.spawn(httpd.server,
                                 api.tcp_listener(('0.0.0.0', 31337)),
                                 self.site_class(),
+                                log=self.logfile,
                                 max_size=128)
 
     def tearDown(self):
@@ -238,7 +240,7 @@ class Site302(BasicSite):
         if req.path().startswith('/expires/'):
             url = ('http://' + req.get_header('host') +
                    req.uri().replace('/expires/', '/'))
-            expires = (DateTime.gmt() + 100).gmticks()
+            expires = time.time() + (100 * 24 * 60 * 60)
             headers = {'location': url, 'expires': httpc.to_http_time(expires)}
             req.response(302, headers=headers, body='')
             return
@@ -349,7 +351,19 @@ class TestHttpc500(TestBase, tests.TestCase):
             self.assertEquals(e.params.response_body, data)
             self.assert_(str(e).count(data))
             self.assert_(repr(e).count(data))
-
+            
+class TestHttpTime(tests.TestCase):
+    rfc1123_time = 'Sun, 06 Nov 1994 08:49:37 GMT'
+    rfc850_time  = 'Sunday, 06-Nov-94 08:49:37 GMT'
+    asctime_time = 'Sun Nov  6 08:49:37 1994'
+    secs_since_epoch = 784111777
+    def test_to_http_time(self):
+        self.assertEqual(self.rfc1123_time, httpc.to_http_time(self.secs_since_epoch))
+    
+    def test_from_http_time(self):
+        for formatted in (self.rfc1123_time, self.rfc850_time, self.asctime_time):
+            ticks = httpc.from_http_time(formatted, 0)
+            self.assertEqual(ticks, self.secs_since_epoch)
 
 if __name__ == '__main__':
     tests.main()
