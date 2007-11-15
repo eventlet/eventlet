@@ -306,6 +306,9 @@ def switch(other=None, value=None, exc=None):
     if not (other or hasattr(other, 'run')):
         raise SwitchingToDeadGreenlet("Switching to dead greenlet %r %r %r" % (other, value, exc))
     _greenlet_context_call('swap_out')
+    running_exc = sys.exc_info()
+    if running_exc[0] != None:  # see if we're in the middle of an exception handler
+        sys.exc_clear()  # don't pass along exceptions to the other coroutine
     try:
         rval = other.switch(value, exc)
         if not rval or not other:
@@ -315,9 +318,16 @@ def switch(other=None, value=None, exc=None):
     except:
         res, exc = None, sys.exc_info()
     _greenlet_context_call('swap_in')
+    # *NOTE: we don't restore exc_info, so don't switch inside an
+    # exception handler and then call sys.exc_info() or use bare
+    # raise.  Instead, explicitly save off the exception before
+    # switching.  We need an extension that allows us to restore the
+    # exception state at this point because vanilla Python doesn't
+    # allow that.
     if isinstance(exc, tuple):
         typ, exc, tb = exc
         raise typ, exc, tb
     elif exc is not None:
         raise exc
+    
     return res
