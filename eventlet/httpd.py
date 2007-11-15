@@ -329,6 +329,11 @@ class Request(object):
     def not_found(self):
         self.error(404, 'Not Found\n', log_traceback=False)
 
+    def raw_body(self):
+        if not hasattr(self, '_cached_body'):
+            self.read_body()
+        return self._cached_body
+
     def read_body(self):
         if not hasattr(self, '_cached_parsed_body'):
             if not hasattr(self, '_cached_body'):
@@ -504,6 +509,7 @@ def server(sock, site, log=None, max_size=512):
                 new_sock, address = sock.accept()
                 proto = HttpProtocol(new_sock, address, serv)
                 pool.execute_async(proto.handle)
+                api.sleep(0)   # sleep to allow other coros to run
             except KeyboardInterrupt:
                 api.get_hub().remove_descriptor(sock.fileno())
                 serv.log.write("httpd exiting\n")

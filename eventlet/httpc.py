@@ -74,37 +74,31 @@ def host_and_port_from_url(url):
     return host, port
 
 
-def better_putrequest(self, method, url, skip_host=0):
+def better_putrequest(self, method, url, skip_host=0, skip_accept_encoding=0):
     self.method = method
     self.path = url
-    self.old_putrequest(method, url, skip_host)
+    try:
+        # Python 2.4 and above
+        self.old_putrequest(method, url, skip_host, skip_accept_encoding)
+    except TypeError:
+        # Python 2.3 and below
+        self.old_putrequest(method, url, skip_host)
 
 
 class HttpClient(httplib.HTTPConnection):
-    """A subclass of httplib.HTTPConnection which works around a bug
-    in the interaction between eventlet sockets and httplib. httplib relies
-    on gc to close the socket, causing the socket to be closed too early.
-
-    This is an awful hack and the bug should be fixed properly ASAP.
+    """A subclass of httplib.HTTPConnection that provides a better
+    putrequest that records the method and path on the request object.
     """
     def __init__(self, host, port=None, strict=None):
         _old_HTTPConnection.__init__(self, host, port, strict)
-
-    def close(self):
-        pass
 
     old_putrequest = httplib.HTTPConnection.putrequest
     putrequest = better_putrequest
 
 class HttpsClient(httplib.HTTPSConnection):
-    """A subclass of httplib.HTTPSConnection which works around a bug
-    in the interaction between eventlet sockets and httplib. httplib relies
-    on gc to close the socket, causing the socket to be closed too early.
-
-    This is an awful hack and the bug should be fixed properly ASAP.
+    """A subclass of httplib.HTTPSConnection that provides a better
+    putrequest that records the method and path on the request object.
     """
-    def close(self):
-        pass
     old_putrequest = httplib.HTTPSConnection.putrequest
     putrequest = better_putrequest
 
@@ -184,6 +178,11 @@ class FileScheme(object):
             self.method, self.host, self.port,
             self.path, self.status, self.reason, '')
 
+    def close(self):
+        """We're challenged here, and read the whole file rather than
+        integrating with this lib. file object already out of scope at this
+        point"""
+        pass
 
 class _Params(object):
     def __init__(self, url, method, body='', headers=None, dumper=None,
@@ -471,6 +470,8 @@ class HttpSuite(object):
         if params.loader is not None:
             try:
                 body = params.loader(body)
+            except KeyboardInterrupt:
+                raise
             except Exception, e:
                 raise UnparseableResponse(params.loader, body)
 
@@ -488,6 +489,7 @@ class HttpSuite(object):
                            params.headers)
         params.response = connection.getresponse()
         params.response_body = params.response.read()
+        connection.close()
         self._check_status(params)
 
         return params.response, params.response_body
@@ -505,6 +507,7 @@ class HttpSuite(object):
     def get_(self, url, headers=None, use_proxy=False, ok=None, aux=None):
         if headers is None:
             headers = {}
+        headers['accept'] = self.fallback_content_type+';q=1,*/*;q=0'
         return self.request_(_Params(url, 'GET', headers=headers,
                                      loader=make_safe_loader(self.loader),
                                      use_proxy=use_proxy, ok=ok, aux=aux))
@@ -521,6 +524,7 @@ class HttpSuite(object):
                 headers['content-type'] = self.fallback_content_type
             else:
                 headers['content-type'] = content_type
+        headers['accept'] = headers['content-type']+';q=1,*/*;q=0'
         return self.request_(_Params(url, 'PUT', body=data, headers=headers,
                                      ok=ok, aux=aux))
 
@@ -542,6 +546,7 @@ class HttpSuite(object):
                 headers['content-type'] = self.fallback_content_type
             else:
                 headers['content-type'] = content_type
+        headers['accept'] = headers['content-type']+';q=1,*/*;q=0'
         return self.request_(_Params(url, 'POST', body=data,
                              headers=headers, dumper=self.dumper,
                              loader=self.loader, ok=ok, aux=aux))

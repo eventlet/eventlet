@@ -64,18 +64,35 @@ def higher_order_send(send_func):
 
 
 
+class RefCount(object):
+    def __init__(self):
+        self._count = 1
+
+    def increment(self):
+        self._count += 1
+
+    def decrement(self):
+        self._count -= 1
+        assert self._count >= 0
+
+    def is_referenced(self):
+        return self._count > 0
+
 class wrapped_fd(object):
     newlines = '\r\n'
     mode = 'wb+'
     is_secure = False
 
-    def __init__(self, fd):
+    def __init__(self, fd, refcount = None):
         self._closed = False
         self.fd = fd
         self._fileno = fd.fileno()
         self.recvbuffer = ''
         self.recvcount = 0
-        self.sendcount = 0        
+        self.sendcount = 0
+        self._refcount = refcount
+        if refcount is None:
+            self._refcount = RefCount()
 
     def getpeername(self, *args, **kw):
         fn = self.getpeername = self.fd.getpeername
@@ -115,6 +132,9 @@ class wrapped_fd(object):
 
     def close(self, *args, **kw):
         if self._closed:
+            return
+        self._refcount.decrement()
+        if self._refcount.is_referenced():
             return
         self._closed = True
         fn = self.close = self.fd.close
@@ -222,8 +242,8 @@ class wrapped_fd(object):
             self.write(line)
         
     def read(self, size=None):
-        if size is not None and not isinstance(size, int):
-             raise TypeError
+        if size is not None and not isinstance(size, (int, long)):
+             raise TypeError('Expecting an int or long for size, got %s: %s' % (type(size), repr(size)))
         buf, self.recvbuffer = self.recvbuffer, ''
         lst = [buf]
         if size is None:
@@ -250,7 +270,8 @@ class wrapped_fd(object):
         return ''.join(lst)
 
     def makefile(self, *args, **kw):
-        return type(self)(self.fd)
+        self._refcount.increment()
+        return type(self)(self.fd, refcount = self._refcount)
 
 
 class wrapped_file(wrapped_fd):
