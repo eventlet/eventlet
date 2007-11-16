@@ -309,6 +309,7 @@ def switch(other=None, value=None, exc=None):
     running_exc = sys.exc_info()
     if running_exc[0] != None:  # see if we're in the middle of an exception handler
         sys.exc_clear()  # don't pass along exceptions to the other coroutine
+        del running_exc  # tracebacks can create cyclic object references
     try:
         rval = other.switch(value, exc)
         if not rval or not other:
