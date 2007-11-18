@@ -532,7 +532,7 @@ class HttpSuite(object):
         return self.put_(*args, **kwargs)[-1]
 
     def delete_(self, url, ok=None, aux=None):
-        return request_(_Params(url, 'DELETE', ok=ok, aux=aux))
+        return self.request_(_Params(url, 'DELETE', ok=ok, aux=aux))
 
     def delete(self, *args, **kwargs):
         return self.delete_(*args, **kwargs)[-1]
