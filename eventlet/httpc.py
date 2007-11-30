@@ -457,8 +457,8 @@ class HttpSuite(object):
         params.orig_body = params.body
 
         if params.method in ('PUT', 'POST'):
-            if params.dumper is not None:
-                params.body = params.dumper(params.body)
+            if self.dumper is not None:
+                params.body = self.dumper(params.body)
             # don't set content-length header because httplib does it
             # for us in _send_request
         else:
@@ -467,13 +467,13 @@ class HttpSuite(object):
         params.response, params.response_body = self._get_response_body(params)
         response, body = params.response, params.response_body
         
-        if params.loader is not None:
+        if self.loader is not None:
             try:
-                body = params.loader(body)
+                body = self.loader(body)
             except KeyboardInterrupt:
                 raise
             except Exception, e:
-                raise UnparseableResponse(params.loader, body)
+                raise UnparseableResponse(self.loader, body)
 
         return response.status, response.msg, body
 

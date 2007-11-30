@@ -26,7 +26,14 @@ from eventlet import httpc
 
 import simplejson
 
-suite = httpc.HttpSuite(simplejson.dumps, simplejson.loads, 'application/json')
+
+def safe_load(what):
+	if not what:
+		return None
+	return simplejson.loads(what)
+
+
+suite = httpc.HttpSuite(simplejson.dumps, safe_load, 'application/json')
 head, get, put, delete, post = (
     suite.head, suite.get, suite.put, suite.delete, suite.post)
 head_, get_, put_, delete_, post_ = (
