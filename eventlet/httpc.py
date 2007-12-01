@@ -340,7 +340,7 @@ class Gone(ConnectionError):
     """ 410 Gone """
     pass
 
-class ServiceUnavailable(httpc.Retriable):
+class ServiceUnavailable(Retriable):
     """ 503 Service Unavailable """
     def url(self):
         return self.params._delegate.url
