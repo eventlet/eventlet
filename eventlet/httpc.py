@@ -340,6 +340,10 @@ class Gone(ConnectionError):
     """ 410 Gone """
     pass
 
+class ServiceUnavailable(httpc.Retriable):
+    """ 503 Service Unavailable """
+    def url(self):
+        return self.params._delegate.url
 
 class InternalServerError(ConnectionError):
     """ 500 Internal Server Error """
@@ -377,6 +381,7 @@ status_to_error_map = {
     404: NotFound,
     410: Gone,
     500: InternalServerError,
+    503: ServiceUnavailable,
 }
 
 scheme_to_factory_map = {
