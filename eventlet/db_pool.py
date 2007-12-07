@@ -168,8 +168,9 @@ class PooledConnectionWrapper(GenericConnectionWrapper):
         reference to it so that you can't use it again through this
         wrapper object.
         """
-        if self:
+        if self and self._pool:
             self._pool.put(self._base)
+            self._pool = None
             del self._base
     
     def __del__(self):

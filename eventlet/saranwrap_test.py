@@ -27,6 +27,7 @@ from eventlet import saranwrap
 import os
 import sys
 import tempfile
+import time
 import unittest
 import uuid
 
@@ -78,6 +79,7 @@ class TestSaranwrap(unittest.TestCase):
         self.assertEqual(saranwrap.Proxy, type(prox))
         id = prox.uuid4()
         self.assertEqual(id.get_version(), uuid.uuid4().get_version())
+        self.assert_(repr(prox.uuid4))
 
     def test_wrap_eq(self):
         prox = saranwrap.wrap(uuid)
@@ -86,6 +88,13 @@ class TestSaranwrap(unittest.TestCase):
         self.assertEqual(id1, id2)
         id3 = prox.uuid4()
         self.assert_(id1 != id3)
+
+    def test_wrap_nonzero(self):
+        prox = saranwrap.wrap(uuid)
+        id1 = prox.uuid4()
+        self.assert_(bool(id1))
+        prox2 = saranwrap.wrap([1, 2, 3])
+        self.assert_(bool(prox2))
 
     def test_multiple_wraps(self):
         prox1 = saranwrap.wrap(uuid)
@@ -165,8 +174,8 @@ class TestSaranwrap(unittest.TestCase):
         self.assert_(a < b, "%s is not less than %s" % (a, b))
 
     def test_status(self):
-        prox = saranwrap.wrap(uuid)
-        a = prox.uuid4()
+        prox = saranwrap.wrap(time)
+        a = prox.gmtime(0)
         status = saranwrap.status(prox)
         self.assertEqual(status['object_count'], 1)
         self.assertEqual(status['next_id'], 2)
@@ -174,8 +183,8 @@ class TestSaranwrap(unittest.TestCase):
         # status of an object should be the same as the module
         self.assertEqual(saranwrap.status(a), status)
         # create a new one then immediately delete it
-        prox.uuid4()
-        is_id = prox.getnode() # sync up deletes
+        prox.gmtime(1)
+        is_id = prox.ctime(1) # sync up deletes
         status = saranwrap.status(prox)
         self.assertEqual(status['object_count'], 1)
         self.assertEqual(status['next_id'], 3)
@@ -183,14 +192,14 @@ class TestSaranwrap(unittest.TestCase):
         self.assert_(status['pid'] != saranwrap.status(prox2)['pid'])
     
     def test_del(self):
-        prox = saranwrap.wrap(uuid)
-        delme = prox.uuid4()
+        prox = saranwrap.wrap(time)
+        delme = prox.gmtime(0)
         status_before = saranwrap.status(prox)
         #print status_before['objects']
         del delme
         # need to do an access that doesn't create an object
         # in order to sync up the deleted objects
-        prox.getnode()
+        prox.ctime(1)
         status_after = saranwrap.status(prox)
         #print status_after['objects']
         self.assertLessThan(status_after['object_count'], status_before['object_count'])
@@ -211,8 +220,8 @@ class TestSaranwrap(unittest.TestCase):
         tid = make_uuid()
         self.assertEqual(tid.get_version(), uuid.uuid4().get_version())
         def make_list():
-            import eventlet.test_saranwrap
-            prox = saranwrap.wrap(eventlet.test_saranwrap.list_maker)
+            from eventlet import saranwrap_test
+            prox = saranwrap.wrap(saranwrap_test.list_maker)
             # after this function returns, prox should fall out of scope
             return prox()
         proxl = make_list()

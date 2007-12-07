@@ -375,9 +375,19 @@ not need to deal with this class directly."""
         # tack anything on to the return value here because str values are used as data.
         return self.__str__()
 
+    def __nonzero__(self):
+        # bool(obj) is another method that skips __getattribute__.  There's no good way to just pass
+        # the method on, so we use a special message.
+        my_in = self.__local_dict['_in']
+        my_out = self.__local_dict['_out']
+        my_id = self.__local_dict['_id']
+        _dead_list = self.__local_dict['_dead_list']
+        request = Request('nonzero', {'id':my_id})
+        _write_request(request, my_out)
+        return _read_response(my_id, None, my_in, my_out, _dead_list)
+
     def __len__(self):
-        # see description for __repr__, len(obj) is the same.  Unfortunately, __len__ is also
-        # used when determining whether an object is boolean or not, e.g. if proxied_object:
+        # see description for __repr__, len(obj) is the same.
         return self.__len__()
 
 def proxied_type(self):
@@ -497,6 +507,9 @@ when the id is None."""
 
     def handle_type(self, object, req):
         return type(object)
+
+    def handle_nonzero(self, object, req):
+        return bool(object)
 
     def loop(self):
         """@brief Loop forever and respond to all requests."""
