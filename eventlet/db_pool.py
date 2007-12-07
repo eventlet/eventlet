@@ -74,21 +74,104 @@ class ConnectionPool(Pool):
         self._module = module
         self._args = args
         self._kwargs = kwargs
-        Pool.__init__(self, min_size, max_size)
+        super(ConnectionPool, self).__init__(min_size, max_size)
 
     def create(self):
         return saranwrap.wrap(self._module).connect(*self._args, **self._kwargs)
 
     def put(self, conn):
-        # rollback any uncommitted changes, so that the next process
+        # rollback any uncommitted changes, so that the next client
         # has a clean slate.  This also pokes the process to see if
         # it's dead or None
         try:
             conn.rollback()
         except (AttributeError, DeadProcess), e:
-            conn = self.create()
-        # TODO figure out if we're still connected to the database
+            conn = None
+
+        # unwrap the connection for storage
+        if isinstance(conn, GenericConnectionWrapper):
+            if conn:
+                conn = conn._base
+            else:
+                conn = None
+                
+        # *TODO figure out if we're still connected to the database
         if conn is not None:
-            Pool.put(self, conn)
+            super(ConnectionPool, self).put(conn)
         else:
             self.current_size -= 1
+
+    def get(self):
+        # wrap the connection for easier use
+        conn = super(ConnectionPool, self).get()
+        return PooledConnectionWrapper(conn, self)
+
+
+class GenericConnectionWrapper(object):
+    def __init__(self, baseconn):
+        self._base = baseconn
+    def __enter__(self): return self._base.__enter__()
+    def __exit__(self, exc, value, tb): return self._base.__exit__(exc, value, tb)
+    def __repr__(self): return self._base.__repr__()
+    def affected_rows(self): return self._base.affected_rows()
+    def autocommit(self,*args, **kwargs): return self._base.autocommit(*args, **kwargs)
+    def begin(self): return self._base.begin()
+    def change_user(self,*args, **kwargs): return self._base.change_user(*args, **kwargs)
+    def character_set_name(self,*args, **kwargs): return self._base.character_set_name(*args, **kwargs)
+    def close(self,*args, **kwargs): return self._base.close(*args, **kwargs)
+    def commit(self,*args, **kwargs): return self._base.commit(*args, **kwargs)
+    def cursor(self, cursorclass=None): return self._base.cursor(cursorclass)
+    def dump_debug_info(self,*args, **kwargs): return self._base.dump_debug_info(*args, **kwargs)
+    def errno(self,*args, **kwargs): return self._base.errno(*args, **kwargs)
+    def error(self,*args, **kwargs): return self._base.error(*args, **kwargs)
+    def errorhandler(self, conn, curs, errcls, errval): return self._base.errorhandler(conn, curs, errcls, errval)
+    def literal(self, o): return self._base.literal(o)
+    def set_character_set(self, charset): return self._base.set_character_set(charset)
+    def set_sql_mode(self, sql_mode): return self._base.set_sql_mode(sql_mode)
+    def show_warnings(self): return self._base.show_warnings()
+    def warning_count(self): return self._base.warning_count()
+    def literal(self, o): return self._base.literal(o)
+    def ping(self,*args, **kwargs): return self._base.ping(*args, **kwargs)
+    def query(self,*args, **kwargs): return self._base.query(*args, **kwargs)
+    def rollback(self,*args, **kwargs): return self._base.rollback(*args, **kwargs)
+    def select_db(self,*args, **kwargs): return self._base.select_db(*args, **kwargs)
+    def set_server_option(self,*args, **kwargs): return self._base.set_server_option(*args, **kwargs)
+    def set_character_set(self, charset): return self._base.set_character_set(charset)
+    def set_sql_mode(self, sql_mode): return self._base.set_sql_mode(sql_mode)
+    def server_capabilities(self,*args, **kwargs): return self._base.server_capabilities(*args, **kwargs)
+    def show_warnings(self): return self._base.show_warnings()
+    def shutdown(self,*args, **kwargs): return self._base.shutdown(*args, **kwargs)
+    def sqlstate(self,*args, **kwargs): return self._base.sqlstate(*args, **kwargs)
+    def stat(self,*args, **kwargs): return self._base.stat(*args, **kwargs)
+    def store_result(self,*args, **kwargs): return self._base.store_result(*args, **kwargs)
+    def string_literal(self,*args, **kwargs): return self._base.string_literal(*args, **kwargs)
+    def thread_id(self,*args, **kwargs): return self._base.thread_id(*args, **kwargs)
+    def use_result(self,*args, **kwargs): return self._base.use_result(*args, **kwargs)
+    def warning_count(self): return self._base.warning_count()
+
+
+class PooledConnectionWrapper(GenericConnectionWrapper):
+    """ A connection wrapper where:
+    - the close method returns the connection to the pool instead of closing it directly
+    - you can do if conn: (yay)
+    - returns itself to the pool if it gets garbage collected
+    """
+    def __init__(self, baseconn, pool):
+        super(PooledConnectionWrapper, self).__init__(baseconn)
+        self._pool = pool
+
+    def __nonzero__(self):
+        return hasattr(self, '_base')
+
+    def close(self):
+        """ Return the connection to the pool, and remove the
+        reference to it so that you can't use it again through this
+        wrapper object.
+        """
+        if self:
+            self._pool.put(self._base)
+            del self._base
+    
+    def __del__(self):
+        self.close()
+

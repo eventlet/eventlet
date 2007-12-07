@@ -121,6 +121,27 @@ class TestDBConnectionPool(DBTester):
         self.assert_(conn2.cursor)
         del conn2
 
+    def test_close_does_a_put(self):
+        self.assert_(self.pool.free() == 0)
+        self.connection.close()
+        self.assert_(self.pool.free() == 1)
+        self.assertRaises(AttributeError, self.connection.cursor)
+
+    def test_deletion_does_a_put(self):
+        self.assert_(self.pool.free() == 0)
+        self.connection = None
+        self.assert_(self.pool.free() == 1)
+
+    def test_put_doesnt_double_wrap(self):
+        self.pool.put(self.connection)
+        conn = self.pool.get()
+        self.assert_(not isinstance(conn._base, db_pool.PooledConnectionWrapper))
+
+    def test_bool(self):
+        self.assert_(self.connection)
+        self.connection.close()
+        self.assert_(not self.connection)
+
     def fill_test_table(self, conn):
         curs = conn.cursor()
         for i in range(1000):
@@ -232,10 +253,10 @@ class TestDBConnectionPool(DBTester):
         results.sort()
         self.assertEqual([1, 2], results)
 
-import MySQLdb
-
 class TestMysqlConnectionPool(TestDBConnectionPool, unittest.TestCase):
     def setUp(self):
+        import MySQLdb
+        self._dbmodule = MySQLdb
         try:
             import simplejson
             import os.path
@@ -243,7 +264,6 @@ class TestMysqlConnectionPool(TestDBConnectionPool, unittest.TestCase):
             # have to convert unicode objects to str objects because mysqldb is dum
             self._auth = dict([(str(k), str(v))
                          for k, v in auth_utf8.items()])
-            self._dbmodule = MySQLdb
         except (IOError, ImportError), e:
             self._auth = {'host': 'localhost','user': 'root','passwd': '','db': 'persist0'}
         super(TestMysqlConnectionPool, self).setUp()
@@ -255,13 +275,13 @@ class TestMysqlConnectionPool(TestDBConnectionPool, unittest.TestCase):
         except Exception:
             pass
         dbname = auth.pop('db')
-        db = MySQLdb.connect(**auth).cursor()
+        db = self._dbmodule.connect(**auth).cursor()
         db.execute("create database "+dbname)
         db.close()
         del db
 
     def drop_db(self):
-        db = MySQLdb.connect(**self._auth).cursor()
+        db = self._dbmodule.connect(**self._auth).cursor()
         db.execute("drop database "+self._auth['db'])
         db.close()
         del db
