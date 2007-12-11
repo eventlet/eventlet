@@ -23,7 +23,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-import os
+import os, sys
 
 from eventlet.pools import Pool
 from eventlet.processes import DeadProcess
@@ -85,6 +85,9 @@ class ConnectionPool(Pool):
         # it's dead or None
         try:
             conn.rollback()
+        except AttributeError, e:
+            # this means it's already been destroyed
+            conn = None
         except:
             # we don't care what the exception was, we just know the
             # connection is dead
@@ -169,7 +172,10 @@ class PooledConnectionWrapper(GenericConnectionWrapper):
 
     def _destroy(self):
         self._pool = None
-        del self._base
+        try:
+            del self._base
+        except AttributeError:
+            pass
         
     def close(self):
         """ Return the connection to the pool, and remove the
@@ -178,6 +184,7 @@ class PooledConnectionWrapper(GenericConnectionWrapper):
         """
         if self and self._pool:
             self._pool.put(self)
+        self._destroy()
     
     def __del__(self):
         self.close()
