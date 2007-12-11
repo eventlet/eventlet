@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from eventlet import saranwrap
+from eventlet import saranwrap, coros
 
 import os
 import sys
@@ -31,8 +31,13 @@ import time
 import unittest
 import uuid
 
+# random test stuff
 def list_maker():
     return [0,1,2]
+
+one = 1
+two = 2
+three = 3
 
 class TestSaranwrap(unittest.TestCase):
     def assert_server_exists(self, prox):
@@ -264,6 +269,18 @@ sys_path = sys.path""")
             shutil.rmtree(temp_dir)
             sys.path.remove(temp_dir)
                         
+
+    def test_contention(self):
+        from eventlet import saranwrap_test
+        prox = saranwrap.wrap(saranwrap_test)
+                
+        pool = coros.CoroutinePool(max_size=4)
+        waiters = []
+        waiters.append(pool.execute(lambda: self.assertEquals(prox.one, 1)))
+        waiters.append(pool.execute(lambda: self.assertEquals(prox.two, 2)))
+        waiters.append(pool.execute(lambda: self.assertEquals(prox.three, 3)))
+        for waiter in waiters:
+            waiter.wait()
                               
     def test_detection_of_server_crash(self):
         # make the server crash here
