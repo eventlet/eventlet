@@ -85,17 +85,21 @@ class ConnectionPool(Pool):
         # it's dead or None
         try:
             conn.rollback()
-        except (AttributeError, DeadProcess), e:
+        except:
+            # we don't care what the exception was, we just know the
+            # connection is dead
+            print "WARNING: connection.rollback raised: %s" % (sys.exc_info()[1])
             conn = None
 
         # unwrap the connection for storage
         if isinstance(conn, GenericConnectionWrapper):
             if conn:
-                conn = conn._base
+                base = conn._base
+                conn._destroy()
+                conn = base
             else:
                 conn = None
                 
-        # *TODO figure out if we're still connected to the database
         if conn is not None:
             super(ConnectionPool, self).put(conn)
         else:
@@ -153,7 +157,7 @@ class GenericConnectionWrapper(object):
 class PooledConnectionWrapper(GenericConnectionWrapper):
     """ A connection wrapper where:
     - the close method returns the connection to the pool instead of closing it directly
-    - you can do if conn: (yay)
+    - you can do if conn:
     - returns itself to the pool if it gets garbage collected
     """
     def __init__(self, baseconn, pool):
@@ -161,17 +165,19 @@ class PooledConnectionWrapper(GenericConnectionWrapper):
         self._pool = pool
 
     def __nonzero__(self):
-        return hasattr(self, '_base')
+        return (hasattr(self, '_base') and bool(self._base))
 
+    def _destroy(self):
+        self._pool = None
+        del self._base
+        
     def close(self):
         """ Return the connection to the pool, and remove the
         reference to it so that you can't use it again through this
         wrapper object.
         """
         if self and self._pool:
-            self._pool.put(self._base)
-            self._pool = None
-            del self._base
+            self._pool.put(self)
     
     def __del__(self):
         self.close()
