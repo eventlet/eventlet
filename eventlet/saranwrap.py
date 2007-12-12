@@ -98,7 +98,7 @@ except NameError:
     from sets import Set as set, ImmutableSet as frozenset
 
 from eventlet.processes import Process
-from eventlet import api
+from eventlet import api, pools
 
 # debugging hooks
 _g_debug_mode = False
@@ -264,12 +264,20 @@ class ChildProcess(object):
         self._dead_list = dead_list
         self._in = instr
         self._out = outstr
+        self._lock = pools.TokenPool(max_size=1)
 
     def make_request(self, request):
         _id = request.get('id')
         _attribute = request.get('attribute') or request.get('key') or request.get('name')
-        _write_request(request, self._out)
-        return _read_response(_id, _attribute, self._in, self)
+
+        t = self._lock.get()
+        try:
+            _write_request(request, self._out)
+            retval = _read_response(_id, _attribute, self._in, self)
+        finally:
+            self._lock.put(t)
+            
+        return retval
 
 
 class Proxy(object):
