@@ -100,9 +100,7 @@ except NameError:
 from eventlet.processes import Process
 from eventlet import api
 
-#
 # debugging hooks
-#
 _g_debug_mode = False
 if _g_debug_mode:
     import traceback
@@ -124,7 +122,7 @@ def wrap(obj, dead_callback = None):
         return wrap_module(obj.__name__, dead_callback)
     pythonpath_sync()
     p = Process('python', [__file__, '--child'], dead_callback)
-    prox = Proxy(p, p)
+    prox = Proxy(ChildProcess(p, p))
     prox.obj = obj
     return prox.obj
 
@@ -139,15 +137,14 @@ def wrap_module(fqname, dead_callback = None):
         p = Process('python', [__file__, '--module', fqname, '--logfile', '/tmp/saranwrap.log'], dead_callback)
     else:
         p = Process('python', [__file__, '--module', fqname,], dead_callback)
-    prox = Proxy(p, p)
+    prox = Proxy(ChildProcess(p,p))
     return prox
 
 def status(proxy):
     """
 @brief get the status from the server through a proxy
 @param proxy a saranwrap.Proxy object connected to a server."""
-    _write_request(Request('status', {}), proxy.__local_dict['_out'])
-    return _read_response(None, None, proxy.__local_dict['_in'], proxy.__local_dict['_out'], None)
+    return proxy.__local_dict['_cp'].make_request(Request('status', {}))
 
 class BadResponse(Exception):
     """"This exception is raised by an saranwrap client when it could
@@ -171,6 +168,11 @@ class Request(object):
         return "Request `"+self._action+"` "+str(self._param)
     def __getitem__(self, name):
         return self._param[name]
+    def get(self, name, default = None):
+        try:
+            return self[name]
+        except KeyError:
+            return default
     def action(self):
         return self._action
 
@@ -180,7 +182,7 @@ def _read_lp_hunk(stream):
     body = stream.read(length)
     return body
 
-def _read_response(id, attribute, input, output, dead_list):
+def _read_response(id, attribute, input, cp):
     """@brief local helper method to read respones from the rpc server."""
     try:
         str = _read_lp_hunk(input)
@@ -192,9 +194,9 @@ def _read_response(id, attribute, input, output, dead_list):
     if response[0] == 'value':
         return response[1]
     elif response[0] == 'callable':
-        return CallableProxy(id, attribute, input, output, dead_list)
+        return CallableProxy(id, attribute, cp)
     elif response[0] == 'object':
-        return ObjectProxy(input, output, response[1], dead_list)
+        return ObjectProxy(cp, response[1])
     elif response[0] == 'exception':
         exp = response[1]
         raise exp
@@ -236,40 +238,56 @@ def _log(message):
 def _unmunge_attr_name(name):
     """ Sometimes attribute names come in with classname prepended, not sure why.
     This function removes said classname, because we're huge hackers and we didn't
-    find out what the true right thing to do is.  *FIX: find out. """
+    find out what the true right thing to do is.  *TODO: find out. """
     if(name.startswith('_Proxy')):
         name = name[len('_Proxy'):]
     if(name.startswith('_ObjectProxy')):
         name = name[len('_ObjectProxy'):]
     return name
 
+class ChildProcess(object):
+    """\
+    This class wraps a remote python process, presumably available
+    in an instance of an Server.
+    """
+    def __init__(self, instr, outstr, dead_list = None):
+        """
+        @param instr a file-like object which supports read().
+        @param outstr a file-like object which supports write() and flush().
+        @param dead_list a list of ids of remote objects that are dead
+        """
+        # default dead_list inside the function because all objects in method
+        # argument lists are init-ed only once globally
+        _prnt("ChildProcess::__init__")
+        if dead_list is None:
+            dead_list = set()
+        self._dead_list = dead_list
+        self._in = instr
+        self._out = outstr
+
+    def make_request(self, request):
+        _id = request.get('id')
+        _attribute = request.get('attribute') or request.get('key') or request.get('name')
+        _write_request(request, self._out)
+        return _read_response(_id, _attribute, self._in, self)
+
 
 class Proxy(object):
     """\
 @class Proxy
-@brief This class wraps a remote python process, presumably available
-in an instance of an Server.
+@brief This is the class you will typically use as a client to a child
+process.
 
-This is the class you will typically use as a client to a child
-process. Simply instantiate one around a file-like interface and start
+Simply instantiate one around a file-like interface and start
 calling methods on the thing that is exported. The dir() builtin is
 not supported, so you have to know what has been exported.
 """
-    def __init__(self, input, output, dead_list = None):
-        """\
-@param input a file-like object which supports read().
-@param output a file-like object which supports write() and flush().
-@param id an identifier for the remote object. humans do not provide this.
-"""
-        # default dead_list inside the function because all objects in method
-        # argument lists are init-ed only once globally
-        if dead_list is None:
-            dead_list = set()
+    def __init__(self, cp):
+        """@param A ChildProcess instance that wraps the i/o to the child process.
+        """
         #_prnt("Proxy::__init__")
         self.__local_dict = dict(
-            _in = input,
-            _out = output,
-            _dead_list = dead_list,
+            _cp = cp,
             _id = None)
 
     def __getattribute__(self, attribute):
@@ -279,22 +297,20 @@ not supported, so you have to know what has been exported.
             attribute = _unmunge_attr_name(attribute)
             return super(Proxy, self).__getattribute__(attribute)
         else:
-            my_in = self.__local_dict['_in']
-            my_out = self.__local_dict['_out']
+            my_cp = self.__local_dict['_cp']
             my_id = self.__local_dict['_id']
 
-            _dead_list = self.__local_dict['_dead_list']
+            _dead_list = my_cp._dead_list
             for dead_object in _dead_list.copy():
                     request = Request('del', {'id':dead_object})
-                    _write_request(request, my_out)
-                    response = _read_response(my_id, attribute, my_in, my_out, _dead_list)
+
+                    my_cp.make_request(request)
                     _dead_list.remove(dead_object)
                 
             # Pass all public attributes across to find out if it is
             # callable or a simple attribute.
             request = Request('getattr', {'id':my_id, 'attribute':attribute})
-            _write_request(request, my_out)
-            return _read_response(my_id, attribute, my_in, my_out, _dead_list)
+            return my_cp.make_request(request)
 
     def __setattr__(self, attribute, value):
         #_prnt("Proxy::__setattr__: %s" % attribute)
@@ -304,14 +320,11 @@ not supported, so you have to know what has been exported.
             attribute = _unmunge_attr_name(attribute)
             super(Proxy, self).__getattribute__('__dict__')[attribute]=value
         else:
-            my_in = self.__local_dict['_in']
-            my_out = self.__local_dict['_out']
+            my_cp = self.__local_dict['_cp']
             my_id = self.__local_dict['_id']
-            _dead_list = self.__local_dict['_dead_list']
             # Pass the set attribute across
             request = Request('setattr', {'id':my_id, 'attribute':attribute, 'value':value})
-            _write_request(request, my_out)
-            return _read_response(my_id, attribute, my_in, my_out, _dead_list)
+            return my_cp.make_request(request)
 
 class ObjectProxy(Proxy):
     """\
@@ -321,47 +334,37 @@ class ObjectProxy(Proxy):
 This class will be created during normal operation, and users should
 not need to deal with this class directly."""
 
-    def __init__(self, input, output, id, dead_list):
+    def __init__(self, cp, _id):
         """\
-@param input a file-like object which supports read().
-@param output a file-like object which supports write() and flush().
-@param id an identifier for the remote object. humans do not provide this.
+@param cp A ChildProcess object that wraps the i/o of a child process.
+@param _id an identifier for the remote object. humans do not provide this.
 """
-        Proxy.__init__(self, input, output, dead_list)
-        self.__local_dict['_id'] = id
-        #_prnt("ObjectProxy::__init__ %s" % self._id)
+        Proxy.__init__(self, cp)
+        self.__local_dict['_id'] = _id
+        #_prnt("ObjectProxy::__init__ %s" % _id)
 
     def __del__(self):
         my_id = self.__local_dict['_id']
-        _prnt("ObjectProxy::__del__ %s" % my_id)
-        self.__local_dict['_dead_list'].add(my_id)
+        #_prnt("ObjectProxy::__del__ %s" % my_id)
+        self.__local_dict['_cp']._dead_list.add(my_id)
 
     def __getitem__(self, key):
-        my_in = self.__local_dict['_in']
-        my_out = self.__local_dict['_out']
+        my_cp = self.__local_dict['_cp']
         my_id = self.__local_dict['_id']
-        _dead_list = self.__local_dict['_dead_list']
         request = Request('getitem', {'id':my_id, 'key':key})
-        _write_request(request, my_out)
-        return _read_response(my_id, key, my_in, my_out, _dead_list)
+        return my_cp.make_request(request)
         
     def __setitem__(self, key, value):
-        my_in = self.__local_dict['_in']
-        my_out = self.__local_dict['_out']
+        my_cp = self.__local_dict['_cp']
         my_id = self.__local_dict['_id']
-        _dead_list = self.__local_dict['_dead_list']
         request = Request('setitem', {'id':my_id, 'key':key, 'value':value})
-        _write_request(request, my_out)
-        return _read_response(my_id, key, my_in, my_out, _dead_list)
+        return my_cp.make_request(request)
 
     def __eq__(self, rhs):
-        my_in = self.__local_dict['_in']
-        my_out = self.__local_dict['_out']
+        my_cp = self.__local_dict['_cp']
         my_id = self.__local_dict['_id']
-        _dead_list = self.__local_dict['_dead_list']
         request = Request('eq', {'id':my_id, 'rhs':rhs.__local_dict['_id']})
-        _write_request(request, my_out)
-        return _read_response(my_id, None, my_in, my_out, _dead_list)
+        return my_cp.make_request(request)
 
     def __repr__(self):
         # apparently repr(obj) skips the whole getattribute thing and just calls __repr__
@@ -378,13 +381,10 @@ not need to deal with this class directly."""
     def __nonzero__(self):
         # bool(obj) is another method that skips __getattribute__.  There's no good way to just pass
         # the method on, so we use a special message.
-        my_in = self.__local_dict['_in']
-        my_out = self.__local_dict['_out']
+        my_cp = self.__local_dict['_cp']
         my_id = self.__local_dict['_id']
-        _dead_list = self.__local_dict['_dead_list']
         request = Request('nonzero', {'id':my_id})
-        _write_request(request, my_out)
-        return _read_response(my_id, None, my_in, my_out, _dead_list)
+        return my_cp.make_request(request)
 
     def __len__(self):
         # see description for __repr__, len(obj) is the same.
@@ -393,15 +393,11 @@ not need to deal with this class directly."""
 def proxied_type(self):
     if type(self) is not ObjectProxy:
         return type(self)
-
-    my_in = self.__local_dict['_in']
-    my_out = self.__local_dict['_out']
+    
+    my_cp = self.__local_dict['_cp']
     my_id = self.__local_dict['_id']
     request = Request('type', {'id':my_id})
-    _write_request(request, my_out)
-    # dead list can be none because we know the result will always be
-    # a value and not an ObjectProxy itself
-    return _read_response(my_id, None, my_in, my_out, None)
+    return my_cp.make_request(request)
 
 class CallableProxy(object):
     """\
@@ -411,13 +407,11 @@ class CallableProxy(object):
 This class will be created by an Proxy during normal operation,
 and users should not need to deal with this class directly."""
 
-    def __init__(self, object_id, name, input, output, dead_list):
+    def __init__(self, object_id, name, cp):
         #_prnt("CallableProxy::__init__: %s, %s" % (object_id, name))
         self._object_id = object_id
         self._name = name
-        self._in = input
-        self._out = output
-        self._dead_list = dead_list
+        self._cp = cp
 
     def __call__(self, *args, **kwargs):
         #_prnt("CallableProxy::__call__: %s, %s" % (args, kwargs))
@@ -427,8 +421,7 @@ and users should not need to deal with this class directly."""
         # can safely pass this one to the remote object.
         #_prnt("calling %s %s" % (self._object_id, self._name)
         request = Request('call', {'id':self._object_id, 'name':self._name, 'args':args, 'kwargs':kwargs})
-        _write_request(request, self._out)
-        return _read_response(self._object_id, self._name, self._in, self._out, self._dead_list)
+        return self._cp.make_request(request)
 
 class Server(object):
     def __init__(self, input, output, export):
