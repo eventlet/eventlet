@@ -266,14 +266,13 @@ class ChildProcess(object):
         self._out = outstr
         self._lock = pools.TokenPool(max_size=1)
 
-    def make_request(self, request):
+    def make_request(self, request, attribute=None):
         _id = request.get('id')
-        _attribute = request.get('attribute') or request.get('key') or request.get('name')
 
         t = self._lock.get()
         try:
             _write_request(request, self._out)
-            retval = _read_response(_id, _attribute, self._in, self)
+            retval = _read_response(_id, attribute, self._in, self)
         finally:
             self._lock.put(t)
             
@@ -318,7 +317,7 @@ not supported, so you have to know what has been exported.
             # Pass all public attributes across to find out if it is
             # callable or a simple attribute.
             request = Request('getattr', {'id':my_id, 'attribute':attribute})
-            return my_cp.make_request(request)
+            return my_cp.make_request(request, attribute=attribute)
 
     def __setattr__(self, attribute, value):
         #_prnt("Proxy::__setattr__: %s" % attribute)
@@ -332,7 +331,7 @@ not supported, so you have to know what has been exported.
             my_id = self.__local_dict['_id']
             # Pass the set attribute across
             request = Request('setattr', {'id':my_id, 'attribute':attribute, 'value':value})
-            return my_cp.make_request(request)
+            return my_cp.make_request(request, attribute=attribute)
 
 class ObjectProxy(Proxy):
     """\
@@ -360,13 +359,13 @@ not need to deal with this class directly."""
         my_cp = self.__local_dict['_cp']
         my_id = self.__local_dict['_id']
         request = Request('getitem', {'id':my_id, 'key':key})
-        return my_cp.make_request(request)
+        return my_cp.make_request(request, attribute=key)
         
     def __setitem__(self, key, value):
         my_cp = self.__local_dict['_cp']
         my_id = self.__local_dict['_id']
         request = Request('setitem', {'id':my_id, 'key':key, 'value':value})
-        return my_cp.make_request(request)
+        return my_cp.make_request(request, attribute=key)
 
     def __eq__(self, rhs):
         my_cp = self.__local_dict['_cp']
@@ -429,7 +428,7 @@ and users should not need to deal with this class directly."""
         # can safely pass this one to the remote object.
         #_prnt("calling %s %s" % (self._object_id, self._name)
         request = Request('call', {'id':self._object_id, 'name':self._name, 'args':args, 'kwargs':kwargs})
-        return self._cp.make_request(request)
+        return self._cp.make_request(request, attribute=self._name)
 
 class Server(object):
     def __init__(self, input, output, export):

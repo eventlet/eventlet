@@ -269,7 +269,6 @@ sys_path = sys.path""")
             shutil.rmtree(temp_dir)
             sys.path.remove(temp_dir)
                         
-
     def test_contention(self):
         from eventlet import saranwrap_test
         prox = saranwrap.wrap(saranwrap_test)
@@ -281,6 +280,12 @@ sys_path = sys.path""")
         waiters.append(pool.execute(lambda: self.assertEquals(prox.three, 3)))
         for waiter in waiters:
             waiter.wait()
+
+    def test_list_of_functions(self):
+        return # this test is known to fail, we can implement it sometime in the future if we wish
+        from eventlet import saranwrap_test
+        prox = saranwrap.wrap([saranwrap_test.list_maker])
+        self.assertEquals(list_maker(), prox[0]())
                               
     def test_detection_of_server_crash(self):
         # make the server crash here
