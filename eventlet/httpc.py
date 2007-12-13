@@ -474,7 +474,7 @@ class HttpSuite(object):
         
         if self.loader is not None:
             try:
-                body = self.loader(body)
+                body = make_safe_loader(self.loader(body))
             except KeyboardInterrupt:
                 raise
             except Exception, e:
@@ -504,6 +504,7 @@ class HttpSuite(object):
 
     def head_(self, url, headers=None, use_proxy=False, ok=None, aux=None):
         return self.request_(_Params(url, 'HEAD', headers=headers,
+                                     loader=self.loader, dumper=self.dumper,
                                      use_proxy=use_proxy, ok=ok, aux=aux))
 
     def head(self, *args, **kwargs):
@@ -514,7 +515,7 @@ class HttpSuite(object):
             headers = {}
         headers['accept'] = self.fallback_content_type+';q=1,*/*;q=0'
         return self.request_(_Params(url, 'GET', headers=headers,
-                                     loader=make_safe_loader(self.loader),
+                                     loader=self.loader, dumper=self.dumper,
                                      use_proxy=use_proxy, ok=ok, aux=aux))
 
     def get(self, *args, **kwargs):
@@ -531,13 +532,15 @@ class HttpSuite(object):
                 headers['content-type'] = content_type
         headers['accept'] = headers['content-type']+';q=1,*/*;q=0'
         return self.request_(_Params(url, 'PUT', body=data, headers=headers,
+                                     loader=self.loader, dumper=self.dumper,
                                      ok=ok, aux=aux))
 
     def put(self, *args, **kwargs):
         return self.put_(*args, **kwargs)[-1]
 
     def delete_(self, url, ok=None, aux=None):
-        return self.request_(_Params(url, 'DELETE', ok=ok, aux=aux))
+        return self.request_(_Params(url, 'DELETE', loader=self.loader,
+                                     dumper=self.dumper, ok=ok, aux=aux))
 
     def delete(self, *args, **kwargs):
         return self.delete_(*args, **kwargs)[-1]
@@ -553,8 +556,8 @@ class HttpSuite(object):
                 headers['content-type'] = content_type
         headers['accept'] = headers['content-type']+';q=1,*/*;q=0'
         return self.request_(_Params(url, 'POST', body=data,
-                             headers=headers, dumper=self.dumper,
-                             loader=self.loader, ok=ok, aux=aux))
+                                     headers=headers, loader=self.loader,
+                                     dumper=self.dumper, ok=ok, aux=aux))
 
     def post(self, *args, **kwargs):
         return self.post_(*args, **kwargs)[-1]
