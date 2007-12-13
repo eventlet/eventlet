@@ -212,6 +212,7 @@ class wrapped_fd(object):
                 break
             buf += d
         chunk, self.recvbuffer = buf[:size], buf[size:]
+        return chunk
         
     def readline(self, size=None):
         return self.readuntil(self.newlines, size=size)

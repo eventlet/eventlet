@@ -1,5 +1,5 @@
 """\
-@file test_runloop.py
+@file runloop_test.py
 @author Donovan Preston
 
 Copyright (c) 2006-2007, Linden Research, Inc.

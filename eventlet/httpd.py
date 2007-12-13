@@ -353,6 +353,11 @@ class Request(object):
             self._cached_parsed_body = body
         return self._cached_parsed_body
 
+    def override_body(self, body):
+        if not hasattr(self, '_cached_parsed_body'):
+            self.read_body() ## Read and discard body
+        self._cached_parsed_body = body
+
     def response_written(self):
         ## TODO change badly named variable
         return self._request_started
@@ -372,13 +377,15 @@ class Request(object):
         return "<Request %s %s>" % (
             getattr(self, '_method'), getattr(self, '_path'))
 
-
 DEFAULT_TIMEOUT = 300
 
+# This value was chosen because apache 2 has a default limit of 8190.
+# I believe that slightly smaller number is because apache does not
+# count the \r\n.
+MAX_REQUEST_LINE = 8192
 
 class Timeout(RuntimeError):
     pass
-
 
 class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
@@ -403,6 +410,13 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             "%s %d %s" % (
                 self.protocol_version, self._code, self._message)]
 
+    def write_bad_request(self, status, reason):
+        self.set_response_code(self, status, reason)
+        self.wfile.write(''.join(self.generate_status_line()))
+        self.wfile.write('\r\nServer: %s\r\n' % self.version_string())
+        self.wfile.write('Date: %s\r\n' % self.date_time_string())
+        self.wfile.write('Content-Length: 0\r\n\r\n')
+
     def handle(self):
         self.close_connection = 0
 
@@ -412,7 +426,14 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 break
             cancel = api.exc_after(timeout, Timeout)
             try:
-                self.raw_requestline = self.rfile.readline()
+                self.raw_requestline = self.rfile.readline(MAX_REQUEST_LINE)
+                if self.raw_requestline is not None:
+                    if len(self.raw_requestline) == MAX_REQUEST_LINE:
+                        # Someone sent a request line which is too
+                        # large. Be helpful and tell them.
+                        self.write_bad_request(414, 'Request-URI Too Long')
+                        self.close_connection = True
+                        continue
             except socket.error, e:
                 if e[0] in CONNECTION_CLOSED:
                     self.close_connection = True
@@ -421,6 +442,17 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             except Timeout:
                 self.close_connection = True
                 continue
+            except Exception, e:
+                try:
+                    if e[0][0][0].startswith('SSL'):
+                        print "SSL Error:", e[0][0]
+                        self.close_connection = True
+                        cancel.cancel()
+                        continue
+                except Exception, f:
+                    print "Exception in ssl test:",f
+                    pass
+                raise e
             cancel.cancel()
 
             if not self.raw_requestline or not self.parse_request():
@@ -519,5 +551,3 @@ def server(sock, site, log=None, max_size=512):
             sock.close()
         except socket.error:
             pass
-
-

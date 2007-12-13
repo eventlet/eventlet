@@ -25,7 +25,7 @@ THE SOFTWARE.
 from eventlet.api import get_hub
 
 class Timer(object):
-    __slots__ = ['seconds', 'tpl', 'called', 'cancelled', 'scheduled_time']
+    __slots__ = ['seconds', 'tpl', 'called', 'cancelled', 'scheduled_time', 'greenlet']
     def __init__(self, seconds, cb, *args, **kw):
         """Create a timer.
             seconds: The minimum number of seconds to wait before calling

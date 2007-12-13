@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 from eventlet import tests
+from eventlet import timer
 from eventlet import coros, api
 
 class TestEvent(tests.TestCase):
@@ -139,6 +140,17 @@ class TestCoroutinePool(tests.TestCase):
         pool.execute_async(producer)
         done.wait()
         self.assertEquals(['cons1', 'prod', 'cons2'], results)
+
+    def test_timer_cancel(self):
+        def some_work():
+            t = timer.Timer(5, lambda: None)
+            t.schedule()
+            return t
+        pool = coros.CoroutinePool(0, 2)
+        worker = pool.execute(some_work)
+        t = worker.wait()
+        api.sleep(0)
+        self.assertEquals(t.cancelled, True)
 
 if __name__ == '__main__':
     tests.main()

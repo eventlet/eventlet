@@ -32,6 +32,8 @@ import bisect
 import sys
 import traceback
 
+import greenlet
+
 from eventlet.timer import Timer
 
 
@@ -48,6 +50,7 @@ class RunLoop(object):
         self.stopping = False
         self.running = False
         self.timers = []
+        self.timers_by_greenlet = {}
         self.next_timers = []
         self.observers = {}
         self.observer_modes = {
@@ -164,8 +167,14 @@ class RunLoop(object):
     def add_timer(self, timer):
         scheduled_time = self.clock() + timer.seconds
         self._add_absolute_timer(scheduled_time, timer)
+        current_greenlet = greenlet.getcurrent()
+        if current_greenlet not in self.timers_by_greenlet:
+            self.timers_by_greenlet[current_greenlet] = {}
+        self.timers_by_greenlet[current_greenlet][timer] = True
+        timer.greenlet = current_greenlet
         return scheduled_time
-    
+
+
     def prepare_timers(self):
         ins = bisect.insort_right
         t = self.timers
@@ -192,9 +201,25 @@ class RunLoop(object):
         for i in xrange(last):
             timer = t[i][2]
             try:
-                timer()
-            except self.SYSTEM_EXCEPTIONS:
-                raise
-            except:
-                self.squelch_timer_exception(timer, sys.exc_info())
+                try:
+                    timer()
+                except self.SYSTEM_EXCEPTIONS:
+                    raise
+                except:
+                    self.squelch_timer_exception(timer, sys.exc_info())
+            finally:
+                try:
+                    del self.timers_by_greenlet[timer.greenlet][timer]
+                except KeyError:
+                    pass
         del t[:last]
+
+    def cancel_timers(self, greenlet):
+        for timer in self.timers_by_greenlet[greenlet]:
+            if timer.seconds:
+                ## If timer.seconds is 0, this isn't a timer, it's
+                ## actually eventlet's silly way of specifying whether
+                ## a coroutine is "ready to run" or not.
+                timer.cancel()
+        del self.timers_by_greenlet[greenlet]
+        

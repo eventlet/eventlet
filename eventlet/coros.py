@@ -118,6 +118,7 @@ class CoroutinePool(pools.Pool):
                 traceback.print_exc()
                 if evt is not None:
                     evt.send(exc=e)
+            api.get_hub().runloop.cancel_timers(api.getcurrent())
             self.put(sender)
 
     def create(self):

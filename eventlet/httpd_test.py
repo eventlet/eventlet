@@ -136,6 +136,20 @@ class TestHttpd(tests.TestCase):
                                 ['-c','64','-n','1024', '-k', url])
         print out.read()
 
+    def test_006_reject_long_urls(self):
+        sock = api.connect_tcp(
+            ('127.0.0.1', 12346))
+        path_parts = []
+        for ii in range(3000):
+            path_parts.append('path')
+        path = '/'.join(path_parts)
+        request = 'GET /%s HTTP/1.0\r\nHost: localhost\r\n\r\n' % path
+        sock.write(request)
+        result = sock.readline()
+        status = result.split(' ')[1]
+        print "status:",status
+        self.assertEqual(status, '414')
+        sock.close()
 
 if __name__ == '__main__':
     tests.main()
