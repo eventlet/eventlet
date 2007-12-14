@@ -340,10 +340,18 @@ class Gone(ConnectionError):
     """ 410 Gone """
     pass
 
+
 class ServiceUnavailable(Retriable):
     """ 503 Service Unavailable """
     def url(self):
         return self.params._delegate.url
+
+
+class GatewayTimeout(Retriable):
+    """ 504 Gateway Timeout """
+    def url(self):
+        return self.params._delegate.url
+
 
 class InternalServerError(ConnectionError):
     """ 500 Internal Server Error """
@@ -382,6 +390,7 @@ status_to_error_map = {
     410: Gone,
     500: InternalServerError,
     503: ServiceUnavailable,
+    504: GatewayTimeout,
 }
 
 scheme_to_factory_map = {

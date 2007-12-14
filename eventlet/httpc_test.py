@@ -336,6 +336,13 @@ class Site500(BasicSite):
         req.response(500, body="screw you world")
         return
 
+
+class Site500(BasicSite):
+    def handle_request(self, req):
+        req.response(500, body="screw you world")
+        return
+
+
 class TestHttpc500(TestBase, tests.TestCase):
     site_class = Site500
 
@@ -351,7 +358,27 @@ class TestHttpc500(TestBase, tests.TestCase):
             self.assertEquals(e.params.response_body, data)
             self.assert_(str(e).count(data))
             self.assert_(repr(e).count(data))
+
+
+class Site504(BasicSite):
+    def handle_request(self, req):
+        req.response(504, body="screw you world")
+
             
+class TestHttpc504(TestBase, tests.TestCase):
+    site_class = Site504
+
+    def base_url(self):
+        return 'http://localhost:31337/'
+
+    def test_post(self):
+        # Simply ensure that a 504 status code results in a
+        # GatewayTimeout.  Don't bother retrying.
+        data = 'hello world'
+        self.assertRaises(httpc.GatewayTimeout,
+                          lambda: httpc.post(self.base_url(), data=data))
+
+
 class TestHttpTime(tests.TestCase):
     rfc1123_time = 'Sun, 06 Nov 1994 08:49:37 GMT'
     rfc850_time  = 'Sunday, 06-Nov-94 08:49:37 GMT'
