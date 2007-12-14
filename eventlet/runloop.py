@@ -215,6 +215,8 @@ class RunLoop(object):
         del t[:last]
 
     def cancel_timers(self, greenlet):
+        if greenlet not in self.timers_by_greenlet:
+            return
         for timer in self.timers_by_greenlet[greenlet]:
             if timer.seconds:
                 ## If timer.seconds is 0, this isn't a timer, it's
