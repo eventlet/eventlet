@@ -531,9 +531,10 @@ class Server(BaseHTTPServer.HTTPServer):
             '%s - - [%s] "%s" %s %s %.6f\n' % args)
 
 
-def server(sock, site, log=None, max_size=512):
+def server(sock, site, log=None, max_size=512,serv=None):
     pool = coros.CoroutinePool(max_size=max_size)
-    serv = Server(sock, sock.getsockname(), site, log)
+    if serv is None:
+        serv = Server(sock, sock.getsockname(), site, log)
     try:
         serv.log.write("httpd starting up on %s\n" % (sock.getsockname(), ))
         while True:
