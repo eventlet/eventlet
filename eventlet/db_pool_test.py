@@ -79,9 +79,6 @@ class TestDBConnectionPool(DBTester):
         self.pool.put(self.connection)
         super(TestDBConnectionPool, self).tearDown()
 
-    def create_pool(self, max_items = 1):
-        return db_pool.ConnectionPool(self._dbmodule, 0, max_items, **self._auth)
-
     def assert_cursor_works(self, cursor):
         cursor.execute("show full processlist")
         rows = cursor.fetchall()
@@ -253,7 +250,17 @@ class TestDBConnectionPool(DBTester):
         results.sort()
         self.assertEqual([1, 2], results)
 
-class TestMysqlConnectionPool(TestDBConnectionPool, unittest.TestCase):
+
+class TestTpoolConnectionPool(TestDBConnectionPool):
+    def create_pool(self, max_items = 1):
+        return db_pool.TpooledConnectionPool(self._dbmodule, 0, max_items, **self._auth)
+
+
+class TestSaranwrapConnectionPool(TestDBConnectionPool):
+    def create_pool(self, max_items = 1):
+        return db_pool.SaranwrappedConnectionPool(self._dbmodule, 0, max_items, **self._auth)
+
+class TestMysqlConnectionPool(object):
     def setUp(self):
         import MySQLdb
         self._dbmodule = MySQLdb
@@ -285,6 +292,12 @@ class TestMysqlConnectionPool(TestDBConnectionPool, unittest.TestCase):
         db.execute("drop database "+self._auth['db'])
         db.close()
         del db
+
+class TestMysqlTpool(TestMysqlConnectionPool, TestTpoolConnectionPool, unittest.TestCase):
+    pass
+
+class TestMysqlSaranwrap(TestMysqlConnectionPool, TestSaranwrapConnectionPool, unittest.TestCase):
+    pass
 
 
 if __name__ == '__main__':
