@@ -309,11 +309,11 @@ not supported, so you have to know what has been exported.
 
             _dead_list = my_cp._dead_list
             for dead_object in _dead_list.copy():
-                    request = Request('del', {'id':dead_object})
+                request = Request('del', {'id':dead_object})
 
-                    my_cp.make_request(request)
-                    _dead_list.remove(dead_object)
-                
+                my_cp.make_request(request)
+                _dead_list.remove(dead_object)
+            
             # Pass all public attributes across to find out if it is
             # callable or a simple attribute.
             request = Request('getattr', {'id':my_id, 'attribute':attribute})

@@ -39,14 +39,14 @@ class yadda(object):
 def sender_loop(pfx):
     n = 0
     obj = tpool.Proxy(yadda())
-    while True:
+    while n < 10:
         api.sleep(0)
         now = time.time()
         print "%s: send (%s,%s)" % (pfx,now,n)
         rv = obj.foo(now,n=n)
         print "%s: recv %s" % (pfx, rv)
         assert(n == rv)
-        api.sleep(0.5)
+        api.sleep(0)
         n += 1
 
 def test1():

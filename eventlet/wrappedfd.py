@@ -244,7 +244,7 @@ class wrapped_fd(object):
         
     def read(self, size=None):
         if size is not None and not isinstance(size, (int, long)):
-             raise TypeError('Expecting an int or long for size, got %s: %s' % (type(size), repr(size)))
+            raise TypeError('Expecting an int or long for size, got %s: %s' % (type(size), repr(size)))
         buf, self.recvbuffer = self.recvbuffer, ''
         lst = [buf]
         if size is None:

@@ -161,10 +161,10 @@ class ConnectionPool(Pool):
     together to do HTTP keepalive sockets without errors.
     """
     def __init__(self, proto, netloc, use_proxy, min_size=0, max_size=4):
-         self.proto = proto
-         self.netloc = netloc
-         self.use_proxy = use_proxy
-         Pool.__init__(self, min_size, max_size)
+        self.proto = proto
+        self.netloc = netloc
+        self.use_proxy = use_proxy
+        Pool.__init__(self, min_size, max_size)
 
     def create(self):
         return httpc.make_connection(self.proto, self.netloc, self.use_proxy)

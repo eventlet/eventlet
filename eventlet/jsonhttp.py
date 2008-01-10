@@ -28,9 +28,9 @@ import simplejson
 
 
 def safe_load(what):
-	if not what:
-		return None
-	return simplejson.loads(what)
+    if not what:
+        return None
+    return simplejson.loads(what)
 
 
 suite = httpc.HttpSuite(simplejson.dumps, safe_load, 'application/json')
