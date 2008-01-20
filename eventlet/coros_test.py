@@ -152,5 +152,68 @@ class TestCoroutinePool(tests.TestCase):
         api.sleep(0)
         self.assertEquals(t.cancelled, True)
 
+class IncrActor(coros.Actor):
+    def received(self, message):
+        self.value = getattr(self, 'value', 0) + 1
+
+class TestActor(tests.TestCase):
+    mode = 'static'
+    def setUp(self):
+        # raise an exception if we're waiting forever
+        self._cancel_timeout = api.exc_after(1, RuntimeError())
+        self.actor = IncrActor()
+
+    def tearDown(self):
+        self._cancel_timeout.cancel()
+        api.kill(self.actor._killer)
+
+    def test_cast(self):
+        self.actor.cast(1)
+        api.sleep(0)
+        self.assertEqual(self.actor.value, 1)
+        self.actor.cast(1)
+        api.sleep(0)
+        self.assertEqual(self.actor.value, 2)
+
+    def test_cast_multi_1(self):
+        # make sure that both messages make it in there
+        self.actor.cast(1)
+        self.actor.cast(1)
+        api.sleep(0)
+        self.assertEqual(self.actor.value, 2)
+
+    def test_cast_multi_2(self):
+        # the actor goes through a slightly different code path if it
+        # is forced to enter its event loop prior to any cast()s
+        api.sleep(0)
+        self.test_cast_multi_1()
+
+    def test_sleeping_during_received(self):
+        # ensure that even if the received method cooperatively
+        # yields, eventually all messages are delivered
+        msgs = []
+        waiters = []
+        def received(message):
+            evt = coros.event()
+            waiters.append(evt)
+            api.sleep(0)
+            msgs.append(message)
+            evt.send()
+        self.actor.received = received
+
+        self.actor.cast(1)
+        api.sleep(0)
+        self.actor.cast(2)
+        self.actor.cast(3)
+        api.sleep(0)
+        self.actor.cast(4)
+        self.actor.cast(5)
+        for evt in waiters:
+            evt.wait()
+        self.assertEqual(msgs, [1,2,3,4,5])
+        
+
+
+
 if __name__ == '__main__':
     tests.main()
