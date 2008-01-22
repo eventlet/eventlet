@@ -174,9 +174,7 @@ class FileScheme(object):
     def raise_connection_error(self, klass=None):
         if klass is None:
             klass=ConnectionError
-        raise klass(
-            self.method, self.host, self.port,
-            self.path, self.status, self.reason, '')
+        raise klass(_Params('file://' + self.path, self.method))
 
     def close(self):
         """We're challenged here, and read the whole file rather than
