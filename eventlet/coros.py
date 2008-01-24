@@ -83,8 +83,8 @@ class event(object):
                 0, greenlib.switch, waiter, None, Cancelled())
 
     def send(self, result=None, exc=None):
-        """Resume all previous and further
-        calls to wait() with result.
+        """Makes arrangements for the waiters to be woken with the
+        result and then returns immediately to the parent.
         """
         assert self._result is NOT_USED
         self._result = result

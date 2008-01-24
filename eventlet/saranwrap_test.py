@@ -281,6 +281,19 @@ sys_path = sys.path""")
         for waiter in waiters:
             waiter.wait()
 
+    def test_copy(self):
+        import copy
+        compound_object = {'a':[1,2,3]}
+        prox = saranwrap.wrap(compound_object)
+        def make_assertions(copied):
+            self.assert_(isinstance(copied, dict))
+            self.assert_(isinstance(copied['a'], list))
+            self.assertEquals(copied, compound_object)
+            self.assertNotEqual(id(compound_object), id(copied))
+
+        make_assertions(copy.copy(prox))
+        make_assertions(copy.deepcopy(prox))
+
     def test_list_of_functions(self):
         return # this test is known to fail, we can implement it sometime in the future if we wish
         from eventlet import saranwrap_test

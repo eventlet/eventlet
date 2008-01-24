@@ -397,6 +397,19 @@ not need to deal with this class directly."""
         # see description for __repr__, len(obj) is the same.
         return self.__len__()
 
+    def __deepcopy__(self, memo=None):
+        """Copies the entire external object and returns its
+        value. Will only work if the remote object is pickleable."""
+        my_cp = self.__local_dict['_cp']
+        my_id = self.__local_dict['_id']
+        request = Request('copy', {'id':my_id})
+        return my_cp.make_request(request)
+
+    # since the remote object is being serialized whole anyway,
+    # there's no semantic difference between copy and deepcopy
+    __copy__ = __deepcopy__
+        
+
 def proxied_type(self):
     if type(self) is not ObjectProxy:
         return type(self)
@@ -444,60 +457,60 @@ when the id is None."""
         self._next_id = 1
         self._objects = {}
 
-    def handle_status(self, object, req):
+    def handle_status(self, obj, req):
         return {
             'object_count':len(self._objects),
             'next_id':self._next_id,
             'pid':os.getpid()}
 
-    def handle_getattr(self, object, req):
+    def handle_getattr(self, obj, req):
         try:
-            return getattr(object, req['attribute'])
+            return getattr(obj, req['attribute'])
         except AttributeError, e:
-            if hasattr(object, "__getitem__"):
-                return object[req['attribute']]
+            if hasattr(obj, "__getitem__"):
+                return obj[req['attribute']]
             else:
                 raise e
         #_log('getattr: %s' % str(response))
         
-    def handle_setattr(self, object, req):
+    def handle_setattr(self, obj, req):
         try:
-            return setattr(object, req['attribute'], req['value'])
+            return setattr(obj, req['attribute'], req['value'])
         except AttributeError, e:
-            if hasattr(object, "__setitem__"):
-                return object.__setitem__(req['attribute'], req['value'])
+            if hasattr(obj, "__setitem__"):
+                return obj.__setitem__(req['attribute'], req['value'])
             else:
                 raise e
 
-    def handle_getitem(self, object, req):
-        return object[req['key']]
+    def handle_getitem(self, obj, req):
+        return obj[req['key']]
 
-    def handle_setitem(self, object, req):
-        object[req['key']] = req['value']
+    def handle_setitem(self, obj, req):
+        obj[req['key']] = req['value']
         return None  # *TODO figure out what the actual return value of __setitem__ should be
 
-    def handle_eq(self, object, req):
-        #_log("__eq__ %s %s" % (object, req))
+    def handle_eq(self, obj, req):
+        #_log("__eq__ %s %s" % (obj, req))
         rhs = None
         try:
             rhs = self._objects[req['rhs']]
         except KeyError, e:
             return False
-        return (object == rhs)
+        return (obj == rhs)
 
-    def handle_call(self, object, req):
+    def handle_call(self, obj, req):
         #_log("calling %s " % (req['name']))
         try:
-            fn = getattr(object, req['name'])
+            fn = getattr(obj, req['name'])
         except AttributeError, e:
-            if hasattr(object, "__setitem__"):
-                fn = object[req['name']]
+            if hasattr(obj, "__setitem__"):
+                fn = obj[req['name']]
             else:
                 raise e
             
         return fn(*req['args'],**req['kwargs'])
 
-    def handle_del(self, object, req):
+    def handle_del(self, obj, req):
         id = req['id']
         _log("del %s from %s" % (id, self._objects))
 
@@ -505,11 +518,14 @@ when the id is None."""
         del self._objects[id]
         return None
 
-    def handle_type(self, object, req):
-        return type(object)
+    def handle_type(self, obj, req):
+        return type(obj)
 
-    def handle_nonzero(self, object, req):
-        return bool(object)
+    def handle_nonzero(self, obj, req):
+        return bool(obj)
+
+    def handle_copy(self, obj, req):
+        return obj
 
     def loop(self):
         """@brief Loop forever and respond to all requests."""
@@ -524,20 +540,20 @@ when the id is None."""
                 _log("request: %s (%s)" % (request, self._objects))
                 req = request
                 id = None
-                object = None
+                obj = None
                 try:
                     id = req['id']
                     if id:
                         id = int(id)
-                        object = self._objects[id]
-                    #_log("id, object: %d %s" % (id, object))
+                        obj = self._objects[id]
+                    #_log("id, object: %d %s" % (id, obj))
                 except Exception, e:
                     #_log("Exception %s" % str(e))
                     pass
-                if object is None or id is None:
+                if obj is None or id is None:
                     id = None
-                    object = self._export
-                    #_log("found object %s" % str(object))
+                    obj = self._export
+                    #_log("found object %s" % str(obj))
 
                 # Handle the request via a method with a special name on the server
                 handler_name = 'handle_%s' % request.action()
@@ -547,11 +563,11 @@ when the id is None."""
                 except AttributeError:
                     raise BadRequest, request.action()
 
-                response = handler(object, request)
+                response = handler(obj, request)
 
                 # figure out what to do with the response, and respond
                 # apprpriately.
-                if request.action() in ['status', 'type']:
+                if request.action() in ['status', 'type', 'copy']:
                     # have to handle these specially since we want to
                     # pickle up the actual value and not return a proxy
                     self.respond(['value', response])
@@ -627,7 +643,7 @@ def main():
         description="Simple saranwrap.Server wrapper")
     parser.add_option(
         '-c', '--child', default=False, action='store_true',
-        help='Wrap an object serialed via setattr.')
+        help='Wrap an object serialized via setattr.')
     parser.add_option(
         '-m', '--module', type='string', dest='module', default=None,
         help='a module to load and export.')
