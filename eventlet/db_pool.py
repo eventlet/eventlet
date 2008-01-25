@@ -133,6 +133,12 @@ class TpooledConnectionPool(BaseConnectionPool):
         return tpool.Proxy(self._db_module.connect(*self._args, **self._kwargs),
                            autowrap=autowrap)
 
+class RawConnectionPool(BaseConnectionPool):
+    """A pool which gives out plain database connections from a pool.
+    """
+    def create(self):
+        return self._db_module.connect(*self._args, **self._kwargs)
+
 # default connection pool is the tpool one
 ConnectionPool = TpooledConnectionPool
 
