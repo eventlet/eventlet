@@ -7,7 +7,7 @@ setup(
     version='0.2',
     description='Coroutine-based networking library',
     author='Linden Lab',
-    author_email='sldev@lists.secondlife.com',
+    author_email='eventletdev@lists.secondlife.com',
     url='http://wiki.secondlife.com/wiki/Eventlet',
     packages=['eventlet'],
     install_requires=['greenlet'],
