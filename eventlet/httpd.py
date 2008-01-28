@@ -39,6 +39,8 @@ from eventlet import api
 from eventlet import coros
 
 
+DEFAULT_MAX_HTTP_VERSION = 'HTTP/1.1'
+
 USE_ACCESS_LOG = True
 
 
@@ -388,13 +390,13 @@ class Timeout(RuntimeError):
     pass
 
 class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
-    protocol_version = "HTTP/1.1"
     def __init__(self, request, client_address, server):
         self.socket = self.request = self.rfile = self.wfile = request
         self.client_address = client_address
         self.server = server
         self._code = 200
         self._message = 'OK'
+        self.protocol_version = server.max_http_version
 
     def set_response_code(self, request, code, message):
         self._code = code
@@ -503,10 +505,11 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
 
 class Server(BaseHTTPServer.HTTPServer):
-    def __init__(self, socket, address, site, log):
+    def __init__(self, socket, address, site, log, max_http_version=DEFAULT_MAX_HTTP_VERSION):
         self.socket = socket
         self.address = address
         self.site = site
+        self.max_http_version = max_http_version
         if log:
             self.log = log
             if hasattr(log, 'info'):
@@ -531,10 +534,10 @@ class Server(BaseHTTPServer.HTTPServer):
             '%s - - [%s] "%s" %s %s %.6f\n' % args)
 
 
-def server(sock, site, log=None, max_size=512,serv=None):
+def server(sock, site, log=None, max_size=512, serv=None, max_http_version=DEFAULT_MAX_HTTP_VERSION):
     pool = coros.CoroutinePool(max_size=max_size)
     if serv is None:
-        serv = Server(sock, sock.getsockname(), site, log)
+        serv = Server(sock, sock.getsockname(), site, log, max_http_version=max_http_version)
     try:
         serv.log.write("httpd starting up on %s\n" % (sock.getsockname(), ))
         while True:
