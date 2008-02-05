@@ -28,6 +28,11 @@ from eventlet import httpd
 from eventlet import processes
 from eventlet import util
 
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from StringIO import StringIO
+
 
 util.wrap_socket_with_coroutine_socket()
 
@@ -79,8 +84,9 @@ def read_http(sock):
 class TestHttpd(tests.TestCase):
     mode = 'static'
     def setUp(self):
+        self.logfile = StringIO()
         self.killer = api.spawn(
-            httpd.server, api.tcp_listener(('0.0.0.0', 12346)), Site(), max_size=128)
+            httpd.server, api.tcp_listener(('0.0.0.0', 12346)), Site(), max_size=128, log=self.logfile)
 
     def tearDown(self):
         api.kill(self.killer)

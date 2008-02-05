@@ -26,13 +26,19 @@ from sys import stdout
 import random
 r = random.WichmannHill()
 
+_g_debug = False
+
+def prnt(msg):
+    if _g_debug:
+        print msg
+        
 class yadda(object):
     def __init__(self):
         pass
 
     def foo(self,when,n=None):
         assert(n is not None)
-        print "foo: %s, %s" % (when,n)
+        prnt("foo: %s, %s" % (when,n))
         time.sleep(r.random())
         return n
 
@@ -42,9 +48,9 @@ def sender_loop(pfx):
     while n < 10:
         api.sleep(0)
         now = time.time()
-        print "%s: send (%s,%s)" % (pfx,now,n)
+        prnt("%s: send (%s,%s)" % (pfx,now,n))
         rv = obj.foo(now,n=n)
-        print "%s: recv %s" % (pfx, rv)
+        prnt("%s: recv %s" % (pfx, rv))
         assert(n == rv)
         api.sleep(0)
         n += 1
