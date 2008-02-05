@@ -27,16 +27,17 @@ import atexit
 import errno
 import os
 import sys
-import unittest
+import unittest, doctest
 
 
 TestCase = unittest.TestCase
 
 
 name = getattr(sys.modules['__main__'], '__name__', None)
-
 main = unittest.main
 
+# listing of all non-*_test test methods
+eventlet_test_files = ['coros']
 
 def find_command(command):
     for dir in os.getenv('PATH', '/usr/bin:/usr/sbin').split(os.pathsep):
@@ -44,3 +45,44 @@ def find_command(command):
         if os.access(p, os.X_OK):
             return p
     raise IOError(errno.ENOENT, 'Command not found: %r' % command)
+    
+def run_all_tests(test_files = eventlet_test_files):
+    """ Runs all the unit tests in eventlet, returning immediately after the 
+    first failed test.
+    
+    Returns true if the tests all succeeded.  This method is really much longer
+    than it ought to be.
+    """
+    eventlet_dir = os.path.realpath(os.path.dirname(__file__))
+    if eventlet_dir not in sys.path:
+        sys.path.append(eventlet_dir)
+    
+    # add all _test files as a policy
+    import glob
+    test_files += [os.path.splitext(os.path.basename(x))[0] 
+                  for x in glob.glob(os.path.join(eventlet_dir, "*_test.py"))]
+    test_files.sort()
+    
+    for test_file in test_files:
+        print "-=", test_file, "=-"
+        try:
+            test_module = __import__(test_file)
+        except ImportError:
+            print "Unable to import %s, skipping" % test_file
+            continue
+            
+        if test_file.endswith('_test'):
+            # gawd, unittest, why you make it so difficult to just run some tests!
+            suite = unittest.findTestCases(test_module)
+            result = unittest.TextTestRunner().run(suite)
+            if not result.wasSuccessful():
+                return False
+        else:    
+            failures, tests = doctest.testmod(test_module)
+            if failures:
+                return False
+                
+    return True
+    
+if __name__ == '__main__':
+    run_all_tests()

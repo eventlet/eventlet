@@ -18,7 +18,7 @@ limitations under the License.
 """
 
 import os, socket, time, threading
-from eventlet import coros, api,  tpool
+from eventlet import coros, api,  tpool, tests
 
 from eventlet.tpool import erpc
 from sys import stdout
@@ -49,12 +49,16 @@ def sender_loop(pfx):
         api.sleep(0)
         n += 1
 
-def test1():
-    pool = coros.CoroutinePool(max_size=10)
-    waiters = []
-    for i in range(0,9):
-        waiters.append(pool.execute(sender_loop,i))
-    for waiter in waiters:
-        waiter.wait()
 
-test1()
+class TestTpool(tests.TestCase):    
+    def test1(self):
+        pool = coros.CoroutinePool(max_size=10)
+        waiters = []
+        for i in range(0,9):
+            waiters.append(pool.execute(sender_loop,i))
+        for waiter in waiters:
+            waiter.wait()
+
+
+if __name__ == '__main__':
+    tests.main()

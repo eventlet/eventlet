@@ -24,10 +24,8 @@
 
 import os.path
 
-from eventlet import api, coros
+from eventlet import api, coros, tests
 from eventlet import db_pool
-
-import unittest
 
 class DBTester(object):
     def setUp(self):
@@ -293,12 +291,19 @@ class TestMysqlConnectionPool(object):
         db.close()
         del db
 
-class TestMysqlTpool(TestMysqlConnectionPool, TestTpoolConnectionPool, unittest.TestCase):
+class TestMysqlTpool(TestMysqlConnectionPool, TestTpoolConnectionPool, tests.TestCase):
     pass
 
-class TestMysqlSaranwrap(TestMysqlConnectionPool, TestSaranwrapConnectionPool, unittest.TestCase):
+class TestMysqlSaranwrap(TestMysqlConnectionPool, TestSaranwrapConnectionPool, tests.TestCase):
     pass
 
 
 if __name__ == '__main__':
-    unittest.main()
+    try:
+        import MySQLdb
+    except ImportError:
+        print "Unable to import MySQLdb, skipping db_pool_test."
+    else:
+        unittest.main()
+else:
+    import MySQLdb

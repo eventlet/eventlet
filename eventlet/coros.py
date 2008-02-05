@@ -42,6 +42,21 @@ NOT_USED = object()
 class event(object):
     """An abstraction where an arbitrary number of coroutines
     can wait for one event from another.
+    
+    Events differ from channels in two ways:
+      1) calling send() does not unschedule the current coroutine
+      2) send() can only be called once; use reset() to prepare the event for 
+         another send()
+    They are ideal for communicating return values between coroutines.
+    
+    >>> from eventlet import coros, api
+    >>> evt = coros.event()
+    >>> def baz(b):
+    ...     evt.send(b + 1)
+    ... 
+    >>> _ = api.spawn(baz, 3)
+    >>> evt.wait()
+    4
     """
     _result = None
     def __init__(self):
@@ -49,17 +64,50 @@ class event(object):
 
     def reset(self):
         """ Reset this event so it can be used to send again.
-        Can only be called after send has been called."""
-        assert self._result is not NOT_USED
+        Can only be called after send has been called.
+        
+        >>> from eventlet import coros
+        >>> evt = coros.event()
+        >>> evt.send(1)
+        >>> evt.reset()
+        >>> evt.send(2)
+        >>> evt.wait()
+        2
+        
+        Calling reset multiple times in a row is an error.
+        
+        >>> evt.reset()
+        >>> evt.reset()
+        Traceback (most recent call last):
+        ...
+        AssertionError: Trying to re-reset() a fresh event.
+        
+        """
+        assert self._result is not NOT_USED, 'Trying to re-reset() a fresh event.'
         self.epoch = time.time()
         self._result = NOT_USED
         self._waiters = {}
 
     def wait(self):
-        """wait until another coroutine calls send.
+        """Wait until another coroutine calls send.
         Returns the value the other coroutine passed to
-        send. Returns immediately if the event has already
+        send.
+        
+        >>> from eventlet import coros, api
+        >>> evt = coros.event()
+        >>> def wait_on():
+        ...    retval = evt.wait()
+        ...    print "waited for", retval
+        >>> _ = api.spawn(wait_on)
+        >>> evt.send('result')
+        >>> api.sleep(0)
+        waited for result
+
+        Returns immediately if the event has already
         occured.
+        
+        >>> evt.wait()
+        'result'
         """
         if self._result is NOT_USED:
             self._waiters[api.getcurrent()] = True
@@ -76,6 +124,36 @@ class event(object):
 
         waiter: The greenlet (greenlet.getcurrent()) of the 
             coroutine to cancel
+            
+        >>> from eventlet import coros, api
+        >>> evt = coros.event()
+        >>> def wait_on():
+        ...    try:
+        ...        print "received " + evt.wait()
+        ...    except coros.Cancelled, c:
+        ...        print "Cancelled"
+        ...
+        >>> waiter = api.spawn(wait_on)
+                
+        The cancel call works on coroutines that are in the wait() call.
+        
+        >>> api.sleep(0)  # enter the wait()
+        >>> evt.cancel(waiter)
+        >>> api.sleep(0)  # receive the exception
+        Cancelled
+        
+        The cancel is invisible to coroutines that call wait() after cancel()
+        is called.  This is different from send()'s behavior, where the result
+        is passed to any waiter regardless of the ordering of the calls.
+        
+        >>> waiter = api.spawn(wait_on)
+        >>> api.sleep(0)
+        
+        Cancels have no effect on the ability to send() to the event.
+        
+        >>> evt.send('stuff')
+        >>> api.sleep(0)
+        received stuff
         """
         if waiter in self._waiters:
             del self._waiters[waiter]
@@ -85,8 +163,30 @@ class event(object):
     def send(self, result=None, exc=None):
         """Makes arrangements for the waiters to be woken with the
         result and then returns immediately to the parent.
+        
+        >>> from eventlet import coros, api
+        >>> evt = coros.event()
+        >>> def waiter():
+        ...     print 'about to wait'
+        ...     result = evt.wait()
+        ...     print 'waited for', result
+        >>> _ = api.spawn(waiter)
+        >>> api.sleep(0)
+        about to wait
+        >>> evt.send('a')
+        >>> api.sleep(0)
+        waited for a
+        
+        It is an error to call send() multiple times on the same event.
+        
+        >>> evt.send('whoops')
+        Traceback (most recent call last):
+        ...
+        AssertionError: Trying to re-send() an already-triggered event.
+        
+        Use reset() between send()s to reuse an event object.
         """
-        assert self._result is NOT_USED
+        assert self._result is NOT_USED, 'Trying to re-send() an already-triggered event.'
         self._result = result
         self._exc = exc
         hub = api.get_hub()
@@ -95,6 +195,18 @@ class event(object):
 
 
 def execute(func, *args, **kw):
+    """ Executes an operation asynchronously in a new coroutine, returning
+    an event to retrieve the return value.
+
+    This has the same api as the CoroutinePool.execute method; the only 
+    difference is that this one creates a new coroutine instead of drawing
+    from a pool.
+    
+    >>> from eventlet import coros
+    >>> evt = coros.execute(lambda a: ('foo', a), 1)
+    >>> evt.wait()
+    ('foo', 1)
+    """
     evt = event()
     def _really_execute():
         evt.send(func(*args, **kw))
@@ -103,7 +215,35 @@ def execute(func, *args, **kw):
 
 
 class CoroutinePool(pools.Pool):
-    """ Like a thread pool, but with coroutines. """
+    """ Like a thread pool, but with coroutines. 
+    
+    Coroutine pools are useful for splitting up tasks or globally controlling
+    concurrency.  You don't retrieve the coroutines directly with get() -- 
+    instead use the execute() and execute_async() methods to run code.
+    
+    >>> from eventlet import coros, api
+    >>> p = coros.CoroutinePool(max_size=2)
+    >>> def foo(a):
+    ...   print "foo", a
+    ... 
+    >>> evt = p.execute(foo, 1)
+    >>> evt.wait()
+    foo 1
+    
+    Once the pool is exhausted, calling an execute forces a yield.
+    
+    >>> p.execute_async(foo, 2)
+    >>> p.execute_async(foo, 3)
+    >>> p.free()
+    0
+    >>> p.execute_async(foo, 4)
+    foo 2
+    foo 3
+    
+    >>> api.sleep(0)
+    foo 4
+    """
+    
     def _main_loop(self, sender):
         while True:
             recvd = sender.wait()
@@ -139,6 +279,12 @@ class CoroutinePool(pools.Pool):
 
         Immediately returns an eventlet.coros.event object which
         func's result will be sent to when it is available.
+        
+        >>> from eventlet import coros
+        >>> p = coros.CoroutinePool()
+        >>> evt = p.execute(lambda a: ('foo', a), 1)
+        >>> evt.wait()
+        ('foo', 1)
         """
         sender = self.get()
         receiver = event()
@@ -149,7 +295,15 @@ class CoroutinePool(pools.Pool):
         """Execute func in one of the coroutines maintained
         by the pool, when one is free.
 
-        This version does not provide the return value.
+        No return value is provided.
+        >>> from eventlet import coros, api
+        >>> p = coros.CoroutinePool()
+        >>> def foo(a):
+        ...   print "foo", a
+        ... 
+        >>> p.execute_async(foo, 1)
+        >>> api.sleep(0)
+        foo 1
         """
         sender = self.get()
         sender.send((None, func, args, kw))
