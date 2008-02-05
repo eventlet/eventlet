@@ -129,7 +129,7 @@ class TestHttpd(tests.TestCase):
         self.assertRaises(ConnectionClosed, read_http, sock)
         sock.close()
 
-    def test_005_run_apachebench(self):
+    def skip_test_005_run_apachebench(self):
         url = 'http://localhost:12346/'
         # ab is apachebench
         out = processes.Process(tests.find_command('ab'),

@@ -304,6 +304,6 @@ if __name__ == '__main__':
     except ImportError:
         print "Unable to import MySQLdb, skipping db_pool_test."
     else:
-        unittest.main()
+        tests.main()
 else:
     import MySQLdb
