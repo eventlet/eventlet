@@ -194,7 +194,7 @@ class wrapped_fd(object):
                     found += len(terminator)
                     chunk, self.recvbuffer = buf[:found], buf[found:]
                     return chunk
-                checked = len(buf)
+                checked = max(0, len(buf) - (len(terminator) - 1))
                 d = self.recv(BUFFER_SIZE)
                 if not d:
                     break
