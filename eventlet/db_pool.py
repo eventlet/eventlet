@@ -63,7 +63,8 @@ connection pools keyed on host,databasename"""
             new_kwargs['db'] = dbname
             new_kwargs['host'] = host
             new_kwargs.update(self.credentials_for(host))
-            dbpool = self._conn_pool_class(self._module, self._min_size, self._max_size, *self._args, **new_kwargs)
+            dbpool = self._conn_pool_class(self._module, min_size=self._min_size, max_size=self._max_size,
+                                           *self._args, **new_kwargs)
             self._databases[key] = dbpool
 
         return self._databases[key]

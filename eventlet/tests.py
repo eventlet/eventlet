@@ -23,7 +23,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-import atexit
 import errno
 import os
 import sys
@@ -36,8 +35,8 @@ TestCase = unittest.TestCase
 name = getattr(sys.modules['__main__'], '__name__', None)
 main = unittest.main
 
-# listing of all non-*_test test methods
-eventlet_test_files = ['coros']
+# listing of files containing doctests
+doc_test_files = ['coros']
 
 def find_command(command):
     for dir in os.getenv('PATH', '/usr/bin:/usr/sbin').split(os.pathsep):
@@ -46,8 +45,8 @@ def find_command(command):
             return p
     raise IOError(errno.ENOENT, 'Command not found: %r' % command)
     
-def run_all_tests(test_files = eventlet_test_files):
-    """ Runs all the unit tests in eventlet, returning immediately after the 
+def run_all_tests(test_files = doc_test_files):
+    """ Runs all the unit tests, returning immediately after the 
     first failed test.
     
     Returns true if the tests all succeeded.  This method is really much longer
@@ -81,6 +80,8 @@ def run_all_tests(test_files = eventlet_test_files):
             failures, tests = doctest.testmod(test_module)
             if failures:
                 return False
+            else:
+                print "OK"
                 
     return True
     

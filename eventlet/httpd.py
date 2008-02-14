@@ -337,22 +337,39 @@ class Request(object):
         return self._cached_body
 
     def read_body(self):
+        """ Returns the string body that was read off the request, or
+        the empty string if there was no request body.
+
+        Requires a content-length header.  Caches the body so multiple
+        calls to read_body() are free.
+        """
+        if not hasattr(self, '_cached_body'):
+            length = self.get_header('content-length')
+            if length:
+                length = int(length)
+            if length:
+                self._cached_body = self.protocol.rfile.read(length)
+            else:
+                self._cached_body = ''
+        return self._cached_body            
+
+    def parsed_body(self):
+        """ Returns the parsed version of the body, using the
+        content-type header to select from the parsers on the site
+        object.
+
+        If no parser is found, returns the string body from
+        read_body().  Caches the parsed body so multiple calls to
+        parsed_body() are free.
+        """
         if not hasattr(self, '_cached_parsed_body'):
-            if not hasattr(self, '_cached_body'):
-                length = self.get_header('content-length')
-                if length:
-                    length = int(length)
-                if length:
-                    self._cached_body = self.protocol.rfile.read(length)
-                else:
-                    self._cached_body = ''
-            body = self._cached_body
+            body = self.read_body()
             if hasattr(self.site, 'parsers'):
                 parser = self.site.parsers.get(
                     self.get_header('content-type'))
                 if parser is not None:
                     body = parser(body)
-            self._cached_parsed_body = body
+                self._cached_parsed_body = body
         return self._cached_parsed_body
 
     def override_body(self, body):
