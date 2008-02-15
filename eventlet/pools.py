@@ -75,11 +75,20 @@ class Pool(object):
     def put(self, item):
         """Put an item back into the pool, when done
         """
+        if self.current_size > self.max_size:
+            self.current_size -= 1
+            return
+ 
         if self.channel.balance < 0:
             self.channel.send(item)
         else:
             self.free_items.append(item)
 
+    def resize(self, new_size):
+        """Resize the pool
+        """
+        self.max_size = new_size
+ 
     def free(self):
         """Return the number of free items in the pool.
         """
