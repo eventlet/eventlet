@@ -54,7 +54,7 @@ class Timer(object):
         cb, args, kw = getattr(self, 'tpl', (None, None, None))
         retval =  "Timer(%s, %s, *%s, **%s)" % (
             secs, cb, args, kw)
-        if _g_debug and hasattr(self, 'traceback':
+        if _g_debug and hasattr(self, 'traceback'):
             retval += '\n' + self.traceback.getvalue()
         return retval            
 
