@@ -79,14 +79,19 @@ def read_http(sock):
         num = int(headers[CONTENT_LENGTH])
         body = sock.read(num)
         #print body
+    else:
+        body = None
+
+    return response_line, headers, body
 
 
 class TestHttpd(tests.TestCase):
     mode = 'static'
     def setUp(self):
         self.logfile = StringIO()
+        self.site = Site()
         self.killer = api.spawn(
-            httpd.server, api.tcp_listener(('0.0.0.0', 12346)), Site(), max_size=128, log=self.logfile)
+            httpd.server, api.tcp_listener(('0.0.0.0', 12346)), self.site, max_size=128, log=self.logfile)
 
     def tearDown(self):
         api.kill(self.killer)
@@ -153,9 +158,35 @@ class TestHttpd(tests.TestCase):
         sock.write(request)
         result = sock.readline()
         status = result.split(' ')[1]
-        print "status:",status
         self.assertEqual(status, '414')
         sock.close()
+        
+    def test_007_get_arg(self):
+        # define a new handler that does a get_arg as well as a read_body
+        def new_handle_request(req):
+            a = req.get_arg('a')
+            body = req.read_body()
+            req.write('a is %s, body is %s' % (a, body))
+        self.site.handle_request = new_handle_request
+        
+        sock = api.connect_tcp(
+            ('127.0.0.1', 12346))
+        request = '\r\n'.join((
+            'POST /%s HTTP/1.0', 
+            'Host: localhost', 
+            'Content-Length: 3', 
+            '',
+            'a=a'))
+        sock.write(request)
+        
+        # send some junk after the actual request
+        sock.write('01234567890123456789')
+        reqline, headers, body = read_http(sock)
+        self.assertEqual(body, 'a is a, body is a=a')
+        sock.close()
+        
+
+
 
 if __name__ == '__main__':
     tests.main()

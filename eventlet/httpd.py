@@ -24,7 +24,6 @@ THE SOFTWARE.
 """
 
 import cgi
-import cStringIO
 import errno
 import socket
 import sys
@@ -32,8 +31,12 @@ import time
 import urllib
 import socket
 import traceback
-import cStringIO
 import BaseHTTPServer
+
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from StringIO import StringIO
 
 from eventlet import api
 from eventlet import coros
@@ -280,9 +283,9 @@ class Request(object):
                 data = ''
             if self._query:
                 data = self._query
-                fl = cStringIO.StringIO(data)
             else:
-                fl = self.protocol.rfile
+                data = self.read_body()
+            fl = StringIO(data)
             ## Allow our resource to provide the FieldStorage instance for
             ## customization purposes.
             headers = self.get_headers()
