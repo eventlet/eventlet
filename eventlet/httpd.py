@@ -492,12 +492,17 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
             try:
                 try:
-                    self.server.site.handle_request(request)
-                except ErrorResponse, err:
-                    request.response(code=err.code,
-                                     reason_phrase=err.reason,
-                                     headers=err.headers,
-                                     body=err.body)
+                    try:
+                        self.server.site.handle_request(request)
+                    except ErrorResponse, err:
+                        request.response(code=err.code,
+                                         reason_phrase=err.reason,
+                                         headers=err.headers,
+                                         body=err.body)
+                finally:                            
+                    # clean up any timers that might have been left around by the handling code
+                    api.get_hub().runloop.cancel_timers(api.getcurrent())
+                    
                 # throw an exception if it failed to write a body
                 if not request.response_written():
                     raise NotImplementedError("Handler failed to write response to request: %s" % request)
@@ -507,7 +512,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                         request.read_body() ## read & discard body
                     except:
                         pass
-                    continue
+                
             except socket.error, e:
                 # Broken pipe, connection reset by peer
                 if e[0] in CONNECTION_CLOSED:

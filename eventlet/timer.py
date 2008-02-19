@@ -24,8 +24,12 @@ THE SOFTWARE.
 """
 from eventlet.api import get_hub
 
+""" If true, captures a stack trace for each timer when constructed.  This is
+useful for debugging leaking timers, to find out where the timer was set up. """
+_g_debug = False
+
 class Timer(object):
-    __slots__ = ['seconds', 'tpl', 'called', 'cancelled', 'scheduled_time', 'greenlet']
+    __slots__ = ['seconds', 'tpl', 'called', 'cancelled', 'scheduled_time', 'greenlet', 'traceback']
     def __init__(self, seconds, cb, *args, **kw):
         """Create a timer.
             seconds: The minimum number of seconds to wait before calling
@@ -40,12 +44,19 @@ class Timer(object):
         self.seconds = seconds
         self.tpl = cb, args, kw
         self.called = False
+        if _g_debug:
+            import traceback, cStringIO
+            self.traceback = cStringIO.StringIO()
+            traceback.print_stack(file=self.traceback)
 
     def __repr__(self):
         secs = getattr(self, 'seconds', None)
         cb, args, kw = getattr(self, 'tpl', (None, None, None))
-        return "Timer(%s, %s, *%s, **%s)" % (
+        retval =  "Timer(%s, %s, *%s, **%s)" % (
             secs, cb, args, kw)
+        if _g_debug and hasattr(self, 'traceback':
+            retval += '\n' + self.traceback.getvalue()
+        return retval            
 
     def copy(self):
         cb, args, kw = self.tpl

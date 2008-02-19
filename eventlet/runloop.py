@@ -218,10 +218,11 @@ class RunLoop(object):
         if greenlet not in self.timers_by_greenlet:
             return
         for timer in self.timers_by_greenlet[greenlet]:
-            if timer.seconds:
+            if not timer.cancelled and timer.seconds:
                 ## If timer.seconds is 0, this isn't a timer, it's
                 ## actually eventlet's silly way of specifying whether
                 ## a coroutine is "ready to run" or not.
                 timer.cancel()
+                print 'Runloop cancelling left-over timer %s' % timer
         del self.timers_by_greenlet[greenlet]
         
