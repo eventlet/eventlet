@@ -24,6 +24,7 @@ from sys import stdout
 from Queue import Empty, Queue
 
 from eventlet import api, coros, httpc, httpd, util, wrappedfd
+from eventlet.api import trampoline, get_hub
 
 _rpipe, _wpipe = os.pipe()
 _rfile = os.fdopen(_rpipe,"r",0)
@@ -36,10 +37,10 @@ def _signal_t2e():
 _reqq = Queue(maxsize=-1)
 _rspq = Queue(maxsize=-1)
 
-def trampoline():
+def tpool_trampoline():
     global _reqq, _rspq
     while(True):
-        _c = _wrap_rfile.read(1)
+        _c = _wrap_rfile.recv(1)
         assert(_c != "")
         while not _rspq.empty():
             try:
@@ -62,14 +63,20 @@ def tworker():
         try:
             rv = meth(*args,**kwargs)
         except Exception,exn:
-            rv = exn
+            import sys, traceback
+            (a,b,tb) = sys.exc_info()
+            rv = (exn,a,b,tb)
         _rspq.put((e,rv))
         _signal_t2e()
 
 def erecv(e):
     rv = e.wait()
-    if isinstance(rv,Exception):
-        raise rv
+    if isinstance(rv,tuple) and len(rv) == 4 and isinstance(rv[0],Exception):
+        import sys, traceback
+        (e,a,b,tb) = rv
+        traceback.print_exception(Exception,e,tb)
+        traceback.print_stack()
+        raise e
     return rv
 
 def erpc(meth,*args, **kwargs):
@@ -92,7 +99,10 @@ class Proxy(object):
         if not callable(f):
             return f
         def doit(*args, **kwargs):
-            rv = erpc(f,*args,**kwargs)
+            if kwargs.pop('nonblocking',False):
+                rv = f(*args, **kwargs)
+            else:
+                rv = erpc(f,*args,**kwargs)
             if type(rv) in self._autowrap:
                 return Proxy(rv)
             else:
@@ -108,6 +118,6 @@ def setup():
         _threads[i].setDaemon(True)
         _threads[i].start()
 
-    api.spawn(trampoline)
+    api.spawn(tpool_trampoline)
 
 setup()

@@ -495,6 +495,10 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     try:
                         self.server.site.handle_request(request)
                     except ErrorResponse, err:
+                        import sys, traceback
+                        (a,b,tb) = sys.exc_info()
+                        traceback.print_exception(ErrorResponse,err,tb)
+
                         request.response(code=err.code,
                                          reason_phrase=err.reason,
                                          headers=err.headers,
@@ -528,6 +532,11 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 raise
         self.socket.close()
 
+def tid():
+    n = long(id(api.getcurrent()))
+    if n < 0:
+        n = -n
+    return hex(n)
 
 class Server(BaseHTTPServer.HTTPServer):
     def __init__(self, socket, address, site, log, max_http_version=DEFAULT_MAX_HTTP_VERSION):
@@ -543,7 +552,7 @@ class Server(BaseHTTPServer.HTTPServer):
             self.log = self
 
     def write(self, something):
-        sys.stdout.write('%s' % (something, ))
+        sys.stdout.write('%s: %s' % (tid(), something, )); sys.stdout.flush()
 
     def log_message(self, message):
         self.log.write(message)

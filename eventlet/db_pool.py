@@ -157,7 +157,7 @@ class GenericConnectionWrapper(object):
     def character_set_name(self,*args, **kwargs): return self._base.character_set_name(*args, **kwargs)
     def close(self,*args, **kwargs): return self._base.close(*args, **kwargs)
     def commit(self,*args, **kwargs): return self._base.commit(*args, **kwargs)
-    def cursor(self, cursorclass=None): return self._base.cursor(cursorclass)
+    def cursor(self, cursorclass=None, **kwargs): return self._base.cursor(cursorclass, **kwargs)
     def dump_debug_info(self,*args, **kwargs): return self._base.dump_debug_info(*args, **kwargs)
     def errno(self,*args, **kwargs): return self._base.errno(*args, **kwargs)
     def error(self,*args, **kwargs): return self._base.error(*args, **kwargs)
