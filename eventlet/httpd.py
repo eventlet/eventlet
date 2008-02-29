@@ -77,6 +77,7 @@ class Request(object):
     _producer_adapters = {}
     depth = 0
     def __init__(self, protocol, method, path, headers):
+        self.context = {}
         self.request_start_time = time.time()
         self.site = protocol.server.site
         self.protocol = protocol

@@ -357,10 +357,15 @@ class InternalServerError(ConnectionError):
     def __repr__(self):
         try:
             import simplejson
-            body = simplejson.loads(self.params.response_body)
+            traceback = simplejson.loads(self.params.response_body)
         except:
-            traceback = self.params.response_body
-        else:
+            try:
+                from indra.base import llsd
+                traceback = llsd.parse(self.params.response_body)
+            except:
+                traceback = self.params.response_body
+        if isinstance(traceback, dict):
+            body = traceback
             traceback = "Traceback (most recent call last):\n"
             for frame in body['stack-trace']:
                 traceback += '  File "%s", line %s, in %s\n' % (
