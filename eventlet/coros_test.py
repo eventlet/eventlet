@@ -98,6 +98,16 @@ class TestEvent(tests.TestCase):
         api.spawn(send_to_event2)
         self.assertEqual(evt.wait(), value2)
 
+    def test_double_exception(self):
+        evt = coros.event()
+        # send an exception through the event
+        evt.send(exc=RuntimeError())
+        self.assertRaises(RuntimeError, evt.wait)
+        evt.reset()
+        # shouldn't see the RuntimeError again
+        api.exc_after(0.001, api.TimeoutError)
+        self.assertRaises(api.TimeoutError, evt.wait)
+
 class TestCoroutinePool(tests.TestCase):
     mode = 'static'
     def setUp(self):
@@ -160,7 +170,7 @@ class TestActor(tests.TestCase):
     mode = 'static'
     def setUp(self):
         # raise an exception if we're waiting forever
-        self._cancel_timeout = api.exc_after(1, RuntimeError())
+        self._cancel_timeout = api.exc_after(1, api.TimeoutError())
         self.actor = IncrActor()
 
     def tearDown(self):
@@ -213,7 +223,22 @@ class TestActor(tests.TestCase):
         self.assertEqual(msgs, [1,2,3,4,5])
         
 
+    def test_raising_received(self):
+        msgs = []
+        def received(message):
+            if message == 'fail':
+                raise RuntimeError()
+            else:
+                print "appending"
+                msgs.append(message)
+                
+        self.actor.received = received
 
+        self.actor.cast('fail')
+        api.sleep(0)
+        self.actor.cast('should_appear')
+        api.sleep(0)
+        self.assertEqual(['should_appear'], msgs)
 
 if __name__ == '__main__':
     tests.main()

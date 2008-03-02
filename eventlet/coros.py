@@ -23,6 +23,7 @@ THE SOFTWARE.
 """
 
 import collections
+import sys
 import time
 import traceback
 
@@ -253,8 +254,12 @@ class CoroutinePool(pools.Pool):
                 result = func(*args, **kw)
                 if evt is not None:
                     evt.send(result)
-            except api.GreenletExit:
-                pass
+            except api.GreenletExit, e:
+                # we're printing this out to see if it ever happens
+                # in practice
+                print "GreenletExit raised in coroutine pool", e
+                if evt is not None:
+                    evt.send(e)  # sent as a return value, not an exception
             except Exception, e:
                 traceback.print_exc()
                 if evt is not None:
@@ -352,12 +357,22 @@ class Actor(object):
         while True:
             if not self._mailbox:
                 self._event.wait()
-                self._event.reset()
+                self._event = event()
             else:
                 # leave the message in the mailbox until after it's
                 # been processed so the event doesn't get triggered
                 # while in the received method
-                self.received(self._mailbox[0])
+                try:
+                    self.received(self._mailbox[0])
+                except KeyboardInterrupt:
+                    raise # allow the program to quit
+                except:
+                    # we don't want to let the exception escape this
+                    # loop because that would kill the coroutine
+                    e = sys.exc_info()[0]
+                    self.excepted(e)
+                    sys.exc_clear()
+
                 self._mailbox.popleft()
 
     def cast(self, message):
@@ -394,8 +409,44 @@ class Actor(object):
         >>> api.sleep(0)
         received message 2
         received message 3
+        
+        >>> api.kill(a._killer)   # test cleanup
         """
         raise NotImplementedError()
+
+    def excepted(self, exc):
+        """ Called when the received method raises an exception.
+
+        The default implementation simply prints out the raised exception.
+        Redefine it for customization.
+        
+        >>> class Exceptor(Actor):
+        ...    def received(self, message):
+        ...        if message == 'fail':
+        ...            message + 1
+        ...        else:
+        ...            print "received", message
+        ...    def excepted(self, exc):
+        ...        print "excepted:", exc
+        >>> a = Exceptor()
+        >>> a.cast('fail')
+        >>> api.sleep(0)
+        excepted: <type 'exceptions.TypeError'>
+        
+        The main purpose of excepted is to prevent the actor's coroutine
+        from dying.
+        
+        >>> a.cast('message 2')
+        >>> api.sleep(0)
+        received message 2
+        
+        If excepted() itself raises an exception, that will kill the coroutine.
+        
+        >>> api.kill(a._killer)   # test cleanup
+        """
+        print "Exception in %s.received(): %s" % (
+            type(self).__name__, exc)
+        traceback.print_exc()
 
 def _test():
     print "Running doctests.  There will be no further output if they succeed."

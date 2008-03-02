@@ -306,10 +306,7 @@ def switch(other=None, value=None, exc=None):
     if not (other or hasattr(other, 'run')):
         raise SwitchingToDeadGreenlet("Switching to dead greenlet %r %r %r" % (other, value, exc))
     _greenlet_context_call('swap_out')
-    running_exc = sys.exc_info()
-    if running_exc[0] != None:  # see if we're in the middle of an exception handler
-        sys.exc_clear()  # don't pass along exceptions to the other coroutine
-        del running_exc  # tracebacks can create cyclic object references
+    sys.exc_clear()  # don't pass along exceptions to the other coroutine
     try:
         rval = other.switch(value, exc)
         if not rval or not other:

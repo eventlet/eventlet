@@ -487,8 +487,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             request.set_header('Server', self.version_string())
             request.set_header('Date', self.date_time_string())
             try:
-                timeout = int(request.get_header('keep-alive'))
-            except (TypeError, ValueError), e:
+                timeout = int(request.get_header('keep-alive', timeout))
+            except TypeError, ValueError:
                 pass
 
             try:
@@ -522,11 +522,13 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 else:
                     raise
             except Exception, e:
+                self.server.log_message("Exception caught in HttpRequest.handle():\n")
+                self.server.log_exception(*sys.exc_info())
                 if not request.response_written():
                     request.response(500)
                     request.write('Internal Server Error')
                 self.socket.close()
-                raise
+                raise e # can't do a plain raise since exc_info might have been cleared
         self.socket.close()
 
 
