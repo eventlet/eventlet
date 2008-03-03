@@ -112,7 +112,7 @@ class TestCoroutinePool(tests.TestCase):
     mode = 'static'
     def setUp(self):
         # raise an exception if we're waiting forever
-        self._cancel_timeout = api.exc_after(1, RuntimeError())
+        self._cancel_timeout = api.exc_after(1, api.TimeoutError)
 
     def tearDown(self):
         self._cancel_timeout.cancel()
@@ -161,6 +161,24 @@ class TestCoroutinePool(tests.TestCase):
         t = worker.wait()
         api.sleep(0)
         self.assertEquals(t.cancelled, True)
+        
+    def test_reentrant(self):
+        pool = coros.CoroutinePool(0,1)
+        def reenter():
+            waiter = pool.execute(lambda a: a, 'reenter')
+            self.assertEqual('reenter', waiter.wait())
+
+        outer_waiter = pool.execute(reenter)
+        outer_waiter.wait()
+
+        evt = coros.event()
+        def reenter_async():
+            pool.execute_async(lambda a: a, 'reenter')
+            evt.send('done')
+        
+        pool.execute_async(reenter_async)
+        evt.wait()
+        
 
 class IncrActor(coros.Actor):
     def received(self, message):
@@ -229,10 +247,10 @@ class TestActor(tests.TestCase):
             if message == 'fail':
                 raise RuntimeError()
             else:
-                print "appending"
                 msgs.append(message)
                 
         self.actor.received = received
+        self.actor.excepted = lambda x: None
 
         self.actor.cast('fail')
         api.sleep(0)
