@@ -453,11 +453,12 @@ class Actor(object):
         ...        else:
         ...            print "received", message
         ...    def excepted(self, exc):
-        ...        print "excepted:", exc
+        ...        # printing out exc varies per version of Python
+        ...        print "excepted"
         >>> a = Exceptor()
         >>> a.cast('fail')
         >>> api.sleep(0)
-        excepted: <type 'exceptions.TypeError'>
+        excepted
         
         The main purpose of excepted is to prevent the actor's coroutine
         from dying.
