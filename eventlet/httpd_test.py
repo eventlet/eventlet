@@ -42,6 +42,10 @@ from eventlet import tests
 
 class Site(object):
     def handle_request(self, req):
+        path = req.path_segments()
+        if len(path) > 0 and path[0] == "notexist":
+            req.response(404, body='not found')
+            return
         req.write('hello world')
 
     def adapt(self, obj, req):
@@ -185,7 +189,18 @@ class TestHttpd(tests.TestCase):
         self.assertEqual(body, 'a is a, body is a=a')
         sock.close()
         
-
+    def test_008_correctresponse(self):
+        sock = api.connect_tcp(
+            ('127.0.0.1', 12346))
+        
+        sock.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+        response_line_200,_,_ = read_http(sock)
+        sock.write('GET /notexist HTTP/1.1\r\nHost: localhost\r\n\r\n')
+        response_line_404,_,_ = read_http(sock)
+        sock.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+        response_line_test,_,_ = read_http(sock)
+        self.assertEqual(response_line_200,response_line_test)
+        sock.close()
 
 
 if __name__ == '__main__':

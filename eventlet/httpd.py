@@ -415,8 +415,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         self.socket = self.request = self.rfile = self.wfile = request
         self.client_address = client_address
         self.server = server
-        self._code = 200
-        self._message = 'OK'
+        self.set_response_code(None, 200, None)
         self.protocol_version = server.max_http_version
 
     def set_response_code(self, request, code, message):
@@ -482,7 +481,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.close_connection = True
                 continue
 
-            self._code = 200
+            self.set_response_code(None, 200, None)
             request = Request(self, self.command, self.path, self.headers)
             request.set_header('Server', self.version_string())
             request.set_header('Date', self.date_time_string())
