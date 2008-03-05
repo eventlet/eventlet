@@ -87,7 +87,7 @@ request class is basically an action and a map of parameters'
 """
 
 import os
-import cPickle
+from cPickle import dumps, loads
 import struct
 import sys
 
@@ -97,13 +97,14 @@ try:
 except NameError:
     from sets import Set as set, ImmutableSet as frozenset
 
-from eventlet.processes import Process
+from eventlet.processes import Process, DeadProcess
 from eventlet import api, pools
 
 # debugging hooks
 _g_debug_mode = False
 if _g_debug_mode:
     import traceback
+    import tempfile
 
 def pythonpath_sync():
     """
@@ -121,7 +122,10 @@ def wrap(obj, dead_callback = None):
     if type(obj).__name__ == 'module':
         return wrap_module(obj.__name__, dead_callback)
     pythonpath_sync()
-    p = Process('python', [__file__, '--child'], dead_callback)
+    if _g_debug_mode:
+        p = Process('python', [__file__, '--child', '--logfile', os.path.join(tempfile.gettempdir(), 'saranwrap.log')], dead_callback)
+    else:
+        p = Process('python', [__file__, '--child'], dead_callback)
     prox = Proxy(ChildProcess(p, p))
     prox.obj = obj
     return prox.obj
@@ -134,7 +138,7 @@ def wrap_module(fqname, dead_callback = None):
     pythonpath_sync()
     global _g_debug_mode
     if _g_debug_mode:
-        p = Process('python', [__file__, '--module', fqname, '--logfile', '/tmp/saranwrap.log'], dead_callback)
+        p = Process('python', [__file__, '--module', fqname, '--logfile', os.path.join(tempfile.gettempdir(), 'saranwrap.log')], dead_callback)
     else:
         p = Process('python', [__file__, '--module', fqname,], dead_callback)
     prox = Proxy(ChildProcess(p,p))
@@ -187,8 +191,8 @@ def _read_response(id, attribute, input, cp):
     try:
         str = _read_lp_hunk(input)
         _prnt(`str`)
-        response = cPickle.loads(str)
-    except AttributeError, e:
+        response = loads(str)
+    except (AttributeError, DeadProcess), e:
         raise UnrecoverableError(e)
     _prnt("response: %s" % response)
     if response[0] == 'value':
@@ -211,7 +215,7 @@ def _write_lp_hunk(stream, hunk):
 
 def _write_request(param, output):
     _prnt("request: %s" % param)
-    str = cPickle.dumps(param)
+    str = dumps(param)
     _write_lp_hunk(output, str)
 
 def _is_local(attribute):
@@ -303,6 +307,10 @@ not supported, so you have to know what has been exported.
             # call base class getattribute so we actually get the local variable
             attribute = _unmunge_attr_name(attribute)
             return super(Proxy, self).__getattribute__(attribute)
+        elif attribute in ('__deepcopy__', '__copy__'):
+            # redirect copy function calls to our own versions instead of
+            # to the proxied object
+            return super(Proxy, self).__getattribute__('__deepcopy__')
         else:
             my_cp = self.__local_dict['_cp']
             my_id = self.__local_dict['_id']
@@ -536,7 +544,7 @@ when the id is None."""
                     str = _read_lp_hunk(self._in)
                 except EOFError:
                     sys.exit(0)  # normal exit
-                request = cPickle.loads(str)
+                request = loads(str)
                 _log("request: %s (%s)" % (request, self._objects))
                 req = request
                 id = None
@@ -599,7 +607,7 @@ when the id is None."""
     def respond(self, body):
         _log("responding with: %s" % body)
         #_log("objects: %s" % self._objects)
-        s = cPickle.dumps(body)
+        s = dumps(body)
         _log(`s`)
         str = _write_lp_hunk(self._out, s)
 
