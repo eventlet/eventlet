@@ -279,6 +279,8 @@ class CoroutinePool(pools.Pool):
             print "GreenletExit raised in coroutine pool", e
             if evt is not None:
                 evt.send(e)  # sent as a return value, not an exception
+        except KeyboardInterrupt:
+            raise  # allow program to exit
         except Exception, e:
             traceback.print_exc()
             if evt is not None:
@@ -372,11 +374,17 @@ class Actor(object):
     coroutine exists; if you lose all references to the actor object
     it will never be freed.
     """
-    def __init__(self):
-        """ Constructs an Actor, kicking off a new coroutine to process the messages. """
+    def __init__(self, concurrency = 1):
+        """ Constructs an Actor, kicking off a new coroutine to process the messages.
+        
+        The concurrency argument specifies how many messages the actor will try
+        to process concurrently.  If it is 1, the actor will process messages
+        serially.
+        """
         self._mailbox = collections.deque()
         self._event = event()
         self._killer = api.spawn(self.run_forever)
+        self._pool = CoroutinePool(min_size=0, max_size=concurrency)
 
     def run_forever(self):
         """ Loops forever, continually checking the mailbox. """
@@ -388,17 +396,8 @@ class Actor(object):
                 # leave the message in the mailbox until after it's
                 # been processed so the event doesn't get triggered
                 # while in the received method
-                try:
-                    self.received(self._mailbox[0])
-                except KeyboardInterrupt:
-                    raise # allow the program to quit
-                except:
-                    # we don't want to let the exception escape this
-                    # loop because that would kill the coroutine
-                    e = sys.exc_info()[0]
-                    self.excepted(e)
-                    sys.exc_clear()
-
+                self._pool.execute_async(
+                    self.received, self._mailbox[0])
                 self._mailbox.popleft()
 
     def cast(self, message):
@@ -423,16 +422,24 @@ class Actor(object):
         replace it with something useful!
         
         >>> class Greeter(Actor):
-        ...     def received(self, message):
+        ...     def received(self, (message, evt) ):
         ...         print "received", message
+        ...         if evt: evt.send()
         ...
         >>> a = Greeter()
-        >>> a.cast("message 1")
-        >>> api.sleep(0)   # need to explicitly yield to cause the actor to run
+        
+        This example uses events to synchronize between the actor and the main
+        coroutine in a predictable manner, but this kinda defeats the point of
+        the Actor, so don't do it in a real application.
+        
+        >>> evt = event()
+        >>> a.cast( ("message 1", evt) )
+        >>> evt.wait()  # force it to run at this exact moment
         received message 1
-        >>> a.cast("message 2")
-        >>> a.cast("message 3")
-        >>> api.sleep(0)
+        >>> evt.reset()
+        >>> a.cast( ("message 2", None) )
+        >>> a.cast( ("message 3", evt) )
+        >>> evt.wait()
         received message 2
         received message 3
         
@@ -440,40 +447,6 @@ class Actor(object):
         """
         raise NotImplementedError()
 
-    def excepted(self, exc):
-        """ Called when the received method raises an exception.
-
-        The default implementation simply prints out the raised exception.
-        Redefine it for customization.
-        
-        >>> class Exceptor(Actor):
-        ...    def received(self, message):
-        ...        if message == 'fail':
-        ...            message + 1
-        ...        else:
-        ...            print "received", message
-        ...    def excepted(self, exc):
-        ...        # printing out exc varies per version of Python
-        ...        print "excepted"
-        >>> a = Exceptor()
-        >>> a.cast('fail')
-        >>> api.sleep(0)
-        excepted
-        
-        The main purpose of excepted is to prevent the actor's coroutine
-        from dying.
-        
-        >>> a.cast('message 2')
-        >>> api.sleep(0)
-        received message 2
-        
-        If excepted() itself raises an exception, that will kill the coroutine.
-        
-        >>> api.kill(a._killer)   # test cleanup
-        """
-        print "Exception in %s.received(): %s" % (
-            type(self).__name__, exc)
-        traceback.print_exc()
 
 def _test():
     print "Running doctests.  There will be no further output if they succeed."

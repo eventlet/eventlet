@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+import collections
 import os
 import socket
 
@@ -57,7 +58,7 @@ class Pool(object):
         self.max_size = max_size
         self.current_size = 0
         self.channel = channel.channel()
-        self.free_items = []
+        self.free_items = collections.deque()
         for x in range(min_size):
             self.current_size += 1
             self.free_items.append(self.create())
@@ -66,7 +67,7 @@ class Pool(object):
         """Return an item from the pool, when one is available
         """
         if self.free_items:
-            return self.free_items.pop(0)
+            return self.free_items.popleft()
         if self.current_size < self.max_size:
             self.current_size += 1
             return self.create()
