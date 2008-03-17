@@ -45,21 +45,19 @@ class Hub(hub.Hub):
      def add_descriptor(self, fileno, read=None, write=None, exc=None):
         super(Hub, self).add_descriptor(fileno, read, write, exc)
 
+        mask = self.get_fn_mask(read, write)
+        oldmask = self.get_fn_mask(self.readers.get(fileno), self.writers.get(fileno))
+        if mask != oldmask:
+            # Only need to re-register this fileno if the mask changes
+            self.poll.register(fileno, mask)
+
+    def get_fn_mask(self, read, write):
         mask = 0
         if read is not None:
             mask |= READ_MASK
         if write is not None:
             mask |= WRITE_MASK
-        
-        oldmask = 0
-        if readers.get(fileno) is not None:
-            oldmask |= READ_MASK
-        if writers.get(fileno) is not None:
-            oldmask |= WRITE_MASK
-            
-        if mask != oldmask:
-            # Only need to re-register this fileno if the mask changes
-            self.poll.register(fileno, mask)
+        return mask
 
         
     def remove_descriptor(self, fileno):
@@ -67,8 +65,6 @@ class Hub(hub.Hub):
         self.poll.unregister(fileno)
         
     def wait(self, seconds=None):
-        self.process_queue()
-        
         readers = self.readers
         writers = self.writers
         excs = self.excs

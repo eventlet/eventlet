@@ -26,18 +26,14 @@ THE SOFTWARE.
 import sys
 import select
 import errno
-import traceback
 import time
-from bisect import insort, bisect_left
 
-from eventlet import greenlib
 from eventlet import hub
 
 import greenlet
 
 class Hub(hub.Hub):
     def wait(self, seconds=None):
-        self.process_queue()
         readers = self.readers
         writers = self.writers
         excs = self.excs

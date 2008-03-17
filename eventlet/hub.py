@@ -76,7 +76,6 @@ class Hub(object):
                 self.squelch_exception(fileno, sys.exc_info())
 
     def stop(self):
-        self.process_queue()
         self.abort()
         if self.greenlet is not greenlet.getcurrent():
             self.switch()
@@ -100,9 +99,6 @@ class Hub(object):
             self.remove_descriptor(fileno)
         except Exception, e:
             print >>sys.stderr, "Exception while removing descriptor! %r" % (e,)
-        
-    def process_queue(self):
-        pass
             
     def wait(self, seconds=None):
         raise NotImplementedError("Implement this in a subclass")
