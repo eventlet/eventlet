@@ -38,7 +38,6 @@ class Hub(object):
         self.readers = {}
         self.writers = {}
         self.excs = {}
-        self.descriptor_queue = {}
 
         self.clock = clock
         self.greenlet = None
@@ -57,26 +56,17 @@ class Hub(object):
         }
 
     def add_descriptor(self, fileno, read=None, write=None, exc=None):
-        if fileno in self.descriptor_queue:
-            oread, owrite, oexc = self.descriptor_queue[fileno]
-            read, write, exc = read or oread, write or owrite, exc or oexc
-        self.descriptor_queue[fileno] = read, write, exc
+        self.readers[fileno] = read
+        self.writers[fileno] = write
+        self.excs[fileno] = exc
         
     def remove_descriptor(self, fileno):
-        self.descriptor_queue[fileno] = None, None, None
+        self.readers.pop(fileno, None)
+        self.writers.pop(fileno, None)
+        self.excs.pop(fileno, None)
 
     def exc_descriptor(self, fileno):
-        # We must handle two cases here, the descriptor
-        # may be changing or removing its exc handler
-        # in the queue, or it may be waiting on the queue.
-        exc = None
-        try:
-            exc = self.descriptor_queue[fileno][2]
-        except KeyError:
-            try:
-                exc = self.excs[fileno][2]
-            except KeyError:
-                pass
+        exc = self.excs.get(fileno)
         if exc is not None:
             try:
                 exc(fileno)

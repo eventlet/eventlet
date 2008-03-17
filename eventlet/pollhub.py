@@ -42,46 +42,32 @@ class Hub(hub.Hub):
         super(Hub, self).__init__()
         self.poll = select.poll()
 
-    def process_queue(self):
-        readers = self.readers
-        writers = self.writers
-        excs = self.excs
-        
-        reg = self.poll.register
-        unreg = self.poll.unregister
+     def add_descriptor(self, fileno, read=None, write=None, exc=None):
+        super(Hub, self).add_descriptor(fileno, read, write, exc)
+
         rm = READ_MASK
         wm = WRITE_MASK
-        for fileno, rwe in self.descriptor_queue.iteritems():
-            read, write, exc = rwe
-            if read is None and write is None and exc is None:
-                for dct in (readers, writers, excs):
-                    dct.pop(fileno, None)
-                try:
-                    unreg(fileno)
-                except socket.error:
-                    #print "squelched socket err on unreg", fileno
-                    pass
-            else:
-                mask = 0
-                if read is not None:
-                    mask |= rm
-                if write is not None:
-                    mask |= wm
-                oldmask = 0
 
-                oldr = readers.get(fileno)
-                oldw = writers.get(fileno)
-                olde = excs.get(fileno)
+        mask = 0
+        if read is not None:
+            mask |= READ_MASK
+        if write is not None:
+            mask |= WRITE_MASK
+        
+        oldmask = 0
+        if readers.get(fileno) is not None:
+            oldmask |= READ_MASK
+        if writers.get(fileno) is not None:
+            oldmask |= WRITE_MASK
+            
+        if mask != oldmask:
+            # Only need to re-register this fileno if the mask changes
+            self.poll.register(fileno, mask)
 
-                if oldr is not None:
-                    oldmask |= rm
-                if oldw is not None:
-                    oldmask |= wm
-                if mask != oldmask:
-                    reg(fileno, mask)
-                for op, dct in ((read, self.readers), (write, self.writers), (exc, self.excs)):
-                    dct[fileno] = op
-        self.descriptor_queue.clear()
+        
+    def remove_descriptor(self, fileno):
+        super(Hub, self).remove_descriptor(fileno)
+        self.poll.unregister(fileno)
         
     def wait(self, seconds=None):
         self.process_queue()
