@@ -582,3 +582,14 @@ def server(sock, site, log=None, max_size=512, serv=None, max_http_version=DEFAU
             sock.close()
         except socket.error:
             pass
+
+
+if __name__ == '__main__':
+    class TestSite(object):
+        def handle_request(self, req):
+            req.write('hello')
+
+    server(
+        api.tcp_listener(('127.0.0.1', 8080)),
+        TestSite())
+
