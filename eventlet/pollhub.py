@@ -86,30 +86,12 @@ class Hub(hub.Hub):
         SYSTEM_EXCEPTIONS = self.SYSTEM_EXCEPTIONS
 
         for fileno, event in presult:
-            for dct, mask in ((readers, READ_MASK), (writers, WRITE_ASMK
-            read = readers.get(fileno)
-            write = writers.get(fileno)
-            exc = excs.get(fileno)
-
-            if read is not None and event & READ_MASK:
-                try:
-                    read(fileno)
-                except SYSTEM_EXCEPTIONS:
-                    raise
-                except:
-                    self.squelch_exception(fileno, sys.exc_info())
-            elif exc is not None and event & EXC_MASK:
-                try:
-                    exc(fileno)
-                except SYSTEM_EXCEPTIONS:
-                    raise
-                except:
-                    self.squelch_exception(fileno, sys.exc_info())
-
-            if write is not None and event & WRITE_MASK:
-                try:
-                    write(fileno)
-                except SYSTEM_EXCEPTIONS:
-                    raise
-                except:
-                    self.squelch_exception(fileno, sys.exc_info())
+            for dct, mask in ((readers, READ_MASK), (writers, WRITE_MASK), (excs, EXC_MASK)):
+                func = dct.get(fileno)
+                if func is not None and event & mask:
+                    try:
+                        func(fileno)
+                    except SYSTEM_EXCEPTIONS:
+                        raise
+                    except:
+                        self.squelch_exception(fileno, sys.exc_info())

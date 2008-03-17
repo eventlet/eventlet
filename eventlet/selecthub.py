@@ -36,27 +36,6 @@ from eventlet import hub
 import greenlet
 
 class Hub(hub.Hub):
-    def add_descriptor(self, fileno, read=None, write=None, exc=None):
-        self.readers[fileno] = read
-        self.writers[fileno] = write
-        self.excs[fileno] = exc
-        
-    def remove_descriptor(self, fileno):
-        self.readers[fileno] = None
-        self.writers[fileno] = None
-        self.excs[fileno] = None
-
-    def exc_descriptor(self, fileno):
-        # We must handle two cases here, the descriptor
-        # may be changing or removing its exc handler
-        # in the queue, or it may be waiting on the queue.
-        exc = self.excs.get(fileno)
-        if exc is not None:
-            try:
-                exc(fileno)
-            except self.SYSTEM_EXCEPTIONS:
-                self.squelch_exception(fileno, sys.exc_info())
-    
     def wait(self, seconds=None):
         self.process_queue()
         readers = self.readers
@@ -76,7 +55,9 @@ class Hub(hub.Hub):
         for observed, events in ((readers, r), (writers, w)):
             for fileno in events:
                 try:
-                    observed[fileno](fileno)
+                    cb = observed.get(fileno)
+                    if cb is not None:
+                        cb(fileno)
                 except SYSTEM_EXCEPTIONS:
                     raise
                 except:

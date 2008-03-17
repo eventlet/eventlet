@@ -31,7 +31,9 @@ def check_hub():
     # Clear through the descriptor queue
     api.sleep(0)
     api.sleep(0)
-    assert not api.get_hub().descriptors, repr(api.get_hub().descriptors)
+    hub = api.get_hub()
+    for dct in hub.readers, hub.writers, hub.excs:
+        assert not dct, repr(dct)
     # Stop the runloop
     api.get_hub().abort()
     api.sleep(0)
