@@ -49,13 +49,14 @@ class Hub(object):
     def __init__(self):
         self.readers = {}
         self.writers = {}
+        self.interrupted = False
 
         self.runloop = RunLoop(self.wait)
 
         self.greenlet = None
         event.init()
         
-        for sig in 1, 2, 3, 4, 5, 6:
+        for sig in 1, 2, 15:
             signal = event.signal(sig, self.raise_keyboard_interrupt)
             signal.add()
 
@@ -113,10 +114,12 @@ class Hub(object):
             print >>sys.stderr, "Exception while removing descriptor! %r" % (e,)
         
     def raise_keyboard_interrupt(self):
-        print "in keyboardinterrupt"
-        raise KeyboardInterrupt()    
-    
+        self.interrupted = True
+            
     def wait(self, seconds=None):
+        if self.interrupted:
+            raise KeyboardInterrupt()  
+
         if not self.readers and not self.writers:
             if seconds:
                 sleep(seconds)
