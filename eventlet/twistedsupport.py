@@ -82,13 +82,13 @@ class EventletReactor(posixbase.PosixReactorBase):
         self.running = True
         self._stopper = api.call_after(sys.maxint / 1000.0, lambda: None)
         ## schedule a call way in the future, and cancel it in stop?
-        api.get_hub().runloop.run()
+        api.get_hub().run()
 
     def stop(self):
         self._stopper.cancel()
         posixbase.PosixReactorBase.stop(self)
         api.get_hub().remove_descriptor(self._readers.keys()[0])
-        api.get_hub().runloop.abort()
+        api.get_hub().abort()
 
     def addReader(self, reader):
         fileno = reader.fileno()
