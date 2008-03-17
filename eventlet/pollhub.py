@@ -31,80 +31,22 @@ import traceback
 from time import sleep
 
 from eventlet import greenlib
-from eventlet.runloop import RunLoop, Timer
-
-import greenlet
+from eventlet import hub
 
 EXC_MASK = select.POLLERR | select.POLLHUP | select.POLLNVAL
 READ_MASK = select.POLLIN
 WRITE_MASK = select.POLLOUT
 
-class Hub(object):
+class Hub(hub.Hub):
     def __init__(self):
-        self.runloop = RunLoop(self.wait)
-        self.descriptor_queue = {}
-        self.descriptors = {}
-        self.greenlet = None
+        super(Hub, self).__init__()
         self.poll = select.poll()
 
-    def stop(self):
-        self.process_queue()
-        self.runloop.abort()
-        if self.greenlet is not greenlet.getcurrent():
-            self.switch()
-
-    def schedule_call(self, *args, **kw):
-        return self.runloop.schedule_call(*args, **kw)
-
-    def switch(self):
-        if not self.greenlet:
-            self.greenlet = greenlib.tracked_greenlet()
-            args = ((self.runloop.run,),)
-        else:
-            args = ()
-        try:
-            greenlet.getcurrent().parent = self.greenlet
-        except ValueError:
-            pass
-        return greenlib.switch(self.greenlet, *args)
-
-    def add_descriptor(self, fileno, read=None, write=None, exc=None):
-        if fileno in self.descriptor_queue:
-            oread, owrite, oexc = self.descriptor_queue[fileno]
-            read, write, exc = read or oread, write or owrite, exc or oexc
-        self.descriptor_queue[fileno] = read, write, exc
-        
-    def remove_descriptor(self, fileno):
-        self.descriptor_queue[fileno] = None, None, None
-
-    def exc_descriptor(self, fileno):
-        # We must handle two cases here, the descriptor
-        # may be changing or removing its exc handler
-        # in the queue, or it may be waiting on the queue.
-        exc = None
-        try:
-            exc = self.descriptor_queue[fileno][2]
-        except KeyError:
-            try:
-                exc = self.descriptors[fileno][2]
-            except KeyError:
-                pass
-        if exc is not None:
-            try:
-                exc(fileno)
-            except self.runloop.SYSTEM_EXCEPTIONS:
-                self.squelch_exception(fileno, sys.exc_info())
-
-    def squelch_exception(self, fileno, exc_info):
-        traceback.print_exception(*exc_info)
-        print >>sys.stderr, "Removing descriptor: %r" % (fileno,)
-        try:
-            self.remove_descriptor(fileno)
-        except Exception, e:
-            print >>sys.stderr, "Exception while removing descriptor! %r" % (e,)
-
     def process_queue(self):
-        d = self.descriptors
+        readers = self.readers
+        writers = self.writers
+        excs = self.excs
+        
         reg = self.poll.register
         unreg = self.poll.unregister
         rm = READ_MASK
@@ -112,16 +54,13 @@ class Hub(object):
         for fileno, rwe in self.descriptor_queue.iteritems():
             read, write, exc = rwe
             if read is None and write is None and exc is None:
+                for dct in (readers, writers, excs):
+                    dct.pop(fileno, None)
                 try:
-                    del d[fileno]
-                except KeyError:
+                    unreg(fileno)
+                except socket.error:
+                    #print "squelched socket err on unreg", fileno
                     pass
-                else:
-                    try:
-                        unreg(fileno)
-                    except socket.error:
-#                        print "squelched socket err on unreg", fileno
-                        pass
             else:
                 mask = 0
                 if read is not None:
@@ -129,24 +68,29 @@ class Hub(object):
                 if write is not None:
                     mask |= wm
                 oldmask = 0
-                try:
-                    oldr, oldw, olde = d[fileno]
-                except KeyError:
-                    pass
-                else:
-                    if oldr is not None:
-                        oldmask |= rm
-                    if oldw is not None:
-                        oldmask |= wm
+
+                oldr = readers.get(fileno)
+                oldw = writers.get(fileno)
+                olde = excs.get(fileno)
+
+                if oldr is not None:
+                    oldmask |= rm
+                if oldw is not None:
+                    oldmask |= wm
                 if mask != oldmask:
                     reg(fileno, mask)
-                d[fileno] = rwe
+                for op, dct in ((read, self.readers), (write, self.writers), (exc, self.excs)):
+                    dct[fileno] = op
         self.descriptor_queue.clear()
         
     def wait(self, seconds=None):
         self.process_queue()
-
-        if not self.descriptors:
+        
+        readers = self.readers
+        writers = self.writers
+        excs = self.excs
+        
+        if not readers and not writers and not excs:
             if seconds:
                 sleep(seconds)
             return
@@ -156,14 +100,12 @@ class Hub(object):
             if e.args[0] == errno.EINTR:
                 return
             raise
-        SYSTEM_EXCEPTIONS = self.runloop.SYSTEM_EXCEPTIONS
-        dct = self.descriptors
+        SYSTEM_EXCEPTIONS = self.SYSTEM_EXCEPTIONS
 
         for fileno, event in presult:
-            try:
-                read, write, exc = dct[fileno]
-            except KeyError:
-                continue
+            read = readers.get(fileno)
+            write = writers.get(fileno)
+            exc = excs.get(fileno)
 
             if read is not None and event & READ_MASK:
                 try:
