@@ -56,9 +56,8 @@ class Hub(object):
         self.greenlet = None
         event.init()
         
-        for sig in 1, 2, 15:
-            signal = event.signal(sig, self.raise_keyboard_interrupt)
-            signal.add()
+        signal = event.signal(2, self.raise_keyboard_interrupt)
+        signal.add()
 
     def stop(self):
         self.runloop.abort()
