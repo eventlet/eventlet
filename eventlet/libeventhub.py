@@ -21,6 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+import bisect
 import sys
 import socket
 import errno
@@ -53,8 +54,6 @@ class Hub(object):
         self.writers = {}
         self.interrupted = False
 
-        self.runloop = RunLoop(self.wait)
-
         self.greenlet = None
         self.stopping = False
         self.running = False
@@ -69,6 +68,7 @@ class Hub(object):
             'after_waiting': [],
             'exit': [],
         }
+
         event.init()
         
         signal = event.signal(2, self.raise_keyboard_interrupt)
@@ -130,11 +130,6 @@ class Hub(object):
     def wait(self, seconds=None):
         if self.interrupted:
             raise KeyboardInterrupt()  
-
-        if not self.readers and not self.writers:
-            if seconds:
-                time.sleep(seconds)
-            return
         
         timer = event.timeout(seconds, lambda: None)
         timer.add()
@@ -142,6 +137,8 @@ class Hub(object):
         status = event.loop()
         if status == -1:
             raise RuntimeError("does this ever happen?")
+
+        timer.delete()
 
     def default_sleep(self):
         return 60.0
@@ -242,12 +239,7 @@ class Hub(object):
 
     def add_timer(self, timer):
         scheduled_time = self.clock() + timer.seconds
-        self._add_absolute_timer(scheduled_time, timer)
-        current_greenlet = greenlet.getcurrent()
-        if current_greenlet not in self.timers_by_greenlet:
-            self.timers_by_greenlet[current_greenlet] = {}
-        self.timers_by_greenlet[current_greenlet][timer] = True
-        timer.greenlet = current_greenlet
+        event.timeout(timer.seconds, timer).add()
         return scheduled_time
 
     def prepare_timers(self):
