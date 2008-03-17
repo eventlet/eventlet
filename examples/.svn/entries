@@ -1,0 +1,54 @@
+8
+
+dir
+100
+https://svn.secondlife.com/svn/eventlet/trunk/examples
+https://svn.secondlife.com/svn/eventlet
+
+
+
+2007-08-23T23:57:41.609100Z
+3
+which.linden
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+cde37729-5338-0410-b9e2-c56166a61366
+
+webcrawler.py
+file
+
+
+
+
+2008-02-20T19:57:15.000000Z
+d97f9983eb0eb98eddc66259f2abb82d
+2007-08-23T23:51:23.835123Z
+1
+which.linden
+has-props
+
+echoserver.py
+file
+
+
+
+
+2008-02-20T19:57:15.000000Z
+ee5d6fb335a4a28b2b9af8ae3fdca660
+2007-08-23T23:51:23.835123Z
+1
+which.linden
+has-props
+
