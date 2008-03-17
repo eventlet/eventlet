@@ -263,7 +263,7 @@ class CoroutinePool(pools.Pool):
             sender.reset()
             (evt, func, args, kw) = recvd
             self._safe_apply(evt, func, args, kw)
-            api.get_hub().runloop.cancel_timers(api.getcurrent())
+            api.get_hub().cancel_timers(api.getcurrent())
             self.put(sender)
             
     def _safe_apply(self, evt, func, args, kw):

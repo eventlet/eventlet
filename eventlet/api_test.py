@@ -33,9 +33,9 @@ def check_hub():
     api.sleep(0)
     assert not api.get_hub().descriptors, repr(api.get_hub().descriptors)
     # Stop the runloop
-    api.get_hub().runloop.abort()
+    api.get_hub().abort()
     api.sleep(0)
-    assert not api.get_hub().runloop.running
+    assert not api.get_hub().running
 
 
 class TestApi(tests.TestCase):
