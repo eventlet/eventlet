@@ -164,7 +164,7 @@ class RunLoop(object):
         # the 0 placeholder makes it easy to bisect_right using (now, 1)
         self.next_timers.append((when, 0, info))
 
-    def add_timer(self, timer):
+    def dont_add_timer(self, timer):
         scheduled_time = self.clock() + timer.seconds
         self._add_absolute_timer(scheduled_time, timer)
         current_greenlet = greenlet.getcurrent()
@@ -174,6 +174,9 @@ class RunLoop(object):
         timer.greenlet = current_greenlet
         return scheduled_time
 
+    def add_timer(self, timer):
+        import event
+        event.timeout(timer.seconds, timer).add()
 
     def prepare_timers(self):
         ins = bisect.insort_right

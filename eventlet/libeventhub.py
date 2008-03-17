@@ -1,6 +1,5 @@
 """\
-@file pollhub.py
-@author Bob Ippolito
+@file libeventhub.py
 
 Copyright (c) 2005-2006, Bob Ippolito
 Copyright (c) 2007, Linden Research, Inc.
@@ -48,11 +47,17 @@ import event
 
 class Hub(object):
     def __init__(self):
-        self.runloop = RunLoop(self.wait)
         self.readers = {}
         self.writers = {}
+
+        self.runloop = RunLoop(self.wait)
+
         self.greenlet = None
         event.init()
+        
+        for sig in 1, 2, 3, 4, 5, 6:
+            signal = event.signal(sig, self.raise_keyboard_interrupt)
+            signal.add()
 
     def stop(self):
         self.runloop.abort()
@@ -107,13 +112,18 @@ class Hub(object):
         except Exception, e:
             print >>sys.stderr, "Exception while removing descriptor! %r" % (e,)
         
+    def raise_keyboard_interrupt(self):
+        print "in keyboardinterrupt"
+        raise KeyboardInterrupt()    
+    
     def wait(self, seconds=None):
         if not self.readers and not self.writers:
             if seconds:
                 sleep(seconds)
             return
-
+        
         timer = event.timeout(seconds, lambda: None)
+        timer.add()
 
         status = event.loop()
         if status == -1:
