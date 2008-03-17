@@ -38,15 +38,12 @@ READ_MASK = select.POLLIN
 WRITE_MASK = select.POLLOUT
 
 class Hub(hub.Hub):
-    def __init__(self):
-        super(Hub, self).__init__()
+    def __init__(self, clock=time.time):
+        super(Hub, self).__init__(clock)
         self.poll = select.poll()
 
      def add_descriptor(self, fileno, read=None, write=None, exc=None):
         super(Hub, self).add_descriptor(fileno, read, write, exc)
-
-        rm = READ_MASK
-        wm = WRITE_MASK
 
         mask = 0
         if read is not None:
@@ -89,6 +86,7 @@ class Hub(hub.Hub):
         SYSTEM_EXCEPTIONS = self.SYSTEM_EXCEPTIONS
 
         for fileno, event in presult:
+            for dct, mask in ((readers, READ_MASK), (writers, WRITE_ASMK
             read = readers.get(fileno)
             write = writers.get(fileno)
             exc = excs.get(fileno)

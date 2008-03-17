@@ -28,6 +28,8 @@ import errno
 import traceback
 import time
 
+import greenlet
+
 from eventlet import greenlib
 from eventlet.timer import Timer
 
@@ -103,7 +105,7 @@ class Hub(object):
         pass
             
     def wait(self, seconds=None):
-        raise NotImplementedError()
+        raise NotImplementedError("Implement this in a subclass")
 
     def default_sleep(self):
         return 60.0
@@ -204,7 +206,12 @@ class Hub(object):
 
     def add_timer(self, timer):
         scheduled_time = self.clock() + timer.seconds
-        event.timeout(timer.seconds, timer).add()
+        self._add_absolute_timer(scheduled_time, timer)
+        current_greenlet = greenlet.getcurrent()
+        if current_greenlet not in self.timers_by_greenlet:
+            self.timers_by_greenlet[current_greenlet] = {}
+        self.timers_by_greenlet[current_greenlet][timer] = True
+        timer.greenlet = current_greenlet
         return scheduled_time
 
     def prepare_timers(self):
