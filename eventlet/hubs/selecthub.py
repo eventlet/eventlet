@@ -1,5 +1,5 @@
 """\
-@file select.py
+@file selecthub.py
 
 Copyright (c) 2005-2006, Bob Ippolito
 Copyright (c) 2007, Linden Research, Inc.

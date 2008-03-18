@@ -203,16 +203,18 @@ class BaseHub(object):
     def add_timer(self, timer):
         scheduled_time = self.clock() + timer.seconds
         self._add_absolute_timer(scheduled_time, timer)
-        timer.greenlet = current_greenlet
         self.track_timer(timer)
         return scheduled_time
-    
+        
     def track_timer(self, timer):
         current_greenlet = greenlet.getcurrent()
+        timer.greenlet = current_greenlet
         if current_greenlet not in self.timers_by_greenlet:
             self.timers_by_greenlet[current_greenlet] = {}
         self.timers_by_greenlet[current_greenlet][timer] = True
 
+    def timer_canceled(self, timer):
+        pass
 
     def prepare_timers(self):
         ins = bisect.insort_right

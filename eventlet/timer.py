@@ -29,7 +29,7 @@ useful for debugging leaking timers, to find out where the timer was set up. """
 _g_debug = False
 
 class Timer(object):
-    __slots__ = ['seconds', 'tpl', 'called', 'cancelled', 'scheduled_time', 'greenlet', 'traceback']
+    __slots__ = ['seconds', 'tpl', 'called', 'cancelled', 'scheduled_time', 'greenlet', 'traceback', 'impltimer']
     def __init__(self, seconds, cb, *args, **kw):
         """Create a timer.
             seconds: The minimum number of seconds to wait before calling
@@ -81,3 +81,4 @@ class Timer(object):
         """
         self.cancelled = True
         self.called = True
+        get_hub().timer_canceled(self)
