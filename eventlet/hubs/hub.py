@@ -34,6 +34,9 @@ from eventlet import greenlib
 from eventlet.timer import Timer
 
 class BaseHub(object):
+    """ Base hub class for easing the implementation of subclasses that are 
+    specific to a particular underlying event architecture. """
+
     SYSTEM_EXCEPTIONS = (KeyboardInterrupt, SystemExit)
     
     def __init__(self, clock=time.time):
@@ -58,6 +61,20 @@ class BaseHub(object):
         }
 
     def add_descriptor(self, fileno, read=None, write=None, exc=None):
+        """ Signals an intent to read/write from a particular file descriptor.
+        
+        The fileno argument is the file number of the file of interest.  The other
+        arguments are either callbacks or None.  If there is a callback for read
+        or write, the hub sets things up so that when the file descriptor is
+        ready to be read or written, the callback is called.
+        
+        The exc callback is called when the socket represented by the file
+        descriptor is closed.  The intent is that the the exc callbacks should
+        only be present when either a read or write callback is also present,
+        so the exc callback happens instead of the respective read or write
+        callback.
+        """
+        
         self.readers[fileno] = read or self.readers.get(fileno)
         self.writers[fileno] = write or self.writers.get(fileno)
         self.excs[fileno] = exc or self.excs.get(fileno)
