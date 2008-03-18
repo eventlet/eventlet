@@ -187,13 +187,12 @@ def exc_after(seconds, exc):
 
 
 def get_default_hub():
-    if False:
-        try:
-            import eventlet.libeventhub
-        except ImportError:
-            pass
-        else:
-            return eventlet.libeventhub
+    try:
+        import eventlet.libeventhub
+    except ImportError:
+        pass
+    else:
+        return eventlet.libeventhub
     try:
         import eventlet.kqueuehub
     except ImportError:
