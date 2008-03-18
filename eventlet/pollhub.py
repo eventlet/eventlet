@@ -37,7 +37,7 @@ EXC_MASK = select.POLLERR | select.POLLHUP | select.POLLNVAL
 READ_MASK = select.POLLIN
 WRITE_MASK = select.POLLOUT
 
-class Hub(hub.Hub):
+class Hub(hub.BaseHub):
     def __init__(self, clock=time.time):
         super(Hub, self).__init__(clock)
         self.poll = select.poll()

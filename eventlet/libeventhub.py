@@ -34,6 +34,9 @@ from eventlet import hub
 
 import greenlet
 
+# XXX for debugging only
+#raise ImportError()
+
 try:
     # use rel if it's available
     import rel
@@ -45,7 +48,7 @@ except ImportError:
 import event
 
 
-class Hub(hub.Hub):
+class Hub(hub.BaseHub):
     SYSTEM_EXCEPTIONS = (KeyboardInterrupt, SystemExit)
     
     def __init__(self, clock=time.time):
@@ -68,36 +71,33 @@ class Hub(hub.Hub):
             evt = event.write(fileno, write, fileno)
             evt.add()
             self.writers[fileno] = evt, write
+            
+        if exc:
+            self.excs[fileno] = exc
         
     def remove_descriptor(self, fileno):
         for queue in (self.readers, self.writers):
             tpl = queue.pop(fileno, None)
             if tpl is not None:
                 tpl[0].delete()
-
-    def exc_descriptor(self, fileno):
-        for queue in (self.readers, self.writers):
-            tpl = queue.pop(fileno, None)
-            if tpl is not None:
-                evt, cb = tpl
-                evt.delete()
-                cb(fileno)
+        self.excs.pop(fileno, None)
         
     def signal_received(self, signal):
         self.interrupted = True
             
     def wait(self, seconds=None):
-        if self.interrupted:
-            raise KeyboardInterrupt()  
-        
         timer = event.timeout(seconds, lambda: None)
         timer.add()
 
         status = event.loop()
         if status == -1:
             raise RuntimeError("does this ever happen?")
-
+        
         timer.delete()
+        
+        if self.interrupted:
+            self.interrupted = False
+            raise KeyboardInterrupt() 
 
     def add_timer(self, timer):
         event.timeout(timer.seconds, timer).add()

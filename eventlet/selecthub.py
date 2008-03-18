@@ -31,7 +31,7 @@ from eventlet import hub
 
 import greenlet
 
-class Hub(hub.Hub):
+class Hub(hub.BaseHub):
     def wait(self, seconds=None):
         readers = self.readers
         writers = self.writers

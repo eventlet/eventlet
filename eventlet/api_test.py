@@ -32,8 +32,9 @@ def check_hub():
     api.sleep(0)
     api.sleep(0)
     hub = api.get_hub()
-    for dct in hub.readers, hub.writers, hub.excs:
-        assert not dct, repr(dct)
+    for nm in 'readers', 'writers', 'excs':
+        dct = getattr(hub, nm)
+        assert not dct, "hub.%s not empty: %s" % (nm, dct)
     # Stop the runloop
     api.get_hub().abort()
     api.sleep(0)
@@ -74,12 +75,11 @@ class TestApi(tests.TestCase):
         check_hub()
 
     def test_server(self):
+        connected = []
         server = api.tcp_listener(('0.0.0.0', 0))
         bound_port = server.getsockname()[1]
-        connected = []
 
         def accept_twice((conn, addr)):
-            print 'connected'
             connected.append(True)
             conn.close()
             if len(connected) == 2:

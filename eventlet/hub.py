@@ -33,7 +33,7 @@ import greenlet
 from eventlet import greenlib
 from eventlet.timer import Timer
 
-class Hub(object):
+class BaseHub(object):
     SYSTEM_EXCEPTIONS = (KeyboardInterrupt, SystemExit)
     
     def __init__(self, clock=time.time):
