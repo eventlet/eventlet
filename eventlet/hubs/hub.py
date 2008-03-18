@@ -203,12 +203,16 @@ class BaseHub(object):
     def add_timer(self, timer):
         scheduled_time = self.clock() + timer.seconds
         self._add_absolute_timer(scheduled_time, timer)
+        timer.greenlet = current_greenlet
+        self.track_timer(timer)
+        return scheduled_time
+    
+    def track_timer(self, timer):
         current_greenlet = greenlet.getcurrent()
         if current_greenlet not in self.timers_by_greenlet:
             self.timers_by_greenlet[current_greenlet] = {}
         self.timers_by_greenlet[current_greenlet][timer] = True
-        timer.greenlet = current_greenlet
-        return scheduled_time
+
 
     def prepare_timers(self):
         ins = bisect.insort_right
@@ -258,5 +262,5 @@ class BaseHub(object):
                 ## actually eventlet's silly way of specifying whether
                 ## a coroutine is "ready to run" or not.
                 timer.cancel()
-                print 'Runloop cancelling left-over timer %s' % timer
+                print 'Hub cancelling left-over timer %s' % timer
         del self.timers_by_greenlet[greenlet]

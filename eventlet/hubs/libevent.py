@@ -101,4 +101,5 @@ class Hub(hub.BaseHub):
 
     def add_timer(self, timer):
         event.timeout(timer.seconds, timer).add()
+        self.track_timer(timer)
 
