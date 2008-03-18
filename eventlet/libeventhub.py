@@ -34,6 +34,9 @@ from eventlet import hub
 
 import greenlet
 
+# XXX for debugging only
+#raise ImportError()
+
 try:
     # use rel if it's available
     import rel
@@ -68,20 +71,16 @@ class Hub(hub.BaseHub):
             evt = event.write(fileno, write, fileno)
             evt.add()
             self.writers[fileno] = evt, write
+            
+        if exc:
+            self.excs[fileno] = exc
         
     def remove_descriptor(self, fileno):
         for queue in (self.readers, self.writers):
             tpl = queue.pop(fileno, None)
             if tpl is not None:
                 tpl[0].delete()
-
-    def exc_descriptor(self, fileno):
-        for queue in (self.readers, self.writers):
-            tpl = queue.pop(fileno, None)
-            if tpl is not None:
-                evt, cb = tpl
-                evt.delete()
-                cb(fileno)
+        self.excs.pop(fileno, None)
         
     def signal_received(self, signal):
         self.interrupted = True
