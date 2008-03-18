@@ -86,17 +86,18 @@ class Hub(hub.BaseHub):
         self.interrupted = True
             
     def wait(self, seconds=None):
-        if self.interrupted:
-            raise KeyboardInterrupt()  
-        
         timer = event.timeout(seconds, lambda: None)
         timer.add()
 
         status = event.loop()
         if status == -1:
             raise RuntimeError("does this ever happen?")
-
+        
         timer.delete()
+        
+        if self.interrupted:
+            self.interrupted = False
+            raise KeyboardInterrupt() 
 
     def add_timer(self, timer):
         event.timeout(timer.seconds, timer).add()
