@@ -187,19 +187,28 @@ def exc_after(seconds, exc):
 
 
 def get_default_hub():
-    if False:
-        try:
-            import eventlet.libeventhub
-        except ImportError:
-            pass
-        else:
-            return eventlet.libeventhub
+    ## TODO some sort of plugin system?
+    try:
+        import eventlet.nginxhub
+    except ImportError:
+        pass
+    else:
+        return eventlet.nginxhub
+
+    try:
+        import eventlet.libeventhub
+    except ImportError:
+        pass
+    else:
+        return eventlet.libeventhub
+
     try:
         import eventlet.kqueuehub
     except ImportError:
         pass
     else:
         return eventlet.kqueuehub
+
     import select
     if hasattr(select, 'poll'):
         import eventlet.pollhub
@@ -207,6 +216,7 @@ def get_default_hub():
     else:
         import eventlet.selecthub
         return eventlet.selecthub
+
 
 def use_hub(mod=None):
     if mod is None:
