@@ -1,5 +1,5 @@
 """\
-@file twistedsupport.py
+@file support.twisted.py
 @author Donovan Preston
 
 Copyright (c) 2005-2006, Donovan Preston
@@ -124,7 +124,7 @@ class EventletReactor(posixbase.PosixReactorBase):
 
 def emulate():
     if not _working:
-        raise RuntimeError, "Can't use twistedsupport because zope.interface is not installed."
+        raise RuntimeError, "Can't use support.twisted because zope.interface is not installed."
     reactor = EventletReactor()
     from twisted.internet.main import installReactor
     installReactor(reactor)

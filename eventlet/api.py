@@ -34,13 +34,13 @@ try:
     import greenlet
 except ImportError:
     try:
-        import pylibsupport
-        pylibsupport.emulate()
+        import support.pylib
+        support.pylib.emulate()
         greenlet = sys.modules['greenlet']
     except ImportError:
         try:
-            import stacklesssupport
-            stacklesssupport.emulate()
+            import support.stackless
+            support.stackless.emulate()
             greenlet = sys.modules['greenlet']
         except ImportError:
             raise ImportError("Unable to find an implementation of greenlet.")

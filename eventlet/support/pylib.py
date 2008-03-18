@@ -1,5 +1,5 @@
 """\
-@file pylibsupport.py
+@file support.pylib.py
 @author Donovan Preston
 
 Copyright (c) 2005-2006, Donovan Preston
