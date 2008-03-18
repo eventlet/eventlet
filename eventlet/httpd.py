@@ -412,11 +412,16 @@ class Timeout(RuntimeError):
 
 class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
     def __init__(self, request, client_address, server):
-        self.socket = self.request = self.rfile = self.wfile = request
+        self.rfile = self.wfile = request.makefile()
+        request.close()  # close this now so that when rfile and wfile are closed, the socket gets closed
         self.client_address = client_address
         self.server = server
         self.set_response_code(None, 200, None)
         self.protocol_version = server.max_http_version
+
+    def close(self):
+        self.rfile.close()
+        self.wfile.close()
 
     def set_response_code(self, request, code, message):
         self._code = code
@@ -526,9 +531,9 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 if not request.response_written():
                     request.response(500)
                     request.write('Internal Server Error')
-                self.socket.close()
+                self.close()
                 raise e # can't do a plain raise since exc_info might have been cleared
-        self.socket.close()
+        self.close()
 
 
 class Server(BaseHTTPServer.HTTPServer):

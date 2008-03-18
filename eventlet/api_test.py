@@ -49,15 +49,14 @@ class TestApi(tests.TestCase):
 
         check_hub()
 
-    def dont_test_connect_tcp(self):
-        """This test is broken. Please name it test_connect_tcp and fix
-        the bug (or the test) so it passes.
-        """
+    def test_connect_tcp(self):
         def accept_once(listenfd):
             try:
                 conn, addr = listenfd.accept()
-                conn.write('hello\n')
+                fd = conn.makefile()
                 conn.close()
+                fd.write('hello\n')
+                fd.close()
             finally:
                 listenfd.close()
 
@@ -65,10 +64,12 @@ class TestApi(tests.TestCase):
         api.spawn(accept_once, server)
 
         client = api.connect_tcp(('127.0.0.1', server.getsockname()[1]))
-        assert client.readline() == 'hello\n'
-
-        assert client.read() == ''
+        fd = client.makefile()
         client.close()
+        assert fd.readline() == 'hello\n'
+
+        assert fd.read() == ''
+        fd.close()
 
         check_hub()
 
@@ -100,7 +101,7 @@ class TestApi(tests.TestCase):
         bound_port = server.getsockname()[1]
 
         try:
-            desc = wrappedfd.wrapped_fd(util.tcp_socket())
+            desc = wrappedfd.GreenSocket(util.tcp_socket())
             api.trampoline(desc, read=True, write=True, timeout=0.1)
         except api.TimeoutError:
             pass # test passed
@@ -119,7 +120,7 @@ class TestApi(tests.TestCase):
         def go():
             client = util.tcp_socket()
 
-            desc = wrappedfd.wrapped_fd(client)
+            desc = wrappedfd.GreenSocket(client)
             desc.connect(('127.0.0.1', bound_port))
             try:
                 api.trampoline(desc, read=True, write=True, timeout=0.1)

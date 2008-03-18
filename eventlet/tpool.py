@@ -28,7 +28,7 @@ from eventlet.api import trampoline, get_hub
 
 _rpipe, _wpipe = os.pipe()
 _rfile = os.fdopen(_rpipe,"r",0)
-_wrap_rfile = wrappedfd.wrapped_file(_rfile)
+_wrap_rfile = wrappedfd.GreenPipe(_rfile)
 util.set_nonblocking(_rfile)
 
 def _signal_t2e():

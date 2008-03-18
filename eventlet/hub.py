@@ -58,9 +58,9 @@ class Hub(object):
         }
 
     def add_descriptor(self, fileno, read=None, write=None, exc=None):
-        self.readers[fileno] = read
-        self.writers[fileno] = write
-        self.excs[fileno] = exc
+        self.readers[fileno] = read or self.readers.get(fileno)
+        self.writers[fileno] = write or self.writers.get(fileno)
+        self.excs[fileno] = exc or self.excs.get(fileno)
         
     def remove_descriptor(self, fileno):
         self.readers.pop(fileno, None)

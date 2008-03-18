@@ -69,7 +69,7 @@ def tcp_listener(address):
     each incoming connection.
     """
     from eventlet import wrappedfd, util
-    socket = wrappedfd.wrapped_fd(util.tcp_socket())
+    socket = wrappedfd.GreenSocket(util.tcp_socket())
     util.socket_bind_and_listen(socket, address)
     return socket
 
@@ -95,7 +95,7 @@ def connect_tcp(address):
     Create a TCP connection to address (host, port) and return the socket.
     """
     from eventlet import wrappedfd, util
-    desc = wrappedfd.wrapped_fd(util.tcp_socket())
+    desc = wrappedfd.GreenSocket(util.tcp_socket())
     desc.connect(address)
     return desc
 
@@ -187,12 +187,13 @@ def exc_after(seconds, exc):
 
 
 def get_default_hub():
-    try:
-        import eventlet.libeventhub
-    except ImportError:
-        pass
-    else:
-        return eventlet.libeventhub
+    if False:
+        try:
+            import eventlet.libeventhub
+        except ImportError:
+            pass
+        else:
+            return eventlet.libeventhub
     try:
         import eventlet.kqueuehub
     except ImportError:

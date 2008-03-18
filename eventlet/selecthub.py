@@ -1,6 +1,5 @@
 """\
 @file selecthub.py
-@author Bob Ippolito
 
 Copyright (c) 2005-2006, Bob Ippolito
 Copyright (c) 2007, Linden Research, Inc.
@@ -49,9 +48,11 @@ class Hub(hub.Hub):
             raise
         SYSTEM_EXCEPTIONS = self.SYSTEM_EXCEPTIONS
         for observed, events in ((readers, r), (writers, w)):
+            #print "events", r, " ", w
             for fileno in events:
                 try:
                     cb = observed.get(fileno)
+                    #print "cb", cb, " ", observed
                     if cb is not None:
                         cb(fileno)
                 except SYSTEM_EXCEPTIONS:

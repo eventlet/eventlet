@@ -27,7 +27,6 @@ import os
 import fcntl
 import socket
 import errno
-from errno import EWOULDBLOCK, EAGAIN
 
 try:
     from OpenSSL import SSL
@@ -63,7 +62,7 @@ def g_log(*args):
         ident = 'greenlet-%d' % (g_id,)
     print >>sys.stderr, '[%s] %s' % (ident, ' '.join(map(str, args)))
 
-CONNECT_ERR = (errno.EINPROGRESS, errno.EALREADY, EWOULDBLOCK)
+CONNECT_ERR = (errno.EINPROGRESS, errno.EALREADY, errno.EWOULDBLOCK)
 CONNECT_SUCCESS = (0, errno.EISCONN)
 def socket_connect(descriptor, address):
     err = descriptor.connect_ex(address)
@@ -98,7 +97,7 @@ def wrap_ssl(sock, certificate=None, private_key=None):
     ## TODO only do this on client sockets? how?
     connection = SSL.Connection(context, sock)
     connection.set_connect_state()
-    return wrappedfd.wrapped_fd(connection)
+    return wrappedfd.GreenSocket(connection)
 
 
 def wrap_socket_with_coroutine_socket():
@@ -106,7 +105,7 @@ def wrap_socket_with_coroutine_socket():
         from eventlet import wrappedfd
         s = __original_socket__(*args, **kw)
         set_nonblocking(s)
-        return wrappedfd.wrapped_fd(s)
+        return wrappedfd.GreenSocket(s)
     socket.socket = new_socket
 
     socket.ssl = wrap_ssl
@@ -122,7 +121,7 @@ def socket_accept(descriptor):
     try:
         return descriptor.accept()
     except socket.error, e:
-        if e[0] == EWOULDBLOCK:
+        if e[0] == errno.EWOULDBLOCK:
             return None
         raise
 
@@ -130,7 +129,7 @@ def socket_send(descriptor, data):
     try:
         return descriptor.send(data)
     except socket.error, e:
-        if e[0] == EWOULDBLOCK:
+        if e[0] == errno.EWOULDBLOCK:
             return 0
         raise
     except SSL.WantWriteError:
@@ -145,7 +144,7 @@ def socket_recv(descriptor, buflen):
     try:
         return descriptor.recv(buflen)
     except socket.error, e:
-        if e[0] == EWOULDBLOCK:
+        if e[0] == errno.EWOULDBLOCK:
             return None
         if e[0] in SOCKET_CLOSED:
             return ''
@@ -158,34 +157,6 @@ def socket_recv(descriptor, buflen):
         if e[0] == -1 or e[0] > 0:
             raise socket.error(errno.ECONNRESET, errno.errorcode[errno.ECONNRESET])
         raise
-
-
-def file_recv(fd, buflen):
-    try:
-        return fd.read(buflen)
-    except IOError, e:
-        if e[0] == EAGAIN:
-            return None
-        return ''
-    except socket.error, e:
-        if e[0] == errno.EPIPE:
-            return ''
-        raise
-
-
-def file_send(fd, data):
-    try:
-        fd.write(data)
-        fd.flush()
-        return len(data)
-    except IOError, e:
-        if e[0] == EAGAIN:
-            return 0
-    except ValueError, e:
-        written = 0
-    except socket.error, e:
-        if e[0] == errno.EPIPE:
-            written = 0
 
 
 def set_reuse_addr(descriptor):

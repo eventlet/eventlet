@@ -68,10 +68,11 @@ class ConnectionClosed(Exception):
 
 
 def read_http(sock):
-    response_line = sock.readline()
+    fd = sock.makefile()
+    response_line = fd.readline()
     if not response_line:
         raise ConnectionClosed
-    raw_headers = sock.readuntil('\r\n\r\n').strip()
+    raw_headers = fd.readuntil('\r\n\r\n').strip()
     #print "R", response_line, raw_headers
     headers = dict()
     for x in raw_headers.split('\r\n'):
@@ -81,7 +82,7 @@ def read_http(sock):
 
     if CONTENT_LENGTH in headers:
         num = int(headers[CONTENT_LENGTH])
-        body = sock.read(num)
+        body = fd.read(num)
         #print body
     else:
         body = None
@@ -103,10 +104,11 @@ class TestHttpd(tests.TestCase):
     def test_001_server(self):
         sock = api.connect_tcp(
             ('127.0.0.1', 12346))
-
-        sock.write('GET / HTTP/1.0\r\nHost: localhost\r\n\r\n')
-        result = sock.read()
-        sock.close()
+        
+        fd = sock.makefile()
+        fd.write('GET / HTTP/1.0\r\nHost: localhost\r\n\r\n')
+        result = fd.read()
+        fd.close()
         ## The server responds with the maximum version it supports
         self.assert_(result.startswith('HTTP'), result)
         self.assert_(result.endswith('hello world'))
@@ -114,35 +116,38 @@ class TestHttpd(tests.TestCase):
     def test_002_keepalive(self):
         sock = api.connect_tcp(
             ('127.0.0.1', 12346))
-
-        sock.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+            
+        fd = sock.makefile()
+        fd.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
         read_http(sock)
-        sock.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+        fd.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
         read_http(sock)
-        sock.close()
+        fd.close()
 
     def test_003_passing_non_int_to_read(self):
         # This should go in test_wrappedfd
         sock = api.connect_tcp(
             ('127.0.0.1', 12346))
-
-        sock.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+        
+        fd = sock.makefile()
+        fd.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
         cancel = api.exc_after(1, RuntimeError)
-        self.assertRaises(TypeError, sock.read, "This shouldn't work")
+        self.assertRaises(TypeError, fd.read, "This shouldn't work")
         cancel.cancel()
-        sock.close()
+        fd.close()
 
     def test_004_close_keepalive(self):
         sock = api.connect_tcp(
             ('127.0.0.1', 12346))
 
-        sock.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+        fd = sock.makefile()
+        fd.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
         read_http(sock)
-        sock.write('GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
+        fd.write('GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
         read_http(sock)
-        sock.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+        fd.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
         self.assertRaises(ConnectionClosed, read_http, sock)
-        sock.close()
+        fd.close()
 
     def skip_test_005_run_apachebench(self):
         url = 'http://localhost:12346/'
@@ -159,11 +164,12 @@ class TestHttpd(tests.TestCase):
             path_parts.append('path')
         path = '/'.join(path_parts)
         request = 'GET /%s HTTP/1.0\r\nHost: localhost\r\n\r\n' % path
-        sock.write(request)
-        result = sock.readline()
+        fd = sock.makefile()
+        fd.write(request)
+        result = fd.readline()
         status = result.split(' ')[1]
         self.assertEqual(status, '414')
-        sock.close()
+        fd.close()
         
     def test_007_get_arg(self):
         # define a new handler that does a get_arg as well as a read_body
@@ -181,26 +187,28 @@ class TestHttpd(tests.TestCase):
             'Content-Length: 3', 
             '',
             'a=a'))
-        sock.write(request)
+        fd = sock.makefile()
+        fd.write(request)
         
         # send some junk after the actual request
-        sock.write('01234567890123456789')
+        fd.write('01234567890123456789')
         reqline, headers, body = read_http(sock)
         self.assertEqual(body, 'a is a, body is a=a')
-        sock.close()
+        fd.close()
         
     def test_008_correctresponse(self):
         sock = api.connect_tcp(
             ('127.0.0.1', 12346))
         
-        sock.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+        fd = sock.makefile()
+        fd.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
         response_line_200,_,_ = read_http(sock)
-        sock.write('GET /notexist HTTP/1.1\r\nHost: localhost\r\n\r\n')
+        fd.write('GET /notexist HTTP/1.1\r\nHost: localhost\r\n\r\n')
         response_line_404,_,_ = read_http(sock)
-        sock.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+        fd.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
         response_line_test,_,_ = read_http(sock)
         self.assertEqual(response_line_200,response_line_test)
-        sock.close()
+        fd.close()
 
 
 if __name__ == '__main__':

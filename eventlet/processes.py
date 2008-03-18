@@ -55,9 +55,9 @@ class Process(object):
         child_stdin = self.popen4.tochild
         util.set_nonblocking(child_stdout_stderr)
         util.set_nonblocking(child_stdin)
-        self.child_stdout_stderr = wrappedfd.wrapped_file(child_stdout_stderr)
+        self.child_stdout_stderr = wrappedfd.GreenPipe(child_stdout_stderr)
         self.child_stdout_stderr.newlines = '\n'  # the default is \r\n, which aren't sent over pipes
-        self.child_stdin = wrappedfd.wrapped_file(child_stdin)
+        self.child_stdin = wrappedfd.GreenPipe(child_stdin)
         self.child_stdin.newlines = '\n'
 
         self.sendall = self.child_stdin.write
@@ -86,8 +86,9 @@ class Process(object):
         return result
 
     def write(self, stuff):
-        written = self.child_stdin.send(stuff)
+        written = 0
         try:
+            written = self.child_stdin.write(stuff)
             self.child_stdin.flush()
         except ValueError, e:
             ## File was closed
