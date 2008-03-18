@@ -45,7 +45,7 @@ except ImportError:
 import event
 
 
-class Hub(hub.Hub):
+class Hub(hub.BaseHub):
     SYSTEM_EXCEPTIONS = (KeyboardInterrupt, SystemExit)
     
     def __init__(self, clock=time.time):
