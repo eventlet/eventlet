@@ -4,6 +4,8 @@ import sys
 from eventlet import api
 from eventlet import httpc
 
+from eventlet.hubs import nginx
+
 
 def real_application(env, start_response):
     #result = httpc.get('http://127.0.0.1:8081/')
@@ -22,6 +24,9 @@ def wrap_application(master, env, start_response):
 
 def application(env, start_response):
     hub = api.get_hub()
+
+    if not isinstance(hub, nginx.Hub):
+        api.use_hub(nginx)
 
     hub.poll_register = env['ngx.poll_register']
     hub.poll_unregister = env['ngx.poll_unregister']

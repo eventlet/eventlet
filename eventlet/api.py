@@ -186,14 +186,7 @@ def exc_after(seconds, exc):
     return call_after(seconds, switch, getcurrent(), None, exc)
 
 
-def get_default_hub():
-    ## TODO some sort of plugin system?
-    try:
-        import eventlet.hubs.nginx
-        return eventlet.hubs.nginx
-    except ImportError:
-        pass
-        
+def get_default_hub():        
     try:
         import eventlet.hubs.libevent
         return eventlet.hubs.libevent
