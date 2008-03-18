@@ -1,5 +1,5 @@
 """\
-@file wrappedfd_test.py
+@file greenio_test.py
 
 Copyright (c) 2006-2007, Linden Research, Inc.
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,12 +22,12 @@ THE SOFTWARE.
 """
 
 from eventlet import tests
-from eventlet import api, wrappedfd, util
+from eventlet import api, greenio, util
 import socket
 
 # TODO try and reuse unit tests from within Python itself
 
-class TestWrappedFd(tests.TestCase):
+class TestGreenIo(tests.TestCase):
     def test_close_with_makefile(self):
         def accept_close_early(listener):
             # verify that the makefile and the socket are truly independent
@@ -100,6 +100,6 @@ class TestWrappedFd(tests.TestCase):
         assert fd.read() == ''
         
         timer.cancel()
-        
+                
 if __name__ == '__main__':
     tests.main()

@@ -68,8 +68,8 @@ def tcp_listener(address):
     which accepts connections forever and spawns greenlets for
     each incoming connection.
     """
-    from eventlet import wrappedfd, util
-    socket = wrappedfd.GreenSocket(util.tcp_socket())
+    from eventlet import greenio, util
+    socket = greenio.GreenSocket(util.tcp_socket())
     util.socket_bind_and_listen(socket, address)
     return socket
 
@@ -94,8 +94,8 @@ def connect_tcp(address):
     """
     Create a TCP connection to address (host, port) and return the socket.
     """
-    from eventlet import wrappedfd, util
-    desc = wrappedfd.GreenSocket(util.tcp_socket())
+    from eventlet import greenio, util
+    desc = greenio.GreenSocket(util.tcp_socket())
     desc.connect(address)
     return desc
 
@@ -186,14 +186,7 @@ def exc_after(seconds, exc):
     return call_after(seconds, switch, getcurrent(), None, exc)
 
 
-def get_default_hub():
-    ## TODO some sort of plugin system?
-    try:
-        import eventlet.hubs.nginx
-        return eventlet.hubs.nginx
-    except ImportError:
-        pass
-        
+def get_default_hub():        
     try:
         import eventlet.hubs.libevent
         return eventlet.hubs.libevent

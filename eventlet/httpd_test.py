@@ -125,7 +125,7 @@ class TestHttpd(tests.TestCase):
         fd.close()
 
     def test_003_passing_non_int_to_read(self):
-        # This should go in test_wrappedfd
+        # This should go in greenio_test
         sock = api.connect_tcp(
             ('127.0.0.1', 12346))
         

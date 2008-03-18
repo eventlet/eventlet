@@ -38,14 +38,14 @@ import greenlet
 #raise ImportError()
 
 try:
-    # use rel if it's available
+    import event
+except ImportError:
+    # use rel if pyevent isn't available
+    # (rel prints out some annoying notice upon initialization)
     import rel
     rel.initialize()
     rel.override()
-except ImportError:
-    pass
-
-import event
+    import event
 
 
 class Hub(hub.BaseHub):
@@ -101,4 +101,5 @@ class Hub(hub.BaseHub):
 
     def add_timer(self, timer):
         event.timeout(timer.seconds, timer).add()
+        self.track_timer(timer)
 

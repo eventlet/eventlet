@@ -23,12 +23,12 @@ import Queue
 from sys import stdout
 from Queue import Empty, Queue
 
-from eventlet import api, coros, httpc, httpd, util, wrappedfd
+from eventlet import api, coros, httpc, httpd, util, greenio
 from eventlet.api import trampoline, get_hub
 
 _rpipe, _wpipe = os.pipe()
 _rfile = os.fdopen(_rpipe,"r",0)
-_wrap_rfile = wrappedfd.GreenPipe(_rfile)
+_wrap_rfile = greenio.GreenPipe(_rfile)
 util.set_nonblocking(_rfile)
 
 def _signal_t2e():
