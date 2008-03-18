@@ -111,7 +111,7 @@ class TestDyingProcessesLeavePool(tests.TestCase):
 class TestProcessLivesForever(tests.TestCase):
     mode = 'static'
     def setUp(self):
-        self.pool = processes.ProcessPool('python', ['-c', 'print "y"; print "y"'], max_size=1)
+        self.pool = processes.ProcessPool('python', ['-c', 'print "y"; import time; time.sleep(0.1); print "y"'], max_size=1)
 
     def test_reading_twice_from_same_process(self):
         proc = self.pool.get()

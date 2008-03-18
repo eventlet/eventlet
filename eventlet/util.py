@@ -62,15 +62,6 @@ def g_log(*args):
         ident = 'greenlet-%d' % (g_id,)
     print >>sys.stderr, '[%s] %s' % (ident, ' '.join(map(str, args)))
 
-CONNECT_ERR = (errno.EINPROGRESS, errno.EALREADY, errno.EWOULDBLOCK)
-CONNECT_SUCCESS = (0, errno.EISCONN)
-def socket_connect(descriptor, address):
-    err = descriptor.connect_ex(address)
-    if err in CONNECT_ERR:
-        return None
-    if err not in CONNECT_SUCCESS:
-        raise socket.error(err, errno.errorcode[err])
-    return descriptor
 
 __original_socket__ = socket.socket
 
@@ -116,47 +107,6 @@ def socket_bind_and_listen(descriptor, addr=('', 0), backlog=50):
     descriptor.bind(addr)
     descriptor.listen(backlog)
     return descriptor
-    
-def socket_accept(descriptor):
-    try:
-        return descriptor.accept()
-    except socket.error, e:
-        if e[0] == errno.EWOULDBLOCK:
-            return None
-        raise
-
-def socket_send(descriptor, data):
-    try:
-        return descriptor.send(data)
-    except socket.error, e:
-        if e[0] == errno.EWOULDBLOCK:
-            return 0
-        raise
-    except SSL.WantWriteError:
-        return 0
-    except SSL.WantReadError:
-        return 0
-
-
-# winsock sometimes throws ENOTCONN
-SOCKET_CLOSED = (errno.ECONNRESET, errno.ENOTCONN, errno.ESHUTDOWN)
-def socket_recv(descriptor, buflen):
-    try:
-        return descriptor.recv(buflen)
-    except socket.error, e:
-        if e[0] == errno.EWOULDBLOCK:
-            return None
-        if e[0] in SOCKET_CLOSED:
-            return ''
-        raise
-    except SSL.WantReadError:
-        return None
-    except SSL.ZeroReturnError:
-        return ''
-    except SSL.SysCallError, e:
-        if e[0] == -1 or e[0] > 0:
-            raise socket.error(errno.ECONNRESET, errno.errorcode[errno.ECONNRESET])
-        raise
 
 
 def set_reuse_addr(descriptor):
