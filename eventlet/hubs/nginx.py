@@ -1,5 +1,5 @@
 """\
-@file nginxhub.py
+@file nginx.py
 @author Donovan Preston
 
 Copyright (c) 2008, Linden Research, Inc.
@@ -24,14 +24,14 @@ THE SOFTWARE.
 """
 
 from eventlet import greenlib
-from eventlet import hub
+from eventlet.hubs import hub
 
 
 WSGI_POLLIN = 0x01
 WSGI_POLLOUT = 0x04
 
 
-class Hub(hub.Hub):
+class Hub(hub.BaseHub):
     def add_descriptor(self, fileno, read=None, write=None, exc=None):
         super(Hub, self).add_descriptor(fileno, read, write, exc)
 

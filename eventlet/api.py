@@ -189,33 +189,30 @@ def exc_after(seconds, exc):
 def get_default_hub():
     ## TODO some sort of plugin system?
     try:
-        import eventlet.nginxhub
+        import eventlet.hubs.nginx
+        return eventlet.hubs.nginx
     except ImportError:
         pass
-    else:
-        return eventlet.nginxhub
+        
+    try:
+        import eventlet.hubs.libevent
+        return eventlet.hubs.libevent
+    except ImportError:
+        pass
 
     try:
-        import eventlet.libeventhub
+        import eventlet.hubs.kqueue
+        return eventlet.hubs.kqueue
     except ImportError:
         pass
-    else:
-        return eventlet.libeventhub
-
-    try:
-        import eventlet.kqueuehub
-    except ImportError:
-        pass
-    else:
-        return eventlet.kqueuehub
 
     import select
     if hasattr(select, 'poll'):
-        import eventlet.pollhub
-        return eventlet.pollhub
+        import eventlet.hubs.poll
+        return eventlet.hubs.poll
     else:
-        import eventlet.selecthub
-        return eventlet.selecthub
+        import eventlet.hubs.select
+        return eventlet.hubs.select
 
 
 def use_hub(mod=None):

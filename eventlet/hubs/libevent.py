@@ -1,5 +1,5 @@
 """\
-@file libeventhub.py
+@file libevent.py
 
 Copyright (c) 2007, Linden Research, Inc.
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -30,7 +30,7 @@ import time
 
 from eventlet import greenlib
 from eventlet.timer import Timer
-from eventlet import hub
+from eventlet.hubs import hub
 
 import greenlet
 

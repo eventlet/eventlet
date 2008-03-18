@@ -1,5 +1,5 @@
 """\
-@file pollhub.py
+@file poll.py
 @author Bob Ippolito
 
 Copyright (c) 2005-2006, Bob Ippolito
@@ -31,7 +31,7 @@ import traceback
 from time import sleep
 
 from eventlet import greenlib
-from eventlet import hub
+from eventlet.hubs import hub
 
 EXC_MASK = select.POLLERR | select.POLLHUP | select.POLLNVAL
 READ_MASK = select.POLLIN
