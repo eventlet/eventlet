@@ -23,7 +23,7 @@ THE SOFTWARE.
 """
 
 from eventlet import tests
-from eventlet import api, wrappedfd, util
+from eventlet import api, greenio, util
 import socket
 
 
@@ -101,7 +101,7 @@ class TestApi(tests.TestCase):
         bound_port = server.getsockname()[1]
 
         try:
-            desc = wrappedfd.GreenSocket(util.tcp_socket())
+            desc = greenio.GreenSocket(util.tcp_socket())
             api.trampoline(desc, read=True, write=True, timeout=0.1)
         except api.TimeoutError:
             pass # test passed
@@ -120,7 +120,7 @@ class TestApi(tests.TestCase):
         def go():
             client = util.tcp_socket()
 
-            desc = wrappedfd.GreenSocket(client)
+            desc = greenio.GreenSocket(client)
             desc.connect(('127.0.0.1', bound_port))
             try:
                 api.trampoline(desc, read=True, write=True, timeout=0.1)

@@ -76,7 +76,7 @@ __original_ssl__ = socket.ssl
 
 def wrap_ssl(sock, certificate=None, private_key=None):
     from OpenSSL import SSL
-    from eventlet import wrappedfd, util
+    from eventlet import greenio, util
     context = SSL.Context(SSL.SSLv23_METHOD)
     print certificate, private_key
     if certificate is not None:
@@ -88,15 +88,15 @@ def wrap_ssl(sock, certificate=None, private_key=None):
     ## TODO only do this on client sockets? how?
     connection = SSL.Connection(context, sock)
     connection.set_connect_state()
-    return wrappedfd.GreenSocket(connection)
+    return greenio.GreenSocket(connection)
 
 
 def wrap_socket_with_coroutine_socket():
     def new_socket(*args, **kw):
-        from eventlet import wrappedfd
+        from eventlet import greenio
         s = __original_socket__(*args, **kw)
         set_nonblocking(s)
-        return wrappedfd.GreenSocket(s)
+        return greenio.GreenSocket(s)
     socket.socket = new_socket
 
     socket.ssl = wrap_ssl

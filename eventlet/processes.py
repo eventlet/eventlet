@@ -28,7 +28,7 @@ import signal
 
 
 from eventlet import util, pools
-from eventlet import wrappedfd
+from eventlet import greenio
 
 class DeadProcess(RuntimeError):
     pass
@@ -55,9 +55,9 @@ class Process(object):
         child_stdin = self.popen4.tochild
         util.set_nonblocking(child_stdout_stderr)
         util.set_nonblocking(child_stdin)
-        self.child_stdout_stderr = wrappedfd.GreenPipe(child_stdout_stderr)
+        self.child_stdout_stderr = greenio.GreenPipe(child_stdout_stderr)
         self.child_stdout_stderr.newlines = '\n'  # the default is \r\n, which aren't sent over pipes
-        self.child_stdin = wrappedfd.GreenPipe(child_stdin)
+        self.child_stdin = greenio.GreenPipe(child_stdin)
         self.child_stdin.newlines = '\n'
 
         self.sendall = self.child_stdin.write
