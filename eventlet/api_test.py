@@ -93,10 +93,7 @@ class TestApi(tests.TestCase):
 
         check_hub()
 
-    def dont_test_trampoline_timeout(self):
-        """This test is broken. Please change it's name to test_trampoline_timeout,
-        and fix the bug (or fix the test)
-        """
+    def test_trampoline_timeout(self):
         server = api.tcp_listener(('0.0.0.0', 0))
         bound_port = server.getsockname()[1]
 
