@@ -50,9 +50,7 @@ except ImportError:
 import event
 
 
-class Hub(hub.BaseHub):
-    SYSTEM_EXCEPTIONS = (KeyboardInterrupt, SystemExit)
-    
+class Hub(hub.BaseHub):    
     def __init__(self, clock=time.time):
         super(Hub, self).__init__(clock)
         self.interrupted = False
@@ -83,18 +81,20 @@ class Hub(hub.BaseHub):
                 tpl[0].delete()
         self.excs.pop(fileno, None)
         
+    def abort(self):
+        super(Hub, self).abort()
+        event.abort()
+        
     def signal_received(self, signal):
-        # can only set this flag here because the pyevent callback mechanism
-        # swallows exceptions raised here, so we have to raise in the 'main'
-        # greenlet to kill the program
+        # can't do more than set this flag here because the pyevent callback
+        # mechanism swallows exceptions raised here, so we have to raise in 
+        # the 'main' greenlet (in wait()) to kill the program
         self.interrupted = True
             
     def wait(self, seconds=None):
         # this timeout will cause us to return from the dispatch() call
         # when we want to
-        def abc():
-            pass
-        timer = event.timeout(seconds, abc)
+        timer = event.timeout(seconds, lambda: None)
         timer.add()
 
         status = event.dispatch()
@@ -103,12 +103,13 @@ class Hub(hub.BaseHub):
                 
         timer.delete()
         
+        # raise any signals that deserve raising
         if self.interrupted:
             self.interrupted = False
             raise KeyboardInterrupt() 
 
     def add_timer(self, timer):
-        # eventtimer is the pyevent object representing the timer
+        # store the pyevent timer object so that we can cancel later
         eventtimer = event.timeout(timer.seconds, timer)
         timer.impltimer = eventtimer
         eventtimer.add()
