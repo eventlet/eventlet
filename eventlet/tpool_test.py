@@ -39,13 +39,16 @@ class yadda(object):
     def foo(self,when,n=None):
         assert(n is not None)
         prnt("foo: %s, %s" % (when,n))
-        time.sleep(r.random())
+        time.sleep(r.random()/20.0)
         return n
 
 def sender_loop(pfx):
     n = 0
     obj = tpool.Proxy(yadda())
     while n < 10:
+        if not (n % 5):
+            stdout.write('.')
+            stdout.flush()
         api.sleep(0)
         now = time.time()
         prnt("%s: send (%s,%s)" % (pfx,now,n))
