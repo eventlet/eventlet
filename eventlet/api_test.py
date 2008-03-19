@@ -133,10 +133,7 @@ class TestApi(tests.TestCase):
 
         check_hub()
 
-    def dont_test_explicit_hub(self):
-        """This test is broken. please change it's name to test_explicit_hub
-        and make it pass (or fix the test)
-        """
+    def test_explicit_hub(self):
         api.use_hub(Foo)
         assert isinstance(api.get_hub(), Foo), api.get_hub()
 
