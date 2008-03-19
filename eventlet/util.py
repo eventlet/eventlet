@@ -90,8 +90,12 @@ def wrap_ssl(sock, certificate=None, private_key=None):
     connection.set_connect_state()
     return greenio.GreenSocket(connection)
 
-
+socket_already_wrapped = False
 def wrap_socket_with_coroutine_socket():
+    global socket_already_wrapped
+    if socket_already_wrapped:
+        return
+
     def new_socket(*args, **kw):
         from eventlet import greenio
         s = __original_socket__(*args, **kw)
@@ -100,6 +104,8 @@ def wrap_socket_with_coroutine_socket():
     socket.socket = new_socket
 
     socket.ssl = wrap_ssl
+    
+    socket_already_wrapped = True
 
 
 def socket_bind_and_listen(descriptor, addr=('', 0), backlog=50):

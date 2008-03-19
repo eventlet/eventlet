@@ -237,19 +237,13 @@ def get_default_hub():
     except ImportError:
         pass
 
-    try:
-        import eventlet.hubs.kqueue
-        return eventlet.hubs.kqueue
-    except ImportError:
-        pass
-
     import select
     if hasattr(select, 'poll'):
         import eventlet.hubs.poll
         return eventlet.hubs.poll
     else:
-        import eventlet.hubs.select
-        return eventlet.hubs.select
+        import eventlet.hubs.selecthub
+        return eventlet.hubs.selecthub
 
 
 def use_hub(mod=None):

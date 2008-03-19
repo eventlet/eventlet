@@ -22,6 +22,7 @@ THE SOFTWARE.
 """
 
 import bisect
+import signal
 import sys
 import socket
 import errno
@@ -38,14 +39,15 @@ import greenlet
 #raise ImportError()
 
 try:
-    import event
-except ImportError:
-    # use rel if pyevent isn't available
-    # (rel prints out some annoying notice upon initialization)
+    # use rel if available
     import rel
     rel.initialize()
     rel.override()
-    import event
+except ImportError:
+    # don't have rel, but might still have libevent
+    pass
+    
+import event
 
 
 class Hub(hub.BaseHub):
@@ -56,9 +58,8 @@ class Hub(hub.BaseHub):
         self.interrupted = False
         event.init()
         
-        # catch SIGINT
-        signal = event.signal(2, self.signal_received, 2)
-        signal.add()
+        sig = event.signal(signal.SIGINT, self.signal_received, signal.SIGINT)
+        sig.add()
 
 
     def add_descriptor(self, fileno, read=None, write=None, exc=None):
@@ -83,16 +84,23 @@ class Hub(hub.BaseHub):
         self.excs.pop(fileno, None)
         
     def signal_received(self, signal):
+        # can only set this flag here because the pyevent callback mechanism
+        # swallows exceptions raised here, so we have to raise in the 'main'
+        # greenlet to kill the program
         self.interrupted = True
             
     def wait(self, seconds=None):
-        timer = event.timeout(seconds, lambda: None)
+        # this timeout will cause us to return from the dispatch() call
+        # when we want to
+        def abc():
+            pass
+        timer = event.timeout(seconds, abc)
         timer.add()
 
-        status = event.loop()
-        if status == -1:
-            raise RuntimeError("does this ever happen?")
-        
+        status = event.dispatch()
+        # we are explicitly ignoring the status because in our experience it's
+        # harmless and there's nothing meaningful we could do with it anyway
+                
         timer.delete()
         
         if self.interrupted:
@@ -100,6 +108,16 @@ class Hub(hub.BaseHub):
             raise KeyboardInterrupt() 
 
     def add_timer(self, timer):
-        event.timeout(timer.seconds, timer).add()
+        # eventtimer is the pyevent object representing the timer
+        eventtimer = event.timeout(timer.seconds, timer)
+        timer.impltimer = eventtimer
+        eventtimer.add()
         self.track_timer(timer)
+        
+    def timer_canceled(self, timer):
+        """ Cancels the underlying libevent timer. """
+        try:
+            timer.impltimer.delete()
+        except AttributeError:
+            pass
 
