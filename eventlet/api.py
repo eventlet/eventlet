@@ -50,6 +50,7 @@ from eventlet import greenlib, tls
 __all__ = [
     'use_hub', 'get_hub', 'sleep', 'spawn', 'kill',
     'call_after', 'exc_after', 'trampoline', 'tcp_listener', 'tcp_server',
+    'with_timeout',
 ]
 
 
@@ -181,6 +182,49 @@ def call_after(seconds, cb, *args, **kw):
         greenlib.switch(g)
     return get_hub().schedule_call(seconds, startup)
 
+
+def with_timeout(seconds, func, *args, **kwds):
+    """Wrap a call to some (yielding) function with a timeout; if the called
+    function fails to return before the timeout, cancel it and return a flag
+    value.
+    
+    *seconds*
+      (int or float) seconds before timeout occurs
+    *func*
+      the callable to execute with a timeout; must be one of the functions
+      that implicitly or explicitly yields
+    *\*args*, *\*\*kwds*
+      (positional, keyword) arguments to pass to *func*
+    *timeout_value=*
+      value to return if timeout occurs (default None)
+      
+    **Returns**:
+
+    Value returned by *func* if *func* returns before *seconds*, else *timeout_value*
+
+    **Raises**:
+
+    Any exception raised by *func*, except ``TimeoutError``
+    
+    **Example**::
+    
+      data = with_timeout(30, httpc.get, 'http://www.google.com/', timeout_value="")
+      # Here data is either the result of the get() call, or the empty string if
+      # it took too long to return. Any exception raised by the get() call is
+      # passed through to the caller.
+    """
+    # Recognize a specific keyword argument, while also allowing pass-through
+    # of any other keyword arguments accepted by func. Use pop() so we don't
+    # pass timeout_value through to func().
+    timeout_value = kwds.pop("timeout_value", None)
+    timeout = api.exc_after(time, TimeoutError()) 
+    try:
+        try:
+            return func(*args, **kwds)
+        except TimeoutError:
+            return timeout_value
+    finally:
+        timeout.cancel()
 
 def exc_after(seconds, exc):
     return call_after(seconds, switch, getcurrent(), None, exc)
