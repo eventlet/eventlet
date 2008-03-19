@@ -93,7 +93,7 @@ class TestApi(tests.TestCase):
 
         check_hub()
 
-    def test_trampoline_timeout(self):
+    def test_001_trampoline_timeout(self):
         server = api.tcp_listener(('0.0.0.0', 0))
         bound_port = server.getsockname()[1]
 
