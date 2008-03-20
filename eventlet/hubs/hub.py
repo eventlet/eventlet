@@ -33,6 +33,8 @@ import greenlet
 from eventlet import greenlib
 from eventlet.timer import Timer
 
+_g_debug = True
+
 class BaseHub(object):
     """ Base hub class for easing the implementation of subclasses that are 
     specific to a particular underlying event architecture. """
@@ -281,5 +283,6 @@ class BaseHub(object):
                 ## actually eventlet's silly way of specifying whether
                 ## a coroutine is "ready to run" or not.
                 timer.cancel()
-                print 'Hub cancelling left-over timer %s' % timer
+                if _g_debug:
+                    print 'Hub cancelling left-over timer %s' % timer
         del self.timers_by_greenlet[greenlet]

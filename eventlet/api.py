@@ -150,8 +150,8 @@ def trampoline(fd, read=False, write=False, timeout=None):
     def _do_close(fn):
         hub.remove_descriptor(fn)
         greenlib.switch(self, exc=socket.error(32, 'Broken pipe'))
-    def _do_timeout(fn):
-        hub.remove_descriptor(fn)
+    def _do_timeout():
+        hub.remove_descriptor(fileno)
         greenlib.switch(self, exc=TimeoutError())
     def cb(_fileno):
         if t is not None:
