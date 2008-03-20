@@ -1,0 +1,3 @@
+dir="$(dirname "$0")"
+epydoc -o "$dir/html" --graph classtree --docformat=restructuredtext "$dir/eventlet/" || exit $?
+open "$dir/html/index.html"
