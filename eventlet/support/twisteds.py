@@ -91,28 +91,36 @@ class EventletReactor(posixbase.PosixReactorBase):
         api.get_hub().abort()
 
     def addReader(self, reader):
+        print "NEW READER", reader.fileno()
         fileno = reader.fileno()
         self._readers[fileno] = reader
         api.get_hub().add_descriptor(fileno, read=self._got_read)
 
     def _got_read(self, fileno):
+        print "got read on", fileno, self._readers[fileno]
+        api.get_hub().add_descriptor(fileno, read=self._got_read)
         self._readers[fileno].doRead()
 
     def addWriter(self, writer):
+        print "NEW WRITER", writer.fileno()
         fileno = writer.fileno()
         self._writers[fileno] = writer
         api.get_hub().add_descriptor(fileno, write=self._got_write)
 
     def _got_write(self, fileno):
+        print "got write on", fileno, self._writers[fileno]
+        api.get_hub().add_descriptor(fileno, write=self._got_write)
         self._writers[fileno].doWrite()
 
     def removeReader(self, reader):
+        print "removing reader", reader.fileno()
         fileno = reader.fileno()
         if fileno in self._readers:
             self._readers.pop(fileno)
         api.get_hub().remove_descriptor(fileno)
 
     def removeWriter(self, writer):
+        print "removing writer", writer.fileno()
         fileno = writer.fileno()
         if fileno in self._writers:
             self._writers.pop(fileno)
@@ -122,7 +130,7 @@ class EventletReactor(posixbase.PosixReactorBase):
         return self._removeAll(self._readers.values(), self._writers.values())
 
 
-def emulate():
+def install():
     if not _working:
         raise RuntimeError, "Can't use support.twisted because zope.interface is not installed."
     reactor = EventletReactor()
@@ -130,5 +138,5 @@ def emulate():
     installReactor(reactor)
 
 
-__all__ = ['emulate']
+__all__ = ['install']
 

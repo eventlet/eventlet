@@ -29,6 +29,7 @@ import socket
 import errno
 import traceback
 from time import sleep
+import time
 
 from eventlet import greenlib
 from eventlet.hubs import hub
@@ -42,7 +43,7 @@ class Hub(hub.BaseHub):
         super(Hub, self).__init__(clock)
         self.poll = select.poll()
 
-     def add_descriptor(self, fileno, read=None, write=None, exc=None):
+    def add_descriptor(self, fileno, read=None, write=None, exc=None):
         super(Hub, self).add_descriptor(fileno, read, write, exc)
 
         mask = self.get_fn_mask(read, write)

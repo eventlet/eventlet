@@ -203,7 +203,7 @@ class BaseHub(object):
     def add_timer(self, timer):
         scheduled_time = self.clock() + timer.seconds
         self._add_absolute_timer(scheduled_time, timer)
-        timer.greenlet = current_greenlet
+        timer.greenlet = greenlet.getcurrent()
         self.track_timer(timer)
         return scheduled_time
     
