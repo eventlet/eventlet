@@ -369,10 +369,15 @@ class Request(object):
         if not hasattr(self, '_cached_parsed_body'):
             body = self.read_body()
             if hasattr(self.site, 'parsers'):
-                parser = self.site.parsers.get(
-                    self.get_header('content-type'))
+                ct = self.get_header('content-type')
+                parser = self.site.parsers.get(ct)
+                    
                 if parser is not None:
                     body = parser(body)
+                else:
+                    ex = ValueError("Could not find parser for content-type: %s" % ct)
+                    ex.body = body
+                    raise ex
                 self._cached_parsed_body = body
         return self._cached_parsed_body
 
