@@ -33,7 +33,12 @@ import greenlet
 from eventlet import greenlib
 from eventlet.timer import Timer
 
+_g_debug = True
+
 class BaseHub(object):
+    """ Base hub class for easing the implementation of subclasses that are 
+    specific to a particular underlying event architecture. """
+
     SYSTEM_EXCEPTIONS = (KeyboardInterrupt, SystemExit)
     
     def __init__(self, clock=time.time):
@@ -58,6 +63,20 @@ class BaseHub(object):
         }
 
     def add_descriptor(self, fileno, read=None, write=None, exc=None):
+        """ Signals an intent to read/write from a particular file descriptor.
+        
+        The fileno argument is the file number of the file of interest.  The other
+        arguments are either callbacks or None.  If there is a callback for read
+        or write, the hub sets things up so that when the file descriptor is
+        ready to be read or written, the callback is called.
+        
+        The exc callback is called when the socket represented by the file
+        descriptor is closed.  The intent is that the the exc callbacks should
+        only be present when either a read or write callback is also present,
+        so the exc callback happens instead of the respective read or write
+        callback.
+        """
+        
         self.readers[fileno] = read or self.readers.get(fileno)
         self.writers[fileno] = write or self.writers.get(fileno)
         self.excs[fileno] = exc or self.excs.get(fileno)
@@ -203,16 +222,18 @@ class BaseHub(object):
     def add_timer(self, timer):
         scheduled_time = self.clock() + timer.seconds
         self._add_absolute_timer(scheduled_time, timer)
-        timer.greenlet = greenlet.getcurrent()
         self.track_timer(timer)
         return scheduled_time
-    
+        
     def track_timer(self, timer):
         current_greenlet = greenlet.getcurrent()
+        timer.greenlet = current_greenlet
         if current_greenlet not in self.timers_by_greenlet:
             self.timers_by_greenlet[current_greenlet] = {}
         self.timers_by_greenlet[current_greenlet][timer] = True
 
+    def timer_canceled(self, timer):
+        pass
 
     def prepare_timers(self):
         ins = bisect.insort_right
@@ -262,5 +283,6 @@ class BaseHub(object):
                 ## actually eventlet's silly way of specifying whether
                 ## a coroutine is "ready to run" or not.
                 timer.cancel()
-                print 'Hub cancelling left-over timer %s' % timer
+                if _g_debug:
+                    print 'Hub cancelling left-over timer %s' % timer
         del self.timers_by_greenlet[greenlet]
