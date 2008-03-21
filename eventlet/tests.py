@@ -36,7 +36,7 @@ name = getattr(sys.modules['__main__'], '__name__', None)
 main = unittest.main
 
 # listing of files containing doctests
-doc_test_files = []#'coros']
+doc_test_files = ['coros']
 
 def find_command(command):
     for dir in os.getenv('PATH', '/usr/bin:/usr/sbin').split(os.pathsep):
