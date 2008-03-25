@@ -258,13 +258,18 @@ class CoroutinePool(pools.Pool):
     
     def _main_loop(self, sender):
         """ Private, infinite loop run by a pooled coroutine. """
-        while True:
-            recvd = sender.wait()
-            sender.reset()
-            (evt, func, args, kw) = recvd
-            self._safe_apply(evt, func, args, kw)
-            api.get_hub().runloop.cancel_timers(api.getcurrent())
-            self.put(sender)
+        try:
+            while True:
+                recvd = sender.wait()
+                sender = event()
+                (evt, func, args, kw) = recvd
+                self._safe_apply(evt, func, args, kw)
+                api.get_hub().runloop.cancel_timers(api.getcurrent())
+                self.put(sender)
+        finally:
+            # if we get here, something broke badly, and all we can really
+            # do is try to keep the pool from leaking items
+            self.put(self.create())
             
     def _safe_apply(self, evt, func, args, kw):
         """ Private method that runs the function, catches exceptions, and
