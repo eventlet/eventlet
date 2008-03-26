@@ -413,7 +413,9 @@ class InternalServerError(ConnectionError):
                 traceback = llsd.parse(self.params.response_body)
             except:
                 traceback = self.params.response_body
-        if isinstance(traceback, dict):
+        if(isinstance(traceback, dict)
+            and 'stack-trace' in traceback
+            and 'description' in traceback):
             body = traceback
             traceback = "Traceback (most recent call last):\n"
             for frame in body['stack-trace']:
