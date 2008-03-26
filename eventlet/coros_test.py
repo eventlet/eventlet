@@ -25,6 +25,8 @@ from eventlet import tests
 from eventlet import timer
 from eventlet import coros, api
 
+import sys
+
 class TestEvent(tests.TestCase):
     mode = 'static'
     def setUp(self):
@@ -178,6 +180,33 @@ class TestCoroutinePool(tests.TestCase):
         
         pool.execute_async(reenter_async)
         evt.wait()
+        
+    def test_horrible_main_loop_death(self):
+        # testing the case that causes the run_forever
+        # method to exit unwantedly
+        pool = coros.CoroutinePool(min_size=1, max_size=1)
+        def crash(*args, **kw):
+            raise RuntimeError("Whoa")
+        class FakeFile(object):
+            write = crash
+        
+        # we're going to do this by causing the traceback.print_exc in 
+        # safe_apply to raise an exception and thus exit _main_loop
+        normal_err = sys.stderr
+        try:
+            sys.stderr = FakeFile()
+            waiter = pool.execute(crash)
+            self.assertRaises(RuntimeError, waiter.wait)
+            # the pool should have something free at this point since the
+            # waiter returned
+            self.assertEqual(pool.free(), 1)
+            # shouldn't block when trying to get
+            t = api.exc_after(0.1, api.TimeoutError)
+            self.assert_(pool.get())
+            t.cancel()
+        finally:
+            sys.stderr = normal_err
+        
         
 
 class IncrActor(coros.Actor):
