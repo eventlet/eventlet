@@ -363,6 +363,10 @@ class LengthRequired(ConnectionError):
     """ 411 Length Required """
     pass
 
+class RequestEntityTooLarge(ConnectionError):
+    """ 413 Request Entity Too Large """
+    pass
+
 class RequestURITooLong(ConnectionError):
     """ 414 Request-URI Too Long """
     pass
@@ -440,6 +444,7 @@ status_to_error_map = {
     404: NotFound,
     410: Gone,
     411: LengthRequired,
+    413: RequestEntityTooLarge,
     414: RequestURITooLong,
     415: UnsupportedMediaType,
     416: RequestedRangeNotSatisfiable,
