@@ -26,6 +26,7 @@ THE SOFTWARE.
 import os
 import fcntl
 import socket
+import select
 import errno
 from errno import EWOULDBLOCK, EAGAIN
 
@@ -75,6 +76,7 @@ def socket_connect(descriptor, address):
 
 __original_socket__ = socket.socket
 
+
 def tcp_socket():
     s = __original_socket__(socket.AF_INET, socket.SOCK_STREAM)
     set_nonblocking(s)
@@ -110,6 +112,43 @@ def wrap_socket_with_coroutine_socket():
     socket.socket = new_socket
 
     socket.ssl = wrap_ssl
+
+
+__original_select__ = select.select
+
+
+def fake_select(r, w, e, timeout):
+    """This is to cooperate with people who are trying to do blocking
+    reads with a timeout. This only works if r, w, and e aren't
+    bigger than len 1, and if either r or w is populated.
+
+    Install this with wrap_select_with_coroutine_select,
+    which makes the global select.select into fake_select.
+    """
+    from eventlet import api
+
+    assert len(r) <= 1
+    assert len(w) <= 1
+    assert len(e) <= 1
+
+    if w and r:
+        raise RuntimeError('fake_select doesn\'t know how to do that yet')
+
+    try:
+        if r:
+            api.trampoline(r[0], read=True, timeout=timeout)
+            return r, [], []
+        else:
+            api.trampoline(w[0], write=True, timeout=timeout)
+            return [], w, []
+    except api.TimeoutError, e:
+        return [], [], []
+    except:
+        return [], [], e
+
+
+def wrap_select_with_coroutine_select():
+    select.select = fake_select
 
 
 def socket_bind_and_listen(descriptor, addr=('', 0), backlog=50):

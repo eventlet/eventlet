@@ -281,4 +281,5 @@ class wrapped_file(wrapped_fd):
     send = higher_order_send(util.file_send)
 
     def flush(self):
-        self.fd.flush()
+        fn = self.flush = self.fd.flush
+        return fn()

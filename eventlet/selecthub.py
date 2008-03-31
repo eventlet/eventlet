@@ -31,6 +31,7 @@ import time
 from bisect import insort, bisect_left
 
 from eventlet import greenlib
+from eventlet import util
 from eventlet.runloop import RunLoop, Timer
 
 import greenlet
@@ -157,7 +158,7 @@ class Hub(object):
         writers = self.writers
         excs = self.excs
         try:
-            r, w, ig = select.select(readers.keys(), writers.keys(), [], seconds)
+            r, w, ig = util.__original_select__(readers.keys(), writers.keys(), [], seconds)
         except select.error, e:
             if e.args[0] == errno.EINTR:
                 return
