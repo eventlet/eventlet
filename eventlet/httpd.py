@@ -389,7 +389,7 @@ class Request(object):
         return self.protocol.request_version
 
     def request_protocol(self):
-        if self.protocol.socket.is_secure:
+        if self.protocol.is_secure:
             return "https"
         return "http"
 
@@ -413,6 +413,7 @@ class Timeout(RuntimeError):
 class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
     def __init__(self, request, client_address, server):
         self.rfile = self.wfile = request.makefile()
+        self.is_secure = request.is_secure
         request.close()  # close this now so that when rfile and wfile are closed, the socket gets closed
         self.client_address = client_address
         self.server = server
