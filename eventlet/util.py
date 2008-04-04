@@ -28,7 +28,6 @@ import fcntl
 import socket
 import select
 import errno
-from errno import EWOULDBLOCK, EAGAIN
 
 try:
     from OpenSSL import SSL
@@ -64,7 +63,7 @@ def g_log(*args):
         ident = 'greenlet-%d' % (g_id,)
     print >>sys.stderr, '[%s] %s' % (ident, ' '.join(map(str, args)))
 
-CONNECT_ERR = (errno.EINPROGRESS, errno.EALREADY, EWOULDBLOCK)
+CONNECT_ERR = (errno.EINPROGRESS, errno.EALREADY, errno.EWOULDBLOCK)
 CONNECT_SUCCESS = (0, errno.EISCONN)
 def socket_connect(descriptor, address):
     err = descriptor.connect_ex(address)
@@ -161,7 +160,7 @@ def socket_accept(descriptor):
     try:
         return descriptor.accept()
     except socket.error, e:
-        if e[0] == EWOULDBLOCK:
+        if e[0] == errno.EWOULDBLOCK:
             return None
         raise
 
@@ -169,14 +168,19 @@ def socket_send(descriptor, data):
     try:
         return descriptor.send(data)
     except socket.error, e:
-        if e[0] == EWOULDBLOCK:
+        if e[0] == errno.EWOULDBLOCK:
             return 0
         raise
     except SSL.WantWriteError:
         return 0
     except SSL.WantReadError:
         return 0
-
+    # trap this error
+    except SSL.SysCallError, e:
+        (ssl_errno, ssl_errstr) = e
+        if ssl_errno == -1 or ssl_errno > 0:
+            raise socket.error(errno.ECONNRESET, errno.errorcode[errno.ECONNRESET])
+        raise
 
 # winsock sometimes throws ENOTCONN
 SOCKET_CLOSED = (errno.ECONNRESET, errno.ENOTCONN, errno.ESHUTDOWN)
@@ -184,7 +188,7 @@ def socket_recv(descriptor, buflen):
     try:
         return descriptor.recv(buflen)
     except socket.error, e:
-        if e[0] == EWOULDBLOCK:
+        if e[0] == errno.EWOULDBLOCK:
             return None
         if e[0] in SOCKET_CLOSED:
             return ''
@@ -194,16 +198,16 @@ def socket_recv(descriptor, buflen):
     except SSL.ZeroReturnError:
         return ''
     except SSL.SysCallError, e:
-        if e[0] == -1 or e[0] > 0:
+        (ssl_errno, ssl_errstr) = e
+        if ssl_errno == -1 or ssl_errno > 0:
             raise socket.error(errno.ECONNRESET, errno.errorcode[errno.ECONNRESET])
         raise
-
 
 def file_recv(fd, buflen):
     try:
         return fd.read(buflen)
     except IOError, e:
-        if e[0] == EAGAIN:
+        if e[0] == errno.EAGAIN:
             return None
         return ''
     except socket.error, e:
@@ -218,7 +222,7 @@ def file_send(fd, data):
         fd.flush()
         return len(data)
     except IOError, e:
-        if e[0] == EAGAIN:
+        if e[0] == errno.EAGAIN:
             return 0
     except ValueError, e:
         written = 0
