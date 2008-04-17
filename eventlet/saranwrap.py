@@ -670,8 +670,12 @@ def main():
 
     # *HACK: some modules may emit on stderr, which breaks everything.
     class NullSTDOut(object):
-        def write(a, b):
+        def noop(*args):
             pass
+        write = noop
+        read = noop
+        flush = noop
+
     sys.stderr = NullSTDOut()
     sys.stdout = NullSTDOut()
 
