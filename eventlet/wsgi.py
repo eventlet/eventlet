@@ -43,8 +43,8 @@ class Input(object):
         self.content_length = content_length
 
     def read(self, length=None):
-        if length is None:
-            length = self.content_length
+        if length is None and self.content_length is not None:
+            length = int(self.content_length)
         if length is None:
             return ''
         return self.rfile.read(length)
