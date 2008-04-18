@@ -354,6 +354,10 @@ class NotFound(ConnectionError):
     """ 404 Not Found """
     pass
 
+class RequestTimeout(ConnectionError):
+    """ 408 RequestTimeout """
+    pass
+
 
 class Gone(ConnectionError):
     """ 410 Gone """
@@ -444,6 +448,7 @@ status_to_error_map = {
     402: PaymentRequired,
     403: Forbidden,
     404: NotFound,
+    408: RequestTimeout,
     410: Gone,
     411: LengthRequired,
     413: RequestEntityTooLarge,
