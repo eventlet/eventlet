@@ -23,6 +23,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+import errno
 import sys
 import time
 import urllib
@@ -204,16 +205,21 @@ class Server(BaseHTTPServer.HTTPServer):
         self.log.write(message + '\n')
 
 
-def server(socket, site, log=None, environ=None):
-    serv = Server(socket, socket.getsockname(), site, log, environ=None)
+def server(sock, site, log=None, environ=None):
+    serv = Server(sock, sock.getsockname(), site, log, environ=None)
     try:
-        print "wsgi starting up on", socket.getsockname()
+        print "wsgi starting up on", sock.getsockname()
         while True:
             try:
-                api.spawn(serv.process_request, socket.accept())
+                api.spawn(serv.process_request, sock.accept())
             except KeyboardInterrupt:
-                api.get_hub().remove_descriptor(socket.fileno())
+                api.get_hub().remove_descriptor(sock.fileno())
                 print "wsgi exiting"
                 break
     finally:
-        socket.close()
+        try:
+            sock.close()
+        except socket.error, e:
+            if e[0] != errno.EPIPE:
+                raise
+
