@@ -156,7 +156,7 @@ class GreenSocket(object):
         self.sendcount = 0
         self.recvcount = 0
         self.recvbuffer = ''
-        self._closed = False
+        self.closed = False
         
     def accept(self):
         fd = self.fd
@@ -173,9 +173,9 @@ class GreenSocket(object):
         return fn(*args, **kw)
     
     def close(self, *args, **kw):
-        if self._closed:
+        if self.closed:
             return
-        self._closed = True
+        self.closed = True
         fn = self.close = self.fd.close
         try:
             res = fn(*args, **kw)
@@ -272,16 +272,20 @@ class GreenFile(object):
 
     def __init__(self, fd):
         self.sock = fd
+        self.closed = False
     
     def close(self):
         self.sock.close()
+        self.closed = True
         
     def fileno(self):
         return self.sock.fileno()
     
     # TODO next
-    # TODO flush
-    
+
+    def flush(self):
+        pass
+
     def write(self, data):
         return self.sock.sendall(data)
     

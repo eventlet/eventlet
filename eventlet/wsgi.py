@@ -26,6 +26,7 @@ THE SOFTWARE.
 import errno
 import sys
 import time
+import traceback
 import urllib
 import socket
 import cStringIO
@@ -35,8 +36,22 @@ import BaseHTTPServer
 from eventlet import api
 from eventlet.httpdate import format_date_time
 
-class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
+class Input(object):
+    def __init__(self, rfile, content_length):
+        self.rfile = rfile
+        self.content_length = content_length
+
+    def read(self, length=None):
+        if length is None:
+            length = self.content_length
+        if length is None:
+            return ''
+        return self.rfile.read(length)
+
+
+class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
+    protocol_version = 'HTTP/1.1'
     def log_message(self, format, *args):
         self.server.log_message("%s - - [%s] %s" % (
             self.address_string(),
@@ -71,8 +86,10 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
         wfile = self.wfile
         num_blocks = None
+        use_chunked = False
         
         def write(data, _write=wfile.write):
+            towrite = []
             if not headers_set:
                 raise AssertionError("write() before start_response()")
             elif not headers_sent:
@@ -80,16 +97,24 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 headers_sent.append(1)
                 for k, v in response_headers:
                     header_dict[k.lower()] = k
-                _write('HTTP/1.0 %s\r\n' % status)
+                towrite.append('%s %s\r\n' % (self.protocol_version, status))
                 # send Date header?
                 if 'date' not in header_dict:
-                    _write('Date: %s\r\n' % (format_date_time(time.time()),))
-                if 'content-length' not in header_dict and num_blocks == 1:
-                    _write('Content-Length: %s\r\n' % (len(data),))
+                    towrite.append('Date: %s\r\n' % (format_date_time(time.time()),))
+                if num_blocks == 1:
+                    towrite.append('Content-Length: %s\r\n' % (len(data),))
+                elif use_chunked:
+                    towrite.append('Transfer-Encoding: chunked\r\n')
                 for header in response_headers:
-                    _write('%s: %s\r\n' % header)
-                _write('\r\n')
-            _write(data)
+                    towrite.append('%s: %s\r\n' % header)
+                towrite.append('\r\n')
+
+            if use_chunked:
+                ## Write the chunked encoding
+                towrite.append("%x\r\n%s\r\n" % (len(data), data))
+            else:
+                towrite.append(data)
+            _write(''.join(towrite))
                 
         def start_request(status, response_headers, exc_info=None):
             if exc_info:
@@ -106,18 +131,48 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             headers_set[:] = [status, response_headers]
             return write
 
-        result = self.server.app(self.environ, start_request)
+        try:
+            result = self.server.app(self.environ, start_request)
+        except Exception, e:
+            exc = traceback.format_exc()
+            if not headers_sent:
+                start_request("500 Internal Server Error", [('Content-type', 'text/plain')])
+                write(exc)
+                return
+
         try:
             num_blocks = len(result)
         except (TypeError, AttributeError, NotImplementedError):
-            pass
-            
+            if self.protocol_version == 'HTTP/1.1':
+                use_chunked = True
+
         try:
-            for data in result:
-                if data:
-                    write(data)
+            towrite = []
+            try:
+                for data in result:
+                    if data:
+                        towrite.append(data)
+                        if reduce(
+                            lambda x, y: x + y,
+                            map(
+                                lambda x: len(x), towrite)) > 4096:
+                            write(''.join(towrite))
+                            del towrite[:]
+            except Exception, e:
+                exc = traceback.format_exc()
+                if not headers_sent:
+                    start_request("500 Internal Server Error", [('Content-type', 'text/plain')])
+                    write(exc)
+                    return
+
+            if towrite:
+                write(''.join(towrite))
+            if use_chunked:
+                wfile.write('0\r\n\r\n')
             if not headers_sent:
                 write('')
+        except Exception, e:
+            traceback.print_exc()
         finally:
             if hasattr(result, 'close'):
                 result.close()
@@ -150,6 +205,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         env['REMOTE_ADDR'] = self.client_address[0]
         env['GATEWAY_INTERFACE'] = 'CGI/1.1'
 
+        env['wsgi.input'] = Input(self.rfile, length)
+
         for h in self.headers.headers:
             k, v = h.split(':', 1)
             k = k.replace('-', '_').upper()
@@ -165,10 +222,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         return env
 
     def finish(self):
-        # Override SocketServer.StreamRequestHandler.finish because
-        # we only need to call close on the socket, not the makefile'd things
-        
-        self.request.close()
+        BaseHTTPServer.BaseHTTPRequestHandler.finish(self)
+        self.connection.close()
 
 
 class Server(BaseHTTPServer.HTTPServer):
@@ -186,7 +241,6 @@ class Server(BaseHTTPServer.HTTPServer):
     def get_environ(self):
         socket = self.socket
         d = {
-            'wsgi.input': socket,
             'wsgi.errors': sys.stderr,
             'wsgi.version': (1, 0),
             'wsgi.multithread': True,
@@ -200,6 +254,7 @@ class Server(BaseHTTPServer.HTTPServer):
 
     def process_request(self, (socket, address)):
         proto = HttpProtocol(socket, address, self)
+        proto.handle()
 
     def log_message(self, message):
         self.log.write(message + '\n')
