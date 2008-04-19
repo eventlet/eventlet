@@ -38,16 +38,33 @@ from eventlet.httpdate import format_date_time
 
 
 class Input(object):
-    def __init__(self, rfile, content_length):
+    def __init__(self, rfile, content_length, wfile=None, wfile_line=None):
         self.rfile = rfile
+        if content_length is not None:
+            content_length = int(content_length)
         self.content_length = content_length
 
+        self.wfile = wfile
+        self.wfile_line = wfile_line
+
+        self.position = 0
+
     def read(self, length=None):
+        if self.wfile is not None:
+            ## 100 Continue
+            self.wfile.write(self.wfile_line)
+            self.wfile = None
+            self.wfile_line = None
+
         if length is None and self.content_length is not None:
-            length = int(self.content_length)
-        if length is None:
+            length = self.content_length - self.position
+        if length and length > self.content_length - self.position:
+            length = self.content_length - self.position
+        if not length:
             return ''
-        return self.rfile.read(length)
+        read = self.rfile.read(length)
+        self.position += len(read)
+        return read
 
 
 class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
@@ -86,6 +103,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
         wfile = self.wfile
         num_blocks = None
+        result = None
         use_chunked = False
         
         def write(data, _write=wfile.write):
@@ -101,10 +119,13 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 # send Date header?
                 if 'date' not in header_dict:
                     towrite.append('Date: %s\r\n' % (format_date_time(time.time()),))
-                if num_blocks == 1:
-                    towrite.append('Content-Length: %s\r\n' % (len(data),))
+                if num_blocks is not None:
+                    towrite.append('Content-Length: %s\r\n' % (len(''.join(result)),))
                 elif use_chunked:
                     towrite.append('Transfer-Encoding: chunked\r\n')
+                else:
+                    towrite.append('Connection: close\r\n')
+                    self.close_connection = 1
                 for header in response_headers:
                     towrite.append('%s: %s\r\n' % header)
                 towrite.append('\r\n')
@@ -135,7 +156,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             result = self.server.app(self.environ, start_request)
         except Exception, e:
             exc = traceback.format_exc()
-            if not headers_sent:
+            print exc
+            if not headers_set:
                 start_request("500 Internal Server Error", [('Content-type', 'text/plain')])
                 write(exc)
                 return
@@ -160,7 +182,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                             del towrite[:]
             except Exception, e:
                 exc = traceback.format_exc()
-                if not headers_sent:
+                print exc
+                if not headers_set:
                     start_request("500 Internal Server Error", [('Content-type', 'text/plain')])
                     write(exc)
                     return
@@ -205,8 +228,6 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         env['REMOTE_ADDR'] = self.client_address[0]
         env['GATEWAY_INTERFACE'] = 'CGI/1.1'
 
-        env['wsgi.input'] = Input(self.rfile, length)
-
         for h in self.headers.headers:
             k, v = h.split(':', 1)
             k = k.replace('-', '_').upper()
@@ -218,6 +239,15 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 env[envk] += ',' + v
             else:
                 env[envk] = v
+
+        if env.get('HTTP_EXPECT') == '100-continue':
+            wfile = self.wfile
+            wfile_line = 'HTTP/1.1 100 Continue\r\n\r\n'
+        else:
+            wfile = None
+            wfile_line = None
+        env['wsgi.input'] = Input(
+            self.rfile, length, wfile=wfile, wfile_line=wfile_line)
 
         return env
 
