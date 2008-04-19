@@ -136,8 +136,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             else:
                 towrite.append(data)
             _write(''.join(towrite))
-                
-        def start_request(status, response_headers, exc_info=None):
+
+        def start_response(status, response_headers, exc_info=None):
             if exc_info:
                 try:
                     if headers_sent:
@@ -146,19 +146,17 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 finally:
                     # Avoid dangling circular ref
                     exc_info = None
-            elif headers_set:
-                raise AssertionError("Headers already set!")
 
             headers_set[:] = [status, response_headers]
             return write
 
         try:
-            result = self.server.app(self.environ, start_request)
+            result = self.server.app(self.environ, start_response)
         except Exception, e:
             exc = traceback.format_exc()
             print exc
             if not headers_set:
-                start_request("500 Internal Server Error", [('Content-type', 'text/plain')])
+                start_response("500 Internal Server Error", [('Content-type', 'text/plain')])
                 write(exc)
                 return
 
@@ -184,7 +182,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 exc = traceback.format_exc()
                 print exc
                 if not headers_set:
-                    start_request("500 Internal Server Error", [('Content-type', 'text/plain')])
+                    start_response("500 Internal Server Error", [('Content-type', 'text/plain')])
                     write(exc)
                     return
 
