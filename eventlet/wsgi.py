@@ -288,7 +288,7 @@ class Server(BaseHTTPServer.HTTPServer):
         self.log.write(message + '\n')
 
 
-def server(sock, site, log=None, environ=None):
+def server(sock, site, log=None, environ=None, max_size=None):
     serv = Server(sock, sock.getsockname(), site, log, environ=None)
     try:
         print "wsgi starting up on", sock.getsockname()
