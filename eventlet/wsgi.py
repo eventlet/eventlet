@@ -76,7 +76,12 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             format % args))
 
     def handle_one_request(self):
-        self.raw_requestline = self.rfile.readline()
+        try:
+            self.raw_requestline = self.rfile.readline()
+        except socket.error, e:
+            if e[0] != errno.EBADF:
+                raise
+            self.raw_requestline = ''
     
         if not self.raw_requestline:
             self.close_connection = 1
