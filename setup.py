@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='eventlet',
@@ -9,7 +9,7 @@ setup(
     author='Linden Lab',
     author_email='eventletdev@lists.secondlife.com',
     url='http://wiki.secondlife.com/wiki/Eventlet',
-    packages=['eventlet'],
+    packages=find_packages(),
     install_requires=['greenlet'],
     long_description="""
     Eventlet is a networking library written in Python. It achieves
