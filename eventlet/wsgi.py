@@ -158,7 +158,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         try:
             result = self.server.app(self.environ, start_response)
         except Exception, e:
-            exc = traceback.format_exc()
+            exc = ''.join(traceback.format_exception(*sys.exc_info()))
             print exc
             if not headers_set:
                 start_response("500 Internal Server Error", [('Content-type', 'text/plain')])
@@ -170,38 +170,41 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         except (TypeError, AttributeError, NotImplementedError):
             if self.protocol_version == 'HTTP/1.1':
                 use_chunked = True
-
         try:
-            towrite = []
             try:
-                for data in result:
-                    if data:
-                        towrite.append(data)
-                        if reduce(
-                            lambda x, y: x + y,
-                            map(
-                                lambda x: len(x), towrite)) > 4096:
-                            write(''.join(towrite))
-                            del towrite[:]
+                towrite = []
+                try:
+                    for data in result:
+                        if data:
+                            towrite.append(data)
+                            if reduce(
+                                lambda x, y: x + y,
+                                map(
+                                    lambda x: len(x), towrite)) > 4096:
+                                write(''.join(towrite))
+                                del towrite[:]
+                except Exception, e:
+                    exc = traceback.format_exc()
+                    print exc
+                    if not headers_set:
+                        start_response("500 Internal Server Error", [('Content-type', 'text/plain')])
+                        write(exc)
+                        return
+    
+                if towrite:
+                    write(''.join(towrite))
+                if use_chunked:
+                    wfile.write('0\r\n\r\n')
+                if not headers_sent:
+                    write('')
             except Exception, e:
-                exc = traceback.format_exc()
-                print exc
-                if not headers_set:
-                    start_response("500 Internal Server Error", [('Content-type', 'text/plain')])
-                    write(exc)
-                    return
-
-            if towrite:
-                write(''.join(towrite))
-            if use_chunked:
-                wfile.write('0\r\n\r\n')
-            if not headers_sent:
-                write('')
-        except Exception, e:
-            traceback.print_exc()
+                traceback.print_exc()
         finally:
             if hasattr(result, 'close'):
                 result.close()
+            if self.environ['eventlet.input'].position < self.environ.get('CONTENT_LENGTH', 0):
+                ## Read and discard body
+                self.environ['eventlet.input'].read()
 
     def get_environ(self):
         env = self.server.get_environ()
@@ -249,7 +252,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         else:
             wfile = None
             wfile_line = None
-        env['wsgi.input'] = Input(
+        env['wsgi.input'] = env['eventlet.input'] = Input(
             self.rfile, length, wfile=wfile, wfile_line=wfile_line)
 
         return env
