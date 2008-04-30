@@ -260,7 +260,7 @@ class CoroutinePool(pools.Pool):
         """ Private, infinite loop run by a pooled coroutine. """
         while True:
             recvd = sender.wait()
-            sender.reset()
+            sender = event()
             (evt, func, args, kw) = recvd
             self._safe_apply(evt, func, args, kw)
             api.get_hub().cancel_timers(api.getcurrent())
