@@ -21,7 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
-from eventlet.api import trampoline, get_hub
+from eventlet.api import exc_after, TimeoutError, trampoline, get_hub
 from eventlet import util
 
 BUFFER_SIZE = 4096
@@ -86,37 +86,55 @@ def socket_accept(descriptor):
 
 
 def socket_send(descriptor, data):
+    timeout = descriptor.gettimeout()
+    if timeout:
+        cancel = exc_after(timeout, TimeoutError)
+    else:
+        cancel = None
     try:
-        return descriptor.send(data)
-    except socket.error, e:
-        if e[0] == errno.EWOULDBLOCK:
+        try:
+            return descriptor.send(data)
+        except socket.error, e:
+            if e[0] == errno.EWOULDBLOCK:
+                return 0
+            raise
+        except SSL.WantWriteError:
             return 0
-        raise
-    except SSL.WantWriteError:
-        return 0
-    except SSL.WantReadError:
-        return 0
+        except SSL.WantReadError:
+            return 0
+    finally:
+        if cancel:
+            cancel.cancel()
 
 
 # winsock sometimes throws ENOTCONN
 SOCKET_CLOSED = (errno.ECONNRESET, errno.ENOTCONN, errno.ESHUTDOWN)
 def socket_recv(descriptor, buflen):
+    timeout = descriptor.gettimeout()
+    if timeout:
+        cancel = exc_after(timeout, TimeoutError)
+    else:
+        cancel = None
     try:
-        return descriptor.recv(buflen)
-    except socket.error, e:
-        if e[0] == errno.EWOULDBLOCK:
+        try:
+            return descriptor.recv(buflen)
+        except socket.error, e:
+            if e[0] == errno.EWOULDBLOCK:
+                return None
+            if e[0] in SOCKET_CLOSED:
+                return ''
+            raise
+        except SSL.WantReadError:
             return None
-        if e[0] in SOCKET_CLOSED:
+        except SSL.ZeroReturnError:
             return ''
-        raise
-    except SSL.WantReadError:
-        return None
-    except SSL.ZeroReturnError:
-        return ''
-    except SSL.SysCallError, e:
-        if e[0] == -1 or e[0] > 0:
-            raise socket.error(errno.ECONNRESET, errno.errorcode[errno.ECONNRESET])
-        raise
+        except SSL.SysCallError, e:
+            if e[0] == -1 or e[0] > 0:
+                raise socket.error(errno.ECONNRESET, errno.errorcode[errno.ECONNRESET])
+            raise
+    finally:
+        if cancel:
+            cancel.cancel()
 
 
 def file_recv(fd, buflen):
@@ -149,7 +167,7 @@ def file_send(fd, data):
 
 class GreenSocket(object):
     is_secure = False
-    
+    timeout = None
     def __init__(self, fd):
         self.fd = fd
         self._fileno = fd.fileno()
@@ -254,9 +272,6 @@ class GreenSocket(object):
         fn = self.setblocking = self.fd.setblocking
         return fn(*args, **kw)
     
-    # TODO settimeout
-    # TODO gettimeout
-    
     def setsockopt(self, *args, **kw):
         fn = self.setsockopt = self.fd.setsockopt
         return fn(*args, **kw)
@@ -264,7 +279,13 @@ class GreenSocket(object):
     def shutdown(self, *args, **kw):
         fn = self.shutdown = self.fd.shutdown
         return fn(*args, **kw)
-        
+
+    def settimeout(self, howlong):
+        self.timeout = howlong
+
+    def gettimeout(self):
+        return self.timeout
+
     
 class GreenFile(object):
     newlines = '\r\n'
