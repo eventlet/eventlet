@@ -98,9 +98,9 @@ def socket_send(descriptor, data):
             if e[0] == errno.EWOULDBLOCK:
                 return 0
             raise
-        except SSL.WantWriteError:
+        except util.SSL.WantWriteError:
             return 0
-        except SSL.WantReadError:
+        except util.SSL.WantReadError:
             return 0
     finally:
         if cancel:
@@ -124,11 +124,11 @@ def socket_recv(descriptor, buflen):
             if e[0] in SOCKET_CLOSED:
                 return ''
             raise
-        except SSL.WantReadError:
+        except util.SSL.WantReadError:
             return None
-        except SSL.ZeroReturnError:
+        except util.SSL.ZeroReturnError:
             return ''
-        except SSL.SysCallError, e:
+        except util.SSL.SysCallError, e:
             if e[0] == -1 or e[0] > 0:
                 raise socket.error(errno.ECONNRESET, errno.errorcode[errno.ECONNRESET])
             raise
@@ -286,7 +286,36 @@ class GreenSocket(object):
     def gettimeout(self):
         return self.timeout
 
-    
+
+def read(self, size=None):
+    if size is not None and not isinstance(size, (int, long)):
+        raise TypeError('Expecting an int or long for size, got %s: %s' % (type(size), repr(size)))
+    buf, self.sock.recvbuffer = self.sock.recvbuffer, ''
+    lst = [buf]
+    if size is None:
+        while True:
+            d = self.sock.recv(BUFFER_SIZE)
+            if not d:
+                break
+            lst.append(d)
+    else:
+        buflen = len(buf)
+        while buflen < size:
+            d = self.sock.recv(BUFFER_SIZE)
+            if not d:
+                break
+            buflen += len(d)
+            lst.append(d)
+        else:
+            d = lst[-1]
+            overbite = buflen - size
+            if overbite:
+                lst[-1], self.sock.recvbuffer = d[:-overbite], d[-overbite:]
+            else:
+                lst[-1], self.sock.recvbuffer = d, ''
+    return ''.join(lst)
+
+
 class GreenFile(object):
     newlines = '\r\n'
     mode = 'wb+'
@@ -368,33 +397,7 @@ class GreenFile(object):
         for line in lines:
             self.write(line)
         
-    def read(self, size=None):
-        if size is not None and not isinstance(size, (int, long)):
-            raise TypeError('Expecting an int or long for size, got %s: %s' % (type(size), repr(size)))
-        buf, self.sock.recvbuffer = self.sock.recvbuffer, ''
-        lst = [buf]
-        if size is None:
-            while True:
-                d = self.sock.recv(BUFFER_SIZE)
-                if not d:
-                    break
-                lst.append(d)
-        else:
-            buflen = len(buf)
-            while buflen < size:
-                d = self.sock.recv(BUFFER_SIZE)
-                if not d:
-                    break
-                buflen += len(d)
-                lst.append(d)
-            else:
-                d = lst[-1]
-                overbite = buflen - size
-                if overbite:
-                    lst[-1], self.sock.recvbuffer = d[:-overbite], d[-overbite:]
-                else:
-                    lst[-1], self.sock.recvbuffer = d, ''
-        return ''.join(lst)
+    read = read
 
 
 class GreenPipeSocket(GreenSocket):
@@ -420,3 +423,21 @@ class GreenPipe(GreenFile):
 
     def flush(self):
         self.fd.fd.flush()
+
+
+class GreenSSL(GreenSocket):
+    def __init__(self, fd):
+        GreenSocket.__init__(self, fd)
+        self.sock = self
+
+    read = read
+
+    def write(self, data):
+        return self.sendall(data)
+
+    def server(self):
+        return self.fd.server()
+
+    def issuer(self):
+        return self.fd.issuer()
+

@@ -88,7 +88,7 @@ def wrap_ssl(sock, certificate=None, private_key=None):
     ## TODO only do this on client sockets? how?
     connection = SSL.Connection(context, sock)
     connection.set_connect_state()
-    return greenio.GreenSocket(connection)
+    return greenio.GreenSSL(connection)
 
 socket_already_wrapped = False
 def wrap_socket_with_coroutine_socket():

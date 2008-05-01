@@ -37,6 +37,9 @@ from eventlet import api
 from eventlet.httpdate import format_date_time
 
 
+DEFAULT_MAX_HTTP_VERSION = 'HTTP/1.1'
+
+
 class Input(object):
     def __init__(self, rfile, content_length, wfile=None, wfile_line=None):
         self.rfile = rfile
@@ -76,6 +79,9 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             format % args))
 
     def handle_one_request(self):
+        if self.server.max_http_version:
+            self.protocol_version = self.server.max_http_version
+
         try:
             self.raw_requestline = self.rfile.readline()
         except socket.error, e:
@@ -263,7 +269,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
 
 class Server(BaseHTTPServer.HTTPServer):
-    def __init__(self, socket, address, app, log, environ=None):
+    def __init__(self, socket, address, app, log, environ=None, max_http_version=None):
         self.socket = socket
         self.address = address
         if log:
@@ -273,6 +279,7 @@ class Server(BaseHTTPServer.HTTPServer):
             self.log = sys.stderr
         self.app = app
         self.environ = environ
+        self.max_http_version = max_http_version            
 
     def get_environ(self):
         socket = self.socket
@@ -296,8 +303,8 @@ class Server(BaseHTTPServer.HTTPServer):
         self.log.write(message + '\n')
 
 
-def server(sock, site, log=None, environ=None, max_size=None):
-    serv = Server(sock, sock.getsockname(), site, log, environ=None)
+def server(sock, site, log=None, environ=None, max_size=None, max_http_version=DEFAULT_MAX_HTTP_VERSION):
+    serv = Server(sock, sock.getsockname(), site, log, environ=None, max_http_version=max_http_version)
     try:
         print "wsgi starting up on", sock.getsockname()
         while True:
