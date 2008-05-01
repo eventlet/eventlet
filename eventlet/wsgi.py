@@ -127,18 +127,20 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 for k, v in response_headers:
                     header_dict[k.lower()] = k
                 towrite.append('%s %s\r\n' % (self.protocol_version, status))
+                for header in response_headers:
+                    towrite.append('%s: %s\r\n' % header)
+
                 # send Date header?
                 if 'date' not in header_dict:
                     towrite.append('Date: %s\r\n' % (format_date_time(time.time()),))
                 if num_blocks is not None:
-                    towrite.append('Content-Length: %s\r\n' % (len(''.join(result)),))
+                    if 'content-length' not in header_dict:
+                        towrite.append('Content-Length: %s\r\n' % (len(''.join(result)),))
                 elif use_chunked:
                     towrite.append('Transfer-Encoding: chunked\r\n')
                 else:
                     towrite.append('Connection: close\r\n')
                     self.close_connection = 1
-                for header in response_headers:
-                    towrite.append('%s: %s\r\n' % header)
                 towrite.append('\r\n')
 
             if use_chunked:
