@@ -101,6 +101,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             return
 
         self.environ = self.get_environ()
+        self.application = self.server.app
         try:
             self.handle_one_response()
         except socket.error, e:
@@ -168,7 +169,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             return write
 
         try:
-            result = self.server.app(self.environ, start_response)
+            result = self.application(self.environ, start_response)
         except Exception, e:
             exc = ''.join(traceback.format_exception(*sys.exc_info()))
             print exc
@@ -275,7 +276,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
 
 class Server(BaseHTTPServer.HTTPServer):
-    def __init__(self, socket, address, app, log, environ=None, max_http_version=None):
+    def __init__(self, socket, address, app, log=None, environ=None, max_http_version=None, protocol=HttpProtocol):
         self.socket = socket
         self.address = address
         if log:
@@ -284,7 +285,8 @@ class Server(BaseHTTPServer.HTTPServer):
             self.log = sys.stderr
         self.app = app
         self.environ = environ
-        self.max_http_version = max_http_version            
+        self.max_http_version = max_http_version      
+        self.protocol = protocol      
 
     def get_environ(self):
         socket = self.socket
@@ -301,7 +303,7 @@ class Server(BaseHTTPServer.HTTPServer):
         return d
 
     def process_request(self, (socket, address)):
-        proto = HttpProtocol(socket, address, self)
+        proto = self.protocol(socket, address, self)
         proto.handle()
 
     def log_message(self, message):
@@ -309,8 +311,8 @@ class Server(BaseHTTPServer.HTTPServer):
 
 
 
-def server(sock, site, log=None, environ=None, max_size=None, max_http_version=DEFAULT_MAX_HTTP_VERSION):
-    serv = Server(sock, sock.getsockname(), site, log, environ=None, max_http_version=max_http_version)
+def server(sock, site, log=None, environ=None, max_size=None, max_http_version=DEFAULT_MAX_HTTP_VERSION, protocol=HttpProtocol):
+    serv = Server(sock, sock.getsockname(), site, log, environ=None, max_http_version=max_http_version, protocol=protocol)
     if max_size is None:
         max_size = DEFAULT_MAX_SIMULTANEOUS_REQUESTS
     pool = coros.CoroutinePool(max_size=max_size)
