@@ -35,6 +35,10 @@ import BaseHTTPServer
 
 from eventlet import api
 from eventlet.httpdate import format_date_time
+from eventlet import pools
+
+
+DEFAULT_MAX_SIMULTANEOUS_REQUESTS = 1024
 
 
 class Input(object):
@@ -265,7 +269,6 @@ class Server(BaseHTTPServer.HTTPServer):
         self.address = address
         if log:
             self.log = log
-            log.write = log.info
         else:
             self.log = sys.stderr
         self.app = app
@@ -295,11 +298,14 @@ class Server(BaseHTTPServer.HTTPServer):
 
 def server(sock, site, log=None, environ=None, max_size=None):
     serv = Server(sock, sock.getsockname(), site, log, environ=None)
+    if max_size is None:
+        max_size = DEFAULT_MAX_SIMULTANEOUS_REQUESTS
+    pool = pools.CoroutinePool(max_size=max_size)
     try:
         print "wsgi starting up on", sock.getsockname()
         while True:
             try:
-                api.spawn(serv.process_request, sock.accept())
+                pool.execute_async(lambda: serv.process_request(sock.accept()))
             except KeyboardInterrupt:
                 api.get_hub().remove_descriptor(sock.fileno())
                 print "wsgi exiting"
