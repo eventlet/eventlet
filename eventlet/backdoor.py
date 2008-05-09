@@ -76,7 +76,9 @@ class SocketConsole(greenlib.GreenletContext):
 def backdoor((conn, addr), locals=None):
     host, port = addr
     print "backdoor to %s:%s" % (host, port)
-    ctx = SocketConsole(conn)
+    fl = conn.makefile("rw")
+    fl.newlines = '\n'
+    ctx = SocketConsole(fl)
     ctx.register()
     try:
         console = InteractiveConsole(locals)

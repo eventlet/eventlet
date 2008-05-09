@@ -21,12 +21,19 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
+
 from eventlet.api import exc_after, TimeoutError, trampoline, get_hub
 from eventlet import util
 
+
 BUFFER_SIZE = 4096
 
-import socket, errno
+import errno
+import os
+import socket
+import fcntl
+
+
 from errno import EWOULDBLOCK, EAGAIN
 
 
@@ -95,7 +102,7 @@ def socket_send(descriptor, data):
         try:
             return descriptor.send(data)
         except socket.error, e:
-            if e[0] == errno.EWOULDBLOCK:
+            if e[0] == errno.EWOULDBLOCK or e[0] == errno.ENOTCONN:
                 return 0
             raise
         except util.SSL.WantWriteError:
@@ -163,26 +170,38 @@ def file_send(fd, data):
     except socket.error, e:
         if e[0] == errno.EPIPE:
             written = 0
-            
+
+
+def set_nonblocking(fd):
+    ## Socket
+    if hasattr(fd, 'setblocking'):
+        fd.setblocking(0)
+    ## File
+    else:
+        fileno = fd.fileno()
+        flags = fcntl.fcntl(fileno, fcntl.F_GETFL)
+        fcntl.fcntl(fileno, fcntl.F_SETFL, flags | os.O_NONBLOCK)
+
 
 class GreenSocket(object):
     is_secure = False
     timeout = None
     def __init__(self, fd):
+        set_nonblocking(fd)
         self.fd = fd
         self._fileno = fd.fileno()
         self.sendcount = 0
         self.recvcount = 0
         self.recvbuffer = ''
         self.closed = False
-        
+
     def accept(self):
         fd = self.fd
         while True:
             res = socket_accept(fd)
             if res is not None:
                 client, addr = res
-                util.set_nonblocking(client)
+                set_nonblocking(client)
                 return type(self)(client), addr
             trampoline(fd, read=True, write=True)
             
@@ -215,7 +234,7 @@ class GreenSocket(object):
         
     def dup(self, *args, **kw):
         sock = self.fd.dup(*args, **kw)
-        util.set_nonblocking(sock)
+        set_nonblocking(sock)
         return type(self)(sock)
     
     def fileno(self, *args, **kw):
@@ -321,9 +340,13 @@ class GreenFile(object):
     mode = 'wb+'
 
     def __init__(self, fd):
+        if isinstance(fd, GreenSocket):
+            set_nonblocking(fd.fd)
+        else:
+            set_nonblocking(fd)
         self.sock = fd
         self.closed = False
-    
+
     def close(self):
         self.sock.close()
         self.closed = True
@@ -410,6 +433,7 @@ class GreenPipeSocket(GreenSocket):
 
 class GreenPipe(GreenFile):        
     def __init__(self, fd):
+        set_nonblocking(fd)
         self.fd = GreenPipeSocket(fd)
         super(GreenPipe, self).__init__(self.fd)
 

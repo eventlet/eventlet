@@ -17,22 +17,24 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import os, socket, time, threading
+import os, threading
 import Queue
 
 from sys import stdout
 from Queue import Empty, Queue
 
-from eventlet import api, coros, httpc, httpd, util, greenio
+from eventlet import api, coros, httpc, httpd, greenio
 from eventlet.api import trampoline, get_hub
 
 _rpipe, _wpipe = os.pipe()
 _rfile = os.fdopen(_rpipe,"r",0)
-_wrap_rfile = greenio.GreenPipe(_rfile)
-util.set_nonblocking(_rfile)
+## Work whether or not wrap_pipe_with_coroutine_pipe was called
+if not isinstance(_rfile, greenio.GreenPipe):
+    _rfile = greenio.GreenPipe(_rfile)
+
 
 def _signal_t2e():
-    nwritten = os.write(_wpipe,' ')
+    nwritten = greenio.__original_write__(_wpipe,' ')
 
 _reqq = Queue(maxsize=-1)
 _rspq = Queue(maxsize=-1)
@@ -79,10 +81,17 @@ def erecv(e):
         raise e
     return rv
 
-def erpc(meth,*args, **kwargs):
+def execute(meth,*args, **kwargs):
+    """Execute method in a thread, blocking the current
+    coroutine until the method completes.
+    """
     e = esend(meth,*args,**kwargs)
     rv = erecv(e)
     return rv
+
+## TODO deprecate
+erpc = execute
+
 
 class Proxy(object):
     """ a simple proxy-wrapper of any object that comes with a methods-only interface,
@@ -102,9 +111,9 @@ class Proxy(object):
             if kwargs.pop('nonblocking',False):
                 rv = f(*args, **kwargs)
             else:
-                rv = erpc(f,*args,**kwargs)
+                rv = execute(f,*args,**kwargs)
             if type(rv) in self._autowrap:
-                return Proxy(rv)
+                return Proxy(rv, self._autowrap)
             else:
                 return rv
         return doit
