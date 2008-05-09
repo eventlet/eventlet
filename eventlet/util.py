@@ -24,7 +24,6 @@ THE SOFTWARE.
 """
 
 import os
-import fcntl
 import socket
 import errno
 
@@ -67,7 +66,6 @@ __original_socket__ = socket.socket
 
 def tcp_socket():
     s = __original_socket__(socket.AF_INET, socket.SOCK_STREAM)
-    set_nonblocking(s)
     return s
 
 
@@ -90,6 +88,7 @@ def wrap_ssl(sock, certificate=None, private_key=None):
     connection.set_connect_state()
     return greenio.GreenSocket(connection)
 
+
 socket_already_wrapped = False
 def wrap_socket_with_coroutine_socket():
     global socket_already_wrapped
@@ -98,14 +97,59 @@ def wrap_socket_with_coroutine_socket():
 
     def new_socket(*args, **kw):
         from eventlet import greenio
-        s = __original_socket__(*args, **kw)
-        set_nonblocking(s)
-        return greenio.GreenSocket(s)
+        return greenio.GreenSocket(__original_socket__(*args, **kw))
     socket.socket = new_socket
 
     socket.ssl = wrap_ssl
     
     socket_already_wrapped = True
+
+
+__original_fdopen__ = os.fdopen
+__original_read__ = os.read
+__original_write__ = os.write
+__original_waitpid__ = os.waitpid
+__original_fork__ = os.fork
+## TODO wrappings for popen functions? not really needed since Process object exists?
+
+
+pipes_already_wrapped = False
+def wrap_pipes_with_coroutine_pipes():
+    from eventlet import processes ## Make sure the signal handler is installed
+    global pipes_already_wrapped
+    if pipes_already_wrapped:
+        return
+    def new_fdopen(*args, **kw):
+        from eventlet import greenio
+        return greenio.GreenPipe(__original_fdopen__(*args, **kw))
+    def new_read(fd, *args, **kw):
+        from eventlet import api
+        api.trampoline(fd, read=True)
+        return __original_read__(fd, *args, **kw)
+    def new_write(fd, *args, **kw):
+        from eventlet import api
+        api.trampoline(fd, write=True)
+        return __original_write__(fd, *args, **kw)
+    def new_fork(*args, **kwargs):
+        pid = __original_fork__
+        if pid:
+            processes._add_child_pid(pid)
+        return  pid
+    def new_waitpid(pid, options):
+        from eventlet import processes
+        evt = processes.CHILD_EVENTS[pid]
+        if options == os.WNOHANG:
+            if evt.ready():
+                return pid, evt.wait()
+            return 0, 0
+        elif options:
+            return __original_waitpid__(pid, result)
+        return pid, evt.wait()
+    os.fdopen = new_fdopen
+    os.read = new_read
+    os.write = new_write
+    os.fork = new_fork
+    os.waitpid = new_waitpid
 
 
 def socket_bind_and_listen(descriptor, addr=('', 0), backlog=50):
@@ -124,18 +168,4 @@ def set_reuse_addr(descriptor):
         )
     except socket.error:
         pass
-    
-def set_nonblocking(descriptor):
-    if hasattr(descriptor, 'setblocking'):
-        # socket
-        descriptor.setblocking(0)
-    else:
-        # fd
-        if hasattr(descriptor, 'fileno'):
-            fd = descriptor.fileno()
-        else:
-            fd = descriptor
-        flags = fcntl.fcntl(fd, fcntl.F_GETFL)
-        fcntl.fcntl(fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
-    return descriptor
 
