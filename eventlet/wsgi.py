@@ -35,7 +35,7 @@ import BaseHTTPServer
 
 from eventlet import api
 from eventlet.httpdate import format_date_time
-from eventlet import pools
+from eventlet import coros
 
 
 DEFAULT_MAX_SIMULTANEOUS_REQUESTS = 1024
@@ -313,7 +313,7 @@ def server(sock, site, log=None, environ=None, max_size=None, max_http_version=D
     serv = Server(sock, sock.getsockname(), site, log, environ=None, max_http_version=max_http_version)
     if max_size is None:
         max_size = DEFAULT_MAX_SIMULTANEOUS_REQUESTS
-    pool = pools.CoroutinePool(max_size=max_size)
+    pool = coros.CoroutinePool(max_size=max_size)
     try:
         print "wsgi starting up on", sock.getsockname()
         while True:
