@@ -124,6 +124,14 @@ class event(object):
             raise self._exc
         return self._result
 
+    def ready(self):
+        """ Return true if the wait() call will return immediately. 
+        Used to avoid waiting for things that might take a while to time out.
+        For example, you can put a bunch of events into a list, and then visit
+        them all repeatedly, calling ready() until one returns True, and then
+        you can wait() on that one."""
+        return self._result is not NOT_USED
+
     def cancel(self, waiter):
         """Raise an exception into a coroutine which called
         wait() an this event instead of returning a value
@@ -340,6 +348,10 @@ class CoroutinePool(pools.Pool):
         foo 1
         """
         self._execute(None, func, args, kw)
+
+    def killall(self):
+        for g in self._greenlets:
+            api.kill(g)
 
 
 class pipe(object):
