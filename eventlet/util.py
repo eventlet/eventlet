@@ -63,6 +63,8 @@ def g_log(*args):
 
 
 __original_socket__ = socket.socket
+__original_gethostbyname__ = socket.gethostbyname
+__original_getaddrinfo__ = socket.getaddrinfo
 
 def tcp_socket():
     s = __original_socket__(socket.AF_INET, socket.SOCK_STREAM)
@@ -101,7 +103,18 @@ def wrap_socket_with_coroutine_socket():
     socket.socket = new_socket
 
     socket.ssl = wrap_ssl
-    
+
+    from eventlet import tpool
+    def new_gethostbyname(*args, **kw):
+        return tpool.execute(
+            __original_gethostbyname__, *args, **kw)
+    socket.gethostbyname = new_gethostbyname
+
+    def new_getaddrinfo(*args, **kw):
+        return tpool.execute(
+            __original_getaddrinfo__, *args, **kw)
+    socket.getaddrinfo = new_getaddrinfo
+
     socket_already_wrapped = True
 
 
