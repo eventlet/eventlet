@@ -357,8 +357,9 @@ GreenletExit = greenlet.GreenletExit
 class Spew(object):
     """
     """
-    def __init__(self, trace_names=None):
+    def __init__(self, trace_names=None, show_values=True):
         self.trace_names = trace_names
+        self.show_values = show_values
 
     def __call__(self, frame, event, arg):
         if event == 'line':
@@ -380,6 +381,8 @@ class Spew(object):
                         frame.f_code.co_name, frame.f_lasti)
             if self.trace_names is None or name in self.trace_names:
                 print '%s:%s: %s' % (name, lineno, line.rstrip())
+                if not self.show_values:
+                    return self
                 details = '\t'
                 tokens = line.translate(
                     string.maketrans(' ,.()', '\0' * 5)).split('\0')
@@ -393,10 +396,10 @@ class Spew(object):
         return self
 
 
-def spew(trace_names=None):
+def spew(trace_names=None, show_values=False):
     """
     """
-    sys.settrace(Spew(trace_names))
+    sys.settrace(Spew(trace_names, show_values))
 
 
 def unspew():
