@@ -34,7 +34,8 @@ if not isinstance(_rfile, greenio.GreenPipe):
 
 
 def _signal_t2e():
-    nwritten = greenio.__original_write__(_wpipe,' ')
+    from eventlet import util
+    nwritten = util.__original_write__(_wpipe,' ')
 
 _reqq = Queue(maxsize=-1)
 _rspq = Queue(maxsize=-1)
@@ -42,7 +43,7 @@ _rspq = Queue(maxsize=-1)
 def tpool_trampoline():
     global _reqq, _rspq
     while(True):
-        _c = _wrap_rfile.recv(1)
+        _c = _rfile.recv(1)
         assert(_c != "")
         while not _rspq.empty():
             try:
@@ -71,6 +72,7 @@ def tworker():
         _rspq.put((e,rv))
         _signal_t2e()
 
+
 def erecv(e):
     rv = e.wait()
     if isinstance(rv,tuple) and len(rv) == 4 and isinstance(rv[0],Exception):
@@ -80,6 +82,7 @@ def erecv(e):
         traceback.print_stack()
         raise e
     return rv
+
 
 def execute(meth,*args, **kwargs):
     """Execute method in a thread, blocking the current
