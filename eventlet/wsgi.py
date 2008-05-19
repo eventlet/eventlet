@@ -24,6 +24,7 @@ THE SOFTWARE.
 """
 
 import errno
+import os
 import sys
 import time
 import traceback
@@ -77,7 +78,8 @@ class Input(object):
 class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
     protocol_version = 'HTTP/1.1'
     def log_message(self, format, *args):
-        self.server.log_message("%s - - [%s] %s" % (
+        self.server.log_message("(%s) %s - - [%s] %s" % (
+            self.server.pid,
             self.address_string(),
             self.log_date_time_string(),
             format % args))
@@ -112,6 +114,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 raise
 
     def handle_one_response(self):
+        start = time.time()
         headers_set = []
         headers_sent = []
         # set of lowercase header names that were sent
@@ -121,7 +124,9 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         num_blocks = None
         result = None
         use_chunked = False
-        
+        length = [0]
+        status_code = [200]
+
         def write(data, _write=wfile.write):
             towrite = []
             if not headers_set:
@@ -153,9 +158,12 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 towrite.append("%x\r\n%s\r\n" % (len(data), data))
             else:
                 towrite.append(data)
-            _write(''.join(towrite))
+            joined = ''.join(towrite)
+            length[0] = length[0] + len(joined)
+            _write(joined)
 
         def start_response(status, response_headers, exc_info=None):
+            status_code[0] = status
             if exc_info:
                 try:
                     if headers_sent:
@@ -218,6 +226,10 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             if self.environ['eventlet.input'].position < self.environ.get('CONTENT_LENGTH', 0):
                 ## Read and discard body
                 self.environ['eventlet.input'].read()
+            finish = time.time()
+            self.log_message(
+                '"%s" %s %s %.6f\n' % (
+                    self.requestline, status_code[0], length[0], finish - start))
 
     def get_environ(self):
         env = self.server.get_environ()
@@ -286,7 +298,8 @@ class Server(BaseHTTPServer.HTTPServer):
         self.app = app
         self.environ = environ
         self.max_http_version = max_http_version      
-        self.protocol = protocol      
+        self.protocol = protocol
+        self.pid = os.getpid()
 
     def get_environ(self):
         socket = self.socket
@@ -307,8 +320,8 @@ class Server(BaseHTTPServer.HTTPServer):
         proto.handle()
 
     def log_message(self, message):
+        print "log_message", message, self.log
         self.log.write(message + '\n')
-
 
 
 def server(sock, site, log=None, environ=None, max_size=None, max_http_version=DEFAULT_MAX_HTTP_VERSION, protocol=HttpProtocol):
@@ -317,7 +330,7 @@ def server(sock, site, log=None, environ=None, max_size=None, max_http_version=D
         max_size = DEFAULT_MAX_SIMULTANEOUS_REQUESTS
     pool = coros.CoroutinePool(max_size=max_size)
     try:
-        print "wsgi starting up on", sock.getsockname()
+        print os.getpid(), "wsgi starting up on", sock.getsockname()
         while True:
             try:
                 pool.execute_async(lambda: serv.process_request(sock.accept()))
