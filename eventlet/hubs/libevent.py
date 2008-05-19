@@ -90,6 +90,7 @@ class Hub(hub.BaseHub):
         # mechanism swallows exceptions raised here, so we have to raise in 
         # the 'main' greenlet (in wait()) to kill the program
         self.interrupted = True
+        event.abort()
             
     def wait(self, seconds=None):
         # this timeout will cause us to return from the dispatch() call
