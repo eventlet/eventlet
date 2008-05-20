@@ -330,7 +330,7 @@ def server(sock, site, log=None, environ=None, max_size=None, max_http_version=D
         max_size = DEFAULT_MAX_SIMULTANEOUS_REQUESTS
     pool = coros.CoroutinePool(max_size=max_size)
     try:
-        print os.getpid(), "wsgi starting up on", sock.getsockname()
+        print "(%s) wsgi starting up on %s" % (os.getpid(), sock.getsockname())
         while True:
             try:
                 pool.execute_async(lambda: serv.process_request(sock.accept()))
