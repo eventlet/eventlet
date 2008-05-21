@@ -320,7 +320,6 @@ class Server(BaseHTTPServer.HTTPServer):
         proto.handle()
 
     def log_message(self, message):
-        print "log_message", message, self.log
         self.log.write(message + '\n')
 
 
