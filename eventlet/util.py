@@ -24,6 +24,7 @@ THE SOFTWARE.
 """
 
 import os
+import select
 import socket
 import errno
 
