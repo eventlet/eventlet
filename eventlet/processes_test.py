@@ -100,8 +100,12 @@ class TestDyingProcessesLeavePool(tests.TestCase):
     def test_dead_process_not_inserted_into_pool(self):
         proc = self.pool.get()
         try:
-            result = proc.read()
-            self.assertEquals(result, 'hello\n')
+            try:
+                result = proc.read()
+                self.assertEquals(result, 'hello\n')
+                result = proc.read()
+            except processes.DeadProcess:
+                pass
         finally:
             self.pool.put(proc)
         proc2 = self.pool.get()
