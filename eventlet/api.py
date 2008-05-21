@@ -299,7 +299,7 @@ def get_default_hub():
         pass
 
     import select
-    if 0:#hasattr(select, 'poll'):
+    if hasattr(select, 'poll'):
         import eventlet.hubs.poll
         return eventlet.hubs.poll
     else:

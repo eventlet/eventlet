@@ -500,7 +500,6 @@ class HttpSuite(object):
             raise klass(params)
 
     def _get_response_body(self, params, connection):
-        print "CONENCTO", connection
         if connection is None:
             connection = connect(params.url, params.use_proxy)
         connection.request(params.method, params.path, params.body,

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 
-from setuptools import Extension, find_packages, setup
+from setuptools import find_packages, setup
 
 
 setup(
@@ -27,10 +27,3 @@ setup(
     "Intended Audience :: Developers",
     "Development Status :: 4 - Beta"]
     )
-
-
-
-setup(name="sendmsg",
-      version="1.0",
-      ext_modules=[Extension("sendmsg", ["src/sendmsg.c"])])
-
