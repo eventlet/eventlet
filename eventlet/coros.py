@@ -95,6 +95,14 @@ class event(object):
         self.epoch = time.time()
         self._result = NOT_USED
         self._waiters = {}
+        
+    def ready(self):
+        """ Return true if the wait() call will return immediately. 
+        Used to avoid waiting for things that might take a while to time out.
+        For example, you can put a bunch of events into a list, and then visit
+        them all repeatedly, calling ready() until one returns True, and then
+        you can wait() on that one."""
+        return self._result is not NOT_USED
 
     def wait(self):
         """Wait until another coroutine calls send.
@@ -123,14 +131,6 @@ class event(object):
         if self._exc is not None:
             raise self._exc
         return self._result
-
-    def ready(self):
-        """ Return true if the wait() call will return immediately. 
-        Used to avoid waiting for things that might take a while to time out.
-        For example, you can put a bunch of events into a list, and then visit
-        them all repeatedly, calling ready() until one returns True, and then
-        you can wait() on that one."""
-        return self._result is not NOT_USED
 
     def cancel(self, waiter):
         """Raise an exception into a coroutine which called
@@ -266,13 +266,18 @@ class CoroutinePool(pools.Pool):
     
     def _main_loop(self, sender):
         """ Private, infinite loop run by a pooled coroutine. """
-        while True:
-            recvd = sender.wait()
-            sender = event()
-            (evt, func, args, kw) = recvd
-            self._safe_apply(evt, func, args, kw)
-            api.get_hub().cancel_timers(api.getcurrent())
-            self.put(sender)
+        try:
+            while True:
+                recvd = sender.wait()
+                sender = event()
+                (evt, func, args, kw) = recvd
+                self._safe_apply(evt, func, args, kw)
+                api.get_hub().cancel_timers(api.getcurrent())
+                self.put(sender)
+        finally:
+            # if we get here, something broke badly, and all we can really
+            # do is try to keep the pool from leaking items
+            self.put(self.create())
             
     def _safe_apply(self, evt, func, args, kw):
         """ Private method that runs the function, catches exceptions, and

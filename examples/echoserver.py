@@ -32,7 +32,7 @@ THE SOFTWARE.
 
 from eventlet import api
 
-def handle_socket(client):
+def handle_socket(reader, writer):
     print "client connected"
     while True:
         # pass through every non-eof line
@@ -47,6 +47,6 @@ server = api.tcp_listener(('0.0.0.0', 6000))
 while True:
     new_sock, address = server.accept()
     # handle every new connection with a new coroutine
-    api.spawn(handle_socket, new_sock)
+    api.spawn(handle_socket, new_sock.makefile('r'), new_sock.makefile('w'))
 
 server.close()

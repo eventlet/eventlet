@@ -165,6 +165,42 @@ def wrap_pipes_with_coroutine_pipes():
     os.fork = new_fork
     os.waitpid = new_waitpid
 
+__original_select__ = select.select
+
+
+def fake_select(r, w, e, timeout):
+    """This is to cooperate with people who are trying to do blocking
+    reads with a timeout. This only works if r, w, and e aren't
+    bigger than len 1, and if either r or w is populated.
+
+    Install this with wrap_select_with_coroutine_select,
+    which makes the global select.select into fake_select.
+    """
+    from eventlet import api
+
+    assert len(r) <= 1
+    assert len(w) <= 1
+    assert len(e) <= 1
+
+    if w and r:
+        raise RuntimeError('fake_select doesn\'t know how to do that yet')
+
+    try:
+        if r:
+            api.trampoline(r[0], read=True, timeout=timeout)
+            return r, [], []
+        else:
+            api.trampoline(w[0], write=True, timeout=timeout)
+            return [], w, []
+    except api.TimeoutError, e:
+        return [], [], []
+    except:
+        return [], [], e
+
+
+def wrap_select_with_coroutine_select():
+    select.select = fake_select
+
 
 def socket_bind_and_listen(descriptor, addr=('', 0), backlog=50):
     set_reuse_addr(descriptor)

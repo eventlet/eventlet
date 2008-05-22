@@ -23,6 +23,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+import copy
 import datetime
 import httplib
 import os.path
@@ -218,9 +219,20 @@ class _LocalParams(_Params):
             setattr(self, k, v)
 
     def __getattr__(self, key):
+        if key == '__setstate__': return
         return getattr(self._delegate, key)
 
-    
+    def __reduce__(self):
+        params = copy.copy(self._delegate)
+        kwargs = copy.copy(self.__dict__)
+        assert(kwargs.has_key('_delegate'))
+        del kwargs['_delegate']
+        if hasattr(params,'aux'): del params.aux
+        return (_LocalParams,(params,),kwargs)
+
+    def __setitem__(self, k, item):
+        setattr(self, k, item)
+
 class ConnectionError(Exception):
     """Detailed exception class for reporting on http connection problems.
 
@@ -321,6 +333,14 @@ class TemporaryRedirect(Retriable):
 class BadRequest(ConnectionError):
     """ 400 Bad Request """
     pass
+        
+class Unauthorized(ConnectionError):
+    """ 401 Unauthorized """
+    pass
+        
+class PaymentRequired(ConnectionError):
+    """ 402 Payment Required """
+    pass
 
 
 class Forbidden(ConnectionError):
@@ -332,11 +352,42 @@ class NotFound(ConnectionError):
     """ 404 Not Found """
     pass
 
+class RequestTimeout(ConnectionError):
+    """ 408 RequestTimeout """
+    pass
+
 
 class Gone(ConnectionError):
     """ 410 Gone """
     pass
 
+class LengthRequired(ConnectionError):
+    """ 411 Length Required """
+    pass
+
+class RequestEntityTooLarge(ConnectionError):
+    """ 413 Request Entity Too Large """
+    pass
+
+class RequestURITooLong(ConnectionError):
+    """ 414 Request-URI Too Long """
+    pass
+
+class UnsupportedMediaType(ConnectionError):
+    """ 415 Unsupported Media Type """
+    pass
+
+class RequestedRangeNotSatisfiable(ConnectionError):
+    """ 416 Requested Range Not Satisfiable """
+    pass
+
+class ExpectationFailed(ConnectionError):
+    """ 417 Expectation Failed """
+    pass
+
+class NotImplemented(ConnectionError):
+    """ 501 Not Implemented """
+    pass
 
 class ServiceUnavailable(Retriable):
     """ 503 Service Unavailable """
@@ -349,6 +400,9 @@ class GatewayTimeout(Retriable):
     def url(self):
         return self.params._delegate.url
 
+class HTTPVersionNotSupported(ConnectionError):
+    """ 505 HTTP Version Not Supported """
+    pass
 
 class InternalServerError(ConnectionError):
     """ 500 Internal Server Error """
@@ -362,7 +416,9 @@ class InternalServerError(ConnectionError):
                 traceback = llsd.parse(self.params.response_body)
             except:
                 traceback = self.params.response_body
-        if isinstance(traceback, dict):
+        if(isinstance(traceback, dict)
+            and 'stack-trace' in traceback
+            and 'description' in traceback):
             body = traceback
             traceback = "Traceback (most recent call last):\n"
             for frame in body['stack-trace']:
@@ -387,12 +443,23 @@ status_to_error_map = {
     304: NotModified,
     307: TemporaryRedirect,
     400: BadRequest,
+    401: Unauthorized,
+    402: PaymentRequired,
     403: Forbidden,
     404: NotFound,
+    408: RequestTimeout,
     410: Gone,
+    411: LengthRequired,
+    413: RequestEntityTooLarge,
+    414: RequestURITooLong,
+    415: UnsupportedMediaType,
+    416: RequestedRangeNotSatisfiable,
+    417: ExpectationFailed,
     500: InternalServerError,
+    501: NotImplemented,
     503: ServiceUnavailable,
     504: GatewayTimeout,
+    505: HTTPVersionNotSupported,
 }
 
 scheme_to_factory_map = {
