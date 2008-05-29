@@ -145,10 +145,10 @@ def wrap_pipes_with_coroutine_pipes():
         api.trampoline(fd, write=True)
         return __original_write__(fd, *args, **kw)
     def new_fork(*args, **kwargs):
-        pid = __original_fork__
+        pid = __original_fork__()
         if pid:
             processes._add_child_pid(pid)
-        return  pid
+        return pid
     def new_waitpid(pid, options):
         from eventlet import processes
         evt = processes.CHILD_EVENTS[pid]
