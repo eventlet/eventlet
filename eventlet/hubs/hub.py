@@ -278,7 +278,7 @@ class BaseHub(object):
         if greenlet not in self.timers_by_greenlet:
             return
         for timer in self.timers_by_greenlet[greenlet]:
-            if not timer.cancelled and timer.seconds:
+            if not timer.cancelled and not timer.called and timer.seconds:
                 ## If timer.seconds is 0, this isn't a timer, it's
                 ## actually eventlet's silly way of specifying whether
                 ## a coroutine is "ready to run" or not.
