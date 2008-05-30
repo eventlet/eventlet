@@ -110,6 +110,7 @@ class TestEvent(tests.TestCase):
         api.exc_after(0.001, api.TimeoutError)
         self.assertRaises(api.TimeoutError, evt.wait)
 
+
 class TestCoroutinePool(tests.TestCase):
     mode = 'static'
     def setUp(self):
@@ -206,13 +207,22 @@ class TestCoroutinePool(tests.TestCase):
             t.cancel()
         finally:
             sys.stderr = normal_err
-        
-        
+
+    def test_track_events(self):
+        pool = coros.CoroutinePool(track_events=True)
+        for x in range(6):
+            pool.execute(lambda n: n, x)
+        t = api.exc_after(10, RuntimeError)
+        for y in range(6):
+            pool.wait()
+        t.cancel()
+
 
 class IncrActor(coros.Actor):
     def received(self, evt):
         self.value = getattr(self, 'value', 0) + 1
         if evt: evt.send()
+
 
 class TestActor(tests.TestCase):
     mode = 'static'
@@ -277,7 +287,6 @@ class TestActor(tests.TestCase):
         for evt in waiters:
             evt.wait()
         self.assertEqual(msgs, [1,2,3,4,5])
-        
 
     def test_raising_received(self):
         msgs = []
@@ -324,6 +333,7 @@ class TestActor(tests.TestCase):
         evt.wait()
         self.assertEqual(total[0], 3)
         self.assertEqual(self.actor._pool.free(), 2)
+
 
 if __name__ == '__main__':
     tests.main()

@@ -260,8 +260,13 @@ class CoroutinePool(pools.Pool):
     foo 4
     """
     
-    def __init__(self, min_size=0, max_size=4):
+    def __init__(self, min_size=0, max_size=4, track_events=False):
         self._greenlets = set()
+        if track_events:
+            self._tracked_events = []
+            self._next_event = None
+        else:
+            self._tracked_events = None
         super(CoroutinePool, self).__init__(min_size, max_size)
     
     def _main_loop(self, sender):
@@ -286,6 +291,13 @@ class CoroutinePool(pools.Pool):
             result = func(*args, **kw)
             if evt is not None:
                 evt.send(result)
+                if self._tracked_events is not None:
+                    if self._next_event is None:
+                        self._tracked_events.append(result)
+                    else:
+                        ne = self._next_event
+                        self._next_event = None
+                        ne.send(result)
         except api.GreenletExit, e:
             # we're printing this out to see if it ever happens
             # in practice
@@ -353,6 +365,22 @@ class CoroutinePool(pools.Pool):
         foo 1
         """
         self._execute(None, func, args, kw)
+
+    def wait(self):
+        """Wait for the next execute in the pool to complete,
+        and return the result.
+
+        You must pass track_events=True to the CoroutinePool constructor
+        in order to use this method.
+        """
+        assert self._tracked_events is not None, (
+            "Must pass track_events=True to the constructor to use CoroutinePool.wait()")
+        if self._next_event is None:
+            result = self._tracked_events.pop(0)
+            if not self._tracked_events:
+                self._next_event = event()
+            return result
+        return self._next_event.wait()
 
     def killall(self):
         for g in self._greenlets:
