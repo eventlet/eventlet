@@ -295,6 +295,7 @@ class CoroutinePool(pools.Pool):
                     if self._next_event is None:
                         self._tracked_events.append(result)
                     else:
+                        
                         ne = self._next_event
                         self._next_event = None
                         ne.send(result)
@@ -375,12 +376,17 @@ class CoroutinePool(pools.Pool):
         """
         assert self._tracked_events is not None, (
             "Must pass track_events=True to the constructor to use CoroutinePool.wait()")
-        if self._next_event is None:
-            result = self._tracked_events.pop(0)
-            if not self._tracked_events:
-                self._next_event = event()
-            return result
-        return self._next_event.wait()
+        if self._next_event is not None:
+            return self._next_event.wait()
+
+        if not self._tracked_events:
+            self._next_event = event()
+            return self._next_event.wait()
+
+        result = self._tracked_events.pop(0)
+        if not self._tracked_events:
+            self._next_event = event()
+        return result
 
     def killall(self):
         for g in self._greenlets:

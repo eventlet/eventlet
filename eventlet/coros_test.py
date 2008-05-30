@@ -212,10 +212,16 @@ class TestCoroutinePool(tests.TestCase):
         pool = coros.CoroutinePool(track_events=True)
         for x in range(6):
             pool.execute(lambda n: n, x)
-        t = api.exc_after(10, RuntimeError)
         for y in range(6):
             pool.wait()
-        t.cancel()
+
+    def test_track_slow_event(self):
+        pool = coros.CoroutinePool(track_events=True)
+        def slow():
+            api.sleep(0.1)
+            return 'ok'
+        pool.execute(slow)
+        self.assertEquals(pool.wait(), 'ok')
 
 
 class IncrActor(coros.Actor):
