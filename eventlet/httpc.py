@@ -274,7 +274,7 @@ class UnparseableResponse(ConnectionError):
         Exception.__init__(self)
 
     def __repr__(self):
-        return "Could not parse the data at the URL %r of content-type %r\nData:\n%r)" % (
+        return "Could not parse the data at the URL %r of content-type %r\nData:\n%s" % (
             self.url, self.content_type, self.response)
 
     __str__ = __repr__

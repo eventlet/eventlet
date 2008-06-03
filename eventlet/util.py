@@ -66,6 +66,7 @@ def g_log(*args):
 __original_socket__ = socket.socket
 __original_gethostbyname__ = socket.gethostbyname
 __original_getaddrinfo__ = socket.getaddrinfo
+__original_fromfd__ = socket.fromfd
 
 def tcp_socket():
     s = __original_socket__(socket.AF_INET, socket.SOCK_STREAM)
@@ -115,6 +116,12 @@ def wrap_socket_with_coroutine_socket():
         return tpool.execute(
             __original_getaddrinfo__, *args, **kw)
     socket.getaddrinfo = new_getaddrinfo
+
+    def new_fromfd(*args, **kw):
+        print "fromfd", args, kw
+        from eventlet import greenio
+        return greenio.GreenSocket(__original_fromfd__(*args, **kw))
+    socket.fromfd = new_fromfd
 
     socket_already_wrapped = True
 
@@ -200,6 +207,47 @@ def fake_select(r, w, e, timeout):
 
 def wrap_select_with_coroutine_select():
     select.select = fake_select
+
+
+def wrap_paste_tls_with_corols():
+    """Paste uses threadlocals, in a module called paste.util.threadinglocal.
+    If you are running Paste under an eventlet web server that uses greenlets
+    instead of threads, you can use wrap_paste_tls_with_corols to replace
+    the paste.util.threadinglocal.local class with one that uses the current
+    greenlet id as the 'thread' id instead of the current thread.
+    """
+    from eventlet import api
+    from paste.util import threadinglocal
+
+    def get_ident():
+        return id(api.getcurrent())
+
+    class local(object):
+
+        def __init__(self):
+            self.__dict__['__objs'] = {}
+
+        def __getattr__(self, attr, g=get_ident):
+            print "getattr", self, attr, g
+            try:
+                return self.__dict__['__objs'][g()][attr]
+            except KeyError:
+                raise AttributeError(
+                    "No variable %s defined for the thread %s"
+                    % (attr, g()))
+
+        def __setattr__(self, attr, value, g=get_ident):
+            self.__dict__['__objs'].setdefault(g(), {})[attr] = value
+
+        def __delattr__(self, attr, g=get_ident):
+            try:
+                del self.__dict__['__objs'][g()][attr]
+            except KeyError:
+                raise AttributeError(
+                    "No variable %s defined for thread %s"
+                    % (attr, g()))
+
+    threadinglocal.local = local
 
 
 def socket_bind_and_listen(descriptor, addr=('', 0), backlog=50):
