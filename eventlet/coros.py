@@ -44,6 +44,11 @@ class Cancelled(RuntimeError):
     pass
 
 
+class ExceptionWrapper(object):
+    def __init__(self, e):
+        self.e = e
+
+
 NOT_USED = object()
 
 
@@ -283,7 +288,7 @@ class CoroutinePool(pools.Pool):
             # if we get here, something broke badly, and all we can really
             # do is try to keep the pool from leaking items
             self.put(self.create())
-            
+
     def _safe_apply(self, evt, func, args, kw):
         """ Private method that runs the function, catches exceptions, and
         passes back the return value in the event."""
@@ -311,7 +316,14 @@ class CoroutinePool(pools.Pool):
             traceback.print_exc()
             if evt is not None:
                 evt.send(exc=e)
-                
+            if self._tracked_events is not None:
+                if self._next_event is None:
+                    self._tracked_events.append(ExceptionWrapper(e))
+                else:
+                    ne = self._next_event
+                    self._next_event = None
+                    ne.send(exc=e)
+
     def _execute(self, evt, func, args, kw):
         """ Private implementation of the execute methods.
         """
@@ -384,6 +396,9 @@ class CoroutinePool(pools.Pool):
             return self._next_event.wait()
 
         result = self._tracked_events.pop(0)
+        if isinstance(result, ExceptionWrapper):
+            raise result.e
+
         if not self._tracked_events:
             self._next_event = event()
         return result
