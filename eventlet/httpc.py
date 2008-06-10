@@ -589,13 +589,27 @@ class HttpSuite(object):
     def head(self, *args, **kwargs):
         return self.head_(*args, **kwargs)[-1]
 
-    def get_(self, url, headers=None, use_proxy=False, ok=None, aux=None):
+    def get_(self, url, headers=None, use_proxy=False, ok=None, aux=None, max_retries=8):
         if headers is None:
             headers = {}
         headers['accept'] = self.fallback_content_type+';q=1,*/*;q=0'
-        return self.request_(_Params(url, 'GET', headers=headers,
-                                     loader=self.loader, dumper=self.dumper,
-                                     use_proxy=use_proxy, ok=ok, aux=aux))
+        def req():
+            return self.request_(_Params(url, 'GET', headers=headers,
+                                         loader=self.loader, dumper=self.dumper,
+                                         use_proxy=use_proxy, ok=ok, aux=aux))
+        def retry_response(err):
+            def doit():
+                return err.retry_()
+            return doit
+        retried = 0
+        while retried <= max_retries:
+            try:
+                return req()
+            except (Found, TemporaryRedirect, MovedPermanently, SeeOther), e:
+                if retried >= max_retries:
+                    raise
+                retried += 1
+                req = retry_response(e)
 
     def get(self, *args, **kwargs):
         return self.get_(*args, **kwargs)[-1]

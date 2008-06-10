@@ -263,11 +263,12 @@ class TestHttpc301(TestBase, tests.TestCase):
 
     def test_get(self):
         try:
-            httpc.get(self.base_url() + 'hello')
+            httpc.get(self.base_url() + 'hello', max_retries=0)
             self.assert_(False)
         except httpc.MovedPermanently, err:
             response = err.retry()
         self.assertEquals(response, 'hello world')
+        self.assertEquals(httpc.get(self.base_url() + 'hello', max_retries=1), 'hello world')
     
     def test_post(self):
         data = 'qunge'
@@ -284,19 +285,21 @@ class TestHttpc302(TestBase, tests.TestCase):
 
     def test_get_expired(self):
         try:
-            httpc.get(self.base_url() + 'expired/hello')
+            httpc.get(self.base_url() + 'expired/hello', max_retries=0)
             self.assert_(False)
         except httpc.Found, err:
             response = err.retry()
         self.assertEquals(response, 'hello world')
+        self.assertEquals(httpc.get(self.base_url() + 'expired/hello', max_retries=1), 'hello world')
 
     def test_get_expires(self):
         try:
-            httpc.get(self.base_url() + 'expires/hello')
+            httpc.get(self.base_url() + 'expires/hello', max_retries=0)
             self.assert_(False)
         except httpc.Found, err:
             response = err.retry()
         self.assertEquals(response, 'hello world')
+        self.assertEquals(httpc.get(self.base_url() + 'expires/hello', max_retries=1), 'hello world')
 
 
 class TestHttpc303(TestBase, tests.TestCase):
