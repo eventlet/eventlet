@@ -209,6 +209,61 @@ class event(object):
         for waiter in self._waiters:
             hub.schedule_call(0, greenlib.switch, waiter, self._result)
 
+class metaphore(object):
+    """This is sort of an inverse semaphore: a counter that starts at 0 and
+    waits only if nonzero. It's used to implement a "wait for all" scenario.
+
+    >>> from eventlet import api, coros
+    >>> count = coros.metaphore()
+    >>> count.wait()
+    >>> def decrementer(count, id):
+    ...     print "%s decrementing" % id
+    ...     count.dec()
+    ...
+    >>> _ = api.spawn(decrementer, count, 'A')
+    >>> _ = api.spawn(decrementer, count, 'B')
+    >>> count.inc(2)
+    >>> count.wait()
+    A decrementing
+    B decrementing
+    """
+    def __init__(self):
+        self.counter = 0
+        self.event   = event()
+        # send() right away, else we'd wait on the default 0 count!
+        self.event.send()
+
+    def inc(self, by=1):
+        """Increment our counter. If this transitions the counter from zero to
+        nonzero, make any subsequent wait() call wait.
+        """
+        assert by > 0
+        self.counter += by
+        if self.counter == by:
+            # If we just incremented self.counter by 'by', and the new count
+            # equals 'by', then the old value of self.counter was 0.
+            # Transitioning from 0 to a nonzero value means wait() must
+            # actually wait.
+            self.event.reset()
+
+    def dec(self, by=1):
+        """Decrement our counter. If this transitions the counter from nonzero
+        to zero, a current or subsequent wait() call need no longer wait.
+        """
+        assert by > 0
+        self.counter -= by
+        if self.counter <= 0:
+            # Don't leave self.counter < 0, that will screw things up in
+            # future calls.
+            self.counter = 0
+            # Transitioning from nonzero to 0 means wait() need no longer wait.
+            self.event.send()
+
+    def wait(self):
+        """Suspend the caller only if our count is nonzero. In that case,
+        resume the caller once the count decrements to zero again.
+        """
+        self.event.wait()        
 
 def execute(func, *args, **kw):
     """ Executes an operation asynchronously in a new coroutine, returning
@@ -262,8 +317,27 @@ class CoroutinePool(pools.Pool):
     
     def __init__(self, min_size=0, max_size=4):
         self._greenlets = set()
+        self.requested = metaphore()
         super(CoroutinePool, self).__init__(min_size, max_size)
-    
+
+## This doesn't yet pass its own doctest -- but I'm not even sure it's a
+## wonderful idea.
+##     def __del__(self):
+##         """Experimental: try to prevent the calling script from exiting until
+##         all coroutines in this pool have run to completion.
+
+##         >>> from eventlet import coros
+##         >>> pool = coros.CoroutinePool()
+##         >>> def saw(x): print "I saw %s!"
+##         ...
+##         >>> pool.launch_all(saw, "GHI")
+##         >>> del pool
+##         I saw G!
+##         I saw H!
+##         I saw I!
+##         """
+##         self.wait_all()
+
     def _main_loop(self, sender):
         """ Private, infinite loop run by a pooled coroutine. """
         try:
@@ -283,7 +357,12 @@ class CoroutinePool(pools.Pool):
         """ Private method that runs the function, catches exceptions, and
         passes back the return value in the event."""
         try:
-            result = func(*args, **kw)
+            try:
+                result = func(*args, **kw)
+            finally:
+                # Be sure to decrement requested coroutines, no matter HOW we
+                # leave. (See _execute().)
+                self.requested.dec()
             if evt is not None:
                 evt.send(result)
         except api.GreenletExit, e:
@@ -302,6 +381,11 @@ class CoroutinePool(pools.Pool):
     def _execute(self, evt, func, args, kw):
         """ Private implementation of the execute methods.
         """
+        # Track number of requested coroutines. Note the asymmetry: we
+        # increment when the coroutine is first REQUESTED, long before it
+        # actually starts up; we don't decrement until it completes. (See
+        # _safe_apply().)
+        self.requested.inc()
         # if reentering an empty pool, don't try to wait on a coroutine freeing 
         # itself -- instead, just execute in the current coroutine
         if self.free() == 0 and api.getcurrent() in self._greenlets:
@@ -354,6 +438,64 @@ class CoroutinePool(pools.Pool):
         """
         self._execute(None, func, args, kw)
 
+    def wait_all(self):
+        """Wait until all coroutines started either by execute() or
+        execute_async() have completed. If you kept the event objects returned
+        by execute(), you can then call their individual wait() methods to
+        retrieve results with no further actual waiting.
+
+        >>> from eventlet import coros
+        >>> pool = coros.CoroutinePool()
+        >>> pool.wait_all()
+        >>> def hi(name):
+        ...     print "Hello, %s!" % name
+        ...     return name
+        ...
+        >>> evt = pool.execute(hi, "world")
+        >>> pool.execute_async(hi, "darkness, my old friend")
+        >>> pool.wait_all()
+        Hello, world!
+        Hello, darkness, my old friend!
+        >>> evt.wait()
+        'world'
+        >>> pool.wait_all()
+        """
+        self.requested.wait()
+
+    def launch_all(self, function, iterable):
+        """For each tuple (sequence) in iterable, launch function(*tuple) in
+        its own coroutine -- like itertools.starmap(), but in parallel.
+
+        >>> from eventlet import coros
+        >>> pool = coros.CoroutinePool()
+        >>> def saw(x):
+        ...     print "I saw %s!" % x
+        ...
+        >>> pool.launch_all(saw, "ABC")
+        >>> pool.wait_all()
+        I saw A!
+        I saw B!
+        I saw C!
+        """
+        for tup in iterable:
+            self.execute_async(function, *tup)
+
+    def process_all(self, function, iterable):
+        """For each tuple (sequence) in iterable, launch function(*tuple) in
+        its own coroutine -- like itertools.starmap(), but in parallel. Don't
+        return until they've all completed.
+
+        >>> from eventlet import coros
+        >>> pool = coros.CoroutinePool()
+        >>> def saw(x): print "I saw %s!" % x
+        ...
+        >>> pool.process_all(saw, "DEF")
+        I saw D!
+        I saw E!
+        I saw F!
+        """
+        self.launch_all(function, iterable)
+        self.wait_all()
 
 class pipe(object):
     """ Implementation of pipe using events.  Not tested!  Not used, either."""
