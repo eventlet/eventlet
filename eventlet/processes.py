@@ -30,6 +30,7 @@ import sys
 from eventlet import coros
 from eventlet import pools
 from eventlet import greenio
+from eventlet import util
 
 
 class DeadProcess(RuntimeError):
@@ -44,7 +45,7 @@ CHILD_EVENTS = {}
 def sig_child(signal, frame):
     for child_pid in CHILD_PIDS:
         try:
-            pid, code = os.waitpid(child_pid, os.WNOHANG)
+            pid, code = util.__original_waitpid__(child_pid, os.WNOHANG)
             if not pid:
                 continue ## Wasn't this one that died
             elif pid == -1:
