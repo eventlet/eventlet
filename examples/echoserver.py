@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 """\
 @file echoserver.py
 
@@ -36,17 +37,18 @@ def handle_socket(reader, writer):
     print "client connected"
     while True:
         # pass through every non-eof line
-        x = client.readline()
+        x = reader.readline()
         if not x: break
-        client.write(x)
+        writer.write(x)
         print "echoed", x
     print "client disconnected"
 
-# server socket listening on port 6000
+print "server socket listening on port 6000"
 server = api.tcp_listener(('0.0.0.0', 6000))
 while True:
-    new_sock, address = server.accept()
+    try:
+        new_sock, address = server.accept()
+    except KeyboardInterrupt:
+        break
     # handle every new connection with a new coroutine
     api.spawn(handle_socket, new_sock.makefile('r'), new_sock.makefile('w'))
-
-server.close()
