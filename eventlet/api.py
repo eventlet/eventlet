@@ -230,6 +230,7 @@ def sleep(timeout=0):
 
 
 switch = greenlib.switch
+local_dict = greenlib.greenlet_dict
 getcurrent = greenlet.getcurrent
 GreenletExit = greenlet.GreenletExit
 
