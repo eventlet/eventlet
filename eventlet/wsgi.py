@@ -105,13 +105,17 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         self.environ = self.get_environ()
         self.application = self.server.app
         try:
-            self.handle_one_response()
-        except socket.error, e:
-            # Broken pipe, connection reset by peer
-            if e[0] in (32, 54):
-                pass
-            else:
-                raise
+            self.server.outstanding_requests += 1
+            try:
+                self.handle_one_response()
+            except socket.error, e:
+                # Broken pipe, connection reset by peer
+                if e[0] in (32, 54):
+                    pass
+                else:
+                    raise
+        finally:
+            self.server.outstanding_requests -= 1
 
     def handle_one_response(self):
         start = time.time()
@@ -289,6 +293,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
 class Server(BaseHTTPServer.HTTPServer):
     def __init__(self, socket, address, app, log=None, environ=None, max_http_version=None, protocol=HttpProtocol):
+        self.outstanding_requests = 0
         self.socket = socket
         self.address = address
         if log:
@@ -323,8 +328,10 @@ class Server(BaseHTTPServer.HTTPServer):
         self.log.write(message + '\n')
 
 
-def server(sock, site, log=None, environ=None, max_size=None, max_http_version=DEFAULT_MAX_HTTP_VERSION, protocol=HttpProtocol):
+def server(sock, site, log=None, environ=None, max_size=None, max_http_version=DEFAULT_MAX_HTTP_VERSION, protocol=HttpProtocol, server_event=None):
     serv = Server(sock, sock.getsockname(), site, log, environ=None, max_http_version=max_http_version, protocol=protocol)
+    if server_event is not None:
+        server_event.send(serv)
     if max_size is None:
         max_size = DEFAULT_MAX_SIMULTANEOUS_REQUESTS
     pool = coros.CoroutinePool(max_size=max_size)
@@ -332,7 +339,8 @@ def server(sock, site, log=None, environ=None, max_size=None, max_http_version=D
         print "(%s) wsgi starting up on %s" % (os.getpid(), sock.getsockname())
         while True:
             try:
-                pool.execute_async(lambda: serv.process_request(sock.accept()))
+                client_socket = sock.accept()
+                pool.execute_async(serv.process_request, client_socket)
             except KeyboardInterrupt:
                 api.get_hub().remove_descriptor(sock.fileno())
                 print "wsgi exiting"

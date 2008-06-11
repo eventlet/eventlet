@@ -35,7 +35,7 @@ if not isinstance(_rfile, greenio.GreenPipe):
 
 def _signal_t2e():
     from eventlet import util
-    nwritten = util.__original_write__(_wpipe,' ')
+    nwritten = util.__original_write__(_wpipe, ' ')
 
 _reqq = Queue(maxsize=-1)
 _rspq = Queue(maxsize=-1)
@@ -104,6 +104,8 @@ class Proxy(object):
     code only. """
     def __init__(self, obj,autowrap=()):
         self._obj = obj
+        if isinstance(autowrap, (list, tuple)):
+            autowrap = dict([(x, True) for x in autowrap])
         self._autowrap = autowrap
 
     def __getattr__(self,attr_name):
