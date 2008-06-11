@@ -22,6 +22,8 @@ setup(
     classifiers=[
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: POSIX",
     "Topic :: Internet",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Intended Audience :: Developers",

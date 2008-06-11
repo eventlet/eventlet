@@ -44,10 +44,10 @@ except ImportError:
             greenlet = sys.modules['greenlet']
         except ImportError:
             try:
-                import support.stackless
-                support.stackless.emulate()
+                import support.stacklesss
+                support.stacklesss.emulate()
                 greenlet = sys.modules['greenlet']                
-            except ImportError:
+            except ImportError, e:
                 raise ImportError("Unable to find an implementation of greenlet.")
 
 
