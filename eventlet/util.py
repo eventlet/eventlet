@@ -158,7 +158,9 @@ def wrap_pipes_with_coroutine_pipes():
         return pid
     def new_waitpid(pid, options):
         from eventlet import processes
-        evt = processes.CHILD_EVENTS[pid]
+        evt = processes.CHILD_EVENTS.get(pid)
+        if not evt:
+            return 0, 0
         if options == os.WNOHANG:
             if evt.ready():
                 return pid, evt.wait()
