@@ -1,1 +1,4 @@
-glob:*.pyc
+syntax: glob
+*.pyc
+dist
+eventlet.egg-info
