@@ -1,9 +1,0 @@
-K 10
-svn:ignore
-V 16
-*.pyc
-*~
-
-*.tmp
-
-END
