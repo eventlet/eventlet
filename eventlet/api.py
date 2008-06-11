@@ -54,9 +54,10 @@ except ImportError:
 from eventlet import greenlib, tls
 
 __all__ = [
-    'use_hub', 'get_hub', 'sleep', 'spawn', 'kill',
-    'call_after', 'exc_after', 'trampoline', 'tcp_listener', 'tcp_server',
-    'with_timeout',
+    'call_after', 'exc_after', 'getcurrent', 'get_default_hub', 'get_hub',
+    'GreenletExit', 'kill', 'sleep', 'spawn', 'spew', 'switch',
+    'ssl_listener', 'tcp_listener', 'tcp_server', 'trampoline',
+    'unspew', 'use_hub', 'with_timeout',
 ]
 
 
@@ -204,7 +205,9 @@ def spawn(function, *args, **kwds):
     greenlib.switch(g, (_spawn_startup, function, args, kwds, t.cancel))
     return g
 
+
 kill = greenlib.kill
+
 
 def call_after(seconds, function, *args, **kwds):
     """Schedule *function* to be called after *seconds* have elapsed.
@@ -296,7 +299,8 @@ def exc_after(seconds, exception_object):
 
 
 def get_default_hub():
-    """
+    """Select the default hub implementation based on what multiplexing
+    libraries are installed. Tries libevent first, then poll, then select.
     """
     try:
         import eventlet.hubs.libevent
@@ -314,7 +318,8 @@ def get_default_hub():
 
 
 def use_hub(mod=None):
-    """
+    """Use the module *mod*, containing a class called Hub, as the
+    event hub. Usually not required; the default hub is usually fine.
     """
     if mod is None:
         mod = get_default_hub()
@@ -326,7 +331,7 @@ def use_hub(mod=None):
         _threadlocal.Hub = mod
 
 def get_hub():
-    """
+    """Get the current event hub singleton object.
     """
     try:
         hub = _threadlocal.hub
@@ -403,13 +408,14 @@ class Spew(object):
 
 
 def spew(trace_names=None, show_values=False):
-    """
+    """Install a trace hook which writes incredibly detailed logs
+    about what code is being executed to stdout.
     """
     sys.settrace(Spew(trace_names, show_values))
 
 
 def unspew():
-    """
+    """Remove the trace hook installed by spew.
     """
     sys.settrace(None)
 
