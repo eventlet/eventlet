@@ -437,12 +437,7 @@ class CoroutinePool(pools.Pool):
         """ Private method that runs the function, catches exceptions, and
         passes back the return value in the event."""
         try:
-            try:
-                result = func(*args, **kw)
-            finally:
-                # Be sure to decrement requested coroutines, no matter HOW we
-                # leave. (See _execute().)
-                self.requested.dec()
+            result = func(*args, **kw)
             if evt is not None:
                 evt.send(result)
         except api.GreenletExit, e:
@@ -461,11 +456,6 @@ class CoroutinePool(pools.Pool):
     def _execute(self, evt, func, args, kw):
         """ Private implementation of the execute methods.
         """
-        # Track number of requested coroutines. Note the asymmetry: we
-        # increment when the coroutine is first REQUESTED, long before it
-        # actually starts up; we don't decrement until it completes. (See
-        # _safe_apply().)
-        self.requested.inc()
         # if reentering an empty pool, don't try to wait on a coroutine freeing 
         # itself -- instead, just execute in the current coroutine
         if self.free() == 0 and api.getcurrent() in self._greenlets:
@@ -484,6 +474,20 @@ class CoroutinePool(pools.Pool):
         sender = event()
         self._greenlets.add(api.spawn(self._main_loop, sender))
         return sender
+
+    def get(self):
+        """Override of eventlet.pools.Pool interface"""
+        # Track the number of requested CoroutinePool coroutines
+        self.requested.inc()
+        # forward call to base class
+        return super(CoroutinePool, self).get()
+
+    def put(self, item):
+        """Override of eventlet.pools.Pool interface"""
+        # forward call to base class
+        super(CoroutinePool, self).put(item)
+        # Track the number of outstanding CoroutinePool coroutines
+        self.requested.dec()
         
     def execute(self, func, *args, **kw):
         """Execute func in one of the coroutines maintained
