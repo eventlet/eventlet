@@ -12,7 +12,7 @@ setup(
     author_email='eventletdev@lists.secondlife.com',
     url='http://wiki.secondlife.com/wiki/Eventlet',
     packages=find_packages(),
-    install_requires=['greenlet'],
+    install_requires=['greenlet', 'pyOpenSSL'],
     long_description="""
     Eventlet is a networking library written in Python. It achieves
     high scalability by using non-blocking io while at the same time

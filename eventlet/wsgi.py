@@ -167,7 +167,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             _write(joined)
 
         def start_response(status, response_headers, exc_info=None):
-            status_code[0] = status
+            status_code[0] = status.split()[0]
             if exc_info:
                 try:
                     if headers_sent:
@@ -202,10 +202,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     for data in result:
                         if data:
                             towrite.append(data)
-                            if reduce(
-                                lambda x, y: x + y,
-                                map(
-                                    lambda x: len(x), towrite)) > 4096:
+                            if sum([len(x) for x in towrite]) > 4096:
                                 write(''.join(towrite))
                                 del towrite[:]
                 except Exception, e:
@@ -218,10 +215,10 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
     
                 if towrite:
                     write(''.join(towrite))
-                if use_chunked:
-                    wfile.write('0\r\n\r\n')
                 if not headers_sent:
                     write('')
+                if use_chunked:
+                    wfile.write('0\r\n\r\n')
             except Exception, e:
                 traceback.print_exc()
         finally:
