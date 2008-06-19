@@ -656,6 +656,51 @@ class HttpSuite(object):
         return self.post_(*args, **kwargs)[-1]
 
 
+class HttpStreamSuite(HttpSuite):
+    def request_(self, params):
+        '''Make an http request to a url, for internal use mostly.'''
+
+        params = _LocalParams(params, instance=self)
+
+        (scheme, location, path, parameters, query,
+         fragment) = urlparse.urlparse(params.url)
+
+        if params.use_proxy:
+            if scheme == 'file':
+                params.use_proxy = False
+            else:
+                params.headers['host'] = location
+
+        if not params.use_proxy:
+            params.path = path
+            if query:
+                params.path += '?' + query
+
+        params.orig_body = params.body
+
+        if params.method in ('PUT', 'POST'):
+            if self.dumper is not None:
+                params.body = self.dumper(params.body)
+            # don't set content-length header because httplib does it
+            # for us in _send_request
+        else:
+            params.body = ''
+
+        params.response = self._get_response_body(params)
+        response = params.response
+
+        return response.status, response.msg, response
+
+    def _get_response_body(self, params):
+        connection = connect(params.url, params.use_proxy)
+        connection.request(params.method, params.path, params.body,
+                           params.headers)
+        params.response = connection.getresponse()
+        #connection.close()
+        self._check_status(params)
+
+        return params.response
+
 def make_suite(dumper, loader, fallback_content_type):
     """ Return a tuple of methods for making http requests with automatic bidirectional formatting with a particular content-type."""
     suite = HttpSuite(dumper, loader, fallback_content_type)
