@@ -23,6 +23,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+import cgi
 import errno
 import os
 import sys
@@ -75,6 +76,9 @@ class Input(object):
         return read
 
 
+MAX_REQUEST_LINE = 8192
+
+
 class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
     protocol_version = 'HTTP/1.1'
     def log_message(self, format, *args):
@@ -89,7 +93,12 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             self.protocol_version = self.server.max_http_version
 
         try:
-            self.raw_requestline = self.rfile.readline()
+            self.raw_requestline = self.rfile.readline(MAX_REQUEST_LINE)
+            if len(self.raw_requestline) == MAX_REQUEST_LINE:
+                self.wfile.write(
+                    "HTTP/1.0 414 Request URI Too Long\r\nConnection: close\r\nContent-length: 0\r\n\r\n")
+                self.close_connection = 1
+                return
         except socket.error, e:
             if e[0] != errno.EBADF:
                 raise
