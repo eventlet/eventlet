@@ -50,6 +50,20 @@ def hello_world(env, start_response):
     return ["hello world"]
 
 
+def chunked_app(env, start_response):
+    start_response('200 OK', [('Content-type', 'text/plain')])
+    yield "this"
+    yield "is"
+    yield "chunked"
+
+
+def big_chunks(env, start_response):
+    start_response('200 OK', [('Content-type', 'text/plain')])
+    line = 'a' * 8192
+    for x in range(10):
+        yield line
+
+
 class Site(object):
     def __init__(self):
         self.application = hello_world
@@ -217,6 +231,41 @@ class TestHttpd(tests.TestCase):
         self.assertEqual(response_line_200,response_line_test)
         fd.close()
 
+    def test_009_chunked_response(self):
+        self.site.application = chunked_app
+        sock = api.connect_tcp(
+            ('127.0.0.1', 12346))
+        
+        fd = sock.makefile()
+        fd.write('GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
+        self.assert_('Transfer-Encoding: chunked' in fd.read())
+
+    def test_010_no_chunked_http_1_0(self):
+        self.site.application = chunked_app
+        sock = api.connect_tcp(
+            ('127.0.0.1', 12346))
+        
+        fd = sock.makefile()
+        fd.write('GET / HTTP/1.0\r\nHost: localhost\r\nConnection: close\r\n\r\n')
+        self.assert_('Transfer-Encoding: chunked' not in fd.read())
+
+    def test_011_multiple_chunks(self):
+        self.site.application = big_chunks
+        sock = api.connect_tcp(
+            ('127.0.0.1', 12346))
+        
+        fd = sock.makefile()
+        fd.write('GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
+        headers = fd.readuntil('\r\n\r\n')
+        self.assert_('Transfer-Encoding: chunked' in headers)
+        chunks = 0
+        chunklen = int(fd.readline(), 16)
+        while chunklen:
+            chunks += 1
+            chunk = fd.read(chunklen)
+            fd.readline()
+            chunklen = int(fd.readline(), 16)
+        self.assert_(chunks > 1)
 
 if __name__ == '__main__':
     tests.main()

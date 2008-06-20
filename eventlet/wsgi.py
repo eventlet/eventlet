@@ -23,7 +23,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-import cgi
 import errno
 import os
 import sys
@@ -202,7 +201,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         try:
             num_blocks = len(result)
         except (TypeError, AttributeError, NotImplementedError):
-            if self.protocol_version == 'HTTP/1.1':
+            if self.request_version == 'HTTP/1.1':
                 use_chunked = True
         try:
             try:
@@ -211,7 +210,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     for data in result:
                         if data:
                             towrite.append(data)
-                            if sum([len(x) for x in towrite]) > 4096:
+                            if use_chunked and sum(map(len, towrite)) > 4096:
                                 write(''.join(towrite))
                                 del towrite[:]
                 except Exception, e:
