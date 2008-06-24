@@ -123,7 +123,7 @@ class Proxy(object):
                 return rv
         return doit
 
-_nthreads = 20
+_nthreads = int(os.environ.get('EVENTLET_THREADPOOL_SIZE', 20))
 _threads = {}
 def setup():
     global _threads
