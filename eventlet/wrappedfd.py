@@ -154,13 +154,13 @@ class wrapped_fd(object):
                 client, addr = res
                 util.set_nonblocking(client)
                 return type(self)(client), addr
-            trampoline(fd, read=True, write=True)
+            trampoline(fd, read=True)
 
     def connect(self, address):
         fd = self.fd
         connect = util.socket_connect
         while not connect(fd, address):
-            trampoline(fd, read=True, write=True)
+            trampoline(fd, write=True)
 
     recv = higher_order_recv(util.socket_recv)
 
