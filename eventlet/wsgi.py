@@ -57,7 +57,7 @@ class Input(object):
 
         self.position = 0
 
-    def read(self, length=None):
+    def _do_read(self, reader, length=None):
         if self.wfile is not None:
             ## 100 Continue
             self.wfile.write(self.wfile_line)
@@ -70,9 +70,21 @@ class Input(object):
             length = self.content_length - self.position
         if not length:
             return ''
-        read = self.rfile.read(length)
+        read = reader(length)
         self.position += len(read)
         return read
+
+    def read(self, length=None):
+        return self._do_read(self.rfile.read, length)
+
+    def readline(self):
+        return self._do_read(self.rfile.readline)
+
+    def readlines(self, hint=None):
+        return self._do_read(self.rfile.readlines, hint)
+
+    def __iter__(self):
+        return iter(self.read())
 
 
 MAX_REQUEST_LINE = 8192
