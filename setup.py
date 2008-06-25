@@ -6,7 +6,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='eventlet',
-    version='0.5.4pre',
+    version='0.6pre',
     description='Coroutine-based networking library',
     author='Linden Lab',
     author_email='eventletdev@lists.secondlife.com',

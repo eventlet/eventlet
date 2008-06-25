@@ -203,7 +203,7 @@ class GreenSocket(object):
                 client, addr = res
                 set_nonblocking(client)
                 return type(self)(client), addr
-            trampoline(fd, read=True, write=True)
+            trampoline(fd, read=True)
             
     def bind(self, *args, **kw):
         fn = self.bind = self.fd.bind
@@ -226,7 +226,7 @@ class GreenSocket(object):
         fd = self.fd
         connect = socket_connect
         while not connect(fd, address):
-            trampoline(fd, read=True, write=True)
+            trampoline(fd, write=True)
             
     def connect_ex(self, *args, **kw):
         fn = self.connect_ex = self.fd.connect_ex
