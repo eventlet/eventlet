@@ -295,7 +295,8 @@ def exc_after(seconds, exception_object):
             else: 
                 timer.cancel()
     """
-    return call_after(seconds, switch, getcurrent(), None, exception_object)
+    hub = get_hub()
+    return call_after(seconds, hub.exc_greenlet, getcurrent(), exception_object)
 
 
 def get_default_hub():

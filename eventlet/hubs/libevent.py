@@ -59,7 +59,6 @@ class Hub(hub.BaseHub):
         sig = event.signal(signal.SIGINT, self.signal_received, signal.SIGINT)
         sig.add()
 
-
     def add_descriptor(self, fileno, read=None, write=None, exc=None):
         if read:
             evt = event.read(fileno, read, fileno)
@@ -74,12 +73,15 @@ class Hub(hub.BaseHub):
         if exc:
             self.excs[fileno] = exc
 
+        self.waiters_by_greenlet[greenlet.getcurrent()] = fileno
+
     def remove_descriptor(self, fileno):
         for queue in (self.readers, self.writers):
             tpl = queue.pop(fileno, None)
             if tpl is not None:
                 tpl[0].delete()
         self.excs.pop(fileno, None)
+        self.waiters_by_greenlet.pop(greenlet.getcurrent(), None)
 
     def abort(self):
         super(Hub, self).abort()

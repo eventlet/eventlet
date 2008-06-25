@@ -45,6 +45,7 @@ class BaseHub(object):
         self.readers = {}
         self.writers = {}
         self.excs = {}
+        self.waiters_by_greenlet = {}
 
         self.clock = clock
         self.greenlet = None
@@ -80,11 +81,19 @@ class BaseHub(object):
         self.readers[fileno] = read or self.readers.get(fileno)
         self.writers[fileno] = write or self.writers.get(fileno)
         self.excs[fileno] = exc or self.excs.get(fileno)
+        self.waiters_by_greenlet[greenlet.getcurrent()] = fileno
         
     def remove_descriptor(self, fileno):
         self.readers.pop(fileno, None)
         self.writers.pop(fileno, None)
         self.excs.pop(fileno, None)
+        self.waiters_by_greenlet.pop(greenlet.getcurrent(), None)
+
+    def exc_greenlet(self, gr, exception_object):
+        fileno = self.waiters_by_greenlet.pop(gr, None)
+        if fileno is not None:
+            self.remove_descriptor(fileno)
+        greenlib.switch(gr, None, exception_object)
 
     def exc_descriptor(self, fileno):
         exc = self.excs.get(fileno)
