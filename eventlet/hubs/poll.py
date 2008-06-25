@@ -64,12 +64,12 @@ class Hub(hub.BaseHub):
     def remove_descriptor(self, fileno):
         super(Hub, self).remove_descriptor(fileno)
         self.poll.unregister(fileno)
-        
+
     def wait(self, seconds=None):
         readers = self.readers
         writers = self.writers
         excs = self.excs
-        
+
         if not readers and not writers and not excs:
             if seconds:
                 sleep(seconds)

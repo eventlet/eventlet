@@ -46,7 +46,7 @@ try:
 except ImportError:
     # don't have rel, but might still have libevent
     pass
-    
+
 import event
 
 
@@ -55,7 +55,7 @@ class Hub(hub.BaseHub):
         super(Hub, self).__init__(clock)
         self.interrupted = False
         event.init()
-        
+
         sig = event.signal(signal.SIGINT, self.signal_received, signal.SIGINT)
         sig.add()
 
@@ -70,40 +70,46 @@ class Hub(hub.BaseHub):
             evt = event.write(fileno, write, fileno)
             evt.add()
             self.writers[fileno] = evt, write
-            
+
         if exc:
             self.excs[fileno] = exc
-        
+
     def remove_descriptor(self, fileno):
         for queue in (self.readers, self.writers):
             tpl = queue.pop(fileno, None)
             if tpl is not None:
                 tpl[0].delete()
         self.excs.pop(fileno, None)
-        
+
     def abort(self):
         super(Hub, self).abort()
         event.abort()
-        
+
     def signal_received(self, signal):
         # can't do more than set this flag here because the pyevent callback
         # mechanism swallows exceptions raised here, so we have to raise in 
         # the 'main' greenlet (in wait()) to kill the program
         self.interrupted = True
         event.abort()
-            
+
     def wait(self, seconds=None):
         # this timeout will cause us to return from the dispatch() call
         # when we want to
         timer = event.timeout(seconds, lambda: None)
         timer.add()
 
-        status = event.dispatch()
+        try:
+            status = event.dispatch()
+        except self.SYSTEM_EXCEPTIONS:
+            self.interrupted = True
+        except:
+            self.squelch_exception(-1, sys.exc_info())
+
         # we are explicitly ignoring the status because in our experience it's
         # harmless and there's nothing meaningful we could do with it anyway
-                
+
         timer.delete()
-        
+
         # raise any signals that deserve raising
         if self.interrupted:
             self.interrupted = False
@@ -115,7 +121,7 @@ class Hub(hub.BaseHub):
         timer.impltimer = eventtimer
         eventtimer.add()
         self.track_timer(timer)
-        
+
     def timer_canceled(self, timer):
         """ Cancels the underlying libevent timer. """
         try:
