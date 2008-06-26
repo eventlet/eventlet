@@ -283,7 +283,7 @@ class BaseHub(object):
                     pass
         del t[:last]
 
-    def cancel_timers(self, greenlet):
+    def cancel_timers(self, greenlet, quiet=False):
         if greenlet not in self.timers_by_greenlet:
             return
         for timer in self.timers_by_greenlet[greenlet]:
@@ -292,6 +292,6 @@ class BaseHub(object):
                 ## actually eventlet's silly way of specifying whether
                 ## a coroutine is "ready to run" or not.
                 timer.cancel()
-                if _g_debug:
+                if _g_debug and not quiet:
                     print 'Hub cancelling left-over timer %s' % timer
         del self.timers_by_greenlet[greenlet]
