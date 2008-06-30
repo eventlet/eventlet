@@ -102,12 +102,15 @@ def ssl_listener(address, certificate, private_key):
     socket.is_secure = True
     return socket
 
-def connect_tcp(address):
+def connect_tcp(address, localaddr=None):
     """
     Create a TCP connection to address (host, port) and return the socket.
+    Optionally, bind to localaddr (host, port) first.
     """
     from eventlet import greenio, util
     desc = greenio.GreenSocket(util.tcp_socket())
+    if localaddr is not None:
+        desc.bind(localaddr)
     desc.connect(address)
     return desc
 
