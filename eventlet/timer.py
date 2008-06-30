@@ -69,7 +69,7 @@ class Timer(object):
         self.scheduled_time = get_hub().add_timer(self)
         return self
         
-    def __call__(self):
+    def __call__(self, *args):
         if not self.called:
             self.called = True
             cb, args, kw = self.tpl
