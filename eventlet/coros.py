@@ -423,14 +423,30 @@ class CoroutinePool(pools.Pool):
         try:
             while True:
                 recvd = sender.wait()
+                # Delete the sender's result here because the very
+                # first event through the loop is referenced by
+                # spawn_startup, and therefore is not itself deleted.
+                # This means that we have to free up its argument
+                # because otherwise said argument persists in memory
+                # forever.  This is generally only a problem in unit
+                # tests.
+                sender._result = NOT_USED
+                
                 sender = event()
                 (evt, func, args, kw) = recvd
                 self._safe_apply(evt, func, args, kw)
+                # Likewise, delete these variables or else they will
+                # be referenced by this frame until replaced by the
+                # next recvd, which may or may not be a long time from
+                # now.
+                del evt, func, args, kw, recvd
+
                 api.get_hub().runloop.cancel_timers(api.getcurrent())
                 self.put(sender)
         finally:
             # if we get here, something broke badly, and all we can really
-            # do is try to keep the pool from leaking items
+            # do is try to keep the pool from leaking items.
+            # Shouldn't even try to print the exception.
             self.put(self.create())
             
     def _safe_apply(self, evt, func, args, kw):
