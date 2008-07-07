@@ -1,0 +1,18 @@
+0.6.x
+=====
+
+Fixes some long-standing bugs where sometimes failures in accept() or connect() would cause the coroutine that was waiting to be double-resumed, most often resulting in SwitchingToDeadGreenlet exceptions as well as weird tuple-unpacking exceptions in the CoroutinePool main loop.
+
+0.6.1: Added eventlet.tpool.killall. Blocks until all of the threadpool threads have been told to exit and join()ed. Meant to be used to clean up the threadpool on exit or if calling execv. Used by Spawning.
+
+0.5.x
+=====
+
+"The Pycon 2008 Refactor": The first release which incorporates libevent support. Also comes with significant refactoring and code cleanup, especially to the eventlet.wsgi http server. Docstring coverage is much higher and there is new extensive documentation: http://wiki.secondlife.com/wiki/Eventlet/Documentation
+
+The point releases of 0.5.x fixed some bugs in the wsgi server, most notably handling of Transfer-Encoding: chunked; previously, it would happily send chunked encoding to clients which asked for HTTP/1.0, which isn't legal.
+
+0.2
+=====
+
+Initial re-release of forked linden branch.
