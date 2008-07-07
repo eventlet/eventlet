@@ -61,7 +61,10 @@ def esend(meth,*args, **kwargs):
 def tworker():
     global _reqq, _rspq
     while(True):
-        (e,meth,args,kwargs) = _reqq.get()
+        msg = _reqq.get()
+        if msg is None:
+            return
+        (e,meth,args,kwargs) = msg
         rv = None
         try:
             rv = meth(*args,**kwargs)
@@ -96,6 +99,7 @@ def execute(meth,*args, **kwargs):
 erpc = execute
 
 
+
 class Proxy(object):
     """ a simple proxy-wrapper of any object that comes with a methods-only interface,
     in order to forward every method invocation onto a thread in the native-thread pool.
@@ -123,6 +127,7 @@ class Proxy(object):
                 return rv
         return doit
 
+
 _nthreads = int(os.environ.get('EVENTLET_THREADPOOL_SIZE', 20))
 _threads = {}
 def setup():
@@ -135,3 +140,11 @@ def setup():
     api.spawn(tpool_trampoline)
 
 setup()
+
+
+def killall():
+    for i in _threads:
+        _reqq.put(None)
+    for thr in _threads.values():
+        thr.join()
+
