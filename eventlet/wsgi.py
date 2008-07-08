@@ -353,7 +353,18 @@ def server(sock, site, log=None, environ=None, max_size=None, max_http_version=D
         max_size = DEFAULT_MAX_SIMULTANEOUS_REQUESTS
     pool = coros.CoroutinePool(max_size=max_size)
     try:
-        print "(%s) wsgi starting up on %s" % (os.getpid(), sock.getsockname())
+        host, port = sock.getsockname()
+        port = ':%s' % (port, )
+        if sock.is_secure:
+            scheme = 'https'
+            if port == ':443':
+                port = ''
+        else:
+            scheme = 'http'
+            if port == ':80':
+                port = ''
+
+        print "(%s) wsgi starting up on %s://%s%s/" % (os.getpid(), scheme, host, port)
         while True:
             try:
                 client_socket = sock.accept()
