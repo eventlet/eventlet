@@ -90,7 +90,7 @@ class TestApi(tests.TestCase):
 
         check_hub()
 
-    def dont_test_trampoline_timeout(self):
+    def test_trampoline_timeout(self):
         """This test is broken. Please change it's name to test_trampoline_timeout,
         and fix the bug (or fix the test)
         """
