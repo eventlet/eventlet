@@ -242,7 +242,9 @@ class BaseHub(object):
         self.timers_by_greenlet[current_greenlet][timer] = True
 
     def timer_canceled(self, timer):
-        pass
+        del self.timers_by_greenlet[timer.greenlet][timer]
+        if not self.timers_by_greenlet[timer.greenlet]:
+            del self.timers_by_greenlet[timer.greenlet]
 
     def prepare_timers(self):
         ins = bisect.insort_right

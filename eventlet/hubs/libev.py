@@ -121,4 +121,5 @@ class Hub(hub.BaseHub):
             timer.impltimer.stop()
         except AttributeError:
             pass
-
+        finally:
+            super(Hub, self).timer_canceled(timer)
