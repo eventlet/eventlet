@@ -81,7 +81,7 @@ def wrap_ssl(sock, certificate=None, private_key=None):
     from OpenSSL import SSL
     from eventlet import greenio, util
     context = SSL.Context(SSL.SSLv23_METHOD)
-    print certificate, private_key
+    #print certificate, private_key
     if certificate is not None:
         context.use_certificate_file(certificate)
     if private_key is not None:
@@ -95,7 +95,7 @@ def wrap_ssl(sock, certificate=None, private_key=None):
 
 
 socket_already_wrapped = False
-def wrap_socket_with_coroutine_socket():
+def wrap_socket_with_coroutine_socket(use_thread_pool=True):
     global socket_already_wrapped
     if socket_already_wrapped:
         return
@@ -107,16 +107,17 @@ def wrap_socket_with_coroutine_socket():
 
     socket.ssl = wrap_ssl
 
-    from eventlet import tpool
-    def new_gethostbyname(*args, **kw):
-        return tpool.execute(
-            __original_gethostbyname__, *args, **kw)
-    socket.gethostbyname = new_gethostbyname
+    if use_thread_pool:
+        from eventlet import tpool
+        def new_gethostbyname(*args, **kw):
+            return tpool.execute(
+                __original_gethostbyname__, *args, **kw)
+        socket.gethostbyname = new_gethostbyname
 
-    def new_getaddrinfo(*args, **kw):
-        return tpool.execute(
-            __original_getaddrinfo__, *args, **kw)
-    socket.getaddrinfo = new_getaddrinfo
+        def new_getaddrinfo(*args, **kw):
+            return tpool.execute(
+                __original_getaddrinfo__, *args, **kw)
+        socket.getaddrinfo = new_getaddrinfo
 
     def new_fromfd(*args, **kw):
         from eventlet import greenio
