@@ -5,6 +5,8 @@ Fixes some long-standing bugs where sometimes failures in accept() or connect() 
 
 0.6.1: Added eventlet.tpool.killall. Blocks until all of the threadpool threads have been told to exit and join()ed. Meant to be used to clean up the threadpool on exit or if calling execv. Used by Spawning.
 
+0.6.2: Fix a major memory leak when using the libevent or libev hubs. Timers were not being removed from the hub after they fired. (Thanks Agusto Becciu).
+
 0.5.x
 =====
 

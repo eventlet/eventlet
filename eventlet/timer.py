@@ -40,6 +40,7 @@ class Timer(object):
         This timer will not be run unless it is scheduled in a runloop by
         calling timer.schedule() or runloop.add_timer(timer).
         """
+        self.impltimer = None
         self.cancelled = False
         self.seconds = seconds
         self.tpl = cb, args, kw
@@ -72,6 +73,9 @@ class Timer(object):
     def __call__(self, *args):
         if not self.called:
             self.called = True
+            if self.impltimer is not None:
+                del get_hub().timers_by_greenlet[self.greenlet][self]
+
             cb, args, kw = self.tpl
             cb(*args, **kw)
         
