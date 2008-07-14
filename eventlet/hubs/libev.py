@@ -1,5 +1,5 @@
 """\
-@file libevent.py
+@file libev.py
 
 Copyright (c) 2007, Linden Research, Inc.
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -38,27 +38,26 @@ import greenlet
 # XXX for debugging only
 #raise ImportError()
 
-import ev
+import ev as libev
 
 
 class Hub(hub.BaseHub):
     def __init__(self, clock=time.time):
         super(Hub, self).__init__(clock)
         self.interrupted = False
-        self._evloop = ev.default_loop()
-        #event.init()
+        self._evloop = libev.default_loop()
 
-        sig = ev.Signal(signal.SIGINT, self._evloop, self.signal_received, signal.SIGINT)
+        sig = libev.Signal(signal.SIGINT, self._evloop, self.signal_received, signal.SIGINT)
         sig.start()
 
     def add_descriptor(self, fileno, read=None, write=None, exc=None):
         if read:
-            evt = event.Io(fileno, ev.EV_READ, self._evloop, read, fileno)
+            evt = libev.Io(fileno, libev.EV_READ, self._evloop, read, fileno)
             evt.start()
             self.readers[fileno] = evt, read
 
         if write:
-            evt = ev.Io(fileno, ev.EV_WRITE, self._evloop, write, fileno)
+            evt = libev.Io(fileno, libev.EV_WRITE, self._evloop, write, fileno)
             evt.start()
             self.writers[fileno] = evt, write
 
@@ -89,7 +88,7 @@ class Hub(hub.BaseHub):
     def wait(self, seconds=None):
         # this timeout will cause us to return from the dispatch() call
         # when we want to
-        timer = ev.Timer(seconds, 0, self._evloop, lambda *args: None)
+        timer = libev.Timer(seconds, 0, self._evloop, lambda *args: None)
         timer.start()
 
         try:
@@ -111,7 +110,7 @@ class Hub(hub.BaseHub):
 
     def add_timer(self, timer):
         # store the pyevent timer object so that we can cancel later
-        eventtimer = ev.Timer(timer.seconds, 0, self._evloop, timer)
+        eventtimer = libev.Timer(timer.seconds, 0, self._evloop, timer)
         timer.impltimer = eventtimer
         eventtimer.start()
         self.track_timer(timer)
