@@ -24,6 +24,8 @@ THE SOFTWARE.
 
 from eventlet import tests
 from eventlet import api, wrappedfd, util
+
+import os.path
 import socket
 
 
@@ -40,6 +42,10 @@ def check_hub():
 
 class TestApi(tests.TestCase):
     mode = 'static'
+    
+    certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
+    private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
+    
     def test_tcp_listener(self):
         socket = api.tcp_listener(('0.0.0.0', 0))
         assert socket.getsockname()[0] == '0.0.0.0'
@@ -47,10 +53,7 @@ class TestApi(tests.TestCase):
 
         check_hub()
 
-    def dont_test_connect_tcp(self):
-        """This test is broken. Please name it test_connect_tcp and fix
-        the bug (or the test) so it passes.
-        """
+    def test_connect_tcp(self):
         def accept_once(listenfd):
             try:
                 conn, addr = listenfd.accept()
@@ -70,6 +73,29 @@ class TestApi(tests.TestCase):
 
         check_hub()
 
+    def dont_test_connect_ssl(self):
+        """ This test is broken, please fix it, remove the dont from the 
+        name and remove this comment"""
+        def accept_once(listenfd):
+            try:
+                conn, addr = listenfd.accept()
+                conn.write('hello\n')
+                conn.close()
+            finally:
+                listenfd.close()
+
+        server = api.ssl_listener(('0.0.0.0', 0), 
+                                  self.certificate_file, 
+                                  self.private_key_file)
+        api.spawn(accept_once, server)
+
+        client = util.wrap_ssl(
+            api.connect_tcp(('127.0.0.1', server.getsockname()[1])))
+        assert client.readline() == 'hello\n'
+
+        assert client.read() == ''
+        client.close()
+        
     def test_server(self):
         server = api.tcp_listener(('0.0.0.0', 0))
         bound_port = server.getsockname()[1]
@@ -91,9 +117,6 @@ class TestApi(tests.TestCase):
         check_hub()
 
     def test_trampoline_timeout(self):
-        """This test is broken. Please change it's name to test_trampoline_timeout,
-        and fix the bug (or fix the test)
-        """
         server = api.tcp_listener(('0.0.0.0', 0))
         bound_port = server.getsockname()[1]
 
