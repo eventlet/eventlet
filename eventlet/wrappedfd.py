@@ -130,6 +130,13 @@ class wrapped_fd(object):
         fn = self.setblocking = self.fd.setblocking
         return fn(*args, **kw)
 
+    def shutdown(self, *args, **kw):
+        if self.is_secure:
+            fn = self.shutdown = self.fd.sock_shutdown
+        else:
+            fn = self.shutdown = self.fd.shutdown
+        return fn(*args, **kw)
+
     def close(self, *args, **kw):
         if self._closed:
             return
@@ -137,6 +144,11 @@ class wrapped_fd(object):
         if self._refcount.is_referenced():
             return
         self._closed = True
+        if self.is_secure:
+            # *NOTE: This is not quite the correct SSL shutdown sequence.
+            # We should actually be checking the return value of shutdown.
+            # Note also that this is not the same as calling self.shutdown().
+            self.fd.shutdown()
         fn = self.close = self.fd.close
         try:
             res = fn(*args, **kw)

@@ -73,9 +73,7 @@ class TestApi(tests.TestCase):
 
         check_hub()
 
-    def dont_test_connect_ssl(self):
-        """ This test is broken, please fix it, remove the dont from the 
-        name and remove this comment"""
+    def test_connect_ssl(self):
         def accept_once(listenfd):
             try:
                 conn, addr = listenfd.accept()
@@ -102,7 +100,6 @@ class TestApi(tests.TestCase):
         connected = []
 
         def accept_twice((conn, addr)):
-            print 'connected'
             connected.append(True)
             conn.close()
             if len(connected) == 2:

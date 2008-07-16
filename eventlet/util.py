@@ -89,7 +89,6 @@ def wrap_ssl(sock, certificate=None, private_key=None):
     from OpenSSL import SSL
     from eventlet import wrappedfd, util
     context = SSL.Context(SSL.SSLv23_METHOD)
-    print certificate, private_key
     if certificate is not None:
         context.use_certificate_file(certificate)
     if private_key is not None:
@@ -200,7 +199,7 @@ def socket_recv(descriptor, buflen):
     except SSL.SysCallError, e:
         (ssl_errno, ssl_errstr) = e
         if ssl_errno == -1 or ssl_errno > 0:
-            raise socket.error(errno.ECONNRESET, errno.errorcode[errno.ECONNRESET])
+            return ''
         raise
 
 def file_recv(fd, buflen):
