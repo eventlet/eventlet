@@ -22,9 +22,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from eventlet import tests
-from eventlet import api, greenio, util
+import os
 import socket
+
+from eventlet import api
+from eventlet import greenio
+from eventlet import tests
+from eventlet import util
 
 
 def check_hub():
@@ -43,6 +47,10 @@ def check_hub():
 
 class TestApi(tests.TestCase):
     mode = 'static'
+
+    certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt') 
+    private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
+
     def test_tcp_listener(self):
         socket = api.tcp_listener(('0.0.0.0', 0))
         assert socket.getsockname()[0] == '0.0.0.0'
@@ -73,6 +81,30 @@ class TestApi(tests.TestCase):
         fd.close()
 
         check_hub()
+
+    def test_connect_ssl(self): 
+        def accept_once(listenfd): 
+            try: 
+                conn, addr = listenfd.accept()
+                fl = conn.makefile('w')
+                fl.write('hello\r\n')
+                fl.close()
+                conn.close() 
+            finally: 
+                listenfd.close() 
+ 
+        server = api.ssl_listener(('0.0.0.0', 0),  
+                                  self.certificate_file,  
+                                  self.private_key_file) 
+        api.spawn(accept_once, server) 
+ 
+        client = util.wrap_ssl( 
+            api.connect_tcp(('127.0.0.1', server.getsockname()[1])))
+        client = client.makefile()
+
+        assert client.readline() == 'hello\r\n' 
+        assert client.read() == '' 
+        client.close()
 
     def test_server(self):
         connected = []

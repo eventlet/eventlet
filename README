@@ -21,9 +21,6 @@ Eventlet runs on Python version 2.3 or greater, with the following dependenceis:
 * Not enough test coverage -- the goal is 100%, but we are not there yet.
 * Eventlet does not currently run on stackless using tasklets, though
 it is a goal to do so in the future.
-* The SSL client does not properly connect to the SSL server, though
-both client and server interoperate with other SSL implementations
-(e.g. curl and apache).
 
 == getting started ==
 

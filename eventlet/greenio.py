@@ -137,7 +137,7 @@ def socket_recv(descriptor, buflen):
             return ''
         except util.SSL.SysCallError, e:
             if e[0] == -1 or e[0] > 0:
-                raise socket.error(errno.ECONNRESET, errno.errorcode[errno.ECONNRESET])
+                return ''
             raise
     finally:
         if cancel:
@@ -213,6 +213,12 @@ class GreenSocket(object):
         if self.closed:
             return
         self.closed = True
+        if self.is_secure:
+            # *NOTE: This is not quite the correct SSL shutdown sequence.
+            # We should actually be checking the return value of shutdown.
+            # Note also that this is not the same as calling self.shutdown().
+            self.fd.shutdown()
+
         fn = self.close = self.fd.close
         try:
             res = fn(*args, **kw)
@@ -296,7 +302,10 @@ class GreenSocket(object):
         return fn(*args, **kw)
     
     def shutdown(self, *args, **kw):
-        fn = self.shutdown = self.fd.shutdown
+        if self.is_secure:
+            fn = self.shutdown = self.fd.sock_shutdown
+        else:
+            fn = self.shutdown = self.fd.shutdown
         return fn(*args, **kw)
 
     def settimeout(self, howlong):
