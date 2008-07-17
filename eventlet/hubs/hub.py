@@ -78,10 +78,21 @@ class BaseHub(object):
         so the exc callback happens instead of the respective read or write
         callback.
         """
-        
-        self.readers[fileno] = read or self.readers.get(fileno)
-        self.writers[fileno] = write or self.writers.get(fileno)
-        self.excs[fileno] = exc or self.excs.get(fileno)
+        read = read or self.readers.get(fileno)
+        if read is not None:
+            self.readers[fileno] = read
+        else:
+            self.readers.pop(fileno, None)
+        write = write or self.writers.get(fileno)
+        if write is not None:
+            self.writers[fileno] = write
+        else:
+            self.writers.pop(fileno, None)
+        exc = exc or self.excs.get(fileno)
+        if exc is not None:
+            self.excs[fileno] = exc
+        else:
+            self.excs.pop(fileno, None)
         self.waiters_by_greenlet[greenlet.getcurrent()] = fileno
         
     def remove_descriptor(self, fileno):

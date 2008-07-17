@@ -4,6 +4,8 @@ Fix a major memory leak when using the libevent or libev hubs. Timers were not b
 
 It's now possible to use eventlet's SSL client to talk to eventlet's SSL server. (Thanks to Ryan Williams)
 
+Fixed a major CPU leak when using select hub. When adding a descriptor to the hub, entries were made in all three dictionaries, readers, writers, and exc, even if the callback is None. Thus every fd would be passed into all three lists when calling select regardless of whether there was a callback for that event or not. When reading the next request out of a keepalive socket, the socket would come back as ready for writing, the hub would notice the callback is None and ignore it, and then loop as fast as possible consuming CPU.
+
 0.6.x
 =====
 
