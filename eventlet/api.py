@@ -243,15 +243,17 @@ def with_timeout(seconds, func, *args, **kwds):
     \*args, \*\*kwds
       (positional, keyword) arguments to pass to *func*
     timeout_value=
-      value to return if timeout occurs (default None)
+      value to return if timeout occurs (default raise ``TimeoutError``)
       
     **Returns**:
 
-    Value returned by *func* if *func* returns before *seconds*, else *timeout_value*
+    Value returned by *func* if *func* returns before *seconds*, else
+    *timeout_value* if provided, else raise ``TimeoutError``
 
     **Raises**:
 
-    Any exception raised by *func*, except ``TimeoutError``
+    Any exception raised by *func*, and ``TimeoutError`` if *func* times out
+    and no ``timeout_value`` has been provided.
     
     **Example**::
     
@@ -264,13 +266,16 @@ def with_timeout(seconds, func, *args, **kwds):
     # Recognize a specific keyword argument, while also allowing pass-through
     # of any other keyword arguments accepted by func. Use pop() so we don't
     # pass timeout_value through to func().
+    has_timeout_value = "timeout_value" in kwds
     timeout_value = kwds.pop("timeout_value", None)
-    timeout = api.exc_after(time, TimeoutError()) 
+    timeout = exc_after(seconds, TimeoutError())
     try:
         try:
             return func(*args, **kwds)
         except TimeoutError:
-            return timeout_value
+            if has_timeout_value:
+                return timeout_value
+            raise
     finally:
         timeout.cancel()
 
