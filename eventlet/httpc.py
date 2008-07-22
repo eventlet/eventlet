@@ -394,7 +394,6 @@ class ServiceUnavailable(Retriable):
     def url(self):
         return self.params._delegate.url
 
-
 class GatewayTimeout(Retriable):
     """ 504 Gateway Timeout """
     def url(self):
