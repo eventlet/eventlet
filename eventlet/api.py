@@ -169,7 +169,7 @@ def trampoline(fd, read=False, write=False, timeout=None):
         hub.remove_descriptor(fileno)
         greenlib.switch(self, fd)
     if timeout is not None:
-        t = hub.schedule_call(timeout, _do_timeout, fileno)
+        t = hub.schedule_call(timeout, _do_timeout)
     hub.add_descriptor(fileno, read and cb, write and cb, _do_close)
     return hub.switch()
 
