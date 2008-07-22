@@ -394,7 +394,6 @@ class ServiceUnavailable(Retriable):
     def url(self):
         return self.params._delegate.url
 
-
 class GatewayTimeout(Retriable):
     """ 504 Gateway Timeout """
     def url(self):
@@ -596,16 +595,28 @@ class HttpSuite(object):
 
     def get_(
         self, url, headers=None, use_proxy=False, ok=None,
-        aux=None, connection=None):
+        aux=None, max_retries=8, connection=None):
         if headers is None:
             headers = {}
         headers['accept'] = self.fallback_content_type+';q=1,*/*;q=0'
-        return self.request_(
-            _Params(
-                url, 'GET', headers=headers,
-                loader=self.loader, dumper=self.dumper,
-                use_proxy=use_proxy, ok=ok, aux=aux),
-            connection)
+        def req():
+            return self.request_(_Params(url, 'GET', headers=headers,
+                                         loader=self.loader, dumper=self.dumper,
+                                         use_proxy=use_proxy, ok=ok, aux=aux),
+							     connection)
+        def retry_response(err):
+            def doit():
+                return err.retry_()
+            return doit
+        retried = 0
+        while retried <= max_retries:
+            try:
+                return req()
+            except (Found, TemporaryRedirect, MovedPermanently, SeeOther), e:
+                if retried >= max_retries:
+                    raise
+                retried += 1
+                req = retry_response(e)
 
     def get(self, *args, **kwargs):
         return self.get_(*args, **kwargs)[-1]
@@ -661,6 +672,51 @@ class HttpSuite(object):
     def post(self, *args, **kwargs):
         return self.post_(*args, **kwargs)[-1]
 
+
+class HttpStreamSuite(HttpSuite):
+    def request_(self, params):
+        '''Make an http request to a url, for internal use mostly.'''
+
+        params = _LocalParams(params, instance=self)
+
+        (scheme, location, path, parameters, query,
+         fragment) = urlparse.urlparse(params.url)
+
+        if params.use_proxy:
+            if scheme == 'file':
+                params.use_proxy = False
+            else:
+                params.headers['host'] = location
+
+        if not params.use_proxy:
+            params.path = path
+            if query:
+                params.path += '?' + query
+
+        params.orig_body = params.body
+
+        if params.method in ('PUT', 'POST'):
+            if self.dumper is not None:
+                params.body = self.dumper(params.body)
+            # don't set content-length header because httplib does it
+            # for us in _send_request
+        else:
+            params.body = ''
+
+        params.response = self._get_response_body(params)
+        response = params.response
+
+        return response.status, response.msg, response
+
+    def _get_response_body(self, params):
+        connection = connect(params.url, params.use_proxy)
+        connection.request(params.method, params.path, params.body,
+                           params.headers)
+        params.response = connection.getresponse()
+        #connection.close()
+        self._check_status(params)
+
+        return params.response
 
 def make_suite(dumper, loader, fallback_content_type):
     """ Return a tuple of methods for making http requests with automatic bidirectional formatting with a particular content-type."""
