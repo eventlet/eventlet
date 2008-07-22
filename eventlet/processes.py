@@ -42,7 +42,7 @@ CHILD_PIDS = []
 CHILD_EVENTS = {}
 
 
-def sig_child(signal, frame):
+def wait_on_children():
     for child_pid in CHILD_PIDS:
         try:
             pid, code = util.__original_waitpid__(child_pid, os.WNOHANG)
@@ -65,6 +65,11 @@ def sig_child(signal, frame):
                 # Already dead; signal, but assume success
                 event = CHILD_EVENTS.pop(child_pid)
                 event.send(0)
+
+
+def sig_child(signal, frame):
+    from eventlet import api
+    api.call_after(0, wait_on_children)
 signal.signal(signal.SIGCHLD, sig_child)
     
 
