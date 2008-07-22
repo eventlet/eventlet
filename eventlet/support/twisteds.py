@@ -1,5 +1,5 @@
 """\
-@file twistedsupport.py
+@file support.twisted.py
 @author Donovan Preston
 
 Copyright (c) 2005-2006, Donovan Preston
@@ -82,37 +82,45 @@ class EventletReactor(posixbase.PosixReactorBase):
         self.running = True
         self._stopper = api.call_after(sys.maxint / 1000.0, lambda: None)
         ## schedule a call way in the future, and cancel it in stop?
-        api.get_hub().runloop.run()
+        api.get_hub().run()
 
     def stop(self):
         self._stopper.cancel()
         posixbase.PosixReactorBase.stop(self)
         api.get_hub().remove_descriptor(self._readers.keys()[0])
-        api.get_hub().runloop.abort()
+        api.get_hub().abort()
 
     def addReader(self, reader):
+        print "NEW READER", reader.fileno()
         fileno = reader.fileno()
         self._readers[fileno] = reader
         api.get_hub().add_descriptor(fileno, read=self._got_read)
 
     def _got_read(self, fileno):
+        print "got read on", fileno, self._readers[fileno]
+        api.get_hub().add_descriptor(fileno, read=self._got_read)
         self._readers[fileno].doRead()
 
     def addWriter(self, writer):
+        print "NEW WRITER", writer.fileno()
         fileno = writer.fileno()
         self._writers[fileno] = writer
         api.get_hub().add_descriptor(fileno, write=self._got_write)
 
     def _got_write(self, fileno):
+        print "got write on", fileno, self._writers[fileno]
+        api.get_hub().add_descriptor(fileno, write=self._got_write)
         self._writers[fileno].doWrite()
 
     def removeReader(self, reader):
+        print "removing reader", reader.fileno()
         fileno = reader.fileno()
         if fileno in self._readers:
             self._readers.pop(fileno)
         api.get_hub().remove_descriptor(fileno)
 
     def removeWriter(self, writer):
+        print "removing writer", writer.fileno()
         fileno = writer.fileno()
         if fileno in self._writers:
             self._writers.pop(fileno)
@@ -122,13 +130,13 @@ class EventletReactor(posixbase.PosixReactorBase):
         return self._removeAll(self._readers.values(), self._writers.values())
 
 
-def emulate():
+def install():
     if not _working:
-        raise RuntimeError, "Can't use twistedsupport because zope.interface is not installed."
+        raise RuntimeError, "Can't use support.twisted because zope.interface is not installed."
     reactor = EventletReactor()
     from twisted.internet.main import installReactor
     installReactor(reactor)
 
 
-__all__ = ['emulate']
+__all__ = ['install']
 

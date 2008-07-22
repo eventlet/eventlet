@@ -22,7 +22,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-import threading
+try:
+    import threading
+except ImportError:
+    class Dummy(object): pass
+
+    the_thread = Dummy()
+
+    class threading(object):
+        def currentThread():
+            return the_thread
+        currentThread = staticmethod(currentThread)
+
 import weakref
 
 __all__ = ['local']

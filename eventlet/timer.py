@@ -29,7 +29,7 @@ useful for debugging leaking timers, to find out where the timer was set up. """
 _g_debug = False
 
 class Timer(object):
-    __slots__ = ['seconds', 'tpl', 'called', 'cancelled', 'scheduled_time', 'greenlet', 'traceback']
+    #__slots__ = ['seconds', 'tpl', 'called', 'cancelled', 'scheduled_time', 'greenlet', 'traceback', 'impltimer']
     def __init__(self, seconds, cb, *args, **kw):
         """Create a timer.
             seconds: The minimum number of seconds to wait before calling
@@ -56,28 +56,32 @@ class Timer(object):
             secs, cb, args, kw)
         if _g_debug and hasattr(self, 'traceback'):
             retval += '\n' + self.traceback.getvalue()
-        return retval            
+        return retval
 
     def copy(self):
         cb, args, kw = self.tpl
         return self.__class__(self.seconds, cb, *args, **kw)
-    
+
     def schedule(self):
         """Schedule this timer to run in the current runloop.
         """
         self.called = False
-        self.scheduled_time = get_hub().runloop.add_timer(self)
+        self.scheduled_time = get_hub().add_timer(self)
         return self
-        
-    def __call__(self):
+
+    def __call__(self, *args):
         if not self.called:
             self.called = True
             cb, args, kw = self.tpl
-            cb(*args, **kw)
-        
+            try:
+                cb(*args, **kw)
+            finally:
+                get_hub().timer_finished(self)
+
     def cancel(self):
         """Prevent this timer from being called. If the timer has already
         been called, has no effect.
         """
         self.cancelled = True
         self.called = True
+        get_hub().timer_canceled(self)

@@ -22,24 +22,35 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from eventlet import tests
-from eventlet import api, wrappedfd, util
+import os
 import socket
+
+from eventlet import api
+from eventlet import greenio
+from eventlet import tests
+from eventlet import util
 
 
 def check_hub():
     # Clear through the descriptor queue
     api.sleep(0)
     api.sleep(0)
-    assert not api.get_hub().descriptors, repr(api.get_hub().descriptors)
+    hub = api.get_hub()
+    for nm in 'readers', 'writers', 'excs':
+        dct = getattr(hub, nm)
+        assert not dct, "hub.%s not empty: %s" % (nm, dct)
     # Stop the runloop
-    api.get_hub().runloop.abort()
+    api.get_hub().abort()
     api.sleep(0)
-    assert not api.get_hub().runloop.running
+    assert not api.get_hub().running
 
 
 class TestApi(tests.TestCase):
     mode = 'static'
+
+    certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt') 
+    private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
+
     def test_tcp_listener(self):
         socket = api.tcp_listener(('0.0.0.0', 0))
         assert socket.getsockname()[0] == '0.0.0.0'
@@ -47,15 +58,14 @@ class TestApi(tests.TestCase):
 
         check_hub()
 
-    def dont_test_connect_tcp(self):
-        """This test is broken. Please name it test_connect_tcp and fix
-        the bug (or the test) so it passes.
-        """
+    def test_connect_tcp(self):
         def accept_once(listenfd):
             try:
                 conn, addr = listenfd.accept()
-                conn.write('hello\n')
+                fd = conn.makefile()
                 conn.close()
+                fd.write('hello\n')
+                fd.close()
             finally:
                 listenfd.close()
 
@@ -63,20 +73,45 @@ class TestApi(tests.TestCase):
         api.spawn(accept_once, server)
 
         client = api.connect_tcp(('127.0.0.1', server.getsockname()[1]))
-        assert client.readline() == 'hello\n'
-
-        assert client.read() == ''
+        fd = client.makefile()
         client.close()
+        assert fd.readline() == 'hello\n'
+
+        assert fd.read() == ''
+        fd.close()
 
         check_hub()
 
+    def test_connect_ssl(self): 
+        def accept_once(listenfd): 
+            try: 
+                conn, addr = listenfd.accept()
+                fl = conn.makefile('w')
+                fl.write('hello\r\n')
+                fl.close()
+                conn.close() 
+            finally: 
+                listenfd.close() 
+ 
+        server = api.ssl_listener(('0.0.0.0', 0),  
+                                  self.certificate_file,  
+                                  self.private_key_file) 
+        api.spawn(accept_once, server) 
+ 
+        client = util.wrap_ssl( 
+            api.connect_tcp(('127.0.0.1', server.getsockname()[1])))
+        client = client.makefile()
+
+        assert client.readline() == 'hello\r\n' 
+        assert client.read() == '' 
+        client.close()
+
     def test_server(self):
+        connected = []
         server = api.tcp_listener(('0.0.0.0', 0))
         bound_port = server.getsockname()[1]
-        connected = []
 
         def accept_twice((conn, addr)):
-            print 'connected'
             connected.append(True)
             conn.close()
             if len(connected) == 2:
@@ -90,15 +125,12 @@ class TestApi(tests.TestCase):
 
         check_hub()
 
-    def dont_test_trampoline_timeout(self):
-        """This test is broken. Please change it's name to test_trampoline_timeout,
-        and fix the bug (or fix the test)
-        """
+    def test_001_trampoline_timeout(self):
         server = api.tcp_listener(('0.0.0.0', 0))
         bound_port = server.getsockname()[1]
 
         try:
-            desc = wrappedfd.wrapped_fd(util.tcp_socket())
+            desc = greenio.GreenSocket(util.tcp_socket())
             api.trampoline(desc, read=True, write=True, timeout=0.1)
         except api.TimeoutError:
             pass # test passed
@@ -117,7 +149,7 @@ class TestApi(tests.TestCase):
         def go():
             client = util.tcp_socket()
 
-            desc = wrappedfd.wrapped_fd(client)
+            desc = greenio.GreenSocket(client)
             desc.connect(('127.0.0.1', bound_port))
             try:
                 api.trampoline(desc, read=True, write=True, timeout=0.1)
@@ -133,10 +165,7 @@ class TestApi(tests.TestCase):
 
         check_hub()
 
-    def dont_test_explicit_hub(self):
-        """This test is broken. please change it's name to test_explicit_hub
-        and make it pass (or fix the test)
-        """
+    def test_explicit_hub(self):
         api.use_hub(Foo)
         assert isinstance(api.get_hub(), Foo), api.get_hub()
 

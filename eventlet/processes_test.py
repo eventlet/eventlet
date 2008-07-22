@@ -100,8 +100,12 @@ class TestDyingProcessesLeavePool(tests.TestCase):
     def test_dead_process_not_inserted_into_pool(self):
         proc = self.pool.get()
         try:
-            result = proc.read()
-            self.assertEquals(result, 'hello\n')
+            try:
+                result = proc.read()
+                self.assertEquals(result, 'hello\n')
+                result = proc.read()
+            except processes.DeadProcess:
+                pass
         finally:
             self.pool.put(proc)
         proc2 = self.pool.get()
@@ -111,7 +115,7 @@ class TestDyingProcessesLeavePool(tests.TestCase):
 class TestProcessLivesForever(tests.TestCase):
     mode = 'static'
     def setUp(self):
-        self.pool = processes.ProcessPool('yes', max_size=1)
+        self.pool = processes.ProcessPool('python', ['-c', 'print "y"; import time; time.sleep(0.1); print "y"'], max_size=1)
 
     def test_reading_twice_from_same_process(self):
         proc = self.pool.get()

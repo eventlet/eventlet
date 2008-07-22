@@ -21,17 +21,62 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-
+import errno
 import os
 import popen2
 import signal
+import sys
 
+from eventlet import coros
+from eventlet import pools
+from eventlet import greenio
+from eventlet import util
 
-from eventlet import util, pools
-from eventlet import wrappedfd
 
 class DeadProcess(RuntimeError):
     pass
+
+
+CHILD_PIDS = []
+
+CHILD_EVENTS = {}
+
+
+def sig_child(signal, frame):
+    for child_pid in CHILD_PIDS:
+        try:
+            pid, code = util.__original_waitpid__(child_pid, os.WNOHANG)
+            if not pid:
+                continue ## Wasn't this one that died
+            elif pid == -1:
+                print >> sys.stderr, "Got -1! Why didn't python raise?"
+            elif pid != child_pid:
+                print >> sys.stderr, "pid (%d) != child_pid (%d)" % (pid, child_pid)
+
+            # Defensively assume we could get a different pid back
+            if CHILD_EVENTS.get(pid):
+                event = CHILD_EVENTS.pop(pid)
+                event.send(code)
+
+        except OSError, e:
+            if e[0] != errno.ECHILD:
+                raise e
+            elif CHILD_EVENTS.get(child_pid):
+                # Already dead; signal, but assume success
+                event = CHILD_EVENTS.pop(child_pid)
+                event.send(0)
+signal.signal(signal.SIGCHLD, sig_child)
+    
+
+def _add_child_pid(pid):
+    """Add the given integer 'pid' to the list of child
+    process ids we are tracking. Return an event object
+    that can be used to get the process' exit code.
+    """
+    CHILD_PIDS.append(pid)
+    event = coros.event()
+    CHILD_EVENTS[pid] = event
+    return event
 
 
 class Process(object):
@@ -51,13 +96,14 @@ class Process(object):
 
         ## We use popen4 so that read() will read from either stdout or stderr
         self.popen4 = popen2.Popen4([self.command] + self.args)
+        self.event = _add_child_pid(self.popen4.pid)
         child_stdout_stderr = self.popen4.fromchild
         child_stdin = self.popen4.tochild
-        util.set_nonblocking(child_stdout_stderr)
-        util.set_nonblocking(child_stdin)
-        self.child_stdout_stderr = wrappedfd.wrapped_file(child_stdout_stderr)
+        greenio.set_nonblocking(child_stdout_stderr)
+        greenio.set_nonblocking(child_stdin)
+        self.child_stdout_stderr = greenio.GreenPipe(child_stdout_stderr)
         self.child_stdout_stderr.newlines = '\n'  # the default is \r\n, which aren't sent over pipes
-        self.child_stdin = wrappedfd.wrapped_file(child_stdin)
+        self.child_stdin = greenio.GreenPipe(child_stdin)
         self.child_stdin.newlines = '\n'
 
         self.sendall = self.child_stdin.write
@@ -86,8 +132,9 @@ class Process(object):
         return result
 
     def write(self, stuff):
-        written = self.child_stdin.send(stuff)
+        written = 0
         try:
+            written = self.child_stdin.write(stuff)
             self.child_stdin.flush()
         except ValueError, e:
             ## File was closed
@@ -114,6 +161,9 @@ class Process(object):
 
     def getpid(self):
         return self.popen4.pid
+
+    def wait(self):
+        return self.event.wait()
 
 
 class ProcessPool(pools.Pool):

@@ -22,9 +22,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+import cgi
 
 from eventlet import api
-from eventlet import httpd
+from eventlet import wsgi
 from eventlet import processes
 from eventlet import util
 
@@ -40,16 +41,35 @@ util.wrap_socket_with_coroutine_socket()
 from eventlet import tests
 
 
-class Site(object):
-    def handle_request(self, req):
-        path = req.path_segments()
-        if len(path) > 0 and path[0] == "notexist":
-            req.response(404, body='not found')
-            return
-        req.write('hello world')
+def hello_world(env, start_response):
+    if env['PATH_INFO'] == 'notexist':
+        start_response('404 Not Found', [('Content-type', 'text/plain')])
+        return ["not found"]
+        
+    start_response('200 OK', [('Content-type', 'text/plain')])
+    return ["hello world"]
 
-    def adapt(self, obj, req):
-        req.write(str(obj))
+
+def chunked_app(env, start_response):
+    start_response('200 OK', [('Content-type', 'text/plain')])
+    yield "this"
+    yield "is"
+    yield "chunked"
+
+
+def big_chunks(env, start_response):
+    start_response('200 OK', [('Content-type', 'text/plain')])
+    line = 'a' * 8192
+    for x in range(10):
+        yield line
+
+
+class Site(object):
+    def __init__(self):
+        self.application = hello_world
+
+    def __call__(self, env, start_response):
+        return self.application(env, start_response)
 
 
 CONTENT_LENGTH = 'content-length'
@@ -96,7 +116,8 @@ class TestHttpd(tests.TestCase):
         self.logfile = StringIO()
         self.site = Site()
         self.killer = api.spawn(
-            httpd.server, api.tcp_listener(('0.0.0.0', 12346)), self.site, max_size=128, log=self.logfile)
+            wsgi.server,
+            api.tcp_listener(('0.0.0.0', 12346)), self.site, max_size=128, log=self.logfile)
 
     def tearDown(self):
         api.kill(self.killer)
@@ -173,16 +194,16 @@ class TestHttpd(tests.TestCase):
         
     def test_007_get_arg(self):
         # define a new handler that does a get_arg as well as a read_body
-        def new_handle_request(req):
-            a = req.get_arg('a')
-            body = req.read_body()
-            req.write('a is %s, body is %s' % (a, body))
-        self.site.handle_request = new_handle_request
-        
+        def new_app(env, start_response):
+            body = env['wsgi.input'].read()
+            a = cgi.parse_qs(body).get('a', [1])[0]
+            start_response('200 OK', [('Content-type', 'text/plain')])
+            return ['a is %s, body is %s' % (a, body)]
+        self.site.application = new_app
         sock = api.connect_tcp(
             ('127.0.0.1', 12346))
         request = '\r\n'.join((
-            'POST /%s HTTP/1.0', 
+            'POST / HTTP/1.0', 
             'Host: localhost', 
             'Content-Length: 3', 
             '',
@@ -210,6 +231,41 @@ class TestHttpd(tests.TestCase):
         self.assertEqual(response_line_200,response_line_test)
         fd.close()
 
+    def test_009_chunked_response(self):
+        self.site.application = chunked_app
+        sock = api.connect_tcp(
+            ('127.0.0.1', 12346))
+        
+        fd = sock.makefile()
+        fd.write('GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
+        self.assert_('Transfer-Encoding: chunked' in fd.read())
+
+    def test_010_no_chunked_http_1_0(self):
+        self.site.application = chunked_app
+        sock = api.connect_tcp(
+            ('127.0.0.1', 12346))
+        
+        fd = sock.makefile()
+        fd.write('GET / HTTP/1.0\r\nHost: localhost\r\nConnection: close\r\n\r\n')
+        self.assert_('Transfer-Encoding: chunked' not in fd.read())
+
+    def test_011_multiple_chunks(self):
+        self.site.application = big_chunks
+        sock = api.connect_tcp(
+            ('127.0.0.1', 12346))
+        
+        fd = sock.makefile()
+        fd.write('GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
+        headers = fd.readuntil('\r\n\r\n')
+        self.assert_('Transfer-Encoding: chunked' in headers)
+        chunks = 0
+        chunklen = int(fd.readline(), 16)
+        while chunklen:
+            chunks += 1
+            chunk = fd.read(chunklen)
+            fd.readline()
+            chunklen = int(fd.readline(), 16)
+        self.assert_(chunks > 1)
 
 if __name__ == '__main__':
     tests.main()

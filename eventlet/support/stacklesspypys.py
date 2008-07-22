@@ -1,9 +1,8 @@
 """\
-@file pylibsupport.py
+@file stacklesspypysupport.py
 @author Donovan Preston
 
-Copyright (c) 2005-2006, Donovan Preston
-Copyright (c) 2007, Linden Research, Inc.
+Copyright (c) 2008, Linden Research, Inc.
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -24,7 +23,7 @@ THE SOFTWARE.
 """
 
 
-from py.magic import greenlet
+from stackless import greenlet
 
 
 import sys
@@ -39,4 +38,7 @@ def emulate():
     module.GreenletExit = greenlet.GreenletExit
 
     
+
+
+
 

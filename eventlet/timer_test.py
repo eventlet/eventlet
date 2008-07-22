@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 import unittest
 
-from eventlet import api, runloop, tests, timer
+from eventlet import api, tests, timer
 
 class TestTimer(tests.TestCase):
     mode = 'static'
@@ -35,32 +35,32 @@ class TestTimer(tests.TestCase):
         assert t.tpl == t2.tpl
         assert t.called == t2.called
 
-    def test_cancel(self):
-        r = runloop.RunLoop()
-        called = []
-        t = timer.Timer(0, lambda: called.append(True))
-        t.cancel()
-        r.add_timer(t)
-        r.add_observer(lambda r, activity: r.abort(), 'after_waiting')
-        r.run()
-        assert not called
-        assert not r.running
+##     def test_cancel(self):
+##         r = runloop.RunLoop()
+##         called = []
+##         t = timer.Timer(0, lambda: called.append(True))
+##         t.cancel()
+##         r.add_timer(t)
+##         r.add_observer(lambda r, activity: r.abort(), 'after_waiting')
+##         r.run()
+##         assert not called
+##         assert not r.running
 
     def test_schedule(self):
         hub = api.get_hub()
-        r = hub.runloop
+##         r = hub.runloop
         # clean up the runloop, preventing side effects from previous tests
         # on this thread
-        if r.running:
-            r.abort()
+        if hub.running:
+            hub.abort()
             api.sleep(0)
         called = []
-        t = timer.Timer(0, lambda: (called.append(True), hub.runloop.abort()))
+        t = timer.Timer(0, lambda: (called.append(True), hub.abort()))
         t.schedule()
-        r.default_sleep = lambda: 0.0
-        r.run()
+        hub.default_sleep = lambda: 0.0
+        hub.run()
         assert called
-        assert not r.running
+        assert not hub.running
 
 if __name__ == '__main__':
     unittest.main()

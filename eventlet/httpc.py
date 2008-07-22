@@ -45,9 +45,7 @@ try:
     def from_http_time(t, defaultdate=None):
         return int(DateTime.Parser.DateTimeFromString(
             t, defaultdate=defaultdate).gmticks())
-
 except ImportError:
-
     import calendar
     parse_formats = (HTTP_TIME_FORMAT, # RFC 1123
                     '%A, %d-%b-%y %H:%M:%S GMT',  # RFC 850
@@ -276,7 +274,7 @@ class UnparseableResponse(ConnectionError):
         Exception.__init__(self)
 
     def __repr__(self):
-        return "Could not parse the data at the URL %r of content-type %r\nData:\n%r)" % (
+        return "Could not parse the data at the URL %r of content-type %r\nData:\n%s" % (
             self.url, self.content_type, self.response)
 
     __str__ = __repr__
@@ -519,7 +517,7 @@ class HttpSuite(object):
         self.loader = loader
         self.fallback_content_type = fallback_content_type
 
-    def request_(self, params):
+    def request_(self, params, connection=None):
         '''Make an http request to a url, for internal use mostly.'''
 
         params = _LocalParams(params, instance=self)
@@ -548,7 +546,7 @@ class HttpSuite(object):
         else:
             params.body = ''
 
-        params.response, params.response_body = self._get_response_body(params)
+        params.response, params.response_body = self._get_response_body(params, connection)
         response, body = params.response, params.response_body
         
         if self.loader is not None:
@@ -567,8 +565,9 @@ class HttpSuite(object):
             klass = status_to_error_map.get(response.status, ConnectionError)
             raise klass(params)
 
-    def _get_response_body(self, params):
-        connection = connect(params.url, params.use_proxy)
+    def _get_response_body(self, params, connection):
+        if connection is None:
+            connection = connect(params.url, params.use_proxy)
         connection.request(params.method, params.path, params.body,
                            params.headers)
         params.response = connection.getresponse()
@@ -578,25 +577,33 @@ class HttpSuite(object):
 
         return params.response, params.response_body
         
-    def request(self, params):
-        return self.request_(params)[-1]
+    def request(self, params, connection=None):
+        return self.request_(params, connection=connection)[-1]
 
-    def head_(self, url, headers=None, use_proxy=False, ok=None, aux=None):
-        return self.request_(_Params(url, 'HEAD', headers=headers,
-                                     loader=self.loader, dumper=self.dumper,
-                                     use_proxy=use_proxy, ok=ok, aux=aux))
+    def head_(
+        self, url, headers=None, use_proxy=False,
+        ok=None, aux=None, connection=None):
+        return self.request_(
+            _Params(
+                url, 'HEAD', headers=headers,
+                loader=self.loader, dumper=self.dumper,
+                use_proxy=use_proxy, ok=ok, aux=aux),
+            connection)
 
     def head(self, *args, **kwargs):
         return self.head_(*args, **kwargs)[-1]
 
-    def get_(self, url, headers=None, use_proxy=False, ok=None, aux=None, max_retries=8):
+    def get_(
+        self, url, headers=None, use_proxy=False, ok=None,
+        aux=None, max_retries=8, connection=None):
         if headers is None:
             headers = {}
         headers['accept'] = self.fallback_content_type+';q=1,*/*;q=0'
         def req():
             return self.request_(_Params(url, 'GET', headers=headers,
                                          loader=self.loader, dumper=self.dumper,
-                                         use_proxy=use_proxy, ok=ok, aux=aux))
+                                         use_proxy=use_proxy, ok=ok, aux=aux),
+							     connection)
         def retry_response(err):
             def doit():
                 return err.retry_()
@@ -614,7 +621,7 @@ class HttpSuite(object):
         return self.get_(*args, **kwargs)[-1]
 
     def put_(self, url, data, headers=None, content_type=None, ok=None,
-             aux=None):
+             aux=None, connection=None):
         if headers is None:
             headers = {}
         if 'content-type' not in headers:
@@ -623,22 +630,29 @@ class HttpSuite(object):
             else:
                 headers['content-type'] = content_type
         headers['accept'] = headers['content-type']+';q=1,*/*;q=0'
-        return self.request_(_Params(url, 'PUT', body=data, headers=headers,
-                                     loader=self.loader, dumper=self.dumper,
-                                     ok=ok, aux=aux))
+        return self.request_(
+            _Params(
+                url, 'PUT', body=data, headers=headers,
+                loader=self.loader, dumper=self.dumper,
+                ok=ok, aux=aux),
+            connection)
 
     def put(self, *args, **kwargs):
         return self.put_(*args, **kwargs)[-1]
 
-    def delete_(self, url, ok=None, aux=None):
-        return self.request_(_Params(url, 'DELETE', loader=self.loader,
-                                     dumper=self.dumper, ok=ok, aux=aux))
+    def delete_(self, url, ok=None, aux=None, connection=None):
+        return self.request_(
+            _Params(
+                url, 'DELETE', loader=self.loader,
+                dumper=self.dumper, ok=ok, aux=aux),
+            connection)
 
     def delete(self, *args, **kwargs):
         return self.delete_(*args, **kwargs)[-1]
 
-    def post_(self, url, data='', headers=None, content_type=None, ok=None,
-              aux=None):
+    def post_(
+        self, url, data='', headers=None, content_type=None,ok=None,
+        aux=None, connection=None):
         if headers is None:
             headers = {}
         if 'content-type' not in headers:
@@ -647,9 +661,12 @@ class HttpSuite(object):
             else:
                 headers['content-type'] = content_type
         headers['accept'] = headers['content-type']+';q=1,*/*;q=0'
-        return self.request_(_Params(url, 'POST', body=data,
-                                     headers=headers, loader=self.loader,
-                                     dumper=self.dumper, ok=ok, aux=aux))
+        return self.request_(
+            _Params(
+                url, 'POST', body=data,
+                headers=headers, loader=self.loader,
+                dumper=self.dumper, ok=ok, aux=aux),
+            connection)
 
     def post(self, *args, **kwargs):
         return self.post_(*args, **kwargs)[-1]

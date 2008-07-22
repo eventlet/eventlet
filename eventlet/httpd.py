@@ -369,10 +369,15 @@ class Request(object):
         if not hasattr(self, '_cached_parsed_body'):
             body = self.read_body()
             if hasattr(self.site, 'parsers'):
-                parser = self.site.parsers.get(
-                    self.get_header('content-type'))
+                ct = self.get_header('content-type')
+                parser = self.site.parsers.get(ct)
+                    
                 if parser is not None:
                     body = parser(body)
+                else:
+                    ex = ValueError("Could not find parser for content-type: %s" % ct)
+                    ex.body = body
+                    raise ex
                 self._cached_parsed_body = body
         return self._cached_parsed_body
 
@@ -389,7 +394,7 @@ class Request(object):
         return self.protocol.request_version
 
     def request_protocol(self):
-        if self.protocol.socket.is_secure:
+        if self.protocol.is_secure:
             return "https"
         return "http"
 
@@ -412,11 +417,17 @@ class Timeout(RuntimeError):
 
 class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
     def __init__(self, request, client_address, server):
-        self.socket = self.request = self.rfile = self.wfile = request
+        self.rfile = self.wfile = request.makefile()
+        self.is_secure = request.is_secure
+        request.close()  # close this now so that when rfile and wfile are closed, the socket gets closed
         self.client_address = client_address
         self.server = server
         self.set_response_code(None, 200, None)
         self.protocol_version = server.max_http_version
+
+    def close(self):
+        self.rfile.close()
+        self.wfile.close()
 
     def set_response_code(self, request, code, message):
         self._code = code
@@ -501,7 +512,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                                          body=err.body)
                 finally:                            
                     # clean up any timers that might have been left around by the handling code
-                    api.get_hub().runloop.cancel_timers(api.getcurrent())
+                    api.get_hub().cancel_timers(api.getcurrent())
                     
                 # throw an exception if it failed to write a body
                 if not request.response_written():
@@ -526,9 +537,9 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 if not request.response_written():
                     request.response(500)
                     request.write('Internal Server Error')
-                self.socket.close()
+                self.close()
                 raise e # can't do a plain raise since exc_info might have been cleared
-        self.socket.close()
+        self.close()
 
 
 class Server(BaseHTTPServer.HTTPServer):
@@ -582,3 +593,14 @@ def server(sock, site, log=None, max_size=512, serv=None, max_http_version=DEFAU
             sock.close()
         except socket.error:
             pass
+
+
+if __name__ == '__main__':
+    class TestSite(object):
+        def handle_request(self, req):
+            req.write('hello')
+
+    server(
+        api.tcp_listener(('127.0.0.1', 8080)),
+        TestSite())
+

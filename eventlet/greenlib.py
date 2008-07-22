@@ -265,6 +265,7 @@ def greenlet_body(value, exc):
 
     Greenlets using this body must be greenlib.switch()'ed to
     """
+    from eventlet import api
     if exc is not None:
         if isinstance(exc, tuple):
             raise exc[0], exc[1], exc[2]
@@ -282,12 +283,14 @@ def greenlet_body(value, exc):
     except AttributeError:
         greenlet_id = 1
         _threadlocal.next_greenlet_id = itertools.count(2)
-    greenlets[greenlet.getcurrent()] = {'greenlet_id': greenlet_id}
+    cur = greenlet.getcurrent()
+    greenlets[cur] = {'greenlet_id': greenlet_id}
     try:
         return cb(*args)
     finally:
         _greenlet_context_call('finalize')
-        greenlets.pop(greenlet.getcurrent(), None)
+        greenlets.pop(cur, None)
+        api.get_hub().cancel_timers(cur, quiet=True)
 
 
 class SwitchingToDeadGreenlet(RuntimeError):
