@@ -28,7 +28,7 @@ import socket
 from eventlet import api
 from eventlet import greenio
 from eventlet import tests
-from eventlet import api, wrappedfd, util
+from eventlet import util
 
 import os.path
 import socket
@@ -50,6 +50,7 @@ def check_hub():
 
 class TestApi(tests.TestCase):
     mode = 'static'
+    
     certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
     private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
     
