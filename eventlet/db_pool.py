@@ -91,6 +91,8 @@ class BaseConnectionPool(Pool):
         # it's dead or None
         try:
             conn.rollback()
+        except KeyboardInterrupt:
+            raise
         except AttributeError, e:
             # this means it's already been destroyed, so we don't need to print anything
             conn = None
@@ -113,6 +115,20 @@ class BaseConnectionPool(Pool):
             super(BaseConnectionPool, self).put(conn)
         else:
             self.current_size -= 1
+
+    def clear(self):
+        """ Close all connections that this pool still holds a reference to, leaving it empty."""
+        for conn in self.free_items:
+            try:
+                conn.close()
+            except KeyboardInterrupt:
+                raise
+            except:
+                pass   # even if stuff happens here, we still want to at least try to close all the other connections
+        self.free_items.clear()
+            
+    def __del__(self):
+        self.clear()
     
 
 class SaranwrappedConnectionPool(BaseConnectionPool):

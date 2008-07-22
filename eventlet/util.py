@@ -81,7 +81,6 @@ def wrap_ssl(sock, certificate=None, private_key=None):
     from OpenSSL import SSL
     from eventlet import greenio, util
     context = SSL.Context(SSL.SSLv23_METHOD)
-    #print certificate, private_key
     if certificate is not None:
         context.use_certificate_file(certificate)
     if private_key is not None:

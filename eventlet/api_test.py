@@ -28,7 +28,10 @@ import socket
 from eventlet import api
 from eventlet import greenio
 from eventlet import tests
-from eventlet import util
+from eventlet import api, wrappedfd, util
+
+import os.path
+import socket
 
 
 def check_hub():
@@ -47,10 +50,9 @@ def check_hub():
 
 class TestApi(tests.TestCase):
     mode = 'static'
-
-    certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt') 
+    certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
     private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
-
+    
     def test_tcp_listener(self):
         socket = api.tcp_listener(('0.0.0.0', 0))
         assert socket.getsockname()[0] == '0.0.0.0'
@@ -125,7 +127,7 @@ class TestApi(tests.TestCase):
 
         check_hub()
 
-    def test_001_trampoline_timeout(self):
+    def test_trampoline_timeout(self):
         server = api.tcp_listener(('0.0.0.0', 0))
         bound_port = server.getsockname()[1]
 
