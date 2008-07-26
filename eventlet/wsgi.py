@@ -30,7 +30,6 @@ import time
 import traceback
 import urllib
 import socket
-import cStringIO
 import SocketServer
 import BaseHTTPServer
 
