@@ -190,7 +190,10 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     # Avoid dangling circular ref
                     exc_info = None
 
-            headers_set[:] = [status, response_headers]
+            capitalized_headers = [('-'.join([x.capitalize() for x in key.split('-')]), value)
+                                   for key, value in response_headers]
+
+            headers_set[:] = [status, capitalized_headers]
             return write
 
         try:

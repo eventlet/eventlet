@@ -257,10 +257,14 @@ class ConnectionError(Exception):
         return time.time() > expires
 
     def __repr__(self):
-        response = self.params.response
-        return "%s(url=%r, method=%r, status=%r, reason=%r, body=%r)" % (
-            self.__class__.__name__, self.params.url, self.params.method,
-            response.status, response.reason, self.params.body)
+        try:
+            response = self.params.response
+            return "%s(url=%r, method=%r, status=%r, reason=%r, body=%r)" % (
+                self.__class__.__name__, self.params.url, self.params.method,
+                response.status, response.reason, self.params.body)
+        except AttributeError:
+            return "%s(url=%r, method=%r)" % (
+                self.__class__.__name__, self.params.url, self.params.method)
 
     __str__ = __repr__
 
