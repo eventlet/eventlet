@@ -126,21 +126,23 @@ class Hub(hub.BaseHub):
 
     def timer_finished(self, timer):
         try:
-            timer.impltimer.delete()
-            del timer.impltimer
-        # XXX might this raise other exceptions? double delete?
-        except (AttributeError, TypeError):
-            pass
+            try:
+                timer.impltimer.delete()
+                del timer.impltimer
+            # XXX might this raise other exceptions? double delete?
+            except (AttributeError, TypeError):
+                pass
         finally:
             super(Hub, self).timer_finished(timer)
 
     def timer_canceled(self, timer):
         """ Cancels the underlying libevent timer. """
         try:
-            timer.impltimer.delete()
-            del timer.impltimer
-        except (AttributeError, TypeError):
-            pass
+            try:
+                timer.impltimer.delete()
+                del timer.impltimer
+            except (AttributeError, TypeError):
+                pass
         finally:
             super(Hub, self).timer_canceled(timer)
 
