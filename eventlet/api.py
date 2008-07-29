@@ -313,7 +313,7 @@ def get_default_hub():
         pass
 
     import select
-    if False: #hasattr(select, 'poll'): pollhub is broken at the moment
+    if hasattr(select, 'poll'):
         import eventlet.hubs.poll
         return eventlet.hubs.poll
     else:
