@@ -74,7 +74,10 @@ def tcp_socket():
     return s
 
 
-__original_ssl__ = socket.ssl
+try:
+    __original_ssl__ = socket.ssl
+except AttributeError:
+    __original_ssl__ = None
 
 
 def wrap_ssl(sock, certificate=None, private_key=None):
