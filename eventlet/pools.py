@@ -40,14 +40,34 @@ class Pool(object):
         # do stuff
     finally:
         self.pool.put(thing)
+        
+    The maximum size of the pool can be modified at runtime via the max_size attribute.  
+    Adjusting this number does not affect existing items checked out of the pool, nor 
+    on any waiters who are waiting for an item to free up.  Some indeterminate number 
+    of get/put cycles will be necessary before the new maximum size truly matches the 
+    actual operation of the pool.
     """
-    def __init__(self, min_size=0, max_size=4):
+    def __init__(self, min_size=0, max_size=4, order_as_stack=False):
+        """ Pre-populates the pool with *min_size* items.  Sets a hard limit to
+        the size of the pool -- it cannot contain any more items than 
+        *max_size*, and if there are already *max_size* items 'checked out' of
+        the pool, the pool will cause any getter to cooperatively yield until an 
+        item is put in.
+        
+        *order_as_stack* governs the ordering of the items in the free pool.  If
+        False (the default), the free items collection (of items that were 
+        created and were put back in the pool) acts as a round-robin, giving 
+        each item approximately equal utilization.  If True, the free pool acts 
+        as a FILO stack, which preferentially re-uses items that have most
+        recently been used.
+        """
         self.min_size = min_size
         self.max_size = max_size
+        self.order_as_stack = order_as_stack
         self.current_size = 0
         self.channel = channel.channel()
         self.free_items = collections.deque()
-        for x in range(min_size):
+        for x in xrange(min_size):
             self.current_size += 1
             self.free_items.append(self.create())
 
@@ -71,7 +91,10 @@ class Pool(object):
         if self.channel.balance < 0:
             self.channel.send(item)
         else:
-            self.free_items.append(item)
+            if self.order_as_stack:
+                self.free_items.appendleft(item)
+            else:
+                self.free_items.append(item)
 
     def resize(self, new_size):
         """Resize the pool
