@@ -36,7 +36,10 @@ class DatabaseConnector(object):
     """\
 @brief This is an object which will maintain a collection of database
 connection pools keyed on host,databasename"""
-    def __init__(self, module, credentials, min_size = 0, max_size = 4, conn_pool=None, *args, **kwargs):
+    def __init__(self, module, credentials, 
+                 min_size = 0, max_size = 4,
+                 max_idle = 10, max_age = 30, 
+                 conn_pool=None, *args, **kwargs):
         """\
         @brief constructor
         @param min_size the minimum size of a child pool.
@@ -48,6 +51,8 @@ connection pools keyed on host,databasename"""
         self._module = module
         self._min_size = min_size
         self._max_size = max_size
+        self._max_idle = max_idle
+        self._max_age  = max_age
         self._args = args
         self._kwargs = kwargs
         self._credentials = credentials  # this is a map of hostname to username/password
@@ -68,6 +73,7 @@ connection pools keyed on host,databasename"""
             new_kwargs.update(self.credentials_for(host))
             dbpool = self._conn_pool_class(self._module,
                 min_size=self._min_size, max_size=self._max_size,
+                max_idle=self._max_idle, max_age=self._max_age,
                 *self._args, **new_kwargs)
             self._databases[key] = dbpool
 
