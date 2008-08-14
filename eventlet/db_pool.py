@@ -23,11 +23,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-import os, sys
+from collections import deque
+import os
+import sys
+import time
 
 from eventlet.pools import Pool
 from eventlet.processes import DeadProcess
-from eventlet import saranwrap
+from eventlet import api
 
 class DatabaseConnector(object):
     """\
@@ -144,7 +147,7 @@ class BaseConnectionPool(Pool):
         if next_delay > 0:
             # set up a continuous self-calling loop
             self._expiration_timer = api.call_after(next_delay,
-                                                   self._schedule_expiration)
+                                                    self._schedule_expiration)
         
     def _expire_old_connections(self, now):
         """ Iterates through the open connections contained in the pool, closing
@@ -153,7 +156,7 @@ class BaseConnectionPool(Pool):
         
         *now* is the current time, as returned by time.time().
         """
-        original_count = len(free_items)
+        original_count = len(self.free_items)
         self.free_items = deque([
             (last_used, created_at, conn)
             for last_used, created_at, conn in self.free_items
@@ -174,10 +177,10 @@ class BaseConnectionPool(Pool):
         return False
         
     def _unwrap_connection(self, conn):
-        """ If the connection was wrapped by a subclass of BaseConnectionWrapper 
-        and is still functional (as determined by the __nonzero__ method), 
-        returns the unwrapped connection.  If anything goes wrong with this 
-        process, returns None.
+        """ If the connection was wrapped by a subclass of
+        BaseConnectionWrapper and is still functional (as determined
+        by the __nonzero__ method), returns the unwrapped connection.
+        If anything goes wrong with this process, returns None.
         """
         base = None
         try:
@@ -191,7 +194,8 @@ class BaseConnectionPool(Pool):
         return base
 
     def _safe_close(self, conn, quiet = False):
-        """ Closes the connection, squelching any exceptions. """
+        """ Closes the (already unwrapped) connection, squelching any
+        exceptions."""
         try:
             conn.close()
         except KeyboardInterrupt:
@@ -203,8 +207,15 @@ class BaseConnectionPool(Pool):
                 print "Connection.close raised: %s" % (sys.exc_info()[1])
 
     def get(self):
+        # if the call to get() draws from the free pool, it will come
+        # back as a tuple
+        conn = super(BaseConnectionPool, self).get()
+        if isinstance(conn, tuple):
+            _last_used, created_at, conn = conn
+        else:
+            created_at = time.time()
+            
         # wrap the connection so the consumer can call close() safely
-        _last_used, created_at, conn = super(BaseConnectionPool, self).get()
         wrapped = PooledConnectionWrapper(conn, self)
         # annotating the wrapper so that when it gets put in the pool
         # again, we'll know how old it is
@@ -230,7 +241,7 @@ class BaseConnectionPool(Pool):
         base = self._unwrap_connection(conn)
         now = time.time()
         if (base is not None 
-            and not self._expired(now, now, created_at, base)):
+            and not self._is_expired(now, now, created_at, base)):
             super(BaseConnectionPool, self).put( (now, created_at, base) )
         else:
             self.current_size -= 1
@@ -241,6 +252,8 @@ class BaseConnectionPool(Pool):
         """ Close all connections that this pool still holds a reference to, 
         and removes all references to them.
         """
+        if self._expiration_timer:
+            self._expiration_timer.cancel()
         for _last_used, _created_at, conn in self.free_items:
             self._safe_close(conn, quiet=True)
         self.free_items.clear()
@@ -253,6 +266,7 @@ class SaranwrappedConnectionPool(BaseConnectionPool):
     """A pool which gives out saranwrapped database connections from a pool
     """
     def create(self):
+        from eventlet import saranwrap
         return saranwrap.wrap(self._db_module).connect(*self._args, **self._kwargs)
 
 class TpooledConnectionPool(BaseConnectionPool):
