@@ -274,15 +274,16 @@ class ConnectionError(Exception):
 
 class UnparseableResponse(ConnectionError):
     """Raised when a loader cannot parse the response from the server."""
-    def __init__(self, content_type, response, url):
+    def __init__(self, content_type, parser, response, url):
         self.content_type = content_type
+        self.parser = parser
         self.response = response
         self.url = url
         Exception.__init__(self)
 
     def __repr__(self):
-        return "Could not parse the data at the URL %r of content-type %r\nData:\n%s" % (
-            self.url, self.content_type, self.response)
+        return "Could not parse the data at the URL %r of content-type %r with %r\nData:\n%s" % (
+            self.url, self.content_type, self.parser, self.response)
 
     __str__ = __repr__
 
@@ -562,7 +563,10 @@ class HttpSuite(object):
             except KeyboardInterrupt:
                 raise
             except Exception, e:
-                raise UnparseableResponse(self.loader, body, params.url)
+                raise UnparseableResponse(response.msg.get('content-type', '(unknown)'),
+                                          self.loader,
+                                          body,
+                                          params.url)
 
         return response.status, response.msg, body
 
