@@ -140,7 +140,7 @@ def tcp_server(listensocket, server, *args, **kw):
     finally:
         listensocket.close()
 
-def trampoline(fd, read=False, write=False, timeout=None):
+def trampoline(fd, read=None, write=None, timeout=None):
     """Suspend the current coroutine until the given socket object or file
     descriptor is ready to *read*, ready to *write*, or the specified
     *timeout* elapses, depending on arguments specified.

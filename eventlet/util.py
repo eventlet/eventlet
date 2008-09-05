@@ -148,7 +148,13 @@ def wrap_pipes_with_coroutine_pipes():
         return greenio.GreenPipe(__original_fdopen__(*args, **kw))
     def new_read(fd, *args, **kw):
         from eventlet import api
-        api.trampoline(fd, read=True)
+        try:
+            api.trampoline(fd, read=True)
+        except socket.error, e:
+            if e[0] == errno.EPIPE:
+                return ''
+            else:
+                raise
         return __original_read__(fd, *args, **kw)
     def new_write(fd, *args, **kw):
         from eventlet import api
