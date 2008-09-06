@@ -1,6 +1,6 @@
 """\
 @file db_pool.py
-@brief Uses saranwrap to implement a pool of nonblocking database connections to a db server.
+@brief A pool of nonblocking database connections.
 
 Copyright (c) 2007, Linden Research, Inc.
 
@@ -32,13 +32,14 @@ from eventlet.pools import Pool
 from eventlet.processes import DeadProcess
 from eventlet import api
 
+class ConnectionTimeout(Exception):
+    pass
+
 class DatabaseConnector(object):
     """\
 @brief This is an object which will maintain a collection of database
 connection pools keyed on host,databasename"""
     def __init__(self, module, credentials, 
-                 min_size = 0, max_size = 4,
-                 max_idle = 10, max_age = 30, 
                  conn_pool=None, *args, **kwargs):
         """\
         @brief constructor
@@ -49,10 +50,6 @@ connection pools keyed on host,databasename"""
         if self._conn_pool_class is None:
             self._conn_pool_class = ConnectionPool
         self._module = module
-        self._min_size = min_size
-        self._max_size = max_size
-        self._max_idle = max_idle
-        self._max_age  = max_age
         self._args = args
         self._kwargs = kwargs
         self._credentials = credentials  # this is a map of hostname to username/password
@@ -72,8 +69,6 @@ connection pools keyed on host,databasename"""
             new_kwargs['host'] = host
             new_kwargs.update(self.credentials_for(host))
             dbpool = self._conn_pool_class(self._module,
-                min_size=self._min_size, max_size=self._max_size,
-                max_idle=self._max_idle, max_age=self._max_age,
                 *self._args, **new_kwargs)
             self._databases[key] = dbpool
 
@@ -83,7 +78,8 @@ connection pools keyed on host,databasename"""
 class BaseConnectionPool(Pool):
     def __init__(self, db_module, 
                        min_size = 0, max_size = 4, 
-                       max_idle = 10, max_age = 30, 
+                       max_idle = 10, max_age = 30,
+                       connect_timeout = 5,
                        *args, **kwargs):
         """
         Constructs a pool with at least *min_size* connections and at most
@@ -98,6 +94,10 @@ class BaseConnectionPool(Pool):
         closed, regardless of idle time.  If *max_age* is 0, all connections are 
         closed on return to the pool, reducing it to a concurrency limiter.
         
+        *connect_timeout* is the duration in seconds that the pool will wait 
+        before timing out on connect() to the database.  If triggered, the
+        timeout will raise a ConnectionTimeout from get().
+        
         The remainder of the arguments are used as parameters to the
         *db_module*'s connection constructor.
         """
@@ -107,6 +107,7 @@ class BaseConnectionPool(Pool):
         self._kwargs = kwargs
         self.max_idle = max_idle
         self.max_age = max_age
+        self.connect_timeout = connect_timeout
         self._expiration_timer = None
         super(BaseConnectionPool, self).__init__(min_size=min_size, 
                                                  max_size=max_size,
@@ -272,21 +273,31 @@ class SaranwrappedConnectionPool(BaseConnectionPool):
     """A pool which gives out saranwrapped database connections from a pool
     """
     def create(self):
-        from eventlet import saranwrap
-        return saranwrap.wrap(self._db_module).connect(*self._args, **self._kwargs)
+        timer = api.exc_after(self.connect_timeout, ConnectionTimeout())
+        try:
+            from eventlet import saranwrap
+            return saranwrap.wrap(self._db_module).connect(*self._args,
+                                                           **self._kwargs)
+        finally:
+            timer.cancel()
 
 class TpooledConnectionPool(BaseConnectionPool):
     """A pool which gives out tpool.Proxy-based database connections from a pool.
     """
     def create(self):
-        from eventlet import tpool
+        timer = api.exc_after(self.connect_timeout, ConnectionTimeout())
         try:
-            # *FIX: this is a huge hack that will probably only work for MySQLdb
-            autowrap = (self._db_module.cursors.DictCursor,)
-        except:
-            autowrap = ()
-        return tpool.Proxy(self._db_module.connect(*self._args, **self._kwargs),
-                           autowrap=autowrap)
+            from eventlet import tpool
+            try:
+                # *FIX: this is a huge hack that will probably only work for MySQLdb
+                autowrap = (self._db_module.cursors.DictCursor,)
+            except:
+                autowrap = ()
+            return tpool.Proxy(self._db_module.connect(*self._args,
+                                                       **self._kwargs),
+                               autowrap=autowrap)
+        finally:
+            timer.cancel()
 
 class RawConnectionPool(BaseConnectionPool):
     """A pool which gives out plain database connections from a pool.
