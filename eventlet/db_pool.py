@@ -32,7 +32,7 @@ from eventlet.pools import Pool
 from eventlet.processes import DeadProcess
 from eventlet import api
 
-class ConnectionTimeout(Exception):
+class ConnectTimeout(Exception):
     pass
 
 class DatabaseConnector(object):
@@ -96,7 +96,7 @@ class BaseConnectionPool(Pool):
         
         *connect_timeout* is the duration in seconds that the pool will wait 
         before timing out on connect() to the database.  If triggered, the
-        timeout will raise a ConnectionTimeout from get().
+        timeout will raise a ConnectTimeout from get().
         
         The remainder of the arguments are used as parameters to the
         *db_module*'s connection constructor.
@@ -273,7 +273,7 @@ class SaranwrappedConnectionPool(BaseConnectionPool):
     """A pool which gives out saranwrapped database connections from a pool
     """
     def create(self):
-        timer = api.exc_after(self.connect_timeout, ConnectionTimeout())
+        timer = api.exc_after(self.connect_timeout, ConnectTimeout())
         try:
             from eventlet import saranwrap
             return saranwrap.wrap(self._db_module).connect(*self._args,
@@ -285,7 +285,7 @@ class TpooledConnectionPool(BaseConnectionPool):
     """A pool which gives out tpool.Proxy-based database connections from a pool.
     """
     def create(self):
-        timer = api.exc_after(self.connect_timeout, ConnectionTimeout())
+        timer = api.exc_after(self.connect_timeout, ConnectTimeout())
         try:
             from eventlet import tpool
             try:
@@ -293,9 +293,8 @@ class TpooledConnectionPool(BaseConnectionPool):
                 autowrap = (self._db_module.cursors.DictCursor,)
             except:
                 autowrap = ()
-            return tpool.Proxy(self._db_module.connect(*self._args,
-                                                       **self._kwargs),
-                               autowrap=autowrap)
+            conn = tpool.execute(self._db_module.connect, *self._args, **self._kwargs)
+            return tpool.Proxy(conn, autowrap=autowrap)
         finally:
             timer.cancel()
 
