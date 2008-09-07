@@ -164,11 +164,13 @@ class BaseConnectionPool(Pool):
         *now* is the current time, as returned by time.time().
         """
         original_count = len(self.free_items)
-        self.free_items = deque([
+        new_free = [
             (last_used, created_at, conn)
             for last_used, created_at, conn in self.free_items
-            if not self._is_expired(now, last_used, created_at, conn)])
-            
+            if not self._is_expired(now, last_used, created_at, conn)]
+        self.free_items.clear()
+        self.free_items.extend(new_free)
+        
         # adjust the current size counter to account for expired 
         # connections
         self.current_size -= original_count - len(self.free_items)
@@ -214,14 +216,14 @@ class BaseConnectionPool(Pool):
                 print "Connection.close raised: %s" % (sys.exc_info()[1])
 
     def get(self):
+        conn = super(BaseConnectionPool, self).get()
         # if the call to get() draws from the free pool, it will come
         # back as a tuple
-        conn = super(BaseConnectionPool, self).get()
         if isinstance(conn, tuple):
             _last_used, created_at, conn = conn
         else:
             created_at = time.time()
-            
+        
         # wrap the connection so the consumer can call close() safely
         wrapped = PooledConnectionWrapper(conn, self)
         # annotating the wrapper so that when it gets put in the pool
