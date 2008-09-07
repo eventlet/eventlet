@@ -272,39 +272,68 @@ class BaseConnectionPool(Pool):
     
 
 class SaranwrappedConnectionPool(BaseConnectionPool):
-    """A pool which gives out saranwrapped database connections from a pool
+    """A pool which gives out saranwrapped database connections.
     """
     def create(self):
-        timer = api.exc_after(self.connect_timeout, ConnectTimeout())
+        return self.connect(self._db_module,
+                                    self.connect_timeout,
+                                    *self._args,
+                                    **self._kwargs)
+
+    def connect(self, db_module, connect_timeout, *args, **kw):
+        timeout = api.exc_after(connect_timeout, ConnectTimeout())
         try:
             from eventlet import saranwrap
-            return saranwrap.wrap(self._db_module).connect(*self._args,
-                                                           **self._kwargs)
+            return saranwrap.wrap(db_module).connect(*args, **kw)
         finally:
-            timer.cancel()
+            timeout.cancel()
+            
+    connect = classmethod(connect)
+        
 
 class TpooledConnectionPool(BaseConnectionPool):
-    """A pool which gives out tpool.Proxy-based database connections from a pool.
+    """A pool which gives out tpool.Proxy-based database connections.
     """
     def create(self):
-        timer = api.exc_after(self.connect_timeout, ConnectTimeout())
+        return self.connect(self._db_module,
+                                    self.connect_timeout,
+                                    *self._args,
+                                    **self._kwargs)
+
+    def connect(self, db_module, connect_timeout, *args, **kw):
+        timeout = api.exc_after(connect_timeout, ConnectTimeout())
         try:
             from eventlet import tpool
             try:
                 # *FIX: this is a huge hack that will probably only work for MySQLdb
-                autowrap = (self._db_module.cursors.DictCursor,)
+                autowrap = (db_module.cursors.DictCursor,)
             except:
                 autowrap = ()
-            conn = tpool.execute(self._db_module.connect, *self._args, **self._kwargs)
+            conn = tpool.execute(db_module.connect, *args, **kw)
             return tpool.Proxy(conn, autowrap=autowrap)
         finally:
-            timer.cancel()
+            timeout.cancel()
+
+    connect = classmethod(connect)
 
 class RawConnectionPool(BaseConnectionPool):
-    """A pool which gives out plain database connections from a pool.
+    """A pool which gives out plain database connections.
     """
     def create(self):
-        return self._db_module.connect(*self._args, **self._kwargs)
+        return self.connect(self._db_module,
+                                    self.connect_timeout,
+                                    *self._args,
+                                    **self._kwargs)
+
+    def connect(self, db_module, connect_timeout, *args, **kw):
+        timeout = api.exc_after(connect_timeout, ConnectTimeout())
+        try:
+            return db_module.connect(*args, **kw)
+        finally:
+            timeout.cancel()
+
+    connect = classmethod(connect)
+
 
 # default connection pool is the tpool one
 ConnectionPool = TpooledConnectionPool
@@ -372,7 +401,7 @@ class PooledConnectionWrapper(GenericConnectionWrapper):
             del self._base
         except AttributeError:
             pass
-        
+
     def close(self):
         """ Return the connection to the pool, and remove the
         reference to it so that you can't use it again through this
