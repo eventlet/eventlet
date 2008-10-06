@@ -263,7 +263,12 @@ class semaphore(object):
             # release()s.
             self.relevent.send()
 
-    def acquire(self):
+    def locked(self):
+        return self.counter <= 0
+
+    def acquire(self, blocking=1):
+        if blocking==0 and self.locked():
+            return False
         # This logic handles the self.limit is None case because None != any integer.
         while self.counter == 0:
             # Loop until there are resources to acquire. We loop because we
@@ -281,6 +286,9 @@ class semaphore(object):
             # If we just transitioned from being full to having room for one
             # more resource, notify whoever was waiting to release one.
             self.relevent.send()
+        return True
+
+    __enter__ = acquire
 
     def release(self):
         # This logic handles the self.limit is None case because None != any integer.
@@ -293,6 +301,10 @@ class semaphore(object):
             # If self.counter was 0 before we incremented it, then wake up
             # anybody who was waiting 
             self.acqevent.send()
+
+    def __exit__(self, typ, val, tb):
+        self.release()
+
 
 class metaphore(object):
     """This is sort of an inverse semaphore: a counter that starts at 0 and
