@@ -63,7 +63,10 @@ class Hub(hub.BaseHub):
         
     def remove_descriptor(self, fileno):
         super(Hub, self).remove_descriptor(fileno)
-        self.poll.unregister(fileno)
+        try:
+            self.poll.unregister(fileno)
+        except KeyError:
+            pass
 
     def wait(self, seconds=None):
         readers = self.readers
