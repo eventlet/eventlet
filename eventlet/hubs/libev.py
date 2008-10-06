@@ -51,13 +51,17 @@ class Hub(hub.BaseHub):
         sig.start()
 
     def add_descriptor(self, fileno, read=None, write=None, exc=None):
+        def do_cb(watcher, event):
+            func, fileno = watcher.data
+            func(fileno)
+
         if read:
-            evt = libev.Io(fileno, libev.EV_READ, self._evloop, read, fileno)
+            evt = libev.Io(fileno, libev.EV_READ, self._evloop, do_cb, (read, fileno))
             evt.start()
             self.readers[fileno] = evt, read
 
         if write:
-            evt = libev.Io(fileno, libev.EV_WRITE, self._evloop, write, fileno)
+            evt = libev.Io(fileno, libev.EV_WRITE, self._evloop, do_cb, (write, fileno))
             evt.start()
             self.writers[fileno] = evt, write
 
