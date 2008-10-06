@@ -67,7 +67,7 @@ class TimeoutError(Exception):
 
 _threadlocal = tls.local()
 
-def tcp_listener(address):
+def tcp_listener(address, backlog=50):
     """
     Listen on the given (ip, port) *address* with a TCP socket.
     Returns a socket object on which one should call ``accept()`` to
@@ -79,7 +79,7 @@ def tcp_listener(address):
     """
     from eventlet import greenio, util
     socket = greenio.GreenSocket(util.tcp_socket())
-    util.socket_bind_and_listen(socket, address)
+    util.socket_bind_and_listen(socket, address, backlog=backlog)
     return socket
 
 def ssl_listener(address, certificate, private_key):
