@@ -308,10 +308,17 @@ class GreenSocket(object):
         if not self.act_non_blocking:
             trampoline(self.fd, read=True, timeout=self.gettimeout(), timeout_exc=socket.timeout)
         return self.fd.recvfrom(*args)
-    
-    # TODO recvfrom_into
-    # TODO recv_into
-    
+
+    def recvfrom_into(self, *args):
+        if not self.act_non_blocking:
+            trampoline(self.fd, read=True, timeout=self.gettimeout(), timeout_exc=socket.timeout)
+        return self.fd.recvfrom_into(*args)
+
+    def recv_into(self, *args):
+        if not self.act_non_blocking:
+            trampoline(self.fd, read=True, timeout=self.gettimeout(), timeout_exc=socket.timeout)
+        return self.fd.recv_into(*args)
+
     send = higher_order_send(socket_send)
 
     def sendall(self, data):
