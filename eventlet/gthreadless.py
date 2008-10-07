@@ -1,4 +1,4 @@
-import greenlet
+from eventlet.support import greenlet
 greenlet.main = greenlet.getcurrent() # WTF did greenlet.main go?
 from twisted.internet import defer, reactor
 

@@ -25,7 +25,7 @@ THE SOFTWARE.
 import sys
 import itertools
 
-import greenlet
+from eventlet.support import greenlet
 
 from eventlet import tls
 

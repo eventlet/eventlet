@@ -30,27 +30,7 @@ import linecache
 import inspect
 import traceback
 
-try:
-    import greenlet
-except ImportError:
-    try:
-        import support.pylib
-        support.pylib.emulate()
-        greenlet = sys.modules['greenlet']
-    except ImportError:
-        try:
-            import support.stacklesspypys
-            support.stacklesspypys.emulate()
-            greenlet = sys.modules['greenlet']
-        except ImportError:
-            try:
-                import support.stacklesss
-                support.stacklesss.emulate()
-                greenlet = sys.modules['greenlet']                
-            except ImportError, e:
-                raise ImportError("Unable to find an implementation of greenlet.")
-
-
+from eventlet.support import greenlet
 from eventlet import greenlib, tls
 
 __all__ = [

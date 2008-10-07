@@ -29,7 +29,7 @@ import errno
 import traceback
 import time
 
-import greenlet
+from eventlet.support import greenlet
 
 from eventlet import greenlib
 from eventlet.timer import Timer

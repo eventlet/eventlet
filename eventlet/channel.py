@@ -26,8 +26,7 @@ THE SOFTWARE.
 import collections
 
 from eventlet import api, greenlib
-
-import greenlet
+from eventlet.support import greenlet
 
 __all__ = ['channel']
 

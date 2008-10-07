@@ -33,7 +33,7 @@ from eventlet import greenlib
 from eventlet.timer import Timer
 from eventlet.hubs import hub
 
-import greenlet
+from eventlet.support import greenlet
 
 # XXX for debugging only
 #raise ImportError()
