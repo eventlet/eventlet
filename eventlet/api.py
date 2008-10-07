@@ -137,20 +137,22 @@ def trampoline(fd, read=None, write=None, timeout=None, timeout_exc=TimeoutError
     hub = get_hub()
     self = greenlet.getcurrent()
     fileno = getattr(fd, 'fileno', lambda: fd)()
-    def _do_close(fn):
-        hub.remove_descriptor(fn)
-        greenlib.switch(self, exc=socket.error(32, 'Broken pipe'))
-    def _do_timeout():
-        hub.remove_descriptor(fileno)
-        greenlib.switch(self, exc=timeout_exc())
-    def cb(_fileno):
+    def _do_close(_d, error):
         if t is not None:
             t.cancel()
-        hub.remove_descriptor(fileno)
+        hub.remove_descriptor(descriptor)
+        greenlib.switch(self, exc=error.value) # convert to socket.error
+    def _do_timeout():
+        hub.remove_descriptor(descriptor)
+        greenlib.switch(self, exc=timeout_exc())
+    def cb(d):
+        if t is not None:
+            t.cancel()
+        hub.remove_descriptor(descriptor)
         greenlib.switch(self, fd)
     if timeout is not None:
         t = hub.schedule_call(timeout, _do_timeout)
-    hub.add_descriptor(fileno, read and cb, write and cb, _do_close)
+    descriptor = hub.add_descriptor(fileno, read and cb, write and cb, _do_close)
     return hub.switch()
 
 def _spawn_startup(cb, args, kw, cancel=None):
