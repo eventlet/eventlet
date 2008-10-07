@@ -354,6 +354,10 @@ def get_default_hub():
     """Select the default hub implementation based on what multiplexing
     libraries are installed. Tries libevent first, then poll, then select.
     """
+
+    from eventlet.hubs import twistedreactor
+    return twistedreactor
+
     try:
         import eventlet.hubs.libevent
         return eventlet.hubs.libevent
