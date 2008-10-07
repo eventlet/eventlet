@@ -308,10 +308,12 @@ class GreenSocket(object):
         self._refcount.increment()
         new_sock = type(self)(self.fd, self._refcount)
         return GreenFile(new_sock)
-    
-    def makefile(self, mode = None, bufsize = None):
-        return GreenFile(self.dup())
-    
+
+    def makefile(self, mode='r', bufsize=-1):
+        return socket._fileobject(self.dup(), mode, bufsize)
+        # the following has problems, e.g. it doesn't recognise '\n' as a delimeter
+        #return GreenFile(self.dup())
+
     recv = higher_order_recv(socket_recv)
     
     def recvfrom(self, *args):
