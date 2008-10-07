@@ -182,7 +182,14 @@ def set_nonblocking(fd):
 class GreenSocket(object):
     is_secure = False
     timeout = None
-    def __init__(self, fd):
+    def __init__(self, family_or_fd=socket.AF_INET, *args, **kwargs):
+        if isinstance(family_or_fd, (int, long)):
+            fd = socket.socket(family_or_fd, *args, **kwargs)
+        else:
+            fd = family_or_fd
+            assert not args, args
+            assert not kwargs, kwargs
+
         set_nonblocking(fd)
         self.fd = fd
         self._fileno = fd.fileno()
