@@ -233,7 +233,7 @@ class GreenSocket(object):
     def bind(self, *args, **kw):
         fn = self.bind = self.fd.bind
         return fn(*args, **kw)
-    
+
     def close(self, *args, **kw):
         if self.closed:
             return
@@ -252,7 +252,7 @@ class GreenSocket(object):
             # a caller waiting on trampoline (e.g. server on .accept())
             get_hub().exc_descriptor(self._fileno)
         return res
-        
+
     def connect(self, address):
         if self.act_non_blocking:
             return self.fd.connect(address)
@@ -274,36 +274,31 @@ class GreenSocket(object):
             while not connect(fd, address):
                 trampoline(fd, write=True)
 
-        
-    #def connect_ex(self, *args, **kw):
-    #    fn = self.connect_ex = self.fd.connect_ex
-    #    return fn(*args, **kw)
-        
     def dup(self, *args, **kw):
         sock = self.fd.dup(*args, **kw)
         set_nonblocking(sock)
         return type(self)(sock)
-    
+
     def fileno(self, *args, **kw):
         fn = self.fileno = self.fd.fileno
         return fn(*args, **kw)
-        
+
     def getpeername(self, *args, **kw):
         fn = self.getpeername = self.fd.getpeername
         return fn(*args, **kw)
-    
+
     def getsockname(self, *args, **kw):
         fn = self.getsockname = self.fd.getsockname
         return fn(*args, **kw)
-    
+
     def getsockopt(self, *args, **kw):
         fn = self.getsockopt = self.fd.getsockopt
         return fn(*args, **kw)
-    
+
     def listen(self, *args, **kw):
         fn = self.listen = self.fd.listen
         return fn(*args, **kw)
-    
+
     def old_makefile(self, *args, **kw):
         self._refcount.increment()
         new_sock = type(self)(self.fd, self._refcount)
@@ -315,7 +310,7 @@ class GreenSocket(object):
         #return GreenFile(self.dup())
 
     recv = higher_order_recv(socket_recv)
-    
+
     def recvfrom(self, *args):
         try:
             trampoline(self.fd, read=True, timeout=self.gettimeout())
@@ -327,18 +322,18 @@ class GreenSocket(object):
     # TODO recv_into
     
     send = higher_order_send(socket_send)
-    
+
     def sendall(self, data):
         fd = self.fd
         tail = self.send(data)
         while tail < len(data):
             trampoline(self.fd, write=True)
             tail += self.send(data[tail:])
-        
+
     def sendto(self, *args):
         trampoline(self.fd, write=True)
         return self.fd.sendto(*args)
-    
+
     def setblocking(self, flag):
         self.fd.setblocking(flag)
         if flag:
@@ -351,7 +346,7 @@ class GreenSocket(object):
     def setsockopt(self, *args, **kw):
         fn = self.setsockopt = self.fd.setsockopt
         return fn(*args, **kw)
-    
+
     def shutdown(self, *args, **kw):
         if self.is_secure:
             fn = self.shutdown = self.fd.sock_shutdown
@@ -377,7 +372,6 @@ class GreenSocket(object):
 
     def gettimeout(self):
         return self.timeout
-
 
 def read(self, size=None):
     if size is not None and not isinstance(size, (int, long)):
@@ -423,10 +417,10 @@ class GreenFile(object):
     def close(self):
         self.sock.close()
         self.closed = True
-        
+
     def fileno(self):
         return self.sock.fileno()
-    
+
     # TODO next
 
     def flush(self):
@@ -434,7 +428,7 @@ class GreenFile(object):
 
     def write(self, data):
         return self.sock.sendall(data)
-    
+
     def readuntil(self, terminator, size=None):
         buf, self.sock.recvbuffer = self.sock.recvbuffer, ''
         checked = 0
@@ -464,7 +458,7 @@ class GreenFile(object):
             buf += d
         chunk, self.sock.recvbuffer = buf[:size], buf[size:]
         return chunk
-        
+
     def readline(self, size=None):
         return self.readuntil(self.newlines, size=size)
 
@@ -492,7 +486,7 @@ class GreenFile(object):
     def writelines(self, lines):
         for line in lines:
             self.write(line)
-        
+
     read = read
 
 
