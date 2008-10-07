@@ -225,11 +225,8 @@ class GreenSocket(object):
                 client, addr = res
                 set_nonblocking(client)
                 return type(self)(client), addr
-            try:
-                trampoline(fd, read=True, timeout=self.gettimeout())
-            except TimeoutError:
-                raise socket.timeout
-            
+            trampoline(fd, read=True, timeout=self.gettimeout(), timeout_exc=socket.timeout)
+
     def bind(self, *args, **kw):
         fn = self.bind = self.fd.bind
         return fn(*args, **kw)
@@ -258,21 +255,17 @@ class GreenSocket(object):
             return self.fd.connect(address)
         fd = self.fd
         connect = socket_connect
-        if self.gettimeout():
+        if self.gettimeout() is None:
+            while not connect(fd, address):
+                trampoline(fd, write=True, timeout_exc=socket.timeout)
+        else:
             end = time.time() + self.gettimeout()
             while True:
                 if connect(fd, address):
                     return
                 if time.time() >= end:
                     raise socket.timeout
-                try:
-                    trampoline(fd, write=True, timeout=time.time()-end)
-                except TimeoutError:
-                    raise socket.timeout
-                
-        else:
-            while not connect(fd, address):
-                trampoline(fd, write=True)
+                trampoline(fd, write=True, timeout=end-time.time(), timeout_exc=socket.timeout)
 
     def dup(self, *args, **kw):
         sock = self.fd.dup(*args, **kw)
@@ -312,10 +305,8 @@ class GreenSocket(object):
     recv = higher_order_recv(socket_recv)
 
     def recvfrom(self, *args):
-        try:
-            trampoline(self.fd, read=True, timeout=self.gettimeout())
-        except TimeoutError:
-            raise socket.timeout
+        if not self.act_non_blocking:
+            trampoline(self.fd, read=True, timeout=self.gettimeout(), timeout_exc=socket.timeout)
         return self.fd.recvfrom(*args)
     
     # TODO recvfrom_into
@@ -327,11 +318,11 @@ class GreenSocket(object):
         fd = self.fd
         tail = self.send(data)
         while tail < len(data):
-            trampoline(self.fd, write=True)
+            trampoline(self.fd, write=True, timeout_exc=socket.timeout)
             tail += self.send(data[tail:])
 
     def sendto(self, *args):
-        trampoline(self.fd, write=True)
+        trampoline(self.fd, write=True, timeout_exc=socket.timeout)
         return self.fd.sendto(*args)
 
     def setblocking(self, flag):
