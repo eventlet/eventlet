@@ -222,23 +222,24 @@ def tracked_greenlets():
     except AttributeError:
         return []
 
-def greenlet_id():
+def greenlet_id(self=None):
     """
     Get the id of the current tracked greenlet, returns None if the
     greenlet is not tracked.
     """
     try:
-        d = greenlet_dict()
+        d = greenlet_dict(self)
     except RuntimeError:
         return None
     return d['greenlet_id']
 
-def greenlet_dict():
+def greenlet_dict(self=None):
     """
     Return the greenlet local storage for this greenlet.  Raises RuntimeError
     if this greenlet is not tracked.
     """
-    self = greenlet.getcurrent()
+    if self is None:
+        self = greenlet.getcurrent()
     try:
         return _threadlocal.greenlets[self]
     except (AttributeError, KeyError):
