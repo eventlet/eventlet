@@ -120,7 +120,7 @@ def tcp_server(listensocket, server, *args, **kw):
     finally:
         listensocket.close()
 
-def trampoline(fd, read=None, write=None, timeout=None):
+def trampoline(fd, read=None, write=None, timeout=None, timeout_exc=TimeoutError):
     """Suspend the current coroutine until the given socket object or file
     descriptor is ready to *read*, ready to *write*, or the specified
     *timeout* elapses, depending on arguments specified.
@@ -130,7 +130,7 @@ def trampoline(fd, read=None, write=None, timeout=None):
     argument in seconds.
 
     If the specified *timeout* elapses before the socket is ready to read or
-    write, ``TimeoutError`` will be raised instead of ``trampoline()``
+    write, *timeout_exc* will be raised instead of ``trampoline()``
     returning normally.
     """
     t = None
@@ -142,7 +142,7 @@ def trampoline(fd, read=None, write=None, timeout=None):
         greenlib.switch(self, exc=socket.error(32, 'Broken pipe'))
     def _do_timeout():
         hub.remove_descriptor(fileno)
-        greenlib.switch(self, exc=TimeoutError())
+        greenlib.switch(self, exc=timeout_exc())
     def cb(_fileno):
         if t is not None:
             t.cancel()
