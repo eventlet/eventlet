@@ -155,6 +155,67 @@ def trampoline(fd, read=None, write=None, timeout=None, timeout_exc=TimeoutError
     descriptor = hub.add_descriptor(fileno, read and cb, write and cb, _do_close)
     return hub.switch()
 
+def get_fileno(obj):
+    try:
+        f = obj.fileno
+    except AttributeError:
+        assert isinstance(obj, (int, long))
+        return obj
+    else:
+        return f()
+
+def select(read_list, write_list, error_list, timeout=None):
+    self = get_hub()
+    t = None
+    current = greenlet.getcurrent()
+    ds = {}
+    for r in read_list:
+        ds[get_fileno(r)] = {'read' : r}
+    for w in write_list:
+        ds.setdefault(get_fileno(w), {})['write'] = w
+    for e in error_list:
+        ds.setdefault(get_fileno(e), {})['error'] = e
+
+    descriptors = []
+
+    def cleanup(t):
+        if t is not None:
+            t.cancel()
+        for d in descriptors:
+            self.remove_descriptor(d)
+
+    def on_read(d):
+        cleanup(t)
+        original = ds[d.fileno()]['read']
+        greenlib.switch(current, ([original], [], []))
+
+    def on_write(d):
+        cleanup(t)
+        original = ds[d.fileno()]['write']
+        greenlib.switch(current, ([], [original], []))
+
+    def on_error(d, _err):
+        cleanup(t)
+        original = ds[d.fileno()]['error']
+        greenlib.switch(current, ([], [], [original]))
+
+    def on_timeout():
+        cleanup(None)
+        greenlib.switch(current, ([], [], []))
+
+    if timeout is not None:
+        t = self.schedule_call(timeout, on_timeout)
+
+    for k, v in ds.iteritems():
+        d = self.add_descriptor(k,
+                                v.get('read') is not None and on_read,
+                                v.get('write') is not None and on_write,
+                                v.get('error') is not None and on_error)
+        descriptors.append(d)
+
+    return self.switch()
+
+
 def _spawn_startup(cb, args, kw, cancel=None):
     try:
         greenlib.switch(greenlet.getcurrent().parent)
