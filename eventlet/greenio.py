@@ -344,8 +344,8 @@ class GreenSocket(object):
             self.timeout = None
         else:
             self.act_non_blocking = True
-            self.timeout = 0
-    
+            self.timeout = 0.0
+
     def setsockopt(self, *args, **kw):
         fn = self.setsockopt = self.fd.setsockopt
         return fn(*args, **kw)
@@ -358,9 +358,20 @@ class GreenSocket(object):
         return fn(*args, **kw)
 
     def settimeout(self, howlong):
-        if howlong == 0:
+        if howlong is None:
+            self.setblocking(True)
+            return
+        try:
+            f = howlong.__float__
+        except AttributeError:
+            raise TypeError('a float is required')
+        howlong = f()
+        if howlong < 0.0:
+            raise ValueError('Timeout value out of range')
+        if howlong == 0.0:
             self.setblocking(howlong)
-        self.timeout = howlong
+        else:
+            self.timeout = howlong
 
     def gettimeout(self):
         return self.timeout
