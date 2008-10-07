@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from eventlet.api import exc_after, TimeoutError, trampoline, get_hub
+from eventlet.api import trampoline, get_hub
 from eventlet import util
 
 from twisted.internet.error import ConnectionDone
