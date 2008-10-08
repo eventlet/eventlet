@@ -1,0 +1,5 @@
+disabled because don't work:
+ * _test_socketserver.py/ThreadingUDPServer
+ * _test_threading.py/ThreadJoinOnShutdown.test_3_join_in_forked_from_thread disabled
+
+use 'kdiff3 python2.5/Lib/test .' to see all the differences
