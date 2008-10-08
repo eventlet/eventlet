@@ -1,0 +1,3 @@
+nosetests -e "teststream|testdgram|testloop|testall|test_main|test_password_manager|test_password_manager_default_port" test_timeout_green.py test_socket_green.py test_urllib2_green.py
+# get bind error if i don't break there
+nosetests -e "teststream|testdgram|testloop|testall|test_main|test_password_manager|test_password_manager_default_port" test_urllib2_localnet_green.py test_thread_green.py test_threading_green.py test_threading_local.py test_socketserver_green.py
