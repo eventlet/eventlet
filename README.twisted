@@ -1,24 +1,55 @@
+--work in progress--
+
+Introduction
+------------
+Twisted provides solid foundation for asynchronous programming in Python.
+Eventlet makes asynchronous programming look like synchronous, thus
+achieving higher signal-to-noise ratio than traditional twisted programs have.
+
+Eventlet working on top of twisted, provides:
+ * [stable twisted]
+ * [usable and readable synchronous style]
+ * existing twisted code can be used without any changes
+ * existing blocking code can be used after trivial changes applied
+
+ 
+Coroutines
+----------
 
 To understand how eventlet works, one has to understand how to use greenlet:
 http://codespeak.net/py/dist/greenlet.html
+
+Essential points
 
 * Every greenlet except MAIN has a parent. When an exception happen in the greenlet
   it is propogated to the parent greenlet (special case is GreenletExit, in that case
   the greenlet silently dies)
 * Parent can be reassigned (cycle would be detected and rejected with ValueError)
-
 ...
 
-Twisted's reactor and eventlet's hubs are very similar in what they do.
-Both do select(poll or similar) on the list of known descriptors and call the
-associated callback in case of an event. In addition, both maintain scheduled calls.
+greenlet == coroutine == green thread == microthread in this document
 
-However, while with twisted you explicitly start the main loop (reactor.run()),
-with evenlet the main loop is run in a separate greenlet (child of the main greenlet) and 
-is started implicitly. Whenever you want to do a blocking operation, you switch() into
-the main loop's greenlet with some additional preparations, as shown in the following figure.
 
-blocking operation RECV on socket d:
+How does eventlet work
+----------------------
+
+Twisted's reactor and eventlet's hub are very similar in what they do.
+Both continuously call select (or poll or similar) on the list of registered
+descriptors (this is called polling) and each time a specific event is
+fired, the associated callback function is called. In addition, both
+maintain a list of scheduled calls.
+
+Polling is performed by the main loop - a function that both reactor and hub have.
+However, while with twisted you explicitly start it by calling reactor.run(), with
+eventlet the main loop is running in a dedicated greenlet and is started implicitly
+upon the first switch into that greenlet. When an event is fired, the callback
+perform switch to the waiting greenlet.
+
+So, to perform a `blocking' operation that blocks this greenlet but not the others,
+you switch() into the main loop's greenlet with some additional preparations,
+as shown in the following figure.
+
+= blocking operation RECV on socket d =
 
 user's greenlet (USER)             main loop's greenlet (MAIN_LOOP)
       |
@@ -27,12 +58,36 @@ user's greenlet (USER)             main loop's greenlet (MAIN_LOOP)
 add_descriptor(d, RECV)
       |
 data=MAIN_LOOP.switch() ---------> poll for events
-                                        |
-                                       ... ---------------------------> may execute other greenlets here
-                                        |
-                                   event RECV on descriptor d?
-                                        |
-                                   data = d.recv() # calling blocking op that will return immediately
-                                        |
-  return data <------------------- USER.switch(data)
+  ^---------------------\               |
+                        |              ... ---------------------------> may execute other greenlets here
+                        |               |
+                        |          event RECV on descriptor d?
+                        |               |
+                        |          d.remove_descriptor(d, RECV)
+                        |               |
+                        |          data = d.recv() # calling blocking op that will return immediately
+                        |               |
+                        \--------- USER.switch(data) # argument data here becomes return value in user's switch
+  return data
 
+
+TBW:
+
+* green package
+  modules that mimic modules in standard library, but actually do the non-blocking stuff as described above.
+
+* how to convert protocol implemented in twisted to `blocking' mode.
+  see eventlet.twisteds.util.block_on
+
+  One can also look at Corotwine for an ideas.
+  Corotwine is another attempt to use twisted together with greentlets.
+  protocol <-> buffer <-> greenlet
+
+* how to convert real blocking code.
+  For simple cases: block_on(reactor.callInThread(func, args))
+
+  When single deferred is not enough: Queue subclass that has list of
+  associated channels with it and a descriptor (obtained with os.pipe()).
+  Every time, queue.put is called, eQueue does descriptor.write(byte).
+  The descriptor is registered with the hub, so the callback is called
+  which gets the value from the Queue and puts it in all associated channels.
