@@ -1,0 +1,38 @@
+
+To understand how eventlet works, one has to understand how to use greenlet:
+http://codespeak.net/py/dist/greenlet.html
+
+* Every greenlet except MAIN has a parent. When an exception happen in the greenlet
+  it is propogated to the parent greenlet (special case is GreenletExit, in that case
+  the greenlet silently dies)
+* Parent can be reassigned (cycle would be detected and rejected with ValueError)
+
+...
+
+Twisted's reactor and eventlet's hubs are very similar in what they do.
+Both do select(poll or similar) on the list of known descriptors and call the
+associated callback in case of an event. In addition, both maintain scheduled calls.
+
+However, while with twisted you explicitly start the main loop (reactor.run()),
+with evenlet the main loop is run in a separate greenlet (child of the main greenlet) and 
+is started implicitly. Whenever you want to do a blocking operation, you switch() into
+the main loop's greenlet with some additional preparations, as shown in the following figure.
+
+blocking operation RECV on socket d:
+
+user's greenlet (USER)             main loop's greenlet (MAIN_LOOP)
+      |
+(inside d.recv() call)
+      |
+add_descriptor(d, RECV)
+      |
+data=MAIN_LOOP.switch() ---------> poll for events
+                                        |
+                                       ... ---------------------------> may execute other greenlets here
+                                        |
+                                   event RECV on descriptor d?
+                                        |
+                                   data = d.recv() # calling blocking op that will return immediately
+                                        |
+  return data <------------------- USER.switch(data)
+
