@@ -74,7 +74,7 @@ class Hub:
         if Hub.state == 1:
             reactor.startRunning(installSignalHandlers=installSignalHandlers)
 
-        if self.errcount > 10:
+        if self.errcount > 10: # XXX remove it or make disableable
             import os
             os._exit(1)
         self.errcount += 1
