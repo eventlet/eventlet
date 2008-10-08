@@ -266,6 +266,7 @@ class ConnectionError(Exception):
                 self.__class__.__name__, self.params.url, self.params.method,
                 response.status, response.reason, self.params.body)
         except AttributeError:
+            # url and method are required fields on the params object 
             return "%s(url=%r, method=%r)" % (
                 self.__class__.__name__, self.params.url, self.params.method)
 
