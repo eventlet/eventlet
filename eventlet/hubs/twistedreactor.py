@@ -48,6 +48,8 @@ class Hub:
     # 3-restarted
     state = 0
 
+    installSignalHandlers = True
+
     def __init__(self):
         assert Hub.state==0, ('This hub can only be instantiated once', Hub.state)
         Hub.state = 1
@@ -65,7 +67,10 @@ class Hub:
            pass
         return greenlib.switch(self.greenlet, *args)
 
-    def run(self, installSignalHandlers=True):
+    def run(self, installSignalHandlers=None):
+        if installSignalHandlers is None:
+            installSignalHandlers = self.installSignalHandlers
+        
         # main loop, executed in a dedicated greenlet
         from twisted.internet import reactor
         assert Hub.state in [1, 3], ('run function is not reentrant', Hub.state)
