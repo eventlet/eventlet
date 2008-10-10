@@ -92,25 +92,19 @@ class Hub:
             Hub.state = 3
             raise
 
-        # if we have twisted's signal handlers installed and mainLoop has just exited,
+        # if twisted's signal handlers are installed and mainLoop has just exited,
         # we must report the error to the user's greenlet.
-        # QQQ actually we raise this error in all the user's greenlets, to let them
-        # clean properly. never executing them again is cruel (unless they're daemons)
+        # QQQ actually we must raise this error in all the user's greenlets, to let them
+        # clean up properly. never executing them again is cruel (unless they're daemons)
         raise AssertionError("reactor was stopped")
 
     def mainLoop(self, reactor):
         Hub.state = 2
-        # the same as reactor's mainLoop, but without try/except(all) catcher
-        # since this greenlet's parent is the main greenlet, an exception will be
-        # delegated there.
-        # for example. when exception is raised in a signal handlers, it should go
-        # into the main greenlet.
-        # (QQQ when there're no references to a greenlet, it should be killed
-        #  with GreenletExit. is it possible for this greenlet to be killed under
-        #  such circumstances?)
+        # Unlike reactor's mainLoop, this function does not catch exceptions.
+        # Anything raised goes into the main greenlet (because it is always the
+        # parent of this one)
         while reactor.running:
-            # Advance simulation time in delayed event
-            # processors.
+            # Advance simulation time in delayed event processors.
             reactor.runUntilCurrent()
             t2 = reactor.timeout()
             t = reactor.running and t2
