@@ -52,7 +52,6 @@ class Hub:
         assert Hub.state==0, ('This hub can only be instantiated once', Hub.state)
         Hub.state = 1
         self.greenlet = None
-        self.errcount = 0
 
     def switch(self):
         if not self.greenlet:
@@ -74,10 +73,6 @@ class Hub:
         if Hub.state == 1:
             reactor.startRunning(installSignalHandlers=installSignalHandlers)
 
-        if self.errcount > 10: # XXX remove it or make disableable
-            import os
-            os._exit(1)
-        self.errcount += 1
         try:
             self.mainLoop(reactor)
         #except:
