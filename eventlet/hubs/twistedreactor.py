@@ -48,7 +48,7 @@ class Hub:
     # 3-restarted
     state = 0
 
-    installSignalHandlers = True
+    installSignalHandlers = False
 
     def __init__(self):
         assert Hub.state==0, ('This hub can only be instantiated once', Hub.state)
