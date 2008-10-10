@@ -68,7 +68,7 @@ class Hub:
     def run(self, installSignalHandlers=True):
         # main loop, executed in a dedicated greenlet
         from twisted.internet import reactor
-        assert Hub.state in [1, 3], ('Run function is not reentrant', Hub.state)
+        assert Hub.state in [1, 3], ('run function is not reentrant', Hub.state)
 
         if Hub.state == 1:
             reactor.startRunning(installSignalHandlers=installSignalHandlers)
@@ -98,7 +98,7 @@ class Hub:
             reactor.runUntilCurrent()
             t2 = reactor.timeout()
             t = reactor.running and t2
-            reactor.doIteration(t)       
+            reactor.doIteration(t)
 
     def stop(self):
         from twisted.internet import reactor
