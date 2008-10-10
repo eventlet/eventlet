@@ -72,15 +72,26 @@ class Hub:
 
         if Hub.state == 1:
             reactor.startRunning(installSignalHandlers=installSignalHandlers)
+        elif not reactor.running:
+            # if we're here, then reactor was explicitly stopped with reactor.stop()
+            # restarting reactor (like we would do after an exception) in this case
+            # is not an option.
+            raise AssertionError("reactor is not running")
 
         try:
             self.mainLoop(reactor)
-        #except:
-        #    sys.stderr.write('\nexception in mainloop\n')
-        #    traceback.print_exc()
-        #    raise
-        finally:
+        except:
+            # an exception in the mainLoop is a normal operation (e.g. user's
+            # signal handler could raise an exception). In this case we will re-enter
+            # the main loop at the next switch.
             Hub.state = 3
+            raise
+
+        # if we have twisted's signal handlers installed and mainLoop has just exited,
+        # we must report the error to the user's greenlet.
+        # QQQ actually we raise this error in all the user's greenlets, to let them
+        # clean properly. never executing them again is cruel (unless they're daemons)
+        raise AssertionError("reactor was stopped")
 
     def mainLoop(self, reactor):
         Hub.state = 2
