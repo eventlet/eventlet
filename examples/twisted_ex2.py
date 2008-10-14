@@ -14,9 +14,6 @@ class LineOnlyReceiver(basic.LineOnlyReceiver):
     def lineReceived(self, line):
         self.channel.send(line)
 
-    def sendLine(self, line):
-        return self.transport.writeSequence((line,self.delimiter))
-
     def connectionLost(self, reason):
         self.channel.send_exception(reason.value)
 
@@ -25,9 +22,8 @@ class line_only_receiver:
 
     def __init__(self, host, port):
         cc = ClientCreator(reactor, LineOnlyReceiver)
-        self.channel = channel()
         self.protocol = block_on(cc.connectTCP(host, port))
-        self.protocol.channel = self.channel
+        self.protocol.channel = self.channel = channel()
 
     def readline(self):
         return self.channel.receive()
