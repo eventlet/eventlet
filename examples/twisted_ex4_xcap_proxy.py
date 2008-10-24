@@ -62,7 +62,7 @@ class MyFactory(Factory):
         return p
 
 def xcaplib_enable_eventlet():
-    from eventlet.green import urllib2, socket as greensocket, time as greentime
+    from eventlet.green import urllib2
     from xcaplib import httpclient
     # replacing all the references to the old urllib2 in xcaplib:
     httpclient.urllib2 = urllib2
