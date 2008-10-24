@@ -85,7 +85,7 @@ def handler(conn):
     try:
         for line in conn:
             print 'received from %s: %s' % (peer, line)
-            print perform_request(line)
+            conn.protocol.transport.write(perform_request(line))
         print peer, 'connection done'
     except Exception, ex:
         print peer, ex
