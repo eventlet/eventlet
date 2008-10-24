@@ -1,7 +1,7 @@
-from functools import wraps
+from twisted.internet import defer
 from eventlet.support.greenlet import greenlet
 from eventlet import greenlib
-from eventlet.api import get_hub
+from eventlet.api import get_hub, spawn
 
 def block_on(deferred):
     cur = greenlet.getcurrent()
@@ -12,3 +12,15 @@ def block_on(deferred):
     deferred.addCallback(cb)
     deferred.addErrback(eb)
     return get_hub().switch()
+
+def callInGreenThread(func, *args, **kwargs):
+    result = defer.Deferred()
+    def signal_deferred():
+        try:
+            value = func(*args, **kwargs)
+        except Exception, ex:
+            result.errback(ex)
+        else:
+            result.callback(value)
+    spawn(signal_deferred)
+    return result
