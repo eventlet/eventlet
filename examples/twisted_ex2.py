@@ -5,6 +5,7 @@ from twisted.protocols import basic
 from twisted.internet import reactor
 from twisted.internet.error import ConnectionDone
 
+from eventlet.api import spawn
 from eventlet.channel import channel
 from eventlet.twisteds.util import block_on
 
@@ -12,7 +13,7 @@ from eventlet.twisteds.util import block_on
 class LineOnlyReceiver(basic.LineOnlyReceiver):
 
     def lineReceived(self, line):
-        self.channel.send(line)
+        spawn(self.channel.send, line)
 
     def connectionLost(self, reason):
         self.channel.send_exception(reason.value)
