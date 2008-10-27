@@ -137,11 +137,11 @@ def trampoline(fd, read=None, write=None, timeout=None, timeout_exc=TimeoutError
     hub = get_hub()
     self = greenlet.getcurrent()
     fileno = getattr(fd, 'fileno', lambda: fd)()
-    def _do_close(_d, error):
+    def _do_close(_d, error=None):
         if t is not None:
             t.cancel()
         hub.remove_descriptor(descriptor)
-        greenlib.switch(self, exc=error.value) # convert to socket.error
+        greenlib.switch(self, exc=getattr(error, 'value', None)) # convert to socket.error
     def _do_timeout():
         hub.remove_descriptor(descriptor)
         greenlib.switch(self, exc=timeout_exc())
