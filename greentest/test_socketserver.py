@@ -165,9 +165,6 @@ if hasattr(os, 'fork') and os.name not in ('os2',):
     tcpservers.append(ForkingTCPServer)
 udpservers = [UDPServer, ThreadingUDPServer]
 
-print 'WARNING: ThreadingUDPServer is disabled'
-udpservers = [UDPServer]
-
 if hasattr(os, 'fork') and os.name not in ('os2',):
     udpservers.append(ForkingUDPServer)
 
