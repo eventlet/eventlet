@@ -186,17 +186,17 @@ def select(read_list, write_list, error_list, timeout=None):
 
     def on_read(d):
         cleanup(t)
-        original = ds[d.fileno()]['read']
+        original = ds[get_fileno(d)]['read']
         greenlib.switch(current, ([original], [], []))
 
     def on_write(d):
         cleanup(t)
-        original = ds[d.fileno()]['write']
+        original = ds[get_fileno(d)]['write']
         greenlib.switch(current, ([], [original], []))
 
-    def on_error(d, _err):
+    def on_error(d, _err=None):
         cleanup(t)
-        original = ds[d.fileno()]['error']
+        original = ds[get_fileno(d)]['error']
         greenlib.switch(current, ([], [], [original]))
 
     def on_timeout():
