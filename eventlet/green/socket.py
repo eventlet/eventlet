@@ -1,18 +1,32 @@
 from __future__ import absolute_import
-from socket import _fileobject, fromfd as __fromfd, socketpair as __socketpair
+import socket
+import socket as __socket
 from socket import *
+_fileobject = __socket._fileobject
 
+from eventlet.api import get_hub
 from eventlet.greenio import GreenSocket as socket, GreenSSL as _GreenSSL
-from eventlet.twisteds.util import block_on as _block_on
 
 def fromfd(*args):
-    return socket(__fromfd(*args))
+    return socket(__socket.fromfd(*args))
 
-def gethostbyname(name):
-    from twisted.internet import reactor
-    return _block_on(reactor.resolve(name))
+if type(get_hub()).__name__ == 'TwistedHub':
+    from eventlet.twisteds.util import block_on as _block_on
+    def gethostbyname(name):
+        from twisted.internet import reactor
+        return _block_on(reactor.resolve(name))
+else:
+    from eventlet import tpool
+    def gethostbyname(*args, **kw):
+        return tpool.execute(
+            __socket.gethostbyname, *args, **kw)
+
+    def getaddrinfo(*args, **kw):
+        return tpool.execute(
+            __socket.getaddrinfo, *args, **kw)
 
 # XXX there're few more blocking functions in socket
+# XXX having a hub-independent way to access thread pool would be nice
 
 def socketpair(family=None, type=SOCK_STREAM, proto=0):
     if family is None:
@@ -21,7 +35,7 @@ def socketpair(family=None, type=SOCK_STREAM, proto=0):
         except AttributeError:
             family = AF_INET
 
-    a, b = __socketpair(family, type, proto)
+    a, b = __socket.socketpair(family, type, proto)
     return socket(a), socket(b)
 
 
