@@ -74,6 +74,7 @@ class Hub(hub.BaseHub):
             self.excs[fileno] = exc
 
         self.waiters_by_greenlet[greenlet.getcurrent()] = fileno
+        return fileno
 
     def remove_descriptor(self, fileno):
         for queue in (self.readers, self.writers):

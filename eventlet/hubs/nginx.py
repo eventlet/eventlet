@@ -84,7 +84,7 @@ class Hub(hub.BaseHub):
         print "ADD DESCRIPTOR", fileno, read, write, exc
         traceback.print_stack()
 
-        super(Hub, self).add_descriptor(fileno, read, write, exc)
+        result = super(Hub, self).add_descriptor(fileno, read, write, exc)
         flag = 0
         if read:
             flag |= WSGI_POLLIN
@@ -94,6 +94,7 @@ class Hub(hub.BaseHub):
         self._connection_wrappers[fileno] = conn
         print "POLL REGISTER", flag
         self.poll_register(conn, flag)
+        return result
 
     def remove_descriptor(self, fileno):
         super(Hub, self).remove_descriptor(fileno)

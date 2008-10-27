@@ -45,12 +45,13 @@ class Hub(hub.BaseHub):
 
     def add_descriptor(self, fileno, read=None, write=None, exc=None):
         oldmask = self.get_fn_mask(self.readers.get(fileno), self.writers.get(fileno))
-        super(Hub, self).add_descriptor(fileno, read, write, exc)
+        result = super(Hub, self).add_descriptor(fileno, read, write, exc)
 
         mask = self.get_fn_mask(read, write)
         if mask != oldmask:
             # Only need to re-register this fileno if the mask changes
             self.poll.register(fileno, mask)
+        return result
 
     def get_fn_mask(self, read, write):
         mask = 0

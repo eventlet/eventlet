@@ -94,6 +94,7 @@ class BaseHub(object):
         else:
             self.excs.pop(fileno, None)
         self.waiters_by_greenlet[greenlet.getcurrent()] = fileno
+        return fileno
         
     def remove_descriptor(self, fileno):
         self.readers.pop(fileno, None)
