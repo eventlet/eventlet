@@ -32,7 +32,7 @@ class socket_rwdescriptor:
         return self.logstr
 
 
-class Hub:
+class TwistedHub(object):
     # wrapper around reactor that runs reactor's main loop in a separate greenlet.
     # whenever you need to wait, i.e. inside a call that must appear
     # blocking, call hub.switch() (then your blocking operation should switch back to you
@@ -147,6 +147,7 @@ class Hub:
         from twisted.internet import reactor
         return reactor.callLater(seconds, func, *args, **kwargs)
 
+Hub = TwistedHub
 
 class DaemonicThread(threading.Thread):
     def _set_daemon(self):
