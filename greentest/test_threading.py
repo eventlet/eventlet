@@ -295,8 +295,8 @@ class ThreadJoinOnShutdown(unittest.TestCase):
 
 
 def test_main():
-    test.test_support.run_unittest(ThreadTests,
-                                   ThreadJoinOnShutdown)
+    greentest.test_support.run_unittest(ThreadTests,
+                                        ThreadJoinOnShutdown)
 
 if __name__ == "__main__":
     test_main()
