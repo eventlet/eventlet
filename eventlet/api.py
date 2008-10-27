@@ -383,6 +383,8 @@ def use_hub(mod=None):
         mod = get_default_hub()
     if hasattr(_threadlocal, 'hub'):
         del _threadlocal.hub
+    if isinstance(mod, str):
+        mod = __import__('eventlet.hubs.' + mod, fromlist=['Hub'])
     if hasattr(mod, 'Hub'):
         _threadlocal.Hub = mod.Hub
     else:
