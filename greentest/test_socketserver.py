@@ -6,6 +6,7 @@ test_support.requires('network')
 
 import errno
 import os
+import unittest
 
 NREQ = 3
 DELAY = 0.1
@@ -198,6 +199,28 @@ def testall():
         # Alas, on Linux (at least) recvfrom() doesn't return a meaningful
         # client address so this cannot work:
         ##testloop(socket.AF_UNIX, dgramservers, MyDatagramHandler, testdgram)
+
+class Test(unittest.TestCase):
+
+    def tearDown(self):
+        sloppy_cleanup()
+
+    for tcpserver in tcpservers:
+        n = tcpserver.__name__
+        exec """def test_%s(self): testloop(socket.AF_INET, [%s], MyStreamHandler, teststream)""" % (n,n)
+
+    for udpserver in udpservers:
+        n = udpserver.__name__
+        exec """def test_%s(self): testloop(socket.AF_INET, [%s], MyDatagramHandler, testdgram)""" % (n,n)
+
+    if hasattr(socket, 'AF_UNIX'):
+        for streamserver in streamservers:
+            n = streamserver.__name__
+            exec """def test_%s(self): testloop(socket.AF_UNIX, [%s], MyStreamHandler, teststream)""" % (n,n)
+
+
+def testall():
+    test_support.run_unittest(Test)
 
 def test_main():
     import imp
