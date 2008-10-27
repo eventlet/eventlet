@@ -293,8 +293,6 @@ class ThreadJoinOnShutdown(unittest.TestCase):
             """
         self._run_and_join(script)
 
-print 'WARNING: ThreadJoinOnShutdown.test_3_join_in_forked_from_thread disabled'
-del ThreadJoinOnShutdown.test_3_join_in_forked_from_thread
 
 def test_main():
     test.test_support.run_unittest(ThreadTests,
