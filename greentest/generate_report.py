@@ -130,7 +130,7 @@ def main():
     r = make_table(db)
     report = format_html(format_table(*r))
     changeset = db.split('.')[1]
-    path = 'htmlreports/%s' % changeset
+    path = '../htmlreports/%s' % changeset
     try:
         os.makedirs(path)
     except OSError, ex:
