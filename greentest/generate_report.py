@@ -74,7 +74,7 @@ class TestResult:
                 tracebacks = output.count('traceback')
                 if tracebacks:
                     errors += ['%s tracebacks' % tracebacks]
-        return '\n'.join(["%s passed" % self.passed] + errors)
+        return '\n'.join(["%s passed" % self.passed] + errors).replace(' ', '&nbsp;')
        
     def format(self):
         text = self.text().replace('\n', '<br>\n')
