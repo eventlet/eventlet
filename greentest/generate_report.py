@@ -87,17 +87,6 @@ def format_table(table, hubs, tests, hub_stats):
     for hub in hubs:
         r += '<td align=center>%s</td>\n' % hub
     r += '</tr>\n'
-    for test in tests:
-        r += '<tr><td>%s</td>' % test
-        for hub in hubs:
-            test_result = table[test].get(hub)
-            if test_result is None:
-                r += '<td align=center bgcolor=gray>no data</td>'
-            else:
-                r += test_result.format() + '\n'
-        r += '</tr>'
-
-    r += '<tr><td colspan=%s/></tr>' % (len(hubs)+1)
 
     r += '<tr><td>Total</td>'
     for hub in hubs:
@@ -107,6 +96,18 @@ def format_table(table, hubs, tests, hub_stats):
         else:
             r += test_result.format() + '\n'
     r += '</tr>'
+
+    r += '<tr><td colspan=%s/></tr>' % (len(hubs)+1)
+
+    for test in tests:
+        r += '<tr><td>%s</td>' % test
+        for hub in hubs:
+            test_result = table[test].get(hub)
+            if test_result is None:
+                r += '<td align=center bgcolor=gray>no data</td>'
+            else:
+                r += test_result.format() + '\n'
+        r += '</tr>'
 
     r += '</table>'
     return r
