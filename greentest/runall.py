@@ -46,8 +46,8 @@ def enum_reactors():
 
 def enum_tests():
     tests = []
-    #tests += glob.glob('test*_green.py')
-    #tests += glob.glob('test__*.py')
+    tests += glob.glob('test*_green.py')
+    tests += glob.glob('test__*.py')
     tests += glob.glob('*_test.py')
     return tests
 
