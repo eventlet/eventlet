@@ -1,5 +1,15 @@
+0.8.x
+=====
+
+Fix a CPU leak that would cause the poll hub to consume 100% CPU in certain conditions, for example the echoserver example. (Donovan Preston)
+
+Fix the libev hub to match libev's callback signature. (Patch by grugq)
+
+Add a backlog argument to api.tcp_listener (Patch by grugq)
+
 0.7.x
 =====
+
 Fix a major memory leak when using the libevent or libev hubs. Timers were not being removed from the hub after they fired. (Thanks Agusto Becciu and the grugq). Also, make it possible to call wrap_socket_with_coroutine_socket without using the threadpool to make dns operations non-blocking (Thanks the grugq).
 
 It's now possible to use eventlet's SSL client to talk to eventlet's SSL server. (Thanks to Ryan Williams)
