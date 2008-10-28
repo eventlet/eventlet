@@ -9,6 +9,7 @@ from copy import copy
 from with_eventlet import import_reactor
 
 COMMAND = './record_results.py ./with_timeout.py ./with_eventlet.py %(setup)s %(test)s'
+NOT_HUBS = ['hub', 'nginx']
 
 def w(s):
     sys.stderr.write("%s\n" % (s, ))
@@ -18,7 +19,7 @@ def enum_hubs():
     hubs = glob.glob('../eventlet/hubs/*.py')
     hubs = [os.path.basename(h)[:-3] for h in hubs]
     hubs = [h for h in hubs if h[:1]!='_']
-    hubs = set(hubs) - set(['hub'])
+    hubs = set(hubs) - set(NOT_HUBS)
     result = []
     for hub in hubs:
         try:
