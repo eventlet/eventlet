@@ -1,4 +1,3 @@
-from twisted.internet import pollreactor; pollreactor.install()
 from twisted.internet.protocol import Protocol, Factory
 from twisted.internet import reactor
 
