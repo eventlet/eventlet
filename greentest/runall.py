@@ -96,6 +96,12 @@ def main():
         options.reactors = enum_reactors()
     if options.tests is None:
         options.tests = enum_tests()
+
+    tests = []
+    for t in options.tests:
+        tests.extend(glob(t))
+    options.tests = tests
+
     options.hubs = list(set(options.hubs) - set(options.ignore_hubs))
     options.reactors = list(set(options.reactors) - set(options.ignore_reactors))
     options.tests = list(set(options.tests) - set(options.ignore_tests))
