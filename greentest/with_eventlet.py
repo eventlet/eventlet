@@ -20,7 +20,17 @@ def setup_hub(hub, reactor):
         import_reactor(reactor).install()
     if hub is not None:
         from eventlet.api import use_hub
-        use_hub(hub)
+        try:
+            use_hub(hub)
+        except ImportError:
+            # as a shortcut, try to import the reactor with such name
+            try:
+                r = import_reactor(hub)
+            except ImportError:
+                sys.exit('Nu such hub: %s' % hub)
+            else:
+                r.install()
+                use_hub('twistedr')
 
 def parse_args():
     hub = None
