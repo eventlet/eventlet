@@ -82,7 +82,7 @@ def higher_order_recv(recv_func):
 def higher_order_send(send_func):
     def send(self, data):
         if self.act_non_blocking:
-            return self.fd.send(buflen)
+            return self.fd.send(data)
         count = send_func(self.fd, data)
         if not count:
             return 0
