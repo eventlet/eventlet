@@ -244,12 +244,9 @@ class TwistedHub(BaseTwistedHub):
             # the main loop at the next switch.
             Hub.state = 3
             raise
-
-        # if twisted's signal handlers are installed and mainLoop has just exited,
-        # we must report the error to the user's greenlet.
-        # QQQ actually we must raise this error in all the user's greenlets, to let them
-        # clean up properly. never executing them again is cruel (unless they're daemons)
-        raise AssertionError("reactor was stopped")
+        
+        # clean exit here is needed for abort() method to work
+        # do not raise an exception here.
 
     def mainLoop(self, reactor):
         Hub.state = 2
