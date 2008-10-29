@@ -1,6 +1,6 @@
 """Test than modules in eventlet.green package are indeed green.
-To do that spawn green server and then access it using green socket.
-If either operation would actuallu block the whole script would block and timeout.
+To do that spawn a green server and then access it using a green socket.
+If either operation blocked the whole script would block and timeout.
 """
 import unittest
 from greentest import test_support
