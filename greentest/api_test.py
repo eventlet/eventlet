@@ -39,8 +39,8 @@ def check_hub():
     api.sleep(0)
     api.sleep(0)
     hub = api.get_hub()
-    for nm in 'readers', 'writers', 'excs':
-        dct = getattr(hub, nm)
+    for nm in 'get_readers', 'get_writers', 'get_excs':
+        dct = getattr(hub, nm)()
         assert not dct, "hub.%s not empty: %s" % (nm, dct)
     # Stop the runloop
     api.get_hub().abort()
@@ -85,7 +85,7 @@ class TestApi(tests.TestCase):
 
         check_hub()
 
-    def test_connect_ssl(self): 
+    def test_connect_ssl(self):
         def accept_once(listenfd): 
             try: 
                 conn, addr = listenfd.accept()

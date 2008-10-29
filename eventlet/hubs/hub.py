@@ -321,3 +321,12 @@ class BaseHub(object):
         except KeyError:
             pass
 
+    def get_readers(self):
+        return self.readers
+
+    def get_writers(self):
+        return self.writers
+
+    def get_excs(self):
+        return self.excs
+
