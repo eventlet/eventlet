@@ -63,6 +63,8 @@ class TestResult:
         self.output = None
 
     def color(self):
+        if self.id is None:
+            return 'white'
         if self.timeouts or self.exitcode in [7, 9, 10]:
             return 'red'
         elif self.errors or self.fails or self.exitcode:
