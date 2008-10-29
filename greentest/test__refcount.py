@@ -50,7 +50,6 @@ def run_interaction():
 
 def run_and_check():
     w = run_interaction()
-    reactor = sys.modules.get('twisted.internet.reactor')
     if w():
         print gc.get_referrers(w())
         for x in gc.get_referrers(w()):
