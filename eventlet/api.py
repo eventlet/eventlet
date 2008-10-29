@@ -352,8 +352,8 @@ def exc_after(seconds, exception_object):
 
 def get_default_hub():
     """Select the default hub implementation based on what multiplexing
-    libraries are installed. Tries twistedr if a twisted reactor is
-    currently in use, then tries libevent, then poll, then select.
+    libraries are installed. Tries twistedr if a twisted reactor is imported,
+    then libevent, then poll, then select.
     """
 
     if 'twisted.internet.reactor' in sys.modules:
