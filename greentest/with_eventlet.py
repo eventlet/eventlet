@@ -22,12 +22,12 @@ def setup_hub(hub, reactor):
         from eventlet.api import use_hub
         try:
             use_hub(hub)
-        except ImportError:
+        except ImportError, ex:
             # as a shortcut, try to import the reactor with such name
             try:
                 r = import_reactor(hub)
             except ImportError:
-                sys.exit('Nu such hub: %s' % hub)
+                sys.exit('No hub %s: %s' % (hub, ex))
             else:
                 r.install()
                 use_hub('twistedr')
