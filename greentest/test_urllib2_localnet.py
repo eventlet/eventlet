@@ -5,7 +5,7 @@ import urlparse
 import unittest
 import hashlib
 from greentest import test_support
- 
+
 
 # Loopback http server infrastructure
 
@@ -26,16 +26,7 @@ class LoopbackHttpServer(BaseHTTPServer.HTTPServer):
     def get_request(self):
         """BaseHTTPServer method, overridden."""
 
-        #sys.stderr.write('get_request: calling accept()\n')
-        #try:
         request, client_address = self.socket.accept()
-#         except Exception, ex:
-#             sys.stderr.write('--------------accept error-----------\n')
-#             import traceback
-#             traceback.print_exc()
-#             raise
-#         else:
-#             sys.stderr.write('get_request: accept() returns %s %s\n' % (request, client_address))
 
         # It's a loopback connection, so setting the timeout
         # really low shouldn't affect anything, but should make
@@ -76,10 +67,6 @@ class LoopbackHttpServerThread(threading.Thread):
         self.ready.set()
         while not self._stop:
             httpd.handle_request()
-
-        print 'WARNING: have to close server explicitly here, is leaking somewhere'
-        # XXX added especially for eventlet, otherwise get error: (98, 'Address already in use')
-        httpd.server_close()
 
 # Authentication infrastructure
 
@@ -264,14 +251,12 @@ class ProxyAuthTests(unittest.TestCase):
         self._digest_auth_handler.add_password(self.REALM, self.URL,
                                                self.USER, self.PASSWD+"bad")
         FakeProxyHandler.digest_auth_handler.set_qop("auth")
-        #self.opener.open(self.URL)
         self.assertRaises(urllib2.HTTPError,
                           self.opener.open,
                           self.URL)
 
     def test_proxy_with_no_password_raises_httperror(self):
         FakeProxyHandler.digest_auth_handler.set_qop("auth")
-        #self.opener.open(self.URL)
         self.assertRaises(urllib2.HTTPError,
                           self.opener.open,
                           self.URL)
@@ -280,16 +265,9 @@ class ProxyAuthTests(unittest.TestCase):
         self._digest_auth_handler.add_password(self.REALM, self.URL,
                                                self.USER, self.PASSWD)
         FakeProxyHandler.digest_auth_handler.set_qop("auth")
-        #print '##', self.URL
         result = self.opener.open(self.URL)
-        #print result
-        #print result.read
-        #while result.read():
-        #    pass
-        while True:
-            r = result.read()
-            if not r:
-                break
+        while result.read():
+            pass
         result.close()
 
     def test_proxy_qop_auth_int_works_or_throws_urlerror(self):
@@ -316,16 +294,6 @@ def test_main():
     #test_support.requires("network")
 
     test_support.run_unittest(ProxyAuthTests)
-
-    #t = ProxyAuthTests('test_proxy_with_bad_password_raises_httperror')
-    #t = ProxyAuthTests('test_proxy_with_no_password_raises_httperror')
-    #t = ProxyAuthTests('test_proxy_qop_auth_works')
-    #t = ProxyAuthTests('test_proxy_qop_auth_int_works_or_throws_urlerror')
-#     t.setUp()
-#     try:
-#         getattr(t, t._testMethodName)()
-#     finally:
-#         t.tearDown()
 
 if __name__ == "__main__":
     test_main()
