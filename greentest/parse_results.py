@@ -62,12 +62,13 @@ def main():
                error_names text,
                fail_names text,
                timeout_names text)''')
-    c.execute('delete from parsed_command_record;')
     c.commit()
 
     parse_error = 0
     
-    SQL = 'select id, command, stdout, exitcode from command_record'
+    SQL = ('select command_record.id, command, stdout, exitcode from command_record '
+           'where not exists (select * from parsed_command_record where '
+           'parsed_command_record.id=command_record.id)')
     for row in c.execute(SQL).fetchall():
         id, command, stdout, exitcode = row
         stdout = stdout.encode()
