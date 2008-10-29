@@ -3,6 +3,7 @@ import sys
 import traceback
 import sqlite3
 import re
+import glob
 
 def parse_stdout(s):
     argv = re.search('^===ARGV=(.*?)$', s, re.M).group(1)
@@ -48,8 +49,7 @@ def parse_unittest_output(s):
         timeout = int(timeout_match.group(1))
     return num, error, fail, timeout
 
-def main():
-    [db] = sys.argv[1:]
+def main(db):
     c = sqlite3.connect(db)
     c.execute('''create table if not exists parsed_command_record
               (id integer not null unique,
@@ -96,5 +96,10 @@ def main():
             c.commit()
 
 if __name__=='__main__':
-    main()
-
+    if not sys.argv[1:]:
+        latest_db = sorted(glob.glob('results.*.db'))[-1]
+        print latest_db
+        sys.argv.append(latest_db)
+    for db in sys.argv[1:]:
+        main(db)
+    execfile('generate_report.py')
