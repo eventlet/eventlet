@@ -4,7 +4,6 @@
 Usage: %prog [--hub HUB] [--reactor REACTOR] program.py
 """
 import sys
-import optparse
 
 def import_green(modulename):
     m = __import__('eventlet.green.' + modulename)

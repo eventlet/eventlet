@@ -1,4 +1,3 @@
-import sys
 import unittest
 from eventlet.api import call_after, spawn, sleep
 
