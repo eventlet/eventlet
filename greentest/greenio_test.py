@@ -21,7 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from eventlet import tests
+from greentest import tests
 from eventlet import api, greenio, util
 import socket
 

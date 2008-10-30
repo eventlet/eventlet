@@ -38,7 +38,7 @@ except ImportError:
 util.wrap_socket_with_coroutine_socket()
 
 
-from eventlet import tests
+from greentest import tests
 
 
 def hello_world(env, start_response):

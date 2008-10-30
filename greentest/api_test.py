@@ -27,7 +27,7 @@ import socket
 
 from eventlet import api
 from eventlet import greenio
-from eventlet import tests
+from greentest import tests
 from eventlet import util
 
 import os.path
