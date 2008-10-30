@@ -5,3 +5,4 @@ syntax: glob
 dist
 eventlet.egg-info
 build
+htmlreports
