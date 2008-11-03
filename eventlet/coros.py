@@ -224,7 +224,9 @@ class semaphore(object):
     >>> from eventlet import coros, api
     >>> sem = coros.semaphore(2, limit=3)
     >>> sem.acquire()
+    True
     >>> sem.acquire()
+    True
     >>> def releaser(sem):
     ...     print "releasing one"
     ...     sem.release()
@@ -232,6 +234,7 @@ class semaphore(object):
     >>> _ = api.spawn(releaser, sem)
     >>> sem.acquire()
     releasing one
+    True
     >>> sem.counter
     0
     >>> for x in xrange(3):
