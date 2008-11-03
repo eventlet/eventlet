@@ -1,4 +1,5 @@
 from twisted.internet import defer
+from twisted.python import failure
 from eventlet.support.greenlet import greenlet
 from eventlet import greenlib
 from eventlet.api import get_hub, spawn
@@ -13,14 +14,20 @@ def block_on(deferred):
     deferred.addErrback(eb)
     return get_hub().switch()
 
+def _putResultInDeferred(deferred, f, args, kwargs):
+    try:
+        result = f(*args, **kwargs)
+    except:
+        f = failure.Failure()
+        deferred.errback(f)
+    else:
+        deferred.callback(result)
+
+def deferToGreenThread(func, *args, **kwargs):
+    d = defer.Deferred()
+    spawn(_putResultInDeferred, d, func, args, kwargs)
+    return d
+
 def callInGreenThread(func, *args, **kwargs):
-    result = defer.Deferred()
-    def signal_deferred():
-        try:
-            value = func(*args, **kwargs)
-        except Exception, ex:
-            result.errback(ex)
-        else:
-            result.callback(value)
-    spawn(signal_deferred)
-    return result
+    return spawn(func, *args, **kwargs)
+
