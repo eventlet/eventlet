@@ -11,8 +11,11 @@ import gc
 
 address = ('0.0.0.0', 7878)
 
+SOCKET_TIMEOUT = 0.1
+
 def init_server():
     s = socket.socket()
+    s.settimeout(SOCKET_TIMEOUT)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.bind(address)
     s.listen(5)
@@ -41,17 +44,18 @@ def make_request():
     #print 'make_request - recvd %r' % res
     #s.close()
 
-def run_interaction():
+def run_interaction(run_client=True):
     s = init_server()
     start_new_thread(handle_request, (s, ))
-    start_new_thread(make_request, ())
-    sleep(0.2)
+    if run_client:
+        start_new_thread(make_request, ())
+    sleep(0.1+SOCKET_TIMEOUT)
     #print sys.getrefcount(s.fd)
     #s.close()
     return weakref.ref(s.fd)
 
-def run_and_check():
-    w = run_interaction()
+def run_and_check(run_client=True):
+    w = run_interaction(run_client=run_client)
     if w():
         print gc.get_referrers(w())
         for x in gc.get_referrers(w()):
@@ -62,10 +66,13 @@ def run_and_check():
 
 class test(unittest.TestCase):
 
-    def test(self):
+    def test_clean_exit(self):
         run_and_check()
         run_and_check()
 
+    def test_timeout_exit(self):
+        run_and_check(True)
+        run_and_check(True)
 
 if __name__=='__main__':
     unittest.main()
