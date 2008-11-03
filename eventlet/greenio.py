@@ -187,11 +187,11 @@ def set_nonblocking(fd):
 class GreenSocket(object):
     is_secure = False
     timeout = None
-    def __init__(self, family_or_fd=socket.AF_INET, *args, **kwargs):
-        if isinstance(family_or_fd, (int, long)):
-            fd = socket.socket(family_or_fd, *args, **kwargs)
+    def __init__(self, family_or_realsock=socket.AF_INET, *args, **kwargs):
+        if isinstance(family_or_realsock, (int, long)):
+            fd = socket.socket(family_or_realsock, *args, **kwargs)
         else:
-            fd = family_or_fd
+            fd = family_or_realsock
             assert not args, args
             assert not kwargs, kwargs
 
