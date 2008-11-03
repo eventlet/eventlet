@@ -22,6 +22,7 @@ def handle_request(s):
     conn, address = s.accept()
     #print 'handle_request - accepted'
     res = conn.recv(100)
+    assert res == 'hello', `res`
     #print 'handle_request - recvd %r' % res
     res = conn.send('bye')
     #print 'handle_request - sent %r' % res
@@ -36,6 +37,7 @@ def make_request():
     res = s.send('hello')
     #print 'make_request - sent %s' % res
     res = s.recv(100)
+    assert res == 'bye', `res`
     #print 'make_request - recvd %r' % res
     #s.close()
 
