@@ -1,24 +1,58 @@
 """Basic twisted protocols converted to synchronous mode"""
 from twisted.internet.protocol import ClientCreator, Protocol as _Protocol
 from twisted.protocols import basic
-from twisted.internet import reactor
 from twisted.internet.error import ConnectionDone
-from twisted.internet.protocol import Factory
+from twisted.internet.protocol import Factory, _InstanceFactory
+from twisted.internet import defer
 
 from eventlet.api import spawn
 from eventlet.channel import channel
 from eventlet.twisteds.util import block_on
 
 
-def connectTCP(buffer_class, host, port):
+def connectTCP(*args, **kwargs):
+    from twisted.internet import reactor
+    buffer_class = kwargs.pop('buffer_class', DEFAULT_BUFFER)
     cc = ClientCreator(reactor, buffer_class.protocol_class)
-    protocol = block_on(cc.connectTCP(host, port))
+    protocol = block_on(cc.connectTCP(*args, **kwargs))
     chan = protocol.channel = channel()
     return buffer_class(protocol, chan)
 
-def listenTCP(buffer_class, handler, port, *args, **kwargs):
+def connectSSL(*args, **kwargs):
     from twisted.internet import reactor
+    buffer_class = kwargs.pop('buffer_class', DEFAULT_BUFFER)
+    cc = ClientCreator(reactor, buffer_class.protocol_class)
+    protocol = block_on(cc.connectSSL(*args, **kwargs))
+    chan = protocol.channel = channel()
+    return buffer_class(protocol, chan)
+
+def _connectTLS(protocol, host, port, *args, **kwargs):
+    from twisted.internet import reactor
+    d = defer.Deferred()
+    f = _InstanceFactory(reactor, protocol, d)
+    reactor.connectTLS(host, port, f, *args, **kwargs)
+    return d
+
+def connectTLS(host, port, *args, **kwargs):
+    buffer_class = kwargs.pop('buffer_class', DEFAULT_BUFFER)
+    protocol = block_on(_connectTLS(buffer_class.protocol_class(), host, port, *args, **kwargs))
+    chan = protocol.channel = channel()
+    return buffer_class(protocol, chan)
+
+def listenTCP(port, handler, *args, **kwargs):
+    from twisted.internet import reactor
+    buffer_class = kwargs.pop('buffer_class', unbuffered)
     return reactor.listenTCP(port, SpawnFactory(buffer_class, handler), *args, **kwargs)
+
+def listenSSL(port, handler, *args, **kwargs):
+    from twisted.internet import reactor
+    buffer_class = kwargs.pop('buffer_class', unbuffered)
+    return reactor.listenSSL(port, SpawnFactory(buffer_class, handler), *args, **kwargs)
+
+def listenTLS(port, handler, *args, **kwargs):
+    from twisted.internet import reactor
+    buffer_class = kwargs.pop('buffer_class', unbuffered)
+    return reactor.listenTLS(port, SpawnFactory(buffer_class, handler), *args, **kwargs)
 
 class SpawnFactory(Factory):
 
