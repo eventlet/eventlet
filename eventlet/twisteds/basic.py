@@ -336,3 +336,29 @@ class line_only_receiver(buffer_base):
         except ConnectionDone:
             raise StopIteration
 
+
+def __setup_server_tcp(exit='clean', delay=0.1, port=0):
+    from eventlet.green import socket
+    from eventlet.api import sleep
+    s = socket.socket()
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    s.bind(('127.0.0.1', port))
+    port = s.getsockname()[1]
+    s.listen(5)
+    s.settimeout(delay+1)
+    def serve():
+        conn, addr = s.accept()
+        conn.settimeout(delay+1)
+        hello = conn.recv(128)
+        conn.sendall('you said %s. ' % hello)
+        sleep(delay)
+        conn.sendall('BYE')
+        conn.close()
+    spawn(serve)
+    return port
+
+if __name__ == '__main__':
+    import doctest
+    from twisted.internet import reactor
+    doctest.testmod(extraglobs = {'setup_server_tcp': __setup_server_tcp})
+
