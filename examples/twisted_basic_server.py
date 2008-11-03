@@ -24,6 +24,6 @@ class Chat:
             self.participants.remove(conn)
 
 chat = Chat()
-basic.listenTCP(basic.line_only_receiver, chat.handler, 8007)
+basic.listenTCP(8007, chat.handler, 8007, buffer_class=basic.line_only_receiver)
 from twisted.internet import reactor
 reactor.run()

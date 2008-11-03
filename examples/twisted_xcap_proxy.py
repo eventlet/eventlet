@@ -4,7 +4,7 @@ from twisted.protocols import basic
 
 from xcaplib.green import XCAPClient
 
-from eventlet.twisteds.util import callInGreenThread
+from eventlet.twisteds.util import deferToGreenThread
 from eventlet.twisteds import join_reactor
 
 class LineOnlyReceiver(basic.LineOnlyReceiver):
@@ -15,7 +15,7 @@ class LineOnlyReceiver(basic.LineOnlyReceiver):
             return
         app, context, node = (line + ' ').split(' ', 3) 
         context = {'u' : 'users', 'g': 'global'}.get(context, context)
-        d = callInGreenThread(client._get, app, node, globaltree=context=='global')
+        d = deferToGreenThread(client._get, app, node, globaltree=context=='global')
         def callback(result):
             self.transport.write(str(result))
         def errback(error):
