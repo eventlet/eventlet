@@ -40,12 +40,6 @@ class buffer_base(object):
         self.protocol = protocol
         self.channel = channel
 
-    def send(self, data):
-        self.protocol.transport.write(data)
-
-    def close(self):
-        self.protocol.transport.loseConnection()
-
     @property
     def transport(self):
         return self.protocol.transport
