@@ -4,8 +4,8 @@ from twisted.protocols import basic
 
 from xcaplib.green import XCAPClient
 
-from eventlet.twisteds.util import deferToGreenThread
-from eventlet.twisteds import join_reactor
+from eventlet.twistedutil import deferToGreenThread
+from eventlet.twistedutil import join_reactor
 
 class LineOnlyReceiver(basic.LineOnlyReceiver):
 

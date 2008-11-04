@@ -1,5 +1,6 @@
-from eventlet.twisteds import basic
-from eventlet.twisteds import join_reactor
+from eventlet.twistedutil import join_reactor
+from eventlet.twistedutil.protocol import SpawnFactory
+from eventlet.twistedutil.protocols.basic import LineOnlyReceiverBuffer
 
 class Chat:
 
@@ -24,6 +25,6 @@ class Chat:
             self.participants.remove(conn)
 
 chat = Chat()
-basic.listenTCP(8007, chat.handler, 8007, buffer_class=basic.line_only_receiver)
 from twisted.internet import reactor
+reactor.listenTCP(8007, SpawnFactory(chat.handler, LineOnlyReceiverBuffer))
 reactor.run()

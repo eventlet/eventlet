@@ -1,6 +1,5 @@
 """Basic twisted protocols converted to synchronous mode"""
-from twisted.internet.protocol import ClientCreator, Protocol as _Protocol
-from twisted.protocols import basic
+from twisted.internet.protocol import ClientCreator, Protocol as twistedProtocol
 from twisted.internet.error import ConnectionDone
 from twisted.internet.protocol import Factory, _InstanceFactory
 from twisted.internet import defer
@@ -39,37 +38,8 @@ def connectTLS(host, port, *args, **kwargs):
     chan = protocol.channel = channel()
     return buffer_class(protocol, chan)
 
-def listenTCP(port, handler, *args, **kwargs):
-    from twisted.internet import reactor
-    buffer_class = kwargs.pop('buffer_class', DEFAULT_BUFFER)
-    return reactor.listenTCP(port, SpawnFactory(buffer_class, handler), *args, **kwargs)
 
-def listenSSL(port, handler, *args, **kwargs):
-    from twisted.internet import reactor
-    buffer_class = kwargs.pop('buffer_class', DEFAULT_BUFFER)
-    return reactor.listenSSL(port, SpawnFactory(buffer_class, handler), *args, **kwargs)
-
-def listenTLS(port, handler, *args, **kwargs):
-    from twisted.internet import reactor
-    buffer_class = kwargs.pop('buffer_class', DEFAULT_BUFFER)
-    return reactor.listenTLS(port, SpawnFactory(buffer_class, handler), *args, **kwargs)
-
-class SpawnFactory(Factory):
-
-    def __init__(self, buffer_class, handler):
-        self.handler = handler
-        self.buffer_class = buffer_class
-        self.protocol = buffer_class.protocol_class
-
-    def buildProtocol(self, addr):
-        protocol = self.protocol()
-        chan = protocol.channel = channel()
-        protocol.factory = self
-        spawn(self.handler, self.buffer_class(protocol, chan))
-        return protocol
-
-
-class buffer_base(object):
+class BaseBuffer(object):
 
     def __init__(self, protocol, channel):
         self.protocol = protocol
@@ -83,7 +53,7 @@ class buffer_base(object):
         return getattr(self.protocol.transport, item)
 
 
-class Protocol(_Protocol):
+class Protocol(twistedProtocol):
 
     def dataReceived(self, data):
         spawn(self.channel.send, data)
@@ -93,7 +63,7 @@ class Protocol(_Protocol):
         self.channel = None # QQQ channel creates a greenlet. does it actually finish and memory is reclaimed?
 
 
-class unbuffered(buffer_base):
+class Unbuffered(BaseBuffer):
 
     protocol_class = Protocol
 
@@ -159,12 +129,12 @@ class unbuffered(buffer_base):
         return result
 
 
-class buffer(buffer_base):
+class Buffer(BaseBuffer):
     
     protocol_class = Protocol
 
     def __init__(self, *args):
-        buffer_base.__init__(self, *args)
+        BaseBuffer.__init__(self, *args)
         self.buf = ''
 
     def read(self, size=-1):
@@ -303,38 +273,24 @@ class buffer(buffer_base):
             raise StopIteration
         return res
 
-DEFAULT_BUFFER = buffer
+DEFAULT_BUFFER = Buffer
 
+class SpawnFactory(Factory):
+    
+    buffer_class = DEFAULT_BUFFER
 
-class LineOnlyReceiver(basic.LineOnlyReceiver):
+    def __init__(self, handler, buffer_class=None):
+        self.handler = handler
+        if buffer_class is not None:
+            self.buffer_class = buffer_class
+        self.protocol = self.buffer_class.protocol_class
 
-    def lineReceived(self, line):
-        spawn(self.channel.send, line)
-
-    def connectionLost(self, reason):
-        self.channel.send_exception(reason.value)
-
-
-class line_only_receiver(buffer_base):
-
-    protocol_class = LineOnlyReceiver
-
-    def readline(self):
-        return self.channel.receive()
-
-    def sendline(self, line):
-        self.protocol.sendLine(line)
-
-    # iterator protocol:
-
-    def __iter__(self):
-        return self
-
-    def next(self):
-        try:
-            return self.readline()
-        except ConnectionDone:
-            raise StopIteration
+    def buildProtocol(self, addr):
+        protocol = self.protocol()
+        chan = protocol.channel = channel()
+        protocol.factory = self
+        spawn(self.handler, self.buffer_class(protocol, chan))
+        return protocol
 
 
 def __setup_server_tcp(exit='clean', delay=0.1, port=0):
