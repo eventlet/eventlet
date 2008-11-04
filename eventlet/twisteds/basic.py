@@ -41,17 +41,17 @@ def connectTLS(host, port, *args, **kwargs):
 
 def listenTCP(port, handler, *args, **kwargs):
     from twisted.internet import reactor
-    buffer_class = kwargs.pop('buffer_class', unbuffered)
+    buffer_class = kwargs.pop('buffer_class', DEFAULT_BUFFER)
     return reactor.listenTCP(port, SpawnFactory(buffer_class, handler), *args, **kwargs)
 
 def listenSSL(port, handler, *args, **kwargs):
     from twisted.internet import reactor
-    buffer_class = kwargs.pop('buffer_class', unbuffered)
+    buffer_class = kwargs.pop('buffer_class', DEFAULT_BUFFER)
     return reactor.listenSSL(port, SpawnFactory(buffer_class, handler), *args, **kwargs)
 
 def listenTLS(port, handler, *args, **kwargs):
     from twisted.internet import reactor
-    buffer_class = kwargs.pop('buffer_class', unbuffered)
+    buffer_class = kwargs.pop('buffer_class', DEFAULT_BUFFER)
     return reactor.listenTLS(port, SpawnFactory(buffer_class, handler), *args, **kwargs)
 
 class SpawnFactory(Factory):
