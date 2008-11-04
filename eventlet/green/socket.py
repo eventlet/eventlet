@@ -11,7 +11,7 @@ def fromfd(*args):
     return socket(__socket.fromfd(*args))
 
 if type(get_hub()).__name__ == 'TwistedHub':
-    from eventlet.twisteds.util import block_on as _block_on
+    from eventlet.twistedutil import block_on as _block_on
     def gethostbyname(name):
         from twisted.internet import reactor
         return _block_on(reactor.resolve(name))
