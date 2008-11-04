@@ -9,36 +9,6 @@ from eventlet.channel import channel
 from eventlet.twistedutil import block_on
 
 
-def connectTCP(*args, **kwargs):
-    from twisted.internet import reactor
-    buffer_class = kwargs.pop('buffer_class', DEFAULT_BUFFER)
-    cc = ClientCreator(reactor, buffer_class.protocol_class)
-    protocol = block_on(cc.connectTCP(*args, **kwargs))
-    chan = protocol.channel = channel()
-    return buffer_class(protocol, chan)
-
-def connectSSL(*args, **kwargs):
-    from twisted.internet import reactor
-    buffer_class = kwargs.pop('buffer_class', DEFAULT_BUFFER)
-    cc = ClientCreator(reactor, buffer_class.protocol_class)
-    protocol = block_on(cc.connectSSL(*args, **kwargs))
-    chan = protocol.channel = channel()
-    return buffer_class(protocol, chan)
-
-def _connectTLS(protocol, host, port, *args, **kwargs):
-    from twisted.internet import reactor
-    d = defer.Deferred()
-    f = _InstanceFactory(reactor, protocol, d)
-    reactor.connectTLS(host, port, f, *args, **kwargs)
-    return d
-
-def connectTLS(host, port, *args, **kwargs):
-    buffer_class = kwargs.pop('buffer_class', DEFAULT_BUFFER)
-    protocol = block_on(_connectTLS(buffer_class.protocol_class(), host, port, *args, **kwargs))
-    chan = protocol.channel = channel()
-    return buffer_class(protocol, chan)
-
-
 class BaseBuffer(object):
 
     def __init__(self, protocol, channel):
@@ -108,7 +78,7 @@ class Unbuffered(BaseBuffer):
         except Exception:
             self.channel = None
             raise
-    
+
     # iterator protocol:
 
     def __iter__(self):
@@ -130,7 +100,7 @@ class Unbuffered(BaseBuffer):
 
 
 class Buffer(BaseBuffer):
-    
+
     protocol_class = Protocol
 
     def __init__(self, *args):
@@ -153,7 +123,7 @@ class Buffer(BaseBuffer):
         ''
         >>> print buf.channel
         None
-        
+
         >>> PORT = setup_server_tcp(exit='clean')
         >>> buf = connectTCP('127.0.0.1', PORT)
         >>> buf.write('world')
@@ -275,8 +245,53 @@ class Buffer(BaseBuffer):
 
 DEFAULT_BUFFER = Buffer
 
+def connectXXX(reactor, connect_func, protocol_instance, address_args, *args, **kwargs):
+    d = defer.Deferred()
+    f = _InstanceFactory(reactor, protocol_instance, d)
+    connect_func(*(address_args + (f,) + args), **kwargs)
+    protocol = block_on(d)
+    chan = protocol.channel = channel()
+    return (protocol, chan)
+
+class BufferCreator(object):
+
+    buffer_class = DEFAULT_BUFFER
+
+    def __init__(self, buffer_class=None, reactor=None, protocol_args=None, protocol_kwargs=None):
+        if reactor is None:
+            from twisted.internet import reactor
+        self.reactor = reactor
+        if buffer_class is not None:
+            self.buffer_class = buffer_class
+        self.protocol_args = protocol_args or ()
+        self.protocol_kwargs = protocol_kwargs or {}
+
+    def connectTCP(self, host, port, *args, **kwargs):
+        protocol = self.buffer_class.protocol_class(*self.protocol_args, **self.protocol_kwargs)
+        protocol, chan = connectXXX(self.reactor, self.reactor.connectTCP,
+                                    protocol, (host, port), *args, **kwargs)
+        return self.buffer_class(protocol, chan)
+
+    def connectSSL(self, host, port, *args, **kwargs):
+        protocol = self.buffer_class.protocol_class(*self.protocol_args, **self.protocol_kwargs)
+        protocol, chan = connectXXX(self.reactor, self.reactor.connectSSL,
+                                    protocol, (host, port), *args, **kwargs)
+        return self.buffer_class(protocol, chan)
+
+    def connectTLS(self, host, port, *args, **kwargs):
+        protocol = self.buffer_class.protocol_class(*self.protocol_args, **self.protocol_kwargs)
+        protocol, chan = connectXXX(self.reactor, self.reactor.connectTLS,
+                                    protocol, (host, port), *args, **kwargs)
+        return self.buffer_class(protocol, chan)
+
+    def connectUNIX(self, address, *args, **kwargs):
+        protocol = self.buffer_class.protocol_class(*self.protocol_args, **self.protocol_kwargs)
+        protocol, chan = connectXXX(self.reactor, self.reactor.connectTCP,
+                                    protocol, (address, ), *args, **kwargs)
+        return self.buffer_class(protocol, chan) 
+
 class SpawnFactory(Factory):
-    
+
     buffer_class = DEFAULT_BUFFER
 
     def __init__(self, handler, buffer_class=None):
