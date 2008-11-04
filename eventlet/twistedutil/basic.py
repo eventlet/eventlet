@@ -7,7 +7,7 @@ from twisted.internet import defer
 
 from eventlet.api import spawn
 from eventlet.channel import channel
-from eventlet.twisteds.util import block_on
+from eventlet.twistedutil import block_on
 
 
 def connectTCP(*args, **kwargs):
