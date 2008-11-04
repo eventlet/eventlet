@@ -1,5 +1,5 @@
 """Basic twisted protocols converted to synchronous mode"""
-from twisted.internet.protocol import ClientCreator, Protocol as twistedProtocol
+from twisted.internet.protocol import Protocol as twistedProtocol
 from twisted.internet.error import ConnectionDone
 from twisted.internet.protocol import Factory, _InstanceFactory
 from twisted.internet import defer
