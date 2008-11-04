@@ -44,7 +44,7 @@ class Unbuffered(BaseBuffer):
         in a non clean fashion. After that all successive calls return ''.
 
         >>> PORT = setup_server_tcp(exit='clean')
-        >>> buf = connectTCP('127.0.0.1', PORT, buffer_class=unbuffered)
+        >>> buf = BufferCreator(Unbuffered).connectTCP('127.0.0.1', PORT)
         >>> buf.write('hello')
         >>> buf.recv()
         'you said hello. '
@@ -54,7 +54,7 @@ class Unbuffered(BaseBuffer):
         ''
 
         #>>> PORT = setup_server_tcp(exit='reset')
-        #>>> buf = connectTCP('127.0.0.1', PORT, buffer_class=unbuffered)
+        #>>> buf = BufferCreator(Unbuffered).connectTCP('127.0.0.1', PORT)
         #>>> buf.write('hello')
         #>>> buf.recv()
         #'you said hello. '
@@ -65,7 +65,7 @@ class Unbuffered(BaseBuffer):
         #>>> buf.recv()
         #''
 
-        Note that server 'BYE' was received by twisted, but it was thrown away. Use buffer if you
+        Note that server 'BYE' was received by twisted, but it was thrown away. Use Buffer if you
         want to keep the received data.
         """
         if self.channel is None:
@@ -86,7 +86,8 @@ class Unbuffered(BaseBuffer):
 
     def next(self):
         """
-        >>> buf = connectTCP('127.0.0.1', setup_server_tcp(exit='clean'), buffer_class=unbuffered)
+        >>> PORT = setup_server_tcp(exit='clean')
+        >>> buf = BufferCreator(Unbuffered).connectTCP('127.0.0.1', PORT)
         >>> buf.write('hello')
         >>> for data in buf:
         ...     print `data`
@@ -111,7 +112,7 @@ class Buffer(BaseBuffer):
         """Like file's read().
 
         >>> PORT = setup_server_tcp(exit='clean')
-        >>> buf = connectTCP('127.0.0.1', PORT)
+        >>> buf = BufferCreator(Buffer).connectTCP('127.0.0.1', PORT)
         >>> buf.write('hello')
         >>> buf.read(9)
         'you said '
@@ -125,7 +126,7 @@ class Buffer(BaseBuffer):
         None
 
         >>> PORT = setup_server_tcp(exit='clean')
-        >>> buf = connectTCP('127.0.0.1', PORT)
+        >>> buf = BufferCreator(Buffer).connectTCP('127.0.0.1', PORT)
         >>> buf.write('world')
         >>> buf.read()
         'you said world. BYE'
@@ -133,7 +134,7 @@ class Buffer(BaseBuffer):
         ''
 
         #>>> PORT = setup_server_tcp(exit='reset')
-        #>>> buf = connectTCP('127.0.0.1', PORT)
+        #>>> buf = BufferCreator(Buffer).connectTCP('127.0.0.1', PORT)
         #>>> buf.write('whoa')
         #>>> buf.read(4)
         #'you '
@@ -169,7 +170,7 @@ class Buffer(BaseBuffer):
         """Like socket's recv().
 
         >>> PORT = setup_server_tcp(exit='clean')
-        >>> buf = connectTCP('127.0.0.1', PORT)
+        >>> buf = BufferCreator(Buffer).connectTCP('127.0.0.1', PORT)
         >>> buf.write('hello')
         >>> buf.recv()
         'you said hello. '
@@ -181,7 +182,7 @@ class Buffer(BaseBuffer):
         ''
 
         >>> PORT = setup_server_tcp(exit='clean')
-        >>> buf = connectTCP('127.0.0.1', PORT)
+        >>> buf = BufferCreator(Buffer).connectTCP('127.0.0.1', PORT)
         >>> buf.write('whoa')
         >>> buf.recv(9)
         'you said '
@@ -193,7 +194,7 @@ class Buffer(BaseBuffer):
         ''
 
         #>>> PORT = setup_server_tcp(exit='reset')
-        #>>> buf = connectTCP('127.0.0.1', PORT)
+        #>>> buf = BufferCreator(Buffer).connectTCP('127.0.0.1', PORT)
         #>>> buf.write('whoa')
         #>>> buf.recv()
         #'you said whoa. '
@@ -231,7 +232,8 @@ class Buffer(BaseBuffer):
 
     def next(self):
         """
-        >>> buf = connectTCP('127.0.0.1', setup_server_tcp(exit='clean'))
+        >>> PORT = setup_server_tcp(exit='clean')
+        >>> buf = BufferCreator(Buffer).connectTCP('127.0.0.1', PORT)
         >>> buf.write('hello')
         >>> for data in buf:
         ...     print `data`
@@ -243,7 +245,6 @@ class Buffer(BaseBuffer):
             raise StopIteration
         return res
 
-DEFAULT_BUFFER = Buffer
 
 def connectXXX(reactor, connect_func, protocol_instance, address_args, *args, **kwargs):
     d = defer.Deferred()
@@ -255,7 +256,7 @@ def connectXXX(reactor, connect_func, protocol_instance, address_args, *args, **
 
 class BufferCreator(object):
 
-    buffer_class = DEFAULT_BUFFER
+    buffer_class = Buffer
 
     def __init__(self, buffer_class=None, reactor=None, protocol_args=None, protocol_kwargs=None):
         if reactor is None:
@@ -292,7 +293,7 @@ class BufferCreator(object):
 
 class SpawnFactory(Factory):
 
-    buffer_class = DEFAULT_BUFFER
+    buffer_class = Buffer
 
     def __init__(self, handler, buffer_class=None):
         self.handler = handler
