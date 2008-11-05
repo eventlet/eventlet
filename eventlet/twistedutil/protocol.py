@@ -29,7 +29,7 @@ class Protocol(twistedProtocol):
         spawn(self.channel.send, data)
 
     def connectionLost(self, reason):
-        self.channel.send_exception(reason.value)
+        spawn(self.channel.send_exception, reason.value)
         self.channel = None # QQQ channel creates a greenlet. does it actually finish and memory is reclaimed?
 
 

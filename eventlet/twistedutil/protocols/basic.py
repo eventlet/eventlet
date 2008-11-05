@@ -9,7 +9,7 @@ class LineOnlyReceiver(basic.LineOnlyReceiver):
         spawn(self.channel.send, line)
 
     def connectionLost(self, reason):
-        self.channel.send_exception(reason.value)
+        spawn(self.channel.send_exception, reason.value)
 
 class LineOnlyReceiverBuffer(BaseBuffer):
 
