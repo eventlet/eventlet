@@ -11,9 +11,10 @@ from eventlet.twistedutil import block_on
 
 class BaseBuffer(object):
 
-    def __init__(self, protocol, channel):
-        self.protocol = protocol
-        self.channel = channel
+    def build_protocol(self):
+        self.protocol = self.protocol_class()
+        self.channel = self.protocol.channel = channel()
+        return self.protocol
 
     @property
     def transport(self):
@@ -44,7 +45,7 @@ class Unbuffered(BaseBuffer):
         in a non clean fashion. After that all successive calls return ''.
 
         >>> PORT = setup_server_tcp(exit='clean')
-        >>> buf = BufferCreator(Unbuffered).connectTCP('127.0.0.1', PORT)
+        >>> buf = BufferCreator(reactor, Unbuffered).connectTCP('127.0.0.1', PORT)
         >>> buf.write('hello')
         >>> buf.recv()
         'you said hello. '
@@ -54,7 +55,7 @@ class Unbuffered(BaseBuffer):
         ''
 
         #>>> PORT = setup_server_tcp(exit='reset')
-        #>>> buf = BufferCreator(Unbuffered).connectTCP('127.0.0.1', PORT)
+        #>>> buf = BufferCreator(reactor, Unbuffered).connectTCP('127.0.0.1', PORT)
         #>>> buf.write('hello')
         #>>> buf.recv()
         #'you said hello. '
@@ -87,7 +88,7 @@ class Unbuffered(BaseBuffer):
     def next(self):
         """
         >>> PORT = setup_server_tcp(exit='clean')
-        >>> buf = BufferCreator(Unbuffered).connectTCP('127.0.0.1', PORT)
+        >>> buf = BufferCreator(reactor, Unbuffered).connectTCP('127.0.0.1', PORT)
         >>> buf.write('hello')
         >>> for data in buf:
         ...     print `data`
@@ -104,15 +105,14 @@ class Buffer(BaseBuffer):
 
     protocol_class = Protocol
 
-    def __init__(self, *args):
-        BaseBuffer.__init__(self, *args)
+    def __init__(self):
         self.buf = ''
 
     def read(self, size=-1):
         """Like file's read().
 
         >>> PORT = setup_server_tcp(exit='clean')
-        >>> buf = BufferCreator(Buffer).connectTCP('127.0.0.1', PORT)
+        >>> buf = BufferCreator(reactor, Buffer).connectTCP('127.0.0.1', PORT)
         >>> buf.write('hello')
         >>> buf.read(9)
         'you said '
@@ -126,7 +126,7 @@ class Buffer(BaseBuffer):
         None
 
         >>> PORT = setup_server_tcp(exit='clean')
-        >>> buf = BufferCreator(Buffer).connectTCP('127.0.0.1', PORT)
+        >>> buf = BufferCreator(reactor, Buffer).connectTCP('127.0.0.1', PORT)
         >>> buf.write('world')
         >>> buf.read()
         'you said world. BYE'
@@ -134,7 +134,7 @@ class Buffer(BaseBuffer):
         ''
 
         #>>> PORT = setup_server_tcp(exit='reset')
-        #>>> buf = BufferCreator(Buffer).connectTCP('127.0.0.1', PORT)
+        #>>> buf = BufferCreator(reactor, Buffer).connectTCP('127.0.0.1', PORT)
         #>>> buf.write('whoa')
         #>>> buf.read(4)
         #'you '
@@ -170,7 +170,7 @@ class Buffer(BaseBuffer):
         """Like socket's recv().
 
         >>> PORT = setup_server_tcp(exit='clean')
-        >>> buf = BufferCreator(Buffer).connectTCP('127.0.0.1', PORT)
+        >>> buf = BufferCreator(reactor, Buffer).connectTCP('127.0.0.1', PORT)
         >>> buf.write('hello')
         >>> buf.recv()
         'you said hello. '
@@ -182,7 +182,7 @@ class Buffer(BaseBuffer):
         ''
 
         >>> PORT = setup_server_tcp(exit='clean')
-        >>> buf = BufferCreator(Buffer).connectTCP('127.0.0.1', PORT)
+        >>> buf = BufferCreator(reactor, Buffer).connectTCP('127.0.0.1', PORT)
         >>> buf.write('whoa')
         >>> buf.recv(9)
         'you said '
@@ -194,7 +194,7 @@ class Buffer(BaseBuffer):
         ''
 
         #>>> PORT = setup_server_tcp(exit='reset')
-        #>>> buf = BufferCreator(Buffer).connectTCP('127.0.0.1', PORT)
+        #>>> buf = BufferCreator(reactor, Buffer).connectTCP('127.0.0.1', PORT)
         #>>> buf.write('whoa')
         #>>> buf.recv()
         #'you said whoa. '
@@ -233,7 +233,7 @@ class Buffer(BaseBuffer):
     def next(self):
         """
         >>> PORT = setup_server_tcp(exit='clean')
-        >>> buf = BufferCreator(Buffer).connectTCP('127.0.0.1', PORT)
+        >>> buf = BufferCreator(reactor, Buffer).connectTCP('127.0.0.1', PORT)
         >>> buf.write('hello')
         >>> for data in buf:
         ...     print `data`
@@ -246,66 +246,63 @@ class Buffer(BaseBuffer):
         return res
 
 
-def connectXXX(reactor, connect_func, protocol_instance, address_args, *args, **kwargs):
+def sync_connect(reactor, connect_func, protocol_instance, address_args, *args, **kwargs):
     d = defer.Deferred()
     f = _InstanceFactory(reactor, protocol_instance, d)
     connect_func(*(address_args + (f,) + args), **kwargs)
     protocol = block_on(d)
-    chan = protocol.channel = channel()
-    return (protocol, chan)
 
 class BufferCreator(object):
 
     buffer_class = Buffer
 
-    def __init__(self, buffer_class=None, reactor=None, protocol_args=None, protocol_kwargs=None):
-        if reactor is None:
-            from twisted.internet import reactor
+    def __init__(self, reactor, buffer_class=None, *args, **kwargs):
         self.reactor = reactor
         if buffer_class is not None:
             self.buffer_class = buffer_class
-        self.protocol_args = protocol_args or ()
-        self.protocol_kwargs = protocol_kwargs or {}
+        self.args = args
+        self.kwargs = kwargs
 
     def connectTCP(self, host, port, *args, **kwargs):
-        protocol = self.buffer_class.protocol_class(*self.protocol_args, **self.protocol_kwargs)
-        protocol, chan = connectXXX(self.reactor, self.reactor.connectTCP,
-                                    protocol, (host, port), *args, **kwargs)
-        return self.buffer_class(protocol, chan)
+        buffer = self.buffer_class(*self.args, **self.kwargs)
+        protocol = buffer.build_protocol()
+        sync_connect(self.reactor, self.reactor.connectTCP, protocol, (host, port), *args, **kwargs)
+        return buffer
 
     def connectSSL(self, host, port, *args, **kwargs):
-        protocol = self.buffer_class.protocol_class(*self.protocol_args, **self.protocol_kwargs)
-        protocol, chan = connectXXX(self.reactor, self.reactor.connectSSL,
-                                    protocol, (host, port), *args, **kwargs)
-        return self.buffer_class(protocol, chan)
+        buffer = self.buffer_class(*self.args, **self.kwargs)
+        protocol = buffer.build_protocol()
+        sync_connect(self.reactor, self.reactor.connectSSL, protocol, (host, port), *args, **kwargs)
+        return buffer
 
     def connectTLS(self, host, port, *args, **kwargs):
-        protocol = self.buffer_class.protocol_class(*self.protocol_args, **self.protocol_kwargs)
-        protocol, chan = connectXXX(self.reactor, self.reactor.connectTLS,
-                                    protocol, (host, port), *args, **kwargs)
-        return self.buffer_class(protocol, chan)
+        buffer = self.buffer_class(*self.args, **self.kwargs)
+        protocol = buffer.build_protocol()
+        sync_connect(self.reactor, self.reactor.connectTLS, protocol, (host, port), *args, **kwargs)
+        return buffer
 
     def connectUNIX(self, address, *args, **kwargs):
-        protocol = self.buffer_class.protocol_class(*self.protocol_args, **self.protocol_kwargs)
-        protocol, chan = connectXXX(self.reactor, self.reactor.connectTCP,
-                                    protocol, (address, ), *args, **kwargs)
-        return self.buffer_class(protocol, chan) 
+        buffer = self.buffer_class(*self.args, **self.kwargs)
+        protocol = buffer.build_protocol()
+        sync_connect(self.reactor, self.reactor.connectUNIX, protocol, (address,), *args, **kwargs)
+        return buffer
 
 class SpawnFactory(Factory):
 
     buffer_class = Buffer
 
-    def __init__(self, handler, buffer_class=None):
+    def __init__(self, handler, buffer_class=None, *args, **kwargs):
         self.handler = handler
         if buffer_class is not None:
             self.buffer_class = buffer_class
-        self.protocol = self.buffer_class.protocol_class
+        self.args = args
+        self.kwargs = kwargs
 
     def buildProtocol(self, addr):
-        protocol = self.protocol()
-        chan = protocol.channel = channel()
+        buffer = self.buffer_class(*self.args, **self.kwargs)
+        protocol = buffer.build_protocol()
         protocol.factory = self
-        spawn(self.handler, self.buffer_class(protocol, chan))
+        spawn(self.handler, buffer)
         return protocol
 
 
