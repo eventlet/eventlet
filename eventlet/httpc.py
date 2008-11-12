@@ -667,8 +667,8 @@ class HttpSuite(object):
         return self.delete_(*args, **kwargs)[-1]
 
     def post_(
-        self, url, data='', headers=None, content_type=None,ok=None,
-        aux=None, connection=None):
+        self, url, data='', headers=None, use_proxy=False, content_type=None,
+        ok=None, aux=None, connection=None):
         if headers is None:
             headers = {}
         if 'content-type' not in headers:
@@ -681,7 +681,7 @@ class HttpSuite(object):
             _Params(
                 url, 'POST', body=data,
                 headers=headers, loader=self.loader,
-                dumper=self.dumper, ok=ok, aux=aux),
+                dumper=self.dumper, use_proxy=use_proxy, ok=ok, aux=aux),
             connection)
 
     def post(self, *args, **kwargs):
