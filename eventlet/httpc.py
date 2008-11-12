@@ -304,6 +304,9 @@ class Retriable(ConnectionError):
     def retry_(self):
         params = _LocalParams(self.params,
             url=self.retry_url(),
+            path=self.retry_url(), # need to override both path and
+                                   # url because request_ uses path
+                                   # but not url when using a proxy
             method=self.retry_method())
         return self.params.instance.request_(params)
                                       
