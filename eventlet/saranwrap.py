@@ -405,6 +405,10 @@ not need to deal with this class directly."""
         # see description for __repr__, len(obj) is the same.
         return self.__len__()
 
+    def __contains__(self, item):
+        # another special name that is normally called without recours to __getattribute__
+        return self.__contains__(item)
+
     def __deepcopy__(self, memo=None):
         """Copies the entire external object and returns its
         value. Will only work if the remote object is pickleable."""
@@ -541,10 +545,10 @@ when the id is None."""
         while True:
             try:
                 try:
-                    str = _read_lp_hunk(self._in)
+                    str_ = _read_lp_hunk(self._in)
                 except EOFError:
                     sys.exit(0)  # normal exit
-                request = loads(str)
+                request = loads(str_)
                 _log("request: %s (%s)" % (request, self._objects))
                 req = request
                 id = None
@@ -609,16 +613,18 @@ when the id is None."""
         #_log("objects: %s" % self._objects)
         s = dumps(body)
         _log(`s`)
-        str = _write_lp_hunk(self._out, s)
+        str_ = _write_lp_hunk(self._out, s)
 
     def write_exception(self, e):
         """@brief Helper method to respond with an exception."""
         #_log("exception: %s" % sys.exc_info()[0])
         # TODO: serialize traceback using generalization of code from mulib.htmlexception
-        self.respond(['exception', e])
+
         global _g_debug_mode
         if _g_debug_mode:
             _log("traceback: %s" % traceback.format_tb(sys.exc_info()[2]))
+
+        self.respond(['exception', e])
 
 
 # test function used for testing that final except clause
@@ -662,11 +668,17 @@ def main():
     global _g_logfile
     if options.logfile:
         _g_logfile = open(options.logfile, 'a')
+
+    from eventlet import tpool
     if options.module:
         export = api.named(options.module)
-        server = Server(sys.stdin, sys.stdout, export)
+        server = Server(tpool.Proxy(sys.stdin),
+                        tpool.Proxy(sys.stdout),
+                        export)
     elif options.child:
-        server = Server(sys.stdin, sys.stdout, {})
+        server = Server(tpool.Proxy(sys.stdin),
+                        tpool.Proxy(sys.stdout),
+                        {})
 
     # *HACK: some modules may emit on stderr, which breaks everything.
     class NullSTDOut(object):
