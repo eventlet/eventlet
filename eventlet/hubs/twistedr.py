@@ -6,7 +6,6 @@ from eventlet.hubs.hub import _g_debug
 from eventlet import greenlib
 from eventlet.support.greenlet import greenlet
 
-from functools import wraps
 import traceback
 
 
@@ -85,11 +84,6 @@ class BaseTwistedHub(object):
         from twisted.internet import reactor
         reactor.stop()
 
-    def sleep(self, seconds=0):
-        from twisted.internet import reactor
-        d = reactor.callLater(seconds, greenlib.switch, greenlet.getcurrent())
-        self.switch()
-
     def add_descriptor(self, fileno, read=None, write=None, exc=None):
         from twisted.internet import reactor
         descriptor = socket_rwdescriptor(fileno, read, write, exc)
@@ -119,8 +113,8 @@ class BaseTwistedHub(object):
 
     def schedule_call(self, seconds, func, *args, **kwargs):
         from twisted.internet import reactor
-        @wraps(func)
-        def wrap(*args, **kwargs):
+
+        def call_func_finish_time(*args, **kwargs):
             try:
                 return func(*args, **kwargs)
             finally:
@@ -187,7 +181,12 @@ class BaseTwistedHub(object):
         from twisted.internet import reactor
         reactor.crash()
 
-    # for test cases:
+    @property
+    def running(self):
+        from twisted.internet import reactor
+        return reactor.running
+
+    # for debugging:
 
     def get_readers(self):
         from twisted.internet import reactor
@@ -202,10 +201,10 @@ class BaseTwistedHub(object):
     def get_excs(self):
         return []
 
-    @property
-    def running(self):
+    def get_timers_count(self):
         from twisted.internet import reactor
-        return reactor.running
+        return len(reactor.getDelayedCalls())
+
 
 
 class TwistedHub(BaseTwistedHub):
@@ -283,39 +282,6 @@ class TwistedHub(BaseTwistedHub):
             t2 = reactor.timeout()
             t = reactor.running and t2
             reactor.doIteration(t)
-
-    def running_greenlets(self):
-        res = []
-        for g in greenlib.tracked_greenlets():
-            if g is self.greenlet:
-                continue
-            if hasattr(self.greenlet, 'parent') and g is self.greenlet.parent:
-                continue
-            res.append(g)
-
-    def join(self, lst, timeout=None):
-        """Wait for other greenlets to finish"""
-        waiting = [1]           
-#         if timeout is not None and self.running_greenlets():
-#             def stop():
-#                 waiting[0] = 0
-#             self.schedule_call(timeout, stop)
-        while True:
-            print 'WHILE!'
-            lst = [x for x in lst if not x.dead]
-            print 'WHILE!', lst
-            if not lst:
-                break # XXX collect return values
-            print 'WHILE! - before switch', lst[0], lst[0].parent
-            print 'WHILE! - before switch', greenlet.getcurrent(), greenlet.getcurrent().parent
-            print 'WHILE! - before switch', self.greenlet, getattr(self.greenlet, 'parent', '-')
-            for x in lst:
-                x.parent = greenlet.getcurrent()
-            print 'AWHILE! - before switch', lst[0], lst[0].parent
-            print 'AWHILE! - before switch', greenlet.getcurrent(), greenlet.getcurrent().parent
-            print 'AWHILE! - before switch', self.greenlet, getattr(self.greenlet, 'parent', '-')
-            res = self.switch()
-            print 'res=%r' % res
 
 Hub = TwistedHub
 

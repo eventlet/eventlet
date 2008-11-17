@@ -321,6 +321,8 @@ class BaseHub(object):
         except KeyError:
             pass
 
+    # for debugging:
+
     def get_readers(self):
         return self.readers
 
@@ -329,4 +331,7 @@ class BaseHub(object):
 
     def get_excs(self):
         return self.excs
+
+    def get_timers_count(hub):
+        return max(len(x) for x in [hub.timers, hub.timers_by_greenlet.items(), hub.next_timers])
 
