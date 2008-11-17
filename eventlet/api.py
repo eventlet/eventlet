@@ -422,8 +422,11 @@ def sleep(seconds=0):
     nothing else will run.
     """
     hub = get_hub()
-    hub.schedule_call(seconds, greenlib.switch, greenlet.getcurrent())
-    hub.switch()
+    timer = hub.schedule_call(seconds, greenlib.switch, greenlet.getcurrent())
+    try:
+        hub.switch()
+    finally:
+        timer.cancel()
 
 
 switch = greenlib.switch
