@@ -1,11 +1,34 @@
 import threading
 import weakref
+from twisted.internet.base import DelayedCall as TwistedDelayedCall
 from eventlet.hubs.hub import _g_debug
 from eventlet import greenlib
 from eventlet.support.greenlet import greenlet
 
 from functools import wraps
 import traceback
+
+
+class DelayedCall(TwistedDelayedCall):
+    "fix DelayedCall to behave like eventlet's Timer in some respects"
+
+    def cancel(self):
+        if self.cancelled or self.called:
+            self.cancelled = True
+            return
+        return TwistedDelayedCall.cancel(self)
+
+def callLater(reactor, _seconds, _f, *args, **kw):
+    # the same as original but creates fixed DelayedCall instance 
+    assert callable(_f), "%s is not callable" % _f
+    assert sys.maxint >= _seconds >= 0, \
+           "%s is not greater than or equal to 0 seconds" % (_seconds,)
+    tple = DelayedCall(reactor.seconds() + _seconds, _f, args, kw,
+                       reactor._cancelCallLater,
+                       reactor._moveCallLaterSooner,
+                       seconds=reactor.seconds)
+    reactor._newTimedCalls.append(tple)
+    return tple
 
 class socket_rwdescriptor:
     #implements(IReadWriteDescriptor)
@@ -42,7 +65,7 @@ class BaseTwistedHub(object):
     Instead, it assumes that the mainloop is run in the main greenlet.
     
     This makes running "green" functions in the main greenlet impossible but is useful
-    when you want to run reactor.run() yourself.
+    when you want to call reactor.run() yourself.
     """
     def __init__(self, mainloop_greenlet):
         self.greenlet = mainloop_greenlet
@@ -101,7 +124,7 @@ class BaseTwistedHub(object):
                 return func(*args, **kwargs)
             finally:
                 self.timer_finished(timer)
-        timer = reactor.callLater(seconds, wrap, *args, **kwargs)
+        timer = callLater(reactor, seconds, call_func_finish_time, *args, **kwargs)
         if seconds:
             self.track_timer(timer)
         return timer
