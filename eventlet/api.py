@@ -138,28 +138,29 @@ def trampoline(fd, read=None, write=None, timeout=None, timeout_exc=TimeoutError
     self = greenlet.getcurrent()
     fileno = getattr(fd, 'fileno', lambda: fd)()
     def _do_close(_d, error=None):
-        if t is not None:
-            t.cancel()
-        hub.remove_descriptor(descriptor)
         greenlib.switch(self, exc=getattr(error, 'value', None)) # convert to socket.error
     def _do_timeout():
-        hub.remove_descriptor(descriptor)
         greenlib.switch(self, exc=timeout_exc())
     def cb(d):
-        if t is not None:
-            t.cancel()
-        hub.remove_descriptor(descriptor)
         greenlib.switch(self)
         # with TwistedHub, descriptor actually an object (socket_rwdescriptor) which stores
         # this callback. If this callback stores a reference to the socket instance (fd)
-        # then descriptor has a reference to that instance. This makes socket not be collected
+        # then descriptor has a reference to that instance. This makes socket not collected
         # after greenlet exit. Since nobody actually uses the results of this switch, I removed
         # fd from here. If it will be needed than an indirect reference which is discarded right
         # after the switch above should be used.
     if timeout is not None:
         t = hub.schedule_call(timeout, _do_timeout)
-    descriptor = hub.add_descriptor(fileno, read and cb, write and cb, _do_close)
-    return hub.switch()
+    try:
+        descriptor = hub.add_descriptor(fileno, read and cb, write and cb, _do_close)
+        try:
+            return hub.switch()
+        finally:
+            hub.remove_descriptor(descriptor)
+    finally:
+        if t is not None:
+            t.cancel()
+
 
 def get_fileno(obj):
     try:
@@ -184,42 +185,38 @@ def select(read_list, write_list, error_list, timeout=None):
 
     descriptors = []
 
-    def cleanup(t):
-        if t is not None:
-            t.cancel()
-        for d in descriptors:
-            self.remove_descriptor(d)
-
     def on_read(d):
-        cleanup(t)
         original = ds[get_fileno(d)]['read']
         greenlib.switch(current, ([original], [], []))
 
     def on_write(d):
-        cleanup(t)
         original = ds[get_fileno(d)]['write']
         greenlib.switch(current, ([], [original], []))
 
     def on_error(d, _err=None):
-        cleanup(t)
         original = ds[get_fileno(d)]['error']
         greenlib.switch(current, ([], [], [original]))
 
     def on_timeout():
-        cleanup(None)
         greenlib.switch(current, ([], [], []))
 
     if timeout is not None:
         t = self.schedule_call(timeout, on_timeout)
-
-    for k, v in ds.iteritems():
-        d = self.add_descriptor(k,
-                                v.get('read') is not None and on_read,
-                                v.get('write') is not None and on_write,
-                                v.get('error') is not None and on_error)
-        descriptors.append(d)
-
-    return self.switch()
+    try:
+        for k, v in ds.iteritems():
+            d = self.add_descriptor(k,
+                                    v.get('read') is not None and on_read,
+                                    v.get('write') is not None and on_write,
+                                    v.get('error') is not None and on_error)
+            descriptors.append(d)
+        try:
+            return self.switch()
+        finally:
+            for d in descriptors:
+                self.remove_descriptor(d)
+    finally:
+        if t is not None:
+            t.cancel()
 
 
 def _spawn_startup(cb, args, kw, cancel=None):
