@@ -5,14 +5,21 @@ from eventlet import greenlib
 from eventlet.api import get_hub, spawn
 
 def block_on(deferred):
-    cur = greenlet.getcurrent()
+    cur = [greenlet.getcurrent()]
     def cb(value):
-        greenlib.switch(cur, value)
+        if cur:
+            greenlib.switch(cur[0], value)
+        return value
     def eb(err):
-        greenlib.switch(cur, exc=(err.type, err.value, err.tb))
+        if cur:
+            greenlib.switch(cur[0], exc=(err.type, err.value, err.tb))
+        return err
     deferred.addCallback(cb)
     deferred.addErrback(eb)
-    return get_hub().switch()
+    try:
+        return get_hub().switch()
+    finally:
+        del cur[0]
 
 def _putResultInDeferred(deferred, f, args, kwargs):
     try:
