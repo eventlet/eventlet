@@ -6,6 +6,9 @@ import glob
 
 REPO_URL = 'http://devel.ag-projects.com/~denis/cgi-bin/hgweb.cgi'
 
+hubs_order = ['selecthub', 'poll', 'selects', 'libev', 'twistedr/selectreactor',
+              'twistedr/pollreactor', 'twistedr/epollreactor']
+
 def make_table(database):
     c = sqlite3.connect(database)
     res = c.execute(('select command_record.id, testname, hub, runs, errors, fails, '
@@ -26,7 +29,13 @@ def calc_hub_stats(table):
             test_result = table[testname][hub]
             hub_stats.setdefault(hub, TestResult(0,0,0,0)).__iadd__(test_result)
     hubs = hub_stats.items()
-    hubs.sort(key=lambda t: (t[1].passed, -t[1].timeouts, -t[1].failed), reverse=True)
+    hub_names = sorted(hub_stats.keys())
+    def get_order(hub):
+        try:
+            return hubs_order.index(hub)
+        except ValueError:
+            return 100 + hub_names.index(hub)
+    hubs.sort(key=lambda (hub, stats): get_order(hub))
     return hub_stats, [x[0] for x in hubs]
 
 class TestResult:
@@ -51,6 +60,10 @@ class TestResult:
     @property
     def total(self):
         return self.runs + self.timeouts
+
+    @property
+    def percentage(self):
+        return float(self.passed) / self.total
 
     def __iadd__(self, other):
         self.runs += other.runs
