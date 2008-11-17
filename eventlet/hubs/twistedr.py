@@ -1,3 +1,4 @@
+import sys
 import threading
 import weakref
 from twisted.internet.base import DelayedCall as TwistedDelayedCall
