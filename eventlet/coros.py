@@ -922,6 +922,8 @@ class queue(object):
         self.sem.acquire()
         result, exc = self.items.popleft()
         if exc is not None:
+            if isinstance(exc, tuple):
+                raise exc[0], exc[1], exc[2]
             raise exc
         return result
 
