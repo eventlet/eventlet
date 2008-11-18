@@ -132,7 +132,10 @@ class event(object):
         """
         if self._result is NOT_USED:
             self._waiters[api.getcurrent()] = True
-            return api.get_hub().switch()
+            try:
+                return api.get_hub().switch()
+            finally:
+                del self._waiters[api.getcurrent()]
         if self._exc is not None:
             raise self._exc
         return self._result
