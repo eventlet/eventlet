@@ -909,6 +909,9 @@ class queue(object):
         self.items.append((result, exc))
         self.sem.release()
 
+    def send_exception(self, exc):
+        return self.send(exc=exc)
+
     def wait(self):
         """Wait for an item sent by a send() call, in FIFO order.
         If the corresponding send() specifies exc=SomeExceptionClass, this
