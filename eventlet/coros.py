@@ -926,6 +926,8 @@ class queue(object):
                 raise exc[0], exc[1], exc[2]
             raise exc
         return result
+    
+    receive = wait
 
     def ready(self):
         # could also base this on self.sem.counter...
