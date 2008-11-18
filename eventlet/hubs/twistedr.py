@@ -113,13 +113,13 @@ class BaseTwistedHub(object):
 
     def schedule_call(self, seconds, func, *args, **kwargs):
         from twisted.internet import reactor
-
-        def call_func_finish_time(*args, **kwargs):
+        def call_with_timer_attached(*args1, **kwargs1):
             try:
-                return func(*args, **kwargs)
+                return func(*args1, **kwargs1)
             finally:
-                self.timer_finished(timer)
-        timer = callLater(reactor, seconds, call_func_finish_time, *args, **kwargs)
+                if seconds:
+                    self.timer_finished(timer)
+        timer = callLater(reactor, seconds, call_with_timer_attached, *args, **kwargs)
         if seconds:
             self.track_timer(timer)
         return timer
