@@ -135,7 +135,7 @@ class event(object):
             try:
                 return api.get_hub().switch()
             finally:
-                del self._waiters[api.getcurrent()]
+                self._waiters.pop(api.getcurrent(), None)
         if self._exc is not None:
             raise self._exc
         return self._result
