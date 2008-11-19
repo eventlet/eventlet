@@ -136,6 +136,7 @@ def trampoline(fd, read=None, write=None, timeout=None, timeout_exc=TimeoutError
     t = None
     hub = get_hub()
     self = greenlet.getcurrent()
+    assert hub.greenlet is not self, 'do not call blocking functions from the mainloop'
     fileno = getattr(fd, 'fileno', lambda: fd)()
     def _do_close(_d, error=None):
         greenlib.switch(self, exc=getattr(error, 'value', None)) # convert to socket.error
@@ -175,6 +176,7 @@ def select(read_list, write_list, error_list, timeout=None):
     self = get_hub()
     t = None
     current = greenlet.getcurrent()
+    assert self.greenlet is not current, 'do not call blocking functions from the mainloop'
     ds = {}
     for r in read_list:
         ds[get_fileno(r)] = {'read' : r}
@@ -419,6 +421,7 @@ def sleep(seconds=0):
     nothing else will run.
     """
     hub = get_hub()
+    assert hub.greenlet is not greenlet.getcurrent(), 'do not call blocking functions from the mainloop'
     timer = hub.schedule_call(seconds, greenlib.switch, greenlet.getcurrent())
     try:
         hub.switch()
