@@ -254,9 +254,9 @@ def spawn(function, *args, **kwds):
     greenlib.switch(g, (_spawn_startup, function, args, kwds, t.cancel))
     return g
 
-
-kill = greenlib.kill
-
+def kill(g):
+    get_hub().schedule_call(0, greenlib.kill, g)
+    sleep(0) 
 
 def call_after(seconds, function, *args, **kwds):
     """Schedule *function* to be called after *seconds* have elapsed.
