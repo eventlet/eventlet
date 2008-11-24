@@ -35,7 +35,7 @@ class MyMixinServer:
 
 teststring = "hello world\r\n"
 
-def receive(sock, n, timeout=20):
+def receive(sock, n, timeout=5):
     #print 'select args: ', [sock], [], [], timeout
     r, w, x = select.select([sock], [], [], timeout)
     #print 'select results: ', r, w, x
