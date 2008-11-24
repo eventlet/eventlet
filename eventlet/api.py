@@ -279,7 +279,8 @@ def spawn(function, *args, **kwds):
 
 def kill(g):
     get_hub().schedule_call(0, g.throw)
-    sleep(0)
+    if getcurrent() is not get_hub().greenlet:
+        sleep(0)
 
 def call_after_global(seconds, function, *args, **kwds):
     """Schedule *function* to be called after *seconds* have elapsed.
