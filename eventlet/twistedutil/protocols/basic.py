@@ -1,22 +1,21 @@
 from twisted.protocols import basic
 from twisted.internet.error import ConnectionDone
-from eventlet.api import spawn
 from eventlet.twistedutil.protocol import BaseBuffer
 
 class LineOnlyReceiver(basic.LineOnlyReceiver):
 
     def lineReceived(self, line):
-        spawn(self.channel.send, line)
+        self._queue.send(line)
 
     def connectionLost(self, reason):
-        spawn(self.channel.send_exception, reason.value)
+        self._queue.send_exception(reason.value)
 
 class LineOnlyReceiverBuffer(BaseBuffer):
 
     protocol_class = LineOnlyReceiver
 
     def readline(self):
-        return self.channel.receive()
+        return self._wait()
 
     def sendline(self, line):
         self.protocol.sendLine(line)

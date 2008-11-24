@@ -5,17 +5,21 @@ from twisted.internet.protocol import Factory, _InstanceFactory
 from twisted.internet import defer
 
 from eventlet.api import spawn
-from eventlet.channel import channel
+from eventlet.coros import queue
 from eventlet.twistedutil import block_on
 
 
 class BaseBuffer(object):
 
     def build_protocol(self):
+        # note to subclassers: self._queue must have send and send_exception that are non-blocking
         self.protocol = self.protocol_class()
-        self.channel = self.protocol.channel = channel()
+        self._queue = self.protocol._queue = queue()
         return self.protocol
-
+    
+    def _wait(self):
+        return self._queue.wait()
+    
     @property
     def transport(self):
         return self.protocol.transport
@@ -27,11 +31,11 @@ class BaseBuffer(object):
 class Protocol(twistedProtocol):
 
     def dataReceived(self, data):
-        spawn(self.channel.send, data)
+        self._queue.send(data)
 
     def connectionLost(self, reason):
-        spawn(self.channel.send_exception, reason.value)
-        self.channel = None # QQQ channel creates a greenlet. does it actually finish and memory is reclaimed?
+        self._queue.send_exception(reason.value)
+        self._queue = None
 
 
 class Unbuffered(BaseBuffer):
@@ -69,15 +73,15 @@ class Unbuffered(BaseBuffer):
         Note that server 'BYE' was received by twisted, but it was thrown away. Use Buffer if you
         want to keep the received data.
         """
-        if self.channel is None:
+        if self._queue is None:
             return ''
         try:
-            return self.channel.receive()
+            return self._wait()
         except ConnectionDone:
-            self.channel = None
+            self._queue = None
             return ''
         except Exception:
-            self.channel = None
+            self._queue = None
             raise
 
     # iterator protocol:
@@ -122,7 +126,7 @@ class Buffer(BaseBuffer):
         ''
         >>> buf.read(1)
         ''
-        >>> print buf.channel
+        >>> print buf._queue
         None
 
         >>> PORT = setup_server_tcp(exit='clean')
@@ -142,22 +146,22 @@ class Buffer(BaseBuffer):
         #Traceback
         # ...
         #ConnectionLost:
-        #>>> buf.channel
+        #>>> buf._queue
         #None
         #>>> buf.read(4)
         #'said'
         #>>> buf.read()
         #' whoa. BYE'
         """
-        if self.channel is not None:
+        if self._queue is not None:
             try:
                 while len(self.buf) < size or size < 0:
-                    recvd = self.channel.receive()
+                    recvd = self._wait()
                     self.buf += recvd
             except ConnectionDone:
-                self.channel = None
+                self._queue = None
             except Exception:
-                self.channel = None
+                self._queue = None
                 # signal the error, but keep buf intact for possible inspection
                 raise
         if size>=0:
@@ -208,15 +212,15 @@ class Buffer(BaseBuffer):
         #'BYE'
         #>>> buf.read(1)
         """
-        if self.channel is not None and not self.buf:
+        if self._queue is not None and not self.buf:
             try:
-                recvd = self.channel.receive()
+                recvd = self._wait()
                 #print 'recvd: %r' % recvd
                 self.buf += recvd
             except ConnectionDone:
-                self.channel = None
+                self._queue = None
             except Exception:
-                self.channel = None
+                self._queue = None
                 # signal the error, but if buf had any data keep it
                 raise
         if buflen is None:
