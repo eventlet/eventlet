@@ -945,6 +945,10 @@ class queue(object):
         result, exc = self.items.popleft()
         if exc is not None:
             if isinstance(exc, tuple):
+                if len(exc)==1:
+                    exc += (None, None,)
+                elif len(exc)==2:
+                    exc += (None, )
                 raise exc[0], exc[1], exc[2]
             raise exc
         return result
