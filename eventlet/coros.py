@@ -213,11 +213,20 @@ class event(object):
         self._result = result
         self._exc = exc
         hub = api.get_hub()
-        for waiter in self._waiters:
-            if exc is None:
+        if exc is None:
+            for waiter in self._waiters:
                 hub.schedule_call(0, waiter.switch, self._result)
+        else:
+            if isinstance(self._exc, tuple):
+                for waiter in self._waiters:
+                    hub.schedule_call(0, waiter.throw, *self._exc)
             else:
-                hub.schedule_call(0, waiter.throw, self._exc)
+                for waiter in self._waiters:
+                    hub.schedule_call(0, waiter.throw, self._exc)
+
+    def send_exception(self, *args):
+        # the arguments and the same as for greenlet.throw
+        return self.send(None, args)
 
 class semaphore(object):
     """Classic semaphore implemented with a counter and an event.
@@ -913,8 +922,9 @@ class queue(object):
         self.items.append((result, exc))
         self.sem.release()
 
-    def send_exception(self, exc):
-        return self.send(exc=exc)
+    def send_exception(self, *args):
+        # the arguments are the same as for greenlet.throw
+        return self.send(exc=args)
 
     def wait(self):
         """Wait for an item sent by a send() call, in FIFO order.
