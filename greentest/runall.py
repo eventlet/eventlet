@@ -8,6 +8,9 @@ from optparse import OptionParser, Option
 from copy import copy
 from with_eventlet import import_reactor
 
+first_hubs = ['selecthub', 'poll', 'selects', 'twistedr']
+first_reactors = ['selectreactor', 'pollreactor', 'epollreactor']
+
 COMMAND = './record_results.py ./with_timeout.py ./with_eventlet.py %(setup)s %(test)s'
 
 # the following aren't in the default list unless --all option present
@@ -106,7 +109,9 @@ def main():
     options.reactors = list(set(options.reactors) - set(options.ignore_reactors))
     options.tests = list(set(options.tests) - set(options.ignore_tests))
     random.shuffle(options.hubs)
+    options.hubs.sort(key=first_hubs.__contains__, reverse=True)
     random.shuffle(options.reactors)
+    options.reactors.sort(key=first_reactors.__contains__, reverse=True)
     random.shuffle(options.tests)
 
     print 'hubs: %s' % ','.join(options.hubs)
