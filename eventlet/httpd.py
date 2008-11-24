@@ -25,13 +25,12 @@ THE SOFTWARE.
 
 import cgi
 import errno
-import socket
+from eventlet.green import socket
 import sys
 import time
-import urllib
-import socket
+from eventlet.green import urllib
 import traceback
-import BaseHTTPServer
+from eventlet.green import BaseHTTPServer
 
 try:
     from cStringIO import StringIO
