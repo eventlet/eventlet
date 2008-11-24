@@ -23,7 +23,7 @@ import Queue
 from sys import stdout
 from Queue import Empty, Queue
 
-from eventlet import api, coros, httpc, httpd, greenio
+from eventlet import api, coros, greenio
 from eventlet.api import trampoline, get_hub
 
 _rpipe, _wpipe = os.pipe()
