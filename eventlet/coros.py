@@ -236,6 +236,35 @@ class event(object):
         # the arguments and the same as for greenlet.throw
         return self.send(None, args)
 
+
+class async_result(object):
+
+    def __init__(self, greenlet, event):
+        self.greenlet = greenlet
+        self.event = event
+
+    def wait(self):
+        return self.event.wait()
+
+    def kill(self):
+        return api.kill(self.greenlet)
+
+def _wrap_result_in_event(event, func, *args, **kwargs):
+    try:
+        result = func(*args, **kwargs)
+    except api.GreenletExit, ex:
+        event.send(ex)
+    except:
+        event.send_exception(*sys.exc_info())
+    else:
+        event.send(result)
+
+def spawn_link(func, *args, **kwargs):
+    result = event()
+    g = api.spawn(_wrap_result_in_event, result, func, *args, **kwargs)
+    return async_result(g, result)
+
+
 class semaphore(object):
     """Classic semaphore implemented with a counter and an event.
     Optionally initialize with a resource count, then acquire() and release()
