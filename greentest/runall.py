@@ -140,7 +140,7 @@ def main():
             cmd(COMMAND % locals())
             if time()-last_time>PARSE_PERIOD:
                 os.system('./parse_results.py')
-                last_time = PARSE_PERIOD
+                last_time = time()
     os.system('./parse_results.py')
 
 if __name__=='__main__':
