@@ -47,9 +47,11 @@ class ExceptionWrapper(object):
     def __init__(self, e):
         self.e = e
 
+class NOT_USED:
+    def __repr__(self):
+        return 'NOT_USED'
 
-NOT_USED = object()
-
+NOT_USED = NOT_USED()
 
 class event(object):
     """An abstraction where an arbitrary number of coroutines
@@ -73,6 +75,10 @@ class event(object):
     _result = None
     def __init__(self):
         self.reset()
+
+    def __repr__(self):
+        klass = self.__class__.__name__
+        return '<%s _result=%r _exc=%r _waiters=%r>' % (klass, self._result, self._exc, self._waiters)
 
     def reset(self):
         """ Reset this event so it can be used to send again.
