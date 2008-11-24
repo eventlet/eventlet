@@ -28,10 +28,10 @@ import os
 import sys
 import time
 import traceback
-import urllib
-import socket
-import SocketServer
-import BaseHTTPServer
+from eventlet.green import urllib
+from eventlet.green import socket
+from eventlet.green import SocketServer
+from eventlet.green import BaseHTTPServer
 
 from eventlet import api
 from eventlet.httpdate import format_date_time
