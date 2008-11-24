@@ -28,7 +28,6 @@ import socket
 
 from eventlet import api
 from eventlet import channel
-from eventlet import httpc
 
 class FanFailed(RuntimeError):
     pass
@@ -177,6 +176,7 @@ class ConnectionPool(Pool):
         Pool.__init__(self, min_size, max_size)
 
     def create(self):
+        import httpc
         return httpc.make_connection(self.proto, self.netloc, self.use_proxy)
 
     def put(self, item):
