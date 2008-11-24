@@ -259,18 +259,39 @@ class GreenSocket(object):
         if self.act_non_blocking:
             return self.fd.connect(address)
         fd = self.fd
-        connect = socket_connect
         if self.gettimeout() is None:
-            while not connect(fd, address):
+            while not socket_connect(fd, address):
                 trampoline(fd, write=True, timeout_exc=socket.timeout)
         else:
             end = time.time() + self.gettimeout()
             while True:
-                if connect(fd, address):
+                if socket_connect(fd, address):
                     return
                 if time.time() >= end:
                     raise socket.timeout
                 trampoline(fd, write=True, timeout=end-time.time(), timeout_exc=socket.timeout)
+
+    def connect_ex(self, address):
+        if self.act_non_blocking:
+            return self.fd.connect_ex(address)
+        fd = self.fd
+        if self.gettimeout() is None:
+            while not socket_connect(fd, address):
+                try:
+                    trampoline(fd, write=True, timeout_exc=socket.timeout)
+                except socket.error, ex:
+                    return ex[0]
+        else:
+            end = time.time() + self.gettimeout()
+            while True:
+                if socket_connect(fd, address):
+                    return 0
+                if time.time() >= end:
+                    raise socket.timeout
+                try:
+                    trampoline(fd, write=True, timeout=end-time.time(), timeout_exc=socket.timeout)
+                except socket.error, ex:
+                    return ex[0]
 
     def dup(self, *args, **kw):
         sock = self.fd.dup(*args, **kw)
