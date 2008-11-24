@@ -214,7 +214,10 @@ class event(object):
         self._exc = exc
         hub = api.get_hub()
         for waiter in self._waiters:
-            hub.schedule_call(0, waiter.switch, self._result)
+            if exc is None:
+                hub.schedule_call(0, waiter.switch, self._result)
+            else:
+                hub.schedule_call(0, waiter.throw, self._exc)
 
 class semaphore(object):
     """Classic semaphore implemented with a counter and an event.
