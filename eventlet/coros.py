@@ -142,6 +142,8 @@ class event(object):
             finally:
                 self._waiters.pop(api.getcurrent(), None)
         if self._exc is not None:
+            if isinstance(self._exc, tuple):
+                raise self._exc[0], self._exc[1], self._exc[2]
             raise self._exc
         return self._result
 
