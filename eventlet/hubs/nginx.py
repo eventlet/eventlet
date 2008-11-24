@@ -38,10 +38,6 @@ if mydir not in sys.path:
 from eventlet import api
 from eventlet import httpc
 from eventlet.hubs import hub
-from eventlet import util
-
-
-util.wrap_socket_with_coroutine_socket()
 
 
 def hello_world(env, start_response):
