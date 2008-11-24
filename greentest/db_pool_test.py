@@ -24,7 +24,8 @@
 
 import os.path
 
-from eventlet import api, coros, tests
+from eventlet import api, coros
+from greentest import tests
 from eventlet import db_pool
 
 class DBTester(object):

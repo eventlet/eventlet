@@ -24,7 +24,8 @@ THE SOFTWARE.
 
 import unittest
 
-from eventlet import api, tests, timer
+from eventlet import api, timer
+from greentest import tests
 
 class TestTimer(tests.TestCase):
     mode = 'static'
