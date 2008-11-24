@@ -31,7 +31,6 @@ import traceback
 from eventlet import api
 from eventlet import channel
 from eventlet import pools
-from eventlet import greenlib
 
 
 try:
@@ -182,7 +181,7 @@ class event(object):
         if waiter in self._waiters:
             del self._waiters[waiter]
             api.get_hub().schedule_call(
-                0, greenlib.switch, waiter, None, Cancelled())
+                0, waiter.throw, Cancelled())
 
     def send(self, result=None, exc=None):
         """Makes arrangements for the waiters to be woken with the
@@ -215,8 +214,7 @@ class event(object):
         self._exc = exc
         hub = api.get_hub()
         for waiter in self._waiters:
-            hub.schedule_call(0, greenlib.switch, waiter, self._result)
-
+            hub.schedule_call(0, waiter.switch, self._result)
 
 class semaphore(object):
     """Classic semaphore implemented with a counter and an event.

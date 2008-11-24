@@ -30,8 +30,6 @@ import traceback
 import time
 
 from eventlet.support import greenlet
-
-from eventlet import greenlib
 from eventlet.timer import Timer
 
 _g_debug = True
@@ -49,7 +47,7 @@ class BaseHub(object):
         self.waiters_by_greenlet = {}
 
         self.clock = clock
-        self.greenlet = None
+        self.greenlet = greenlet.greenlet(self.run)
         self.stopping = False
         self.running = False
         self.timers = []
@@ -106,7 +104,7 @@ class BaseHub(object):
         fileno = self.waiters_by_greenlet.pop(gr, None)
         if fileno is not None:
             self.remove_descriptor(fileno)
-        greenlib.switch(gr, None, exception_object)
+        gr.throw(exception_object)
 
     def exc_descriptor(self, fileno):
         exc = self.excs.get(fileno)
@@ -122,16 +120,13 @@ class BaseHub(object):
             self.switch()
 
     def switch(self):
-        if not self.greenlet:
-            self.greenlet = greenlib.tracked_greenlet()
-            args = ((self.run,),)
-        else:
-            args = ()
+        if self.greenlet.dead:
+            self.greenlet = greenlet.greenlet(self.run)
         try:
             greenlet.getcurrent().parent = self.greenlet
         except ValueError:
             pass
-        return greenlib.switch(self.greenlet, *args)
+        return self.greenlet.switch()
 
     def squelch_exception(self, fileno, exc_info):
         traceback.print_exception(*exc_info)

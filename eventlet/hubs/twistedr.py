@@ -3,7 +3,6 @@ import threading
 import weakref
 from twisted.internet.base import DelayedCall as TwistedDelayedCall
 from eventlet.hubs.hub import _g_debug
-from eventlet import greenlib
 from eventlet.support.greenlet import greenlet
 
 import traceback
@@ -78,7 +77,7 @@ class BaseTwistedHub(object):
            greenlet.getcurrent().parent = self.greenlet
         except ValueError, ex:
            pass
-        return greenlib.switch(self.greenlet)
+        return self.greenlet.switch()
 
     def stop(self):
         from twisted.internet import reactor
@@ -105,7 +104,7 @@ class BaseTwistedHub(object):
         fileno = self.waiters_by_greenlet.pop(gr, None)
         if fileno is not None:
             self.remove_descriptor(fileno)
-        greenlib.switch(gr, None, exception_object)
+        gr.throw(exception_object)
 
     # required by GreenSocket
     def exc_descriptor(self, _fileno):
@@ -212,7 +211,6 @@ class BaseTwistedHub(object):
         return len(reactor.getDelayedCalls())
 
 
-
 class TwistedHub(BaseTwistedHub):
     # wrapper around reactor that runs reactor's main loop in a separate greenlet.
     # whenever you need to wait, i.e. inside a call that must appear
@@ -235,19 +233,17 @@ class TwistedHub(BaseTwistedHub):
         assert Hub.state==0, ('This hub can only be instantiated once', Hub.state)
         Hub.state = 1
         make_twisted_threadpool_daemonic() # otherwise the program would hang after the main greenlet exited
-        BaseTwistedHub.__init__(self, None)
+        g = greenlet(self.run)
+        BaseTwistedHub.__init__(self, g)
 
     def switch(self):
-        if not self.greenlet:
-            self.greenlet = greenlib.tracked_greenlet()
-            args = ((self.run,),)
-        else:
-            args = ()
+        if self.greenlet.dead:
+            self.greenlet = greenlet(self.run)
         try:
            greenlet.getcurrent().parent = self.greenlet
         except ValueError, ex:
            pass
-        return greenlib.switch(self.greenlet, *args)
+        return self.greenlet.switch()
 
     def run(self, installSignalHandlers=None):
         if installSignalHandlers is None:

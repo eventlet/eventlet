@@ -1,18 +1,17 @@
 from twisted.internet import defer
 from twisted.python import failure
 from eventlet.support.greenlet import greenlet
-from eventlet import greenlib
 from eventlet.api import get_hub, spawn
 
 def block_on(deferred):
     cur = [greenlet.getcurrent()]
     def cb(value):
         if cur:
-            greenlib.switch(cur[0], value)
+            cur[0].switch(value)
         return value
     def eb(err):
         if cur:
-            greenlib.switch(cur[0], exc=(err.type, err.value, err.tb))
+            err.throwExceptionIntoGenerator(cur[0])
         return err
     deferred.addCallback(cb)
     deferred.addErrback(eb)
@@ -41,7 +40,10 @@ def callInGreenThread(func, *args, **kwargs):
 
 if __name__=='__main__':
     import sys
-    num = int(sys.argv[1])
+    try:
+        num = int(sys.argv[1])
+    except:
+        sys.exit('Supply number of test as an argument, 0, 1, 2 or 3')
     from twisted.internet import reactor
     def test():
         print block_on(reactor.resolver.getHostByName('www.google.com'))
@@ -51,7 +53,9 @@ if __name__=='__main__':
     elif num==1:
         spawn(test)
         from eventlet.api import sleep
+        print 'sleeping..'
         sleep(5)
+        print 'done sleeping..'
     elif num==2:
         from eventlet.twistedutil import join_reactor
         spawn(test)

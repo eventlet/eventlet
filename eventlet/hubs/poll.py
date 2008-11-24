@@ -31,7 +31,6 @@ import traceback
 from time import sleep
 import time
 
-from eventlet import greenlib
 from eventlet.hubs import hub
 
 EXC_MASK = select.POLLERR | select.POLLHUP | select.POLLNVAL

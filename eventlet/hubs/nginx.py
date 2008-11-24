@@ -36,7 +36,6 @@ if mydir not in sys.path:
 
 
 from eventlet import api
-from eventlet import greenlib
 from eventlet import httpc
 from eventlet.hubs import hub
 from eventlet import util
@@ -112,7 +111,7 @@ class Hub(hub.BaseHub):
             result = to_call[0](to_call[1])
             del self.to_call
             return result
-        greenlib.switch(self.current_application, self.poll(int(seconds*1000)))
+        self.current_application.switch(self.poll(int(seconds*1000)))
 
     def application(self, env, start_response):
         print "ENV",env
@@ -151,8 +150,8 @@ class Hub(hub.BaseHub):
                         yield x
                 return
             result = self.switch()
-            if not isinstance(result, tuple):
-                result = (result, None) ## TODO Fix greenlib's return values
+            #if not isinstance(result, tuple):
+            #    result = (result, None) ## TODO Fix greenlib's return values
 
 
 def application(env, start_response):

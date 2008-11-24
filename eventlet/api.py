@@ -31,7 +31,7 @@ import inspect
 import traceback
 
 from eventlet.support import greenlet
-from eventlet import greenlib, tls
+from eventlet import tls
 
 __all__ = [
     'call_after', 'exc_after', 'getcurrent', 'get_default_hub', 'get_hub',
@@ -135,15 +135,15 @@ def trampoline(fd, read=None, write=None, timeout=None, timeout_exc=TimeoutError
     """
     t = None
     hub = get_hub()
-    self = greenlet.getcurrent()
-    assert hub.greenlet is not self, 'do not call blocking functions from the mainloop'
+    current = greenlet.getcurrent()
+    assert hub.greenlet is not current, 'do not call blocking functions from the mainloop'
     fileno = getattr(fd, 'fileno', lambda: fd)()
     def _do_close(_d, error=None):
-        greenlib.switch(self, exc=getattr(error, 'value', None)) # convert to socket.error
+        current.throw(getattr(error, 'value', None)) # convert to socket.error
     def _do_timeout():
-        greenlib.switch(self, exc=timeout_exc())
+        current.throw(timeout_exc())
     def cb(d):
-        greenlib.switch(self)
+        current.switch()
         # with TwistedHub, descriptor actually an object (socket_rwdescriptor) which stores
         # this callback. If this callback stores a reference to the socket instance (fd)
         # then descriptor has a reference to that instance. This makes socket not collected
@@ -173,10 +173,10 @@ def get_fileno(obj):
         return f()
 
 def select(read_list, write_list, error_list, timeout=None):
-    self = get_hub()
+    hub = get_hub()
     t = None
     current = greenlet.getcurrent()
-    assert self.greenlet is not current, 'do not call blocking functions from the mainloop'
+    assert hub.greenlet is not current, 'do not call blocking functions from the mainloop'
     ds = {}
     for r in read_list:
         ds[get_fileno(r)] = {'read' : r}
@@ -189,33 +189,33 @@ def select(read_list, write_list, error_list, timeout=None):
 
     def on_read(d):
         original = ds[get_fileno(d)]['read']
-        greenlib.switch(current, ([original], [], []))
+        current.switch(([original], [], []))
 
     def on_write(d):
         original = ds[get_fileno(d)]['write']
-        greenlib.switch(current, ([], [original], []))
+        current.switch(([], [original], []))
 
     def on_error(d, _err=None):
         original = ds[get_fileno(d)]['error']
-        greenlib.switch(current, ([], [], [original]))
+        current.switch(([], [], [original]))
 
     def on_timeout():
-        greenlib.switch(current, ([], [], []))
+        current.switch(([], [], []))
 
     if timeout is not None:
-        t = self.schedule_call(timeout, on_timeout)
+        t = hub.schedule_call(timeout, on_timeout)
     try:
         for k, v in ds.iteritems():
-            d = self.add_descriptor(k,
-                                    v.get('read') is not None and on_read,
-                                    v.get('write') is not None and on_write,
-                                    v.get('error') is not None and on_error)
+            d = hub.add_descriptor(k,
+                                   v.get('read') is not None and on_read,
+                                   v.get('write') is not None and on_write,
+                                   v.get('error') is not None and on_error)
             descriptors.append(d)
         try:
-            return self.switch()
+            return hub.switch()
         finally:
             for d in descriptors:
-                self.remove_descriptor(d)
+                hub.remove_descriptor(d)
     finally:
         if t is not None:
             t.cancel()
@@ -223,7 +223,7 @@ def select(read_list, write_list, error_list, timeout=None):
 
 def _spawn_startup(cb, args, kw, cancel=None):
     try:
-        greenlib.switch(greenlet.getcurrent().parent)
+        greenlet.getcurrent().parent.switch()
         cancel = None
     finally:
         if cancel is not None:
@@ -232,7 +232,25 @@ def _spawn_startup(cb, args, kw, cancel=None):
 
 def _spawn(g):
     g.parent = greenlet.getcurrent()
-    greenlib.switch(g)
+    g.switch()
+
+
+class CancellingTimersGreenlet(greenlet.greenlet):
+
+    def __init__(self, run=None, parent=None, hub=None):
+        self._run = run
+        if parent is None:
+            parent = greenlet.getcurrent()
+        if hub is None:
+            hub = get_hub()
+        self.hub = hub
+        greenlet.greenlet.__init__(self, None, parent)
+
+    def run(self, *args, **kwargs):
+        try:
+            return self._run(*args, **kwargs)
+        finally:
+            self.hub.cancel_timers(self, quiet=True)
 
 
 def spawn(function, *args, **kwds):
@@ -251,17 +269,18 @@ def spawn(function, *args, **kwds):
     """
     # killable
     t = None
-    g = greenlib.tracked_greenlet()
-    t = get_hub().schedule_call(0, _spawn, g)
-    greenlib.switch(g, (_spawn_startup, function, args, kwds, t.cancel))
+    g = CancellingTimersGreenlet(_spawn_startup)
+    t = get_hub().schedule_call_global(0, _spawn, g)
+    g.switch(function, args, kwds, t.cancel)
     return g
 
 def kill(g):
-    get_hub().schedule_call(0, greenlib.kill, g)
-    sleep(0) 
+    get_hub().schedule_call(0, g.throw)
+    sleep(0)
 
-def call_after(seconds, function, *args, **kwds):
+def call_after_global(seconds, function, *args, **kwds):
     """Schedule *function* to be called after *seconds* have elapsed.
+    The function will be scheduled even if the current greenlet has exited.
     
     *seconds* may be specified as an integer, or a float if fractional seconds
     are desired. The *function* will be called with the given *args* and
@@ -272,11 +291,34 @@ def call_after(seconds, function, *args, **kwds):
     """
     # cancellable
     def startup():
-        g = greenlib.tracked_greenlet()
-        greenlib.switch(g, (_spawn_startup, function, args, kwds))
-        greenlib.switch(g)
-    return get_hub().schedule_call(seconds, startup)
+        g = CancellingTimersGreenlet(_spawn_startup)
+        g.switch(function, args, kwds)
+        g.switch()
+    t = get_hub().schedule_call_global(seconds, startup)
+    return t
 
+
+def call_after_local(seconds, function, *args, **kwds):
+    """Schedule *function* to be called after *seconds* have elapsed.
+    The function will NOT be called if the current greenlet has exited.
+    
+    *seconds* may be specified as an integer, or a float if fractional seconds
+    are desired. The *function* will be called with the given *args* and
+    keyword arguments *kwds*, and will be executed within the main loop's
+    coroutine.
+
+    Its return value is discarded. Any uncaught exception will be logged.
+    """
+    # cancellable
+    def startup():
+        g = CancellingTimersGreenlet(_spawn_startup)
+        g.switch(function, args, kwds)
+        g.switch()
+    t = get_hub().schedule_call_local(seconds, startup)
+    return t
+
+# for compatibility with original eventlet API
+call_after = call_after_local
 
 def with_timeout(seconds, func, *args, **kwds):
     """Wrap a call to some (yielding) function with a timeout; if the called
@@ -422,15 +464,13 @@ def sleep(seconds=0):
     """
     hub = get_hub()
     assert hub.greenlet is not greenlet.getcurrent(), 'do not call blocking functions from the mainloop'
-    timer = hub.schedule_call(seconds, greenlib.switch, greenlet.getcurrent())
+    timer = hub.schedule_call(seconds, greenlet.getcurrent().switch)
     try:
         hub.switch()
     finally:
         timer.cancel()
 
 
-switch = greenlib.switch
-local_dict = greenlib.greenlet_dict
 getcurrent = greenlet.getcurrent
 GreenletExit = greenlet.GreenletExit
 

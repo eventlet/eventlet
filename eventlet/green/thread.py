@@ -1,16 +1,21 @@
 """implements standard module 'thread' with greenlets"""
 from __future__ import absolute_import
 import thread as thread_module
-from eventlet.greenlib import greenlet_id as get_ident
 from eventlet.support import greenlet
 from eventlet.api import spawn
 from eventlet.coros import semaphore as LockType
 
 error = thread_module.error
 
+def get_ident(gr=None):
+    if gr is None:
+        return id(greenlet.getcurrent())
+    else:
+        return id(gr)
+
 def start_new_thread(function, args=(), kwargs={}):
     g = spawn(function, *args, **kwargs)
-    return get_ident(g) or 0 # XXX 0 only for main greenlet, None for the rest untracked
+    return get_ident(g)
 
 def allocate_lock():
     return LockType(1)

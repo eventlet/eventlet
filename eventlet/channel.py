@@ -25,7 +25,7 @@ THE SOFTWARE.
 
 import collections
 
-from eventlet import api, greenlib
+from eventlet import api
 from eventlet.support import greenlet
 
 __all__ = ['channel']
@@ -49,8 +49,13 @@ class channel(object):
     def _tasklet_loop(self):
         deque = self.deque = collections.deque()
         hub = api.get_hub()
-        switch = greenlib.switch
-        direction, caller, args = switch()
+        current = greenlet.getcurrent()
+        def switch(g, value=None, exc=None):
+            if exc is None:
+                return g.switch(value)
+            else:
+                return g.throw(exc)
+        direction, caller, args = switch(current.parent or current)
         try:
             while True:
                 if direction == -1:
@@ -80,12 +85,12 @@ class channel(object):
         try:
             t = self._tasklet
         except AttributeError:
-            t = self._tasklet = greenlib.tracked_greenlet()
-            greenlib.switch(t, (self._tasklet_loop,))
+            t = self._tasklet = greenlet.greenlet(self._tasklet_loop)
+            t.switch()
         if args:
-            return greenlib.switch(t, (1, greenlet.getcurrent(), args))
+            return t.switch((1, greenlet.getcurrent(), args))
         else:
-            return greenlib.switch(t, (-1, greenlet.getcurrent(), args))
+            return t.switch((-1, greenlet.getcurrent(), args))
         
     def receive(self):
         return self._send_tasklet()
