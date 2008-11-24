@@ -6,17 +6,19 @@ import random
 from glob import glob
 from optparse import OptionParser, Option
 from copy import copy
+from time import time
 from with_eventlet import import_reactor
 
 first_hubs = ['selecthub', 'poll', 'selects', 'twistedr']
 first_reactors = ['selectreactor', 'pollreactor', 'epollreactor']
 
 COMMAND = './record_results.py ./with_timeout.py ./with_eventlet.py %(setup)s %(test)s'
+PARSE_PERIOD = 10
 
 # the following aren't in the default list unless --all option present
 NOT_HUBS = set(['nginx'])
 NOT_REACTORS = set(['wxreactor', 'glib2reactor', 'gtk2reactor'])
-NOT_TESTS = set(['test_threading_green.py', 'httpc_test.py', 'httpd_test.py', 'wsgi_test.py'])
+NOT_TESTS = set(['test_threading_green.py', 'httpd_test.py', 'wsgi_test.py'])
 
 def w(s):
     sys.stderr.write("%s\n" % (s, ))
@@ -129,11 +131,17 @@ def main():
         else:
             setups.append('--hub %s' % hub)
 
+    last_time = time()
+
     for setup in setups:
         w(setup)
         for test in options.tests:
             w(test)
             cmd(COMMAND % locals())
+            if time()-last_time>PARSE_PERIOD:
+                os.system('./parse_results.py')
+                last_time = PARSE_PERIOD
+    os.system('./parse_results.py')
 
 if __name__=='__main__':
     main()
