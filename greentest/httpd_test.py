@@ -34,9 +34,6 @@ except ImportError:
     from StringIO import StringIO
 
 
-util.wrap_socket_with_coroutine_socket()
-
-
 from greentest import tests
 
 
