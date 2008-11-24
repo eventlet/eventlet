@@ -139,7 +139,10 @@ def trampoline(fd, read=None, write=None, timeout=None, timeout_exc=TimeoutError
     assert hub.greenlet is not current, 'do not call blocking functions from the mainloop'
     fileno = getattr(fd, 'fileno', lambda: fd)()
     def _do_close(_d, error=None):
-        current.throw(getattr(error, 'value', None)) # convert to socket.error
+        if error is None:
+            current.throw(socket.error(32, 'Broken pipe'))
+        else:
+            current.throw(getattr(error, 'value', error)) # convert to socket.error
     def _do_timeout():
         current.throw(timeout_exc())
     def cb(d):
