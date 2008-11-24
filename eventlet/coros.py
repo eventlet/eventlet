@@ -953,8 +953,6 @@ class queue(object):
             raise exc
         return result
     
-    receive = wait
-
     def ready(self):
         # could also base this on self.sem.counter...
         return len(self.items) > 0
