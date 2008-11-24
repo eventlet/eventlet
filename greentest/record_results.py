@@ -38,8 +38,9 @@ def main():
     print arg, 'finished with code', returncode
     stdout = file(output_name).read()
     if not debug:
-        record(changeset, argv, stdout, returncode)
-        os.unlink(output_name)
+        if returncode!=1:
+            record(changeset, argv, stdout, returncode)
+            os.unlink(output_name)
     sys.exit(returncode)
 
 if __name__=='__main__':
