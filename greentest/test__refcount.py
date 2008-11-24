@@ -21,8 +21,14 @@ def init_server():
     s.listen(5)
     return s
 
-def handle_request(s):
-    conn, address = s.accept()
+def handle_request(s, raise_on_timeout):
+    try:
+        conn, address = s.accept()
+    except socket.timeout:
+        if raise_on_timeout:
+            raise
+        else:
+            return
     #print 'handle_request - accepted'
     res = conn.recv(100)
     assert res == 'hello', `res`
@@ -44,9 +50,9 @@ def make_request():
     #print 'make_request - recvd %r' % res
     #s.close()
 
-def run_interaction(run_client=True):
+def run_interaction(run_client):
     s = init_server()
-    start_new_thread(handle_request, (s, ))
+    start_new_thread(handle_request, (s, run_client))
     if run_client:
         start_new_thread(make_request, ())
     sleep(0.1+SOCKET_TIMEOUT)
@@ -54,7 +60,7 @@ def run_interaction(run_client=True):
     #s.close()
     return weakref.ref(s.fd)
 
-def run_and_check(run_client=True):
+def run_and_check(run_client):
     w = run_interaction(run_client=run_client)
     if w():
         print gc.get_referrers(w())
@@ -67,12 +73,12 @@ def run_and_check(run_client=True):
 class test(unittest.TestCase):
 
     def test_clean_exit(self):
-        run_and_check()
-        run_and_check()
+        run_and_check(True)
+        run_and_check(True)
 
     def test_timeout_exit(self):
-        run_and_check(True)
-        run_and_check(True)
+        run_and_check(False)
+        run_and_check(False)
 
 if __name__=='__main__':
     unittest.main()
