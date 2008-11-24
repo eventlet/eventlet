@@ -241,10 +241,11 @@ class BaseHub(object):
         # the 0 placeholder makes it easy to bisect_right using (now, 1)
         self.next_timers.append((when, 0, info))
 
-    def add_timer(self, timer):
+    def add_timer(self, timer, track=True):
         scheduled_time = self.clock() + timer.seconds
         self._add_absolute_timer(scheduled_time, timer)
-        self.track_timer(timer)
+        if track:
+            self.track_timer(timer)
         return scheduled_time
         
     def track_timer(self, timer):
@@ -259,7 +260,7 @@ class BaseHub(object):
             del self.timers_by_greenlet[timer.greenlet][timer]
             if not self.timers_by_greenlet[timer.greenlet]:
                 del self.timers_by_greenlet[timer.greenlet]
-        except KeyError:
+        except (KeyError, AttributeError):
             pass
 
     def timer_canceled(self, timer):
@@ -272,16 +273,30 @@ class BaseHub(object):
             ins(t, item)
         del self.next_timers[:]
 
-    def schedule_call(self, seconds, cb, *args, **kw):
+    def schedule_call_local(self, seconds, cb, *args, **kw):
         """Schedule a callable to be called after 'seconds' seconds have
-        elapsed.
+        elapsed. Cancel the timer if greenlet has exited.
             seconds: The number of seconds to wait.
             cb: The callable to call after the given time.
             *args: Arguments to pass to the callable when called.
             **kw: Keyword arguments to pass to the callable when called.
         """
         t = Timer(seconds, cb, *args, **kw)
-        self.add_timer(t)
+        self.add_timer(t, track=True)
+        return t
+
+    schedule_call = schedule_call_local
+
+    def schedule_call_global(self, seconds, cb, *args, **kw):
+        """Schedule a callable to be called after 'seconds' seconds have
+        elapsed. The timer will NOT 
+            seconds: The number of seconds to wait.
+            cb: The callable to call after the given time.
+            *args: Arguments to pass to the callable when called.
+            **kw: Keyword arguments to pass to the callable when called.
+        """
+        t = Timer(seconds, cb, *args, **kw)
+        self.add_timer(t, track=False)
         return t
 
     def fire_timers(self, when):

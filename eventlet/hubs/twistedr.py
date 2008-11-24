@@ -111,7 +111,7 @@ class BaseTwistedHub(object):
     def exc_descriptor(self, _fileno):
         pass # XXX do something sensible here
 
-    def schedule_call(self, seconds, func, *args, **kwargs):
+    def schedule_call_local(self, seconds, func, *args, **kwargs):
         from twisted.internet import reactor
         def call_with_timer_attached(*args1, **kwargs1):
             try:
@@ -123,6 +123,12 @@ class BaseTwistedHub(object):
         if seconds:
             self.track_timer(timer)
         return timer
+
+    schedule_call = schedule_call_local
+
+    def schedule_call_global(self, seconds, func, *args, **kwargs):
+        from twisted.internet import reactor
+        return callLater(reactor, seconds, func, *args, **kwargs)
 
     def track_timer(self, timer):
         try:
