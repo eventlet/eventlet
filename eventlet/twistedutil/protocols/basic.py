@@ -8,7 +8,7 @@ class LineOnlyReceiver(basic.LineOnlyReceiver):
         self._queue.send(line)
 
     def connectionLost(self, reason):
-        self._queue.send_exception(reason.value)
+        self._queue.send_exception(reason.type, reason.value, reason.tb)
 
 class LineOnlyReceiverBuffer(BaseBuffer):
 

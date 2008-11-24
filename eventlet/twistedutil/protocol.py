@@ -34,7 +34,7 @@ class Protocol(twistedProtocol):
         self._queue.send(data)
 
     def connectionLost(self, reason):
-        self._queue.send_exception(reason.value)
+        self._queue.send_exception(reason.type, reason.value, reason.tb)
         self._queue = None
 
 
