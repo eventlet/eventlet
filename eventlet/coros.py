@@ -243,6 +243,9 @@ class async_result(object):
         self.greenlet = greenlet
         self.event = event
 
+    def __bool__(self):
+        return not self.greenlet.dead
+
     def wait(self):
         return self.event.wait()
 
