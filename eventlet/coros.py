@@ -103,6 +103,7 @@ class event(object):
         assert self._result is not NOT_USED, 'Trying to re-reset() a fresh event.'
         self.epoch = time.time()
         self._result = NOT_USED
+        self._exc = None
         self._waiters = {}
         
     def ready(self):
