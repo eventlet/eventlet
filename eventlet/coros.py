@@ -75,9 +75,9 @@ class event(object):
     def __init__(self):
         self.reset()
 
-    def __repr__(self):
-        klass = self.__class__.__name__
-        return '<%s _result=%r _exc=%r _waiters=%r>' % (klass, self._result, self._exc, self._waiters)
+    def __str__(self):
+        params = (self.__class__.__name__, hex(id(self)), self._result, self._exc, len(self._waiters))
+        return '<%s at %s result=%r _exc=%r _waiters[%d]>' % params
 
     def reset(self):
         """ Reset this event so it can be used to send again.
@@ -318,6 +318,10 @@ class semaphore(object):
             # If either there's no limit or we're below it, don't block on
             # release()s.
             self.relevent.send()
+
+    def __str__(self):
+        params = (self.__class__.__name__, hex(id(self)), self.counter, self.limit, self.acqevent, self.relevent)
+        return '<%s at %s %r/%r acq=%s rel=%s>' % params
 
     def locked(self):
         return self.counter <= 0
@@ -953,6 +957,10 @@ class queue(object):
         """
         self.items = collections.deque()
         self.sem = semaphore(count=0, limit=max_size)
+
+    def __str__(self):
+        params = (self.__class__.__name__, hex(id(self)), self.sem, len(self.items))
+        return '<%s at %s sem=%s items[%d]>' % params
 
     def send(self, result=None, exc=None):
         """If you send(exc=SomeExceptionClass), the corresponding wait() call
