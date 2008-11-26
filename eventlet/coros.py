@@ -29,7 +29,6 @@ import traceback
 
 
 from eventlet import api
-from eventlet import channel
 from eventlet import pools
 
 
