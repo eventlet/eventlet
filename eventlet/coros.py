@@ -268,6 +268,63 @@ def spawn_link(func, *args, **kwargs):
     return async_result(g, result)
 
 
+class multievent(object):
+    """is an event that can hold more than one value (it cannot be cancelled though)
+    is like a queue, but if there're waiters blocked, send/send_exception will wake up
+    all of them, just like an event will do (queue will wake up only one)
+    """
+
+    def __init__(self):
+        self.items = collections.deque()
+        self._waiters = {}
+
+    def __str__(self):
+        params = (self.__class__.__name__, hex(id(self)), self.items, len(self._waiters))
+        return '<%s at %s items[%d] _waiters[%d]>' % params
+
+    def wait(self):
+        if self.items:
+            result, exc = self.items.popleft()
+            if exc is not None:
+                if isinstance(exc, tuple):
+                    if len(exc)==1:
+                        exc += (None, None,)
+                    elif len(exc)==2:
+                        exc += (None, )
+                    raise exc[0], exc[1], exc[2]
+                raise exc
+            return result
+        else:
+            self._waiters[api.getcurrent()] = True
+            try:
+                return api.get_hub().switch()
+            finally:
+                self._waiters.pop(api.getcurrent(), None)
+
+    def send(self, result=None, exc=None):
+        if self._waiters:
+            hub = api.get_hub()
+            if exc is None:
+                for waiter in self._waiters:
+                    hub.schedule_call(0, waiter.switch, result)
+            else:
+                if isinstance(exc, tuple):
+                    for waiter in self._waiters:
+                        hub.schedule_call(0, waiter.throw, *exc)
+                else:
+                    for waiter in self._waiters:
+                        hub.schedule_call(0, waiter.throw, exc)
+        else:
+            self.items.append((result, exc))
+
+    def send_exception(self, *args):
+        # the arguments are the same as for greenlet.throw
+        return self.send(exc=args)
+
+    def ready(self):
+        return len(self.items) > 0
+
+
 class semaphore(object):
     """Classic semaphore implemented with a counter and an event.
     Optionally initialize with a resource count, then acquire() and release()
