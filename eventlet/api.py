@@ -324,6 +324,65 @@ def call_after_local(seconds, function, *args, **kwds):
 # for compatibility with original eventlet API
 call_after = call_after_local
 
+class _SilentException(BaseException):
+    pass
+
+class timeout:
+    """
+    >>> from __future__ import with_statement
+    >>> from eventlet.api import sleep
+    >>> DELAY = 0.01
+    
+    Nothing happens if with-block finishes before the timeout expires
+    >>> with timeout(DELAY*2):
+    ...     sleep(DELAY)
+    >>> sleep(DELAY*2) # check if timer was actually cancelled
+
+    An exception will be raised if it's not
+    >>> with timeout(DELAY):
+    ...    sleep(DELAY*2)
+    Traceback (most recent call last):
+     ...
+    TimeoutError
+    
+    You can customize the exception raised:
+    >>> with timeout(DELAY, IOError("Operation takes way too long")):
+    ...     sleep(DELAY*2)
+    Traceback (most recent call last):
+     ...
+    IOError: Operation takes way too long
+
+    It's possible to cancel the timer inside the block:
+    >>> with timeout(DELAY) as timer:
+    ...     timer.cancel()
+    ...     sleep(DELAY*2)
+ 
+    To silent the exception, pass None as second parameter. The with-block
+    will be interrupted with _SilentException, but it won't be propogated
+    outside.
+    >>> DELAY=0.1
+    >>> import time
+    >>> start = time.time()
+    >>> with timeout(DELAY, None):
+    ...    sleep(DELAY*2)
+    >>> (time.time()-start)<DELAY*2
+    True
+    """
+    def __init__(self, seconds, exc=TimeoutError):
+        self.seconds = seconds
+        self.exc = exc
+
+    def __enter__(self):
+        self.timeout = exc_after(self.seconds, self.exc or _SilentException)
+        return self.timeout
+
+    def __exit__(self, typ, value, tb):
+        self.timeout.cancel()
+        del self.timeout
+        if typ is _SilentException:
+            return True
+
+
 def with_timeout(seconds, func, *args, **kwds):
     """Wrap a call to some (yielding) function with a timeout; if the called
     function fails to return before the timeout, cancel it and return a flag
