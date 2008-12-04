@@ -5,6 +5,10 @@ if __name__ != 'greentest.test_support':
 
 import sys
 
+disabled_marker = '-*-*-*-*-*- disabled -*-*-*-*-*-'
+def exit_disabled():
+    sys.exit(disabled_marker)
+
 class Error(Exception):
     """Base class for regression test exceptions."""
 

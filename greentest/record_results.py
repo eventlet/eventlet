@@ -7,6 +7,7 @@ import sys
 import os
 import sqlite3
 import warnings
+from greentest.test_support import disabled_marker
 
 warnings.simplefilter('ignore')
 
@@ -38,7 +39,11 @@ def main():
     print arg, 'finished with code', returncode
     stdout = file(output_name).read()
     if not debug:
-        if returncode!=1:
+        if returncode==1:
+            pass
+        elif returncode==8 and disabled_marker in stdout:
+            pass
+        else:
             record(changeset, argv, stdout, returncode)
             os.unlink(output_name)
     sys.exit(returncode)
