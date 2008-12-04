@@ -1,20 +1,30 @@
 from twisted.internet import defer
 from twisted.python import failure
 from eventlet.support.greenlet import greenlet
-from eventlet.api import get_hub, spawn
+from eventlet.api import get_hub, spawn, getcurrent
 
 def block_on(deferred):
     cur = [greenlet.getcurrent()]
+    synchronous = []
     def cb(value):
         if cur:
-            cur[0].switch(value)
+            if getcurrent() is cur[0]:
+                synchronous.append((value, None))
+            else:
+                cur[0].switch(value)
         return value
-    def eb(err):
+    def eb(failure):
         if cur:
-            err.throwExceptionIntoGenerator(cur[0])
-        return err
-    deferred.addCallback(cb)
-    deferred.addErrback(eb)
+            if getcurrent() is cur[0]:
+                synchronous.append((None, failure))
+            else:
+                failure.throwExceptionIntoGenerator(cur[0])
+    deferred.addCallbacks(cb, eb)
+    if synchronous:
+        result, failure = synchronous[0]
+        if failure is not None:
+            failure.raiseException()
+        return result
     try:
         return get_hub().switch()
     finally:
