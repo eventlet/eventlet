@@ -395,12 +395,13 @@ def with_timeout(seconds, func, *args, **kwds):
     # pass timeout_value through to func().
     has_timeout_value = "timeout_value" in kwds
     timeout_value = kwds.pop("timeout_value", None)
-    timeout = exc_after(seconds, TimeoutError())
+    error = TimeoutError()
+    timeout = exc_after(seconds, error)
     try:
         try:
             return func(*args, **kwds)
-        except TimeoutError:
-            if has_timeout_value:
+        except TimeoutError, ex:
+            if ex is error and has_timeout_value:
                 return timeout_value
             raise
     finally:

@@ -1,5 +1,5 @@
 import unittest
-from eventlet.api import sleep, spawn, kill
+from eventlet.api import sleep, spawn, kill, with_timeout, TimeoutError
 
 DELAY = 0.1
 
@@ -28,6 +28,11 @@ class Test(unittest.TestCase):
         assert state == ['start', 'except'], state
         sleep(DELAY)
         assert state == ['start', 'except', 'finished'], state
+
+    def test_nested_with_timeout(self):
+        def func():
+            return with_timeout(0.2, sleep, 2, timeout_value=1)
+        self.assertRaises(TimeoutError, with_timeout, 0.1, func)
 
 if __name__=='__main__':
     unittest.main()
