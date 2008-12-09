@@ -370,16 +370,19 @@ class timeout:
     """
     def __init__(self, seconds, exc=TimeoutError):
         self.seconds = seconds
-        self.exc = exc
+        if exc is None:
+            self.exc = _SilentException()
+        else:
+            self.exc = exc
 
     def __enter__(self):
-        self.timeout = exc_after(self.seconds, self.exc or _SilentException)
+        self.timeout = exc_after(self.seconds, self.exc)
         return self.timeout
 
     def __exit__(self, typ, value, tb):
         self.timeout.cancel()
         del self.timeout
-        if typ is _SilentException:
+        if value is self.exc:
             return True
 
 
