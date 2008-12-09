@@ -327,46 +327,18 @@ class _SilentException(BaseException):
     pass
 
 class timeout:
-    """
-    >>> from __future__ import with_statement
-    >>> from eventlet.api import sleep
-    >>> DELAY = 0.01
-    
-    Nothing happens if with-block finishes before the timeout expires
-    >>> with timeout(DELAY*2):
-    ...     sleep(DELAY)
-    >>> sleep(DELAY*2) # check if timer was actually cancelled
+    """Raise an exception in the block after timeout.
 
-    An exception will be raised if it's not
-    >>> with timeout(DELAY):
-    ...    sleep(DELAY*2)
-    Traceback (most recent call last):
-     ...
-    TimeoutError
-    
-    You can customize the exception raised:
-    >>> with timeout(DELAY, IOError("Operation takes way too long")):
-    ...     sleep(DELAY*2)
-    Traceback (most recent call last):
-     ...
-    IOError: Operation takes way too long
+    with timeout(seconds[, exc]):
+        ... code block ...
 
-    It's possible to cancel the timer inside the block:
-    >>> with timeout(DELAY) as timer:
-    ...     timer.cancel()
-    ...     sleep(DELAY*2)
- 
-    To silent the exception, pass None as second parameter. The with-block
-    will be interrupted with _SilentException, but it won't be propogated
-    outside.
-    >>> DELAY=0.1
-    >>> import time
-    >>> start = time.time()
-    >>> with timeout(DELAY, None):
-    ...    sleep(DELAY*2)
-    >>> (time.time()-start)<DELAY*2
-    True
+    Assuming code block is yielding (i.e. gives up control to the hub),
+    an exception provided in `exc' argument will be raised
+    (TimeoutError if `exc' is omitted).
+
+    If exc is None, code block will be interrupted silently.
     """
+
     def __init__(self, seconds, exc=TimeoutError):
         self.seconds = seconds
         if exc is None:

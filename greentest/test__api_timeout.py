@@ -1,0 +1,61 @@
+from __future__ import with_statement
+import unittest
+import time
+from eventlet.api import sleep, timeout, TimeoutError
+DELAY = 0.01
+ 
+class Test(unittest.TestCase):
+
+    def test_api(self):
+        # Nothing happens if with-block finishes before the timeout expires 
+        with timeout(DELAY*2):
+            sleep(DELAY)
+        sleep(DELAY*2) # check if timer was actually cancelled
+
+        # An exception will be raised if it's not
+        try:
+            with timeout(DELAY):
+                sleep(DELAY*2)
+        except TimeoutError:
+            pass
+        else:
+            assert False, 'must raise TimeoutError'
+
+        # You can customize the exception raised:
+        try:
+            with timeout(DELAY, IOError("Operation takes way too long")):
+                sleep(DELAY*2)
+        except IOError, ex:
+            assert str(ex)=="Operation takes way too long", repr(ex)
+
+        # Providing classes instead of values should be possible too:
+        try:
+            with timeout(DELAY, ValueError):
+                sleep(DELAY*2)
+        except ValueError:
+            pass
+
+        # It's possible to cancel the timer inside the block:
+        with timeout(DELAY) as timer:
+            timer.cancel()
+            sleep(DELAY*2)
+         
+        # To silent the exception, pass None as second parameter. The with-block
+        # will be interrupted with _SilentException, but it won't be propogated
+        # outside.
+        XDELAY=0.1
+        start = time.time()
+        with timeout(XDELAY, None):
+            sleep(XDELAY*2)
+        delta = (time.time()-start)
+        assert delta<XDELAY*2, delta
+
+    def test_nested_timeout(self):
+        with timeout(DELAY, None):
+            with timeout(DELAY*2, None):
+                sleep(DELAY*3)
+            assert False, 'should not get there'
+
+if __name__=='__main__':
+    unittest.main()
+
