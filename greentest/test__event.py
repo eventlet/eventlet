@@ -1,6 +1,6 @@
 import unittest
 import sys
-from eventlet.coros import event, spawn_link
+from eventlet.coros import event, Job
 from eventlet.api import spawn, sleep, GreenletExit, exc_after
 
 class TestEvent(unittest.TestCase):
@@ -22,15 +22,15 @@ class TestEvent(unittest.TestCase):
         assert log == [('catched', 'Exception')], log
 
 
-class TestSpawnLink(unittest.TestCase):
+class TestJob(unittest.TestCase):
 
     def test_simple_return(self):
-        res = spawn_link(lambda: 25).wait()
+        res = Job(lambda: 25).wait()
         assert res==25, res
 
     def test_exception(self):
         try:
-            spawn_link(sys.exit, 'bye').wait()
+            Job(sys.exit, 'bye').wait()
         except SystemExit, ex:
             assert ex.args == ('bye', )
         else:
@@ -40,7 +40,7 @@ class TestSpawnLink(unittest.TestCase):
         def func():
             sleep(0.1)
             return 101
-        res = spawn_link(func)
+        res = Job(func)
         assert res
         if sync:
             res.kill()
@@ -60,14 +60,14 @@ class TestSpawnLink(unittest.TestCase):
         def func():
             sleep(0.1)
             return 25
-        job = spawn_link(func)
+        job = Job(func)
         self.assertEqual(job.poll(), None)
         assert job, repr(job)
         self.assertEqual(job.wait(), 25)
         self.assertEqual(job.poll(), 25)
         assert not job, repr(job)
 
-        job = spawn_link(func)
+        job = Job(func)
         self.assertEqual(job.poll(5), 5)
         assert job, repr(job)
         self.assertEqual(job.wait(), 25)
@@ -78,12 +78,12 @@ class TestSpawnLink(unittest.TestCase):
         def func():
             sleep(0.1)
             return 25
-        job = spawn_link(func)
+        job = Job(func)
         job.kill_after(0.05)
         result = job.wait()
         assert isinstance(result, GreenletExit), repr(result)
 
-        job = spawn_link(func)
+        job = Job(func)
         job.kill_after(0.2)
         self.assertEqual(job.wait(), 25)
         sleep(0.2)

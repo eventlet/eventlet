@@ -1,12 +1,12 @@
 """Spawn multiple greenlet-workers and collect their results.
 
-Demonstrates how to use spawn_link.
+Demonstrates how to use coros.Job.
 """
 import sys
 import string
 from eventlet.api import sleep
 from eventlet.green import socket
-from eventlet.coros import spawn_link
+from eventlet.coros import Job
 
 # this example works with both standard eventlet hubs and with twisted-based hub
 # comment out the following line to use standard eventlet hub
@@ -24,10 +24,10 @@ def progress_indicator():
         sys.stderr.write('.')
         sleep(0.5)
 
-spawn_link(progress_indicator)
+Job(progress_indicator)
 
 urls = ['www.%s.com' % (x*3) for x in string.letters]
-jobs = [spawn_link(geturl, x) for x in urls]
+jobs = [Job(geturl, x) for x in urls]
 
 print 'spawned %s jobs' % len(jobs)
 

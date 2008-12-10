@@ -238,11 +238,23 @@ class event(object):
         return self.send(None, args)
 
 
-class AsyncJob(object):
+class Job(object):
+    """Spawn a new coroutine to execute a function and collect its result.
 
-    def __init__(self, greenlet_ref, event):
-        self.greenlet_ref = greenlet_ref
-        self.event = event
+    use wait() method to collect the result of the function;
+    use kill() method to kill the greenlet running the function.
+    """
+
+    def __init__(self, function, *args, **kwargs):
+        """Create a new coroutine, or cooperative thread of control, within which
+        to execute *function*.
+
+        ``Job()`` returns control to the caller immediately, and *function*
+        will be called in a future main loop iteration.
+        """
+        self.event = event()
+        g = api.spawn(wrap_result_in_event, weakref.ref(self.event), function, *args, **kwargs)
+        self.greenlet_ref = weakref.ref(g)
 
     @property
     def greenlet(self):
@@ -263,6 +275,13 @@ class AsyncJob(object):
         return '<%s greenlet=%r%s event=%s>' % (klass, self.greenlet, dead, self.event)
 
     def wait(self):
+        """Wait for the function to return or raise.
+        Return the return value of the function if it has returned one,
+        re-raise the exception that was raised by the function otherwise.
+
+        If the greenlet was killed(), e.g. with kill() method, GreenletExit()
+        object is returned.
+        """
         return self.event.wait()
 
     def poll(self, notready=None):
@@ -287,9 +306,15 @@ def _kill_by_ref(async_job_ref):
     if async_job is not None:
         async_job.kill()
 
-def _wrap_result_in_event(event_ref, func, *args, **kwargs):
+def wrap_result_in_event(event_ref, function, *args, **kwargs):
+    """Execute *function*, send its result to event_ref().
+    If function raises GreenletExit() it's trapped and sent as a regular value.
+    If event_ref() is not available (event was GC-ed) the return value
+    is thrown away and the exception is re-raised (allowing hub to log
+    the exception)
+    """
     try:
-        result = func(*args, **kwargs)
+        result = function(*args, **kwargs)
     except api.GreenletExit, ex:
         event = event_ref()
         if event is not None:
@@ -304,11 +329,6 @@ def _wrap_result_in_event(event_ref, func, *args, **kwargs):
         event = event_ref()
         if event is not None:
             event.send(result)
-
-def spawn_link(func, *args, **kwargs):
-    result = event()
-    g = api.spawn(_wrap_result_in_event, weakref.ref(result), func, *args, **kwargs)
-    return AsyncJob(weakref.ref(g), result)
 
 
 class multievent(object):

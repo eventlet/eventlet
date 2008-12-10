@@ -1,6 +1,6 @@
 import sys
 from twisted.internet import reactor
-from eventlet.coros import event, spawn_link
+from eventlet.coros import event, Job
 from eventlet.twistedutil import join_reactor
 from eventlet.twistedutil.protocol import GreenClientCreator, SpawnFactory, UnbufferedTransport
 
@@ -18,8 +18,8 @@ def forward(from_, to):
 def handler(local):
     remote = GreenClientCreator(reactor, UnbufferedTransport).connectTCP(remote_host, remote_port)
     error = event()
-    a = spawn_link(forward, remote, local)
-    b = spawn_link(forward, local, remote)
+    a = Job(forward, remote, local)
+    b = Job(forward, local, remote)
     a.wait()
     b.wait()
 
