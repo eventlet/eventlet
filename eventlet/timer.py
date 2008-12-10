@@ -85,3 +85,7 @@ class Timer(object):
         self.cancelled = True
         self.called = True
         get_hub().timer_canceled(self)
+        try:
+            del self.tpl
+        except AttributeError:
+            pass
