@@ -32,6 +32,9 @@ import time
 import urlparse
 
 
+url_parser = urlparse.urlparse
+
+
 _old_HTTPConnection = httplib.HTTPConnection
 _old_HTTPSConnection = httplib.HTTPSConnection
 
@@ -65,7 +68,7 @@ def host_and_port_from_url(url):
     """
     host = None
     port = None
-    parsed_url = urlparse.urlparse(url)
+    parsed_url = url_parser(url)
     try:
         host, port = parsed_url[1].split(':')
     except ValueError:
@@ -489,7 +492,7 @@ def make_connection(scheme, location, use_proxy):
 
     # run a little heuristic to see if location is an url, and if so parse out the hostpart
     if location.startswith('http'):
-        _scheme, location, path, parameters, query, fragment = urlparse.urlparse(location)
+        _scheme, location, path, parameters, query, fragment = url_parser(location)
             
     result = scheme_to_factory_map[scheme](location)
     result.connect()
@@ -498,7 +501,7 @@ def make_connection(scheme, location, use_proxy):
 
 def connect(url, use_proxy=False):
     """ Create a connection object to the host specified in a url.  Convenience function for make_connection."""
-    scheme, location = urlparse.urlparse(url)[:2]
+    scheme, location = url_parser(url)[:2]
     return make_connection(scheme, location, use_proxy)
 
 
@@ -527,7 +530,7 @@ class HttpSuite(object):
         params = _LocalParams(params, instance=self)
 
         (scheme, location, path, parameters, query,
-         fragment) = urlparse.urlparse(params.url)
+         fragment) = url_parser(params.url)
 
         if params.use_proxy:
             if scheme == 'file':
@@ -684,7 +687,7 @@ class HttpStreamSuite(HttpSuite):
         params = _LocalParams(params, instance=self)
 
         (scheme, location, path, parameters, query,
-         fragment) = urlparse.urlparse(params.url)
+         fragment) = url_parser(params.url)
 
         if params.use_proxy:
             if scheme == 'file':
