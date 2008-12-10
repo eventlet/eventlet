@@ -272,7 +272,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             finish = time.time()
 
             self.server.log_message('%s - - [%s] "%s" %s %s %.6f\n' % (
-                self.address_string(),
+                self.client_address[0],
                 self.log_date_time_string(),
                 self.requestline,
                 status_code[0],
