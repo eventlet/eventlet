@@ -35,6 +35,20 @@ class Test(unittest.TestCase):
         except ValueError:
             pass
 
+        # basically, anything that greenlet.throw accepts work:
+        try:
+            1/0
+        except:
+            try:
+                with timeout(DELAY, *sys.exc_info()):
+                    sleep(DELAY*2)
+                    assert 'should not get there'
+                assert 'should not get there'
+            except ZeroDivisionError:
+                pass
+        else:
+            assert 'should not get there'
+
         # It's possible to cancel the timer inside the block:
         with timeout(DELAY) as timer:
             timer.cancel()
