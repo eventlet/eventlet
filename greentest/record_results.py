@@ -7,7 +7,7 @@ import sys
 import os
 import sqlite3
 import warnings
-from greentest.test_support import disabled_marker
+from greentest import disabled_marker
 
 warnings.simplefilter('ignore')
 

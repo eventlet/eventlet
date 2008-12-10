@@ -1,14 +1,12 @@
+from twisted.internet import reactor
+from greentest import exit_unless_twisted
+exit_unless_twisted()
 import sys
 import unittest
 from twisted.internet.error import DNSLookupError
 from twisted.internet import defer
 from twisted.python.failure import Failure
 from eventlet.twistedutil import block_on
-from eventlet.api import get_hub
-from greentest.test_support import exit_disabled
-
-if 'Twisted' not in type(get_hub()).__name__:
-    exit_disabled()
 
 class Test(unittest.TestCase):
 
