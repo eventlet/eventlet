@@ -2,7 +2,7 @@ from __future__ import with_statement
 import unittest
 import weakref
 import time
-from eventlet.api import sleep, timeout, TimeoutError
+from eventlet.api import sleep, timeout, TimeoutError, _SilentException
 DELAY = 0.01
 
 class Error(Exception):
@@ -81,6 +81,19 @@ class Test(unittest.TestCase):
             with timeout(DELAY*2, None):
                 sleep(DELAY*3)
             assert False, 'should not get there'
+
+        with timeout(DELAY, _SilentException()):
+            with timeout(DELAY*2, _SilentException()):
+                sleep(DELAY*3)
+            assert False, 'should not get there'
+
+        # this case fails and there's no intent to fix it.
+        # just don't do it like that
+        #with timeout(DELAY, _SilentException):
+        #    with timeout(DELAY*2, _SilentException):
+        #        sleep(DELAY*3)
+        #    assert False, 'should not get there'
+
 
 if __name__=='__main__':
     unittest.main()
