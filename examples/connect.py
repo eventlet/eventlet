@@ -1,23 +1,45 @@
-import sys
-from eventlet.green import socket
-from eventlet.green import time
-from eventlet.api import spawn
+"""Spawn multiple greenlet-workers and collect their results.
 
-def client():
-    # using domain name directly is of course possible too
-    # this is a test to see that dns lookups happen simultaneously too
-    ip = socket.gethostbyname('www.google.com')
+Demonstrates how to use spawn_link.
+"""
+import sys
+import string
+from eventlet.api import sleep
+from eventlet.green import socket
+from eventlet.coros import spawn_link
+
+# this example works with both standard eventlet hubs and with twisted-based hub
+# comment out the following line to use standard eventlet hub
+from twisted.internet import reactor
+
+def geturl(url):
     c = socket.socket()
+    ip = socket.gethostbyname(url)
     c.connect((ip, 80))
     c.send('GET /\r\n\r\n')
-    print c.recv(1024)
+    return c.recv(1024)
 
+def progress_indicator():
+    while True:
+        sys.stderr.write('.')
+        sleep(0.5)
 
-for x in range(5):
-    # note that spawn doesn't switch to new greenlet immediately.
-    spawn(client)
+spawn_link(progress_indicator)
 
-# the execution ends with the main greenlet exit (by design), so we need to give control
-# to other greenlets for some time here.
-time.sleep(1)
-sys.stdout.flush()
+urls = ['www.%s.com' % (x*3) for x in string.letters]
+jobs = [spawn_link(geturl, x) for x in urls]
+
+print 'spawned %s jobs' % len(jobs)
+
+# collect the results from workers, one by one
+for url, job in zip(urls, jobs):
+    sys.stderr.write('%s: ' % url)
+    try:
+        result = job.wait()
+    except Exception, ex: # when using BaseException here and pressing Ctrl-C recv returns None sometimes
+        sys.stderr.write('%s' % ex)
+    else:
+        sys.stderr.write('%s bytes: %s...' % (len(result), repr(result)[:40]))
+    finally:
+        sys.stderr.write('\n')
+
