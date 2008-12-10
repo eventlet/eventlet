@@ -146,7 +146,7 @@ def trampoline(fd, read=None, write=None, timeout=None, timeout_exc=TimeoutError
         current.throw(timeout_exc())
     def cb(d):
         current.switch()
-        # with TwistedHub, descriptor actually an object (socket_rwdescriptor) which stores
+        # with TwistedHub, descriptor is actually an object (socket_rwdescriptor) which stores
         # this callback. If this callback stores a reference to the socket instance (fd)
         # then descriptor has a reference to that instance. This makes socket not collected
         # after greenlet exit. Since nobody actually uses the results of this switch, I removed
@@ -339,23 +339,23 @@ class timeout:
     If exc is None, code block will be interrupted silently.
     """
 
-    def __init__(self, seconds, exc=TimeoutError):
+    def __init__(self, seconds, *throw_args):
         self.seconds = seconds
-        if exc is None:
-            self.exc = _SilentException()
+        if not throw_args:
+            self.throw_args = (TimeoutError(), )
+        elif throw_args == (None, ):
+            self.throw_args = (_SilentException(), )
         else:
-            self.exc = exc
+            self.throw_args = throw_args
 
     def __enter__(self):
-        self.timeout = exc_after(self.seconds, self.exc)
+        self.timeout = exc_after(self.seconds, *self.throw_args)
         return self.timeout
 
     def __exit__(self, typ, value, tb):
         self.timeout.cancel()
-        del self.timeout
-        if value is self.exc:
+        if typ is _SilentException and value in self.throw_args:
             return True
-
 
 def with_timeout(seconds, func, *args, **kwds):
     """Wrap a call to some (yielding) function with a timeout; if the called
@@ -407,8 +407,9 @@ def with_timeout(seconds, func, *args, **kwds):
     finally:
         timeout.cancel()
 
-def exc_after(seconds, exception_object):
-    """Schedule *exception_object* to be raised into the current coroutine
+
+def exc_after(seconds, *throw_args):
+    """Schedule an exception to be raised into the current coroutine
     after *seconds* have elapsed.
 
     This only works if the current coroutine is yielding, and is generally
@@ -432,7 +433,7 @@ def exc_after(seconds, exception_object):
                 timer.cancel()
     """
     hub = get_hub()
-    return call_after(seconds, hub.exc_greenlet, getcurrent(), exception_object)
+    return call_after(seconds, hub.exc_greenlet, getcurrent(), *throw_args)
 
 
 def get_default_hub():

@@ -100,11 +100,11 @@ class BaseHub(object):
         self.excs.pop(fileno, None)
         self.waiters_by_greenlet.pop(greenlet.getcurrent(), None)
 
-    def exc_greenlet(self, gr, exception_object):
+    def exc_greenlet(self, gr, *throw_args):
         fileno = self.waiters_by_greenlet.pop(gr, None)
         if fileno is not None:
             self.remove_descriptor(fileno)
-        gr.throw(exception_object)
+        gr.throw(*throw_args)
 
     def exc_descriptor(self, fileno):
         exc = self.excs.get(fileno)
