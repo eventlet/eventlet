@@ -66,6 +66,11 @@ class BaseTwistedHub(object):
     This makes running "green" functions in the main greenlet impossible but is useful
     when you want to call reactor.run() yourself.
     """
+
+    # XXX: remove me from here. make functions that depend on reactor
+    # XXX: hub's methods
+    uses_twisted_reactor = True
+
     def __init__(self, mainloop_greenlet):
         self.greenlet = mainloop_greenlet
         self.waiters_by_greenlet = {}

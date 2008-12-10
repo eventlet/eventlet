@@ -10,21 +10,27 @@ from eventlet.greenio import GreenSocket as socket, GreenSSL as _GreenSSL
 def fromfd(*args):
     return socket(__socket.fromfd(*args))
 
-if type(get_hub()).__name__ == 'TwistedHub':
+def gethostbyname(name):
+    if getattr(get_hub(), 'uses_twisted_reactor', None):
+        globals()['gethostbyname'] = _gethostbyname_twisted
+    else:
+        globals()['gethostbyname'] = _gethostbyname_tpool
+    return globals()['gethostbyname'](name)
+
+def _gethostbyname_twisted(name):
+    from twisted.internet import reactor
     from eventlet.twistedutil import block_on as _block_on
-    def gethostbyname(name):
-        from twisted.internet import reactor
-        return _block_on(reactor.resolve(name))
-else:
+    return _block_on(reactor.resolve(name))
+
+def _gethostbyname_tpool(name):
     from eventlet import tpool
-    def gethostbyname(*args, **kw):
-        return tpool.execute(
-            __socket.gethostbyname, *args, **kw)
+    return tpool.execute(
+        __socket.gethostbyname, name)
 
-    def getaddrinfo(*args, **kw):
-        return tpool.execute(
-            __socket.getaddrinfo, *args, **kw)
-
+#     def getaddrinfo(*args, **kw):
+#         return tpool.execute(
+#             __socket.getaddrinfo, *args, **kw)
+# 
 # XXX there're few more blocking functions in socket
 # XXX having a hub-independent way to access thread pool would be nice
 
