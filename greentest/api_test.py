@@ -65,7 +65,7 @@ class TestApi(tests.TestCase):
         def accept_once(listenfd):
             try:
                 conn, addr = listenfd.accept()
-                fd = conn.makefile()
+                fd = conn.makeGreenFile()
                 conn.close()
                 fd.write('hello\n')
                 fd.close()
@@ -76,7 +76,7 @@ class TestApi(tests.TestCase):
         api.spawn(accept_once, server)
 
         client = api.connect_tcp(('127.0.0.1', server.getsockname()[1]))
-        fd = client.makefile()
+        fd = client.makeGreenFile()
         client.close()
         assert fd.readline() == 'hello\n'
 
@@ -89,7 +89,7 @@ class TestApi(tests.TestCase):
         def accept_once(listenfd): 
             try: 
                 conn, addr = listenfd.accept()
-                fl = conn.makefile('w')
+                fl = conn.makeGreenFile('w')
                 fl.write('hello\r\n')
                 fl.close()
                 conn.close() 
@@ -103,7 +103,7 @@ class TestApi(tests.TestCase):
  
         client = util.wrap_ssl( 
             api.connect_tcp(('127.0.0.1', server.getsockname()[1])))
-        client = client.makefile()
+        client = client.makeGreenFile()
 
         assert client.readline() == 'hello\r\n' 
         assert client.read() == '' 

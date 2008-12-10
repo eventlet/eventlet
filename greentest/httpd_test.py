@@ -65,7 +65,7 @@ class ConnectionClosed(Exception):
 
 
 def read_http(sock):
-    fd = sock.makefile()
+    fd = sock.makeGreenFile()
     response_line = fd.readline()
     if not response_line:
         raise ConnectionClosed
@@ -102,7 +102,7 @@ class TestHttpd(tests.TestCase):
         sock = api.connect_tcp(
             ('127.0.0.1', 12346))
         
-        fd = sock.makefile()
+        fd = sock.makeGreenFile()
         fd.write('GET / HTTP/1.0\r\nHost: localhost\r\n\r\n')
         result = fd.read()
         fd.close()
@@ -114,7 +114,7 @@ class TestHttpd(tests.TestCase):
         sock = api.connect_tcp(
             ('127.0.0.1', 12346))
             
-        fd = sock.makefile()
+        fd = sock.makeGreenFile()
         fd.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
         read_http(sock)
         fd.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
@@ -126,7 +126,7 @@ class TestHttpd(tests.TestCase):
         sock = api.connect_tcp(
             ('127.0.0.1', 12346))
         
-        fd = sock.makefile()
+        fd = sock.makeGreenFile()
         fd.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
         cancel = api.exc_after(1, RuntimeError)
         self.assertRaises(TypeError, fd.read, "This shouldn't work")
@@ -137,7 +137,7 @@ class TestHttpd(tests.TestCase):
         sock = api.connect_tcp(
             ('127.0.0.1', 12346))
 
-        fd = sock.makefile()
+        fd = sock.makeGreenFile()
         fd.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
         read_http(sock)
         fd.write('GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
@@ -161,7 +161,7 @@ class TestHttpd(tests.TestCase):
             path_parts.append('path')
         path = '/'.join(path_parts)
         request = 'GET /%s HTTP/1.0\r\nHost: localhost\r\n\r\n' % path
-        fd = sock.makefile()
+        fd = sock.makeGreenFile()
         fd.write(request)
         result = fd.readline()
         status = result.split(' ')[1]
@@ -184,7 +184,7 @@ class TestHttpd(tests.TestCase):
             'Content-Length: 3', 
             '',
             'a=a'))
-        fd = sock.makefile()
+        fd = sock.makeGreenFile()
         fd.write(request)
         
         # send some junk after the actual request
@@ -197,7 +197,7 @@ class TestHttpd(tests.TestCase):
         sock = api.connect_tcp(
             ('127.0.0.1', 12346))
         
-        fd = sock.makefile()
+        fd = sock.makeGreenFile()
         fd.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
         response_line_200,_,_ = read_http(sock)
         fd.write('GET /notexist HTTP/1.1\r\nHost: localhost\r\n\r\n')

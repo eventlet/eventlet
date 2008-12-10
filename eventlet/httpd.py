@@ -416,7 +416,7 @@ class Timeout(RuntimeError):
 
 class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
     def __init__(self, request, client_address, server):
-        self.rfile = self.wfile = request.makefile()
+        self.rfile = self.wfile = request.makeGreenFile()
         self.is_secure = request.is_secure
         request.close()  # close this now so that when rfile and wfile are closed, the socket gets closed
         self.client_address = client_address

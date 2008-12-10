@@ -123,7 +123,6 @@ def socket_send(descriptor, data):
     except util.SSL.WantReadError:
         return 0
 
-
 # winsock sometimes throws ENOTCONN
 SOCKET_CLOSED = (errno.ECONNRESET, errno.ENOTCONN, errno.ESHUTDOWN)
 def socket_recv(descriptor, buflen):
@@ -318,15 +317,11 @@ class GreenSocket(object):
         fn = self.listen = self.fd.listen
         return fn(*args, **kw)
 
-    def old_makefile(self, *args, **kw):
-        self._refcount.increment()
-        new_sock = type(self)(self.fd, self._refcount)
-        return GreenFile(new_sock)
-
     def makefile(self, mode='r', bufsize=-1):
         return socket._fileobject(self.dup(), mode, bufsize)
-        # the following has problems, e.g. it doesn't recognise '\n' as a delimeter
-        #return GreenFile(self.dup())
+
+    def makeGreenFile(self, mode='r', bufsize=-1):
+        return GreenFile(self.dup())
 
     recv = higher_order_recv(socket_recv)
 
@@ -522,7 +517,7 @@ class GreenPipeSocket(GreenSocket):
     send = higher_order_send(file_send)
 
 
-class GreenPipe(GreenFile):        
+class GreenPipe(GreenFile):
     def __init__(self, fd):
         set_nonblocking(fd)
         self.fd = GreenPipeSocket(fd)
