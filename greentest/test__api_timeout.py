@@ -1,8 +1,12 @@
 from __future__ import with_statement
 import unittest
+import weakref
 import time
 from eventlet.api import sleep, timeout, TimeoutError
 DELAY = 0.01
+
+class Error(Exception):
+    pass
  
 class Test(unittest.TestCase):
 
@@ -63,6 +67,14 @@ class Test(unittest.TestCase):
             sleep(XDELAY*2)
         delta = (time.time()-start)
         assert delta<XDELAY*2, delta
+
+    def test_ref(self):
+        err = Error()
+        err_ref = weakref.ref(err)
+        with timeout(DELAY*2, err):
+            sleep(DELAY)
+        del err
+        assert not err_ref(), repr(err_ref())
 
     def test_nested_timeout(self):
         with timeout(DELAY, None):
