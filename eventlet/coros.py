@@ -237,8 +237,6 @@ class event(object):
         # the arguments and the same as for greenlet.throw
         return self.send(None, args)
 
-class _AsyncJobPollError(Exception):
-    pass
 
 class AsyncJob(object):
 
@@ -267,17 +265,14 @@ class AsyncJob(object):
     def wait(self):
         return self.event.wait()
 
-    def poll(self, marker=None):
-        error = _AsyncJobPollError()
-        timer = api.exc_after(0, error)
-        try:
-            return self.wait()
-        except _AsyncJobPollError, ex:
-            if ex is error:
-                return marker
-            raise
-        finally:
-            timer.cancel()
+    def poll(self, notready=None):
+        if self.event.ready():
+            return self.event.wait()
+        else:
+            return notready
+
+    def ready(self):
+        return self.event.ready()
 
     def kill(self):
         greenlet = self.greenlet_ref()
