@@ -18,7 +18,7 @@ PARSE_PERIOD = 10
 # the following aren't in the default list unless --all option present
 NOT_HUBS = set(['nginx'])
 NOT_REACTORS = set(['wxreactor', 'glib2reactor', 'gtk2reactor'])
-NOT_TESTS = set(['test_threading_green.py', 'httpd_test.py', 'wsgi_test.py'])
+NOT_TESTS = set(['test_threading_green.py'])
 
 def w(s):
     sys.stderr.write("%s\n" % (s, ))
