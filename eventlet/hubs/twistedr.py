@@ -235,7 +235,7 @@ class TwistedHub(BaseTwistedHub):
     installSignalHandlers = False
 
     def __init__(self):
-        assert Hub.state==0, ('This hub can only be instantiated once', Hub.state)
+        assert Hub.state==0, ('%s hub can only be instantiated once' % type(self).__name__, Hub.state)
         Hub.state = 1
         make_twisted_threadpool_daemonic() # otherwise the program would hang after the main greenlet exited
         g = greenlet(self.run)
