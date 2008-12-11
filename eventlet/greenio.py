@@ -25,8 +25,6 @@ THE SOFTWARE.
 from eventlet.api import trampoline, get_hub
 from eventlet import util
 
-from twisted.internet.error import ConnectionDone
-
 
 BUFFER_SIZE = 4096
 
@@ -64,9 +62,6 @@ def higher_order_recv(recv_func):
                 trampoline(fd, read=True, timeout=timeout, timeout_exc=socket.timeout)
             except socket.timeout:
                 raise
-            except ConnectionDone:
-                #sys.stderr.write('ConnectionDone in recv -> returning empty string\n')
-                return ''
             except socket.error, e:
                 if e[0] == errno.EPIPE:
                     bytes = ''
