@@ -18,8 +18,8 @@ def forward(from_, to):
 def handler(local):
     remote = GreenClientCreator(reactor, UnbufferedTransport).connectTCP(remote_host, remote_port)
     error = event()
-    a = Job(forward, remote, local)
-    b = Job(forward, local, remote)
+    a = Job.spawn_new(forward, remote, local)
+    b = Job.spawn_new(forward, local, remote)
     a.wait()
     b.wait()
 

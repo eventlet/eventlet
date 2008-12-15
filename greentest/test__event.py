@@ -25,12 +25,12 @@ class TestEvent(unittest.TestCase):
 class TestJob(unittest.TestCase):
 
     def test_simple_return(self):
-        res = Job(lambda: 25).wait()
+        res = Job.spawn_new(lambda: 25).wait()
         assert res==25, res
 
     def test_exception(self):
         try:
-            Job(sys.exit, 'bye').wait()
+            Job.spawn_new(sys.exit, 'bye').wait()
         except SystemExit, ex:
             assert ex.args == ('bye', )
         else:
@@ -40,7 +40,7 @@ class TestJob(unittest.TestCase):
         def func():
             sleep(0.1)
             return 101
-        res = Job(func)
+        res = Job.spawn_new(func)
         assert res
         if sync:
             res.kill()
@@ -60,14 +60,14 @@ class TestJob(unittest.TestCase):
         def func():
             sleep(0.1)
             return 25
-        job = Job(func)
+        job = Job.spawn_new(func)
         self.assertEqual(job.poll(), None)
         assert job, repr(job)
         self.assertEqual(job.wait(), 25)
         self.assertEqual(job.poll(), 25)
         assert not job, repr(job)
 
-        job = Job(func)
+        job = Job.spawn_new(func)
         self.assertEqual(job.poll(5), 5)
         assert job, repr(job)
         self.assertEqual(job.wait(), 25)
@@ -78,12 +78,12 @@ class TestJob(unittest.TestCase):
         def func():
             sleep(0.1)
             return 25
-        job = Job(func)
+        job = Job.spawn_new(func)
         job.kill_after(0.05)
         result = job.wait()
         assert isinstance(result, GreenletExit), repr(result)
 
-        job = Job(func)
+        job = Job.spawn_new(func)
         job.kill_after(0.2)
         self.assertEqual(job.wait(), 25)
         sleep(0.2)

@@ -239,22 +239,30 @@ class event(object):
 
 
 class Job(object):
-    """Spawn a new coroutine to execute a function and collect its result.
+    """Spawn a greenlet, control its execution and collect the result.
 
-    use wait() method to collect the result of the function;
-    use kill() method to kill the greenlet running the function.
+    use spawn_new() classmethod to spawn a new coroutine and get a new Job instance;
+    use kill() method to kill the greenlet running the function;
+    use wait() method to collect the result of the function.
     """
 
-    def __init__(self, function, *args, **kwargs):
-        """Create a new coroutine, or cooperative thread of control, within which
-        to execute *function*.
-
-        ``Job()`` returns control to the caller immediately, and *function*
-        will be called in a future main loop iteration.
-        """
+    def __init__(self, ev=None):
+        if ev is None:
+            ev = event()
         self.event = event()
+
+    @classmethod
+    def spawn_new(cls, function, *args, **kwargs):
+        job = cls()
+        job.spawn(function, *args, **kwargs)
+        return job
+
+    def spawn(self, function, *args, **kwargs):
+        assert not hasattr(self, 'greenlet_ref'), 'spawn can only be used once per Job instance'
         g = api.spawn(wrap_result_in_event, weakref.ref(self.event), function, *args, **kwargs)
         self.greenlet_ref = weakref.ref(g)
+
+    # spawn_later can be also implemented here
 
     @property
     def greenlet(self):
