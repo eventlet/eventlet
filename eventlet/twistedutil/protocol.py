@@ -91,6 +91,7 @@ class Protocol(twistedProtocol):
 
 
 class UnbufferedTransport(GreenTransportBase):
+    """A very simple implementation of a green transport without an additional buffer"""
 
     protocol_class = Protocol
 
@@ -110,6 +111,21 @@ class UnbufferedTransport(GreenTransportBase):
         except:
             self._queue = None
             raise
+
+    def read(self):
+        """Read the data from the socket until the connection is closed cleanly.
+
+        If connection was closed in a non-clean fashion, the appropriate exception
+        is raised. In that case already received data is lost.
+        Next time read() is called it returns ''.
+        """
+        result = ''
+        while True:
+            recvd = self.recv()
+            if not recvd:
+                break
+            result += recvd
+        return result
 
     # iterator protocol:
 
