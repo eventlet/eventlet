@@ -336,7 +336,7 @@ class timeout:
     an exception provided in `exc' argument will be raised
     (TimeoutError if `exc' is omitted).
 
-    If exc is None, code block will be interrupted silently.
+    When exc is None, code block is interrupted silently.
     """
 
     def __init__(self, seconds, *throw_args):
