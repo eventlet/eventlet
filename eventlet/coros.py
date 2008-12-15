@@ -1084,6 +1084,9 @@ class queue(object):
         self.items = collections.deque()
         self.sem = semaphore(count=0, limit=max_size)
 
+    def __nonzero__(self):
+        return len(self.items)>0
+
     def __str__(self):
         params = (self.__class__.__name__, hex(id(self)), self.sem, len(self.items))
         return '<%s at %s sem=%s items[%d]>' % params
