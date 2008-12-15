@@ -322,8 +322,7 @@ def wrap_result_in_event(event_ref, function, *args, **kwargs):
         event = event_ref()
         if event is not None:
             event.send_exception(*sys.exc_info())
-        else:
-            raise # let hub log the exception
+        raise # let hub log the exception
     else:
         event = event_ref()
         if event is not None:
