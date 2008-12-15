@@ -275,12 +275,11 @@ class Job(object):
         return '<%s greenlet=%r%s event=%s>' % (klass, self.greenlet, dead, self.event)
 
     def wait(self):
-        """Wait for the function to return or raise.
-        Return the return value of the function if it has returned one,
-        re-raise the exception that was raised by the function otherwise.
+        """Wait for the spawned greenlet to exit.
+        Return the result of the function if it completed without errors;
+        re-raise the exception otherwise.
 
-        If the greenlet was killed(), e.g. with kill() method, GreenletExit()
-        object is returned.
+        Return GreenletExit() object if the greenlet was killed.
         """
         return self.event.wait()
 
