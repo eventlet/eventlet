@@ -349,11 +349,11 @@ class timeout:
             self.throw_args = throw_args
 
     def __enter__(self):
-        self.timeout = exc_after(self.seconds, *self.throw_args)
-        return self.timeout
+        self.timer = exc_after(self.seconds, *self.throw_args)
+        return self.timer
 
     def __exit__(self, typ, value, tb):
-        self.timeout.cancel()
+        self.timer.cancel()
         if typ is _SilentException and value in self.throw_args:
             return True
 
