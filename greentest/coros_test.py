@@ -31,7 +31,7 @@ class TestEvent(tests.TestCase):
     mode = 'static'
     def setUp(self):
         # raise an exception if we're waiting forever
-        self._cancel_timeout = api.exc_after(1, RuntimeError())
+        self._cancel_timeout = api.exc_after(1, RuntimeError('test takes too long'))
 
     def tearDown(self):
         self._cancel_timeout.cancel()
@@ -103,11 +103,11 @@ class TestEvent(tests.TestCase):
     def test_double_exception(self):
         evt = coros.event()
         # send an exception through the event
-        evt.send(exc=RuntimeError())
+        evt.send(exc=RuntimeError('from test_double_exception'))
         self.assertRaises(RuntimeError, evt.wait)
         evt.reset()
         # shouldn't see the RuntimeError again
-        api.exc_after(0.001, api.TimeoutError)
+        api.exc_after(0.001, api.TimeoutError('from test_double_exception'))
         self.assertRaises(api.TimeoutError, evt.wait)
 
 
