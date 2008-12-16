@@ -77,6 +77,7 @@ class event(object):
     """
     _result = None
     def __init__(self):
+        self._waiters = {}
         self.reset()
 
     def __str__(self):
@@ -105,6 +106,16 @@ class event(object):
 
         """
         assert self._result is not NOT_USED, 'Trying to re-reset() a fresh event.'
+
+        # there're waiters for the current event? make sure their events fire
+        if self._waiters and self._result is not NOT_USED:
+            if self._exc is None:
+                for waiter in self._waiters:
+                    api.get_hub().schedule_call_global(0, waiter.switch, self._result)
+            else:
+                for waiter in self._waiters:
+                    api.iget_hub().schedule_call_global(0, waiter.throw, *self._exc)
+
         self.epoch = time.time()
         self._result = NOT_USED
         self._exc = None
@@ -246,12 +257,19 @@ class event(object):
             exc = (exc, )
         self._exc = exc
         hub = api.get_hub()
-        if exc is None:
-            for waiter in self._waiters:
-                hub.schedule_call(0, waiter.switch, self._result)
-        else:
-            for waiter in self._waiters:
-                hub.schedule_call(0, waiter.throw, *self._exc)
+        if self._waiters:
+            hub.schedule_call_global(0, self._do_send, self._result, self._exc, self._waiters.keys())
+
+    def _do_send(self, result, exc, waiters):
+        while waiters:
+            waiter = waiters.pop()
+            if waiter in self._waiters:
+                if waiters:
+                    api.get_hub().schedule_call_global(0, self._do_send, result, exc, waiters)
+                if exc is None:
+                    waiter.switch(result)
+                else:
+                    waiter.throw(*exc)
 
     def send_exception(self, *args):
         # the arguments and the same as for greenlet.throw
