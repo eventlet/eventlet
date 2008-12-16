@@ -313,10 +313,13 @@ class Job(object):
         return self.event.wait()
 
     def poll(self, notready=None):
-        if self.event.ready():
-            return self.event.wait()
-        else:
-            return notready
+        return self.event.poll(notready)
+
+    def poll_result(self, notready=None):
+        return self.event.poll_result(notready)
+
+    def poll_exception(self, notready=None):
+        return self.event.poll_exception(notready)
 
     def ready(self):
         return self.event.ready()
