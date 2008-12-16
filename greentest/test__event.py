@@ -1,7 +1,8 @@
+from __future__ import with_statement
 import unittest
 import sys
 from eventlet.coros import event, Job, JobGroup
-from eventlet.api import spawn, sleep, GreenletExit, exc_after
+from eventlet.api import spawn, sleep, GreenletExit, exc_after, timeout
 
 DELAY= 0.01
 
@@ -23,6 +24,18 @@ class TestEvent(unittest.TestCase):
         sleep(0)
         assert log == [('catched', 'Exception')], log
 
+    def test_send(self):
+        event1 = event()
+        event2 = event()
+
+        spawn(event1.send, 'hello event1')
+        exc_after(0, ValueError('interrupted'))
+        try:
+            result = event1.wait()
+        except ValueError:
+            with timeout(DELAY, None):
+                result = event2.wait()
+                raise AssertionError('Nobody sent anything to event2 yet it received %r' % (result, ))
 
 class CommonJobTests:
 
