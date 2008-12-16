@@ -115,6 +115,27 @@ class event(object):
         you can wait() on that one."""
         return self._result is not NOT_USED
 
+    def has_exception(self):
+        return self._exc is not None
+
+    def has_result(self):
+        return self._result is not NOT_USED and self._exc is None
+
+    def poll(self, notready=None):
+        if self.ready():
+            return self.wait()
+        return notready
+
+    def poll_exception(self, notready=None):
+        if self.has_exception():
+            return self.wait()
+        return notready
+
+    def poll_result(self, notready=None):
+        if self.has_result():
+            return self.wait()
+        return notready
+
     def wait(self):
         """Wait until another coroutine calls send.
         Returns the value the other coroutine passed to
