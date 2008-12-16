@@ -26,13 +26,18 @@ class Producer2Event(object):
 class GreenTransportBase(object):
 
     write_event = None
+    transportBufferSize = None
+
+    def __init__(self, transportBufferSize=None):
+        if transportBufferSize is not None:
+            self.transportBufferSize = transportBufferSize
 
     def build_protocol(self):
         # note to subclassers: self._queue must have send and send_exception that never block
         self._queue = queue()
         protocol = self.protocol_class(self, self._queue)
         return protocol
-    
+
     def _wait(self):
         self.transport.resumeProducing()
         try:
@@ -44,7 +49,7 @@ class GreenTransportBase(object):
         self.transport.write(data)
         if self.write_event is not None:
             self.write_event.wait()
-    
+
     def __getattr__(self, item):
         if item=='transport':
             raise AttributeError(item)
@@ -59,17 +64,19 @@ class GreenTransportBase(object):
         self.paused -= 1
         if self.paused==0:
             self.transport.resumeProducing()
- 
+
     def pauseProducing(self):
         self.paused += 1
         if self.paused==1:
             self.transport.pauseProducing()
- 
+
     def init_transport_producer(self, transport):
         transport.pauseProducing()
         self.paused = 1
 
     def init_transport(self, transport):
+        if self.transportBufferSize is not None:
+            transport.bufferSize = self.transportBufferSize
         self.init_transport_producer(transport)
         ev = event()
         ev.send(1)
@@ -82,7 +89,7 @@ class Protocol(twistedProtocol):
     def __init__(self, gtransport, queue):
         self.gtransport = gtransport
         self._queue = queue
-    
+
     def connectionMade(self):
         self.gtransport.init_transport(self.transport)
         del self.gtransport
@@ -147,24 +154,23 @@ class UnbufferedTransport(GreenTransportBase):
 class GreenTransport(GreenTransportBase):
 
     protocol_class = Protocol
-
-    def __init__(self):
-        self.buf = ''
-        self._error = None
+    _buffer = ''
+    _error = None
 
     def _wait(self):
         # don't pause/resume producer here; read and recv methods will do it themselves
         return self._queue.wait()
-   
+
     def read(self, size=-1):
+        """Read size bytes or until EOF"""
         if self._queue is not None:
             resumed = False
             try:
-                while len(self.buf) < size or size < 0:
+                while len(self._buffer) < size or size < 0:
                     if not resumed:
                         self.resumeProducing()
                         resumed = True
-                    self.buf += self._wait()
+                    self._buffer += self._wait()
             except ConnectionDone:
                 self._queue = None
             except:
@@ -174,22 +180,22 @@ class GreenTransport(GreenTransportBase):
                 if resumed:
                     self.pauseProducing()
         if size>=0:
-            result, self.buf = self.buf[:size], self.buf[size:]
+            result, self._buffer = self._buffer[:size], self._buffer[size:]
         else:
-            result, self.buf = self.buf, ''
+            result, self._buffer = self._buffer, ''
         if not result and self._error is not None:
-            error = self._error
-            self._error = None
+            error, self._error = self._error, None
             raise error[0], error[1], error[2]
         return result
 
     def recv(self, buflen=None):
-        if self._queue is not None and not self.buf:
+        """Receive a single chunk of undefined size but no bigger than buflen"""
+        if self._queue is not None and not self._buffer:
             self.resumeProducing()
             try:
                 recvd = self._wait()
                 #print 'received %r' % recvd
-                self.buf += recvd
+                self._buffer += recvd
             except ConnectionDone:
                 self._queue = None
             except:
@@ -198,9 +204,9 @@ class GreenTransport(GreenTransportBase):
             finally:
                 self.pauseProducing()
         if buflen is None:
-            result, self.buf = self.buf, ''
+            result, self._buffer = self._buffer, ''
         else:
-            result, self.buf = self.buf[:buflen], self.buf[buflen:]
+            result, self._buffer = self._buffer[:buflen], self._buffer[buflen:]
         if not result and self._error is not None:
             error = self._error
             self._error = None
