@@ -23,7 +23,7 @@ class Test(unittest.TestCase):
         except TimeoutError:
             pass
         else:
-            assert False, 'must raise TimeoutError'
+            raise AssertionError('must raise TimeoutError')
 
         # You can customize the exception raised:
         try:
@@ -46,12 +46,12 @@ class Test(unittest.TestCase):
             try:
                 with timeout(DELAY, *sys.exc_info()):
                     sleep(DELAY*2)
-                    assert 'should not get there'
-                assert 'should not get there'
+                    raise AssertionError('should not get there')
+                raise AssertionError('should not get there')
             except ZeroDivisionError:
                 pass
         else:
-            assert 'should not get there'
+            raise AssertionError('should not get there')
 
         # It's possible to cancel the timer inside the block:
         with timeout(DELAY) as timer:
@@ -80,12 +80,12 @@ class Test(unittest.TestCase):
         with timeout(DELAY, None):
             with timeout(DELAY*2, None):
                 sleep(DELAY*3)
-            assert False, 'should not get there'
+            raise AssertionError('should not get there')
 
         with timeout(DELAY, _SilentException()):
             with timeout(DELAY*2, _SilentException()):
                 sleep(DELAY*3)
-            assert False, 'should not get there'
+            raise AssertionError('should not get there')
 
         # this case fails and there's no intent to fix it.
         # just don't do it like that
