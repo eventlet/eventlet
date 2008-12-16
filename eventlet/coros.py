@@ -330,7 +330,7 @@ class Job(object):
             return api.kill(greenlet)
 
     def kill_after(self, seconds):
-        api.call_after_global(seconds, _kill_by_ref, weakref.ref(self))
+        return api.call_after_global(seconds, _kill_by_ref, weakref.ref(self))
 
 def _kill_by_ref(async_job_ref):
     async_job = async_job_ref()
