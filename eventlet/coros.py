@@ -167,9 +167,7 @@ class event(object):
             finally:
                 self._waiters.pop(api.getcurrent(), None)
         if self._exc is not None:
-            if isinstance(self._exc, tuple):
-                raise self._exc[0], self._exc[1], self._exc[2]
-            raise self._exc
+            api.getcurrent().throw(*self._exc)
         return self._result
 
     def cancel(self, waiter):
@@ -244,18 +242,16 @@ class event(object):
         """
         assert self._result is NOT_USED, 'Trying to re-send() an already-triggered event.'
         self._result = result
+        if exc is not None and not isinstance(exc, tuple):
+            exc = (exc, )
         self._exc = exc
         hub = api.get_hub()
         if exc is None:
             for waiter in self._waiters:
                 hub.schedule_call(0, waiter.switch, self._result)
         else:
-            if isinstance(self._exc, tuple):
-                for waiter in self._waiters:
-                    hub.schedule_call(0, waiter.throw, *self._exc)
-            else:
-                for waiter in self._waiters:
-                    hub.schedule_call(0, waiter.throw, self._exc)
+            for waiter in self._waiters:
+                hub.schedule_call(0, waiter.throw, *self._exc)
 
     def send_exception(self, *args):
         # the arguments and the same as for greenlet.throw
@@ -491,13 +487,7 @@ class multievent(object):
         if self.items:
             result, exc = self.items.popleft()
             if exc is not None:
-                if isinstance(exc, tuple):
-                    if len(exc)==1:
-                        exc += (None, None,)
-                    elif len(exc)==2:
-                        exc += (None, )
-                    raise exc[0], exc[1], exc[2]
-                raise exc
+                api.getcurrent().throw(*exc)
             return result
         else:
             self._waiters[api.getcurrent()] = True
@@ -513,12 +503,10 @@ class multievent(object):
                 for waiter in self._waiters:
                     hub.schedule_call(0, waiter.switch, result)
             else:
-                if isinstance(exc, tuple):
-                    for waiter in self._waiters:
-                        hub.schedule_call(0, waiter.throw, *exc)
-                else:
-                    for waiter in self._waiters:
-                        hub.schedule_call(0, waiter.throw, exc)
+                if not isinstance(exc, tuple):
+                    exc = (exc, )
+                for waiter in self._waiters:
+                    hub.schedule_call(0, waiter.throw, *exc)
         else:
             self.items.append((result, exc))
 
@@ -1232,6 +1220,8 @@ class queue(object):
         will raise that exception.
         Otherwise, the corresponding wait() will return result (default None).
         """
+        if exc is not None and not isinstance(exc, tuple):
+            exc = (exc, )
         self.items.append((result, exc))
         self.sem.release()
 
@@ -1249,13 +1239,7 @@ class queue(object):
         self.sem.acquire()
         result, exc = self.items.popleft()
         if exc is not None:
-            if isinstance(exc, tuple):
-                if len(exc)==1:
-                    exc += (None, None,)
-                elif len(exc)==2:
-                    exc += (None, )
-                raise exc[0], exc[1], exc[2]
-            raise exc
+            api.getcurrent().throw(*exc)
         return result
 
     def ready(self):
