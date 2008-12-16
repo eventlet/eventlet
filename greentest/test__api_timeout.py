@@ -7,11 +7,11 @@ DELAY = 0.01
 
 class Error(Exception):
     pass
- 
+
 class Test(unittest.TestCase):
 
     def test_api(self):
-        # Nothing happens if with-block finishes before the timeout expires 
+        # Nothing happens if with-block finishes before the timeout expires
         with timeout(DELAY*2):
             sleep(DELAY)
         sleep(DELAY*2) # check if timer was actually cancelled
@@ -57,7 +57,7 @@ class Test(unittest.TestCase):
         with timeout(DELAY) as timer:
             timer.cancel()
             sleep(DELAY*2)
-         
+
         # To silent the exception, pass None as second parameter. The with-block
         # will be interrupted with _SilentException, but it won't be propogated
         # outside.
@@ -67,6 +67,11 @@ class Test(unittest.TestCase):
             sleep(XDELAY*2)
         delta = (time.time()-start)
         assert delta<XDELAY*2, delta
+
+        # passing None as seconds disables the timer
+        with timeout(None):
+            sleep(DELAY)
+        sleep(DELAY)
 
     def test_ref(self):
         err = Error()

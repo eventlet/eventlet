@@ -326,6 +326,11 @@ call_after = call_after_local
 class _SilentException(BaseException):
     pass
 
+class FakeTimer:
+
+    def cancel(self):
+        pass
+
 class timeout:
     """Raise an exception in the block after timeout.
 
@@ -341,6 +346,8 @@ class timeout:
 
     def __init__(self, seconds, *throw_args):
         self.seconds = seconds
+        if seconds is None:
+            return
         if not throw_args:
             self.throw_args = (TimeoutError(), )
         elif throw_args == (None, ):
@@ -349,7 +356,10 @@ class timeout:
             self.throw_args = throw_args
 
     def __enter__(self):
-        self.timer = exc_after(self.seconds, *self.throw_args)
+        if self.seconds is None:
+            self.timer = FakeTimer()
+        else:
+            self.timer = exc_after(self.seconds, *self.throw_args)
         return self.timer
 
     def __exit__(self, typ, value, tb):
