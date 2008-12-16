@@ -284,7 +284,7 @@ def kill(g):
 def call_after_global(seconds, function, *args, **kwds):
     """Schedule *function* to be called after *seconds* have elapsed.
     The function will be scheduled even if the current greenlet has exited.
-    
+
     *seconds* may be specified as an integer, or a float if fractional seconds
     are desired. The *function* will be called with the given *args* and
     keyword arguments *kwds*, and will be executed within the main loop's
@@ -300,11 +300,10 @@ def call_after_global(seconds, function, *args, **kwds):
     t = get_hub().schedule_call_global(seconds, startup)
     return t
 
-
 def call_after_local(seconds, function, *args, **kwds):
     """Schedule *function* to be called after *seconds* have elapsed.
     The function will NOT be called if the current greenlet has exited.
-    
+
     *seconds* may be specified as an integer, or a float if fractional seconds
     are desired. The *function* will be called with the given *args* and
     keyword arguments *kwds*, and will be executed within the main loop's
@@ -371,7 +370,7 @@ def with_timeout(seconds, func, *args, **kwds):
     """Wrap a call to some (yielding) function with a timeout; if the called
     function fails to return before the timeout, cancel it and return a flag
     value.
-    
+
     seconds
       (int or float) seconds before timeout occurs
     func
@@ -381,7 +380,7 @@ def with_timeout(seconds, func, *args, **kwds):
       (positional, keyword) arguments to pass to *func*
     timeout_value=
       value to return if timeout occurs (default raise ``TimeoutError``)
-      
+
     **Returns**:
 
     Value returned by *func* if *func* returns before *seconds*, else
@@ -391,9 +390,9 @@ def with_timeout(seconds, func, *args, **kwds):
 
     Any exception raised by *func*, and ``TimeoutError`` if *func* times out
     and no ``timeout_value`` has been provided.
-    
+
     **Example**::
-    
+
       data = with_timeout(30, httpc.get, 'http://www.google.com/', timeout_value="")
 
     Here *data* is either the result of the ``get()`` call, or the empty string if
@@ -434,12 +433,12 @@ def exc_after(seconds, *throw_args):
     Example::
 
         def read_with_timeout():
-            timer = api.exc_after(30, RuntimeError()) 
-            try: 
-                httpc.get('http://www.google.com/') 
-            except RuntimeError: 
+            timer = api.exc_after(30, RuntimeError())
+            try:
+                httpc.get('http://www.google.com/')
+            except RuntimeError:
                 print "Timed out!"
-            else: 
+            else:
                 timer.cancel()
     """
     hub = get_hub()
@@ -501,7 +500,7 @@ def get_hub():
 
 
 def sleep(seconds=0):
-    """Yield control to another eligible coroutine until at least *seconds* have 
+    """Yield control to another eligible coroutine until at least *seconds* have
     elapsed.
 
     *seconds* may be specified as an integer, or a float if fractional seconds
@@ -578,7 +577,7 @@ def unspew():
     """
     sys.settrace(None)
 
-                                                
+
 def named(name):
     """Return an object given its name.
 
