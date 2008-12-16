@@ -33,6 +33,9 @@ from eventlet import api
 from eventlet import pools
 
 
+DEBUG = False
+
+
 try:
     set
 except NameError:  # python 2.3 compatibility
@@ -279,8 +282,8 @@ class Job(object):
         return job
 
     def spawn(self, function, *args, **kwargs):
-        assert not hasattr(self, 'greenlet_ref'), 'spawn can only be used once per Job instance'
-        g = api.spawn(wrap_result_in_event, weakref.ref(self.event), function, *args, **kwargs)
+        assert not hasattr(self, 'greenlet_ref'), 'spawn can only be used once per instance'
+        g = api.spawn(_collect_result, weakref.ref(self), function, *args, **kwargs)
         self.greenlet_ref = weakref.ref(g)
 
     # spawn_later can be also implemented here
@@ -324,6 +327,18 @@ class Job(object):
     def ready(self):
         return self.event.ready()
 
+    def has_result(self):
+        return self.event.has_result()
+
+    def has_exception(self):
+        return self.event.has_exception()
+
+    def _send(self, result):
+        self.event.send(result)
+
+    def _send_exception(self, *throw_args):
+        self.event.send_exception(*throw_args)
+
     def kill(self):
         greenlet = self.greenlet_ref()
         if greenlet is not None:
@@ -337,28 +352,125 @@ def _kill_by_ref(async_job_ref):
     if async_job is not None:
         async_job.kill()
 
-def wrap_result_in_event(event_ref, function, *args, **kwargs):
-    """Execute *function*, send its result to event_ref().
+
+def _collect_result(job_ref, function, *args, **kwargs):
+    """Execute *function* and send its result to job_ref().
+
     If function raises GreenletExit() it's trapped and sent as a regular value.
-    If event_ref() is not available (event was GC-ed) the return value
-    is thrown away and the exception is re-raised (allowing hub to log
-    the exception)
+    If job_ref points to a dead object or if DEBUG is true the exception
+    will be re-raised.
     """
     try:
         result = function(*args, **kwargs)
     except api.GreenletExit, ex:
-        event = event_ref()
-        if event is not None:
-            event.send(ex)
+        job = job_ref()
+        if job is not None:
+            job._send(ex)
     except:
-        event = event_ref()
-        if event is not None:
-            event.send_exception(*sys.exc_info())
+        job = job_ref()
+        if job is not None:
+            job._send_exception(*sys.exc_info())
+            if not DEBUG:
+                return
         raise # let hub log the exception
     else:
-        event = event_ref()
-        if event is not None:
-            event.send(result)
+        job = job_ref()
+        if job is not None:
+            job._send(result)
+
+class GroupMemberJob(Job):
+
+    def __init__(self, group_queue, event=None):
+        self._group_queue = group_queue
+        Job.__init__(self, event)
+
+    def _send(self, result):
+        self._group_queue.send((self, result, None))
+
+    def _send_exception(self, *throw_args):
+        self._group_queue.send((self, None, throw_args))
+
+
+class JobGroupExit(api.GreenletExit):
+    pass
+
+class JobGroup(object):
+    """Spawn jobs in the context of the group: when one job raises an exception,
+    all other jobs are killed immediatelly.
+
+    To spawn a job use spawn_job method which returns a Job instance.
+    >>> group = JobGroup()
+    >>> job = group.spawn_new(api.get_hub().switch) # give up control to hub forever
+    >>> _ = group.spawn_new(int, 'bad') # raise ValueError
+    >>> job.wait()
+    JobGroupExit('Killed because of ValueError in the group',)
+    """
+
+    def __init__(self):
+        self._queue = queue()
+        self._jobs = []
+        self._waiter_job = Job.spawn_new(self._waiter)
+        self._killerror = None
+
+    def spawn_new(self, function, *args, **kwargs):
+        assert self._waiter_job.poll('run') == 'run'
+        job = GroupMemberJob(self._queue)
+        self._jobs.append(job)
+        if self._killerror is None:
+            job.spawn(function, *args, **kwargs)
+        else:
+            job.event.send(self._killerror)
+        return job
+
+    def kill_all(self, *throw_args):
+        assert self._waiter_job.poll('run') == 'run'
+        for job in self._jobs:
+            g = job.greenlet
+            if g is not None:
+                api.get_hub().schedule_call(0, g.throw, *throw_args)
+        api.sleep(0)
+
+    def complete(self, *jobs):
+        assert self._waiter_job.poll('run') == 'run'
+        left = set(jobs)
+        for job in jobs:
+            if job.ready():
+                left.remove(job)
+        for job in left:
+            job.wait()
+
+    # XXX make jobs a list, because wait methods will have timeout parameter soon
+    def wait(self, *jobs):
+        self.complete(*jobs)
+        return [x.wait() for x in jobs]
+
+    def complete_all(self):
+        while True:
+            count = len(self._jobs)
+            self.complete(*self._jobs)
+            # it's possible that more jobs were added while we were waiting
+            if count == len(self._jobs):
+                break
+
+    def wait_all(self):
+        self.complete_all()
+        return [x.wait() for x in self._jobs]
+
+    def _waiter(self):
+        while True:
+            job, result, throw_args = self._queue.wait()
+            if throw_args is None:
+                job.event.send(result)
+            else:
+                if self._killerror is None:
+                    type = throw_args[0]
+                    self._killerror = JobGroupExit('Killed because of %s in the group' % type.__name__)
+                    self.kill_all(self._killerror)
+                    job.event.send_exception(*throw_args)
+                    # cannot exit here, as I need to deliver GreenExits
+                else:
+                    # another exception, ignore it
+                    pass
 
 
 class multievent(object):
