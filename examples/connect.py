@@ -1,10 +1,7 @@
 """Spawn multiple greenlet-workers and collect their results.
 
-Demonstrates how to use coros.Job.
+Demonstrates how to use eventlet.green package and coros.Job.
 """
-import sys
-import string
-from eventlet.api import sleep
 from eventlet.green import socket
 from eventlet.coros import Job
 
