@@ -1,29 +1,37 @@
+#!/usr/bin/python
+"""Port forwarder
+USAGE: twisted_portforward.py local_port remote_host remote_port"""
 import sys
 from twisted.internet import reactor
-from eventlet.coros import event, Job
+from eventlet.coros import Job
 from eventlet.twistedutil import join_reactor
 from eventlet.twistedutil.protocol import GreenClientCreator, SpawnFactory, UnbufferedTransport
 
-def forward(from_, to):
+def forward(source, dest):
     try:
         while True:
-            x = from_.recv()
+            x = source.recv()
             if not x:
                 break
             print 'forwarding %s bytes' % len(x)
-            to.write(x)
+            dest.write(x)
     finally:
-        to.loseConnection()
+        dest.loseConnection()
 
 def handler(local):
+    client = str(local.getHost())
+    print 'accepted connection from %s' % client
     remote = GreenClientCreator(reactor, UnbufferedTransport).connectTCP(remote_host, remote_port)
-    error = event()
     a = Job.spawn_new(forward, remote, local)
     b = Job.spawn_new(forward, local, remote)
     a.wait()
     b.wait()
+    print 'closed connection to %s' % client
 
-local_port, remote_host, remote_port = sys.argv[1:]
+try:
+    local_port, remote_host, remote_port = sys.argv[1:]
+except ValueError:
+    sys.exit(__doc__)
 local_port = int(local_port)
 remote_port = int(remote_port)
 reactor.listenTCP(local_port, SpawnFactory(handler))
