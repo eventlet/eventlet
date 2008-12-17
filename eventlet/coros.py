@@ -106,20 +106,9 @@ class event(object):
 
         """
         assert self._result is not NOT_USED, 'Trying to re-reset() a fresh event.'
-
-        # there're waiters for the current event? make sure their events fire
-        if self._waiters and self._result is not NOT_USED:
-            if self._exc is None:
-                for waiter in self._waiters:
-                    api.get_hub().schedule_call_global(0, waiter.switch, self._result)
-            else:
-                for waiter in self._waiters:
-                    api.iget_hub().schedule_call_global(0, waiter.throw, *self._exc)
-
         self.epoch = time.time()
         self._result = NOT_USED
         self._exc = None
-        self._waiters = {}
 
     def ready(self):
         """ Return true if the wait() call will return immediately.
@@ -270,6 +259,7 @@ class event(object):
                     waiter.switch(result)
                 else:
                     waiter.throw(*exc)
+                break
 
     def send_exception(self, *args):
         # the arguments and the same as for greenlet.throw
