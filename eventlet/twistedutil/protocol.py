@@ -78,10 +78,10 @@ class GreenTransportBase(object):
         if self.transportBufferSize is not None:
             transport.bufferSize = self.transportBufferSize
         self.init_transport_producer(transport)
-        ev = event()
-        ev.send(1)
-        transport.registerProducer(Producer2Event(ev), True)
-        self.write_event = ev
+        if self.write_event is None:
+            self.write_event = event()
+            self.write_event.send(1)
+        transport.registerProducer(Producer2Event(self.write_event), True)
         self.transport = transport
 
 class Protocol(twistedProtocol):
