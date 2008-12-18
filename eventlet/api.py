@@ -276,8 +276,8 @@ def spawn(function, *args, **kwds):
     g.switch(function, args, kwds, t.cancel)
     return g
 
-def kill(g):
-    get_hub().schedule_call(0, g.throw)
+def kill(g, *throw_args):
+    get_hub().schedule_call(0, g.throw, *throw_args)
     if getcurrent() is not get_hub().greenlet:
         sleep(0)
 
