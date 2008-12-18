@@ -343,10 +343,10 @@ class Job(object):
     def _send_exception(self, *throw_args):
         self.event.send_exception(*throw_args)
 
-    def kill(self):
+    def kill(self, *throw_args):
         greenlet = self.greenlet_ref()
         if greenlet is not None:
-            return api.kill(greenlet)
+            return api.kill(greenlet, *throw_args)
 
     def kill_after(self, seconds):
         return api.call_after_global(seconds, _kill_by_ref, weakref.ref(self))
