@@ -427,12 +427,15 @@ class JobGroup(object):
         return job
 
     def kill_all(self, *throw_args):
-        assert self._waiter_job.poll('run') == 'run'
+        assert self._waiter_job.poll('run') == 'run', '_waiter_job must live'
         for job in self._jobs:
             g = job.greenlet
             if g is not None:
                 api.get_hub().schedule_call(0, g.throw, *throw_args)
         api.sleep(0)
+
+    # QQQ: add kill_all_later(seconds, throw_args)
+    # add kill_delay attribute
 
     def complete(self, *jobs):
         assert self._waiter_job.poll('run') == 'run'
@@ -461,21 +464,22 @@ class JobGroup(object):
         return [x.wait() for x in self._jobs]
 
     def _waiter(self):
+        # XXX: this lives forever, fix it to exit after all jobs died
+        # XXX: add __nonzero__ method that returns whether JobGroup is alive
+        # XXX: 3 states: True (alive), finishing, False (all dead)
         while True:
             job, result, throw_args = self._queue.wait()
             if throw_args is None:
-                job.event.send(result)
+                if not job.event.ready():
+                    job.event.send(result)
             else:
+                if not job.event.ready():
+                    job.event.send_exception(*throw_args)
                 if self._killerror is None:
                     type = throw_args[0]
                     self._killerror = JobGroupExit('Killed because of %s in the group' % type.__name__)
                     self.kill_all(self._killerror)
-                    job.event.send_exception(*throw_args)
                     # cannot exit here, as I need to deliver GreenExits
-                else:
-                    # another exception, ignore it
-                    pass
-
 
 class multievent(object):
     """is an event that can hold more than one value (it cannot be cancelled though)
