@@ -4,13 +4,11 @@ from eventlet.twistedutil.protocol import GreenTransportBase
 
 class LineOnlyReceiver(basic.LineOnlyReceiver):
 
-    def __init__(self, gtransport, queue):
-        self.gtransport = gtransport
+    def __init__(self, queue):
         self._queue = queue
-    
+
     def connectionMade(self):
-        self.gtransport.init_transport(self.transport)
-        del self.gtransport
+        self._queue.send(self.transport)
 
     def lineReceived(self, line):
         self._queue.send(line)

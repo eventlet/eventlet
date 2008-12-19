@@ -4,12 +4,12 @@ exit_unless_twisted()
 
 import sys
 import unittest
-from twisted.internet.error import ConnectionLost, ConnectionDone
-from twisted.python import failure
+from twisted.internet.error import ConnectionDone
 
 import eventlet.twistedutil.protocol as pr
 from eventlet.twistedutil.protocols.basic import LineOnlyReceiverTransport
 from eventlet.api import spawn, sleep, with_timeout, call_after
+from eventlet.coros import event
 from eventlet.green import socket
 
 DELAY=0.01
@@ -180,6 +180,30 @@ class TestGreenTransportError(TestCase):
 #         self.assertEqual('', self.conn.recv(1))
 #         self.assertEqual('', self.conn.recv())
 #
+
+class TestTLSError(unittest.TestCase):
+
+    def test_server_connectionMade_never_called(self):
+        # trigger case when protocol instance is created,
+        # but it's connectionMade is never called
+        from gnutls.interfaces.twisted import X509Credentials
+        from gnutls.errors import GNUTLSError
+        cred = X509Credentials(None, None)
+        ev = event()
+        def handle(conn):
+            ev.send("handle must not be called")
+        s = reactor.listenTLS(0, pr.SpawnFactory(handle, LineOnlyReceiverTransport), cred)
+        creator = pr.GreenClientCreator(reactor, LineOnlyReceiverTransport)
+        try:
+            conn = creator.connectTLS('127.0.0.1', s.getHost().port, cred)
+        except GNUTLSError:
+            pass
+        assert ev.poll() is None, repr(ev.poll())
+        
+try:
+    import gnutls.interfaces.twisted
+except ImportError:
+    del TestTLSError
 
 if __name__=='__main__':
     unittest.main()
