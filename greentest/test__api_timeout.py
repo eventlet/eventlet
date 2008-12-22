@@ -59,7 +59,7 @@ class Test(unittest.TestCase):
             sleep(DELAY*2)
 
         # To silent the exception, pass None as second parameter. The with-block
-        # will be interrupted with _SilentException, but it won't be propogated
+        # will be interrupted with _SilentException, but it won't be propagated
         # outside.
         XDELAY=0.1
         start = time.time()
