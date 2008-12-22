@@ -6,13 +6,99 @@ Twisted provides solid foundation for asynchronous programming in Python.
 Eventlet makes asynchronous programming look like synchronous, thus
 achieving higher signal-to-noise ratio than traditional twisted programs have.
 
-Eventlet working on top of twisted, provides:
+Eventlet on top of twisted provides:
  * [stable twisted]
  * [usable and readable synchronous style]
  * existing twisted code can be used without any changes
  * existing blocking code can be used after trivial changes applied
 
- 
+Eventlet features:
+
+ * utilities for spawning and controlling greenlet execution:
+   api.spawn, api.kill, coros.Job
+ * utilities for communicating between greenlets:
+   coros.event, coros.queue
+ * standard Python modules that won't block the reactor:
+   eventlet.green package
+ * utilities specific to twisted hub:
+   eventlet.twistedutil package
+
+
+Getting started with eventlet on twisted
+----------------------------------------
+
+This section will only mention stuff that may be useful but it
+won't explain in details how to use it. For that, refer to the
+docstrings of the modules and the examples.
+
+There are 2 ways of using twisted with eventlet, one that is
+familiar to twisted developers and another that is familiar
+to eventlet developers:
+
+ 1. explicitly start the main loop in the main greenlet;
+ 2. implicitly start the main loop in a dedicated greenlet.
+
+To enable (1), add this line at the top of your program:
+from eventlet.twistedutil import join_reactor
+then start the reactor as you would do in a regular twisted application.
+
+For (2) just make sure that you have reactor installed before using
+any of eventlet functions. Otherwise a on-twisted hub select will be
+selected and twisted code won't work.
+
+Most of examples/twisted_* use twisted style with the exception of
+twisted_client.py and twisted_srvconnector.py. All of the non-twisted
+examples in examples directory use eventlet-style (they work with any
+of eventlet's hubs, not just twisted-based).
+
+Eventlet implements "blocking" operations by switching to the main loop
+greenlet, thus it's impossible to call a blocking function when you are
+already in the main loop. Therefore one must be cautious in a twisted
+callback, calling only a non-blocking subset of eventlet API here. The
+following functions won't unschedule the current greenlet and are safe
+to call from anywhere:
+
+1. Greenlet creation functions: api.spawn, coros.Job*.spawn_new,
+   twistedutil.deferToGreenThread and others based on api.spawn.
+
+2. send(), send_exception(), poll(), ready() methods of coros.event,
+   coros.Job and _unbounded_ coros.queue.
+
+For an example on how to take advantage of eventlet in a twisted
+application using deferToGreenThread see examples/twisted_http_proxy.py
+
+Although eventlet provides eventlet.green.socket module that implements
+interface of the standard Python socket, there's also a way to use twisted's
+network code in a synchronous fashion via GreenTransport class.
+A GreenTransport interface is reminiscent of socket although it's not a drop
+in replacement. It combines features of TCPTransport and Protocol in a single
+object:
+
+ * all of transport methods (like getPeer()) are available directly on
+   a GreenTransport instance; in addition, underlying transport object
+   is available via 'transport' attribute;
+ * write method is overriden: it may block if transport write buffer is full;
+ * read() and recv() methods are provided to retrieve the data from protocol
+   synchronously.
+
+To make a GreenTransport instance you can use
+twistedutil.protocol.GreenTransportCreator (usage is similar to that of
+twisted.internet.protocol.ClientCreator)
+
+For an example on how to get a connected GreenTransport instance,
+see twisted_client.py, twisted_srvconnect.py or twisted_portforward.py.
+For an example on how to use GreenTransport for incoming connections,
+see twisted_server.py, twisted_portforward.py.
+
+
+also
+* twistedutil.block_on - wait for a deferred to fire
+  block_on(reactor.callInThread(func, args))
+* twistedutil.protocol.basic.LineOnlyReceiverTransport - a green transport
+  variant built on top of LineOnlyReceiver protocol. Demonstrates how
+  to convert a protocol to a synchronous mode.
+
+
 Coroutines
 ----------
 
@@ -21,33 +107,45 @@ http://codespeak.net/py/dist/greenlet.html
 
 Essential points
 
-* Every greenlet except MAIN has a parent. When an exception happen in the greenlet
-  it is propogated to the parent greenlet (special case is GreenletExit, in that case
-  the greenlet silently dies)
-* Parent can be reassigned (cycle would be detected and rejected with ValueError)
-...
+* There always exists MAIN greenlet
+* Every greenlet except MAIN has a parent. MAIN therefore could be detected as g.parent is None
+* When greenlet is finished it's return value is propagated to the parent (i.e. switch() call
+  in the parent greenlet returns it)
+* When an exception leaves a greelen, it's propagated to the parent (i.e. switch() in the parent
+  re-raises it) unless it's a subclass of GreenletExit, which is returned as a value.
+* parent can be reassigned (by simply setting 'parent' attribute). A cycle would be detected and
+  rejected with ValueError
+
 
 greenlet == coroutine == green thread == microthread in this document
+
+Note, that there's no scheduler of any sort; if a coroutine wants to be scheduled again
+it must take care of it itself. As an application developer, however, you don't need
+to worry about it as that's what eventlet does behind the scenes.
 
 
 How does eventlet work
 ----------------------
 
 Twisted's reactor and eventlet's hub are very similar in what they do.
-Both continuously call select (or poll or similar) on the list of registered
-descriptors (this is called polling) and each time a specific event is
-fired, the associated callback function is called. In addition, both
-maintain a list of scheduled calls.
+Both continuously preform polling on the list of registered descriptors
+and each time a specific event is fired, the associated callback function
+is called. In addition, both maintain a list of scheduled calls.
 
 Polling is performed by the main loop - a function that both reactor and hub have.
-However, while with twisted you explicitly start it by calling reactor.run(), with
-eventlet the main loop is running in a dedicated greenlet and is started implicitly
-upon the first switch into that greenlet. When an event is fired, the callback
-perform switch to the waiting greenlet.
+When twisted calls user's callback it's expected to return almost immediately,
+without any blocking I/O calls. Deferreds help there.
 
-So, to perform a `blocking' operation that blocks this greenlet but not the others,
-you switch() into the main loop's greenlet with some additional preparations,
-as shown in the following figure.
+Eventlet runs the main loop in a dedicated greenlet (MAIN_LOOP). It is the same
+greenlet as MAIN if you use join_reactor. Otherwise it's a dedicated greenlet
+started implicitly. The execution is organized in a such way that the switching
+almost always involves MAIN_LOOP. All of the blocking use this algorithm:
+
+1. register a callback that switches back to the current greenlet when
+   an event of interest happen
+2. switch to the MAIN_LOOP
+
+For example, here's what eventlet's socket recv() does:
 
 = blocking operation RECV on socket d =
 
@@ -70,24 +168,3 @@ data=MAIN_LOOP.switch() ---------> poll for events
                         \--------- USER.switch(data) # argument data here becomes return value in user's switch
   return data
 
-
-TBW:
-
-* green package
-  modules that mimic modules in standard library, but actually do the non-blocking stuff as described above.
-
-* how to convert protocol implemented in twisted to `blocking' mode.
-  see eventlet.twisteds.util.block_on
-
-  One can also look at Corotwine for an ideas.
-  Corotwine is another attempt to use twisted together with greentlets.
-  protocol <-> buffer <-> greenlet
-
-* how to convert real blocking code.
-  For simple cases: block_on(reactor.callInThread(func, args))
-
-  When single deferred is not enough: Queue subclass that has list of
-  associated channels with it and a descriptor (obtained with os.pipe()).
-  Every time, queue.put is called, eQueue does descriptor.write(byte).
-  The descriptor is registered with the hub, so the callback is called
-  which gets the value from the Queue and puts it in all associated channels.
