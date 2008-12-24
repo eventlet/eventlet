@@ -2,10 +2,10 @@ import unittest
 from greentest import test_support
 
 import os
+from eventlet.green import socket
 import StringIO
-
-import urllib2
-from urllib2 import Request, OpenerDirector
+from eventlet.green import urllib2
+from eventlet.green.urllib2 import Request, OpenerDirector
 
 # XXX
 # Request

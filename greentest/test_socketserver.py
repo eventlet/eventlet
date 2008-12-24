@@ -1,15 +1,22 @@
 # Test suite for SocketServer.py
+# converted to unittest (Denis)
+
 from greentest import test_support
 from greentest.test_support import (verbose, verify, TESTFN, TestSkipped,
                                reap_children)
 test_support.requires('network')
 
+from eventlet.green.SocketServer import *
+from eventlet.green import socket
 import errno
+from eventlet.green import select
+from eventlet.green import time
+from eventlet.green import threading
 import os
 import unittest
 
 NREQ = 3
-DELAY = 0.1
+DELAY = 0.05
 
 class MyMixinHandler:
     def handle(self):
@@ -33,12 +40,10 @@ class MyMixinServer:
         self.server_close()
         raise
 
-teststring = "hello world\r\n"
+teststring = "hello world\n"
 
 def receive(sock, n, timeout=5):
-    #print 'select args: ', [sock], [], [], timeout
     r, w, x = select.select([sock], [], [], timeout)
-    #print 'select results: ', r, w, x
     if sock in r:
         return sock.recv(n)
     else:

@@ -5,6 +5,11 @@ import urlparse
 import unittest
 import hashlib
 from greentest import test_support
+from eventlet.green import threading
+from eventlet.green import socket
+from eventlet.green import urllib2
+from eventlet.green import BaseHTTPServer
+
 
 
 # Loopback http server infrastructure

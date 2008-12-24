@@ -1,11 +1,12 @@
-#do not run me, I don't import any socket module.
-#run test_socket_green.py or test_socket_hook.py instead
+#!/usr/bin/env python
 
 import unittest
 from greentest import test_support
 
-from eventlet.green import thread
-from eventlet.green import threading
+from eventlet.green import socket
+from eventlet.green import select
+from eventlet.green import time
+from eventlet.green import thread, threading
 import Queue
 import sys
 import array

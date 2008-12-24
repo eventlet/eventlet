@@ -18,7 +18,7 @@ PARSE_PERIOD = 10
 # the following aren't in the default list unless --all option present
 NOT_HUBS = set(['nginx'])
 NOT_REACTORS = set(['wxreactor', 'glib2reactor', 'gtk2reactor'])
-NOT_TESTS = set(['test_threading_green.py'])
+NOT_TESTS = set(['test_threading.py'])
 
 def w(s):
     sys.stderr.write("%s\n" % (s, ))
@@ -59,10 +59,9 @@ def enum_reactors():
 
 def enum_tests():
     tests = []
-    tests += glob('test*_green.py')
-    tests += glob('test__*.py')
+    tests += glob('test_*.py')
     tests += glob('*_test.py')
-    tests = set(tests) - NOT_TESTS
+    tests = set(tests) - NOT_TESTS - set(['test_support.py'])
     return tests
 
 def cmd(program):

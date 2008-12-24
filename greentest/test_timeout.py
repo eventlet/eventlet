@@ -7,6 +7,9 @@ from greentest import test_support
 # This requires the 'network' resource as given on the regrtest command line.
 skip_expected = not test_support.is_resource_enabled('network')
 
+from eventlet.green import time
+from eventlet.green import socket
+
 class CreationTestCase(unittest.TestCase):
     """Test case for socket.gettimeout() and socket.settimeout()"""
 
