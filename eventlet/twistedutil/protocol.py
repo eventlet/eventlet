@@ -293,14 +293,6 @@ class GreenClientCreator(object):
         gtransport._init_transport()
         return gtransport
 
-    def connect(self, required_args, ConnectorClass, *rest_args, **rest_kwargs):
-        gtransport, factory = self._make_transport_and_factory()
-        args = required_args + (factory, ) + rest_args
-        c = ConnectorClass(*args, **rest_kwargs)
-        c.connect()
-        factory.event.wait()
-        return gtransport
-
 
 class SpawnFactory(Factory):
     """Factory that spawns a new greenlet for each incoming connection.
