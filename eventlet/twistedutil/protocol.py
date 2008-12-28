@@ -239,15 +239,17 @@ class GreenInstanceFactory(ClientFactory):
 
 
 class GreenClientCreator(object):
+    """Connect to a remote host and return a connected green transport instance.
+    """
 
     gtransport_class = GreenTransport
 
-    def __init__(self, reactor=None, klass=None, *args, **kwargs):
+    def __init__(self, reactor=None, gtransport_class=None, *args, **kwargs):
         if reactor is None:
             from twisted.internet import reactor
         self.reactor = reactor
-        if klass is not None:
-            self.gtransport_class = klass
+        if gtransport_class is not None:
+            self.gtransport_class = gtransport_class
         self.args = args
         self.kwargs = kwargs
 
@@ -301,6 +303,12 @@ class GreenClientCreator(object):
 
 
 class SpawnFactory(Factory):
+    """Factory that spawns a new greenlet for each incoming connection.
+
+    For an incoming connection a new greenlet is created using the provided
+    callback as a function and a connected green transport instance as an
+    argument.
+    """
 
     gtransport_class = GreenTransport
 
