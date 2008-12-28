@@ -615,7 +615,7 @@ class BoundedSemaphore(object):
             return False
         if self.counter<=0:
             if self._release_waiters:
-                api.get_hub().schedule_call(0, self._do_unlock)
+                api.get_hub().schedule_call_global(0, self._do_unlock)
             self._acquire_waiters[api.getcurrent()] = None
             try:
                 api.get_hub().switch()
@@ -623,14 +623,14 @@ class BoundedSemaphore(object):
                 self._acquire_waiters.pop(api.getcurrent(), None)
         self.counter -= 1
         if self._release_waiters and self.counter < self.limit:
-            api.get_hub().schedule_call(0, self._do_release)
+            api.get_hub().schedule_call_global(0, self._do_release)
         return True
 
     __enter__ = acquire
 
     def _do_unlock(self):
         if self._release_waiters and self._acquire_waiters:
-            api.get_hub().schedule_call(0, self._do_acquire)
+            api.get_hub().schedule_call_global(0, self._do_acquire)
             waiter, _unused = self._release_waiters.popitem()
             waiter.switch()
 
@@ -649,7 +649,7 @@ class BoundedSemaphore(object):
             return False
         if self.counter>=self.limit:
             if self._acquire_waiters:
-                api.get_hub().schedule_call(0, self._do_unlock)
+                api.get_hub().schedule_call_global(0, self._do_unlock)
             self._release_waiters[api.getcurrent()] = None
             try:
                 api.get_hub().switch()
@@ -657,7 +657,7 @@ class BoundedSemaphore(object):
                 self._release_waiters.pop(api.getcurrent(), None)
         self.counter += 1
         if self._acquire_waiters and self.counter > 0:
-            api.get_hub().schedule_call(0, self._do_acquire)
+            api.get_hub().schedule_call_global(0, self._do_acquire)
         return True
 
     def __exit__(self, typ, val, tb):
