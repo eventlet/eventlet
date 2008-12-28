@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import thread as thread_module
 from eventlet.support import greenlet
 from eventlet.api import spawn
-from eventlet.coros import semaphore as LockType
+from eventlet.coros import Semaphore as LockType
 
 error = thread_module.error
 
