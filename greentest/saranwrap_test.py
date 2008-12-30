@@ -225,7 +225,7 @@ class TestSaranwrap(unittest.TestCase):
         tid = make_uuid()
         self.assertEqual(tid.get_version(), uuid.uuid4().get_version())
         def make_list():
-            from eventlet import saranwrap_test
+            from greentest import saranwrap_test
             prox = saranwrap.wrap(saranwrap_test.list_maker)
             # after this function returns, prox should fall out of scope
             return prox()
@@ -270,7 +270,7 @@ sys_path = sys.path""")
             sys.path.remove(temp_dir)
                         
     def test_contention(self):
-        from eventlet import saranwrap_test
+        from greentest import saranwrap_test
         prox = saranwrap.wrap(saranwrap_test)
                 
         pool = coros.CoroutinePool(max_size=4)
@@ -296,7 +296,7 @@ sys_path = sys.path""")
 
     def test_list_of_functions(self):
         return # this test is known to fail, we can implement it sometime in the future if we wish
-        from eventlet import saranwrap_test
+        from greentest import saranwrap_test
         prox = saranwrap.wrap([saranwrap_test.list_maker])
         self.assertEquals(list_maker(), prox[0]())
                               

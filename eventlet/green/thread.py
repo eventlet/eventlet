@@ -1,7 +1,7 @@
 """implements standard module 'thread' with greenlets"""
 from __future__ import absolute_import
 import thread as thread_module
-from eventlet.support import greenlet
+from eventlet.support import greenlets as greenlet
 from eventlet.api import spawn
 from eventlet.coros import Semaphore as LockType
 

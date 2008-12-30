@@ -213,6 +213,7 @@ class TestCoroutinePool(tests.TestCase):
         for x in range(6):
             pool.execute(lambda n: n, x)
         for y in range(6):
+            print "wait", y
             pool.wait()
 
     def test_track_slow_event(self):

@@ -5,7 +5,7 @@ yourself.
 """
 from eventlet.hubs.twistedr import BaseTwistedHub
 from eventlet.api import use_hub, _threadlocal
-from eventlet.support import greenlet
+from eventlet.support import greenlets as greenlet
 
 use_hub(BaseTwistedHub)
 assert not hasattr(_threadlocal, 'hub')
