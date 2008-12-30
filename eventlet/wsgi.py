@@ -96,6 +96,10 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         if self.server.max_http_version:
             self.protocol_version = self.server.max_http_version
 
+        if self.rfile.closed:
+            self.close_connection = 1
+            return
+
         try:
             self.raw_requestline = self.rfile.readline(MAX_REQUEST_LINE)
             if len(self.raw_requestline) == MAX_REQUEST_LINE:
