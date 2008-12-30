@@ -22,11 +22,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+import cgi
+
 from eventlet import api
 from eventlet import httpc
-from eventlet import httpd
 from eventlet import processes
 from eventlet import util
+from eventlet import wsgi
+
 import time
 try:
     from cStringIO import StringIO
@@ -41,64 +44,74 @@ class Site(object):
     def __init__(self):
         self.stuff = {'hello': 'hello world'}
 
-    def adapt(self, obj, req):
-        req.write(str(obj))
+    def __call__(self, env, start_response):
+        return getattr(self, 'handle_%s' % env['REQUEST_METHOD'].lower())(env, start_response)
+ 
+ 
+def _get_query_pairs(env):
+    parsed = cgi.parse_qs(env['QUERY_STRING'])
+    for key, values in parsed.items():
+        for val in values:
+            yield key, val
 
-    def handle_request(self, req):
-        return getattr(self, 'handle_%s' % req.method().lower())(req)
+
+def get_query_pairs(env):
+    return list(_get_query_pairs(env))
+
+
 
 
 class BasicSite(Site):
-    def handle_get(self, req):
-        req.set_header('x-get', 'hello')
+    def handle_get(self, env, start_response):
+        headers = [('x-get', 'hello'), ('Content-type', 'text/plain')]
         resp = StringIO()
-        path = req.path().lstrip('/')
+        path = env['PATH_INFO'].lstrip('/')
         try:
             resp.write(self.stuff[path])
         except KeyError:
-            req.response(404, body='Not found')
-            return
-        for k,v in req.get_query_pairs():
+            start_response("404 Not Found", headers)
+            return ["Not Found"]
+        for k,v in get_query_pairs(env):
             resp.write(k + '=' + v + '\n')
-        req.write(resp.getvalue())
+        start_response("200 OK", headers)
+        return [resp.getvalue()]
 
-    def handle_head(self, req):
-        req.set_header('x-head', 'hello')
-        path = req.path().lstrip('/')
-        try:
-            req.write('')
-        except KeyError:
-            req.response(404, body='Not found')
+    def handle_head(self, env, start_response):
+        headers = [('x-head', 'hello'), ('Content-type', 'text/plain')]
+        start_response("200 OK", headers)
+        return [""]
 
-    def handle_put(self, req):
-        req.set_header('x-put', 'hello')
-        path = req.path().lstrip('/')
+    def handle_put(self, env, start_response):
+        headers = [('x-put', 'hello'), ('Content-type', 'text/plain')]
+        path = env['PATH_INFO'].lstrip('/')
         if not path:
-            req.response(400, body='')
-            return
-        if path in self.stuff:
-            req.response(204)
-        else:
-            req.response(201)
-        self.stuff[path] = req.read_body()
-        req.write('')
+            start_response("400 Bad Request", headers)
+            return [""]
         
-    def handle_delete(self, req):
-        req.set_header('x-delete', 'hello')
-        path = req.path().lstrip('/')
+        if path in self.stuff:
+            start_response("204 No Content", headers)
+        else:
+            start_response("201 Created", headers)
+        self.stuff[path] = env['wsgi.input'].read(int(env.get('CONTENT_LENGTH', '0')))
+        return [""]
+        
+    def handle_delete(self, env, start_response):
+        headers = [('x-delete', 'hello'), ('Content-type', 'text/plain')]
+        path = env['PATH_INFO'].lstrip('/')
         if not path:
-            req.response(400, body='')
-            return
+            start_response("400 Bad Request", headers)
+            return [""]
         try:
             del self.stuff[path]
-            req.response(204)
+            start_response("204 No Content", headers)
         except KeyError:
-            req.response(404)
-        req.write('')
+            start_response("404 Not Found", headers)
+        return [""]
 
-    def handle_post(self, req):
-        req.set_header('x-post', 'hello')
-        req.write(req.read_body())
+    def handle_post(self, env, start_response):
+        headers = [('x-post', 'hello'), ('Content-type', 'text/plain')]
+        start_response("200 OK", headers)
+        return [env['wsgi.input'].read(int(env.get('CONTENT_LENGTH', '0')))]
 
 
 class TestBase(object):
@@ -109,7 +122,7 @@ class TestBase(object):
 
     def setUp(self):
         self.logfile = StringIO()
-        self.victim = api.spawn(httpd.server,
+        self.victim = api.spawn(wsgi.server,
                                 api.tcp_listener(('0.0.0.0', 31337)),
                                 self.site_class(),
                                 log=self.logfile,
@@ -211,45 +224,44 @@ class TestHttpc(TestBase, tests.TestCase):
         
         
 class RedirectSite(BasicSite):
-    response_code = 301
+    response_code = "301 Moved Permanently"
 
-    def handle_request(self, req):
-        if req.path().startswith('/redirect/'):
-            url = ('http://' + req.get_header('host') +
-                   req.uri().replace('/redirect/', '/'))
-            req.response(self.response_code, headers={'location': url},
-                         body='')
-            return
-        return Site.handle_request(self, req)
+    def __call__(self, env, start_response):
+        path = env['PATH_INFO']
+        if path.startswith('/redirect/'):
+            url = 'http://' + env['HTTP_HOST'] + path.replace('/redirect/', '/')
+            start_response(self.response_code, [("Location", url)])
+            return [""]
+        return super(RedirectSite, self).__call__(env, start_response)
+
 
 class Site301(RedirectSite):
     pass
 
 
 class Site302(BasicSite):
-    def handle_request(self, req):
-        if req.path().startswith('/expired/'):
-            url = ('http://' + req.get_header('host') +
-                   req.uri().replace('/expired/', '/'))
-            headers = {'location': url, 'expires': '0'}
-            req.response(302, headers=headers, body='')
-            return
-        if req.path().startswith('/expires/'):
-            url = ('http://' + req.get_header('host') +
-                   req.uri().replace('/expires/', '/'))
+    def __call__(self, env, start_response):
+        path = env['PATH_INFO']
+        if path.startswith('/expired/'):
+            url = 'http://' + env['HTTP_HOST'] + path.replace('/expired/', '/')
+            headers = [('location', url), ('expires', '0')]
+            start_response("302 Found", headers)
+            return [""]
+        if path.startswith('/expires/'):
+            url = 'http://' + env['HTTP_HOST'] + path.replace('/expires/', '/')
             expires = time.time() + (100 * 24 * 60 * 60)
-            headers = {'location': url, 'expires': httpc.to_http_time(expires)}
-            req.response(302, headers=headers, body='')
-            return
-        return Site.handle_request(self, req)
+            headers = [('location', url), ('expires', httpc.to_http_time(expires))]
+            start_response("302 Found", headers)
+            return [""]
+        return super(Site302, self).__call__(env, start_response)
 
 
 class Site303(RedirectSite):
-    response_code = 303
+    response_code = "303 See Other"
 
 
 class Site307(RedirectSite):
-    response_code = 307
+    response_code = "307 Temporary Redirect"
 
 
 class TestHttpc301(TestBase, tests.TestCase):
@@ -332,15 +344,9 @@ class TestHttpc307(TestBase, tests.TestCase):
 
 
 class Site500(BasicSite):
-    def handle_request(self, req):
-        req.response(500, body="screw you world")
-        return
-
-
-class Site500(BasicSite):
-    def handle_request(self, req):
-        req.response(500, body="screw you world")
-        return
+    def __call__(self, env, start_response):
+        start_response("500 Internal Server Error", [("Content-type", "text/plain")])
+        return ["screw you world"]
 
 
 class TestHttpc500(TestBase, tests.TestCase):
@@ -361,8 +367,9 @@ class TestHttpc500(TestBase, tests.TestCase):
 
 
 class Site504(BasicSite):
-    def handle_request(self, req):
-        req.response(504, body="screw you world")
+    def __call__(self, env, start_response):
+        start_response("504 Gateway Timeout", [("Content-type", "text/plain")])
+        return ["screw you world"]
 
             
 class TestHttpc504(TestBase, tests.TestCase):

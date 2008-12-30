@@ -30,7 +30,7 @@ import linecache
 import inspect
 import traceback
 
-from eventlet.support import greenlet
+from eventlet.support import greenlets as greenlet
 from eventlet import tls
 
 __all__ = [
@@ -38,6 +38,12 @@ __all__ = [
     'GreenletExit', 'kill', 'sleep', 'spawn', 'spew', 'switch',
     'ssl_listener', 'tcp_listener', 'tcp_server', 'trampoline',
     'unspew', 'use_hub', 'with_timeout', 'timeout']
+
+
+def switch(coro, result=None, exc=None):
+    if exc is not None:
+        return coro.throw(exc)
+    return coro.switch(result)
 
 
 class TimeoutError(Exception):

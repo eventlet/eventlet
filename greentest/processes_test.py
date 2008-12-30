@@ -23,7 +23,6 @@ THE SOFTWARE.
 """
 from greentest import tests
 from eventlet import api
-from eventlet import channel
 from eventlet import processes
 
 class TestEchoPool(tests.TestCase):

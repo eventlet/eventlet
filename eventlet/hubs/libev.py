@@ -32,7 +32,7 @@ import time
 from eventlet.timer import Timer
 from eventlet.hubs import hub
 
-from eventlet.support import greenlet
+from eventlet.support import greenlets as greenlet
 
 # XXX for debugging only
 #raise ImportError()

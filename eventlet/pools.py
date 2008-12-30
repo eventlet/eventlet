@@ -29,17 +29,6 @@ import socket
 from eventlet import api
 from eventlet import channel
 
-class FanFailed(RuntimeError):
-    pass
-
-
-class SomeFailed(FanFailed):
-    pass
-
-
-class AllFailed(FanFailed):
-    pass
-
 
 class Pool(object):
     """
@@ -105,44 +94,6 @@ class Pool(object):
         """Generate a new pool item
         """
         raise NotImplementedError("Implement in subclass")
-
-    def fan(self, block, input_list):
-        chan = channel.channel()
-        results = []
-        exceptional_results = 0
-        for index, input_item in enumerate(input_list):
-            pool_item = self.get()
-
-            ## Fan out
-            api.spawn(
-                self._invoke, block, pool_item, input_item, index, chan)
-
-        ## Fan back in
-        for i in range(len(input_list)):
-            ## Wait for all guys to send to the queue
-            index, value = chan.receive()
-            if isinstance(value, Exception):
-                exceptional_results += 1
-            results.append((index, value))
-
-        results.sort()
-        results = [value for index, value in results]
-
-        if exceptional_results:
-            if exceptional_results == len(results):
-                raise AllFailed(results)
-            raise SomeFailed(results)
-        return results
-
-    def _invoke(self, block, pool_item, input_item, index, chan):
-        try:
-            result = block(pool_item, input_item)
-        except Exception, e:
-            self.put(pool_item)
-            chan.send((index, e))
-            return
-        self.put(pool_item)
-        chan.send((index, result))
 
 
 class Token(object):

@@ -558,6 +558,7 @@ class Semaphore(object):
         if self.counter<=0:
             self._waiters[api.getcurrent()] = None
             try:
+                print "hub switch"
                 api.get_hub().switch()
             finally:
                 self._waiters.pop(api.getcurrent(), None)
@@ -618,6 +619,7 @@ class BoundedSemaphore(object):
                 api.get_hub().schedule_call(0, self._do_unlock)
             self._acquire_waiters[api.getcurrent()] = None
             try:
+                print "HUB switch"
                 api.get_hub().switch()
             finally:
                 self._acquire_waiters.pop(api.getcurrent(), None)

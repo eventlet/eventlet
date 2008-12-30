@@ -22,10 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+import time
 import unittest
 
 from eventlet import api
-from eventlet import channel
+from eventlet import coros
 from eventlet import pools
 
 
@@ -65,13 +66,19 @@ class TestIntPool(unittest.TestCase):
         self.assertEquals(self.pool.free(), 4)
 
     def test_exhaustion(self):
-        waiter = channel.channel()
+        waiter = coros.event()
         def consumer():
             gotten = None
+            cancel = api.exc_after(1, api.TimeoutError)
             try:
+                print time.asctime(), "getting"
                 gotten = self.pool.get()
+                print time.asctime(), "got"
             finally:
+                cancel.cancel()
+                print "waiter send"
                 waiter.send(gotten)
+                print "waiter sent"
 
         api.spawn(consumer)
 
@@ -82,14 +89,17 @@ class TestIntPool(unittest.TestCase):
         # Let consumer run; nothing will be in the pool, so he will wait
         api.sleep(0)
 
+        print "put in pool", one
         # Wake consumer
         self.pool.put(one)
+        print "done put"
 
         # wait for the consumer
-        self.assertEquals(waiter.receive(), one)
+        self.assertEquals(waiter.wait(), one)
+        print "done wait"
 
     def test_blocks_on_pool(self):
-        waiter = channel.channel()
+        waiter = coros.event()
         def greedy():
             self.pool.get()
             self.pool.get()
@@ -98,7 +108,9 @@ class TestIntPool(unittest.TestCase):
             # No one should be waiting yet.
             self.assertEquals(self.pool.waiting(), 0)
             # The call to the next get will unschedule this routine.
+            print "calling get"
             self.pool.get()
+            print "called get"
             # So this send should never be called.
             waiter.send('Failed!')
 
@@ -113,8 +125,8 @@ class TestIntPool(unittest.TestCase):
         ## Greedy should be blocking on the last get
         self.assertEquals(self.pool.waiting(), 1)
 
-        ## Send will never be called, so balance should be 0.
-        self.assertEquals(waiter.balance, 0)
+        ## Send will never be called, so the event should not be ready.
+        self.assertEquals(waiter.ready(), False)
 
         api.kill(killable)
 
@@ -140,38 +152,6 @@ class TestIntPool2(unittest.TestCase):
         gotten = self.pool.get()
         self.assertEquals(gotten, 1)
 
-
-ALWAYS = RuntimeError('I always fail')
-SOMETIMES = RuntimeError('I fail half the time')
-
-
-class TestFan(unittest.TestCase):
-    mode = 'static'
-    def setUp(self):
-        self.pool = IntPool(max_size=2)
-
-    def test_with_list(self):
-        list_of_input = ['agent-one', 'agent-two', 'agent-three']
-
-        def my_callable(pool_item, next_thing):
-            ## Do some "blocking" (yielding) thing
-            api.sleep(0.01)
-            return next_thing
-
-        output = self.pool.fan(my_callable, list_of_input)
-        self.assertEquals(list_of_input, output)
-
-    def test_all_fail(self):
-        def my_failure(pool_item, next_thing):
-            raise ALWAYS
-        self.assertRaises(pools.AllFailed, self.pool.fan, my_failure, range(4))
-
-    def test_some_fail(self):
-        def my_failing_callable(pool_item, next_thing):
-            if next_thing % 2:
-                raise SOMETIMES
-            return next_thing
-        self.assertRaises(pools.SomeFailed, self.pool.fan, my_failing_callable, range(4))
         
     
 if __name__ == '__main__':

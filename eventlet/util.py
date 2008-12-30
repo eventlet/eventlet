@@ -48,7 +48,7 @@ except ImportError:
 
 def g_log(*args):
     import sys
-    from eventlet.support import greenlet
+    from eventlet.support import greenlets as greenlet
     from eventlet.greenlib import greenlet_id
     g_id = greenlet_id()
     if g_id is None:
