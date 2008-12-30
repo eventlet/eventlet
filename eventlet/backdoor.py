@@ -4,6 +4,8 @@
 
 Copyright (c) 2005-2006, Bob Ippolito
 Copyright (c) 2007, Linden Research, Inc.
+Copyright (c) 2008, Donovan Preston
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -23,9 +25,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+import socket
 import sys
 from code import InteractiveConsole
 from eventlet import greenlib
+
+from eventlet import api
+from eventlet.support import greenlets
 
 try:
     sys.ps1
@@ -36,8 +42,11 @@ try:
 except AttributeError:
     sys.ps2 = '... '
 
-class SocketConsole(greenlib.GreenletContext):
-    def __init__(self, desc):
+
+class SocketConsole(greenlets.greenlet):
+    def __init__(self, desc, hostport, locals):
+        self.hostport = hostport
+        self.locals = locals
         # mangle the socket
         self.desc = desc
         readline = desc.readline
@@ -53,6 +62,24 @@ class SocketConsole(greenlib.GreenletContext):
                 self.old[key] = getattr(desc, key)
             setattr(desc, key, value)
 
+        greenlets.greenlet.__init__(self)
+
+    def run(self):
+        try:
+            console = InteractiveConsole(self.locals)
+            console.interact()
+        finally:
+            self.switch_out()
+            self.finalize()
+
+    def switch(self, *args, **kw):
+        self.saved = sys.stdin, sys.stderr, sys.stdout
+        sys.stdin = sys.stdout = sys.stderr = self.desc
+        greenlets.greenlet.switch(self, *args, **kw)
+
+    def switch_out(self):
+        sys.stdin, sys.stderr, sys.stdout = self.saved
+
     def finalize(self):
         # restore the state of the socket
         for key in self.fixups:
@@ -65,23 +92,26 @@ class SocketConsole(greenlib.GreenletContext):
         self.fixups.clear()
         self.old.clear()
         self.desc = None
+        print "backdoor closed to %s:%s" % self.hostport
 
-    def swap_in(self):
-        self.saved = sys.stdin, sys.stderr, sys.stdout
-        sys.stdin = sys.stdout = sys.stderr = self.desc
 
-    def swap_out(self):
-        sys.stdin, sys.stderr, sys.stdout = self.saved
-
-def backdoor((conn, addr), locals=None):
-    host, port = addr
-    print "backdoor to %s:%s" % (host, port)
-    fl = conn.makeGreenFile("rw")
-    fl.newlines = '\n'
-    ctx = SocketConsole(fl)
-    ctx.register()
+def backdoor_server(server, locals=None):
+    print "backdoor listening on %s:%s" % server.getsockname()
     try:
-        console = InteractiveConsole(locals)
-        console.interact()
+        try:
+            while True:
+                (conn, (host, port)) = server.accept()
+                print "backdoor connected to %s:%s" % (host, port)
+                fl = conn.makeGreenFile("rw")
+                fl.newlines = '\n'
+                greenlet = SocketConsole(fl, (host, port), locals)
+                hub = api.get_hub()
+                hub.schedule_call_global(0, greenlet.switch)
+                hub.switch()
+        except socket.error, e:
+            # Broken pipe means it was shutdown
+            if e[0] != 32:
+                raise
     finally:
-        ctx.unregister()
+        server.close()
+

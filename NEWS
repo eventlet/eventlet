@@ -1,3 +1,14 @@
+0.9.0
+=====
+
+Merged many eventlet-twisted integration patches by Denis Bilenko. It is now possible to mix eventlet-using code with twisted-using code.
+
+Much of the core functionality has been refactored and cleaned up, including the removal of eventlet.greenlib. This means that it is now possible to use plain greenlets without modification in eventlet, and plain old subclasses of greenlet instead of the old eventlet.greenlib.GreenletContext. Calling eventlet.api.get_hub().switch() now checks to see whether the current greenlet has a "switch_out" method and calls it if so, providing the same functionality that the GreenletContext.swap_out used to. The swap_in behavior can be duplicated by overriding the switch method, and the finalize functionality can be duplicated by having a try: finally: block around the greenlet's main implementation. The eventlet.backdoor module has been ported to this new scheme, although it's signature had to change slightly so existing code that used the backdoor will have to be modified.
+
+Monkey-patching is now no longer the default way to use eventlet. Instead, there are a series of standard library networking modules that have been patched to cooperate using the eventlet hub inside the eventlet.green module. For example, using "from eventlet.green import httplib" is equivalent to the old practice of doing "from eventlet import util; util.wrap_socket_with_coroutine_socket(); import httplib".
+
+eventlet.httpd has been removed. Use eventlet.wsgi instead.
+
 0.8.x
 =====
 

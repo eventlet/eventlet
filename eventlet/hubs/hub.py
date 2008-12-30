@@ -120,6 +120,10 @@ class BaseHub(object):
             self.switch()
 
     def switch(self):
+        cur = greenlet.getcurrent()
+        switch_out = getattr(cur, 'switch_out', None)
+        if switch_out is not None:
+            switch_out()
         if self.greenlet.dead:
             self.greenlet = greenlet.greenlet(self.run)
         try:
