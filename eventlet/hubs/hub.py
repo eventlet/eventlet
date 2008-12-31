@@ -123,7 +123,10 @@ class BaseHub(object):
         cur = greenlet.getcurrent()
         switch_out = getattr(cur, 'switch_out', None)
         if switch_out is not None:
-            switch_out()
+            try:
+                switch_out()
+            except:
+                traceback.print_exception(*sys.exc_info())
         if self.greenlet.dead:
             self.greenlet = greenlet.greenlet(self.run)
         try:

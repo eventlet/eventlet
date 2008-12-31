@@ -28,7 +28,6 @@ THE SOFTWARE.
 import socket
 import sys
 from code import InteractiveConsole
-from eventlet import greenlib
 
 from eventlet import api
 from eventlet.support import greenlets

@@ -49,8 +49,7 @@ except ImportError:
 def g_log(*args):
     import sys
     from eventlet.support import greenlets as greenlet
-    from eventlet.greenlib import greenlet_id
-    g_id = greenlet_id()
+    g_id = id(greenlet.getcurrent())
     if g_id is None:
         if greenlet.getcurrent().parent is None:
             ident = 'greenlet-main'
