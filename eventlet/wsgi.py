@@ -150,7 +150,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         length = [0]
         status_code = [200]
 
-        def write(data, _write=wfile.write):
+        def write(data, _writelines=wfile.writelines):
             towrite = []
             if not headers_set:
                 raise AssertionError("write() before start_response()")
@@ -181,13 +181,19 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 towrite.append("%x\r\n%s\r\n" % (len(data), data))
             else:
                 towrite.append(data)
-            joined = ''.join(towrite)
-            length[0] = length[0] + len(joined)
-
             try:
-                _write(joined)
+                _writelines(towrite)
+                length[0] = length[0] + sum(map(len, towrite))
             except UnicodeEncodeError:
-                _write("HTTP/1.0 500 Internal Server Error\r\nConnection: close\r\nContent-type: text/plain\r\nContent-length: 98\r\n\r\nInternal Server Error: wsgi application passed a unicode object to the server instead of a string.")
+                print "Encountered unicode while attempting to write wsgi response: ", [x for x in towrite if isinstance(x, unicode)]
+                traceback.print_exc()
+                _writelines(
+                    ["HTTP/1.0 500 Internal Server Error\r\n",
+                    "Connection: close\r\n",
+                    "Content-type: text/plain\r\n",
+                    "Content-length: 98\r\n",
+                    "\r\n",
+                    "Internal Server Error: wsgi application passed a unicode object to the server instead of a string."])
 
         def start_response(status, response_headers, exc_info=None):
             status_code[0] = status.split()[0]
