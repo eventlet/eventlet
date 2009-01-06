@@ -291,7 +291,8 @@ class BaseHub(object):
 
     def schedule_call_global(self, seconds, cb, *args, **kw):
         """Schedule a callable to be called after 'seconds' seconds have
-        elapsed. The timer will NOT 
+        elapsed. The timer will NOT be cancelled if the current greenlet has
+        exited before the timer fires.
             seconds: The number of seconds to wait.
             cb: The callable to call after the given time.
             *args: Arguments to pass to the callable when called.
