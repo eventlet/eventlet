@@ -87,10 +87,12 @@ class Input(object):
 
 
 MAX_REQUEST_LINE = 8192
+MINIMUM_CHUNK_SIZE = 4096
 
 
 class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
     protocol_version = 'HTTP/1.1'
+    minimum_chunk_size = MINIMUM_CHUNK_SIZE
 
     def handle_one_request(self):
         if self.server.max_http_version:
@@ -181,6 +183,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 towrite.append(data)
             joined = ''.join(towrite)
             length[0] = length[0] + len(joined)
+
             try:
                 _write(joined)
             except UnicodeEncodeError:
@@ -212,7 +215,6 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 start_response("500 Internal Server Error", [('Content-type', 'text/plain')])
                 write(exc)
                 return
-
         try:
             num_blocks = len(result)
         except (TypeError, AttributeError, NotImplementedError):
@@ -225,7 +227,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     for data in result:
                         if data:
                             towrite.append(data)
-                            if use_chunked and sum(map(len, towrite)) > 4096:
+                            if use_chunked and sum(map(len, towrite)) > self.minimum_chunk_size:
                                 write(''.join(towrite))
                                 del towrite[:]
                 except Exception, e:
@@ -317,7 +319,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
 
 class Server(BaseHTTPServer.HTTPServer):
-    def __init__(self, socket, address, app, log=None, environ=None, max_http_version=None, protocol=HttpProtocol):
+    def __init__(self, socket, address, app, log=None, environ=None, max_http_version=None, protocol=HttpProtocol, minimum_chunk_size=None):
         self.outstanding_requests = 0
         self.socket = socket
         self.address = address
@@ -330,6 +332,8 @@ class Server(BaseHTTPServer.HTTPServer):
         self.max_http_version = max_http_version      
         self.protocol = protocol
         self.pid = os.getpid()
+        if minimum_chunk_size is not None:
+            protocol.minimum_chunk_size = minimum_chunk_size
 
     def get_environ(self):
         socket = self.socket
@@ -353,8 +357,8 @@ class Server(BaseHTTPServer.HTTPServer):
         self.log.write(message + '\n')
 
 
-def server(sock, site, log=None, environ=None, max_size=None, max_http_version=DEFAULT_MAX_HTTP_VERSION, protocol=HttpProtocol, server_event=None):
-    serv = Server(sock, sock.getsockname(), site, log, environ=None, max_http_version=max_http_version, protocol=protocol)
+def server(sock, site, log=None, environ=None, max_size=None, max_http_version=DEFAULT_MAX_HTTP_VERSION, protocol=HttpProtocol, server_event=None, minimum_chunk_size=None):
+    serv = Server(sock, sock.getsockname(), site, log, environ=None, max_http_version=max_http_version, protocol=protocol, minimum_chunk_size=minimum_chunk_size)
     if server_event is not None:
         server_event.send(serv)
     if max_size is None:
