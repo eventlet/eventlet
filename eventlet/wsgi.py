@@ -181,7 +181,10 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 towrite.append(data)
             joined = ''.join(towrite)
             length[0] = length[0] + len(joined)
-            _write(joined)
+            try:
+                _write(joined)
+            except UnicodeEncodeError:
+                _write("HTTP/1.0 500 Internal Server Error\r\nConnection: close\r\nContent-type: text/plain\r\nContent-length: 98\r\n\r\nInternal Server Error: wsgi application passed a unicode object to the server instead of a string.")
 
         def start_response(status, response_headers, exc_info=None):
             status_code[0] = status.split()[0]
