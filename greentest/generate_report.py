@@ -41,17 +41,17 @@ def calc_hub_stats(table):
 class TestResult:
 
     def __init__(self, runs, errors, fails, timeouts, exitcode=None, id=None, output=None):
-        self.runs = runs
-        self.errors = errors
-        self.fails = fails
-        self.timeouts = timeouts
+        self.runs = max(runs, 0)
+        self.errors = max(errors, 0)
+        self.fails = max(fails, 0)
+        self.timeouts = max(timeouts, 0)
         self.exitcode = exitcode
         self.id = id
         self.output = output
 
     @property
     def passed(self):
-        return self.runs - self.errors - self.fails
+        return max(0, self.runs - self.errors - self.fails)
 
     @property
     def failed(self):
