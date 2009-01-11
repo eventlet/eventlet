@@ -21,7 +21,7 @@
 from __future__ import with_statement
 import unittest
 import sys
-from eventlet.coros import event, Job, JobGroup
+from eventlet.coros import event
 from eventlet.api import spawn, sleep, GreenletExit, exc_after, timeout
 
 DELAY= 0.01
