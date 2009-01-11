@@ -822,7 +822,7 @@ class CoroutinePool(pools.Pool):
                 sender = event()
                 (evt, func, args, kw) = recvd
                 self._safe_apply(evt, func, args, kw)
-                api.get_hub().cancel_timers(api.getcurrent())
+                #api.get_hub().cancel_timers(api.getcurrent())
                 # Likewise, delete these variables or else they will
                 # be referenced by this frame until replaced by the
                 # next recvd, which may or may not be a long time from

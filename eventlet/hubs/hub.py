@@ -22,15 +22,12 @@ THE SOFTWARE.
 """
 
 import bisect
-import weakref
 import sys
-import socket
-import errno
 import traceback
 import time
 
 from eventlet.support import greenlet
-from eventlet.timer import Timer
+from eventlet.timer import Timer, LocalTimer
 
 _g_debug = True
 
@@ -51,7 +48,6 @@ class BaseHub(object):
         self.stopping = False
         self.running = False
         self.timers = []
-        self.timers_by_greenlet = {}
         self.next_timers = []
         self.observers = {}
         self.observer_modes = {
@@ -236,27 +232,13 @@ class BaseHub(object):
         # the 0 placeholder makes it easy to bisect_right using (now, 1)
         self.next_timers.append((when, 0, info))
 
-    def add_timer(self, timer, track=True):
+    def add_timer(self, timer):
         scheduled_time = self.clock() + timer.seconds
         self._add_absolute_timer(scheduled_time, timer)
-        if track:
-            self.track_timer(timer)
         return scheduled_time
         
-    def track_timer(self, timer):
-        current_greenlet = greenlet.getcurrent()
-        timer.greenlet = current_greenlet
-        self.timers_by_greenlet.setdefault(
-            current_greenlet,
-            weakref.WeakKeyDictionary())[timer] = True
-
     def timer_finished(self, timer):
-        try:
-            del self.timers_by_greenlet[timer.greenlet][timer]
-            if not self.timers_by_greenlet[timer.greenlet]:
-                del self.timers_by_greenlet[timer.greenlet]
-        except (KeyError, AttributeError):
-            pass
+        pass
 
     def timer_canceled(self, timer):
         self.timer_finished(timer)
@@ -276,8 +258,8 @@ class BaseHub(object):
             *args: Arguments to pass to the callable when called.
             **kw: Keyword arguments to pass to the callable when called.
         """
-        t = Timer(seconds, cb, *args, **kw)
-        self.add_timer(t, track=True)
+        t = LocalTimer(seconds, cb, *args, **kw)
+        self.add_timer(t)
         return t
 
     schedule_call = schedule_call_local
@@ -291,7 +273,7 @@ class BaseHub(object):
             **kw: Keyword arguments to pass to the callable when called.
         """
         t = Timer(seconds, cb, *args, **kw)
-        self.add_timer(t, track=False)
+        self.add_timer(t)
         return t
 
     def fire_timers(self, when):
@@ -310,26 +292,6 @@ class BaseHub(object):
             finally:
                 self.timer_finished(timer)
         del t[:last]
-
-    def cancel_timers(self, greenlet, quiet=False):
-        if greenlet not in self.timers_by_greenlet:
-            return
-        for timer in self.timers_by_greenlet[greenlet].keys():
-            if not timer.cancelled and not timer.called and timer.seconds:
-                ## If timer.seconds is 0, this isn't a timer, it's
-                ## actually eventlet's silly way of specifying whether
-                ## a coroutine is "ready to run" or not.
-                try:
-                    # this might be None due to weirdness with weakrefs
-                    timer.cancel()
-                except TypeError:
-                    pass
-                if _g_debug and not quiet:
-                    print 'Hub cancelling left-over timer %s' % timer
-        try:
-            del self.timers_by_greenlet[greenlet]
-        except KeyError:
-            pass
 
     # for debugging:
 

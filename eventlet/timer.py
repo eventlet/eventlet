@@ -22,7 +22,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
-from eventlet.api import get_hub
+from eventlet.api import get_hub, getcurrent
 
 """ If true, captures a stack trace for each timer when constructed.  This is
 useful for debugging leaking timers, to find out where the timer was set up. """
@@ -40,7 +40,7 @@ class Timer(object):
         This timer will not be run unless it is scheduled in a runloop by
         calling timer.schedule() or runloop.add_timer(timer).
         """
-        self.cancelled = False
+        self._cancelled = False
         self.seconds = seconds
         self.tpl = cb, args, kw
         self.called = False
@@ -48,6 +48,10 @@ class Timer(object):
             import traceback, cStringIO
             self.traceback = cStringIO.StringIO()
             traceback.print_stack(file=self.traceback)
+
+    @property
+    def cancelled(self):
+        return self._cancelled
 
     def __repr__(self):
         secs = getattr(self, 'seconds', None)
@@ -82,10 +86,38 @@ class Timer(object):
         """Prevent this timer from being called. If the timer has already
         been called, has no effect.
         """
-        self.cancelled = True
+        self._cancelled = True
         self.called = True
         get_hub().timer_canceled(self)
         try:
             del self.tpl
         except AttributeError:
             pass
+
+class LocalTimer(Timer):
+    
+    def __init__(self, *args, **kwargs):
+        self.greenlet = getcurrent()
+        Timer.__init__(self, *args, **kwargs)
+
+    @property
+    def cancelled(self):
+        if self.greenlet is None or self.greenlet.dead:
+            return True
+        return self._cancelled
+
+    def __call__(self, *args):
+        if not self.called:
+            self.called = True
+            if self.greenlet is not None and self.greenlet.dead:
+                return
+            cb, args, kw = self.tpl
+            try:
+                cb(*args, **kw)
+            finally:
+                get_hub().timer_finished(self)
+
+    def cancel(self):
+        self.greenlet = None
+        Timer.cancel(self)
+

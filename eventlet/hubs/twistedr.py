@@ -20,12 +20,8 @@
 
 import sys
 import threading
-import weakref
 from twisted.internet.base import DelayedCall as TwistedDelayedCall
-from eventlet.hubs.hub import _g_debug
 from eventlet.support.greenlet import greenlet
-
-import traceback
 
 
 class DelayedCall(TwistedDelayedCall):
@@ -37,15 +33,31 @@ class DelayedCall(TwistedDelayedCall):
             return
         return TwistedDelayedCall.cancel(self)
 
-def callLater(reactor, _seconds, _f, *args, **kw):
+class LocalDelayedCall(DelayedCall):
+
+    def __init__(self, *args, **kwargs):
+        self.greenlet = greenlet.getcurrent()
+        DelayedCall.__init__(self, *args, **kwargs)
+
+    def _get_cancelled(self):
+        if self.greenlet is None or self.greenlet.dead:
+            return True
+        return self.__dict__['cancelled']
+
+    def _set_cancelled(self, value):
+        self.__dict__['cancelled'] = value
+
+    cancelled = property(_get_cancelled, _set_cancelled)
+    
+def callLater(DelayedCallClass, reactor, _seconds, _f, *args, **kw):
     # the same as original but creates fixed DelayedCall instance 
     assert callable(_f), "%s is not callable" % _f
     assert sys.maxint >= _seconds >= 0, \
            "%s is not greater than or equal to 0 seconds" % (_seconds,)
-    tple = DelayedCall(reactor.seconds() + _seconds, _f, args, kw,
-                       reactor._cancelCallLater,
-                       reactor._moveCallLaterSooner,
-                       seconds=reactor.seconds)
+    tple = DelayedCallClass(reactor.seconds() + _seconds, _f, args, kw,
+                            reactor._cancelCallLater,
+                            reactor._moveCallLaterSooner,
+                            seconds=reactor.seconds)
     reactor._newTimedCalls.append(tple)
     return tple
 
@@ -94,7 +106,6 @@ class BaseTwistedHub(object):
     def __init__(self, mainloop_greenlet):
         self.greenlet = mainloop_greenlet
         self.waiters_by_greenlet = {}
-        self.timers_by_greenlet = {}
 
     def switch(self):
         assert greenlet.getcurrent() is not self.greenlet, 'Impossible to switch() from the mainloop greenlet'
@@ -137,75 +148,18 @@ class BaseTwistedHub(object):
 
     def schedule_call_local(self, seconds, func, *args, **kwargs):
         from twisted.internet import reactor
-        def call_with_timer_attached(*args1, **kwargs1):
-            try:
-                return func(*args1, **kwargs1)
-            finally:
-                if seconds:
-                    self.timer_finished(timer)
-        timer = callLater(reactor, seconds, call_with_timer_attached, *args, **kwargs)
-        if seconds:
-            self.track_timer(timer)
+        def call_if_greenlet_alive(*args1, **kwargs1):
+            if timer.greenlet.dead:
+                return
+            return func(*args1, **kwargs1)
+        timer = callLater(LocalDelayedCall, reactor, seconds, call_if_greenlet_alive, *args, **kwargs)
         return timer
 
     schedule_call = schedule_call_local
 
     def schedule_call_global(self, seconds, func, *args, **kwargs):
         from twisted.internet import reactor
-        return callLater(reactor, seconds, func, *args, **kwargs)
-
-    def track_timer(self, timer):
-        try:
-            current_greenlet = greenlet.getcurrent()
-            timer.greenlet = current_greenlet
-            self.timers_by_greenlet.setdefault(
-                current_greenlet,
-                weakref.WeakKeyDictionary())[timer] = True
-        except:
-            print 'track_timer failed'
-            traceback.print_exc()
-            raise
-
-    def timer_finished(self, timer):
-        try:
-            greenlet = timer.greenlet
-            del self.timers_by_greenlet[greenlet][timer]
-            if not self.timers_by_greenlet[greenlet]:
-                del self.timers_by_greenlet[greenlet]
-        except (AttributeError, KeyError):
-            pass
-        except:
-            print 'timer_finished failed'
-            traceback.print_exc()
-            raise
-
-    def cancel_timers(self, greenlet, quiet=False):
-        try:
-            if greenlet not in self.timers_by_greenlet:
-                return
-            for timer in self.timers_by_greenlet[greenlet].keys():
-                if not timer.cancelled and not timer.called and hasattr(timer, 'greenlet'):
-                    ## If timer.seconds is 0, this isn't a timer, it's
-                    ## actually eventlet's silly way of specifying whether
-                    ## a coroutine is "ready to run" or not.
-                    ## TwistedHub: I do the same, by not attaching 'greenlet' attribute to zero-timers QQQ
-                    try:
-                        # this might be None due to weirdness with weakrefs
-                        timer.cancel()
-                    except TypeError:
-                        pass
-                    if _g_debug and not quiet:
-                        print 'Hub cancelling left-over timer %s' % timer
-            try:
-                del self.timers_by_greenlet[greenlet]
-            except KeyError:
-                pass
-        except:
-            print 'cancel_timers failed'
-            import traceback
-            traceback.print_exc()
-            if not quiet:
-                raise
+        return callLater(DelayedCall, reactor, seconds, func, *args, **kwargs)
 
     def abort(self):
         from twisted.internet import reactor

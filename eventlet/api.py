@@ -39,6 +39,7 @@ __all__ = [
     'ssl_listener', 'tcp_listener', 'tcp_server', 'trampoline',
     'unspew', 'use_hub', 'with_timeout', 'timeout']
 
+Greenlet = greenlet.greenlet
 
 class TimeoutError(Exception):
     """Exception raised if an asynchronous operation times out"""
@@ -237,24 +238,6 @@ def _spawn(g):
     g.switch()
 
 
-class CancellingTimersGreenlet(greenlet.greenlet):
-
-    def __init__(self, run=None, parent=None, hub=None):
-        self._run = run
-        if parent is None:
-            parent = greenlet.getcurrent()
-        if hub is None:
-            hub = get_hub()
-        self.hub = hub
-        greenlet.greenlet.__init__(self, None, parent)
-
-    def run(self, *args, **kwargs):
-        try:
-            return self._run(*args, **kwargs)
-        finally:
-            self.hub.cancel_timers(self, quiet=True)
-
-
 def spawn(function, *args, **kwds):
     """Create a new coroutine, or cooperative thread of control, within which
     to execute *function*.
@@ -271,7 +254,7 @@ def spawn(function, *args, **kwds):
     """
     # killable
     t = None
-    g = CancellingTimersGreenlet(_spawn_startup)
+    g = Greenlet(_spawn_startup)
     t = get_hub().schedule_call_global(0, _spawn, g)
     g.switch(function, args, kwds, t.cancel)
     return g
@@ -294,7 +277,7 @@ def call_after_global(seconds, function, *args, **kwds):
     """
     # cancellable
     def startup():
-        g = CancellingTimersGreenlet(_spawn_startup)
+        g = Greenlet(_spawn_startup)
         g.switch(function, args, kwds)
         g.switch()
     t = get_hub().schedule_call_global(seconds, startup)
@@ -313,7 +296,7 @@ def call_after_local(seconds, function, *args, **kwds):
     """
     # cancellable
     def startup():
-        g = CancellingTimersGreenlet(_spawn_startup)
+        g = Greenlet(_spawn_startup)
         g.switch(function, args, kwds)
         g.switch()
     t = get_hub().schedule_call_local(seconds, startup)

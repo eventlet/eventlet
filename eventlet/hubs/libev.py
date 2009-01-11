@@ -29,7 +29,6 @@ import errno
 import traceback
 import time
 
-from eventlet.timer import Timer
 from eventlet.hubs import hub
 
 from eventlet.support import greenlet
@@ -112,13 +111,11 @@ class Hub(hub.BaseHub):
             self.interrupted = False
             raise KeyboardInterrupt() 
 
-    def add_timer(self, timer, track=True):
+    def add_timer(self, timer):
         # store the pyevent timer object so that we can cancel later
         eventtimer = libev.Timer(timer.seconds, 0, self._evloop, timer)
         timer.impltimer = eventtimer
         eventtimer.start()
-        if track:
-            self.track_timer(timer)
 
     def timer_finished(self, timer):
         try:
