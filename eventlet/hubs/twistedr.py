@@ -22,7 +22,7 @@
 import sys
 import threading
 from twisted.internet.base import DelayedCall as TwistedDelayedCall
-from eventlet.support.greenlet import greenlet
+from eventlet import api
 
 
 class DelayedCall(TwistedDelayedCall):
@@ -37,7 +37,7 @@ class DelayedCall(TwistedDelayedCall):
 class LocalDelayedCall(DelayedCall):
 
     def __init__(self, *args, **kwargs):
-        self.greenlet = greenlet.getcurrent()
+        self.greenlet = api.getcurrent()
         DelayedCall.__init__(self, *args, **kwargs)
 
     def _get_cancelled(self):
@@ -109,9 +109,9 @@ class BaseTwistedHub(object):
         self.waiters_by_greenlet = {}
 
     def switch(self):
-        assert greenlet.getcurrent() is not self.greenlet, 'Impossible to switch() from the mainloop greenlet'
+        assert api.getcurrent() is not self.greenlet, 'Impossible to switch() from the mainloop greenlet'
         try:
-           greenlet.getcurrent().parent = self.greenlet
+           api.getcurrent().parent = self.greenlet
         except ValueError, ex:
            pass
         return self.greenlet.switch()
@@ -128,14 +128,14 @@ class BaseTwistedHub(object):
         if write:
             reactor.addWriter(descriptor)
         # XXX exc will not work if no read nor write
-        self.waiters_by_greenlet[greenlet.getcurrent()] = descriptor
+        self.waiters_by_greenlet[api.getcurrent()] = descriptor
         return descriptor
 
     def remove_descriptor(self, descriptor):
         from twisted.internet import reactor
         reactor.removeReader(descriptor)
         reactor.removeWriter(descriptor)
-        self.waiters_by_greenlet.pop(greenlet.getcurrent(), None)
+        self.waiters_by_greenlet.pop(api.getcurrent(), None)
 
     def exc_greenlet(self, gr, *throw_args):
         fileno = self.waiters_by_greenlet.pop(gr, None)
@@ -213,16 +213,16 @@ class TwistedHub(BaseTwistedHub):
         assert Hub.state==0, ('%s hub can only be instantiated once' % type(self).__name__, Hub.state)
         Hub.state = 1
         make_twisted_threadpool_daemonic() # otherwise the program would hang after the main greenlet exited
-        g = greenlet(self.run)
+        g = api.Greenlet(self.run)
         BaseTwistedHub.__init__(self, g)
 
     def switch(self):
         if self.greenlet.dead:
-            self.greenlet = greenlet(self.run)
+            self.greenlet = api.Greenlet(self.run)
         try:
-           greenlet.getcurrent().parent = self.greenlet
+            api.getcurrent().parent = self.greenlet
         except ValueError, ex:
-           pass
+            pass
         return self.greenlet.switch()
 
     def run(self, installSignalHandlers=None):
