@@ -18,14 +18,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from __future__ import with_statement
 import unittest
 from eventlet.coros import event
-from eventlet.api import spawn, sleep, exc_after, timeout
+from eventlet.api import spawn, sleep, exc_after, with_timeout
+from greentest import LimitedTestCase
 
 DELAY= 0.01
 
-class TestEvent(unittest.TestCase):
+class TestEvent(LimitedTestCase):
     
     def test_send_exc(self):
         log = []
@@ -36,12 +36,13 @@ class TestEvent(unittest.TestCase):
                 result = e.wait()
                 log.append(('received', result))
             except Exception, ex:
-                log.append(('catched', type(ex).__name__))
+                log.append(('catched', ex))
         spawn(waiter)
         sleep(0) # let waiter to block on e.wait()
-        e.send(exc=Exception())
+        obj = Exception()
+        e.send(exc=obj)
         sleep(0)
-        assert log == [('catched', 'Exception')], log
+        assert log == [('catched', obj)], log
 
     def test_send(self):
         event1 = event()
@@ -52,9 +53,9 @@ class TestEvent(unittest.TestCase):
         try:
             result = event1.wait()
         except ValueError:
-            with timeout(DELAY, None):
-                result = event2.wait()
-                raise AssertionError('Nobody sent anything to event2 yet it received %r' % (result, ))
+            X = object()
+            result = with_timeout(DELAY, event2.wait, timeout_value=X)
+            assert result is X, 'Nobody sent anything to event2 yet it received %r' % (result, )
 
 
 if __name__=='__main__':

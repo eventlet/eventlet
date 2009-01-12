@@ -32,7 +32,7 @@ from with_eventlet import import_reactor
 first_hubs = ['selecthub', 'poll', 'selects', 'twistedr']
 first_reactors = ['selectreactor', 'pollreactor', 'epollreactor']
 
-COMMAND = './record_results.py ./with_timeout.py ./with_eventlet.py %(setup)s %(test)s'
+COMMAND = './record_results.py ' + sys.executable + ' ./with_timeout.py ./with_eventlet.py %(setup)s %(test)s'
 PARSE_PERIOD = 10
 
 # the following aren't in the default list unless --all option present

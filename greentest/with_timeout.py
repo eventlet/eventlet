@@ -99,7 +99,11 @@ def execf():
         class TestCase(unittest.TestCase):
             base = unittest.TestCase
             def run(self, result=None):
-                name = "%s.%s" % (self.__class__.__name__, self._testMethodName)
+                try:
+                    testMethodName = self._testMethodName
+                except:
+                    testMethodName = self.__testMethodName
+                name = "%s.%s" % (self.__class__.__name__, testMethodName)
                 if name in disabled_tests:
                     return
                 print name, ' '
@@ -123,11 +127,12 @@ while True:
         os.unlink(CURRENT_TEST_FILENAME)
     except:
         pass
-    print '===ARGV=%r' % (sys.argv,)
-    print '===TIMEOUT=%r' % TIMEOUT
-    sys.stdout.flush()
     child = os.fork()
     if child == 0:
+        print '===PYTHON=%s.%s.%s' % sys.version_info[:3]
+        print '===ARGV=%s' % ' '.join(sys.argv)
+        print '===TIMEOUT=%r' % TIMEOUT
+        sys.stdout.flush()
         execf()
         break
     else:

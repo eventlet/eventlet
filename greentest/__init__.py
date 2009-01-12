@@ -20,6 +20,7 @@
 
 # package is named greentest, not test, so it won't be confused with test in stdlib
 import sys
+import unittest
 
 disabled_marker = '-*-*-*-*-*- disabled -*-*-*-*-*-'
 def exit_disabled():
@@ -29,5 +30,19 @@ def exit_unless_twisted():
     from eventlet.api import get_hub
     if 'Twisted' not in type(get_hub()).__name__:
         exit_disabled()
+
+def exit_unless_25():
+    print sys.version_info[:2]<(2, 5)
+    if sys.version_info[:2]<(2, 5):
+        exit_disabled()
+
+class LimitedTestCase(unittest.TestCase):
+
+    def setUp(self):
+        from eventlet import api
+        self.timer = api.exc_after(1, RuntimeError('test is taking too long'))
+
+    def tearDown(self):
+        self.timer.cancel()
 
 

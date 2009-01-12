@@ -18,11 +18,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from __future__ import with_statement
 import unittest
 from eventlet import api, coros
+from greentest import LimitedTestCase
 
-class TestSemaphore(unittest.TestCase):
+class TestSemaphore(LimitedTestCase):
 
     def test_bounded(self):
         # this was originally semaphore's doctest
@@ -42,8 +42,7 @@ class TestSemaphore(unittest.TestCase):
     def test_bounded_with_zero_limit(self):
         sem = coros.semaphore(0, 0)
         api.spawn(sem.acquire)
-        with api.timeout(0.001):
-            sem.release()
+        sem.release()
 
 
 if __name__=='__main__':

@@ -18,21 +18,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from __future__ import with_statement
 import sys
 import unittest
-from eventlet.api import sleep, timeout
+from eventlet.api import sleep, with_timeout
 from eventlet import api, proc, coros
+from greentest import LimitedTestCase
 
 DELAY = 0.01
-
-class LimitedTestCase(unittest.TestCase):
-
-    def setUp(self):
-        self.timer = api.exc_after(1, api.TimeoutError('test is taking too long'))
-
-    def tearDown(self):
-        self.timer.cancel()
 
 class TestEventSource(LimitedTestCase):
 
@@ -157,17 +149,10 @@ class TestCase(LimitedTestCase):
         return event, myproc, proc_finished_flag, queue
 
     def check_timed_out(self, event, myproc, proc_finished_flag, queue):
-        with timeout(DELAY, None):
-            event.wait()
-            raise AssertionError('should not get there')
-
-        with timeout(DELAY, None):
-            queue.wait()
-            raise AssertionError('should not get there')
-
-        with timeout(DELAY, None):
-            print repr(proc.waitall([myproc]))
-            raise AssertionError('should not get there')
+        X = object()
+        assert with_timeout(DELAY, event.wait, timeout_value=X) is X
+        assert with_timeout(DELAY, queue.wait, timeout_value=X) is X
+        assert with_timeout(DELAY, proc.waitall, [myproc], timeout_value=X) is X
         assert proc_finished_flag == [], proc_finished_flag
 
 
@@ -230,10 +215,9 @@ class TestRaise_link(TestCase):
 
         assert not p, p
 
-        with timeout(DELAY):
-            self.assertRaises(ValueError, event.wait)
-            self.assertRaises(ValueError, queue.wait)
-            self.assertRaises(kill_exc_type, proc.waitall, [receiver])
+        self.assertRaises(ValueError, event.wait)
+        self.assertRaises(ValueError, queue.wait)
+        self.assertRaises(kill_exc_type, proc.waitall, [receiver])
         sleep(DELAY)
         assert not proc_flag, proc_flag
         assert not callback_flag, callback_flag
@@ -261,10 +245,9 @@ class TestRaise_link(TestCase):
 
         assert not p, p
 
-        with timeout(DELAY):
-            self.assertRaises(proc.ProcExit, event.wait)
-            self.assertRaises(proc.ProcExit, queue.wait)
-            self.assertRaises(kill_exc_type, proc.waitall, [receiver])
+        self.assertRaises(proc.ProcExit, event.wait)
+        self.assertRaises(proc.ProcExit, queue.wait)
+        self.assertRaises(kill_exc_type, proc.waitall, [receiver])
 
         sleep(DELAY)
         assert not proc_flag, proc_flag
@@ -386,9 +369,10 @@ class TestStuff(unittest.TestCase):
                 e.send_exception(*sys.exc_info())
         p = proc.spawn_link(func)
         try:
-            e.wait()
-        except ZeroDivisionError:
-            pass
+            try:
+                e.wait()
+            except ZeroDivisionError:
+                pass
         finally:
             p.unlink()
         sleep(DELAY)

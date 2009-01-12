@@ -7,7 +7,7 @@ import glob
 
 def parse_stdout(s):
     argv = re.search('^===ARGV=(.*?)$', s, re.M).group(1)
-    argv = eval(argv)
+    argv = argv.split()
     testname = argv[-1]
     del argv[-1]
     hub = None
@@ -86,6 +86,7 @@ def main(db):
         except Exception:
             parse_error += 1
             sys.stderr.write('Failed to parse id=%s\n' % id)
+            print repr(stdout)
             traceback.print_exc()
         else:
             print id, hub, testname, runs, errors, fails, timeouts

@@ -5,7 +5,10 @@ Usage: %prog program [args]
 """
 import sys
 import os
-import sqlite3
+try:
+    import sqlite3
+except ImportError:
+    import pysqlite2.dbapi2 as sqlite3
 import warnings
 from greentest import disabled_marker
 
