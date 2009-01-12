@@ -21,7 +21,7 @@
 """This test checks that socket instances (not GreenSockets but underlying sockets)
 are not leaked by the hub.
 """
-import sys
+#import sys
 import unittest
 from eventlet.green import socket
 from eventlet.green.thread import start_new_thread

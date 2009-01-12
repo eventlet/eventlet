@@ -20,9 +20,8 @@
 
 from __future__ import with_statement
 import unittest
-import sys
 from eventlet.coros import event
-from eventlet.api import spawn, sleep, GreenletExit, exc_after, timeout
+from eventlet.api import spawn, sleep, exc_after, timeout
 
 DELAY= 0.01
 

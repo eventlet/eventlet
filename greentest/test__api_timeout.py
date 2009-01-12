@@ -19,6 +19,7 @@
 # THE SOFTWARE.
 
 from __future__ import with_statement
+import sys
 import unittest
 import weakref
 import time

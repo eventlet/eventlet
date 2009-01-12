@@ -21,7 +21,6 @@
 from twisted.internet import reactor
 from greentest import exit_unless_twisted
 exit_unless_twisted()
-import sys
 import unittest
 from twisted.internet.error import DNSLookupError
 from twisted.internet import defer
