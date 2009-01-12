@@ -305,7 +305,7 @@ def call_after_local(seconds, function, *args, **kwds):
 # for compatibility with original eventlet API
 call_after = call_after_local
 
-class _SilentException(BaseException):
+class _SilentException(Exception):
     pass
 
 class FakeTimer:
@@ -462,7 +462,7 @@ def use_hub(mod=None):
     if hasattr(_threadlocal, 'hub'):
         del _threadlocal.hub
     if isinstance(mod, str):
-        mod = __import__('eventlet.hubs.' + mod, fromlist=['Hub'])
+        mod = __import__('eventlet.hubs.' + mod, globals(), locals(), ['Hub'])
     if hasattr(mod, 'Hub'):
         _threadlocal.Hub = mod.Hub
     else:
