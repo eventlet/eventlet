@@ -53,7 +53,7 @@ case the notification is performed immediatelly:
 >>> api.sleep(0)
 Traceback (most recent call last):
  ...
-LinkedCompleted: linked proc 'demofunc' completed successfully
+LinkedCompleted: linked proc '<function demofunc at 0x...>' completed successfully
 
 (Without an argument, link is created to the current greenlet)
 
@@ -68,7 +68,7 @@ fails then there's no way to complete the task so the parent must fail as well;
 >>> api.sleep(0.01)
 Traceback (most recent call last):
  ...
-LinkedFailed: linked proc 'demofunc' failed with ZeroDivisionError
+LinkedFailed: linked proc '<function demofunc at 0x...>' failed with ZeroDivisionError
 
 One application of linking is `wait' function: link to a bunch of coroutines
 and wait for all them to complete. Such function is provided by this module.
@@ -407,9 +407,7 @@ class Proc(Source):
         """
         assert self.greenlet is None, "'run' can only be called once per instance"
         if self.name is None:
-            self.name = getattr(function, '__name__', None)
-        if self.name is None:
-            self.name = getattr(type(function), '__name__', '<unknown>')
+            self.name = str(function)
         self.greenlet = spawn_greenlet(self._run, function, args, kwargs)
 
     def _run(self, function, args, kwargs):
