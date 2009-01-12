@@ -82,7 +82,7 @@ object:
    synchronously.
 
 To make a GreenTransport instance you can use
-twistedutil.protocol.GreenTransportCreator (usage is similar to that of
+twistedutil.protocol.GreenClientCreator (usage is similar to that of
 twisted.internet.protocol.ClientCreator)
 
 For an example on how to get a connected GreenTransport instance,
