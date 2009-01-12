@@ -186,16 +186,17 @@ class GreenTransport(GreenTransportBase):
         if self._queue is not None:
             resumed = False
             try:
-                while len(self._buffer) < size or size < 0:
-                    if not resumed:
-                        self.resumeProducing()
-                        resumed = True
-                    self._buffer += self._wait()
-            except ConnectionDone:
-                self._queue = None
-            except:
-                self._queue = None
-                self._error = sys.exc_info()
+                try:
+                    while len(self._buffer) < size or size < 0:
+                        if not resumed:
+                            self.resumeProducing()
+                            resumed = True
+                        self._buffer += self._wait()
+                except ConnectionDone:
+                    self._queue = None
+                except:
+                    self._queue = None
+                    self._error = sys.exc_info()
             finally:
                 if resumed:
                     self.pauseProducing()
@@ -213,14 +214,15 @@ class GreenTransport(GreenTransportBase):
         if self._queue is not None and not self._buffer:
             self.resumeProducing()
             try:
-                recvd = self._wait()
-                #print 'received %r' % recvd
-                self._buffer += recvd
-            except ConnectionDone:
-                self._queue = None
-            except:
-                self._queue = None
-                self._error = sys.exc_info()
+                try:
+                    recvd = self._wait()
+                    #print 'received %r' % recvd
+                    self._buffer += recvd
+                except ConnectionDone:
+                    self._queue = None
+                except:
+                    self._queue = None
+                    self._error = sys.exc_info()
             finally:
                 self.pauseProducing()
         if buflen is None:
