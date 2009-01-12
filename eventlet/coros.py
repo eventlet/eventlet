@@ -253,13 +253,10 @@ class event(object):
         while waiters:
             waiter = waiters.pop()
             if waiter in self._waiters:
-                if waiters:
-                    api.get_hub().schedule_call_global(0, self._do_send, result, exc, waiters)
                 if exc is None:
                     waiter.switch(result)
                 else:
                     waiter.throw(*exc)
-                break
 
     def send_exception(self, *args):
         # the arguments and the same as for greenlet.throw
