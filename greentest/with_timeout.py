@@ -1,4 +1,25 @@
 #!/usr/bin/python
+# Copyright (c) 2008-2009 AG Projects
+# Author: Denis Bilenko
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
 """
 Run Python script in a child process. Kill it after timeout has elapsed.
 If the script was running unittest test cases, the timeouted test cases is
@@ -99,7 +120,11 @@ def execf():
         class TestCase(unittest.TestCase):
             base = unittest.TestCase
             def run(self, result=None):
-                name = "%s.%s" % (self.__class__.__name__, self._testMethodName)
+                try:
+                    testMethodName = self._testMethodName
+                except:
+                    testMethodName = self.__testMethodName
+                name = "%s.%s" % (self.__class__.__name__, testMethodName)
                 if name in disabled_tests:
                     return
                 print name, ' '
@@ -123,11 +148,12 @@ while True:
         os.unlink(CURRENT_TEST_FILENAME)
     except:
         pass
-    print '===ARGV=%r' % (sys.argv,)
-    print '===TIMEOUT=%r' % TIMEOUT
-    sys.stdout.flush()
     child = os.fork()
     if child == 0:
+        print '===PYTHON=%s.%s.%s' % sys.version_info[:3]
+        print '===ARGV=%s' % ' '.join(sys.argv)
+        print '===TIMEOUT=%r' % TIMEOUT
+        sys.stdout.flush()
         execf()
         break
     else:

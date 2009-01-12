@@ -117,13 +117,11 @@ class Hub(hub.BaseHub):
             self.interrupted = False
             raise KeyboardInterrupt() 
 
-    def add_timer(self, timer, track=True):
+    def add_timer(self, timer):
         # store the pyevent timer object so that we can cancel later
         eventtimer = event.timeout(timer.seconds, timer)
         timer.impltimer = eventtimer
         eventtimer.add()
-        if track:
-            self.track_timer(timer)
 
     def timer_finished(self, timer):
         try:

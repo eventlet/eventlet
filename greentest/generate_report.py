@@ -1,4 +1,25 @@
 #!/usr/bin/python
+# Copyright (c) 2008-2009 AG Projects
+# Author: Denis Bilenko
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
 import sys
 import os
 import sqlite3
@@ -41,17 +62,17 @@ def calc_hub_stats(table):
 class TestResult:
 
     def __init__(self, runs, errors, fails, timeouts, exitcode=None, id=None, output=None):
-        self.runs = runs
-        self.errors = errors
-        self.fails = fails
-        self.timeouts = timeouts
+        self.runs = max(runs, 0)
+        self.errors = max(errors, 0)
+        self.fails = max(fails, 0)
+        self.timeouts = max(timeouts, 0)
         self.exitcode = exitcode
         self.id = id
         self.output = output
 
     @property
     def passed(self):
-        return self.runs - self.errors - self.fails
+        return max(0, self.runs - self.errors - self.fails)
 
     @property
     def failed(self):

@@ -1,4 +1,4 @@
-# Copyright (c) 2008 AG Projects
+# Copyright (c) 2009 AG Projects
 # Author: Denis Bilenko
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,43 +20,23 @@
 # THE SOFTWARE.
 
 import unittest
-from eventlet.api import call_after, spawn, sleep
+from eventlet import api
 
-class test(unittest.TestCase):
+DELAY = 0.01
 
-    def setUp(self):
-        self.lst = [1]
+class TestScheduleCall(unittest.TestCase):
 
-    def test_timer_fired(self):
-        
-        def func():
-            call_after(0.1, self.lst.pop)
-            sleep(0.2)
+    def test_local(self):
+        lst = [1]
+        api.spawn(api.get_hub().schedule_call_local, DELAY, lst.pop)
+        api.sleep(DELAY*2)
+        assert lst == [1], lst
 
-        spawn(func)
-        assert self.lst == [1], self.lst
-        sleep(0.3)
-        assert self.lst == [], self.lst
-
-    def test_timer_cancelled_upon_greenlet_exit(self):
-        
-        def func():
-            call_after(0.1, self.lst.pop)
-
-        spawn(func)
-        assert self.lst == [1], self.lst
-        sleep(0.2)
-        assert self.lst == [1], self.lst
-
-    def test_spawn_is_not_cancelled(self):
-
-        def func():
-            spawn(self.lst.pop)
-            # exiting immediatelly, but self.lst.pop must be called
-        spawn(func)
-        sleep(0.1)
-        assert self.lst == [], self.lst
-
+    def test_global(self):
+        lst = [1]
+        api.spawn(api.get_hub().schedule_call_global, DELAY, lst.pop)
+        api.sleep(DELAY*2)
+        assert lst == [], lst
 
 if __name__=='__main__':
     unittest.main()

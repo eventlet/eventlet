@@ -129,6 +129,11 @@ class event(object):
             return self.wait()
         return notready
 
+    # QQQ make it return tuple (type, value, tb) instead of raising
+    # because
+    # 1) "poll" does not imply raising
+    # 2) it's better not to screw up caller's sys.exc_info() by default
+    #    (e.g. if caller wants to calls the function in except or finally)
     def poll_exception(self, notready=None):
         if self.has_exception():
             return self.wait()
@@ -209,8 +214,11 @@ class event(object):
         >>> api.sleep(0)
         received stuff
         """
+        # why is waiter not used?
         if waiter in self._waiters:
             del self._waiters[waiter]
+            # XXX This does not check that waiter still waits when throw actually happens
+            # XXX and therefore is broken (see how send() deals with this)
             api.get_hub().schedule_call(
                 0, waiter.throw, Cancelled())
 
@@ -253,239 +261,22 @@ class event(object):
         while waiters:
             waiter = waiters.pop()
             if waiter in self._waiters:
-                if waiters:
-                    api.get_hub().schedule_call_global(0, self._do_send, result, exc, waiters)
                 if exc is None:
                     waiter.switch(result)
                 else:
                     waiter.throw(*exc)
-                break
 
     def send_exception(self, *args):
         # the arguments and the same as for greenlet.throw
         return self.send(None, args)
 
 
-class Job(object):
-    """Spawn a greenlet, control its execution and collect the result.
-
-    use spawn_new() classmethod to spawn a new coroutine and get a new Job instance;
-    use kill() method to kill the greenlet running the function;
-    use wait() method to collect the result of the function.
-    """
-
-    def __init__(self, ev=None):
-        if ev is None:
-            ev = event()
-        self.event = event()
-
-    @classmethod
-    def spawn_new(cls, function, *args, **kwargs):
-        job = cls()
-        job.spawn(function, *args, **kwargs)
-        return job
-
-    def spawn(self, function, *args, **kwargs):
-        assert not hasattr(self, 'greenlet_ref'), 'spawn can only be used once per instance'
-        g = api.spawn(_collect_result, weakref.ref(self), function, *args, **kwargs)
-        self.greenlet_ref = weakref.ref(g)
-
-    # spawn_later can be also implemented here
-
-    @property
-    def greenlet(self):
-        return self.greenlet_ref()
-
-    def __nonzero__(self):
-        greenlet = self.greenlet_ref()
-        if greenlet is not None and not greenlet.dead:
-            return True
-        return False
-
-    def __repr__(self):
-        klass = type(self).__name__
-        if self.greenlet is not None and self.greenlet.dead:
-            dead = '(dead)'
-        else:
-            dead = ''
-        return '<%s greenlet=%r%s event=%s>' % (klass, self.greenlet, dead, self.event)
-
-    def wait(self):
-        """Wait for the spawned greenlet to exit.
-        Return the result of the function if it completed without errors;
-        re-raise the exception otherwise.
-
-        Return GreenletExit() object if the greenlet was killed.
-        """
-        return self.event.wait()
-
-    def poll(self, notready=None):
-        return self.event.poll(notready)
-
-    def poll_result(self, notready=None):
-        return self.event.poll_result(notready)
-
-    def poll_exception(self, notready=None):
-        return self.event.poll_exception(notready)
-
-    def ready(self):
-        return self.event.ready()
-
-    def has_result(self):
-        return self.event.has_result()
-
-    def has_exception(self):
-        return self.event.has_exception()
-
-    def _send(self, result):
-        self.event.send(result)
-
-    def _send_exception(self, *throw_args):
-        self.event.send_exception(*throw_args)
-
-    def kill(self, *throw_args):
-        greenlet = self.greenlet_ref()
-        if greenlet is not None:
-            return api.kill(greenlet, *throw_args)
-
-    def kill_after(self, seconds):
-        return api.call_after_global(seconds, _kill_by_ref, weakref.ref(self))
-
-def _kill_by_ref(async_job_ref):
-    async_job = async_job_ref()
-    if async_job is not None:
-        async_job.kill()
-
-
-def _collect_result(job_ref, function, *args, **kwargs):
-    """Execute *function* and send its result to job_ref().
-
-    If function raises GreenletExit() it's trapped and sent as a regular value.
-    If job_ref points to a dead object or if DEBUG is true the exception
-    will be re-raised.
-    """
-    try:
-        result = function(*args, **kwargs)
-    except api.GreenletExit, ex:
-        job = job_ref()
-        if job is not None:
-            job._send(ex)
-    except:
-        job = job_ref()
-        if job is not None:
-            job._send_exception(*sys.exc_info())
-            if not DEBUG:
-                return
-        raise # let hub log the exception
-    else:
-        job = job_ref()
-        if job is not None:
-            job._send(result)
-
-class GroupMemberJob(Job):
-
-    def __init__(self, group_queue, event=None):
-        self._group_queue = group_queue
-        Job.__init__(self, event)
-
-    def _send(self, result):
-        self._group_queue.send((self, result, None))
-
-    def _send_exception(self, *throw_args):
-        self._group_queue.send((self, None, throw_args))
-
-
-class JobGroupExit(api.GreenletExit):
-    pass
-
-class JobGroup(object):
-    """Spawn jobs in the context of the group: when one job raises an exception,
-    all other jobs are killed immediatelly.
-
-    To spawn a job use spawn_job method which returns a Job instance.
-    >>> group = JobGroup()
-    >>> job = group.spawn_new(api.get_hub().switch) # give up control to hub forever
-    >>> _ = group.spawn_new(int, 'bad') # raise ValueError
-    >>> job.wait()
-    JobGroupExit('Killed because of ValueError in the group',)
-    """
-
-    def __init__(self):
-        self._queue = queue()
-        self._jobs = []
-        self._waiter_job = Job.spawn_new(self._waiter)
-        self._killerror = None
-
-    def spawn_new(self, function, *args, **kwargs):
-        assert self._waiter_job.poll('run') == 'run'
-        job = GroupMemberJob(self._queue)
-        self._jobs.append(job)
-        if self._killerror is None:
-            job.spawn(function, *args, **kwargs)
-        else:
-            job.event.send(self._killerror)
-        return job
-
-    def kill_all(self, *throw_args):
-        assert self._waiter_job.poll('run') == 'run', '_waiter_job must live'
-        for job in self._jobs:
-            g = job.greenlet
-            if g is not None:
-                api.get_hub().schedule_call(0, g.throw, *throw_args)
-        api.sleep(0)
-
-    # QQQ: add kill_all_later(seconds, throw_args)
-    # add kill_delay attribute
-
-    def complete(self, *jobs):
-        assert self._waiter_job.poll('run') == 'run'
-        left = set(jobs)
-        for job in jobs:
-            if job.ready():
-                left.remove(job)
-        for job in left:
-            job.wait()
-
-    # XXX make jobs a list, because wait methods will have timeout parameter soon
-    def wait(self, *jobs):
-        self.complete(*jobs)
-        return [x.wait() for x in jobs]
-
-    def complete_all(self):
-        while True:
-            count = len(self._jobs)
-            self.complete(*self._jobs)
-            # it's possible that more jobs were added while we were waiting
-            if count == len(self._jobs):
-                break
-
-    def wait_all(self):
-        self.complete_all()
-        return [x.wait() for x in self._jobs]
-
-    def _waiter(self):
-        # XXX: this lives forever, fix it to exit after all jobs died
-        # XXX: add __nonzero__ method that returns whether JobGroup is alive
-        # XXX: 3 states: True (alive), finishing, False (all dead)
-        while True:
-            job, result, throw_args = self._queue.wait()
-            if throw_args is None:
-                if not job.event.ready():
-                    job.event.send(result)
-            else:
-                if not job.event.ready():
-                    job.event.send_exception(*throw_args)
-                if self._killerror is None:
-                    type = throw_args[0]
-                    self._killerror = JobGroupExit('Killed because of %s in the group' % type.__name__)
-                    self.kill_all(self._killerror)
-                    # cannot exit here, as I need to deliver GreenExits
-
 class multievent(object):
     """is an event that can hold more than one value (it cannot be cancelled though)
     is like a queue, but if there're waiters blocked, send/send_exception will wake up
     all of them, just like an event will do (queue will wake up only one)
     """
+    # XXX to be removed
 
     def __init__(self):
         self.items = collections.deque()
@@ -590,7 +381,6 @@ class BoundedSemaphore(object):
     the calling coroutine until count becomes nonzero again.  Attempting to
     release() after count has reached limit suspends the calling coroutine until
     count becomes less than limit again.
-
     """
     def __init__(self, count, limit):
         if count > limit:
@@ -632,9 +422,9 @@ class BoundedSemaphore(object):
 
     def _do_unlock(self):
         if self._release_waiters and self._acquire_waiters:
-            api.get_hub().schedule_call_global(0, self._do_acquire)
             waiter, _unused = self._release_waiters.popitem()
             waiter.switch()
+            self._do_acquire()
 
     def _do_release(self):
         if self._release_waiters and self.counter<self.limit:
@@ -824,7 +614,7 @@ class CoroutinePool(pools.Pool):
                 sender = event()
                 (evt, func, args, kw) = recvd
                 self._safe_apply(evt, func, args, kw)
-                api.get_hub().cancel_timers(api.getcurrent())
+                #api.get_hub().cancel_timers(api.getcurrent())
                 # Likewise, delete these variables or else they will
                 # be referenced by this frame until replaced by the
                 # next recvd, which may or may not be a long time from

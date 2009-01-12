@@ -1,3 +1,24 @@
+# Copyright (c) 2008-2009 AG Projects
+# Author: Denis Bilenko
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
 from twisted.internet import reactor
 from greentest import exit_unless_twisted
 exit_unless_twisted()
@@ -10,31 +31,36 @@ import eventlet.twistedutil.protocol as pr
 from eventlet.twistedutil.protocols.basic import LineOnlyReceiverTransport
 from eventlet.api import spawn, sleep, with_timeout, call_after
 from eventlet.coros import event
-from eventlet.green import socket
+
+try:
+    from eventlet.green import socket
+except SyntaxError:
+    socket = None
 
 DELAY=0.01
 
-def setup_server_socket(self, delay=DELAY, port=0):
-    s = socket.socket()
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    s.bind(('127.0.0.1', port))
-    port = s.getsockname()[1]
-    s.listen(5)
-    s.settimeout(delay*3)
-    def serve():
-        conn, addr = s.accept()
-        conn.settimeout(delay+1)
-        try:
-            hello = conn.makefile().readline()[:-2]
-        except socket.timeout:
-            return
-        conn.sendall('you said %s. ' % hello)
-        sleep(delay)
-        conn.sendall('BYE')
-        sleep(delay)
-        #conn.close()
-    spawn(serve)
-    return port
+if socket is not None:
+    def setup_server_socket(self, delay=DELAY, port=0):
+        s = socket.socket()
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        s.bind(('127.0.0.1', port))
+        port = s.getsockname()[1]
+        s.listen(5)
+        s.settimeout(delay*3)
+        def serve():
+            conn, addr = s.accept()
+            conn.settimeout(delay+1)
+            try:
+                hello = conn.makefile().readline()[:-2]
+            except socket.timeout:
+                return
+            conn.sendall('you said %s. ' % hello)
+            sleep(delay)
+            conn.sendall('BYE')
+            sleep(delay)
+            #conn.close()
+        spawn(serve)
+        return port
 
 def setup_server_SpawnFactory(self, delay=DELAY, port=0):
     def handle(conn):
@@ -66,7 +92,7 @@ class TestCase(unittest.TestCase):
 
 class TestUnbufferedTransport(TestCase):
     gtransportClass = pr.UnbufferedTransport
-    setup_server = setup_server_socket
+    setup_server = setup_server_SpawnFactory
 
     def test_full_read(self):
         self.conn.write('hello\r\n')
@@ -82,17 +108,9 @@ class TestUnbufferedTransport_bufsize1(TestUnbufferedTransport):
     transportBufferSize = 1
     setup_server = setup_server_SpawnFactory
 
-class TestUnbufferedTransport_SpawnFactory(TestUnbufferedTransport):
-    setup_server = setup_server_SpawnFactory
-
-class TestUnbufferedTransport_SpawnFactory_bufsize1(TestUnbufferedTransport):
-    transportBufferSize = 1
-    setup_server = setup_server_SpawnFactory
-
-
 class TestGreenTransport(TestUnbufferedTransport):
     gtransportClass = pr.GreenTransport
-    setup_server = setup_server_socket
+    setup_server = setup_server_SpawnFactory
 
     def test_read(self):
         self.conn.write('hello\r\n')
@@ -138,15 +156,8 @@ class TestGreenTransport(TestUnbufferedTransport):
 class TestGreenTransport_bufsize1(TestGreenTransport):
     transportBufferSize = 1
 
-class TestGreenTransport_SpawnFactory(TestGreenTransport):
-    setup_server = setup_server_SpawnFactory
-
-class TestGreenTransport_SpawnFactory_bufsize1(TestGreenTransport):
-    transportBufferSize = 1
-    setup_server = setup_server_SpawnFactory
-
 class TestGreenTransportError(TestCase):
-    setup_server = setup_server_socket
+    setup_server = setup_server_SpawnFactory
     gtransportClass = pr.GreenTransport
 
     def test_read_error(self):
@@ -180,6 +191,23 @@ class TestGreenTransportError(TestCase):
 #         self.assertEqual('', self.conn.recv(1))
 #         self.assertEqual('', self.conn.recv())
 #
+
+if socket is not None:
+
+    class TestUnbufferedTransport_socketserver(TestUnbufferedTransport):
+        setup_server = setup_server_socket
+
+    class TestUnbufferedTransport_socketserver_bufsize1(TestUnbufferedTransport):
+        transportBufferSize = 1
+        setup_server = setup_server_socket
+
+    class TestGreenTransport_socketserver(TestGreenTransport):
+        setup_server = setup_server_socket
+
+    class TestGreenTransport_socketserver_bufsize1(TestGreenTransport):
+        transportBufferSize = 1
+        setup_server = setup_server_socket
+
 
 class TestTLSError(unittest.TestCase):
 

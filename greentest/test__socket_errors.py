@@ -1,4 +1,4 @@
-# Copyright (c) 2008 AG Projects
+# Copyright (c) 2008-2009 AG Projects
 # Author: Denis Bilenko
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,44 +20,23 @@
 # THE SOFTWARE.
 
 import unittest
-from eventlet.api import call_after, spawn, sleep
+from eventlet import api
 
-class test(unittest.TestCase):
+if hasattr(api._threadlocal, 'hub'):
+    from eventlet.green import socket
+else:
+    import socket
 
-    def setUp(self):
-        self.lst = [1]
-
-    def test_timer_fired(self):
-        
-        def func():
-            call_after(0.1, self.lst.pop)
-            sleep(0.2)
-
-        spawn(func)
-        assert self.lst == [1], self.lst
-        sleep(0.3)
-        assert self.lst == [], self.lst
-
-    def test_timer_cancelled_upon_greenlet_exit(self):
-        
-        def func():
-            call_after(0.1, self.lst.pop)
-
-        spawn(func)
-        assert self.lst == [1], self.lst
-        sleep(0.2)
-        assert self.lst == [1], self.lst
-
-    def test_spawn_is_not_cancelled(self):
-
-        def func():
-            spawn(self.lst.pop)
-            # exiting immediatelly, but self.lst.pop must be called
-        spawn(func)
-        sleep(0.1)
-        assert self.lst == [], self.lst
-
+class TestSocketErrors(unittest.TestCase):
+    
+    def test_connection_refused(self):
+        s = socket.socket()
+        try:
+            s.connect(('127.0.0.1', 81))
+        except socket.error, ex:
+            code, text = ex.args
+            assert code == 111, (code, text)
+            assert 'refused' in text.lower(), (code, text)
 
 if __name__=='__main__':
     unittest.main()
-
