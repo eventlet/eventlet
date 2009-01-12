@@ -48,9 +48,9 @@ class LocalDelayedCall(DelayedCall):
         self.__dict__['cancelled'] = value
 
     cancelled = property(_get_cancelled, _set_cancelled)
-    
+
 def callLater(DelayedCallClass, reactor, _seconds, _f, *args, **kw):
-    # the same as original but creates fixed DelayedCall instance 
+    # the same as original but creates fixed DelayedCall instance
     assert callable(_f), "%s is not callable" % _f
     assert sys.maxint >= _seconds >= 0, \
            "%s is not greater than or equal to 0 seconds" % (_seconds,)
@@ -94,7 +94,7 @@ class socket_rwdescriptor:
 class BaseTwistedHub(object):
     """This hub does not run a dedicated greenlet for the mainloop (unlike TwistedHub).
     Instead, it assumes that the mainloop is run in the main greenlet.
-    
+
     This makes running "green" functions in the main greenlet impossible but is useful
     when you want to call reactor.run() yourself.
     """
@@ -227,7 +227,7 @@ class TwistedHub(BaseTwistedHub):
     def run(self, installSignalHandlers=None):
         if installSignalHandlers is None:
             installSignalHandlers = self.installSignalHandlers
-        
+
         # main loop, executed in a dedicated greenlet
         from twisted.internet import reactor
         assert Hub.state in [1, 3], ('run function is not reentrant', Hub.state)
@@ -248,7 +248,7 @@ class TwistedHub(BaseTwistedHub):
             # the main loop at the next switch.
             Hub.state = 3
             raise
-        
+
         # clean exit here is needed for abort() method to work
         # do not raise an exception here.
 

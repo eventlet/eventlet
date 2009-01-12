@@ -32,11 +32,11 @@ from eventlet.timer import Timer, LocalTimer
 _g_debug = True
 
 class BaseHub(object):
-    """ Base hub class for easing the implementation of subclasses that are 
+    """ Base hub class for easing the implementation of subclasses that are
     specific to a particular underlying event architecture. """
 
     SYSTEM_EXCEPTIONS = (KeyboardInterrupt, SystemExit)
-    
+
     def __init__(self, clock=time.time):
         self.readers = {}
         self.writers = {}
@@ -60,12 +60,12 @@ class BaseHub(object):
 
     def add_descriptor(self, fileno, read=None, write=None, exc=None):
         """ Signals an intent to read/write from a particular file descriptor.
-        
+
         The fileno argument is the file number of the file of interest.  The other
         arguments are either callbacks or None.  If there is a callback for read
         or write, the hub sets things up so that when the file descriptor is
         ready to be read or written, the callback is called.
-        
+
         The exc callback is called when the socket represented by the file
         descriptor is closed.  The intent is that the the exc callbacks should
         only be present when either a read or write callback is also present,
@@ -89,7 +89,7 @@ class BaseHub(object):
             self.excs.pop(fileno, None)
         self.waiters_by_greenlet[greenlet.getcurrent()] = fileno
         return fileno
-        
+
     def remove_descriptor(self, fileno):
         self.readers.pop(fileno, None)
         self.writers.pop(fileno, None)
@@ -131,7 +131,7 @@ class BaseHub(object):
             self.remove_descriptor(fileno)
         except Exception, e:
             print >>sys.stderr, "Exception while removing descriptor! %r" % (e,)
-            
+
     def wait(self, seconds=None):
         raise NotImplementedError("Implement this in a subclass")
 
@@ -143,7 +143,7 @@ class BaseHub(object):
         if not t:
             return None
         return t[0][0]
-        
+
     def run(self):
         """Run the runloop until abort is called.
         """
@@ -209,12 +209,12 @@ class BaseHub(object):
         """
         for mode in self.observers.pop(observer, ()):
             self.observer_modes[mode].remove(observer)
-            
+
     def squelch_observer_exception(self, observer, exc_info):
         traceback.print_exception(*exc_info)
         print >>sys.stderr, "Removing observer: %r" % (observer,)
         self.remove_observer(observer)
-        
+
     def fire_observers(self, activity):
         for observer in self.observer_modes[activity]:
             try:
@@ -236,7 +236,7 @@ class BaseHub(object):
         scheduled_time = self.clock() + timer.seconds
         self._add_absolute_timer(scheduled_time, timer)
         return scheduled_time
-        
+
     def timer_finished(self, timer):
         pass
 
@@ -266,7 +266,7 @@ class BaseHub(object):
 
     def schedule_call_global(self, seconds, cb, *args, **kw):
         """Schedule a callable to be called after 'seconds' seconds have
-        elapsed. The timer will NOT 
+        elapsed. The timer will NOT
             seconds: The number of seconds to wait.
             cb: The callable to call after the given time.
             *args: Arguments to pass to the callable when called.
