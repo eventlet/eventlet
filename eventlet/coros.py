@@ -129,6 +129,11 @@ class event(object):
             return self.wait()
         return notready
 
+    # QQQ make it return tuple (type, value, tb) instead of raising
+    # because
+    # 1) "poll" does not imply raising
+    # 2) it's better not to screw up caller's sys.exc_info() by default
+    #    (e.g. if caller wants to calls the function in except or finally)
     def poll_exception(self, notready=None):
         if self.has_exception():
             return self.wait()
@@ -209,8 +214,11 @@ class event(object):
         >>> api.sleep(0)
         received stuff
         """
+        # why is waiter not used?
         if waiter in self._waiters:
             del self._waiters[waiter]
+            # XXX This does not check that waiter still waits when throw actually happens
+            # XXX and therefore is broken (see how send() deals with this)
             api.get_hub().schedule_call(
                 0, waiter.throw, Cancelled())
 
