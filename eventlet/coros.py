@@ -412,9 +412,9 @@ class BoundedSemaphore(object):
 
     def _do_unlock(self):
         if self._release_waiters and self._acquire_waiters:
-            api.get_hub().schedule_call_global(0, self._do_acquire)
             waiter, _unused = self._release_waiters.popitem()
             waiter.switch()
+            self._do_acquire()
 
     def _do_release(self):
         if self._release_waiters and self.counter<self.limit:
