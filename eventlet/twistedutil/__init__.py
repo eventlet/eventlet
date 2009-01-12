@@ -21,11 +21,10 @@
 
 from twisted.internet import defer
 from twisted.python import failure
-from eventlet.support.greenlet import greenlet
 from eventlet.api import get_hub, spawn, getcurrent
 
 def block_on(deferred):
-    cur = [greenlet.getcurrent()]
+    cur = [getcurrent()]
     synchronous = []
     def cb(value):
         if cur:
