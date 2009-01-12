@@ -63,5 +63,6 @@ def format_response(response):
 class MyFactory(Factory):
     protocol = LineOnlyReceiver
 
+print __doc__
 reactor.listenTCP(8888, MyFactory())
 reactor.run()

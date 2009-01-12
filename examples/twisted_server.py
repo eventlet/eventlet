@@ -33,6 +33,7 @@ class Chat:
         finally:
             self.participants.remove(conn)
 
+print __doc__
 chat = Chat()
 from twisted.internet import reactor
 reactor.listenTCP(8007, SpawnFactory(chat.handler, LineOnlyReceiverTransport))

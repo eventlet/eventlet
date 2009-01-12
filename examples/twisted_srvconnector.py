@@ -8,21 +8,16 @@ from eventlet.twistedutil.protocols.basic import LineOnlyReceiverTransport
 class NoisySRVConnector(SRVConnector):
 
     def _ebGotServers(self, failure):
-        #self.failure = failure
         return SRVConnector._ebGotServers(self, failure)
 
     def pickServer(self):
         host, port = SRVConnector.pickServer(self)
-        #if not isinstance(port, int) and self.failure:
-        #        self.failure.raiseException()
         print 'Resolved _%s._%s.%s --> %s:%s' % (self.service, self.protocol, self.domain, host, port)
         return host, port
 
-# why TypeError is not raised here?
-
 cred = X509Credentials(None, None)
 creator = GreenClientCreator(reactor, LineOnlyReceiverTransport)
-conn = creator.connectSRV('msrpsx', 'ag-projects.com',
+conn = creator.connectSRV('msrps', 'ag-projects.com',
                           connectFuncName='connectTLS', connectFuncArgs=(cred,),
                           ConnectorClass=NoisySRVConnector)
 
