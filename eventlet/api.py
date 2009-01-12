@@ -312,7 +312,7 @@ def call_after_local(seconds, function, *args, **kwds):
 # for compatibility with original eventlet API
 call_after = call_after_local
 
-class _SilentException(Exception):
+class _SilentException:
     pass
 
 class FakeTimer:
