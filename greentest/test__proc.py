@@ -166,7 +166,7 @@ class TestCase(LimitedTestCase):
             raise AssertionError('should not get there')
 
         with timeout(DELAY, None):
-            print repr(proc.wait(myproc))
+            print repr(proc.waitall([myproc]))
             raise AssertionError('should not get there')
         assert proc_finished_flag == [], proc_finished_flag
 
@@ -201,7 +201,7 @@ class TestReturn_link(TestCase):
         self.assertEqual(event.wait(), result)
         self.assertEqual(queue.wait(), result)
         self.assertRaises(kill_exc_type, receiver.wait)
-        self.assertRaises(kill_exc_type, proc.wait, receiver)
+        self.assertRaises(kill_exc_type, proc.waitall, [receiver])
 
         sleep(DELAY)
         assert not proc_flag, proc_flag
@@ -233,7 +233,7 @@ class TestRaise_link(TestCase):
         with timeout(DELAY):
             self.assertRaises(ValueError, event.wait)
             self.assertRaises(ValueError, queue.wait)
-            self.assertRaises(kill_exc_type, proc.wait, receiver)
+            self.assertRaises(kill_exc_type, proc.waitall, [receiver])
         sleep(DELAY)
         assert not proc_flag, proc_flag
         assert not callback_flag, callback_flag
@@ -264,7 +264,7 @@ class TestRaise_link(TestCase):
         with timeout(DELAY):
             self.assertRaises(proc.ProcExit, event.wait)
             self.assertRaises(proc.ProcExit, queue.wait)
-            self.assertRaises(kill_exc_type, proc.wait, receiver)
+            self.assertRaises(kill_exc_type, proc.waitall, [receiver])
 
         sleep(DELAY)
         assert not proc_flag, proc_flag
@@ -289,7 +289,7 @@ class TestStuff(unittest.TestCase):
         x = proc.spawn(lambda : 1)
         y = proc.spawn(lambda : 2)
         z = proc.spawn(lambda : 3)
-        self.assertEqual(proc.wait([x, y, z]), [1, 2, 3])
+        self.assertEqual(proc.waitall([x, y, z]), [1, 2, 3])
         e = coros.event()
         x.link(e)
         self.assertEqual(e.wait(), 1)
@@ -297,7 +297,7 @@ class TestStuff(unittest.TestCase):
         e = coros.event()
         x.link(e)
         self.assertEqual(e.wait(), 1)
-        self.assertEqual([proc.wait(X) for X in [x, y, z]], [1, 2, 3])
+        self.assertEqual([proc.waitall([X]) for X in [x, y, z]], [[1], [2], [3]])
 
     def test_wait_error(self):
         def x():
@@ -310,10 +310,10 @@ class TestStuff(unittest.TestCase):
         x.link(y)
         y.link(z)
         z.link(y)
-        self.assertRaises(ValueError, proc.wait, [x, y, z])
-        self.assertRaises(proc.LinkedFailed, proc.wait, x)
-        self.assertEqual(proc.wait(z), 3)
-        self.assertRaises(ValueError, proc.wait, y)
+        self.assertRaises(ValueError, proc.waitall, [x, y, z])
+        self.assertRaises(proc.LinkedFailed, proc.waitall, [x])
+        self.assertEqual(proc.waitall([z]), [3])
+        self.assertRaises(ValueError, proc.waitall, [y])
 
     def test_wait_all_exception_order(self):
         # if there're several exceptions raised, the earliest one must be raised by wait
@@ -323,7 +323,7 @@ class TestStuff(unittest.TestCase):
         a = proc.spawn(badint)
         b = proc.spawn(int, 'second')
         try:
-            proc.wait([a, b])
+            proc.waitall([a, b])
         except ValueError, ex:
             assert 'second' in str(ex), repr(str(ex))
 

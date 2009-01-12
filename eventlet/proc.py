@@ -159,22 +159,13 @@ class LinkToGreenlet(Link):
     def _fire_exception(self, source, throw_args):
         self.listener.throw(getLinkedFailed(source, *throw_args))
 
-def wait(linkable_or_list, trap_errors=False):
-    if hasattr(linkable_or_list, 'link'):
-        event = coros.event()
-        linkable_or_list.link(event)
-        try:
-            return event.wait()
-        except Exception:
-            if trap_errors:
-                return
-            raise
+def waitall(lst, trap_errors=False):
     queue = coros.queue()
-    results = [None] * len(linkable_or_list)
-    for (index, linkable) in enumerate(linkable_or_list):
+    results = [None] * len(lst)
+    for (index, linkable) in enumerate(lst):
         linkable.link(decorate_send(queue, index))
     count = 0
-    while count < len(linkable_or_list):
+    while count < len(lst):
         try:
             index, value = queue.wait()
         except Exception:
