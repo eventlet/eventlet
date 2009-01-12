@@ -1,5 +1,6 @@
 #!/usr/bin/python
-# Copyright (c) 2008 Denis Bilenko
+# Copyright (c) 2008-2009 AG Projects
+# Author: Denis Bilenko
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
