@@ -33,7 +33,6 @@ def exit_unless_twisted():
         exit_disabled()
 
 def exit_unless_25():
-    print sys.version_info[:2]<(2, 5)
     if sys.version_info[:2]<(2, 5):
         exit_disabled()
 
