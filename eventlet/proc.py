@@ -89,7 +89,7 @@ __all__ = ['LinkedExited',
            'spawn_link_value',
            'spawn_link_exception']
 
-class LinkedExited(api.GreenletExit):
+class LinkedExited(Exception):
     """Raised when a linked proc exits"""
     msg = "linked proc %r exited"
 
