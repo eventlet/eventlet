@@ -31,6 +31,7 @@ BUFFER_SIZE = 4096
 import errno
 import os
 import socket
+from socket import socket as _original_socket
 import fcntl
 import time
 
@@ -183,7 +184,7 @@ class GreenSocket(object):
     timeout = None
     def __init__(self, family_or_realsock=socket.AF_INET, *args, **kwargs):
         if isinstance(family_or_realsock, (int, long)):
-            fd = socket.socket(family_or_realsock, *args, **kwargs)
+            fd = _original_socket(family_or_realsock, *args, **kwargs)
         else:
             fd = family_or_realsock
             assert not args, args
