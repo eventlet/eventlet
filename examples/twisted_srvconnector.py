@@ -28,9 +28,6 @@ from eventlet.twistedutil.protocols.basic import LineOnlyReceiverTransport
 
 class NoisySRVConnector(SRVConnector):
 
-    def _ebGotServers(self, failure):
-        return SRVConnector._ebGotServers(self, failure)
-
     def pickServer(self):
         host, port = SRVConnector.pickServer(self)
         print 'Resolved _%s._%s.%s --> %s:%s' % (self.service, self.protocol, self.domain, host, port)
