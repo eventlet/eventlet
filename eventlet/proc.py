@@ -160,6 +160,14 @@ class LinkToGreenlet(Link):
     def _fire_exception(self, source, throw_args):
         self.listener.throw(getLinkedFailed(source, *throw_args))
 
+class LinkToCallable(Link):
+
+    def _fire_value(self, source, value):
+        self.listener(value)
+
+    def _fire_exception(self, source, throw_args):
+        self.listener(*throw_args)
+
 def waitall(lst, trap_errors=False):
     queue = coros.queue()
     results = [None] * len(lst)
@@ -323,8 +331,10 @@ class Source(object):
             return LinkToGreenlet(listener)
         if hasattr(listener, 'send'):
             return LinkToEvent(listener)
+        elif callable(listener):
+            return LinkToCallable(listener)
         else:
-            return listener
+            raise TypeError("Don't know how to link to %r" % (listener, ))
 
     def send(self, value):
         self._result = value
