@@ -252,8 +252,9 @@ class Source(object):
      2. If `listener' is something with send/send_exception methods (event,
         queue, Source but not Proc) the relevant method is called.
 
-     3. If `listener' is a callable, it is called with 3 arguments (see Link class
-        for details).
+     3. If `listener' is a callable, it is called with 1 argument (the result)
+        for "value" links and with 3 arguments (typ, value, tb) for "exception"
+        links.
     """
 
     def __init__(self, name=None):
