@@ -256,6 +256,23 @@ class Source(object):
         self._result = _NOT_USED
         self._exc = None
 
+    def _repr_helper(self):
+        result = []
+        result.append(repr(self.name))
+        if self._result is not _NOT_USED:
+            if self._exc is None:
+                result.append('result=%r' % self._result)
+            else:
+                result.append('raised=%s' % getattr(self._exc[0], '__name__', self._exc[0]))
+        if self._value_links or self._exception_links:
+            result.append('{%s:%s}' % (len(self._value_links),
+                                       len(self._exception_links)))
+        return result
+
+    def __repr__(self):
+        klass = type(self).__name__
+        return '<%s %s>' % (klass, ' '.join(self._repr_helper()))
+
     def ready(self):
         return self._result is not _NOT_USED
 
@@ -379,6 +396,17 @@ class Proc(Source):
     def __init__(self, name=None):
         self.greenlet = None
         Source.__init__(self, name)
+
+    def _repr_helper(self):
+        if self.greenlet is not None and self.greenlet.dead:
+            dead = '(dead)'
+        else:
+            dead = ''
+        return ['%r%s' % (self.greenlet, dead)] + Source._repr_helper(self)
+
+    def __repr__(self):
+        klass = type(self).__name__
+        return '<%s %s>' % (klass, ' '.join(self._repr_helper()))
 
     def __nonzero__(self):
         if self.ready():
