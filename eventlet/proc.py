@@ -51,7 +51,6 @@ Now, even though `p' is finished it's still possible to link it. In this
 case the notification is performed immediatelly:
 
 >>> p.link()
->>> api.sleep(0)
 Traceback (most recent call last):
  ...
 LinkedCompleted: '<function demofunc at 0x...>' completed successfully
@@ -66,7 +65,7 @@ fails then there's no way to complete the task so the parent must fail as well;
 
 >>> p = spawn(demofunc, 1, 0)
 >>> p.link_exception()
->>> api.sleep(0.01)
+>>> api.sleep(1)
 Traceback (most recent call last):
  ...
 LinkedFailed: '<function demofunc at 0x...>' failed with ZeroDivisionError
@@ -291,9 +290,12 @@ class Source(object):
             listener = api.getcurrent()
         if link is None:
             link = self.getLink(listener)
-        self._value_links[listener] = link
-        if self._result is not _NOT_USED:
-            self.send(self._result)
+        if self.ready() and listener is api.getcurrent():
+            link(self.name, SUCCESS, self._result)
+        else:
+            self._value_links[listener] = link
+            if self._result is not _NOT_USED:
+                self.send(self._result)
 
     def link_exception(self, listener=None, link=None):
         if self._result is not _NOT_USED and self._exc is None:
@@ -302,22 +304,31 @@ class Source(object):
             listener = api.getcurrent()
         if link is None:
             link = self.getLink(listener)
-        self._exception_links[listener] = link
-        if self._result is not _NOT_USED:
-            self.send_exception(*self._exc)
+        if self.ready() and listener is api.getcurrent():
+            link(self.name, FAILURE, self._exc)
+        else:
+            self._exception_links[listener] = link
+            if self._result is not _NOT_USED:
+                self.send_exception(*self._exc)
 
     def link(self, listener=None, link=None):
         if listener is None:
             listener = api.getcurrent()
         if link is None:
             link = self.getLink(listener)
-        self._value_links[listener] = link
-        self._exception_links[listener] = link
-        if self._result is not _NOT_USED:
+        if self.ready() and listener is api.getcurrent():
             if self._exc is None:
-                self.send(self._result)
+                link(self.name, SUCCESS, self._result)
             else:
-                self.send_exception(*self._exc)
+                link(self.name, FAILURE, self._exc)
+        else:
+            self._value_links[listener] = link
+            self._exception_links[listener] = link
+            if self._result is not _NOT_USED:
+                if self._exc is None:
+                    self.send(self._result)
+                else:
+                    self.send_exception(*self._exc)
 
     def unlink(self, listener=None):
         if listener is None:

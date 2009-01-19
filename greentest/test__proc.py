@@ -74,7 +74,7 @@ class SimpleTestProc(LimitedTestCase):
         receiver2 = proc.spawn(api.sleep, 1)
         p.link(receiver2)
         self.assertRaises(proc.LinkedCompleted, receiver2.wait)
- 
+
     def test_event(self):
         p = proc.spawn(lambda : 100)
         event = coros.event()
@@ -183,7 +183,7 @@ class TestReturn_link(TestCase):
             assert not first_time, 'Should not raise LinkedKilled here after first time'
 
         assert not p, p
-        
+
         self.assertEqual(event.wait(), result)
         self.assertEqual(queue.wait(), result)
         self.assertRaises(kill_exc_type, receiver.wait)
@@ -194,7 +194,7 @@ class TestReturn_link(TestCase):
         assert not callback_flag, callback_flag
 
         self.check_timed_out(*xxxxx)
- 
+
 class TestReturn_link_value(TestReturn_link):
     sync = False
     link_method = 'link_value'
@@ -218,6 +218,7 @@ class TestRaise_link(TestCase):
 
         self.assertRaises(ValueError, event.wait)
         self.assertRaises(ValueError, queue.wait)
+        self.assertRaises(kill_exc_type, receiver.wait)
         self.assertRaises(kill_exc_type, proc.waitall, [receiver])
         sleep(DELAY)
         assert not proc_flag, proc_flag
@@ -249,6 +250,7 @@ class TestRaise_link(TestCase):
         self.assertRaises(proc.ProcExit, event.wait)
         self.assertRaises(proc.ProcExit, queue.wait)
         self.assertRaises(kill_exc_type, proc.waitall, [receiver])
+        self.assertRaises(kill_exc_type, receiver.wait)
 
         sleep(DELAY)
         assert not proc_flag, proc_flag
@@ -313,8 +315,8 @@ class TestStuff(unittest.TestCase):
 
     def test_multiple_listeners_error(self):
         # if there was an error while calling a callback
-        # it should not prevent the other listeners from being called 
-        # also, all of the errors should be logged, check the output 
+        # it should not prevent the other listeners from being called
+        # also, all of the errors should be logged, check the output
         # manually that they are
         p = proc.spawn(lambda : 5)
         results = []
