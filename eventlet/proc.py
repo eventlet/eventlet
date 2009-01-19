@@ -71,7 +71,7 @@ Traceback (most recent call last):
  ...
 LinkedFailed: '<function demofunc at 0x...>' failed with ZeroDivisionError
 
-One application of linking is `wait' function: link to a bunch of coroutines
+One application of linking is `waitall' function: link to a bunch of coroutines
 and wait for all them to complete. Such function is provided by this module.
 """
 import sys
@@ -200,7 +200,7 @@ _NOT_USED = object()
 def spawn_greenlet(function, *args):
     """Create a new greenlet that will run `function(*args)'.
     The current greenlet won't be unscheduled. Keyword arguments aren't
-    supported (limitation of greenlet), use api.spawn to work around that.
+    supported (limitation of greenlet), use spawn() to work around that.
     """
     g = api.Greenlet(function)
     g.parent = api.get_hub().greenlet
@@ -420,7 +420,7 @@ class Proc(Source):
     @property
     def dead(self):
         return self.ready() or self.greenlet.dead
- 
+
     @classmethod
     def spawn(cls, function, *args, **kwargs):
         """Return a new Proc instance that is scheduled to execute
