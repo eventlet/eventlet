@@ -54,7 +54,7 @@ case the notification is performed immediatelly:
 >>> api.sleep(0)
 Traceback (most recent call last):
  ...
-LinkedCompleted: linked proc '<function demofunc at 0x...>' completed successfully
+LinkedCompleted: '<function demofunc at 0x...>' completed successfully
 
 (Without an argument, link is created to the current greenlet)
 
@@ -69,7 +69,7 @@ fails then there's no way to complete the task so the parent must fail as well;
 >>> api.sleep(0.01)
 Traceback (most recent call last):
  ...
-LinkedFailed: linked proc '<function demofunc at 0x...>' failed with ZeroDivisionError
+LinkedFailed: '<function demofunc at 0x...>' failed with ZeroDivisionError
 
 One application of linking is `wait' function: link to a bunch of coroutines
 and wait for all them to complete. Such function is provided by this module.
@@ -91,7 +91,7 @@ __all__ = ['LinkedExited',
 
 class LinkedExited(Exception):
     """Raised when a linked proc exits"""
-    msg = "linked proc %r exited"
+    msg = "%r exited"
 
     def __init__(self, name=None, msg=None):
         self.name = name
@@ -101,22 +101,22 @@ class LinkedExited(Exception):
 
 class LinkedFailed(LinkedExited):
     """Raised when a linked proc dies because of unhandled exception"""
-    msg = "linked proc %r failed"
+    msg = "%r failed with %s"
 
     def __init__(self, name, typ, value=None, tb=None):
-        msg = '%s with %s' % ((self.msg % name), typ.__name__)
+        msg = self.msg % (name, typ.__name__)
         LinkedExited.__init__(self, name, msg)
 
 class LinkedCompleted(LinkedExited):
     """Raised when a linked proc finishes the execution cleanly"""
 
-    msg = "linked proc %r completed successfully"
+    msg = "%r completed successfully"
 
 class LinkedKilled(LinkedFailed):
     """Raised when a linked proc dies because of unhandled GreenletExit
     (i.e. it was killed)
     """
-    msg = """linked proc %r was killed"""
+    msg = """%r was killed with %s"""
 
 def getLinkedFailed(name, typ, value=None, tb=None):
     if issubclass(typ, api.GreenletExit):
