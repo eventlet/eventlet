@@ -231,9 +231,8 @@ class Source(object):
     exceptions won't be delivered to "value" links and values won't be
     delivered to "exception" links). Once link has been fired it is removed.
 
-    Notifying listeners is performed in the MAINLOOP greenlet. As such it
-    must not block or call any functions that block. Under the hood notifying
-    a link means executing a callback, see Link class for details. Notification
+    Notifying listeners is performed in the MAINLOOP greenlet. Under the hood
+    notifying a link means executing a callback, see Link class for details. Notification
     must not attempt to switch to the hub, i.e. call any of blocking functions.
 
     >>> source.send('hello')
@@ -269,17 +268,18 @@ class Source(object):
         result.append(repr(self.name))
         if self._result is not _NOT_USED:
             if self._exc is None:
-                result.append('result=%r' % self._result)
+                res = repr(self._result)
+                if len(res)>50:
+                    res = res[:50]+'...'
+                result.append('result=%s' % res)
             else:
-                result.append('raised=%s' % getattr(self._exc[0], '__name__', self._exc[0]))
-        if self._value_links or self._exception_links:
-            result.append('{%s:%s}' % (len(self._value_links),
-                                       len(self._exception_links)))
+                result.append('raised=%s' % (getattr(self._exc[0], '__name__', self._exc[0]), ))
+        result.append('{%s:%s}' % (len(self._value_links), len(self._exception_links)))
         return result
 
     def __repr__(self):
         klass = type(self).__name__
-        return '<%s %s>' % (klass, ' '.join(self._repr_helper()))
+        return '<%s at %s %s>' % (klass, hex(id(self)), ' '.join(self._repr_helper()))
 
     def ready(self):
         return self._result is not _NOT_USED
