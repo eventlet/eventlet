@@ -283,7 +283,7 @@ class multievent(object):
         self._waiters = {}
 
     def __str__(self):
-        params = (self.__class__.__name__, hex(id(self)), self.items, len(self._waiters))
+        params = (self.__class__.__name__, hex(id(self)), len(self.items), len(self._waiters))
         return '<%s at %s items[%d] _waiters[%d]>' % params
 
     def wait(self):
