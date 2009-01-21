@@ -387,11 +387,19 @@ class Source(object):
                 return self._result
             else:
                 api.getcurrent().throw(*self._exc)
-        if timeout==0:
-            return
         if timeout is not None:
             timer = api.timeout(timeout, *throw_args)
             timer.__enter__()
+            if timeout==0:
+                if timer.__exit__(None, None, None):
+                    return
+                else:
+                    try:
+                        api.getcurrent().throw(*timer.throw_args)
+                    except:
+                        if not timer.__exit__(*sys.exc_info()):
+                            raise
+                    return
             EXC = True
         try:
             try:

@@ -27,14 +27,17 @@ from greentest import LimitedTestCase
 
 DELAY = 0.01
 
-class TestEventSource(LimitedTestCase):
+
+class TestLink_Signal(LimitedTestCase):
 
     def test_send(self):
         s = proc.Source()
         q1, q2, q3 = coros.queue(), coros.queue(), coros.queue()
         s.link_value(q1)
-        assert s.wait(0) is None
+        self.assertRaises(api.TimeoutError, s.wait, 0)
+        assert s.wait(0, None) is None
         assert s.wait(0.001, None) is None
+        self.assertRaises(api.TimeoutError, s.wait, 0.001)
         s.send(1)
         assert not q1.ready()
         assert s.wait()==1
@@ -64,7 +67,7 @@ class TestEventSource(LimitedTestCase):
         self.assertRaises(OSError, s.wait)
 
 
-class SimpleTestProc(LimitedTestCase):
+class TestProc(LimitedTestCase):
 
     def test_proc(self):
         p = proc.spawn(lambda : 100)
@@ -342,10 +345,9 @@ class TestStuff(unittest.TestCase):
         sleep(DELAY*10)
         assert results in [[10, 20], [20, 10]], results
 
-    def test_multiple_listeners_error_unlink(self):
+    def _test_multiple_listeners_error_unlink(self, p):
         # notification must not happen after unlink even
         # though notification process has been already started
-        p = proc.spawn(lambda : 5)
         results = []
         def listener1(*args):
             p.unlink(listener2)
@@ -363,6 +365,15 @@ class TestStuff(unittest.TestCase):
         sleep(DELAY*10)
         assert results == [5], results
 
+    def test_multiple_listeners_error_unlink_Proc(self):
+        p = proc.spawn(lambda : 5)
+        self._test_multiple_listeners_error_unlink(p)
+
+    def test_multiple_listeners_error_unlink_Source(self):
+        p = proc.Source()
+        proc.spawn(p.send, 6)
+        self._test_multiple_listeners_error_unlink(p)
+
     def test_killing_unlinked(self):
         e = coros.event()
         def func():
@@ -377,7 +388,7 @@ class TestStuff(unittest.TestCase):
             except ZeroDivisionError:
                 pass
         finally:
-            p.unlink()
+            p.unlink() # this disables LinkedCompleted that otherwise would be raised by the next line
         sleep(DELAY)
 
 
