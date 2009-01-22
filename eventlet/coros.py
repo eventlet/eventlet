@@ -271,56 +271,6 @@ class event(object):
         return self.send(None, args)
 
 
-class multievent(object):
-    """is an event that can hold more than one value (it cannot be cancelled though)
-    is like a queue, but if there're waiters blocked, send/send_exception will wake up
-    all of them, just like an event will do (queue will wake up only one)
-    """
-    # XXX to be removed
-
-    def __init__(self):
-        self.items = collections.deque()
-        self._waiters = {}
-
-    def __str__(self):
-        params = (self.__class__.__name__, hex(id(self)), len(self.items), len(self._waiters))
-        return '<%s at %s items[%d] _waiters[%d]>' % params
-
-    def wait(self):
-        if self.items:
-            result, exc = self.items.popleft()
-            if exc is not None:
-                api.getcurrent().throw(*exc)
-            return result
-        else:
-            self._waiters[api.getcurrent()] = True
-            try:
-                return api.get_hub().switch()
-            finally:
-                self._waiters.pop(api.getcurrent(), None)
-
-    def send(self, result=None, exc=None):
-        if self._waiters:
-            hub = api.get_hub()
-            if exc is None:
-                for waiter in self._waiters:
-                    hub.schedule_call(0, waiter.switch, result)
-            else:
-                if not isinstance(exc, tuple):
-                    exc = (exc, )
-                for waiter in self._waiters:
-                    hub.schedule_call(0, waiter.throw, *exc)
-        else:
-            self.items.append((result, exc))
-
-    def send_exception(self, *args):
-        # the arguments are the same as for greenlet.throw
-        return self.send(exc=args)
-
-    def ready(self):
-        return len(self.items) > 0
-
-
 class Semaphore(object):
     """An unbounded semaphore.
     Optionally initialize with a resource count, then acquire() and release()
