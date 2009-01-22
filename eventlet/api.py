@@ -438,18 +438,12 @@ def exc_after(seconds, *throw_args):
 def get_default_hub():
     """Select the default hub implementation based on what multiplexing
     libraries are installed. Tries twistedr if a twisted reactor is imported,
-    then libevent, then poll, then select.
+    then poll, then select.
     """
 
     if 'twisted.internet.reactor' in sys.modules:
         from eventlet.hubs import twistedr
         return twistedr
-
-    try:
-        import eventlet.hubs.libevent
-        return eventlet.hubs.libevent
-    except ImportError:
-        pass
 
     import select
     if hasattr(select, 'poll'):
