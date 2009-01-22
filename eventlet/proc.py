@@ -273,7 +273,7 @@ class Source(object):
                     res = res[:50]+'...'
                 result.append('result=%s' % res)
             else:
-                result.append('raised=%s' % (getattr(self._exc[0], '__name__', self._exc[0]), ))
+                result.append('raised=%s' % (self._exc, ))
         result.append('{%s:%s}' % (len(self._value_links), len(self._exception_links)))
         return result
 
