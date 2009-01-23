@@ -296,7 +296,8 @@ class Source(object):
         else:
             self._value_links[listener] = link
             if self._result is not _NOT_USED:
-                self.send(self._result)
+                self._start_send()
+        return link
 
     def link_exception(self, listener=None, link=None):
         if self._result is not _NOT_USED and self._exc is None:
@@ -310,7 +311,8 @@ class Source(object):
         else:
             self._exception_links[listener] = link
             if self._result is not _NOT_USED:
-                self.send_exception(*self._exc)
+                self._start_send_exception()
+        return link
 
     def link(self, listener=None, link=None):
         if listener is None:
@@ -327,9 +329,10 @@ class Source(object):
             self._exception_links[listener] = link
             if self._result is not _NOT_USED:
                 if self._exc is None:
-                    self.send(self._result)
+                    self._start_send()
                 else:
-                    self.send_exception(*self._exc)
+                    self._start_send_exception()
+        return link
 
     def unlink(self, listener=None):
         if listener is None:
@@ -349,16 +352,24 @@ class Source(object):
             raise TypeError("Don't know how to link to %r" % (listener, ))
 
     def send(self, value):
+        assert not self.ready(), "%s has been fired already" % self
         self._result = value
         self._exc = None
+        self._start_send()
+
+    def _start_send(self):
         api.get_hub().schedule_call_global(0, self._do_send, self._value_links.items(),
-                                           SUCCESS, value, self._value_links)
+                                           SUCCESS, self._result, self._value_links)
 
     def send_exception(self, *throw_args):
+        assert not self.ready(), "%s has been fired already" % self
         self._result = None
         self._exc = throw_args
+        self._start_send_exception()
+
+    def _start_send_exception(self):
         api.get_hub().schedule_call_global(0, self._do_send, self._exception_links.items(),
-                                           FAILURE, throw_args, self._exception_links)
+                                           FAILURE, self._exc, self._exception_links)
 
     def _do_send(self, links, tag, value, consult):
         while links:
@@ -403,6 +414,10 @@ class Source(object):
             EXC = True
         try:
             try:
+                # QQQ for successive send() calls, event can be notified more than once here
+                # QQQ forbid to call send()/send_exception() more than once
+                # QQQ use smart_switch() (i.e. switch that can be cancelled in finally) here,
+                #     it won't have this problem
                 event = coros.event()
                 self.link(event)
                 try:
@@ -507,6 +522,9 @@ class Proc(Source):
             if api.getcurrent() is not api.get_hub().greenlet:
                 api.sleep(0)
 
+    # QQQ maybe Proc should not inherit from Source (because its send() and send_exception()
+    # QQQ methods are for internal use only)
+    
 spawn = Proc.spawn
 
 def spawn_link(function, *args, **kwargs):
