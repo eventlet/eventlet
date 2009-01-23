@@ -53,6 +53,7 @@ class GreenTransportBase(object):
     def __init__(self, transportBufferSize=None):
         if transportBufferSize is not None:
             self.transportBufferSize = transportBufferSize
+        self._error_event = event()
 
     def build_protocol(self):
         # note to subclassers: self._queue must have send and send_exception that never block
@@ -64,6 +65,10 @@ class GreenTransportBase(object):
         self.transport.resumeProducing()
         try:
             return self._queue.wait()
+        except:
+            if self._error_event is not None:
+                self._error_event.send(None)
+            raise
         finally:
             self.transport.pauseProducing()
 
@@ -71,6 +76,10 @@ class GreenTransportBase(object):
         self.transport.write(data)
         if self.write_event is not None:
             self.write_event.wait()
+
+    def loseConnection(self):
+        self.transport.loseConnection()
+        self._error_event.wait()
 
     def __getattr__(self, item):
         if item=='transport':
@@ -180,7 +189,11 @@ class GreenTransport(GreenTransportBase):
 
     def _wait(self):
         # don't pause/resume producer here; read and recv methods will do it themselves
-        return self._queue.wait()
+        try:
+            return self._queue.wait()
+        except:
+            self._error_event.send(None)
+            raise
 
     def read(self, size=-1):
         """Read size bytes or until EOF"""
