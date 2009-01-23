@@ -117,6 +117,7 @@ class BaseHub(object):
 
     def switch(self):
         cur = greenlet.getcurrent()
+        assert cur is not self.greenlet, 'Cannot switch to MAINLOOP from MAINLOOP'
         switch_out = getattr(cur, 'switch_out', None)
         if switch_out is not None:
             try:

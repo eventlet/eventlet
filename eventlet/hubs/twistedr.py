@@ -109,10 +109,10 @@ class BaseTwistedHub(object):
         self.waiters_by_greenlet = {}
 
     def switch(self):
-        assert api.getcurrent() is not self.greenlet, 'Impossible to switch() from the mainloop greenlet'
+        assert api.getcurrent() is not self.greenlet, "Cannot switch from MAINLOOP to MAINLOOP"
         try:
            api.getcurrent().parent = self.greenlet
-        except ValueError, ex:
+        except ValueError:
            pass
         return self.greenlet.switch()
 
@@ -217,11 +217,12 @@ class TwistedHub(BaseTwistedHub):
         BaseTwistedHub.__init__(self, g)
 
     def switch(self):
+        assert api.getcurrent() is not self.greenlet, "Cannot switch from MAINLOOP to MAINLOOP"
         if self.greenlet.dead:
             self.greenlet = api.Greenlet(self.run)
         try:
             api.getcurrent().parent = self.greenlet
-        except ValueError, ex:
+        except ValueError:
             pass
         return self.greenlet.switch()
 
