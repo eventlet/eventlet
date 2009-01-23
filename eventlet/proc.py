@@ -133,7 +133,18 @@ class Link(object):
     def __init__(self, listener):
         self.listener = listener
 
+    def cancel(self):
+        self.listener = None
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, *args):
+        self.cancel()
+
     def _fire(self, source, tag, result):
+        if self.listener is None:
+            return
         if tag is SUCCESS:
             self._fire_value(source, result)
         elif tag is FAILURE:
