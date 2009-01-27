@@ -296,7 +296,7 @@ class Semaphore(object):
     def acquire(self, blocking=True):
         if not blocking and self.locked():
             return False
-        if self.counter<=0:
+        while self.counter<=0:
             self._waiters[api.getcurrent()] = None
             try:
                 api.get_hub().switch()
