@@ -535,7 +535,7 @@ class Proc(Source):
 
     # QQQ maybe Proc should not inherit from Source (because its send() and send_exception()
     # QQQ methods are for internal use only)
-    
+
 spawn = Proc.spawn
 
 def spawn_link(function, *args, **kwargs):
@@ -552,6 +552,12 @@ def spawn_link_exception(function, *args, **kwargs):
     p = spawn(function, *args, **kwargs)
     p.link_exception()
     return p
+
+def trap_errors(errors, func, *args, **kwargs):
+    try:
+        return func(*args, **kwargs)
+    except errors, ex:
+        return ex
 
 
 class Pool(object):
