@@ -62,7 +62,7 @@ class GreenTransportBase(object):
         return protocol
 
     def _wait(self):
-        self.transport.resumeProducing()
+        self.resumeProducing()
         try:
             return self._queue.wait()
         except:
@@ -70,7 +70,7 @@ class GreenTransportBase(object):
                 self._error_event.send(None)
             raise
         finally:
-            self.transport.pauseProducing()
+            self.pauseProducing()
 
     def write(self, data):
         self.transport.write(data)
