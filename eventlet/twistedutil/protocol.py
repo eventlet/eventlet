@@ -78,6 +78,7 @@ class GreenTransportBase(object):
             self.write_event.wait()
 
     def loseConnection(self):
+        self.transport.unregisterProducer()
         self.transport.loseConnection()
         self._error_event.wait()
 
