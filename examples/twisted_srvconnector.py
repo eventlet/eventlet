@@ -45,8 +45,11 @@ From-Path: msrps://alice.example.com:9892/98cjs;tcp
 -------49fh$
 """.replace('\n', '\r\n')
 
+print 'Sending:\n%s' % request
 conn.write(request)
+#conn.loseWriteConnection()
+print 'Received:'
 for x in conn:
-    print x
+    print repr(x)
     if '-------' in x:
         break

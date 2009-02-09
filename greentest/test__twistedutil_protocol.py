@@ -20,10 +20,9 @@
 # THE SOFTWARE.
 
 from twisted.internet import reactor
-from greentest import exit_unless_twisted
+from greentest import exit_unless_twisted, LimitedTestCase
 exit_unless_twisted()
 
-import sys
 import unittest
 from twisted.internet.error import ConnectionDone
 
@@ -116,7 +115,6 @@ class TestGreenTransport(TestUnbufferedTransport):
         self.conn.write('hello\r\n')
         self.assertEqual(self.conn.read(9), 'you said ')
         self.assertEqual(self.conn.read(999), 'hello. BYE')
-        self.assertEqual(None, self.conn._queue)
         self.assertEqual(self.conn.read(9), '')
         self.assertEqual(self.conn.read(1), '')
         self.assertEqual(self.conn.recv(9), '')
@@ -156,26 +154,25 @@ class TestGreenTransport(TestUnbufferedTransport):
 class TestGreenTransport_bufsize1(TestGreenTransport):
     transportBufferSize = 1
 
-class TestGreenTransportError(TestCase):
-    setup_server = setup_server_SpawnFactory
-    gtransportClass = pr.GreenTransport
-
-    def test_read_error(self):
-        self.conn.write('hello\r\n')
-        sleep(DELAY*1.5) # make sure the rest of data arrives
-        try:
-            1/0
-        except:
-            #self.conn.loseConnection(failure.Failure()) # does not work, why?
-            spawn(self.conn._queue.send_exception, *sys.exc_info())
-        self.assertEqual(self.conn.read(9), 'you said ')
-        self.assertEqual(self.conn.read(7), 'hello. ')
-        self.assertEqual(self.conn.read(9), 'BYE')
-        self.assertRaises(ZeroDivisionError, self.conn.read, 9)
-        self.assertEqual(None, self.conn._queue)
-        self.assertEqual(self.conn.read(1), '')
-        self.assertEqual(self.conn.read(1), '')
-
+# class TestGreenTransportError(TestCase):
+#     setup_server = setup_server_SpawnFactory
+#     gtransportClass = pr.GreenTransport
+# 
+#     def test_read_error(self):
+#         self.conn.write('hello\r\n')
+#         sleep(DELAY*1.5) # make sure the rest of data arrives
+#         try:
+#             1/0
+#         except:
+#             #self.conn.loseConnection(failure.Failure()) # does not work, why?
+#             spawn(self.conn._queue.send_exception, *sys.exc_info())
+#         self.assertEqual(self.conn.read(9), 'you said ')
+#         self.assertEqual(self.conn.read(7), 'hello. ')
+#         self.assertEqual(self.conn.read(9), 'BYE')
+#         self.assertRaises(ZeroDivisionError, self.conn.read, 9)
+#         self.assertEqual(self.conn.read(1), '')
+#         self.assertEqual(self.conn.read(1), '')
+# 
 #     def test_recv_error(self):
 #         self.conn.write('hello')
 #         self.assertEqual('you said hello. ', self.conn.recv())
@@ -187,10 +184,56 @@ class TestGreenTransportError(TestCase):
 #             spawn(self.conn._queue.send_exception, *sys.exc_info())
 #         self.assertEqual('BYE', self.conn.recv())
 #         self.assertRaises(ZeroDivisionError, self.conn.recv, 9)
-#         self.assertEqual(None, self.conn._queue)
 #         self.assertEqual('', self.conn.recv(1))
 #         self.assertEqual('', self.conn.recv())
 #
+
+class TestHalfClose_TCP(LimitedTestCase):
+
+    def _test_server(self, conn):
+        conn.write('hello')
+        conn.loseWriteConnection()
+        self.assertRaises(pr.WriteConnectionDone, conn.write, 'hey')
+        data = conn.read()
+        self.assertEqual('bye', data)
+        conn.loseConnection()
+        self.assertRaises(ConnectionDone, conn._wait)
+        self.check.append('server')
+
+    def setUp(self):
+        LimitedTestCase.setUp(self)
+        self.factory = pr.SpawnFactory(self._test_server)
+        self.port = reactor.listenTCP(0, self.factory)
+        self.conn = pr.GreenClientCreator(reactor).connectTCP('localhost', self.port.getHost().port)
+        self.port.stopListening()
+        self.check = []
+
+    def test(self):
+        conn = self.conn
+        data = conn.read()
+        self.assertEqual('hello', data)
+        conn.write('bye')
+        conn.loseWriteConnection()
+        self.assertRaises(pr.WriteConnectionDone, conn.write, 'hoy')
+        self.factory.waitall()
+        self.assertRaises(ConnectionDone, conn._wait)
+        assert self.check == ['server']
+
+class TestHalfClose_TLS(TestHalfClose_TCP):
+
+    def setUp(self):
+        LimitedTestCase.setUp(self)
+        from gnutls.crypto import X509PrivateKey, X509Certificate
+        from gnutls.interfaces.twisted import X509Credentials
+        cert = X509Certificate(open('gnutls_valid.crt').read())
+        key = X509PrivateKey(open('gnutls_valid.key').read())
+        server_credentials = X509Credentials(cert, key)
+        self.factory = pr.SpawnFactory(self._test_server)
+        self.port = reactor.listenTLS(0, self.factory, server_credentials)
+        self.conn = pr.GreenClientCreator(reactor).connectTLS('localhost', self.port.getHost().port, X509Credentials())
+        self.port.stopListening()
+        self.check = []
+
 
 if socket is not None:
 
@@ -232,6 +275,7 @@ try:
     import gnutls.interfaces.twisted
 except ImportError:
     del TestTLSError
+    del TestHalfClose_TLS
 
 if __name__=='__main__':
     unittest.main()

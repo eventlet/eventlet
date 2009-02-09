@@ -23,19 +23,36 @@ from twisted.protocols import basic
 from twisted.internet.error import ConnectionDone
 from eventlet.twistedutil.protocol import GreenTransportBase
 
+from twisted.internet.interfaces import IHalfCloseableProtocol
+from zope.interface import implements
+
 class LineOnlyReceiver(basic.LineOnlyReceiver):
 
-    def __init__(self, queue):
-        self._queue = queue
+    implements(IHalfCloseableProtocol)
+
+    def __init__(self, recepient):
+        self._recepient = recepient
 
     def connectionMade(self):
-        self._queue.send(self.transport)
-
-    def lineReceived(self, line):
-        self._queue.send(line)
+        #print '%r made' % self
+        self._recepient._got_transport(self.transport)
 
     def connectionLost(self, reason):
-        self._queue.send_exception(reason.type, reason.value, reason.tb)
+        #print '%r conn lost %r' % (self, reason)
+        self._recepient._connectionLost(reason)
+
+    def readConnectionLost(self):
+        #print '%r read conn lost' % self
+        self._recepient._readConnectionLost()
+
+    def writeConnectionLost(self):
+        #print '%r wr conn lost' % self
+        self._recepient._writeConnectionLost()
+
+    def lineReceived(self, line):
+        #print '%r line received %r' % (self, line)
+        self._recepient._got_data(line)
+
 
 class LineOnlyReceiverTransport(GreenTransportBase):
 

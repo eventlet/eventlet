@@ -52,6 +52,7 @@ class Chat:
         else:
             print peer, 'connection done'
         finally:
+            conn.loseConnection()
             self.participants.remove(conn)
 
 print __doc__
