@@ -331,7 +331,7 @@ class GreenClientCreator(object):
         return gtransport
 
 
-class SpawnFactory(Factory):
+class SimpleSpawnFactory(Factory):
     """Factory that spawns a new greenlet for each incoming connection.
 
     For an incoming connection a new greenlet is created using the provided
@@ -352,18 +352,31 @@ class SpawnFactory(Factory):
         gtransport = self.gtransport_class(*self.args, **self.kwargs)
         protocol = gtransport.build_protocol()
         protocol.factory = self
-        spawn(self._spawn, gtransport, protocol)
+        self._do_spawn(gtransport, protocol)
         return protocol
 
-    def _spawn(self, gtransport, protocol):
-        try:
-            gtransport._init_transport()
-        except Exception:
-            self._log_error(failure.Failure(), gtransport, protocol)
-        else:
-            spawn(self.handler, gtransport)
+    def _do_spawn(self, gtransport, protocol):
+        proc.spawn_greenlet(self._run_handler, gtransport, protocol)
 
-    def _log_error(self, failure, gtransport, protocol):
-        from twisted.python import log
-        log.msg('%s: %s' % (protocol.transport.getPeer(), failure.getErrorMessage()))
+    def _run_handler(self, gtransport, protocol):
+        gtransport._init_transport()
+        self.handler(gtransport)
+
+
+class SpawnFactory(SimpleSpawnFactory):
+    """An extension to SimpleSpawnFactory that provides some control over
+    the greenlets it has spawned.
+    """
+
+    def __init__(self, handler, gtransport_class=None, *args, **kwargs):
+        self.greenlets = set()
+        SimpleSpawnFactory.__init__(self, handler, gtransport_class, *args, **kwargs)
+
+    def _do_spawn(self, gtransport, protocol):
+        g = proc.spawn(self._run_handler, gtransport, protocol)
+        self.greenlets.add(g)
+        g.link(lambda *_: self.greenlets.remove(g))
+
+    def waitall(self):
+        return proc.waitall(self.greenlets)
 
