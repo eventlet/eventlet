@@ -84,12 +84,15 @@ class GreenTransportBase(object):
     def __getattr__(self, item):
         if item=='transport':
             raise AttributeError(item)
-        try:
-            return getattr(self.transport, item)
-        except AttributeError:
-            me = type(self).__name__
-            trans = type(self.transport).__name__
-            raise AttributeError("Neither %r nor %r has attribute %r" % (me, trans, item))
+        if hasattr(self, 'transport'):
+            try:
+                return getattr(self.transport, item)
+            except AttributeError:
+                me = type(self).__name__
+                trans = type(self.transport).__name__
+                raise AttributeError("Neither %r nor %r has attribute %r" % (me, trans, item))
+        else:
+            raise AttributeError(item)
 
     def resumeProducing(self):
         self.paused -= 1
