@@ -52,7 +52,7 @@ class LineOnlyReceiver(basic.LineOnlyReceiver):
 
     def requestReceived(self, lines):
         request = re.match('^(\w+) http://(.*?)(/.*?) HTTP/1..$', lines[0])
-        print request.groups()
+        #print request.groups()
         method, host, path = request.groups()
         headers = dict(x.split(': ', 1) for x in lines[1:])
         def callback(result):
@@ -68,10 +68,11 @@ def http_request(method, host, path, headers):
     conn = httplib.HTTPConnection(host)
     conn.request(method, path, headers=headers)
     response = conn.getresponse()
-    return format_response(response)
-
-def format_response(response):
     body = response.read()
+    print method, host, path, response.status, response.reason, len(body)
+    return format_response(response, body)
+
+def format_response(response, body):
     result = "HTTP/1.1 %s %s" % (response.status, response.reason)
     for k, v in response.getheaders():
         result += '\r\n%s: %s' % (k, v)
