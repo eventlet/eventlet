@@ -585,10 +585,36 @@ def spawn_link_exception(function, *args, **kwargs):
     return p
 
 def trap_errors(errors, func, *args, **kwargs):
+    """DEPRECATED in favor of wrap_errors"""
     try:
         return func(*args, **kwargs)
     except errors, ex:
         return ex
+
+class wrap_errors(object):
+
+    def __init__(self, errors, func):
+        """Make a new function from `func', such that it catches `errors' (an
+        Exception subclass, or a tuple of Exception subclasses) and return
+        it as a value.
+        """
+        self.errors = errors
+        self.func = func
+
+    def __call__(self, *args, **kwargs):
+        try:
+            return self.func(*args, **kwargs)
+        except self.errors, ex:
+            return ex
+
+    def __str__(self):
+        return str(self.func)
+
+    def __repr__(self):
+        return str(self.func)
+
+    def __getattr__(self, item):
+        return getattr(self.func, item)
 
 
 class Pool(object):
