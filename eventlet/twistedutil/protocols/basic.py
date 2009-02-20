@@ -30,15 +30,12 @@ class LineOnlyReceiver(basic.LineOnlyReceiver):
         self._recepient = recepient
 
     def connectionMade(self):
-        #print '%r made' % self
         self._recepient._got_transport(self.transport)
 
     def connectionLost(self, reason):
-        #print '%r conn lost %r' % (self, reason)
         self._recepient._connectionLost(reason)
 
     def lineReceived(self, line):
-        #print '%r line received %r' % (self, line)
         self._recepient._got_data(line)
 
 
