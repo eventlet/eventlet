@@ -446,7 +446,7 @@ class Waiter(object):
         self.greenlet = None
 
     def send(self, value):
-        """Make greenlet calling wait() wake up (if there is a wait()).
+        """Wake up the greenlet that is calling wait() currently (if there is one).
         Can only be called from get_hub().greenlet.
         """
         assert api.getcurrent() is api.get_hub().greenlet
