@@ -172,8 +172,7 @@ class GreenTransportBase(object):
     def resumeProducing(self):
         self.paused -= 1
         if self.paused==0:
-            if self.transport.connected and not self.transport.disconnecting:
-                self.transport.resumeProducing()
+            self.transport.resumeProducing()
 
     def pauseProducing(self):
         self.paused += 1
