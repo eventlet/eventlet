@@ -47,7 +47,6 @@ From-Path: msrps://alice.example.com:9892/98cjs;tcp
 
 print 'Sending:\n%s' % request
 conn.write(request)
-#conn.loseWriteConnection()
 print 'Received:'
 for x in conn:
     print repr(x)
