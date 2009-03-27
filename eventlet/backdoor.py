@@ -106,7 +106,6 @@ def backdoor_server(server, locals=None):
                 greenlet = SocketConsole(fl, (host, port), locals)
                 hub = api.get_hub()
                 hub.schedule_call_global(0, greenlet.switch)
-                hub.switch()
         except socket.error, e:
             # Broken pipe means it was shutdown
             if e[0] != 32:
