@@ -35,7 +35,7 @@ class TestSocketErrors(unittest.TestCase):
             s.connect(('127.0.0.1', 81))
         except socket.error, ex:
             code, text = ex.args
-            assert code == 111, (code, text)
+            assert code in [111, 61], (code, text)
             assert 'refused' in text.lower(), (code, text)
 
 if __name__=='__main__':
