@@ -63,7 +63,10 @@ def enum_hubs():
     return result
 
 def enum_reactors():
-    import twisted
+    try:
+        import twisted
+    except ImportError:
+        return []
     p = os.path.join(os.path.dirname(twisted.__file__), 'internet', '*?reactor.py')
     files = glob(p)
     all_reactors = [os.path.basename(f[:-3]) for f in files]
