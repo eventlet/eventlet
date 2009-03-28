@@ -547,3 +547,13 @@ class GreenSSL(GreenSocket):
     def issuer(self):
         return self.fd.issuer()
 
+
+
+def socketpair(*args):
+    one, two = socket.socketpair(*args)
+    return GreenSocket(one), GreenSocket(two)
+
+
+def fromfd(*args):
+    return GreenSocket(socket.fromfd(*args))
+    

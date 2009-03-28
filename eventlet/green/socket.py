@@ -5,6 +5,7 @@ _fileobject = __socket._fileobject
 
 from eventlet.api import get_hub
 from eventlet.greenio import GreenSocket as socket, GreenSSL as _GreenSSL
+from eventlet.greenio import socketpair, fromfd
 
 def fromfd(*args):
     return socket(__socket.fromfd(*args))
@@ -32,16 +33,6 @@ def _gethostbyname_tpool(name):
 # 
 # XXX there're few more blocking functions in socket
 # XXX having a hub-independent way to access thread pool would be nice
-
-def socketpair(family=None, type=SOCK_STREAM, proto=0):
-    if family is None:
-        try:
-            family = AF_UNIX
-        except AttributeError:
-            family = AF_INET
-
-    a, b = __socket.socketpair(family, type, proto)
-    return socket(a), socket(b)
 
 
 _GLOBAL_DEFAULT_TIMEOUT = object()
