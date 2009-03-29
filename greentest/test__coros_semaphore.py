@@ -32,13 +32,13 @@ class TestSemaphore(LimitedTestCase):
         self.assertEqual(sem.acquire(), True)
         api.spawn(sem.release)
         self.assertEqual(sem.acquire(), True)
-        self.assertEqual(0, sem.counter)
+        self.assertEqual(-3, sem.balance)
         sem.release()
         sem.release()
         sem.release()
         api.spawn(sem.acquire)
         sem.release()
-        self.assertEqual(3, sem.counter)
+        self.assertEqual(3, sem.balance)
    
     def test_bounded_with_zero_limit(self):
         sem = coros.semaphore(0, 0)
