@@ -77,7 +77,7 @@ application using deferToGreenThread see examples/twisted_http_proxy.py
 Although eventlet provides eventlet.green.socket module that implements
 interface of the standard Python socket, there's also a way to use twisted's
 network code in a synchronous fashion via GreenTransport class.
-A GreenTransport interface is reminiscent of socket although it's not a drop-in
+A GreenTransport interface is reminiscent of socket but it's not a drop-in
 replacement. It combines features of TCPTransport and Protocol in a single
 object:
 
