@@ -100,8 +100,7 @@ class GreenTransportBase(object):
         self._disconnected_event = Event()
 
     def build_protocol(self):
-        protocol = self.protocol_class(self)
-        return protocol
+        return self.protocol_class(self)
 
     def _got_transport(self, transport):
         self._queue.send(transport)
