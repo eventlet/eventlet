@@ -647,6 +647,35 @@ class wrap_errors(object):
         return getattr(self.func, item)
 
 
+class RunningProcSet(object):
+    """Maintain a set of Procs that are still running. Provide a way to wait/kill all of them."""
+
+    def __init__(self):
+        self.procs = set()
+
+    def add(self, p):
+        self.procs.add(p)
+        p.link(lambda p: self.procs.discard(p))
+
+    def spawn(self, func, *args, **kwargs):
+        p = spawn(func, *args, **kwargs)
+        self.add(p)
+        return p
+
+    def waitall(self, trap_errors=True):
+        while self.procs:
+            waitall(self.procs, trap_errors=trap_errors)
+
+    def killall(self, *throw_args):
+        if not throw_args:
+            throw_args = (ProcExit, )
+        for g in self.procs:
+            if not g.dead:
+                api.get_hub().schedule_call_global(0, g.throw, *throw_args)
+        if api.getcurrent() is not api.get_hub().greenlet:
+            api.sleep(0)
+
+
 class Pool(object):
 
     linkable_class = Proc
