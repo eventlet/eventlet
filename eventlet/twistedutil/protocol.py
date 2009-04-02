@@ -23,6 +23,8 @@
 from twisted.internet.protocol import Protocol as twistedProtocol
 from twisted.internet.error import ConnectionDone
 from twisted.internet.protocol import Factory, ClientFactory
+from twisted.internet import main
+from twisted.python import failure
 
 from eventlet import proc
 from eventlet.api import getcurrent
@@ -134,9 +136,9 @@ class GreenTransportBase(object):
         else:
             self.transport.write(data)
 
-    def loseConnection(self, sync=True):
+    def loseConnection(self, connDone=failure.Failure(main.CONNECTION_DONE), sync=True):
         self.transport.unregisterProducer()
-        self.transport.loseConnection()
+        self.transport.loseConnection(connDone)
         if sync:
             self._disconnected_event.wait()
 
