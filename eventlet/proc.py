@@ -143,41 +143,29 @@ class Link(object):
     def __exit__(self, *args):
         self.cancel()
 
-    def _fire(self, source, tag, result):
-        if self.listener is None:
-            return
-        if tag is SUCCESS:
-            self._fire_value(source, result)
-        elif tag is FAILURE:
-            self._fire_exception(source, result)
-        else:
-            raise RuntimeError('invalid arguments to _fire: %r %s %r %r' % (self, source, tag, result))
-
-    __call__ = _fire
-
 class LinkToEvent(Link):
 
-    def _fire_value(self, source, value):
-        self.listener.send(value)
-
-    def _fire_exception(self, source, throw_args):
-        self.listener.send_exception(*throw_args)
+    def __call__(self, source):
+        if self.listener is None:
+            return
+        if source.has_value():
+            self.listener.send(source.value)
+        else:
+            self.listener.send_exception(*source.exc_info())
 
 class LinkToGreenlet(Link):
 
-    def _fire_value(self, source, value):
-        self.listener.throw(LinkedCompleted(source))
-
-    def _fire_exception(self, source, throw_args):
-        self.listener.throw(getLinkedFailed(source, *throw_args))
+    def __call__(self, source):
+        if source.has_value():
+            self.listener.throw(LinkedCompleted(source.name))
+        else:
+            self.listener.throw(getLinkedFailed(source.name, *source.exc_info()))
 
 class LinkToCallable(Link):
 
-    def _fire_value(self, source, value):
-        self.listener(value)
+    def __call__(self, source):
+        self.listener(source)
 
-    def _fire_exception(self, source, throw_args):
-        self.listener(*throw_args)
 
 def waitall(lst, trap_errors=False):
     queue = coros.queue()
@@ -213,8 +201,14 @@ class decorate_send(object):
     def send(self, value):
         self._event.send((self._tag, value))
 
+class NotUsed(object):
 
-_NOT_USED = object()
+    def __str__(self):
+        return '<Source instance does not hold a value or an exception>'
+
+    __repr__ = __str__
+
+_NOT_USED = NotUsed()
 
 def spawn_greenlet(function, *args):
     """Create a new greenlet that will run `function(*args)'.
@@ -272,15 +266,15 @@ class Source(object):
         self.name = name
         self._value_links = {}
         self._exception_links = {}
-        self._result = _NOT_USED
+        self.value = _NOT_USED
         self._exc = None
 
     def _repr_helper(self):
         result = []
         result.append(repr(self.name))
-        if self._result is not _NOT_USED:
+        if self.value is not _NOT_USED:
             if self._exc is None:
-                res = repr(self._result)
+                res = repr(self.value)
                 if len(res)>50:
                     res = res[:50]+'...'
                 result.append('result=%s' % res)
@@ -294,8 +288,29 @@ class Source(object):
         return '<%s at %s %s>' % (klass, hex(id(self)), ' '.join(self._repr_helper()))
 
     def ready(self):
-        return self._result is not _NOT_USED
+        return self.value is not _NOT_USED
 
+    def has_value(self):
+        return self.value is not _NOT_USED and self._exc is None
+
+    def has_exception(self):
+        return self.value is not _NOT_USED and self._exc is not None
+
+    def exc_info(self):
+        if not self._exc:
+            return (None, None, None)
+        elif len(self._exc)==3:
+            return self._exc
+        elif len(self._exc)==1:
+            if isinstance(self._exc[0], type):
+                return self._exc[0], None, None
+            else:
+                return type(self._exc[0]), self._exc[0], None
+        elif len(self._exc)==2:
+            return self._exc[0], self._exc[1], None
+        else:
+            return self._exc
+    
     def link_value(self, listener=None, link=None):
         if self.ready() and self._exc is not None:
             return
@@ -304,25 +319,25 @@ class Source(object):
         if link is None:
             link = self.getLink(listener)
         if self.ready() and listener is api.getcurrent():
-            link(self.name, SUCCESS, self._result)
+            link(self)
         else:
             self._value_links[listener] = link
-            if self._result is not _NOT_USED:
+            if self.value is not _NOT_USED:
                 self._start_send()
         return link
 
     def link_exception(self, listener=None, link=None):
-        if self._result is not _NOT_USED and self._exc is None:
+        if self.value is not _NOT_USED and self._exc is None:
             return
         if listener is None:
             listener = api.getcurrent()
         if link is None:
             link = self.getLink(listener)
         if self.ready() and listener is api.getcurrent():
-            link(self.name, FAILURE, self._exc)
+            link(self)
         else:
             self._exception_links[listener] = link
-            if self._result is not _NOT_USED:
+            if self.value is not _NOT_USED:
                 self._start_send_exception()
         return link
 
@@ -333,13 +348,13 @@ class Source(object):
             link = self.getLink(listener)
         if self.ready() and listener is api.getcurrent():
             if self._exc is None:
-                link(self.name, SUCCESS, self._result)
+                link(self)
             else:
-                link(self.name, FAILURE, self._exc)
+                link(self)
         else:
             self._value_links[listener] = link
             self._exception_links[listener] = link
-            if self._result is not _NOT_USED:
+            if self.value is not _NOT_USED:
                 if self._exc is None:
                     self._start_send()
                 else:
@@ -365,35 +380,33 @@ class Source(object):
 
     def send(self, value):
         assert not self.ready(), "%s has been fired already" % self
-        self._result = value
+        self.value = value
         self._exc = None
         self._start_send()
 
     def _start_send(self):
-        api.get_hub().schedule_call_global(0, self._do_send, self._value_links.items(),
-                                           SUCCESS, self._result, self._value_links)
+        api.get_hub().schedule_call_global(0, self._do_send, self._value_links.items(), self._value_links)
 
     def send_exception(self, *throw_args):
         assert not self.ready(), "%s has been fired already" % self
-        self._result = None
+        self.value = None
         self._exc = throw_args
         self._start_send_exception()
 
     def _start_send_exception(self):
-        api.get_hub().schedule_call_global(0, self._do_send, self._exception_links.items(),
-                                           FAILURE, self._exc, self._exception_links)
+        api.get_hub().schedule_call_global(0, self._do_send, self._exception_links.items(), self._exception_links)
 
-    def _do_send(self, links, tag, value, consult):
+    def _do_send(self, links, consult):
         while links:
             listener, link = links.pop()
             try:
                 if listener in consult:
                     try:
-                        link(self.name, tag, value)
+                        link(self)
                     finally:
                         consult.pop(listener, None)
             except:
-                api.get_hub().schedule_call_global(0, self._do_send, links, tag, value, consult)
+                api.get_hub().schedule_call_global(0, self._do_send, links, consult)
                 raise
 
     def wait(self, timeout=None, *throw_args):
@@ -405,9 +418,9 @@ class Source(object):
         to do when timeout has expired. They are treated the same way as
         api.timeout treats them.
         """
-        if self._result is not _NOT_USED:
+        if self.value is not _NOT_USED:
             if self._exc is None:
-                return self._result
+                return self.value
             else:
                 api.getcurrent().throw(*self._exc)
         if timeout is not None:
