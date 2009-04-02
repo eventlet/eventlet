@@ -126,20 +126,20 @@ class GreenTransportBase(object):
         finally:
             self.pauseProducing()
 
-    def write(self, data, sync=True):
+    def write(self, data, wait=True):
         if self._disconnected_event.ready():
             raise self._disconnected_event.wait()
-        if sync:
+        if wait:
             self._write_event.reset()
             self.transport.write(data)
             self._write_event.wait()
         else:
             self.transport.write(data)
 
-    def loseConnection(self, connDone=failure.Failure(main.CONNECTION_DONE), sync=True):
+    def loseConnection(self, connDone=failure.Failure(main.CONNECTION_DONE), wait=True):
         self.transport.unregisterProducer()
         self.transport.loseConnection(connDone)
-        if sync:
+        if wait:
             self._disconnected_event.wait()
 
     def __getattr__(self, item):
