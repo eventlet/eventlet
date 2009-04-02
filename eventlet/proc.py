@@ -606,6 +606,22 @@ def trap_errors(errors, func, *args, **kwargs):
         return ex
 
 class wrap_errors(object):
+    """Helper to make function return an exception, rather than raise it.
+
+    Because every exception that is unhandled by greenlet will be logged by the hub,
+    it is desirable to prevent non-error exceptions from leaving a greenlet.
+    This can done with simple try/except construct:
+
+    def func1(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except (A, B, C), ex:
+            return ex
+
+    wrap_errors provides a shortcut to write that in one line:
+
+    func1 = wrap_errors((A, B, C), func)
+    """
 
     def __init__(self, errors, func):
         """Make a new function from `func', such that it catches `errors' (an
