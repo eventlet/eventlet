@@ -439,12 +439,12 @@ class Source(object):
             EXC = True
         try:
             try:
-                event = Waiter()
-                self.link(event)
+                waiter = Waiter()
+                self.link(waiter)
                 try:
-                    return event.wait()
+                    return waiter.wait()
                 finally:
-                    self.unlink(event)
+                    self.unlink(waiter)
             except:
                 EXC = False
                 if timeout is None or not timer.__exit__(*sys.exc_info()):
