@@ -2,11 +2,12 @@
 
 
 from setuptools import find_packages, setup
+from eventlet import __version__
 
 
 setup(
     name='eventlet',
-    version='0.8.9',
+    version=__version__,
     description='Coroutine-based networking library',
     author='Linden Lab',
     author_email='eventletdev@lists.secondlife.com',

@@ -20,5 +20,5 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-# This text exists only for the purpose of not making a complete
-# mockery of the above copyright header.
+version_info = (0, 8, 10)
+__version__ = '%s.%s.%s' % version_info
