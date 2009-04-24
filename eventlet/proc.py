@@ -316,7 +316,7 @@ class Source(object):
             return self._exc[0], self._exc[1], None
         else:
             return self._exc
-    
+
     def link_value(self, listener=None, link=None):
         if self.ready() and self._exc is not None:
             return
@@ -472,7 +472,7 @@ class Waiter(object):
         assert api.getcurrent() is api.get_hub().greenlet
         if self.greenlet is not None:
             self.greenlet.switch(value)
-        
+
     def send_exception(self, *throw_args):
         """Make greenlet calling wait() wake up (if there is a wait()).
         Can only be called from get_hub().greenlet.
@@ -630,6 +630,8 @@ class wrap_errors(object):
     wrap_errors provides a shortcut to write that in one line:
 
     func1 = wrap_errors((A, B, C), func)
+
+    It also preserves __str__ and __repr__ of the original function.
     """
 
     def __init__(self, errors, func):
@@ -657,7 +659,8 @@ class wrap_errors(object):
 
 
 class RunningProcSet(object):
-    """Maintain a set of Procs that are still running. Provide a way to wait/kill all of them."""
+    """Maintain a set of Procs that are still running, that is, automatically remove
+    a proc when it's finished. Provide a way to wait/kill all of them"""
 
     def __init__(self):
         self.procs = set()
