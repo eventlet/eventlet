@@ -169,11 +169,13 @@ class LinkToCallable(Link):
 
 def waitall(lst, trap_errors=False):
     queue = coros.queue()
-    results = [None] * len(lst)
+    index = -1
     for (index, linkable) in enumerate(lst):
         linkable.link(decorate_send(queue, index))
+    len = index + 1
+    results = [None] * len
     count = 0
-    while count < len(lst):
+    while count < len:
         try:
             index, value = queue.wait()
         except Exception:
