@@ -168,8 +168,9 @@ class LinkToCallable(Link):
         self.listener(source)
 
 
-def waitall(lst, trap_errors=False):
-    queue = coros.queue()
+def waitall(lst, trap_errors=False, queue=None):
+    if queue is None:
+        queue = coros.queue()
     index = -1
     for (index, linkable) in enumerate(lst):
         linkable.link(decorate_send(queue, index))
