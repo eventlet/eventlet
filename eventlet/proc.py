@@ -662,8 +662,14 @@ class RunningProcSet(object):
     """Maintain a set of Procs that are still running, that is, automatically remove
     a proc when it's finished. Provide a way to wait/kill all of them"""
 
-    def __init__(self):
-        self.procs = set()
+    def __init__(self, *args):
+        self.procs = set(*args)
+        if args:
+            for p in self.args[0]:
+                p.link(lambda p: self.procs.discard(p))
+
+    def __iter__(self):
+        return iter(self.procs)
 
     def add(self, p):
         self.procs.add(p)
