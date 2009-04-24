@@ -652,7 +652,7 @@ class wrap_errors(object):
         return str(self.func)
 
     def __repr__(self):
-        return str(self.func)
+        return repr(self.func)
 
     def __getattr__(self, item):
         return getattr(self.func, item)
