@@ -82,6 +82,7 @@ __all__ = ['LinkedExited',
            'LinkedKilled',
            'ProcExit',
            'waitall',
+           'killall'
            'Source',
            'Proc',
            'spawn',
@@ -203,6 +204,19 @@ class decorate_send(object):
 
     def send(self, value):
         self._event.send((self._tag, value))
+
+
+def killall(procs, *throw_args, **kwargs):
+    if not throw_args:
+        throw_args = (ProcExit, )
+    wait = kwargs.pop('wait', False)
+    if kwargs:
+        raise TypeError('Invalid keyword argument for proc.killall(): %s' % ', '.join(kwargs.keys()))
+    for g in procs:
+        if not g.dead:
+            api.get_hub().schedule_call_global(0, g.throw, *throw_args)
+    if wait and api.getcurrent() is not api.get_hub().greenlet:
+        api.sleep(0)
 
 
 class NotUsed(object):
@@ -684,14 +698,8 @@ class RunningProcSet(object):
         while self.procs:
             waitall(self.procs, trap_errors=trap_errors)
 
-    def killall(self, *throw_args):
-        if not throw_args:
-            throw_args = (ProcExit, )
-        for g in self.procs:
-            if not g.dead:
-                api.get_hub().schedule_call_global(0, g.throw, *throw_args)
-        if api.getcurrent() is not api.get_hub().greenlet:
-            api.sleep(0)
+    def killall(self, *throw_args, **kwargs):
+        return killall(self.procs, *throw_args, **kwargs)
 
 
 class Pool(object):
