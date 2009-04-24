@@ -20,6 +20,7 @@
 # THE SOFTWARE.
 
 """Basic twisted protocols converted to synchronous mode"""
+import sys
 from twisted.internet.protocol import Protocol as twistedProtocol
 from twisted.internet.error import ConnectionDone
 from twisted.internet.protocol import Factory, ClientFactory
@@ -384,7 +385,12 @@ class SimpleSpawnFactory(Factory):
     gtransport_class = GreenTransport
 
     def __init__(self, handler, gtransport_class=None, *args, **kwargs):
-        self.handler = handler
+        if callable(handler):
+            self.handler = handler
+        else:
+            self.handler = handler.send
+        if hasattr(handler, 'send_exception'):
+            self.exc_handler = handler.send_exception
         if gtransport_class is not None:
             self.gtransport_class = gtransport_class
         self.args = args
@@ -401,8 +407,12 @@ class SimpleSpawnFactory(Factory):
         proc.spawn_greenlet(self._run_handler, gtransport, protocol)
 
     def _run_handler(self, gtransport, protocol):
-        gtransport._init_transport()
-        self.handler(gtransport)
+        try:
+            gtransport._init_transport()
+        except Exception:
+            self.exc_handler(*sys.exc_info())
+        else:
+            self.handler(gtransport)
 
 
 class SpawnFactory(SimpleSpawnFactory):
