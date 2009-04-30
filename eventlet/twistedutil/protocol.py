@@ -74,7 +74,6 @@ class Event(event):
             self.reset()
         return event.send_exception(self, *throw_args)
 
-
 class Producer2Event(object):
 
     # implements IPullProducer
@@ -115,7 +114,7 @@ class GreenTransportBase(object):
         self._write_event.send_exception(reason.value)
 
     def _wait(self):
-        if self._disconnected_event.ready():
+        if self.disconnecting or self._disconnected_event.ready():
             if self._queue:
                 return self._queue.wait()
             else:
