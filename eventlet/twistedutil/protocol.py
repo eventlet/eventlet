@@ -96,7 +96,7 @@ class GreenTransportBase(object):
     def __init__(self, transportBufferSize=None):
         if transportBufferSize is not None:
             self.transportBufferSize = transportBufferSize
-        self._queue = queue()
+        self._queue = ValueQueue()
         self._write_event = Event()
         self._disconnected_event = Event()
 
