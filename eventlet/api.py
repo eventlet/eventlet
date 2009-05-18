@@ -431,7 +431,7 @@ def exc_after(seconds, *throw_args):
                 timer.cancel()
     """
     hub = get_hub()
-    return call_after(seconds, hub.exc_greenlet, getcurrent(), *throw_args)
+    return call_after(seconds, getcurrent().throw, *throw_args)
 
 
 def get_default_hub():

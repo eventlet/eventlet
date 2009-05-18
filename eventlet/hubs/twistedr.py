@@ -106,7 +106,6 @@ class BaseTwistedHub(object):
 
     def __init__(self, mainloop_greenlet):
         self.greenlet = mainloop_greenlet
-        self.waiters_by_greenlet = {}
 
     def switch(self):
         assert api.getcurrent() is not self.greenlet, "Cannot switch from MAINLOOP to MAINLOOP"
@@ -128,20 +127,12 @@ class BaseTwistedHub(object):
         if write:
             reactor.addWriter(descriptor)
         # XXX exc will not work if no read nor write
-        self.waiters_by_greenlet[api.getcurrent()] = descriptor
         return descriptor
 
     def remove_descriptor(self, descriptor):
         from twisted.internet import reactor
         reactor.removeReader(descriptor)
         reactor.removeWriter(descriptor)
-        self.waiters_by_greenlet.pop(api.getcurrent(), None)
-
-    def exc_greenlet(self, gr, *throw_args):
-        fileno = self.waiters_by_greenlet.pop(gr, None)
-        if fileno is not None:
-            self.remove_descriptor(fileno)
-        gr.throw(*throw_args)
 
     # required by GreenSocket
     def exc_descriptor(self, _fileno):

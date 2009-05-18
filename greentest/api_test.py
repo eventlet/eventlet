@@ -186,6 +186,36 @@ class TestApi(tests.TestCase):
         self.assertRaises(
             ImportError, api.named, 'this_name_should_hopefully_not_exist.Foo')
 
+    def test_timeout_and_final_write(self):
+        # This test verifies that a write on a socket that we've
+        # stopped listening for doesn't result in an incorrect switch
+        from eventlet import greenio
+        rpipe, wpipe = os.pipe()
+        rfile = os.fdopen(rpipe,"r",0)
+        wrap_rfile = greenio.GreenPipe(rfile)
+        wfile = os.fdopen(wpipe,"w",0)
+        wrap_wfile = greenio.GreenPipe(wfile)
+
+        def sender(evt):
+            api.sleep(0.02)
+            wrap_wfile.write('hi')
+            evt.send('sent via event')
+
+        from eventlet import coros
+        evt = coros.event()
+        api.spawn(sender, evt)
+        try:
+            # try and get some data off of this pipe
+            # but bail before any is sent
+            api.exc_after(0.01, api.TimeoutError)
+            _c = wrap_rfile.read(1)
+            self.fail()
+        except api.TimeoutError:
+            pass
+
+        result = evt.wait()
+        self.assertEquals(result, 'sent via event')
+
 
 class Foo(object):
     pass

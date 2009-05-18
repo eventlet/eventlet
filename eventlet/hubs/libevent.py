@@ -72,7 +72,6 @@ class Hub(hub.BaseHub):
         if exc:
             self.excs[fileno] = exc
 
-        self.waiters_by_greenlet[greenlet.getcurrent()] = fileno
         return fileno
 
     def remove_descriptor(self, fileno):
@@ -81,7 +80,6 @@ class Hub(hub.BaseHub):
             if tpl is not None:
                 tpl[0].delete()
         self.excs.pop(fileno, None)
-        self.waiters_by_greenlet.pop(greenlet.getcurrent(), None)
 
     def abort(self):
         super(Hub, self).abort()
