@@ -116,45 +116,46 @@ for i in range(numtasks):
 done.acquire()
 print 'all tasks done'
 
-# not all platforms support changing thread stack size
-print '\n*** Changing thread stack size ***'
-if thread.stack_size() != 0:
-    raise ValueError, "initial stack_size not 0"
+if hasattr(thread, 'stack_size'):
+    # not all platforms support changing thread stack size
+    print '\n*** Changing thread stack size ***'
+    if thread.stack_size() != 0:
+        raise ValueError, "initial stack_size not 0"
 
-thread.stack_size(0)
-if thread.stack_size() != 0:
-    raise ValueError, "stack_size not reset to default"
+    thread.stack_size(0)
+    if thread.stack_size() != 0:
+        raise ValueError, "stack_size not reset to default"
 
-from os import name as os_name
-if os_name in ("nt", "os2", "posix"):
+    from os import name as os_name
+    if os_name in ("nt", "os2", "posix"):
 
-    tss_supported = 1
-    try:
-        thread.stack_size(4096)
-    except ValueError:
-        print 'caught expected ValueError setting stack_size(4096)'
-    except thread.error:
-        tss_supported = 0
-        print 'platform does not support changing thread stack size'
+        tss_supported = 1
+        try:
+            thread.stack_size(4096)
+        except ValueError:
+            print 'caught expected ValueError setting stack_size(4096)'
+        except thread.error:
+            tss_supported = 0
+            print 'platform does not support changing thread stack size'
 
-    if tss_supported:
-        failed = lambda s, e: s != e
-        fail_msg = "stack_size(%d) failed - should succeed"
-        for tss in (262144, 0x100000, 0):
-            thread.stack_size(tss)
-            if failed(thread.stack_size(), tss):
-                raise ValueError, fail_msg % tss
-            print 'successfully set stack_size(%d)' % tss
+        if tss_supported:
+            failed = lambda s, e: s != e
+            fail_msg = "stack_size(%d) failed - should succeed"
+            for tss in (262144, 0x100000, 0):
+                thread.stack_size(tss)
+                if failed(thread.stack_size(), tss):
+                    raise ValueError, fail_msg % tss
+                print 'successfully set stack_size(%d)' % tss
 
-        for tss in (262144, 0x100000):
-            print 'trying stack_size = %d' % tss
-            next_ident = 0
-            for i in range(numtasks):
-                newtask()
+            for tss in (262144, 0x100000):
+                print 'trying stack_size = %d' % tss
+                next_ident = 0
+                for i in range(numtasks):
+                    newtask()
 
-            print 'waiting for all tasks to complete'
-            done.acquire()
-            print 'all tasks done'
+                print 'waiting for all tasks to complete'
+                done.acquire()
+                print 'all tasks done'
 
-        # reset stack size to default
-        thread.stack_size(0)
+            # reset stack size to default
+            thread.stack_size(0)
