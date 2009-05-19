@@ -890,20 +890,21 @@ class TCPTimeoutTest(SocketTCPTest):
             raise Alarm
         old_alarm = signal.signal(signal.SIGALRM, alarm_handler)
         try:
-            signal.alarm(2)    # POSIX allows alarm to be up to 1 second early
             try:
-                foo = self.serv.accept()
-            except socket.timeout:
-                self.fail("caught timeout instead of Alarm")
+                signal.alarm(2)    # POSIX allows alarm to be up to 1 second early
+                try:
+                    foo = self.serv.accept()
+                except socket.timeout:
+                    self.fail("caught timeout instead of Alarm")
+                except Alarm:
+                    pass
+                except:
+                    self.fail("caught other exception instead of Alarm")
+                else:
+                    self.fail("nothing caught")
+                signal.alarm(0)         # shut off alarm
             except Alarm:
-                pass
-            except:
-                self.fail("caught other exception instead of Alarm")
-            else:
-                self.fail("nothing caught")
-            signal.alarm(0)         # shut off alarm
-        except Alarm:
-            self.fail("got Alarm in wrong place")
+                self.fail("got Alarm in wrong place")
         finally:
             # no alarm can be pending.  Safe to restore old handler.
             signal.signal(signal.SIGALRM, old_alarm)
