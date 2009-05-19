@@ -21,6 +21,7 @@
 # THE SOFTWARE.
 
 import sys
+import os
 import traceback
 import sqlite3
 import re
@@ -119,7 +120,7 @@ def main(db):
 
 if __name__=='__main__':
     if not sys.argv[1:]:
-        latest_db = sorted(glob.glob('results.*.db'))[-1]
+        latest_db = sorted(glob.glob('results.*.db'), key=lambda f: os.stat(f).st_mtime)[-1]
         print latest_db
         sys.argv.append(latest_db)
     for db in sys.argv[1:]:
