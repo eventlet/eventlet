@@ -1,7 +1,4 @@
-from __future__ import absolute_import
-from time import *
+__time = __import__('time')
+for var in dir(__time):
+    exec "%s = __time.%s" % (var, var)
 from eventlet.api import sleep
-
-def _install():
-    import time
-    time.sleep = sleep

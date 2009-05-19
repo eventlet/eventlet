@@ -1,16 +1,19 @@
-from __future__ import absolute_import
-import urllib
-from urllib import *
+urllib = __import__('urllib')
+for var in dir(urllib):
+    exec "%s = urllib.%s" % (var, var)
 
 # import the following to be a better drop-in replacement
-from urllib import (__all__, __version__, MAXFTPCACHE, ContentTooShortError,
-                    ftpcache, _noheaders, noheaders, addbase, addclosehook,
-                    addinfo, addinfourl, _is_unicode, toBytes, _hextochr,
-                    always_safe, getproxies_environment, proxy_bypass)
+__import_lst = ['__all__', '__version__', 'MAXFTPCACHE', 'ContentTooShortError',
+                'ftpcache', '_noheaders', 'noheaders', 'addbase', 'addclosehook',
+                'addinfo', 'addinfourl', '_is_unicode', 'toBytes', '_hextochr',
+                'always_safe', 'getproxies_environment', 'proxy_bypass']
+
+for var in __import_lst:
+    exec "%s = urllib.%s" % (var, var)
 
 from eventlet.green import socket
 import os
-import time
+from eventlet.green import time
 import sys
 from urlparse import urljoin as basejoin
 

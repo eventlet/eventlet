@@ -1,10 +1,12 @@
-from __future__ import absolute_import
 import sys
 from eventlet.green import socket
 from eventlet.green import SocketServer
 
-from BaseHTTPServer import (DEFAULT_ERROR_MESSAGE, _quote_html, __version__, __all__,
-                            BaseHTTPRequestHandler as __BaseHTTPRequestHandler)
+__import_lst = ['DEFAULT_ERROR_MESSAGE', '_quote_html', '__version__', '__all__', 'BaseHTTPRequestHandler']
+__BaseHTTPServer = __import__('BaseHTTPServer')
+for var in __import_lst:
+    exec "%s = __BaseHTTPServer.%s" % (var, var)
+
 
 class HTTPServer(SocketServer.TCPServer):
 
@@ -18,7 +20,7 @@ class HTTPServer(SocketServer.TCPServer):
         self.server_port = port
 
 
-class BaseHTTPRequestHandler(__BaseHTTPRequestHandler):
+class BaseHTTPRequestHandler(BaseHTTPRequestHandler):
 
    def address_string(self):
         host, port = self.client_address[:2]

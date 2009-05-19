@@ -1,11 +1,12 @@
-from __future__ import absolute_import
+urllib2 = __import__('urllib2')
+for var in dir(urllib2):
+    exec "%s = urllib2.%s" % (var, var)
 
-# XXX blocking builtin open() is used in randombytes()
-# AbstractHTTPHandler uses socket.error and socket._fileobject but that's OK
-# as long as evenlet.green.socket imports them, does not reimplement them
-import urllib2
-from urllib2 import *
-from urllib2 import __version__, _cut_port_re, _parse_proxy
+# import the following to be a better drop-in replacement
+__import_lst = ['__version__', '__cut_port_re', '_parse_proxy']
+
+for var in __import_lst:
+    exec "%s = getattr(urllib2, %r, None)" % (var, var)
 
 del (urlopen, install_opener, build_opener, HTTPHandler, HTTPSHandler,
      HTTPCookieProcessor, FileHandler, FTPHandler, CacheFTPHandler, GopherError)

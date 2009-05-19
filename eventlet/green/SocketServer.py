@@ -1,13 +1,15 @@
-from __future__ import absolute_import
-from SocketServer import (__all__, __version__, BaseServer, TCPServer as __TCPServer,
-                          UDPServer as __UDPServer, ForkingMixIn, ThreadingMixIn as __ThreadingMixIn,
-                          BaseRequestHandler, StreamRequestHandler, DatagramRequestHandler)
+__import_lst = ['__all__', '__version__', 'BaseServer', 'TCPServer', 'UDPServer', 'ForkingMixIn',
+                'ThreadingMixIn', 'BaseRequestHandler', 'StreamRequestHandler', 'DatagramRequestHandler']
+__SocketServer = __import__('SocketServer')
+for var in __import_lst:
+    exec "%s = __SocketServer.%s" % (var, var)
+
 
 # QQQ ForkingMixIn should be fixed to use green waitpid?
 
 from eventlet.green import socket
 
-class TCPServer(__TCPServer):
+class TCPServer(TCPServer):
 
     def __init__(self, server_address, RequestHandlerClass):
         """Constructor.  May be extended, do not override."""
@@ -17,7 +19,7 @@ class TCPServer(__TCPServer):
         self.server_bind()
         self.server_activate()
 
-class UDPServer(__UDPServer):
+class UDPServer(UDPServer):
 
     def __init__(self, server_address, RequestHandlerClass):
         """Constructor.  May be extended, do not override."""
@@ -27,7 +29,7 @@ class UDPServer(__UDPServer):
         self.server_bind()
         self.server_activate()
 
-class ThreadingMixIn(__ThreadingMixIn):
+class ThreadingMixIn(ThreadingMixIn):
 
     def process_request(self, request, client_address):
         """Start a new thread to process the request."""

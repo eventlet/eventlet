@@ -9,7 +9,7 @@ from collections import deque
 # Rename some stuff so "from threading import *" is safe
 __all__ = ['activeCount', 'Condition', 'currentThread', 'enumerate', 'Event',
            'Lock', 'RLock', 'Semaphore', 'BoundedSemaphore', 'Thread',
-           'Timer', 'setprofile', 'settrace', 'local', 'stack_size']
+           'Timer', 'setprofile', 'settrace', 'local']
 
 _start_new_thread = thread.start_new_thread
 _allocate_lock = thread.allocate_lock
@@ -743,7 +743,11 @@ def enumerate():
     _active_limbo_lock.release()
     return active
 
-from thread import stack_size
+try:
+    from thread import stack_size
+    __all__.append('stack_size')
+except ImportError:
+    pass
 
 # Create the main thread object,
 # and make it available for the interpreter
