@@ -25,7 +25,7 @@ import os
 import sqlite3
 import glob
 
-REPO_URL = 'http://devel.ag-projects.com/~denis/cgi-bin/hgweb.cgi'
+REPO_URL = 'http://bitbucket.org/denis/eventlet'
 
 hubs_order = ['poll', 'selects', 'libevent', 'libev', 'twistedr/selectreactor', 'twistedr/pollreactor', 'twistedr/epollreactor']
 
@@ -152,7 +152,7 @@ class TestResult:
         return '<td align=center valign=%s bgcolor=%s>%s</td>' % (valign, self.color(), text)
 
 def format_testname(changeset, test):
-    return '<a href="%s/file/%s/greentest/%s">%s</a>' % (REPO_URL, changeset, test, test)
+    return '<a href="%s/src/%s/greentest/%s">%s</a>' % (REPO_URL, changeset, test, test)
 
 def format_table(table, hubs, tests, hub_stats, changeset):
     r = '<table border=1>\n<tr>\n<td/>\n'
@@ -184,13 +184,19 @@ def format_table(table, hubs, tests, hub_stats, changeset):
     r += '</table>'
     return r
 
-def format_header(rev, changeset):
-    url = '%s/log/%s' % (REPO_URL, changeset)
-    return '<a href="%s">Eventlet changeset %s: %s</a><p>' % (url, rev, changeset)
+def format_header(rev, changeset, pyversion):
+    result = '<table width=99%%><tr><td>'
+    if REPO_URL is None:
+        result += 'Eventlet changeset %s: %s' % (rev, changeset)
+    else:
+        url = '%s/changeset/%s' % (REPO_URL, changeset)
+        result += '<a href="%s">Eventlet changeset %s: %s</a>' % (url, rev, changeset)
+    result += '</td><tr><tr><td>Python version: %s</td><tr></table><p>' % pyversion
+    return result
 
-def format_html(table, rev, changeset):
+def format_html(table, rev, changeset, pyversion):
     r = '<html><head><style type="text/css">a.x {color: black; text-decoration: none;} </style></head><body>'
-    r += format_header(rev, changeset)
+    r += format_header(rev, changeset, pyversion)
     r += table
     r += '</body></html>'
     return r
@@ -204,11 +210,11 @@ def generate_raw_results(path, database):
     sys.stderr.write('\n')
 
 def main(db):
-    full_changeset = db.split('.')[1]
-    rev, changeset = full_changeset.split('_', 1)
+    full_changeset = '.'.join(db.split('.')[1:-1])
+    rev, changeset, pyversion = full_changeset.split('_')
     table, tests = make_table(db)
     hub_stats, hubs = calc_hub_stats(table)
-    report = format_html(format_table(table, hubs, tests, hub_stats, changeset), rev, changeset)
+    report = format_html(format_table(table, hubs, tests, hub_stats, changeset), rev, changeset, pyversion)
     path = '../htmlreports/%s' % full_changeset
     try:
         os.makedirs(path)
