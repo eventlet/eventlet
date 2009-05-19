@@ -46,8 +46,8 @@ class Site(object):
 
     def __call__(self, env, start_response):
         return getattr(self, 'handle_%s' % env['REQUEST_METHOD'].lower())(env, start_response)
- 
- 
+
+
 def _get_query_pairs(env):
     parsed = cgi.parse_qs(env['QUERY_STRING'])
     for key, values in parsed.items():
@@ -87,14 +87,14 @@ class BasicSite(Site):
         if not path:
             start_response("400 Bad Request", headers)
             return [""]
-        
+
         if path in self.stuff:
             start_response("204 No Content", headers)
         else:
             start_response("201 Created", headers)
         self.stuff[path] = env['wsgi.input'].read(int(env.get('CONTENT_LENGTH', '0')))
         return [""]
-        
+
     def handle_delete(self, env, start_response):
         headers = [('x-delete', 'hello'), ('Content-type', 'text/plain')]
         path = env['PATH_INFO'].lstrip('/')
@@ -221,8 +221,8 @@ class TestHttpc(TestBase, tests.TestCase):
         self.assertRaises(
             httpc.NotFound,
             lambda: httpc.delete(self.base_url() + 'b0gu5'))
-        
-        
+
+
 class RedirectSite(BasicSite):
     response_code = "301 Moved Permanently"
 
@@ -278,7 +278,7 @@ class TestHttpc301(TestBase, tests.TestCase):
             response = err.retry()
         self.assertEquals(response, 'hello world')
         self.assertEquals(httpc.get(self.base_url() + 'hello', max_retries=1), 'hello world')
-    
+
     def test_post(self):
         data = 'qunge'
         try:
@@ -371,7 +371,7 @@ class Site504(BasicSite):
         start_response("504 Gateway Timeout", [("Content-type", "text/plain")])
         return ["screw you world"]
 
-            
+
 class TestHttpc504(TestBase, tests.TestCase):
     site_class = Site504
 
@@ -393,11 +393,12 @@ class TestHttpTime(tests.TestCase):
     secs_since_epoch = 784111777
     def test_to_http_time(self):
         self.assertEqual(self.rfc1123_time, httpc.to_http_time(self.secs_since_epoch))
-    
+
     def test_from_http_time(self):
         for formatted in (self.rfc1123_time, self.rfc850_time, self.asctime_time):
             ticks = httpc.from_http_time(formatted, 0)
             self.assertEqual(ticks, self.secs_since_epoch)
+
 
 if __name__ == '__main__':
     tests.main()
