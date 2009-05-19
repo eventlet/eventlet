@@ -449,7 +449,7 @@ def execute(func, *args, **kw):
 
 
 def CoroutinePool(*args, **kwargs):
-    from pools import CoroutinePool
+    from eventlet.pools import CoroutinePool
     return CoroutinePool(*args, **kwargs)
 
 
