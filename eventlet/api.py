@@ -28,10 +28,9 @@ import socket
 import string
 import linecache
 import inspect
-import traceback
+import threading
 
 from eventlet.support import greenlets as greenlet
-from eventlet import tls
 
 __all__ = [
     'call_after', 'exc_after', 'getcurrent', 'get_default_hub', 'get_hub',
@@ -51,7 +50,7 @@ class TimeoutError(Exception):
     """Exception raised if an asynchronous operation times out"""
     pass
 
-_threadlocal = tls.local()
+_threadlocal = threading.local()
 
 def tcp_listener(address, backlog=50):
     """
