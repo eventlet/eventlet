@@ -17,19 +17,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import os, threading
-import Queue
+import os
+import threading
 
-from sys import stdout
 from Queue import Empty, Queue
 
 from eventlet import api, coros, greenio
-from eventlet.api import trampoline, get_hub
-
-try:
-    set
-except NameError:  # python 2.3 compatibility
-    from sets import Set as set
 
 QUIET=False
 
@@ -56,6 +49,7 @@ def tpool_trampoline():
             try:
                 (e,rv) = _rspq.get(block=False)
                 e.send(rv)
+                rv = None
             except Empty:
                 pass
 
@@ -64,6 +58,9 @@ def esend(meth,*args, **kwargs):
     e = coros.event()
     _reqq.put((e,meth,args,kwargs))
     return e
+
+SYS_EXCS = (KeyboardInterrupt, SystemExit)
+
 
 def tworker():
     global _reqq, _rspq
@@ -75,11 +72,14 @@ def tworker():
         rv = None
         try:
             rv = meth(*args,**kwargs)
+        except SYS_EXCS:
+            raise
         except Exception,exn:
             import sys, traceback
             (a,b,tb) = sys.exc_info()
             rv = (exn,a,b,tb)
         _rspq.put((e,rv))
+        meth = args = kwargs = e = rv = None
         _signal_t2e()
 
 
@@ -118,7 +118,7 @@ def proxy_call(autowrap, f, *args, **kwargs):
         rv = f(*args, **kwargs)
     else:
         rv = execute(f,*args,**kwargs)
-    if type(rv) in autowrap:
+    if isinstance(rv, autowrap):
         return Proxy(rv, autowrap)
     else:
         return rv
@@ -131,8 +131,6 @@ class Proxy(object):
     code only. """
     def __init__(self, obj,autowrap=()):
         self._obj = obj
-        if isinstance(autowrap, (list, tuple)):
-            autowrap = set(autowrap)
         self._autowrap = autowrap
 
     def __getattr__(self,attr_name):
@@ -147,7 +145,7 @@ class Proxy(object):
     # doesn't use getattr to retrieve and therefore have to be defined
     # explicitly
     def __getitem__(self, key):
-        return proxy_call(self._autowrap, self._obj.__getitem__, key)        
+        return proxy_call(self._autowrap, self._obj.__getitem__, key)
     def __setitem__(self, key, value):
         return proxy_call(self._autowrap, self._obj.__setitem__, key, value)
     def __deepcopy__(self, memo=None):
@@ -167,7 +165,7 @@ class Proxy(object):
         return len(self._obj)
     def __nonzero__(self):
         return bool(self._obj)
-    
+
 
 
 _nthreads = int(os.environ.get('EVENTLET_THREADPOOL_SIZE', 20))
