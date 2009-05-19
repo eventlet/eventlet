@@ -326,7 +326,7 @@ class Source(object):
             if isinstance(self._exc[0], type):
                 return self._exc[0], None, None
             else:
-                return type(self._exc[0]), self._exc[0], None
+                return self._exc[0].__class__, self._exc[0], None
         elif len(self._exc)==2:
             return self._exc[0], self._exc[1], None
         else:
