@@ -12,6 +12,7 @@ import errno
 from eventlet.green import select
 from eventlet.green import time
 from eventlet.green import threading
+import sys
 import os
 import unittest
 
@@ -86,9 +87,10 @@ class ServerThread(threading.Thread):
         addr = svr.server_address
         if addr:
             self.__addr = addr
-            if self.__addr != svr.socket.getsockname():
-                raise RuntimeError('server_address was %s, expected %s' %
-                                       (self.__addr, svr.socket.getsockname()))
+            if sys.version_info[:2] >= (2, 5):
+                if self.__addr != svr.socket.getsockname():
+                    raise RuntimeError('server_address was %s, expected %s' %
+                                           (self.__addr, svr.socket.getsockname()))
         if verbose: print "thread: serving three times"
         svr.serve_a_few()
         if verbose: print "thread: done"
