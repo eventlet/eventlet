@@ -27,8 +27,7 @@ import glob
 
 REPO_URL = 'http://devel.ag-projects.com/~denis/cgi-bin/hgweb.cgi'
 
-hubs_order = ['selecthub', 'poll', 'selects', 'libev', 'twistedr/selectreactor',
-              'twistedr/pollreactor', 'twistedr/epollreactor']
+hubs_order = ['poll', 'selects', 'libevent', 'libev', 'twistedr/selectreactor', 'twistedr/pollreactor', 'twistedr/epollreactor']
 
 def make_table(database):
     c = sqlite3.connect(database)
