@@ -30,7 +30,7 @@ from copy import copy
 from time import time
 from with_eventlet import import_reactor
 
-first_hubs = ['selecthub', 'poll', 'selects', 'twistedr']
+first_hubs = ['poll', 'selects', 'twistedr']
 first_reactors = ['selectreactor', 'pollreactor', 'epollreactor']
 
 COMMAND = sys.executable + ' ./record_results.py ' + sys.executable + ' ./with_timeout.py ./with_eventlet.py %(setup)s %(test)s'
