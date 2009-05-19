@@ -10,7 +10,6 @@ class local(object):
         self.__dict__['__objs'] = {}
 
     def __getattr__(self, attr, g=get_ident):
-        print "getattr", self, attr, g
         try:
             return self.__dict__['__objs'][g()][attr]
         except KeyError:
