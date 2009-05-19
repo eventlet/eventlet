@@ -3,17 +3,17 @@
 # @brief Test cases for saranwrap.
 #
 # Copyright (c) 2007, Linden Research, Inc.
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from eventlet import saranwrap, coros
+from eventlet import api, saranwrap, coros
 
 import os
 import sys
@@ -39,12 +39,26 @@ one = 1
 two = 2
 three = 3
 
+class CoroutineCallingClass(object):
+    def __init__(self):
+        self._my_dict = {}
+
+    def run_coroutine(self):
+        api.spawn(self._add_random_key)
+
+    def _add_random_key(self):
+        self._my_dict['random'] = 'yes, random'
+
+    def get_dict(self):
+        return self._my_dict
+
+
 class TestSaranwrap(unittest.TestCase):
     def assert_server_exists(self, prox):
         self.assert_(saranwrap.status(prox))
         prox.foo = 0
         self.assertEqual(0, prox.foo)
-        
+
     def test_wrap_tuple(self):
         my_tuple = (1, 2)
         prox = saranwrap.wrap(my_tuple)
@@ -195,7 +209,7 @@ class TestSaranwrap(unittest.TestCase):
         self.assertEqual(status['next_id'], 3)
         prox2 = saranwrap.wrap(uuid)
         self.assert_(status['pid'] != saranwrap.status(prox2)['pid'])
-    
+
     def test_del(self):
         prox = saranwrap.wrap(time)
         delme = prox.gmtime(0)
@@ -208,6 +222,11 @@ class TestSaranwrap(unittest.TestCase):
         status_after = saranwrap.status(prox)
         #print status_after['objects']
         self.assertLessThan(status_after['object_count'], status_before['object_count'])
+
+    def test_contains(self):
+        prox = saranwrap.wrap({'a':'b'})
+        self.assert_('a' in prox)
+        self.assert_('x' not in prox)
 
     def test_variable_and_keyword_arguments_with_function_calls(self):
         import optparse
@@ -268,11 +287,11 @@ sys_path = sys.path""")
             import shutil
             shutil.rmtree(temp_dir)
             sys.path.remove(temp_dir)
-                        
+
     def test_contention(self):
         from greentest import saranwrap_test
         prox = saranwrap.wrap(saranwrap_test)
-                
+
         pool = coros.CoroutinePool(max_size=4)
         waiters = []
         waiters.append(pool.execute(lambda: self.assertEquals(prox.one, 1)))
@@ -299,7 +318,25 @@ sys_path = sys.path""")
         from greentest import saranwrap_test
         prox = saranwrap.wrap([saranwrap_test.list_maker])
         self.assertEquals(list_maker(), prox[0]())
-                              
+
+    def test_under_the_hood_coroutines(self):
+        # so, we want to write a class which uses a coroutine to call
+        # a function.  Then we want to saranwrap that class, have
+        # the object call the coroutine and verify that it ran
+
+        from greentest import saranwrap_test
+        mod_proxy = saranwrap.wrap(saranwrap_test)
+        obj_proxy = mod_proxy.CoroutineCallingClass()
+        obj_proxy.run_coroutine()
+
+        # sleep for a bit to make sure out coroutine ran by the time
+        # we check the assert below
+        api.sleep(0.1)
+
+        self.assert_(
+            'random' in obj_proxy.get_dict(),
+            'Coroutine in saranwrapped object did not run')
+
     def test_detection_of_server_crash(self):
         # make the server crash here
         pass
