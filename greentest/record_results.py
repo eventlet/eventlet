@@ -57,7 +57,7 @@ def main():
         del argv[0]
     else:
         debug = False
-    changeset = os.popen(COMMAND_CHANGESET).read().replace('changeset:', '').strip().replace(':', '_')
+    changeset = os.popen(COMMAND_CHANGESET).readlines()[0].replace('changeset:', '').strip().replace(':', '_')
     output_name = os.tmpnam()
     arg = ' '.join(argv) + ' &> %s' % output_name
     print arg
