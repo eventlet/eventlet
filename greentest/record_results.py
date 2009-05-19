@@ -35,10 +35,12 @@ from greentest import disabled_marker
 
 warnings.simplefilter('ignore')
 
+PYTHON_VERSION = '%s.%s.%s' % sys.version_info[:3]
+
 COMMAND_CHANGESET = r"hg log -r tip | grep changeset"
 
 def record(changeset, argv, stdout, returncode):
-    c = sqlite3.connect('results.%s.db' % changeset)
+    c = sqlite3.connect('results.%s_%s.db' % (changeset, PYTHON_VERSION))
     c.execute('''create table if not exists command_record
               (id integer primary key autoincrement,
                command text,
