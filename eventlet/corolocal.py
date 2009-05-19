@@ -1,4 +1,4 @@
-
+from eventlet import api
 
 def get_ident():
     return id(api.getcurrent())
