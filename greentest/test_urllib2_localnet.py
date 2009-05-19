@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from greentest import exit_unless_25; exit_unless_25()
+
 import sys
 import urlparse
 import unittest
