@@ -99,7 +99,7 @@ class LinkedExited(Exception):
         self.name = name
         if msg is None:
             msg = self.msg % self.name
-        api.GreenletExit.__init__(self, msg)
+        Exception.__init__(self, msg)
 
 class LinkedFailed(LinkedExited):
     """Raised when a linked proc dies because of unhandled exception"""
