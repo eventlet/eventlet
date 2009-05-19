@@ -75,7 +75,7 @@ class TestEvent(tests.TestCase):
 #         def cancel_event():
 #             evt.cancel(current)
 #         api.spawn(cancel_event)
-# 
+#
 #         self.assertRaises(coros.Cancelled, evt.wait)
 
     def test_reset(self):
@@ -83,7 +83,7 @@ class TestEvent(tests.TestCase):
 
         # calling reset before send should throw
         self.assertRaises(AssertionError, evt.reset)
-        
+
         value = 'some stuff'
         def send_to_event():
             evt.send(value)
@@ -168,7 +168,7 @@ class TestCoroutinePool(tests.TestCase):
 #         t = worker.wait()
 #         api.sleep(0)
 #         self.assertEquals(t.cancelled, True)
-        
+
     def test_reentrant(self):
         pool = coros.CoroutinePool(0,1)
         def reenter():
@@ -182,10 +182,10 @@ class TestCoroutinePool(tests.TestCase):
         def reenter_async():
             pool.execute_async(lambda a: a, 'reenter')
             evt.send('done')
-        
+
         pool.execute_async(reenter_async)
         evt.wait()
-        
+
     def test_horrible_main_loop_death(self):
         # testing the case that causes the run_forever
         # method to exit unwantedly
@@ -194,8 +194,8 @@ class TestCoroutinePool(tests.TestCase):
             raise RuntimeError("Whoa")
         class FakeFile(object):
             write = crash
-        
-        # we're going to do this by causing the traceback.print_exc in 
+
+        # we're going to do this by causing the traceback.print_exc in
         # safe_apply to raise an exception and thus exit _main_loop
         normal_err = sys.stderr
         try:
@@ -307,7 +307,7 @@ class TestActor(tests.TestCase):
                 raise RuntimeError()
             else:
                 msgs.append(message)
-                
+
         self.actor.received = received
 
         evt = coros.event()
@@ -326,16 +326,16 @@ class TestActor(tests.TestCase):
             total[0] += value
             ev.send()
         self.actor.received = received
-        
+
         def onemoment():
             api.sleep(0.1)
-            
+
         evt = coros.event()
         evt1 = coros.event()
-        
+
         self.actor.cast( (onemoment, evt, 1) )
         self.actor.cast( (lambda: None, evt1, 2) )
-        
+
         evt1.wait()
         self.assertEqual(total[0], 2)
         # both coroutines should have been used
