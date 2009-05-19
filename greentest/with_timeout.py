@@ -22,7 +22,7 @@
 
 """
 Run Python script in a child process. Kill it after timeout has elapsed.
-If the script was running unittest test cases, the timeouted test cases is
+If the script was running unittest test cases, the timeouted test case is
 disabled and the script is restarted.
 
 Usage: %prog [-t TIMEOUT] program.py [args]
