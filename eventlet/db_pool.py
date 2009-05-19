@@ -194,10 +194,17 @@ class BaseConnectionPool(Pool):
         *now* is the current time, as returned by time.time().
         """
         original_count = len(self.free_items)
+        expired = [
+            conn
+            for last_used, created_at, conn in self.free_items
+            if self._is_expired(now, last_used, created_at)]
+        for conn in expired:
+            self._safe_close(conn, quiet=True)
+
         new_free = [
             (last_used, created_at, conn)
             for last_used, created_at, conn in self.free_items
-            if not self._is_expired(now, last_used, created_at, conn)]
+            if not self._is_expired(now, last_used, created_at)]
         self.free_items.clear()
         self.free_items.extend(new_free)
         
@@ -205,13 +212,12 @@ class BaseConnectionPool(Pool):
         # connections
         self.current_size -= original_count - len(self.free_items)
 
-    def _is_expired(self, now, last_used, created_at, conn):
+    def _is_expired(self, now, last_used, created_at):
         """ Returns true and closes the connection if it's expired."""
         if ( self.max_idle <= 0
              or self.max_age <= 0
              or now - last_used > self.max_idle
              or now - created_at > self.max_age ):
-            self._safe_close(conn, quiet=True)
             return True
         return False
         
@@ -237,7 +243,7 @@ class BaseConnectionPool(Pool):
         exceptions."""
         try:
             conn.close()
-        except KeyboardInterrupt:
+        except (KeyboardInterrupt, SystemExit):
             raise
         except AttributeError:
             pass # conn is None, or junk
@@ -247,6 +253,20 @@ class BaseConnectionPool(Pool):
 
     def get(self):
         conn = super(BaseConnectionPool, self).get()
+            
+        # None is a flag value that means that put got called with
+        # something it couldn't use
+        if conn is None:
+            try:
+                conn = self.create()
+            except Exception:
+                # unconditionally increase the free pool because
+                # even if there are waiters, doing a full put
+                # would incur a greenlib switch and thus lose the
+                # exception stack
+                self.current_size -= 1
+                raise
+
         # if the call to get() draws from the free pool, it will come
         # back as a tuple
         if isinstance(conn, tuple):
@@ -263,28 +283,37 @@ class BaseConnectionPool(Pool):
 
     def put(self, conn):
         created_at = getattr(conn, '_db_pool_created_at', 0)
-
-        # rollback any uncommitted changes, so that the next client
-        # has a clean slate.  This also pokes the connection to see if
-        # it's dead or None
-        try:
-            conn.rollback()
-        except KeyboardInterrupt:
-            raise
-        except:
-            # we don't care what the exception was, we just know the
-            # connection is dead
-            print "WARNING: connection.rollback raised: %s" % (sys.exc_info()[1])
-            conn = None
-                
-        base = self._unwrap_connection(conn)
         now = time.time()
-        if (base is not None 
-            and not self._is_expired(now, now, created_at, base)):
-            super(BaseConnectionPool, self).put( (now, created_at, base) )
+        conn = self._unwrap_connection(conn)
+  
+        if self._is_expired(now, now, created_at):
+            self._safe_close(conn, quiet=False)
+            conn = None
         else:
-            self.current_size -= 1
-        
+            # rollback any uncommitted changes, so that the next client
+            # has a clean slate.  This also pokes the connection to see if
+            # it's dead or None
+            try:
+                if conn:
+                    conn.rollback()
+            except KeyboardInterrupt:
+                raise
+            except:
+                # we don't care what the exception was, we just know the
+                # connection is dead
+                print "WARNING: connection.rollback raised: %s" % (sys.exc_info()[1])
+                conn = None
+
+        if conn is not None:
+            super(BaseConnectionPool, self).put( (now, created_at, conn) )
+        else:
+            # wake up any waiters with a flag value that indicates
+            # they need to manufacture a connection
+              if self.waiting() > 0:
+                  super(BaseConnectionPool, self).put(None)
+              else:
+                  # no waiters -- just change the size
+                  self.current_size -= 1
         self._schedule_expiration()
 
     def clear(self):
@@ -293,9 +322,9 @@ class BaseConnectionPool(Pool):
         """
         if self._expiration_timer:
             self._expiration_timer.cancel()
-        for _last_used, _created_at, conn in self.free_items:
+        free_items, self.free_items = self.free_items, deque()
+        for _last_used, _created_at, conn in free_items:
             self._safe_close(conn, quiet=True)
-        self.free_items.clear()
             
     def __del__(self):
         self.clear()
