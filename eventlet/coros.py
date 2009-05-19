@@ -305,7 +305,8 @@ class Semaphore(object):
         self.counter -= 1
         return True
 
-    __enter__ = acquire
+    def __enter__(self):
+        self.acquire()
 
     def release(self, blocking=True):
         # `blocking' parameter is for consistency with BoundedSemaphore and is ignored
@@ -361,7 +362,8 @@ class BoundedSemaphore(object):
             # a need to care about such inconsistency
             raise
 
-    __enter__ = acquire
+    def __enter__(self):
+        self.acquire()
 
     def release(self, blocking=True):
         if not blocking and self.bounded():
