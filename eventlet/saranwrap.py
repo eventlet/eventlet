@@ -123,9 +123,9 @@ def wrap(obj, dead_callback = None):
         return wrap_module(obj.__name__, dead_callback)
     pythonpath_sync()
     if _g_debug_mode:
-        p = Process('python', [__file__, '--child', '--logfile', os.path.join(tempfile.gettempdir(), 'saranwrap.log')], dead_callback)
+        p = Process(sys.executable, [__file__, '--child', '--logfile', os.path.join(tempfile.gettempdir(), 'saranwrap.log')], dead_callback)
     else:
-        p = Process('python', [__file__, '--child'], dead_callback)
+        p = Process(sys.executable, [__file__, '--child'], dead_callback)
     prox = Proxy(ChildProcess(p, p))
     prox.obj = obj
     return prox.obj
@@ -138,9 +138,9 @@ def wrap_module(fqname, dead_callback = None):
     pythonpath_sync()
     global _g_debug_mode
     if _g_debug_mode:
-        p = Process('python', [__file__, '--module', fqname, '--logfile', os.path.join(tempfile.gettempdir(), 'saranwrap.log')], dead_callback)
+        p = Process(sys.executable, [__file__, '--module', fqname, '--logfile', os.path.join(tempfile.gettempdir(), 'saranwrap.log')], dead_callback)
     else:
-        p = Process('python', [__file__, '--module', fqname,], dead_callback)
+        p = Process(sys.executable, [__file__, '--module', fqname,], dead_callback)
     prox = Proxy(ChildProcess(p,p))
     return prox
 
