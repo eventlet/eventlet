@@ -26,8 +26,19 @@ import collections
 import traceback
 
 from eventlet import api
-from eventlet import coros
 from eventlet import channel
+from eventlet import coros
+
+class FanFailed(RuntimeError):
+    pass
+
+
+class SomeFailed(FanFailed):
+    pass
+
+
+class AllFailed(FanFailed):
+    pass
 
 
 class Pool(object):
@@ -40,24 +51,24 @@ class Pool(object):
         # do stuff
     finally:
         self.pool.put(thing)
-        
-    The maximum size of the pool can be modified at runtime via the max_size attribute.  
-    Adjusting this number does not affect existing items checked out of the pool, nor 
-    on any waiters who are waiting for an item to free up.  Some indeterminate number 
-    of get/put cycles will be necessary before the new maximum size truly matches the 
+
+    The maximum size of the pool can be modified at runtime via the max_size attribute.
+    Adjusting this number does not affect existing items checked out of the pool, nor
+    on any waiters who are waiting for an item to free up.  Some indeterminate number
+    of get/put cycles will be necessary before the new maximum size truly matches the
     actual operation of the pool.
     """
     def __init__(self, min_size=0, max_size=4, order_as_stack=False):
         """ Pre-populates the pool with *min_size* items.  Sets a hard limit to
-        the size of the pool -- it cannot contain any more items than 
+        the size of the pool -- it cannot contain any more items than
         *max_size*, and if there are already *max_size* items 'checked out' of
-        the pool, the pool will cause any getter to cooperatively yield until an 
+        the pool, the pool will cause any getter to cooperatively yield until an
         item is put in.
-        
+
         *order_as_stack* governs the ordering of the items in the free pool.  If
-        False (the default), the free items collection (of items that were 
-        created and were put back in the pool) acts as a round-robin, giving 
-        each item approximately equal utilization.  If True, the free pool acts 
+        False (the default), the free items collection (of items that were
+        created and were put back in the pool) acts as a round-robin, giving
+        each item approximately equal utilization.  If True, the free pool acts
         as a FILO stack, which preferentially re-uses items that have most
         recently been used.
         """
@@ -87,7 +98,7 @@ class Pool(object):
         if self.current_size > self.max_size:
             self.current_size -= 1
             return
- 
+
         if self.channel.balance < 0:
             self.channel.send(item)
         else:
@@ -100,7 +111,7 @@ class Pool(object):
         """Resize the pool
         """
         self.max_size = new_size
- 
+
     def free(self):
         """Return the number of free items in the pool.
         """
@@ -112,11 +123,49 @@ class Pool(object):
         if self.channel.balance < 0:
             return -self.channel.balance
         return 0
-        
+
     def create(self):
         """Generate a new pool item
         """
         raise NotImplementedError("Implement in subclass")
+
+    def fan(self, block, input_list):
+        queue = coros.queue(0)
+        results = []
+        exceptional_results = 0
+        for index, input_item in enumerate(input_list):
+            pool_item = self.get()
+
+            ## Fan out
+            api.spawn(
+                self._invoke, block, pool_item, input_item, index, queue)
+
+        ## Fan back in
+        for i in range(len(input_list)):
+            ## Wait for all guys to send to the queue
+            index, value = queue.wait()
+            if isinstance(value, Exception):
+                exceptional_results += 1
+            results.append((index, value))
+
+        results.sort()
+        results = [value for index, value in results]
+
+        if exceptional_results:
+            if exceptional_results == len(results):
+                raise AllFailed(results)
+            raise SomeFailed(results)
+        return results
+
+    def _invoke(self, block, pool_item, input_item, index, queue):
+        try:
+            result = block(pool_item, input_item)
+        except Exception, e:
+            self.put(pool_item)
+            queue.send((index, e))
+            return
+        self.put(pool_item)
+        queue.send((index, result))
 
 
 class Token(object):
@@ -618,89 +667,3 @@ class CoroutinePool(Pool):
         while finished < index + 1:
             yield q.wait()
             finished += 1
-
-
-class Actor(object):
-    """ A free-running coroutine that accepts and processes messages.
-
-    Kind of the equivalent of an Erlang process, really.  It processes
-    a queue of messages in the order that they were sent.  You must
-    subclass this and implement your own version of receive().
-
-    The actor's reference count will never drop to zero while the
-    coroutine exists; if you lose all references to the actor object
-    it will never be freed.
-    """
-    def __init__(self, concurrency = 1):
-        """ Constructs an Actor, kicking off a new coroutine to process the messages.
-
-        The concurrency argument specifies how many messages the actor will try
-        to process concurrently.  If it is 1, the actor will process messages
-        serially.
-        """
-        self._mailbox = collections.deque()
-        self._event = coros.event()
-        self._killer = api.spawn(self.run_forever)
-        self._pool = CoroutinePool(min_size=0, max_size=concurrency)
-
-    def run_forever(self):
-        """ Loops forever, continually checking the mailbox. """
-        while True:
-            if not self._mailbox:
-                self._event.wait()
-                self._event = coros.event()
-            else:
-                # leave the message in the mailbox until after it's
-                # been processed so the event doesn't get triggered
-                # while in the received method
-                self._pool.execute_async(
-                    self.received, self._mailbox[0])
-                self._mailbox.popleft()
-
-    def cast(self, message):
-        """ Send a message to the actor.
-
-        If the actor is busy, the message will be enqueued for later
-        consumption.  There is no return value.
-
-        >>> a = Actor()
-        >>> a.received = lambda msg: msg
-        >>> a.cast("hello")
-        """
-        self._mailbox.append(message)
-        # if this is the only message, the coro could be waiting
-        if len(self._mailbox) == 1:
-            self._event.send()
-
-    def received(self, message):
-        """ Called to process each incoming message.
-
-        The default implementation just raises an exception, so
-        replace it with something useful!
-
-        >>> class Greeter(Actor):
-        ...     def received(self, (message, evt) ):
-        ...         print "received", message
-        ...         if evt: evt.send()
-        ...
-        >>> a = Greeter()
-
-        This example uses events to synchronize between the actor and the main
-        coroutine in a predictable manner, but this kinda defeats the point of
-        the Actor, so don't do it in a real application.
-
-        >>> evt = event()
-        >>> a.cast( ("message 1", evt) )
-        >>> evt.wait()  # force it to run at this exact moment
-        received message 1
-        >>> evt.reset()
-        >>> a.cast( ("message 2", None) )
-        >>> a.cast( ("message 3", evt) )
-        >>> evt.wait()
-        received message 2
-        received message 3
-
-        >>> api.kill(a._killer)   # test cleanup
-        """
-        raise NotImplementedError()
-
