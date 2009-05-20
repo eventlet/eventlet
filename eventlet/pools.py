@@ -88,8 +88,9 @@ class Pool(object):
         if self.free_items:
             return self.free_items.popleft()
         if self.current_size < self.max_size:
+            created = self.create()
             self.current_size += 1
-            return self.create()
+            return created
         return self.channel.receive()
 
     def put(self, item):

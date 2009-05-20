@@ -313,8 +313,8 @@ class TestDBConnectionPool(DBTester):
         self.connection.close()
         self.assertEquals(len(self.pool.free_items), 0)
         
-    def test_max_idle(self):
-        # This test is timing-sensitive.
+    def dont_test_max_idle(self):
+        # This test is timing-sensitive.  Rename the function without the "dont" to run it, but beware that it could fail or take a while.
         self.pool = self.create_pool(max_size=2, max_idle=0.02)
         self.connection = self.pool.get()
         self.connection.close()
@@ -332,8 +332,8 @@ class TestDBConnectionPool(DBTester):
         api.sleep(0.03) # long enough to trigger idle timeout for real
         self.assertEquals(len(self.pool.free_items), 0)
 
-    def test_max_idle_many(self):
-        # This test is timing-sensitive.
+    def dont_test_max_idle_many(self):
+        # This test is timing-sensitive.  Rename the function without the "dont" to run it, but beware that it could fail or take a while.
         self.pool = self.create_pool(max_size=2, max_idle=0.02)
         self.connection, conn2 = self.pool.get(), self.pool.get()
         self.connection.close()
@@ -344,8 +344,8 @@ class TestDBConnectionPool(DBTester):
         api.sleep(0.02)  # trigger cleanup of conn1 but not conn2
         self.assertEquals(len(self.pool.free_items), 1)
 
-    def test_max_age(self):
-        # This test is timing-sensitive.
+    def dont_test_max_age(self):
+        # This test is timing-sensitive.  Rename the function without the "dont" to run it, but beware that it could fail or take a while.
         self.pool = self.create_pool(max_size=2, max_age=0.05)
         self.connection = self.pool.get()
         self.connection.close()
@@ -358,8 +358,8 @@ class TestDBConnectionPool(DBTester):
         api.sleep(0.05) # long enough to trigger age timeout
         self.assertEquals(len(self.pool.free_items), 0)
 
-    def test_max_age_many(self):
-        # This test is timing-sensitive.
+    def dont_test_max_age_many(self):
+        # This test is timing-sensitive.  Rename the function without the "dont" to run it, but beware that it could fail or take a while.
         self.pool = self.create_pool(max_size=2, max_age=0.15)
         self.connection, conn2 = self.pool.get(), self.pool.get()
         self.connection.close()
