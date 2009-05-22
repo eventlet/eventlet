@@ -33,7 +33,7 @@ from eventlet.green import socket
 from eventlet.green import BaseHTTPServer
 
 from eventlet import api
-from eventlet import coros
+from eventlet import coropool
 
 
 DEFAULT_MAX_SIMULTANEOUS_REQUESTS = 1024
@@ -380,7 +380,7 @@ def server(sock, site, log=None, environ=None, max_size=None, max_http_version=D
         server_event.send(serv)
     if max_size is None:
         max_size = DEFAULT_MAX_SIMULTANEOUS_REQUESTS
-    pool = coros.CoroutinePool(max_size=max_size)
+    pool = coropool.Pool(max_size=max_size)
     try:
         host, port = sock.getsockname()
         port = ':%s' % (port, )
