@@ -395,6 +395,9 @@ class SimpleSpawnFactory(Factory):
         self.args = args
         self.kwargs = kwargs
 
+    def exc_handler(self, *args):
+        pass
+
     def buildProtocol(self, addr):
         gtransport = self.gtransport_class(*self.args, **self.kwargs)
         protocol = gtransport.build_protocol()
