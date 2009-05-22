@@ -683,6 +683,15 @@ class RunningProcSet(object):
             for p in self.args[0]:
                 p.link(lambda p: self.procs.discard(p))
 
+    def __contains__(self, item):
+        if isinstance(item, api.Greenlet):
+            # special case for "api.getcurrent() in running_proc_set" to work
+            for x in self.procs:
+                if x.greenlet == item:
+                    return True
+        else:
+            return item in self.procs
+
     def __iter__(self):
         return iter(self.procs)
 
