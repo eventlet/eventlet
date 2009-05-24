@@ -22,7 +22,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from eventlet import api, saranwrap, pool
+from eventlet import api, saranwrap
+from eventlet.pool import Pool
 
 import os
 import sys
@@ -292,7 +293,7 @@ sys_path = sys.path""")
         from greentest import saranwrap_test
         prox = saranwrap.wrap(saranwrap_test)
 
-        pool = pool.Pool(max_size=4)
+        pool = Pool(max_size=4)
         waiters = []
         waiters.append(pool.execute(lambda: self.assertEquals(prox.one, 1)))
         waiters.append(pool.execute(lambda: self.assertEquals(prox.two, 2)))
