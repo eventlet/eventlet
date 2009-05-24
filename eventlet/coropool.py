@@ -14,15 +14,6 @@ class Pool(object):
     def free(self):
         return self.sem.counter
 
-    def _execute(self, evt, func, args, kw):
-        """ Private implementation of the execute methods.
-        """
-        if self.free() == 0 and api.getcurrent() in self._greenlets:
-            self._safe_apply(evt, func, args, kw)
-        else:
-            sender = self.get()
-            sender.send((evt, func, args, kw))
-
     def execute(self, func, *args, **kwargs):
         """Execute func in one of the coroutines maintained
         by the pool, when one is free.
