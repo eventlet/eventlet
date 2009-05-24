@@ -57,20 +57,21 @@ class TestCoroutinePool(LimitedTestCase):
         pool.execute_async(reenter_async)
         evt.wait()
 
-#     def test_track_events(self):
-#         pool = self.klass(track_events=True)
-#         for x in range(6):
-#             pool.execute(lambda n: n, x)
-#         for y in range(6):
-#             pool.wait()
-# 
-#     def test_track_slow_event(self):
-#         pool = self.klass(track_events=True)
-#         def slow():
-#             api.sleep(0.1)
-#             return 'ok'
-#         pool.execute(slow)
-#         self.assertEquals(pool.wait(), 'ok')
+    def test_track_events(self):
+        pool = self.klass(track_events=True)
+        for x in range(6):
+            pool.execute(lambda n: n, x)
+        for y in range(6):
+            pool.wait()
+
+    def test_track_slow_event(self):
+        pool = self.klass(track_events=True)
+        def slow():
+            api.sleep(0.1)
+            return 'ok'
+        pool.execute(slow)
+        self.assertEquals(pool.wait(), 'ok')
+
 
 class PoolBasicTests(LimitedTestCase):
     klass = coropool.Pool
