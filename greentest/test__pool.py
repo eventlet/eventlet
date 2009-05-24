@@ -1,10 +1,10 @@
 import sys
-from eventlet import coropool, coros, api
+from eventlet import pool, coros, api
 from greentest import LimitedTestCase
 from unittest import main
 
 class TestCoroutinePool(LimitedTestCase):
-    klass = coropool.Pool
+    klass = pool.Pool
 
     def test_execute_async(self):
         done = coros.event()
@@ -74,7 +74,7 @@ class TestCoroutinePool(LimitedTestCase):
 
 
 class PoolBasicTests(LimitedTestCase):
-    klass = coropool.Pool
+    klass = pool.Pool
 
     def test_execute_async(self):
         p = self.klass(max_size=2)

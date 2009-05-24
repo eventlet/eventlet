@@ -39,7 +39,7 @@ except ImportError:
     from StringIO import StringIO
 
 from eventlet import api
-from eventlet import coropool
+from eventlet import pool
 
 
 DEFAULT_MAX_HTTP_VERSION = 'HTTP/1.1'
@@ -574,7 +574,7 @@ class Server(BaseHTTPServer.HTTPServer):
 
 
 def server(sock, site, log=None, max_size=512, serv=None, max_http_version=DEFAULT_MAX_HTTP_VERSION):
-    pool = coropool.Pool(max_size=max_size)
+    pool = pool.Pool(max_size=max_size)
     if serv is None:
         serv = Server(sock, sock.getsockname(), site, log, max_http_version=max_http_version)
     try:
