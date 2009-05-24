@@ -539,7 +539,10 @@ class GreenSSL(GreenSocket):
     read = read
 
     def write(self, data):
-        return self.sendall(data)
+        try:
+            return self.sendall(data)
+        except util.SSL.Error, ex:
+            raise socket.sslerror(str(ex))
 
     def server(self):
         return self.fd.server()

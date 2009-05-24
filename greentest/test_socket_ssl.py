@@ -118,11 +118,58 @@ def test_rude_shutdown():
     connector()
     t.join()
 
+
+def test_rude_shutdown__write():
+    if test_support.verbose:
+        print "test_rude_shutdown__variant ..."
+
+    from eventlet.green import threading
+
+    # Some random port to connect to.
+    PORT = [9934]
+
+    listener_ready = threading.Event()
+    listener_gone = threading.Event()
+
+    # `listener` runs in a thread.  It opens a socket listening on PORT, and
+    # sits in an accept() until the main thread connects.  Then it rudely
+    # closes the socket, and sets Event `listener_gone` to let the main thread
+    # know the socket is gone.
+    def listener():
+        s = socket.socket()
+        PORT[0] = test_support.bind_port(s, '', PORT[0])
+        s.listen(5)
+        listener_ready.set()
+        s.accept()
+        s = None # reclaim the socket object, which also closes it
+        listener_gone.set()
+
+    def connector():
+        listener_ready.wait()
+        s = socket.socket()
+        s.connect(('localhost', PORT[0]))
+        listener_gone.wait()
+        try:
+            ssl_sock = socket.ssl(s)
+            ssl_sock.write("hello")
+        except socket.sslerror:
+            pass
+        else:
+            raise test_support.TestFailed(
+                      'connecting to closed SSL socket should have failed')
+
+    t = threading.Thread(target=listener)
+    t.start()
+    connector()
+    t.join()
+
+
 class Test(unittest.TestCase):
 
     test_basic = lambda self: test_basic()
     test_timeout = lambda self: test_timeout()
     test_rude_shutdown = lambda self: test_rude_shutdown()
+    test_rude_shutdown__write = lambda self: test_rude_shutdown__write()
 
 def test_main():
     if not hasattr(socket, "ssl"):
