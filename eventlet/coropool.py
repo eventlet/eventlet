@@ -3,13 +3,17 @@ from eventlet import coros, proc, api
 
 class Pool(object):
 
-    def __init__(self, min_size=0, max_size=4):
+    def __init__(self, min_size=0, max_size=4, track_events=False):
         if min_size > max_size:
             raise ValueError('min_size cannot be bigger than max_size')
         self.sem = coros.Semaphore(max_size)
         for _ in xrange(min_size):
             self.sem.acquire()
         self.procs = proc.RunningProcSet()
+        if track_events:
+            self.results = coros.queue()
+        else:
+            self.results = None
 
     def free(self):
         return self.sem.counter
@@ -37,7 +41,10 @@ class Pool(object):
         else:
             self.sem.acquire()
             p = self.procs.spawn(func, *args, **kwargs)
+            # assuming the above line cannot raise
             p.link(lambda p: self.sem.release())
+        if self.results is not None:
+            p.link(self.results)
         return p
 
     execute_async = execute
@@ -46,6 +53,11 @@ class Pool(object):
         return self.procs.waitall()
 
     wait_all = waitall
+
+    def wait(self):
+        """Wait for the next execute in the pool to complete,
+        and return the result."""
+        return self.results.wait()
 
     def killall(self):
         return self.procs.killall()
