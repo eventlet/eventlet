@@ -22,7 +22,7 @@ class Pool(object):
         for the func's result.
 
         >>> pool = Pool()
-        >>> task = p.execute(lambda a: ('foo', a), 1)
+        >>> task = pool.execute(lambda a: ('foo', a), 1)
         >>> task.wait()
         ('foo', 1)
         """
