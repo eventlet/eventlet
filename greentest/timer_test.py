@@ -56,8 +56,9 @@ class TestTimer(tests.TestCase):
             hub.abort()
             api.sleep(0)
         called = []
-        t = timer.Timer(0, lambda: (called.append(True), hub.abort()))
-        t.schedule()
+        #t = timer.Timer(0, lambda: (called.append(True), hub.abort()))
+        #t.schedule()
+        api.get_hub().schedule_call_global(0, lambda: (called.append(True), hub.abort()))
         hub.default_sleep = lambda: 0.0
         hub.run()
         assert called
