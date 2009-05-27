@@ -498,6 +498,9 @@ def make_connection(scheme, location, use_proxy):
     # run a little heuristic to see if location is an url, and if so parse out the hostpart
     if location.startswith('http'):
         _scheme, location, path, parameters, query, fragment = url_parser(location)
+
+    if use_proxy and scheme == 'https':
+        scheme = 'http'
             
     result = scheme_to_factory_map[scheme](location)
     result.connect()
