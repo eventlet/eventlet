@@ -86,8 +86,8 @@ The wire protocol is to pickle the Request class in this file. The
 request class is basically an action and a map of parameters'
 """
 
-import os
 from cPickle import dumps, loads
+import os
 import struct
 import sys
 
@@ -182,6 +182,8 @@ class Request(object):
 
 def _read_lp_hunk(stream):
     len_bytes = stream.read(4)
+    if len_bytes == '':
+        raise EOFError("No more data to read from %s" % stream)
     length = struct.unpack('I', len_bytes)[0]
     body = stream.read(length)
     return body
@@ -247,6 +249,7 @@ def _unmunge_attr_name(name):
         name = name[len('_Proxy'):]
     if(name.startswith('_ObjectProxy')):
         name = name[len('_ObjectProxy'):]
+
     return name
 
 class ChildProcess(object):
@@ -281,6 +284,9 @@ class ChildProcess(object):
             self._lock.put(t)
             
         return retval
+
+    def __del__(self):
+        self._in.close()
 
 
 class Proxy(object):
@@ -320,7 +326,10 @@ not supported, so you have to know what has been exported.
                 request = Request('del', {'id':dead_object})
 
                 my_cp.make_request(request)
-                _dead_list.remove(dead_object)
+                try:
+                    _dead_list.remove(dead_object)
+                except KeyError:
+                    pass
             
             # Pass all public attributes across to find out if it is
             # callable or a simple attribute.
@@ -423,6 +432,11 @@ not need to deal with this class directly."""
         
 
 def proxied_type(self):
+    """ Returns the type of the object in the child process.
+
+    Calling type(obj) on a saranwrapped object will always return
+    <class saranwrap.ObjectProxy>, so this is a way to get at the
+    'real' type value."""
     if type(self) is not ObjectProxy:
         return type(self)
     
@@ -430,6 +444,14 @@ def proxied_type(self):
     my_id = self.__local_dict['_id']
     request = Request('type', {'id':my_id})
     return my_cp.make_request(request)
+
+
+def getpid(self):
+    """ Returns the pid of the child process.  The argument should be
+    a saranwrapped object."""
+    my_cp = self.__local_dict['_cp']
+    return my_cp._in.getpid()
+
 
 class CallableProxy(object):
     """\
@@ -527,7 +549,11 @@ when the id is None."""
         _log("del %s from %s" % (id, self._objects))
 
         # *TODO what does __del__ actually return?
-        del self._objects[id]
+        try:
+            del self._objects[id]
+        except KeyError:
+            pass
+
         return None
 
     def handle_type(self, obj, req):
@@ -547,7 +573,10 @@ when the id is None."""
                 try:
                     str_ = _read_lp_hunk(self._in)
                 except EOFError:
-                    sys.exit(0)  # normal exit
+                    if _g_debug_mode:
+                        _log("Exiting normally")
+                    sys.exit(0)
+
                 request = loads(str_)
                 _log("request: %s (%s)" % (request, self._objects))
                 req = request

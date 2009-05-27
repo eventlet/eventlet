@@ -338,6 +338,13 @@ sys_path = sys.path""")
             'random' in obj_proxy.get_dict(),
             'Coroutine in saranwrapped object did not run')
 
+    def test_child_process_death(self):
+        prox = saranwrap.wrap({})
+        pid = saranwrap.getpid(prox)
+        self.assertEqual(os.kill(pid, 0), None)   # assert that the process is running
+        del prox  # removing all references to the proxy should kill the child process
+        self.assertRaises(OSError, os.kill, pid, 0)  # raises OSError if pid doesn't exist
+
     def test_detection_of_server_crash(self):
         # make the server crash here
         pass
