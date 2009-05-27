@@ -400,5 +400,69 @@ class TestHttpTime(tests.TestCase):
             self.assertEqual(ticks, self.secs_since_epoch)
 
 
+class TestProxy(tests.TestCase):
+    def test_ssl_proxy(self):
+        def ssl_proxy(sock):
+            conn, addr = sock.accept()
+            fd = conn.makefile()
+            try:
+                line = request = fd.readline()
+                self.assertEqual(request, 'GET https://localhost:1234 HTTP/1.1\r\n')
+                while line.strip():  # eat request headers
+                    line = fd.readline()
+
+                # we're not going to actually proxy to localhost:1234,
+                # we're just going to return a response on its behalf
+                fd.write("HTTP/1.0 200 OK\r\n\r\n")
+            finally:
+                fd.close()
+                conn.close()
+
+        server = api.tcp_listener(('0.0.0.0', 5505))
+        api.spawn(ssl_proxy, server)
+        import os
+        os.environ['ALL_PROXY'] = 'localhost:5505'
+        httpc.get('https://localhost:1234', ok=[200], use_proxy=True)
+
+    def test_ssl_proxy_redirects(self):
+        # make sure that if the proxy returns a redirect, that httpc
+        # successfully follows it (this was broken at one point)
+        def ssl_proxy(sock):
+            conn, addr = sock.accept()
+            fd = conn.makefile()
+            try:
+                line = request = fd.readline()
+                self.assertEqual(request, 'GET https://localhost:1234 HTTP/1.1\r\n')
+                while line.strip():  # eat request headers
+                    line = fd.readline()
+
+                # we're not going to actually proxy to localhost:1234,
+                # we're just going to return a response on its behalf
+                fd.write("HTTP/1.0 302 Found\r\nLocation: https://localhost:1234/2\r\n\r\n")
+            finally:
+                fd.close()
+                conn.close()
+
+            # second request, for /2 target
+            conn, addr = sock.accept()
+            fd = conn.makefile()
+            try:
+                line = request = fd.readline()
+                self.assertEqual(request, 'GET https://localhost:1234/2 HTTP/1.1\r\n')
+                while line.strip():  # eat request headers
+                    line = fd.readline()
+                fd.write("HTTP/1.0 200 OK\r\n\r\n")
+            finally:
+                fd.close()
+                conn.close()
+            sock.close()
+
+        server = api.tcp_listener(('0.0.0.0', 5505))
+        api.spawn(ssl_proxy, server)
+        import os
+        os.environ['ALL_PROXY'] = 'localhost:5505'
+        httpc.get('https://localhost:1234', use_proxy=True, max_retries=1)
+
+
 if __name__ == '__main__':
     tests.main()
