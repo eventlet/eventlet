@@ -37,34 +37,38 @@ class DeadProcess(RuntimeError):
     pass
 
 
-CHILD_PIDS = []
+CHILD_POBJS = []
 
 CHILD_EVENTS = {}
 
 
 def wait_on_children():
-    for child_pid in CHILD_PIDS:
+    global CHILD_POBJS
+    unclosed_pobjs = []
+    for child_pobj in CHILD_POBJS:
         try:
-            pid, code = util.__original_waitpid__(child_pid, os.WNOHANG)
-            if not pid:
+            # We have to use poll() rather than os.waitpid because
+            # otherwise the popen2 module leaks fds; hat tip to Brian
+            # Brunswick
+            code = child_pobj.poll()
+            if code == -1:
+                unclosed_pobjs.append(child_pobj)
                 continue ## Wasn't this one that died
-            elif pid == -1:
-                print >> sys.stderr, "Got -1! Why didn't python raise?"
-            elif pid != child_pid:
-                print >> sys.stderr, "pid (%d) != child_pid (%d)" % (pid, child_pid)
 
-            # Defensively assume we could get a different pid back
-            if CHILD_EVENTS.get(pid):
-                event = CHILD_EVENTS.pop(pid)
+            event = CHILD_EVENTS.pop(child_pobj, None)
+            if event:
                 event.send(code)
-
         except OSError, e:
-            if e[0] != errno.ECHILD:
-                raise e
-            elif CHILD_EVENTS.get(child_pid):
+            if e[0] == errno.ECHILD:
+                print "already dead"
                 # Already dead; signal, but assume success
-                event = CHILD_EVENTS.pop(child_pid)
+                event = CHILD_EVENTS.pop(child_pobj, None)
                 event.send(0)
+            else:
+                print "raising"
+                raise e
+    
+    CHILD_POBJS = unclosed_pobjs
 
 
 def sig_child(signal, frame):
@@ -73,14 +77,14 @@ def sig_child(signal, frame):
 signal.signal(signal.SIGCHLD, sig_child)
     
 
-def _add_child_pid(pid):
-    """Add the given integer 'pid' to the list of child
-    process ids we are tracking. Return an event object
+def _add_child_pobj(pobj):
+    """Add the given popen4 object to the list of child
+    processes we are tracking. Return an event object
     that can be used to get the process' exit code.
     """
-    CHILD_PIDS.append(pid)
+    CHILD_POBJS.append(pobj)
     event = coros.event()
-    CHILD_EVENTS[pid] = event
+    CHILD_EVENTS[pobj] = event
     return event
 
 
@@ -101,7 +105,7 @@ class Process(object):
 
         ## We use popen4 so that read() will read from either stdout or stderr
         self.popen4 = popen2.Popen4([self.command] + self.args)
-        self.event = _add_child_pid(self.popen4.pid)
+        self.event = _add_child_pobj(self.popen4)
         child_stdout_stderr = self.popen4.fromchild
         child_stdin = self.popen4.tochild
         greenio.set_nonblocking(child_stdout_stderr)
