@@ -113,3 +113,18 @@ def backdoor_server(server, locals=None):
     finally:
         server.close()
 
+
+def backdoor((conn, addr), locals=None):
+    """ Use this with tcp_server like so:
+        api.tcp_server(
+                       api.tcp_listener(('127.0.0.1', 9000)),
+                       backdoor.backdoor,
+                       {})
+    """
+    host, port = addr
+    print "backdoor to %s:%s" % (host, port)
+    fl = conn.makeGreenFile("rw")
+    fl.newlines = '\n'
+    greenlet = SocketConsole(fl, (host, port), locals)
+    hub = api.get_hub()
+    hub.schedule_call_global(0, greenlet.switch)
