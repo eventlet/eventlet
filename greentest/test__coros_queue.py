@@ -73,7 +73,7 @@ class TestQueue(LimitedTestCase):
         self.assertEquals(e2.wait(),'hi')
         self.assertEquals(e1.wait(),'done')
 
-    def skip_test_multiple_waiters(self):
+    def test_multiple_waiters(self):
         q = coros.queue()
 
         def waiter(q, evt):
@@ -164,7 +164,7 @@ class TestQueue(LimitedTestCase):
         self.assertEquals(e2.wait(), 'timed out')
         self.assertEquals(q.wait(), 'sent')
 
-    def disable_test_waiting(self):
+    def test_waiting(self):
         def do_wait(q, evt):
             result = q.wait()
             evt.send(result)
@@ -175,6 +175,7 @@ class TestQueue(LimitedTestCase):
         api.sleep(0)
         self.assertEquals(1, waiting(q))
         q.send('hi')
+        api.sleep(0)  # *FIX this should not be necessary
         self.assertEquals(0, waiting(q))
         self.assertEquals('hi', e1.wait())
         self.assertEquals(0, waiting(q))
