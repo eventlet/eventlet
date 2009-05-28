@@ -23,6 +23,7 @@ THE SOFTWARE.
 """
 
 import cgi
+import os
 
 from eventlet import api
 from eventlet import wsgi
@@ -263,6 +264,26 @@ class TestHttpd(tests.TestCase):
             fd.readline()
             chunklen = int(fd.readline(), 16)
         self.assert_(chunks > 1)
+
+    def test_012_ssl_server(self):
+        from eventlet import httpc
+        def wsgi_app(self, environ, start_response):
+            print "wsgi_app"
+            print environ['wsgi.input']
+            return [environ['wsgi.input'].read()]
+
+        certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
+        private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
+        
+        sock = api.ssl_listener(('', 4201), certificate_file, private_key_file)
+    
+        api.spawn(wsgi.server, sock, wsgi_app)
+    
+        print "pre request"
+        result = httpc.post("https://localhost:4201/foo", "abc")
+        self.assertEquals(result, 'abc')
+        print "post request"
+
 
 if __name__ == '__main__':
     tests.main()
