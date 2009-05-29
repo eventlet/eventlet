@@ -531,10 +531,30 @@ class GreenPipe(GreenFile):
         self.fd.fd.flush()
 
 
+
+class RefCount(object):
+    """ Reference counting class only to be used with GreenSSL objects """
+    def __init__(self):
+        self._count = 1
+
+    def increment(self):
+        self._count += 1
+
+    def decrement(self):
+        self._count -= 1
+        assert self._count >= 0
+
+    def is_referenced(self):
+        return self._count > 0
+
+
 class GreenSSL(GreenSocket):
-    def __init__(self, fd):
+    def __init__(self, fd, refcount = None):
         GreenSocket.__init__(self, fd)
         self.sock = self
+        self._refcount = refcount
+        if refcount is None:
+            self._refcount = RefCount()
 
     read = read
 
@@ -550,7 +570,21 @@ class GreenSSL(GreenSocket):
     def issuer(self):
         return self.fd.issuer()
 
+    def dup(self):
+        raise NotImplemented("Dup not supported on SSL sockets")
 
+    def makefile(self, *args, **kw):
+        self._refcount.increment()
+        return GreenFile(type(self)(self.fd, refcount = self._refcount))
+
+    def close(self):
+        self._refcount.decrement()
+        if self._refcount.is_referenced():
+            return
+        super(GreenSSL, self).close()
+
+
+    
 
 def socketpair(*args):
     one, two = socket.socketpair(*args)

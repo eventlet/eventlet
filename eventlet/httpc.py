@@ -586,6 +586,9 @@ class HttpSuite(object):
     def _get_response_body(self, params, connection):
         if connection is None:
             connection = connect(params.url, params.use_proxy)
+            # if we're creating a new connection we know the caller
+            # isn't going to reuse it
+            params.headers['connection'] = 'close'
         connection.request(params.method, params.path, params.body,
                            params.headers)
         params.response = connection.getresponse()
