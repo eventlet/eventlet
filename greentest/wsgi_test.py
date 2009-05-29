@@ -266,9 +266,8 @@ class TestHttpd(tests.TestCase):
 
     def test_012_ssl_server(self):
         from eventlet import httpc
-        def wsgi_app(self, environ, start_response):
-            print "wsgi_app"
-            print environ['wsgi.input']
+        def wsgi_app(environ, start_response):
+            start_response('200 OK', {})
             return [environ['wsgi.input'].read()]
 
         certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
@@ -278,10 +277,8 @@ class TestHttpd(tests.TestCase):
 
         api.spawn(wsgi.server, sock, wsgi_app)
 
-        print "pre request"
         result = httpc.post("https://localhost:4201/foo", "abc")
         self.assertEquals(result, 'abc')
-        print "post request"
 
     def test_013_empty_return(self):
         from eventlet import httpc
