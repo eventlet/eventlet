@@ -537,6 +537,13 @@ class GreenSSL(GreenSocket):
         self.sock = self
 
     read = read
+    
+    def sendall(self, data):
+        # overriding sendall because ssl sockets behave badly when asked to 
+        # send empty strings; 'normal' sockets don't have a problem
+        if not data:
+            return
+        super(GreenSSL, self).sendall(data)
 
     def write(self, data):
         try:
