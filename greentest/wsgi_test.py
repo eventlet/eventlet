@@ -1,5 +1,5 @@
 """\
-@file httpd_test.py
+@file wsgi_test.py
 @author Donovan Preston
 
 Copyright (c) 2007, Linden Research, Inc.
@@ -280,6 +280,20 @@ class TestHttpd(tests.TestCase):
     
         result = httpc.post("https://localhost:4201/foo", "abc")
         self.assertEquals(result, 'abc')
+        
+    def test_013_empty_return(self):
+        from eventlet import httpc
+        def wsgi_app(environ, start_response):
+            start_response("200 OK", [])
+            return [""]
+    
+        certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
+        private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
+        sock = api.ssl_listener(('', 4202), certificate_file, private_key_file)
+        api.spawn(wsgi.server, sock, wsgi_app)
+        
+        res = httpc.get("https://localhost:4202/foo")
+        self.assertEquals(res, '')
 
 
 if __name__ == '__main__':
