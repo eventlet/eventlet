@@ -284,16 +284,16 @@ class TestCoroutinePool(tests.TestCase):
         self.assertEquals(['cons1', 'prod', 'cons2'], results)
 
     def test_timer_cancel(self):
+        timer_fired = []
+        def fire_timer():
+            timer_fired.append(True)
         def some_work():
-            t = timer.Timer(5, lambda: None)
-            t.autocancellable = True
-            t.schedule()
-            return t
+            api.get_hub().schedule_call_local(0, fire_timer)
         pool = pools.CoroutinePool(0, 2)
         worker = pool.execute(some_work)
-        t = worker.wait()
+        worker.wait()
         api.sleep(0)
-        self.assertEquals(t.cancelled, True)
+        self.assertEquals(timer_fired, [])
 
     def test_reentrant(self):
         pool = pools.CoroutinePool(0,1)

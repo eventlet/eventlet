@@ -274,7 +274,9 @@ class CoroutinePool(Pool):
     def _main_loop(self, sender):
         """ Private, infinite loop run by a pooled coroutine. """
         try:
-            while True:
+            # not really a loop anymore because we want the greenlet
+            # to die so all its timers get canceled
+            if True:
                 recvd = sender.wait()
                 # Delete the sender's result here because the very
                 # first event through the loop is referenced by
@@ -285,21 +287,14 @@ class CoroutinePool(Pool):
                 # tests.
                 sender._result = coros.NOT_USED
 
-                sender = coros.event()
                 (evt, func, args, kw) = recvd
                 self._safe_apply(evt, func, args, kw)
-                #api.get_hub().cancel_timers(api.getcurrent())
                 # Likewise, delete these variables or else they will
                 # be referenced by this frame until replaced by the
                 # next recvd, which may or may not be a long time from
                 # now.
                 del evt, func, args, kw, recvd
-
-                self.put(sender)
         finally:
-            # if we get here, something broke badly, and all we can really
-            # do is try to keep the pool from leaking items.
-            # Shouldn't even try to print the exception.
             self.put(self.create())
 
     def _safe_apply(self, evt, func, args, kw):
