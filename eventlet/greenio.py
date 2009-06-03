@@ -579,11 +579,13 @@ class GreenSSL(GreenSocket):
         return self.fd.issuer()
 
     def dup(self):
-        raise NotImplemented("Dup not supported on SSL sockets")
+        raise NotImplementedError("Dup not supported on SSL sockets")
 
     def makefile(self, *args, **kw):
         self._refcount.increment()
         return GreenFile(type(self)(self.fd, refcount = self._refcount))
+        
+    makeGreenFile = makefile
 
     def close(self):
         self._refcount.decrement()
