@@ -343,6 +343,7 @@ sys_path = sys.path""")
         pid = saranwrap.getpid(prox)
         self.assertEqual(os.kill(pid, 0), None)   # assert that the process is running
         del prox  # removing all references to the proxy should kill the child process
+        api.sleep(0.1)  # need to let the signal handler run
         self.assertRaises(OSError, os.kill, pid, 0)  # raises OSError if pid doesn't exist
 
     def test_detection_of_server_crash(self):
