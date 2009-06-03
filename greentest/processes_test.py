@@ -21,12 +21,13 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
+import sys
+
 from greentest import tests
 from eventlet import api
 from eventlet import processes
 
 class TestEchoPool(tests.TestCase):
-    mode = 'static'
     def setUp(self):
         self.pool = processes.ProcessPool('echo', ["hello"])
 
@@ -50,7 +51,6 @@ class TestEchoPool(tests.TestCase):
 
 
 class TestCatPool(tests.TestCase):
-    mode = 'static'
     def setUp(self):
         self.pool = processes.ProcessPool('cat')
 
@@ -92,7 +92,6 @@ class TestCatPool(tests.TestCase):
 
 
 class TestDyingProcessesLeavePool(tests.TestCase):
-    mode = 'static'
     def setUp(self):
         self.pool = processes.ProcessPool('echo', ['hello'], max_size=1)
 
@@ -112,11 +111,12 @@ class TestDyingProcessesLeavePool(tests.TestCase):
 
 
 class TestProcessLivesForever(tests.TestCase):
-    mode = 'static'
     def setUp(self):
-        self.pool = processes.ProcessPool('python', ['-c', 'print "y"; import time; time.sleep(0.1); print "y"'], max_size=1)
+        self.pool = processes.ProcessPool(sys.executable, ['-c', 'print "y"; import time; time.sleep(0.4); print "y"'], max_size=1)
 
     def test_reading_twice_from_same_process(self):
+        # this test is a little timing-sensitive in that if the sub-process
+        # completes its sleep before we do a full put/get then it will fail
         proc = self.pool.get()
         try:
             result = proc.read(2)
@@ -125,7 +125,7 @@ class TestProcessLivesForever(tests.TestCase):
             self.pool.put(proc)
 
         proc2 = self.pool.get()
-        self.assert_(proc is proc2)
+        self.assert_(proc is proc2, "This will fail if there is a timing issue")
         try:
             result = proc2.read(2)
             self.assertEquals(result, 'y\n')
