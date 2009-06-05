@@ -311,7 +311,7 @@ class Request(object):
         return self._outgoing_headers.has_key(key.lower())
 
     def socket(self):
-        return self.protocol.socket
+        return self.protocol.rfile._sock
 
     def error(self, response=None, body=None, log_traceback=True):
         if log_traceback:
