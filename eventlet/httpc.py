@@ -510,8 +510,10 @@ def make_connection(scheme, location, use_proxy):
 def connect(url, use_proxy=False):
     """ Create a connection object to the host specified in a url.  Convenience function for make_connection."""
     scheme, location = url_parser(url)[:2]
-    return make_connection(scheme, location, use_proxy)
-
+    try:
+        return make_connection(scheme, location, use_proxy)
+    except KeyError:
+        raise ValueError("Unknown url scheme %s in url %s" % (scheme, url))
 
 def make_safe_loader(loader):
     if not callable(loader):
