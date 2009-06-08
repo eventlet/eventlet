@@ -92,7 +92,6 @@ NOTE: The DatabaseConnector is a bit unfinished, it only suits a subset of use c
 """
 
 from collections import deque
-import os
 import sys
 import time
 

@@ -26,7 +26,6 @@ THE SOFTWARE.
 import os
 import select
 import socket
-import sys
 import errno
 
 try:
@@ -81,7 +80,7 @@ except AttributeError:
 
 def wrap_ssl(sock, certificate=None, private_key=None):
     from OpenSSL import SSL
-    from eventlet import greenio, util
+    from eventlet import greenio
     context = SSL.Context(SSL.SSLv23_METHOD)
     if certificate is not None:
         context.use_certificate_file(certificate)

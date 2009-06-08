@@ -25,12 +25,10 @@ import errno
 import os
 import popen2
 import signal
-import sys
 
 from eventlet import coros
 from eventlet import pools
 from eventlet import greenio
-from eventlet import util
 
 
 class DeadProcess(RuntimeError):

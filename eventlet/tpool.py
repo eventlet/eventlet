@@ -75,7 +75,7 @@ def tworker():
         except SYS_EXCS:
             raise
         except Exception,exn:
-            import sys, traceback
+            import sys
             (a,b,tb) = sys.exc_info()
             rv = (exn,a,b,tb)
         _rspq.put((e,rv))
@@ -86,7 +86,7 @@ def tworker():
 def erecv(e):
     rv = e.wait()
     if isinstance(rv,tuple) and len(rv) == 4 and isinstance(rv[0],Exception):
-        import sys, traceback
+        import traceback
         (e,a,b,tb) = rv
         if not QUIET:
             traceback.print_exception(Exception,e,tb)

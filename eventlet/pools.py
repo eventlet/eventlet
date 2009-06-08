@@ -23,7 +23,6 @@ THE SOFTWARE.
 """
 
 import collections
-import traceback
 
 from eventlet import api
 from eventlet import channel
