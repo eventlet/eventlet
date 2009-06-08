@@ -15,6 +15,10 @@ class Pool(object):
         else:
             self.results = None
 
+    @property
+    def current_size(self):
+        return len(self.procs)
+
     def free(self):
         return self.sem.counter
 
