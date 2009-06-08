@@ -228,7 +228,6 @@ try:
     import gnutls.interfaces.twisted
 except ImportError:
     del TestTLSError
-    del TestHalfClose_TLS
 
 if __name__=='__main__':
     unittest.main()
