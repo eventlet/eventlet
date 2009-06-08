@@ -225,9 +225,11 @@ class TestActor(tests.TestCase):
         self.assertEqual(total[0], 2)
         # both coroutines should have been used
         self.assertEqual(self.actor._pool.current_size, 2)
+        api.sleep(0)
         self.assertEqual(self.actor._pool.free(), 1)
         evt.wait()
         self.assertEqual(total[0], 3)
+        api.sleep(0)
         self.assertEqual(self.actor._pool.free(), 2)
 
 
