@@ -421,16 +421,12 @@ class GenericConnectionWrapper(object):
     def set_sql_mode(self, sql_mode): return self._base.set_sql_mode(sql_mode)
     def show_warnings(self): return self._base.show_warnings()
     def warning_count(self): return self._base.warning_count()
-    def literal(self, o): return self._base.literal(o)
     def ping(self,*args, **kwargs): return self._base.ping(*args, **kwargs)
     def query(self,*args, **kwargs): return self._base.query(*args, **kwargs)
     def rollback(self,*args, **kwargs): return self._base.rollback(*args, **kwargs)
     def select_db(self,*args, **kwargs): return self._base.select_db(*args, **kwargs)
     def set_server_option(self,*args, **kwargs): return self._base.set_server_option(*args, **kwargs)
-    def set_character_set(self, charset): return self._base.set_character_set(charset)
-    def set_sql_mode(self, sql_mode): return self._base.set_sql_mode(sql_mode)
     def server_capabilities(self,*args, **kwargs): return self._base.server_capabilities(*args, **kwargs)
-    def show_warnings(self): return self._base.show_warnings()
     def shutdown(self,*args, **kwargs): return self._base.shutdown(*args, **kwargs)
     def sqlstate(self,*args, **kwargs): return self._base.sqlstate(*args, **kwargs)
     def stat(self,*args, **kwargs): return self._base.stat(*args, **kwargs)
@@ -438,7 +434,6 @@ class GenericConnectionWrapper(object):
     def string_literal(self,*args, **kwargs): return self._base.string_literal(*args, **kwargs)
     def thread_id(self,*args, **kwargs): return self._base.thread_id(*args, **kwargs)
     def use_result(self,*args, **kwargs): return self._base.use_result(*args, **kwargs)
-    def warning_count(self): return self._base.warning_count()
 
 
 class PooledConnectionWrapper(GenericConnectionWrapper):
