@@ -21,18 +21,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-import bisect
 import signal
 import sys
-import socket
-import errno
-import traceback
 import time
 
-from eventlet.timer import Timer
 from eventlet.hubs import hub
 
-from eventlet.support import greenlets as greenlet
 
 # XXX for debugging only
 #raise ImportError()

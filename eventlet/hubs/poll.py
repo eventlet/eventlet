@@ -25,9 +25,7 @@ THE SOFTWARE.
 
 import sys
 import select
-import socket
 import errno
-import traceback
 from time import sleep
 import time
 

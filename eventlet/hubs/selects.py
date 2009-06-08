@@ -29,7 +29,6 @@ import time
 
 from eventlet.hubs import hub
 
-from eventlet.support import greenlets as greenlet
 
 class Hub(hub.BaseHub):
     def wait(self, seconds=None):
