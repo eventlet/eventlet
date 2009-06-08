@@ -91,12 +91,6 @@ import os
 import struct
 import sys
 
-try:
-    set = set
-    frozenset = frozenset
-except NameError:
-    from sets import Set as set, ImmutableSet as frozenset
-
 from eventlet.processes import Process, DeadProcess
 from eventlet import api, pools
 
