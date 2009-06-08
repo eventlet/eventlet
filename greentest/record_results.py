@@ -26,6 +26,7 @@ Usage: %prog program [args]
 """
 import sys
 import os
+import codecs
 try:
     import sqlite3
 except ImportError:
@@ -63,7 +64,7 @@ def main():
     print arg
     returncode = os.system(arg)>>8
     print arg, 'finished with code', returncode
-    stdout = file(output_name).read()
+    stdout = codecs.open(output_name, mode='r', encoding='utf-8', errors='replace').read().replace('\x00', '?')
     if not debug:
         if returncode==1:
             pass
