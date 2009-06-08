@@ -32,7 +32,6 @@ import errno
 import os
 import socket
 from socket import socket as _original_socket
-import fcntl
 import time
 
 
@@ -169,14 +168,17 @@ def file_send(fd, data):
 
 
 def set_nonblocking(fd):
-    ## Socket
-    if hasattr(fd, 'setblocking'):
-        fd.setblocking(0)
-    ## File
-    else:
+    try:
+        setblocking = fd.setblocking
+    except AttributeError:
+        # This version of Python predates socket.setblocking()
+        import fcntl
         fileno = fd.fileno()
         flags = fcntl.fcntl(fileno, fcntl.F_GETFL)
         fcntl.fcntl(fileno, fcntl.F_SETFL, flags | os.O_NONBLOCK)
+    else:
+        # socket supports setblocking()
+        setblocking(0)
 
 
 class GreenSocket(object):
