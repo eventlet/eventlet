@@ -449,8 +449,8 @@ def execute(func, *args, **kw):
 
 
 def CoroutinePool(*args, **kwargs):
-    from eventlet.pools import CoroutinePool
-    return CoroutinePool(*args, **kwargs)
+    from eventlet.pool import Pool
+    return Pool(*args, **kwargs)
 
 
 class pipe(object):
