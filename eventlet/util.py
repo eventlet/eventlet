@@ -173,7 +173,7 @@ def wrap_pipes_with_coroutine_pipes():
                 return pid, evt.wait()
             return 0, 0
         elif options:
-            return __original_waitpid__(pid, result)
+            return __original_waitpid__(pid, options)
         return pid, evt.wait()
     os.fdopen = new_fdopen
     os.read = new_read
