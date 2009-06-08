@@ -1,4 +1,3 @@
-import sys
 from eventlet import pool, coros, api
 from greentest import LimitedTestCase
 from unittest import main

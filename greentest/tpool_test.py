@@ -17,11 +17,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import os, socket, time, threading
+import time
 from eventlet import coros, api, tpool
 from greentest import tests
 
-from eventlet.tpool import erpc
 from sys import stdout
 
 import random

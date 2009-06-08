@@ -22,14 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-import sys
-
 from eventlet import api
 from eventlet import channel
 from eventlet import coros
 from eventlet import pools
 from greentest import tests
-from eventlet import timer
 
 class IntPool(pools.Pool):
     def create(self):

@@ -22,10 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 from greentest import tests
-from eventlet import timer
 from eventlet import coros, api
 
-import sys
 
 class TestEvent(tests.TestCase):
     mode = 'static'

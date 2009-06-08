@@ -28,7 +28,6 @@ import os
 from eventlet import api
 from eventlet import wsgi
 from eventlet import processes
-from eventlet import util
 
 try:
     from cStringIO import StringIO

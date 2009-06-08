@@ -22,7 +22,7 @@ THE SOFTWARE.
 """
 
 from greentest import tests
-from eventlet import api, greenio, util
+from eventlet import api
 import socket
 
 # TODO try and reuse unit tests from within Python itself

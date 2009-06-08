@@ -26,8 +26,6 @@ import cgi
 
 from eventlet import api
 from eventlet import httpc
-from eventlet import processes
-from eventlet import util
 from eventlet import wsgi
 
 import time

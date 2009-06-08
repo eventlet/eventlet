@@ -33,8 +33,6 @@ try:
 except ImportError:
     from StringIO import StringIO
 
-from eventlet import greenio
-
 
 util.wrap_socket_with_coroutine_socket()
 
