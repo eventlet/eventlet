@@ -352,7 +352,6 @@ class GreenSocket(object):
         return self.fd.sendto(*args)
 
     def setblocking(self, flag):
-        self.fd.setblocking(flag)
         if flag:
             self.act_non_blocking = False
             self.timeout = None
