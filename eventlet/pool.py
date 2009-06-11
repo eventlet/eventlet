@@ -54,7 +54,7 @@ class Pool(object):
     execute_async = execute
 
     def _execute(self, evt, func, args, kw):
-        p = self.execute(func, args, kw)
+        p = self.execute(func, *args, **kw)
         p.link(evt)
         return p
 
