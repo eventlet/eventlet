@@ -26,7 +26,6 @@ import socket
 import sys
 import time
 import urllib
-import socket
 import traceback
 import BaseHTTPServer
 
