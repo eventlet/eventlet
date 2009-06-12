@@ -25,7 +25,6 @@ THE SOFTWARE.
 import collections
 
 from eventlet import api
-from eventlet import channel
 from eventlet import coros
 
 class FanFailed(RuntimeError):
@@ -75,7 +74,7 @@ class Pool(object):
         self.max_size = max_size
         self.order_as_stack = order_as_stack
         self.current_size = 0
-        self.channel = channel.channel()
+        self.channel = coros.queue(0)
         self.free_items = collections.deque()
         for x in xrange(min_size):
             self.current_size += 1
@@ -90,7 +89,7 @@ class Pool(object):
             created = self.create()
             self.current_size += 1
             return created
-        return self.channel.receive()
+        return self.channel.wait()
 
     def put(self, item):
         """Put an item back into the pool, when done
@@ -99,7 +98,7 @@ class Pool(object):
             self.current_size -= 1
             return
 
-        if self.channel.balance < 0:
+        if self.channel.sem.balance < 0:
             self.channel.send(item)
         else:
             if self.order_as_stack:
@@ -120,8 +119,8 @@ class Pool(object):
     def waiting(self):
         """Return the number of routines waiting for a pool item.
         """
-        if self.channel.balance < 0:
-            return -self.channel.balance
+        if self.channel.sem.balance < 0:
+            return -self.channel.sem.balance
         return 0
 
     def create(self):
