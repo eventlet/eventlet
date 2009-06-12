@@ -116,7 +116,7 @@ class Hub(hub.BaseHub):
         response = StartResponse()
         result = slave.switch(
             api.getcurrent(), env, response)
-    
+
         while True:
             self.current_application = api.getcurrent()
             print "RESULT", result, callable(result[0])

@@ -71,7 +71,7 @@ class Hub(hub.BaseHub):
 
     def signal_received(self, signal):
         # can't do more than set this flag here because the pyevent callback
-        # mechanism swallows exceptions raised here, so we have to raise in 
+        # mechanism swallows exceptions raised here, so we have to raise in
         # the 'main' greenlet (in wait()) to kill the program
         self.interrupted = True
         self._evloop.unloop()
@@ -97,7 +97,7 @@ class Hub(hub.BaseHub):
         # raise any signals that deserve raising
         if self.interrupted:
             self.interrupted = False
-            raise KeyboardInterrupt() 
+            raise KeyboardInterrupt()
 
     def add_timer(self, timer):
         # store the pyevent timer object so that we can cancel later

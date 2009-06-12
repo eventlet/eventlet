@@ -39,7 +39,7 @@ def format_exc(exc=None):
     frames = []
     while exc_tb is not None:
         f = exc_tb.tb_frame
-        
+
         frames.append((
             f.f_code.co_name,
             f.f_code.co_filename,

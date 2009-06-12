@@ -93,7 +93,7 @@ class Timer(object):
             pass
 
 class LocalTimer(Timer):
-    
+
     def __init__(self, *args, **kwargs):
         self.greenlet = getcurrent()
         Timer.__init__(self, *args, **kwargs)

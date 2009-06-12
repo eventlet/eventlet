@@ -100,7 +100,7 @@ class TestHttpd(tests.TestCase):
     def test_001_server(self):
         sock = api.connect_tcp(
             ('127.0.0.1', 12346))
-        
+
         fd = sock.makeGreenFile()
         fd.write('GET / HTTP/1.0\r\nHost: localhost\r\n\r\n')
         result = fd.read()
@@ -112,7 +112,7 @@ class TestHttpd(tests.TestCase):
     def test_002_keepalive(self):
         sock = api.connect_tcp(
             ('127.0.0.1', 12346))
-            
+
         fd = sock.makeGreenFile()
         fd.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
         read_http(sock)
@@ -124,7 +124,7 @@ class TestHttpd(tests.TestCase):
         # This should go in greenio_test
         sock = api.connect_tcp(
             ('127.0.0.1', 12346))
-        
+
         fd = sock.makeGreenFile()
         fd.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
         cancel = api.exc_after(1, RuntimeError)
@@ -166,7 +166,7 @@ class TestHttpd(tests.TestCase):
         status = result.split(' ')[1]
         self.assertEqual(status, '414')
         fd.close()
-        
+
     def test_007_get_arg(self):
         # define a new handler that does a get_arg as well as a read_body
         def new_handle_request(req):
@@ -174,28 +174,28 @@ class TestHttpd(tests.TestCase):
             body = req.read_body()
             req.write('a is %s, body is %s' % (a, body))
         self.site.handle_request = new_handle_request
-        
+
         sock = api.connect_tcp(
             ('127.0.0.1', 12346))
         request = '\r\n'.join((
-            'POST /%s HTTP/1.0', 
-            'Host: localhost', 
-            'Content-Length: 3', 
+            'POST /%s HTTP/1.0',
+            'Host: localhost',
+            'Content-Length: 3',
             '',
             'a=a'))
         fd = sock.makeGreenFile()
         fd.write(request)
-        
+
         # send some junk after the actual request
         fd.write('01234567890123456789')
         reqline, headers, body = read_http(sock)
         self.assertEqual(body, 'a is a, body is a=a')
         fd.close()
-        
+
     def test_008_correctresponse(self):
         sock = api.connect_tcp(
             ('127.0.0.1', 12346))
-        
+
         fd = sock.makeGreenFile()
         fd.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
         response_line_200,_,_ = read_http(sock)

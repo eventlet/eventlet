@@ -55,7 +55,7 @@ class Hub(hub.BaseHub):
             mask |= WRITE_MASK
         return mask
 
-        
+
     def remove_descriptor(self, fileno):
         super(Hub, self).remove_descriptor(fileno)
         try:

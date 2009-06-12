@@ -124,7 +124,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             if e[0] != errno.EBADF:
                 raise
             self.raw_requestline = ''
-    
+
         if not self.raw_requestline:
             self.close_connection = 1
             return
@@ -254,7 +254,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                         start_response("500 Internal Server Error", [('Content-type', 'text/plain')])
                         write(exc)
                         return
-    
+
                 if towrite:
                     write(''.join(towrite))
                 if not headers_sent:
@@ -346,7 +346,7 @@ class Server(BaseHTTPServer.HTTPServer):
             self.log = sys.stderr
         self.app = app
         self.environ = environ
-        self.max_http_version = max_http_version      
+        self.max_http_version = max_http_version
         self.protocol = protocol
         self.pid = os.getpid()
         if minimum_chunk_size is not None:

@@ -30,11 +30,7 @@ import traceback
 
 
 caller = None
-
-
 coro_args = {}
-
-
 tasklet_to_greenlet = {}
 
 

@@ -275,7 +275,7 @@ class ChildProcess(object):
             retval = _read_response(_id, attribute, self._in, self)
         finally:
             self._lock.put(t)
-            
+
         return retval
 
     def __del__(self):
@@ -323,7 +323,7 @@ not supported, so you have to know what has been exported.
                     _dead_list.remove(dead_object)
                 except KeyError:
                     pass
-            
+
             # Pass all public attributes across to find out if it is
             # callable or a simple attribute.
             request = Request('getattr', {'id':my_id, 'attribute':attribute})
@@ -332,7 +332,7 @@ not supported, so you have to know what has been exported.
     def __setattr__(self, attribute, value):
         #_prnt("Proxy::__setattr__: %s" % attribute)
         if _is_local(attribute):
-            # It must be local to this actual object, so we have to apply 
+            # It must be local to this actual object, so we have to apply
             # it to the dict in a roundabout way
             attribute = _unmunge_attr_name(attribute)
             super(Proxy, self).__getattribute__('__dict__')[attribute]=value
@@ -370,7 +370,7 @@ not need to deal with this class directly."""
         my_id = self.__local_dict['_id']
         request = Request('getitem', {'id':my_id, 'key':key})
         return my_cp.make_request(request, attribute=key)
-        
+
     def __setitem__(self, key, value):
         my_cp = self.__local_dict['_cp']
         my_id = self.__local_dict['_id']
@@ -422,7 +422,7 @@ not need to deal with this class directly."""
     # since the remote object is being serialized whole anyway,
     # there's no semantic difference between copy and deepcopy
     __copy__ = __deepcopy__
-        
+
 
 def proxied_type(self):
     """ Returns the type of the object in the child process.
@@ -432,7 +432,7 @@ def proxied_type(self):
     'real' type value."""
     if type(self) is not ObjectProxy:
         return type(self)
-    
+
     my_cp = self.__local_dict['_cp']
     my_id = self.__local_dict['_id']
     request = Request('type', {'id':my_id})
@@ -499,7 +499,7 @@ when the id is None."""
             else:
                 raise e
         #_log('getattr: %s' % str(response))
-        
+
     def handle_setattr(self, obj, req):
         try:
             return setattr(obj, req['attribute'], req['value'])
@@ -534,7 +534,7 @@ when the id is None."""
                 fn = obj[req['name']]
             else:
                 raise e
-            
+
         return fn(*req['args'],**req['kwargs'])
 
     def handle_del(self, obj, req):

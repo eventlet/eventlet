@@ -22,7 +22,6 @@
 from greentest import tests
 from eventlet import coros, api
 
-
 class TestEvent(tests.TestCase):
     mode = 'static'
     def setUp(self):
