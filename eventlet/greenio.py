@@ -293,7 +293,9 @@ class GreenSocket(object):
     def dup(self, *args, **kw):
         sock = self.fd.dup(*args, **kw)
         set_nonblocking(sock)
-        return type(self)(sock)
+        newsock = type(self)(sock)
+        newsock.settimeout(self.timeout)
+        return newsock
 
     def fileno(self, *args, **kw):
         fn = self.fileno = self.fd.fileno
