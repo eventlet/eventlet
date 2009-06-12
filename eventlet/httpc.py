@@ -24,7 +24,6 @@ THE SOFTWARE.
 """
 
 import copy
-import datetime
 from eventlet.green import httplib
 import os.path
 import os
