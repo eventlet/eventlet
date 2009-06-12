@@ -21,10 +21,8 @@
 # THE SOFTWARE.
 
 import sys
-import traceback
 
 from eventlet import api
-from eventlet import timer
 
 from twisted.internet import posixbase
 from twisted.internet.interfaces import IReactorFDSet

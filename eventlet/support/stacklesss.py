@@ -26,8 +26,6 @@ import sys
 import types
 
 import stackless
-import traceback
-
 
 caller = None
 coro_args = {}

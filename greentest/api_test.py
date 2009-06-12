@@ -20,15 +20,12 @@
 # THE SOFTWARE.
 
 import os
-import socket
+import os.path
 
 from eventlet import api
 from eventlet import greenio
 from greentest import tests
 from eventlet import util
-
-import os.path
-import socket
 
 
 def check_hub():
