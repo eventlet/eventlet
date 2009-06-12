@@ -196,13 +196,11 @@ class event(object):
         >>> api.sleep(0)
         received stuff
         """
-        # why is waiter not used?
         if waiter in self._waiters:
             del self._waiters[waiter]
             # XXX This does not check that waiter still waits when throw actually happens
             # XXX and therefore is broken (see how send() deals with this)
-            api.get_hub().schedule_call(
-                0, waiter.throw, Cancelled())
+            api.get_hub().schedule_call(0, waiter.throw, Cancelled())
 
     def send(self, result=None, exc=None):
         """Makes arrangements for the waiters to be woken with the
