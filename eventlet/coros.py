@@ -451,27 +451,6 @@ def CoroutinePool(*args, **kwargs):
     return Pool(*args, **kwargs)
 
 
-class pipe(object):
-    """ Implementation of pipe using events.  Not tested!  Not used, either."""
-    def __init__(self):
-        self._event = event()
-        self._buffer = ''
-
-    def send(self, txt):
-        self._buffer += txt
-        evt, self._event = self._event, event()
-        evt.send()
-
-    def recv(self, num=16384):
-        if not self._buffer:
-            self._event.wait()
-        if num >= len(self._buffer):
-            buf, self._buffer = self._buffer, ''
-        else:
-            buf, self._buffer = self._buffer[:num], self._buffer[num:]
-        return buf
-
-
 class queue(object):
     """Cross-coroutine queue, using semaphore to synchronize.
     The API is like a generalization of event to be able to hold more than one
