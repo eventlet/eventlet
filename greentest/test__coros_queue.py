@@ -74,6 +74,7 @@ class TestQueue(LimitedTestCase):
         self.assertEquals(e1.wait(),'done')
 
     def test_multiple_waiters(self):
+        # tests that multiple waiters get their results back
         q = coros.queue()
 
         def waiter(q, evt):
@@ -86,14 +87,39 @@ class TestQueue(LimitedTestCase):
 
         api.sleep(0.01) # get 'em all waiting
 
+        results = set()
+        def collect_pending_results():
+            for i, e in enumerate(evts):
+                timer = api.exc_after(0.001, api.TimeoutError)
+                try:
+                    x = e.wait()
+                    results.add(x)
+                    timer.cancel()
+                except api.TimeoutError:
+                    pass  # no pending result at that event
+            return len(results)
         q.send(sendings[0])
-        self.assertEquals(sendings[0], evts[0].wait())
+        self.assertEquals(collect_pending_results(), 1)
         q.send(sendings[1])
-        self.assertEquals(sendings[1], evts[1].wait())
+        self.assertEquals(collect_pending_results(), 2)
         q.send(sendings[2])
         q.send(sendings[3])
-        self.assertEquals(sendings[2], evts[2].wait())
-        self.assertEquals(sendings[3], evts[3].wait())
+        self.assertEquals(collect_pending_results(), 4)
+                
+    def test_ordering_of_waiters(self):
+        # test that waiters receive results in the order that they waited
+        q = coros.queue()
+        def waiter(q, evt):
+            evt.send(q.wait())
+
+        sendings = list(range(10))
+        evts = [coros.event() for x in sendings]
+        for i, x in enumerate(sendings):
+            api.spawn(waiter, q, evts[i])
+        results = []
+        for i, s in enumerate(sendings):
+            q.send(s)
+            self.assertEquals(s, evts[i].wait())
 
     def test_waiters_that_cancel(self):
         q = coros.queue()
@@ -175,7 +201,7 @@ class TestQueue(LimitedTestCase):
         api.sleep(0)
         self.assertEquals(1, waiting(q))
         q.send('hi')
-        api.sleep(0)  # *FIX this should not be necessary
+        api.sleep(0)  # *FIX: should not be necessary
         self.assertEquals(0, waiting(q))
         self.assertEquals('hi', e1.wait())
         self.assertEquals(0, waiting(q))
