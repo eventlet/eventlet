@@ -1,27 +1,24 @@
-"""\
-@file wsgi.py
-@author Bob Ippolito
-
-Copyright (c) 2005-2006, Bob Ippolito
-Copyright (c) 2007, Linden Research, Inc.
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-"""
+# @author Bob Ippolito
+#
+# Copyright (c) 2005-2006, Bob Ippolito
+# Copyright (c) 2007, Linden Research, Inc.
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
 
 import errno
 import os
@@ -124,7 +121,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             if e[0] != errno.EBADF:
                 raise
             self.raw_requestline = ''
-    
+
         if not self.raw_requestline:
             self.close_connection = 1
             return
@@ -254,7 +251,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                         start_response("500 Internal Server Error", [('Content-type', 'text/plain')])
                         write(exc)
                         return
-    
+
                 if towrite:
                     write(''.join(towrite))
                 if not headers_sent:
@@ -346,7 +343,7 @@ class Server(BaseHTTPServer.HTTPServer):
             self.log = sys.stderr
         self.app = app
         self.environ = environ
-        self.max_http_version = max_http_version      
+        self.max_http_version = max_http_version
         self.protocol = protocol
         self.pid = os.getpid()
         if minimum_chunk_size is not None:

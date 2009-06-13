@@ -1,29 +1,28 @@
-"""\
-@file saranwrap.py
+# Copyright (c) 2007, Linden Research, Inc.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+"""
 @author Phoenix
 @date 2007-07-13
-@brief A simple, pickle based rpc mechanism which reflects python
-objects and callables.
-
-Copyright (c) 2007, Linden Research, Inc.
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+@brief A simple, pickle based rpc mechanism which reflects python objects and
+callables.
 
 This file provides classes and exceptions used for simple python level
 remote procedure calls. This is achieved by intercepting the basic
@@ -90,12 +89,6 @@ from cPickle import dumps, loads
 import os
 import struct
 import sys
-
-try:
-    set = set
-    frozenset = frozenset
-except NameError:
-    from sets import Set as set, ImmutableSet as frozenset
 
 from eventlet.processes import Process, DeadProcess
 from eventlet import api, pools
@@ -282,7 +275,7 @@ class ChildProcess(object):
             retval = _read_response(_id, attribute, self._in, self)
         finally:
             self._lock.put(t)
-            
+
         return retval
 
     def __del__(self):
@@ -330,7 +323,7 @@ not supported, so you have to know what has been exported.
                     _dead_list.remove(dead_object)
                 except KeyError:
                     pass
-            
+
             # Pass all public attributes across to find out if it is
             # callable or a simple attribute.
             request = Request('getattr', {'id':my_id, 'attribute':attribute})
@@ -339,7 +332,7 @@ not supported, so you have to know what has been exported.
     def __setattr__(self, attribute, value):
         #_prnt("Proxy::__setattr__: %s" % attribute)
         if _is_local(attribute):
-            # It must be local to this actual object, so we have to apply 
+            # It must be local to this actual object, so we have to apply
             # it to the dict in a roundabout way
             attribute = _unmunge_attr_name(attribute)
             super(Proxy, self).__getattribute__('__dict__')[attribute]=value
@@ -377,7 +370,7 @@ not need to deal with this class directly."""
         my_id = self.__local_dict['_id']
         request = Request('getitem', {'id':my_id, 'key':key})
         return my_cp.make_request(request, attribute=key)
-        
+
     def __setitem__(self, key, value):
         my_cp = self.__local_dict['_cp']
         my_id = self.__local_dict['_id']
@@ -429,7 +422,7 @@ not need to deal with this class directly."""
     # since the remote object is being serialized whole anyway,
     # there's no semantic difference between copy and deepcopy
     __copy__ = __deepcopy__
-        
+
 
 def proxied_type(self):
     """ Returns the type of the object in the child process.
@@ -439,7 +432,7 @@ def proxied_type(self):
     'real' type value."""
     if type(self) is not ObjectProxy:
         return type(self)
-    
+
     my_cp = self.__local_dict['_cp']
     my_id = self.__local_dict['_id']
     request = Request('type', {'id':my_id})
@@ -506,7 +499,7 @@ when the id is None."""
             else:
                 raise e
         #_log('getattr: %s' % str(response))
-        
+
     def handle_setattr(self, obj, req):
         try:
             return setattr(obj, req['attribute'], req['value'])
@@ -541,7 +534,7 @@ when the id is None."""
                 fn = obj[req['name']]
             else:
                 raise e
-            
+
         return fn(*req['args'],**req['kwargs'])
 
     def handle_del(self, obj, req):

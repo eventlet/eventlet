@@ -1,7 +1,4 @@
 """\
-@file greenlib.py
-@author Bob Ippolito
-
 Copyright (c) 2005-2006, Bob Ippolito
 Copyright (c) 2007, Linden Research, Inc.
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,11 +19,13 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
+from eventlet.api import Greenlet
+
+class SwitchingToDeadGreenlet(Exception):
+    pass
+
 def switch(other=None, value=None, exc=None):
-    """
-    Switch to another greenlet, passing value or exception
-    """
-    self = greenlet.getcurrent()
+    self = Greenlet.getcurrent()
     if other is None:
         other = self.parent
     if other is None:
@@ -37,3 +36,6 @@ def switch(other=None, value=None, exc=None):
         return other.throw(exc)
     else:
         return other.switch(value)        
+
+import warnings
+warnings.warn("greenlib is deprecated; use greenlet methods directly", DeprecationWarning, stacklevel=2)

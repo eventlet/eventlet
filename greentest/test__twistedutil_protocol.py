@@ -20,7 +20,7 @@
 # THE SOFTWARE.
 
 from twisted.internet import reactor
-from greentest import exit_unless_twisted, LimitedTestCase
+from greentest import exit_unless_twisted
 exit_unless_twisted()
 
 import unittest
@@ -188,53 +188,6 @@ class TestGreenTransport_bufsize1(TestGreenTransport):
 #         self.assertEqual('', self.conn.recv())
 #
 
-# class TestHalfClose_TCP(LimitedTestCase):
-# 
-#     def _test_server(self, conn):
-#         conn.write('hello')
-#         conn.loseWriteConnection()
-#         self.assertRaises(pr.ConnectionDone, conn.write, 'hey')
-#         data = conn.read()
-#         self.assertEqual('bye', data)
-#         conn.loseConnection()
-#         self.assertRaises(ConnectionDone, conn._wait)
-#         self.check.append('server')
-# 
-#     def setUp(self):
-#         LimitedTestCase.setUp(self)
-#         self.factory = pr.SpawnFactory(self._test_server)
-#         self.port = reactor.listenTCP(0, self.factory)
-#         self.conn = pr.GreenClientCreator(reactor).connectTCP('localhost', self.port.getHost().port)
-#         self.port.stopListening()
-#         self.check = []
-# 
-#     def test(self):
-#         conn = self.conn
-#         data = conn.read()
-#         self.assertEqual('hello', data)
-#         conn.write('bye')
-#         conn.loseWriteConnection()
-#         self.assertRaises(pr.ConnectionDone, conn.write, 'hoy')
-#         self.factory.waitall()
-#         self.assertRaises(ConnectionDone, conn._wait)
-#         assert self.check == ['server']
-# 
-# class TestHalfClose_TLS(TestHalfClose_TCP):
-# 
-#     def setUp(self):
-#         LimitedTestCase.setUp(self)
-#         from gnutls.crypto import X509PrivateKey, X509Certificate
-#         from gnutls.interfaces.twisted import X509Credentials
-#         cert = X509Certificate(open('gnutls_valid.crt').read())
-#         key = X509PrivateKey(open('gnutls_valid.key').read())
-#         server_credentials = X509Credentials(cert, key)
-#         self.factory = pr.SpawnFactory(self._test_server)
-#         self.port = reactor.listenTLS(0, self.factory, server_credentials)
-#         self.conn = pr.GreenClientCreator(reactor).connectTLS('localhost', self.port.getHost().port, X509Credentials())
-#         self.port.stopListening()
-#         self.check = []
-# 
-
 if socket is not None:
 
     class TestUnbufferedTransport_socketserver(TestUnbufferedTransport):
@@ -275,7 +228,6 @@ try:
     import gnutls.interfaces.twisted
 except ImportError:
     del TestTLSError
-    del TestHalfClose_TLS
 
 if __name__=='__main__':
     unittest.main()

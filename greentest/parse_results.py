@@ -93,7 +93,6 @@ def main(db):
            'parsed_command_record.id=command_record.id)')
     for row in c.execute(SQL).fetchall():
         id, command, stdout, exitcode = row
-        stdout = stdout.encode()
         try:
             testname, hub = parse_stdout(stdout)
             if unittest_delim in stdout:

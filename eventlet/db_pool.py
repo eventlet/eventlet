@@ -1,28 +1,26 @@
-"""\
-@file db_pool.py
-@brief A pool of nonblocking database connections.
+# @brief A pool of nonblocking database connections.
+#
+# Copyright (c) 2007, Linden Research, Inc.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
 
-Copyright (c) 2007, Linden Research, Inc.
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-
-
+"""
 The db_pool module is useful for managing database connections.  It provides three primary benefits: cooperative yielding during database operations, concurrency limiting to a database host, and connection reuse.  db_pool is intended to be db-agnostic, compatible with any DB-API 2.0 database module; however it has currently only been tested and used with MySQLdb.
 
 == ConnectionPool ==
@@ -79,11 +77,11 @@ The constructor arguments:
 >>> dc = DatabaseConnector(MySQLdb,
         {'db.internal.example.com':
             {'user':'internal', 'passwd':'s33kr1t'},
-         'localhost': 
+         'localhost':
             {'user':'root', 'passwd':''})
-            
+
 If the credentials contain a host named 'default', then the value for 'default' is used whenever trying to connect to a host that has no explicit entry in the database.  This is useful if there is some pool of hosts that share arguments.
-            
+
 * conn_pool : The connection pool class to use.  Defaults to db_pool.ConnectionPool.
 
 The rest of the arguments to the DatabaseConnector constructor are passed on to the ConnectionPool.
@@ -92,7 +90,6 @@ NOTE: The DatabaseConnector is a bit unfinished, it only suits a subset of use c
 """
 
 from collections import deque
-import os
 import sys
 import time
 
@@ -106,28 +103,28 @@ class ConnectTimeout(Exception):
 
 
 class BaseConnectionPool(Pool):
-    def __init__(self, db_module, 
-                       min_size = 0, max_size = 4, 
+    def __init__(self, db_module,
+                       min_size = 0, max_size = 4,
                        max_idle = 10, max_age = 30,
                        connect_timeout = 5,
                        *args, **kwargs):
         """
         Constructs a pool with at least *min_size* connections and at most
         *max_size* connections.  Uses *db_module* to construct new connections.
-        
+
         The *max_idle* parameter determines how long pooled connections can
-        remain idle, in seconds.  After *max_idle* seconds have elapsed 
-        without the connection being used, the pool closes the connection.  
-        
+        remain idle, in seconds.  After *max_idle* seconds have elapsed
+        without the connection being used, the pool closes the connection.
+
         *max_age* is how long any particular connection is allowed to live.
         Connections that have been open for longer than *max_age* seconds are
-        closed, regardless of idle time.  If *max_age* is 0, all connections are 
+        closed, regardless of idle time.  If *max_age* is 0, all connections are
         closed on return to the pool, reducing it to a concurrency limiter.
-        
-        *connect_timeout* is the duration in seconds that the pool will wait 
+
+        *connect_timeout* is the duration in seconds that the pool will wait
         before timing out on connect() to the database.  If triggered, the
         timeout will raise a ConnectTimeout from get().
-        
+
         The remainder of the arguments are used as parameters to the
         *db_module*'s connection constructor.
         """
@@ -139,33 +136,33 @@ class BaseConnectionPool(Pool):
         self.max_age = max_age
         self.connect_timeout = connect_timeout
         self._expiration_timer = None
-        super(BaseConnectionPool, self).__init__(min_size=min_size, 
+        super(BaseConnectionPool, self).__init__(min_size=min_size,
                                                  max_size=max_size,
                                                  order_as_stack=True)
-        
+
     def _schedule_expiration(self):
-        """ Sets up a timer that will call _expire_old_connections when the 
+        """ Sets up a timer that will call _expire_old_connections when the
         oldest connection currently in the free pool is ready to expire.  This
         is the earliest possible time that a connection could expire, thus, the
-        timer will be running as infrequently as possible without missing a 
+        timer will be running as infrequently as possible without missing a
         possible expiration.
-        
-        If this function is called when a timer is already scheduled, it does 
+
+        If this function is called when a timer is already scheduled, it does
         nothing.
-        
+
         If max_age or max_idle is 0, _schedule_expiration likewise does nothing.
         """
         if self.max_age is 0 or self.max_idle is 0:
             # expiration is unnecessary because all connections will be expired
             # on put
             return
-        
-        if ( self._expiration_timer is not None 
+
+        if ( self._expiration_timer is not None
              and not getattr(self._expiration_timer, 'called', False)
              and not getattr(self._expiration_timer, 'cancelled', False) ):
             # the next timer is already scheduled
-            return 
-            
+            return
+
         try:
             now = time.time()
             self._expire_old_connections(now)
@@ -174,23 +171,23 @@ class BaseConnectionPool(Pool):
             idle_delay = (self.free_items[-1][0] - now) + self.max_idle
             oldest = min([t[1] for t in self.free_items])
             age_delay = (oldest - now) + self.max_age
-            
+
             next_delay = min(idle_delay, age_delay)
         except IndexError, ValueError:
             # no free items, unschedule ourselves
             self._expiration_timer = None
             return
-        
+
         if next_delay > 0:
             # set up a continuous self-calling loop
             self._expiration_timer = api.call_after(next_delay,
                                                     self._schedule_expiration)
-        
+
     def _expire_old_connections(self, now):
         """ Iterates through the open connections contained in the pool, closing
         ones that have remained idle for longer than max_idle seconds, or have
         been in existence for longer than max_age seconds.
-        
+
         *now* is the current time, as returned by time.time().
         """
         original_count = len(self.free_items)
@@ -207,8 +204,8 @@ class BaseConnectionPool(Pool):
             if not self._is_expired(now, last_used, created_at)]
         self.free_items.clear()
         self.free_items.extend(new_free)
-        
-        # adjust the current size counter to account for expired 
+
+        # adjust the current size counter to account for expired
         # connections
         self.current_size -= original_count - len(self.free_items)
 
@@ -220,7 +217,7 @@ class BaseConnectionPool(Pool):
              or now - created_at > self.max_age ):
             return True
         return False
-        
+
     def _unwrap_connection(self, conn):
         """ If the connection was wrapped by a subclass of
         BaseConnectionWrapper and is still functional (as determined
@@ -253,7 +250,7 @@ class BaseConnectionPool(Pool):
 
     def get(self):
         conn = super(BaseConnectionPool, self).get()
-            
+
         # None is a flag value that means that put got called with
         # something it couldn't use
         if conn is None:
@@ -273,7 +270,7 @@ class BaseConnectionPool(Pool):
             _last_used, created_at, conn = conn
         else:
             created_at = time.time()
-        
+
         # wrap the connection so the consumer can call close() safely
         wrapped = PooledConnectionWrapper(conn, self)
         # annotating the wrapper so that when it gets put in the pool
@@ -285,7 +282,7 @@ class BaseConnectionPool(Pool):
         created_at = getattr(conn, '_db_pool_created_at', 0)
         now = time.time()
         conn = self._unwrap_connection(conn)
-  
+
         if self._is_expired(now, now, created_at):
             self._safe_close(conn, quiet=False)
             conn = None
@@ -317,7 +314,7 @@ class BaseConnectionPool(Pool):
         self._schedule_expiration()
 
     def clear(self):
-        """ Close all connections that this pool still holds a reference to, 
+        """ Close all connections that this pool still holds a reference to,
         and removes all references to them.
         """
         if self._expiration_timer:
@@ -325,10 +322,10 @@ class BaseConnectionPool(Pool):
         free_items, self.free_items = self.free_items, deque()
         for _last_used, _created_at, conn in free_items:
             self._safe_close(conn, quiet=True)
-            
+
     def __del__(self):
         self.clear()
-    
+
 
 class SaranwrappedConnectionPool(BaseConnectionPool):
     """A pool which gives out saranwrapped database connections.
@@ -346,9 +343,9 @@ class SaranwrappedConnectionPool(BaseConnectionPool):
             return saranwrap.wrap(db_module).connect(*args, **kw)
         finally:
             timeout.cancel()
-            
+
     connect = classmethod(connect)
-        
+
 
 class TpooledConnectionPool(BaseConnectionPool):
     """A pool which gives out tpool.Proxy-based database connections.
@@ -422,16 +419,12 @@ class GenericConnectionWrapper(object):
     def set_sql_mode(self, sql_mode): return self._base.set_sql_mode(sql_mode)
     def show_warnings(self): return self._base.show_warnings()
     def warning_count(self): return self._base.warning_count()
-    def literal(self, o): return self._base.literal(o)
     def ping(self,*args, **kwargs): return self._base.ping(*args, **kwargs)
     def query(self,*args, **kwargs): return self._base.query(*args, **kwargs)
     def rollback(self,*args, **kwargs): return self._base.rollback(*args, **kwargs)
     def select_db(self,*args, **kwargs): return self._base.select_db(*args, **kwargs)
     def set_server_option(self,*args, **kwargs): return self._base.set_server_option(*args, **kwargs)
-    def set_character_set(self, charset): return self._base.set_character_set(charset)
-    def set_sql_mode(self, sql_mode): return self._base.set_sql_mode(sql_mode)
     def server_capabilities(self,*args, **kwargs): return self._base.server_capabilities(*args, **kwargs)
-    def show_warnings(self): return self._base.show_warnings()
     def shutdown(self,*args, **kwargs): return self._base.shutdown(*args, **kwargs)
     def sqlstate(self,*args, **kwargs): return self._base.sqlstate(*args, **kwargs)
     def stat(self,*args, **kwargs): return self._base.stat(*args, **kwargs)
@@ -439,7 +432,6 @@ class GenericConnectionWrapper(object):
     def string_literal(self,*args, **kwargs): return self._base.string_literal(*args, **kwargs)
     def thread_id(self,*args, **kwargs): return self._base.thread_id(*args, **kwargs)
     def use_result(self,*args, **kwargs): return self._base.use_result(*args, **kwargs)
-    def warning_count(self): return self._base.warning_count()
 
 
 class PooledConnectionWrapper(GenericConnectionWrapper):
@@ -470,7 +462,7 @@ class PooledConnectionWrapper(GenericConnectionWrapper):
         if self and self._pool:
             self._pool.put(self)
         self._destroy()
-    
+
     def __del__(self):
         self.close()
 
@@ -479,7 +471,7 @@ class DatabaseConnector(object):
     """\
 @brief This is an object which will maintain a collection of database
 connection pools on a per-host basis."""
-    def __init__(self, module, credentials, 
+    def __init__(self, module, credentials,
                  conn_pool=None, *args, **kwargs):
         """\
         @brief constructor

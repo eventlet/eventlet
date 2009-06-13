@@ -15,6 +15,10 @@ class Pool(object):
         else:
             self.results = None
 
+    @property
+    def current_size(self):
+        return len(self.procs)
+
     def free(self):
         return self.sem.counter
 
@@ -50,7 +54,7 @@ class Pool(object):
     execute_async = execute
 
     def _execute(self, evt, func, args, kw):
-        p = self.execute(func, args, kw)
+        p = self.execute(func, *args, **kw)
         p.link(evt)
         return p
 

@@ -1,31 +1,26 @@
-"""\
-@file coros_test.py
-@author Donovan Preston, Ryan Williams
+# @author Donovan Preston, Ryan Williams
+#
+# Copyright (c) 2000-2007, Linden Research, Inc.
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
 
-Copyright (c) 2000-2007, Linden Research, Inc.
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-"""
 from greentest import tests
-from eventlet import timer
 from eventlet import coros, api
-
-import sys
 
 class TestEvent(tests.TestCase):
     mode = 'static'
@@ -112,121 +107,6 @@ class TestEvent(tests.TestCase):
         # shouldn't see the RuntimeError again
         api.exc_after(0.001, api.TimeoutError('from test_double_exception'))
         self.assertRaises(api.TimeoutError, evt.wait)
-
-
-class TestCoroutinePool(tests.TestCase):
-    mode = 'static'
-    def setUp(self):
-        # raise an exception if we're waiting forever
-        self._cancel_timeout = api.exc_after(1, api.TimeoutError)
-
-    def tearDown(self):
-        self._cancel_timeout.cancel()
-
-    def test_execute_async(self):
-        done = coros.event()
-        def some_work():
-            done.send()
-        pool = coros.CoroutinePool(0, 2)
-        pool.execute_async(some_work)
-        done.wait()
-
-    def test_execute(self):
-        value = 'return value'
-        def some_work():
-            return value
-        pool = coros.CoroutinePool(0, 2)
-        worker = pool.execute(some_work)
-        self.assertEqual(value, worker.wait())
-
-    def test_multiple_coros(self):
-        evt = coros.event()
-        results = []
-        def producer():
-            results.append('prod')
-            evt.send()
-
-        def consumer():
-            results.append('cons1')
-            evt.wait()
-            results.append('cons2')
-
-        pool = coros.CoroutinePool(0, 2)
-        done = pool.execute(consumer)
-        pool.execute_async(producer)
-        done.wait()
-        self.assertEquals(['cons1', 'prod', 'cons2'], results)
-
-# since CoroutinePool does not kill the greenlet, the following does not work
-#     def test_timer_cancel(self):
-#         def some_work():
-#             t = timer.LocalTimer(5, lambda: None)
-#             t.schedule()
-#             return t
-#         pool = coros.CoroutinePool(0, 2)
-#         worker = pool.execute(some_work)
-#         t = worker.wait()
-#         api.sleep(0)
-#         self.assertEquals(t.cancelled, True)
-
-    def test_reentrant(self):
-        pool = coros.CoroutinePool(0,1)
-        def reenter():
-            waiter = pool.execute(lambda a: a, 'reenter')
-            self.assertEqual('reenter', waiter.wait())
-
-        outer_waiter = pool.execute(reenter)
-        outer_waiter.wait()
-
-        evt = coros.event()
-        def reenter_async():
-            pool.execute_async(lambda a: a, 'reenter')
-            evt.send('done')
-
-        pool.execute_async(reenter_async)
-        evt.wait()
-
-    def test_horrible_main_loop_death(self):
-        # testing the case that causes the run_forever
-        # method to exit unwantedly
-        pool = coros.CoroutinePool(min_size=1, max_size=1)
-        def crash(*args, **kw):
-            raise RuntimeError("Whoa")
-        class FakeFile(object):
-            write = crash
-
-        # we're going to do this by causing the traceback.print_exc in
-        # safe_apply to raise an exception and thus exit _main_loop
-        normal_err = sys.stderr
-        try:
-            sys.stderr = FakeFile()
-            waiter = pool.execute(crash)
-            self.assertRaises(RuntimeError, waiter.wait)
-            # the pool should have something free at this point since the
-            # waiter returned
-            self.assertEqual(pool.free(), 1)
-            # shouldn't block when trying to get
-            t = api.exc_after(0.1, api.TimeoutError)
-            self.assert_(pool.get())
-            t.cancel()
-        finally:
-            sys.stderr = normal_err
-
-    def test_track_events(self):
-        pool = coros.CoroutinePool(track_events=True)
-        for x in range(6):
-            pool.execute(lambda n: n, x)
-        for y in range(6):
-            print "wait", y
-            pool.wait()
-
-    def test_track_slow_event(self):
-        pool = coros.CoroutinePool(track_events=True)
-        def slow():
-            api.sleep(0.1)
-            return 'ok'
-        pool.execute(slow)
-        self.assertEquals(pool.wait(), 'ok')
 
 
 class IncrActor(coros.Actor):
@@ -340,9 +220,11 @@ class TestActor(tests.TestCase):
         self.assertEqual(total[0], 2)
         # both coroutines should have been used
         self.assertEqual(self.actor._pool.current_size, 2)
+        api.sleep(0)
         self.assertEqual(self.actor._pool.free(), 1)
         evt.wait()
         self.assertEqual(total[0], 3)
+        api.sleep(0)
         self.assertEqual(self.actor._pool.free(), 2)
 
 

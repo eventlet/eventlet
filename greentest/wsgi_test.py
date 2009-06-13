@@ -1,26 +1,24 @@
-"""\
-@file wsgi_test.py
-@author Donovan Preston
+# @author Donovan Preston
+#
+# Copyright (c) 2007, Linden Research, Inc.
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
 
-Copyright (c) 2007, Linden Research, Inc.
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-"""
 
 import cgi
 import os
@@ -28,7 +26,6 @@ import os
 from eventlet import api
 from eventlet import wsgi
 from eventlet import processes
-from eventlet import util
 
 try:
     from cStringIO import StringIO
@@ -43,7 +40,7 @@ def hello_world(env, start_response):
     if env['PATH_INFO'] == 'notexist':
         start_response('404 Not Found', [('Content-type', 'text/plain')])
         return ["not found"]
-        
+
     start_response('200 OK', [('Content-type', 'text/plain')])
     return ["hello world"]
 
@@ -123,7 +120,7 @@ class TestHttpd(tests.TestCase):
     def test_001_server(self):
         sock = api.connect_tcp(
             ('127.0.0.1', 12346))
-        
+
         fd = sock.makeGreenFile()
         fd.write('GET / HTTP/1.0\r\nHost: localhost\r\n\r\n')
         result = fd.read()
@@ -135,7 +132,7 @@ class TestHttpd(tests.TestCase):
     def test_002_keepalive(self):
         sock = api.connect_tcp(
             ('127.0.0.1', 12346))
-            
+
         fd = sock.makeGreenFile()
         fd.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
         read_http(sock)
@@ -147,7 +144,7 @@ class TestHttpd(tests.TestCase):
         # This should go in greenio_test
         sock = api.connect_tcp(
             ('127.0.0.1', 12346))
-        
+
         fd = sock.makeGreenFile()
         fd.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
         cancel = api.exc_after(1, RuntimeError)
@@ -189,7 +186,7 @@ class TestHttpd(tests.TestCase):
         status = result.split(' ')[1]
         self.assertEqual(status, '414')
         fd.close()
-        
+
     def test_007_get_arg(self):
         # define a new handler that does a get_arg as well as a read_body
         def new_app(env, start_response):
@@ -201,24 +198,24 @@ class TestHttpd(tests.TestCase):
         sock = api.connect_tcp(
             ('127.0.0.1', 12346))
         request = '\r\n'.join((
-            'POST / HTTP/1.0', 
-            'Host: localhost', 
-            'Content-Length: 3', 
+            'POST / HTTP/1.0',
+            'Host: localhost',
+            'Content-Length: 3',
             '',
             'a=a'))
         fd = sock.makeGreenFile()
         fd.write(request)
-        
+
         # send some junk after the actual request
         fd.write('01234567890123456789')
         reqline, headers, body = read_http(sock)
         self.assertEqual(body, 'a is a, body is a=a')
         fd.close()
-        
+
     def test_008_correctresponse(self):
         sock = api.connect_tcp(
             ('127.0.0.1', 12346))
-        
+
         fd = sock.makeGreenFile()
         fd.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
         response_line_200,_,_ = read_http(sock)
@@ -233,7 +230,7 @@ class TestHttpd(tests.TestCase):
         self.site.application = chunked_app
         sock = api.connect_tcp(
             ('127.0.0.1', 12346))
-        
+
         fd = sock.makeGreenFile()
         fd.write('GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
         self.assert_('Transfer-Encoding: chunked' in fd.read())
@@ -242,7 +239,7 @@ class TestHttpd(tests.TestCase):
         self.site.application = chunked_app
         sock = api.connect_tcp(
             ('127.0.0.1', 12346))
-        
+
         fd = sock.makeGreenFile()
         fd.write('GET / HTTP/1.0\r\nHost: localhost\r\nConnection: close\r\n\r\n')
         self.assert_('Transfer-Encoding: chunked' not in fd.read())
@@ -251,7 +248,7 @@ class TestHttpd(tests.TestCase):
         self.site.application = big_chunks
         sock = api.connect_tcp(
             ('127.0.0.1', 12346))
-        
+
         fd = sock.makeGreenFile()
         fd.write('GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
         headers = fd.readuntil('\r\n\r\n')
@@ -273,9 +270,9 @@ class TestHttpd(tests.TestCase):
 
         certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
         private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
-        
+
         sock = api.ssl_listener(('', 4201), certificate_file, private_key_file)
-    
+
         api.spawn(wsgi.server, sock, wsgi_app)
     
         result = httpc.post("https://localhost:4201/foo", "abc")
@@ -292,6 +289,20 @@ class TestHttpd(tests.TestCase):
         sock = api.ssl_listener(('', 4202), certificate_file, private_key_file)
         api.spawn(wsgi.server, sock, wsgi_app)
         
+        res = httpc.get("https://localhost:4202/foo")
+        self.assertEquals(res, '')
+
+    def test_013_empty_return(self):
+        from eventlet import httpc
+        def wsgi_app(environ, start_response):
+            start_response("200 OK", [])
+            return [""]
+
+        certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
+        private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
+        sock = api.ssl_listener(('', 4202), certificate_file, private_key_file)
+        api.spawn(wsgi.server, sock, wsgi_app)
+
         res = httpc.get("https://localhost:4202/foo")
         self.assertEquals(res, '')
 

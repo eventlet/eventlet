@@ -12,4 +12,5 @@ class channel(coros.queue):
     def balance(self):
         return self.sem.balance
 
-
+import warnings
+warnings.warn("channel is deprecated; use coros.queue(0) which behaves the same", DeprecationWarning, stacklevel=2)

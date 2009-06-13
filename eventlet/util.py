@@ -1,32 +1,28 @@
-"""\
-@file util.py
-@author Bob Ippolito
-
-Copyright (c) 2005-2006, Bob Ippolito
-Copyright (c) 2007, Linden Research, Inc.
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-"""
+# @author Bob Ippolito
+#
+# Copyright (c) 2005-2006, Bob Ippolito
+# Copyright (c) 2007, Linden Research, Inc.
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
 
 import os
 import select
 import socket
-import sys
 import errno
 
 try:
@@ -81,7 +77,7 @@ except AttributeError:
 
 def wrap_ssl(sock, certificate=None, private_key=None):
     from OpenSSL import SSL
-    from eventlet import greenio, util
+    from eventlet import greenio
     context = SSL.Context(SSL.SSLv23_METHOD)
     if certificate is not None:
         context.use_certificate_file(certificate)
@@ -174,7 +170,7 @@ def wrap_pipes_with_coroutine_pipes():
                 return pid, evt.wait()
             return 0, 0
         elif options:
-            return __original_waitpid__(pid, result)
+            return __original_waitpid__(pid, options)
         return pid, evt.wait()
     os.fdopen = new_fdopen
     os.read = new_read
@@ -238,7 +234,7 @@ def wrap_threading_local_with_coro_local():
     class local(object):
         def __init__(self):
             self.__dict__['__objs'] = {}
-    
+
         def __getattr__(self, attr, g=get_ident):
             try:
                 return self.__dict__['__objs'][g()][attr]
@@ -246,10 +242,10 @@ def wrap_threading_local_with_coro_local():
                 raise AttributeError(
                     "No variable %s defined for the thread %s"
                     % (attr, g()))
-    
+
         def __setattr__(self, attr, value, g=get_ident):
             self.__dict__['__objs'].setdefault(g(), {})[attr] = value
-    
+
         def __delattr__(self, attr, g=get_ident):
             try:
                 del self.__dict__['__objs'][g()][attr]

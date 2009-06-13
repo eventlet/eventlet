@@ -1,26 +1,23 @@
-"""\
-@file coros.py
-@author Donovan Preston
-
-Copyright (c) 2007, Linden Research, Inc.
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-"""
+# @author Donovan Preston
+# 
+# Copyright (c) 2007, Linden Research, Inc.
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
 
 import collections
 import time
@@ -196,13 +193,11 @@ class event(object):
         >>> api.sleep(0)
         received stuff
         """
-        # why is waiter not used?
         if waiter in self._waiters:
             del self._waiters[waiter]
             # XXX This does not check that waiter still waits when throw actually happens
             # XXX and therefore is broken (see how send() deals with this)
-            api.get_hub().schedule_call(
-                0, waiter.throw, Cancelled())
+            api.get_hub().schedule_call(0, waiter.throw, Cancelled())
 
     def send(self, result=None, exc=None):
         """Makes arrangements for the waiters to be woken with the
@@ -458,29 +453,8 @@ def execute(func, *args, **kw):
 
 
 def CoroutinePool(*args, **kwargs):
-    from eventlet.pools import CoroutinePool
-    return CoroutinePool(*args, **kwargs)
-
-
-class pipe(object):
-    """ Implementation of pipe using events.  Not tested!  Not used, either."""
-    def __init__(self):
-        self._event = event()
-        self._buffer = ''
-
-    def send(self, txt):
-        self._buffer += txt
-        evt, self._event = self._event, event()
-        evt.send()
-
-    def recv(self, num=16384):
-        if not self._buffer:
-            self._event.wait()
-        if num >= len(self._buffer):
-            buf, self._buffer = self._buffer, ''
-        else:
-            buf, self._buffer = self._buffer[:num], self._buffer[num:]
-        return buf
+    from eventlet.pool import Pool
+    return Pool(*args, **kwargs)
 
 
 class queue(object):
