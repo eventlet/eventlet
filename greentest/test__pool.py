@@ -39,6 +39,20 @@ class TestCoroutinePool(LimitedTestCase):
         done.wait()
         self.assertEquals(['cons1', 'prod', 'cons2'], results)
 
+    def test_timer_cancel(self):
+        # this test verifies that local timers are not fired 
+        # outside of the context of the execute method
+        timer_fired = []
+        def fire_timer():
+            timer_fired.append(True)
+        def some_work():
+            api.get_hub().schedule_call_local(0, fire_timer)
+        pool = self.klass(0, 2)
+        worker = pool.execute(some_work)
+        worker.wait()
+        api.sleep(0)
+        self.assertEquals(timer_fired, [])
+
     def test_reentrant(self):
         pool = self.klass(0,1)
         def reenter():
@@ -55,6 +69,34 @@ class TestCoroutinePool(LimitedTestCase):
 
         pool.execute_async(reenter_async)
         evt.wait()
+        
+    def test_stderr_raising(self):
+        # testing that really egregious errors in the error handling code 
+        # (that prints tracebacks to stderr) don't cause the pool to lose 
+        # any members
+        import sys
+        pool = self.klass(min_size=1, max_size=1)
+        def crash(*args, **kw):
+            raise RuntimeError("Whoa")
+        class FakeFile(object):
+            write = crash
+
+        # we're going to do this by causing the traceback.print_exc in
+        # safe_apply to raise an exception and thus exit _main_loop
+        normal_err = sys.stderr
+        try:
+            sys.stderr = FakeFile()
+            waiter = pool.execute(crash)
+            self.assertRaises(RuntimeError, waiter.wait)
+            # the pool should have something free at this point since the
+            # waiter returned
+            self.assertEqual(pool.free(), 1)
+            # shouldn't block when trying to get
+            t = api.exc_after(0.1, api.TimeoutError)
+            self.assert_(pool.get())
+            t.cancel()
+        finally:
+            sys.stderr = normal_err
 
     def test_track_events(self):
         pool = self.klass(track_events=True)
@@ -70,6 +112,42 @@ class TestCoroutinePool(LimitedTestCase):
             return 'ok'
         pool.execute(slow)
         self.assertEquals(pool.wait(), 'ok')
+        
+    def test_pool_smash(self):
+        # The premise is that a coroutine in a Pool tries to get a token out
+        # of a token pool but times out before getting the token.  We verify
+        # that neither pool is adversely affected by this situation.
+        from eventlet import pools
+        pool = self.klass(min_size=1, max_size=1)
+        tp = pools.TokenPool(max_size=1)
+        token = tp.get()  # empty pool
+        def do_receive(tp):
+            api.exc_after(0, RuntimeError())
+            try:
+                t = tp.get()
+                self.fail("Shouldn't have recieved anything from the pool")
+            except RuntimeError:
+                return 'timed out'
+
+        # the execute makes the token pool expect that coroutine, but then
+        # immediately cuts bait
+        e1 = pool.execute(do_receive, tp)
+        self.assertEquals(e1.wait(), 'timed out')
+
+        # the pool can get some random item back
+        def send_wakeup(tp):
+            tp.put('wakeup')
+        api.spawn(send_wakeup, tp)
+
+        # now we ask the pool to run something else, which should not
+        # be affected by the previous send at all
+        def resume():
+            return 'resumed'
+        e2 = pool.execute(resume)
+        self.assertEquals(e2.wait(), 'resumed')
+
+        # we should be able to get out the thing we put in there, too
+        self.assertEquals(tp.get(), 'wakeup')
 
 
 class PoolBasicTests(LimitedTestCase):
