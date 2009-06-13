@@ -205,7 +205,7 @@ def generate_raw_results(path, database):
     c = sqlite3.connect(database)
     res = c.execute('select id, stdout from command_record').fetchall()
     for id, out in res:
-        file(os.path.join(path, '%s.txt' % id), 'w').write(out)
+        file(os.path.join(path, '%s.txt' % id), 'w').write(out.encode('utf-8'))
         sys.stderr.write('.')
     sys.stderr.write('\n')
 
