@@ -322,7 +322,7 @@ class Request(object):
             self.write(body)
             return
         try:
-            produce(body, self)
+            self.site.adapt(body, self)
         except Exception, e:
             traceback.print_exc(file=self.log)
             if not self.response_written():
