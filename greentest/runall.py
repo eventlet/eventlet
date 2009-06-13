@@ -37,7 +37,7 @@ COMMAND = sys.executable + ' ./record_results.py ' + sys.executable + ' ./with_t
 PARSE_PERIOD = 10
 
 # the following aren't in the default list unless --all option present
-NOT_HUBS = set(['nginx'])
+NOT_HUBS = set()
 NOT_REACTORS = set(['wxreactor', 'glib2reactor', 'gtk2reactor'])
 NOT_TESTS = set()
 
