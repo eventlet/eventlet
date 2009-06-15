@@ -21,8 +21,10 @@
 
 import unittest
 from eventlet import api
+from eventlet.green import socket
 
 DELAY = 0.01
+
 
 class TestScheduleCall(unittest.TestCase):
 
@@ -37,6 +39,20 @@ class TestScheduleCall(unittest.TestCase):
         api.spawn(api.get_hub().schedule_call_global, DELAY, lst.pop)
         api.sleep(DELAY*2)
         assert lst == [], lst
+
+
+class TestCloseSocketWhilePolling(unittest.TestCase):
+
+    def test(self):
+        try:
+            sock = socket.socket()
+            api.call_after(0, sock.close)
+            sock.connect(('127.0.0.1', 80))
+        except Exception:
+            api.sleep(0)
+        else:
+            assert False, 'expected an error here'
+
 
 if __name__=='__main__':
     unittest.main()

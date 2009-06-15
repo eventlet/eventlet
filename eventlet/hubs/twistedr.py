@@ -82,6 +82,14 @@ class socket_rwdescriptor:
     def connectionLost(self, reason):
         if self.error:
             self.error(self, reason)
+        # trampoline() will now throw() into the greenlet that owns the socket
+        # leaving the mainloop unscheduled. However, when the next switch
+        # to the mainloop occurs, twisted will not re-evaluate the delayed calls
+        # because it assumes that none were scheduled since no client code was executed
+        # (it has no idea it was switched away). So, we restart the mainloop.
+        # XXX this is not enough, pollreactor prints the traceback for this and epollreactor
+        # times out. see test__hub.TestCloseSocketWhilePolling
+        raise api.GreenletExit
 
     def fileno(self):
         return self._fileno
