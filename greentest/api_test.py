@@ -129,7 +129,8 @@ class TestApi(TestCase):
 
         try:
             desc = greenio.GreenSocket(util.tcp_socket())
-            api.trampoline(desc, read=True, write=True, timeout=0.1)
+            desc.connect(('127.0.0.1', bound_port))
+            api.trampoline(desc, read=True, write=False, timeout=0.1)
         except api.TimeoutError:
             pass # test passed
         else:
