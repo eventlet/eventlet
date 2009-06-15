@@ -90,11 +90,18 @@ class TestCoroutinePool(LimitedTestCase):
             self.assertRaises(RuntimeError, waiter.wait)
             # the pool should have something free at this point since the
             # waiter returned
+            # pool.Pool change: if an exception is raised during execution of a link, 
+            # the rest of the links are scheduled to be executed on the next hub iteration
+            # this introduces a delay in updating pool.sem which makes pool.free() report 0
+            # therefore, sleep:
+            api.sleep(0)
             self.assertEqual(pool.free(), 1)
             # shouldn't block when trying to get
             t = api.exc_after(0.1, api.TimeoutError)
-            self.assert_(pool.get())
-            t.cancel()
+            try:
+                pool.execute(api.sleep, 1)
+            finally:
+                t.cancel()
         finally:
             sys.stderr = normal_err
 
