@@ -183,7 +183,6 @@ class TestApi(tests.TestCase):
     def test_timeout_and_final_write(self):
         # This test verifies that a write on a socket that we've
         # stopped listening for doesn't result in an incorrect switch
-        from eventlet import greenio
         rpipe, wpipe = os.pipe()
         rfile = os.fdopen(rpipe,"r",0)
         wrap_rfile = greenio.GreenPipe(rfile)
