@@ -73,7 +73,8 @@ class TestQueue(LimitedTestCase):
         self.assertEquals(e2.wait(),'hi')
         self.assertEquals(e1.wait(),'done')
 
-    def skip_test_multiple_waiters(self):
+    def test_multiple_waiters(self):
+        # tests that multiple waiters get their results back
         q = coros.queue()
 
         def waiter(q, evt):
@@ -86,14 +87,24 @@ class TestQueue(LimitedTestCase):
 
         api.sleep(0.01) # get 'em all waiting
 
+        results = set()
+        def collect_pending_results():
+            for i, e in enumerate(evts):
+                timer = api.exc_after(0.001, api.TimeoutError)
+                try:
+                    x = e.wait()
+                    results.add(x)
+                    timer.cancel()
+                except api.TimeoutError:
+                    pass  # no pending result at that event
+            return len(results)
         q.send(sendings[0])
-        self.assertEquals(sendings[0], evts[0].wait())
+        self.assertEquals(collect_pending_results(), 1)
         q.send(sendings[1])
-        self.assertEquals(sendings[1], evts[1].wait())
+        self.assertEquals(collect_pending_results(), 2)
         q.send(sendings[2])
         q.send(sendings[3])
-        self.assertEquals(sendings[2], evts[2].wait())
-        self.assertEquals(sendings[3], evts[3].wait())
+        self.assertEquals(collect_pending_results(), 4)
 
     def test_waiters_that_cancel(self):
         q = coros.queue()
@@ -163,8 +174,8 @@ class TestQueue(LimitedTestCase):
         self.assertEquals(e1.wait(), 'timed out')
         self.assertEquals(e2.wait(), 'timed out')
         self.assertEquals(q.wait(), 'sent')
-
-    def disable_test_waiting(self):
+                
+    def test_waiting(self):
         def do_wait(q, evt):
             result = q.wait()
             evt.send(result)
@@ -175,6 +186,7 @@ class TestQueue(LimitedTestCase):
         api.sleep(0)
         self.assertEquals(1, waiting(q))
         q.send('hi')
+        api.sleep(0)
         self.assertEquals(0, waiting(q))
         self.assertEquals('hi', e1.wait())
         self.assertEquals(0, waiting(q))
