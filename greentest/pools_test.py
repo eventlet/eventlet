@@ -21,7 +21,6 @@
 from unittest import TestCase, main
 
 from eventlet import api
-from eventlet import channel
 from eventlet import coros
 from eventlet import pools
 
@@ -61,7 +60,7 @@ class TestIntPool(TestCase):
         self.assertEquals(self.pool.free(), 4)
 
     def test_exhaustion(self):
-        waiter = channel.channel()
+        waiter = coros.queue(0)
         def consumer():
             gotten = None
             try:
@@ -82,10 +81,10 @@ class TestIntPool(TestCase):
         self.pool.put(one)
 
         # wait for the consumer
-        self.assertEquals(waiter.receive(), one)
+        self.assertEquals(waiter.wait(), one)
 
     def test_blocks_on_pool(self):
-        waiter = channel.channel()
+        waiter = coros.queue(0)
         def greedy():
             self.pool.get()
             self.pool.get()
@@ -110,7 +109,7 @@ class TestIntPool(TestCase):
         self.assertEquals(self.pool.waiting(), 1)
 
         ## Send will never be called, so balance should be 0.
-        self.assertEquals(waiter.balance, 0)
+        self.assertFalse(waiter.ready())
 
         api.kill(killable)
 
