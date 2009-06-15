@@ -36,10 +36,11 @@ def check_hub():
     for nm in 'get_readers', 'get_writers', 'get_excs':
         dct = getattr(hub, nm)()
         assert not dct, "hub.%s not empty: %s" % (nm, dct)
-    # Stop the runloop
-    api.get_hub().abort()
-    api.sleep(0)
-    assert not api.get_hub().running
+    # Stop the runloop (unless it's twistedhub which does not support that)
+    if not getattr(api.get_hub(), 'uses_twisted_reactor', None):
+        api.get_hub().abort()
+        api.sleep(0)
+        assert not api.get_hub().running
 
 
 class TestApi(tests.TestCase):
