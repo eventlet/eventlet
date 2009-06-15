@@ -155,21 +155,27 @@ class PoolBasicTests(LimitedTestCase):
 
     def test_execute_async(self):
         p = self.klass(max_size=2)
+        self.assertEqual(p.free(), 2)
         r = []
         def foo(a):
             r.append(a)
         evt = p.execute(foo, 1)
+        self.assertEqual(p.free(), 1)
         evt.wait()
         self.assertEqual(r, [1])
+        api.sleep(0)
+        self.assertEqual(p.free(), 2)
 
         #Once the pool is exhausted, calling an execute forces a yield.
 
         p.execute_async(foo, 2)
+        self.assertEqual(1, p.free())
         self.assertEqual(r, [1])
-        self.assertEqual(0, p.free())
+
         p.execute_async(foo, 3)
-        self.assertEqual(r, [1, 2])
         self.assertEqual(0, p.free())
+        self.assertEqual(r, [1])
+
         p.execute_async(foo, 4)
         self.assertEqual(r, [1,2,3])
         api.sleep(0)
