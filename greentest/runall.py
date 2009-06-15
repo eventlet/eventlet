@@ -31,7 +31,7 @@ from time import time
 from with_eventlet import import_reactor
 
 first_hubs = ['poll', 'selects', 'twistedr']
-first_reactors = ['selectreactor', 'pollreactor', 'epollreactor']
+first_reactors = ['selectreactor', 'pollreactor']
 
 COMMAND = sys.executable + ' ./record_results.py ' + sys.executable + ' ./with_timeout.py ./with_eventlet.py %(setup)s %(test)s'
 PARSE_PERIOD = 10
