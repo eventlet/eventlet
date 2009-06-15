@@ -94,7 +94,7 @@ class socket_rwdescriptor:
     def fileno(self):
         return self._fileno
 
-    logstr = "XXXfixme"
+    logstr = "twistedr"
 
     def logPrefix(self):
         return self.logstr
