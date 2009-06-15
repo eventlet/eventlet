@@ -109,13 +109,13 @@ def main():
     parser = OptionParser(option_class=MyOption)
     parser.add_option('-u', '--hubs', type='stringlist')
     parser.add_option('-r', '--reactors', type='stringlist')
-    parser.add_option('-t', '--tests', type='stringlist')
     parser.add_option('--ignore-hubs', type='stringlist', default=[])
     parser.add_option('--ignore-reactors', type='stringlist', default=[])
     parser.add_option('--ignore-tests', type='stringlist', default=[])
     parser.add_option('-s', '--show', help='show default values and exit', action='store_true', default=False)
     parser.add_option('-a', '--all', action='store_true', default=False)
-    options, _args = parser.parse_args()
+    options, args = parser.parse_args()
+    options.tests = args or None
     if options.all:
         NOT_HUBS = NOT_REACTORS = NOT_TESTS = set()
     if options.hubs is None:
