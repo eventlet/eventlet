@@ -41,7 +41,7 @@ if sys.argv[1:2] and sys.argv[1]=='-t':
     TIMEOUT = int(sys.argv[1])
     del sys.argv[1]
 else:
-    TIMEOUT = 40
+    TIMEOUT = 20
 
 try:
     disabled_tests
