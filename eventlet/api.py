@@ -146,10 +146,18 @@ def trampoline(fd, read=None, write=None, timeout=None, timeout_exc=TimeoutError
             current.throw(socket.error(32, 'Broken pipe'))
         else:
             current.throw(getattr(error, 'value', error)) # XXX convert to socket.error
+    def cb(d):
+        current.switch()
+        # with TwistedHub, descriptor is actually an object (socket_rwdescriptor) which stores
+        # this callback. If this callback stores a reference to the socket instance (fd)
+        # then descriptor has a reference to that instance. This makes socket not collected
+        # after greenlet exit. Since nobody actually uses the results of this switch, I removed
+        # fd from here. If it will be needed than an indirect reference which is discarded right
+        # after the switch above should be used.
     if timeout is not None:
         t = hub.schedule_call(timeout, current.throw, timeout_exc)
     try:
-        descriptor = hub.add_descriptor(fileno, read and current.switch, write and current.switch, _do_close)
+        descriptor = hub.add_descriptor(fileno, read and cb, write and cb, _do_close)
         try:
             return hub.switch()
         finally:
