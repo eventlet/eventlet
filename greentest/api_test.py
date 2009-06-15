@@ -21,10 +21,10 @@
 
 import os
 import os.path
+from unittest import TestCase, main
 
 from eventlet import api
 from eventlet import greenio
-from greentest import tests
 from eventlet import util
 
 
@@ -43,7 +43,7 @@ def check_hub():
         assert not api.get_hub().running
 
 
-class TestApi(tests.TestCase):
+class TestApi(TestCase):
     mode = 'static'
 
     certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
@@ -218,5 +218,5 @@ class Foo(object):
 
 
 if __name__ == '__main__':
-    tests.main()
+    main()
 

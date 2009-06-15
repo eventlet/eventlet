@@ -19,22 +19,21 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+from unittest import TestCase, main
+
 from eventlet import api
 from eventlet import httpd
 from eventlet import processes
 from eventlet import util
+
+from greentest import find_command
 
 try:
     from cStringIO import StringIO
 except ImportError:
     from StringIO import StringIO
 
-
 util.wrap_socket_with_coroutine_socket()
-
-
-from greentest import tests
-
 
 class Site(object):
     def handle_request(self, req):
@@ -86,7 +85,7 @@ def read_http(sock):
     return response_line, headers, body
 
 
-class TestHttpd(tests.TestCase):
+class TestHttpd(TestCase):
     mode = 'static'
     def setUp(self):
         self.logfile = StringIO()
@@ -148,7 +147,7 @@ class TestHttpd(tests.TestCase):
     def skip_test_005_run_apachebench(self):
         url = 'http://localhost:12346/'
         # ab is apachebench
-        out = processes.Process(tests.find_command('ab'),
+        out = processes.Process(find_command('ab'),
                                 ['-c','64','-n','1024', '-k', url])
         print out.read()
 
@@ -208,4 +207,4 @@ class TestHttpd(tests.TestCase):
 
 
 if __name__ == '__main__':
-    tests.main()
+    main()

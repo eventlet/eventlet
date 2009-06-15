@@ -19,10 +19,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from greentest import tests
+from unittest import TestCase, main
 from eventlet import coros, api
 
-class TestEvent(tests.TestCase):
+class TestEvent(TestCase):
     mode = 'static'
     def setUp(self):
         # raise an exception if we're waiting forever
@@ -115,7 +115,7 @@ class IncrActor(coros.Actor):
         if evt: evt.send()
 
 
-class TestActor(tests.TestCase):
+class TestActor(TestCase):
     mode = 'static'
     def setUp(self):
         # raise an exception if we're waiting forever
@@ -229,4 +229,4 @@ class TestActor(tests.TestCase):
 
 
 if __name__ == '__main__':
-    tests.main()
+    main()

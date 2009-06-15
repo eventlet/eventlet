@@ -19,12 +19,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-import unittest
+from unittest import TestCase, main
 
 from eventlet import api, timer
-from greentest import tests
 
-class TestTimer(tests.TestCase):
+class TestTimer(TestCase):
     mode = 'static'
     def test_copy(self):
         t = timer.Timer(0, lambda: None)
@@ -62,4 +61,4 @@ class TestTimer(tests.TestCase):
         assert not hub.running
 
 if __name__ == '__main__':
-    unittest.main()
+    main()
