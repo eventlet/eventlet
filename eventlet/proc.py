@@ -43,17 +43,18 @@ exception.
 
 Here's an example:
 >>> event = coros.event()
->>> p.link(event)
+>>> _ = p.link(event)
 >>> event.wait()
 3
 
 Now, even though `p' is finished it's still possible to link it. In this
 case the notification is performed immediatelly:
 
->>> p.link()
-Traceback (most recent call last):
- ...
-LinkedCompleted: '<function demofunc at 0x...>' completed successfully
+>>> try:
+...     p.link()
+... except LinkedCompleted:
+...     print 'LinkedCompleted'
+LinkedCompleted
 
 (Without an argument, link is created to the current greenlet)
 
@@ -64,11 +65,12 @@ fails then there's no way to complete the task so the parent must fail as well;
 `link_exception' is useful here:
 
 >>> p = spawn(demofunc, 1, 0)
->>> p.link_exception()
->>> api.sleep(1)
-Traceback (most recent call last):
- ...
-LinkedFailed: '<function demofunc at 0x...>' failed with ZeroDivisionError
+>>> _ = p.link_exception()
+>>> try:
+...     api.sleep(1)
+... except LinkedFailed:
+...     print 'LinkedFailed'
+LinkedFailed
 
 One application of linking is `waitall' function: link to a bunch of coroutines
 and wait for all them to complete. Such function is provided by this module.
@@ -251,7 +253,7 @@ class Source(object):
 
     >>> source = Source()
     >>> event = coros.event()
-    >>> source.link(event)
+    >>> _ = source.link(event)
 
     Once source's send or send_exception method is called, all the listeners
     with the right type of link will be notified ("right type" means that
