@@ -65,6 +65,9 @@ def callLater(DelayedCallClass, reactor, _seconds, _f, *args, **kw):
 class socket_rwdescriptor:
     #implements(IReadWriteDescriptor)
 
+    # required by glib2reactor
+    disconnected = False
+
     def __init__(self, fileno, read, write, error):
         self._fileno = fileno
         self.read = read
@@ -80,6 +83,7 @@ class socket_rwdescriptor:
             self.write(self)
 
     def connectionLost(self, reason):
+        self.disconnected = True
         if self.error:
             self.error(self, reason)
         # trampoline() will now throw() into the greenlet that owns the socket
