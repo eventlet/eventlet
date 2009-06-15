@@ -160,25 +160,25 @@ class PoolBasicTests(LimitedTestCase):
             r.append(a)
         evt = p.execute(foo, 1)
         evt.wait()
-        assert r == [1], r
+        self.assertEqual(r, [1])
 
         #Once the pool is exhausted, calling an execute forces a yield.
 
         p.execute_async(foo, 2)
-        assert r == [1], r
-        assert 0 == p.free()
+        self.assertEqual(r, [1])
+        self.assertEqual(0, p.free())
         p.execute_async(foo, 3)
-        assert r == [1, 2], r
-        assert 0 == p.free()
+        self.assertEqual(r, [1, 2])
+        self.assertEqual(0, p.free())
         p.execute_async(foo, 4)
-        assert r == [1,2,3], r
+        self.assertEqual(r, [1,2,3])
         api.sleep(0)
-        assert r == [1,2,3,4], r
+        self.assertEqual(r, [1,2,3,4])
 
     def test_execute(self):
         p = self.klass()
         evt = p.execute(lambda a: ('foo', a), 1)
-        assert evt.wait() == ('foo', 1)
+        self.assertEqual(evt.wait(), ('foo', 1))
 
 
 if __name__=='__main__':
