@@ -35,6 +35,7 @@ If program.py exited with non-zero value after several runs, return 10
 import sys
 import os
 import time
+import warnings
 
 if sys.argv[1:2] and sys.argv[1]=='-t':
     del sys.argv[1]
@@ -51,7 +52,9 @@ except NameError:
 try:
     CURRENT_TEST_FILENAME
 except NameError:
+    warnings.filterwarnings('ignore', 'tmpnam is a potential security risk to your program')
     CURRENT_TEST_FILENAME = os.tmpnam()
+    del warnings.filters[0]
 
 class Alarm(Exception):
     pass
