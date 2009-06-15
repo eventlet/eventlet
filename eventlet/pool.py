@@ -7,8 +7,6 @@ class Pool(object):
         if min_size > max_size:
             raise ValueError('min_size cannot be bigger than max_size')
         self.sem = coros.Semaphore(max_size)
-        for _ in xrange(min_size):
-            self.sem.acquire()
         self.procs = proc.RunningProcSet()
         if track_events:
             self.results = coros.queue()
