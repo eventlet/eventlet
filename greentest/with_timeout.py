@@ -67,7 +67,7 @@ def _test():
     >>> system('./with_timeout.py -t 3 __init__.py')
     (0, 0)
 
-    >>> system('./with_timeout.py -t 3 /usr/lib/python2.5/BaseHTTPServer.py')
+    >>> system('./with_timeout.py -t 3 /usr/lib/python2.5/BaseHTTPServer.py 0')
     (7, 3)
 
     >>> system('./with_timeout.py -t 3 with_timeout.py --selftest1')
