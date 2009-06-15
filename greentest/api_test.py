@@ -117,10 +117,13 @@ class TestApi(TestCase):
 
         api.call_after(0, api.connect_tcp, ('127.0.0.1', bound_port))
         api.call_after(0, api.connect_tcp, ('127.0.0.1', bound_port))
-        api.tcp_server(server, accept_twice)
+        try:
+            api.tcp_server(server, accept_twice)
+        except:
+            api.sleep(0.1)
+            raise
 
         assert len(connected) == 2
-
         check_hub()
 
     def test_001_trampoline_timeout(self):
