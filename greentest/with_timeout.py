@@ -51,7 +51,7 @@ except NameError:
 try:
     CURRENT_TEST_FILENAME
 except NameError:
-    CURRENT_TEST_FILENAME = '/tmp/eventlet-test-repeat-run.%s' % os.getpid()
+    CURRENT_TEST_FILENAME = os.tmpnam()
 
 class Alarm(Exception):
     pass
