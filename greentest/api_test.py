@@ -162,13 +162,15 @@ class TestApi(tests.TestCase):
 
         check_hub()
 
-    def test_explicit_hub(self):
-        api.use_hub(Foo)
-        assert isinstance(api.get_hub(), Foo), api.get_hub()
-
-        api.use_hub(api.get_default_hub())
-
-        check_hub()
+    if not getattr(api.get_hub(), 'uses_twisted_reactor', None):
+        def test_explicit_hub(self):
+            oldhub = api.get_hub()
+            try:
+                api.use_hub(Foo)
+                assert isinstance(api.get_hub(), Foo), api.get_hub()
+            finally:
+                api._threadlocal.hub = oldhub
+            check_hub()
 
     def test_named(self):
         named_foo = api.named('api_test.Foo')
