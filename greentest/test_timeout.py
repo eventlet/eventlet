@@ -1,4 +1,3 @@
-#do not run me, I don't import any socket module.
 """Unit tests for socket timeout feature."""
 
 import unittest
