@@ -154,51 +154,6 @@ class event(object):
             api.getcurrent().throw(*self._exc)
         return self._result
 
-    def cancel(self, waiter):
-        """Raise an exception into a coroutine which called
-        wait() an this event instead of returning a value
-        from wait. Sends the eventlet.coros.Cancelled
-        exception
-
-        waiter: The greenlet (greenlet.getcurrent()) of the
-            coroutine to cancel
-
-        >>> from eventlet import coros, api
-        >>> evt = coros.event()
-        >>> def wait_on():
-        ...    try:
-        ...        print "received " + evt.wait()
-        ...    except coros.Cancelled, c:
-        ...        print "Cancelled"
-        ...
-        >>> waiter = api.spawn(wait_on)
-
-        The cancel call works on coroutines that are in the wait() call.
-
-        >>> api.sleep(0)  # enter the wait()
-        >>> evt.cancel(waiter)
-        >>> api.sleep(0)  # receive the exception
-        Cancelled
-
-        The cancel is invisible to coroutines that call wait() after cancel()
-        is called.  This is different from send()'s behavior, where the result
-        is passed to any waiter regardless of the ordering of the calls.
-
-        >>> waiter = api.spawn(wait_on)
-        >>> api.sleep(0)
-
-        Cancels have no effect on the ability to send() to the event.
-
-        >>> evt.send('stuff')
-        >>> api.sleep(0)
-        received stuff
-        """
-        if waiter in self._waiters:
-            del self._waiters[waiter]
-            # XXX This does not check that waiter still waits when throw actually happens
-            # XXX and therefore is broken (see how send() deals with this)
-            api.get_hub().schedule_call(0, waiter.throw, Cancelled())
-
     def send(self, result=None, exc=None):
         """Makes arrangements for the waiters to be woken with the
         result and then returns immediately to the parent.

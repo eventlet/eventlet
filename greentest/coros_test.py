@@ -60,19 +60,6 @@ class TestEvent(TestCase):
 
         self.assertEqual(len(results), count)
 
-# commented out, not fixed because it's unclear what event.cancel(waiter) should do
-# (docstring and the code say different things) and because cancel() as implemented now
-# has a bug
-#     def test_cancel(self):
-#         evt = coros.event()
-#         # close over the current coro so we can cancel it explicitly
-#         current = api.getcurrent()
-#         def cancel_event():
-#             evt.cancel(current)
-#         api.spawn(cancel_event)
-#
-#         self.assertRaises(coros.Cancelled, evt.wait)
-
     def test_reset(self):
         evt = coros.event()
 
