@@ -56,7 +56,7 @@ class TestTimer(TestCase):
         #t.schedule()
         api.get_hub().schedule_call_global(0, lambda: (called.append(True), hub.abort()))
         hub.default_sleep = lambda: 0.0
-        hub.run()
+        hub.switch()
         assert called
         assert not hub.running
 
