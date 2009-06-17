@@ -8,8 +8,9 @@ __import_lst = ['__version__', '__cut_port_re', '_parse_proxy']
 for var in __import_lst:
     exec "%s = getattr(urllib2, %r, None)" % (var, var)
 
-del (urlopen, install_opener, build_opener, HTTPHandler, HTTPSHandler,
-     HTTPCookieProcessor, FileHandler, FTPHandler, CacheFTPHandler, GopherError)
+for x in ('urlopen', 'install_opener', 'build_opener', 'HTTPHandler', 'HTTPSHandler',
+          'HTTPCookieProcessor', 'FileHandler', 'FTPHandler', 'CacheFTPHandler', 'GopherError'):
+    globals().pop(x, None)
 
 from eventlet.green import httplib
 import mimetools
@@ -24,7 +25,7 @@ except ImportError:
     from StringIO import StringIO
 
 from eventlet.green.urllib import (unwrap, unquote, splittype, splithost, quote,
-     addinfourl, splitport, splitgophertype, splitquery,
+     addinfourl, splitport, splitquery,
      splitattr, ftpwrapper, noheaders, splituser, splitpasswd, splitvalue)
 
 # support for FileHandler, proxies via environment variables
