@@ -18,12 +18,11 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+from unittest import TestCase, main
 
 from eventlet import api
-from eventlet import channel
 from eventlet import coros
 from eventlet import pools
-from greentest import tests
 
 class IntPool(pools.Pool):
     def create(self):
@@ -31,7 +30,7 @@ class IntPool(pools.Pool):
         return self.current_integer
 
 
-class TestIntPool(tests.TestCase):
+class TestIntPool(TestCase):
     mode = 'static'
     def setUp(self):
         self.pool = IntPool(min_size=0, max_size=4)
@@ -61,7 +60,7 @@ class TestIntPool(tests.TestCase):
         self.assertEquals(self.pool.free(), 4)
 
     def test_exhaustion(self):
-        waiter = channel.channel()
+        waiter = coros.queue(0)
         def consumer():
             gotten = None
             try:
@@ -82,10 +81,10 @@ class TestIntPool(tests.TestCase):
         self.pool.put(one)
 
         # wait for the consumer
-        self.assertEquals(waiter.receive(), one)
+        self.assertEquals(waiter.wait(), one)
 
     def test_blocks_on_pool(self):
-        waiter = channel.channel()
+        waiter = coros.queue(0)
         def greedy():
             self.pool.get()
             self.pool.get()
@@ -110,7 +109,7 @@ class TestIntPool(tests.TestCase):
         self.assertEquals(self.pool.waiting(), 1)
 
         ## Send will never be called, so balance should be 0.
-        self.assertEquals(waiter.balance, 0)
+        self.assertFalse(waiter.ready())
 
         api.kill(killable)
 
@@ -142,7 +141,7 @@ class TestIntPool(tests.TestCase):
         timer.cancel()
 
 
-class TestAbstract(tests.TestCase):
+class TestAbstract(TestCase):
     mode = 'static'
     def test_abstract(self):
         ## Going for 100% coverage here
@@ -151,7 +150,7 @@ class TestAbstract(tests.TestCase):
         self.assertRaises(NotImplementedError, pool.get)
 
 
-class TestIntPool2(tests.TestCase):
+class TestIntPool2(TestCase):
     mode = 'static'
     def setUp(self):
         self.pool = IntPool(min_size=3, max_size=3)
@@ -164,7 +163,7 @@ class TestIntPool2(tests.TestCase):
         self.assertEquals(gotten, 1)
 
 
-class TestOrderAsStack(tests.TestCase):
+class TestOrderAsStack(TestCase):
     mode = 'static'
     def setUp(self):
         self.pool = IntPool(max_size=3, order_as_stack=True)
@@ -183,7 +182,7 @@ class RaisePool(pools.Pool):
         raise RuntimeError()
 
 
-class TestCreateRaises(tests.TestCase):
+class TestCreateRaises(TestCase):
     mode = 'static'
     def setUp(self):
         self.pool = RaisePool(max_size=3)
@@ -201,7 +200,7 @@ SOMETIMES = RuntimeError('I fail half the time')
 class TestTookTooLong(Exception):
     pass
 
-class TestFan(tests.TestCase):
+class TestFan(TestCase):
     mode = 'static'
     def setUp(self):
         self.timer = api.exc_after(1, TestTookTooLong())
@@ -235,5 +234,5 @@ class TestFan(tests.TestCase):
 
 
 if __name__ == '__main__':
-    tests.main()
+    main()
 

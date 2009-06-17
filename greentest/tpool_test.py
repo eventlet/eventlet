@@ -13,16 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import time
-from eventlet import coros, api, tpool
-from greentest import tests
-
 from sys import stdout
-
+import time
+from unittest import TestCase, main
 import random
-r = random.WichmannHill()
 import uuid
 
+from eventlet import coros, api, tpool
+
+r = random.WichmannHill()
 _g_debug = False
 
 def prnt(msg):
@@ -59,7 +58,7 @@ one = 1
 two = 2
 three = 3
 
-class TestTpool(tests.TestCase):
+class TestTpool(TestCase):
     def setUp(self):
         # turn off exception printing, because we'll be deliberately
         # triggering exceptions in our tests
@@ -214,4 +213,4 @@ class TestTpool(tests.TestCase):
 
 
 if __name__ == '__main__':
-    tests.main()
+    main()

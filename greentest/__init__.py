@@ -21,6 +21,8 @@
 
 # package is named greentest, not test, so it won't be confused with test in stdlib
 import sys
+import os
+import errno
 import unittest
 
 disabled_marker = '-*-*-*-*-*- disabled -*-*-*-*-*-'
@@ -45,4 +47,10 @@ class LimitedTestCase(unittest.TestCase):
     def tearDown(self):
         self.timer.cancel()
 
+def find_command(command):
+    for dir in os.getenv('PATH', '/usr/bin:/usr/sbin').split(os.pathsep):
+        p = os.path.join(dir, command)
+        if os.access(p, os.X_OK):
+            return p
+    raise IOError(errno.ENOENT, 'Command not found: %r' % command)
 

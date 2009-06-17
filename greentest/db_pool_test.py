@@ -21,9 +21,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-
+from unittest import TestCase, main
 from eventlet import api, coros
-from greentest import tests
 from eventlet import db_pool
 
 class DBTester(object):
@@ -513,13 +512,13 @@ class TestMysqlConnectionPool(object):
 
 
 # for some reason the tpool test hangs if run after the saranwrap test
-class Test01MysqlTpool(TestMysqlConnectionPool, TestTpoolConnectionPool, tests.TestCase):
+class Test01MysqlTpool(TestMysqlConnectionPool, TestTpoolConnectionPool, TestCase):
     pass
 
-class Test02MysqlSaranwrap(TestMysqlConnectionPool, TestSaranwrapConnectionPool, tests.TestCase):
+class Test02MysqlSaranwrap(TestMysqlConnectionPool, TestSaranwrapConnectionPool, TestCase):
     pass
 
-class Test03MysqlRaw(TestMysqlConnectionPool, TestRawConnectionPool, tests.TestCase):
+class Test03MysqlRaw(TestMysqlConnectionPool, TestRawConnectionPool, TestCase):
     pass
 
 
@@ -529,6 +528,6 @@ if __name__ == '__main__':
     except ImportError:
         print "Unable to import MySQLdb, skipping db_pool_test."
     else:
-        tests.main()
+        main()
 else:
     import MySQLdb

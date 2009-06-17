@@ -586,104 +586,94 @@ class HandlerTests(unittest.TestCase):
             self.assertEqual(headers.get("Content-type"), mimetype)
             self.assertEqual(int(headers["Content-length"]), len(data))
 
-#     def test_file(self):
-#         import time, rfc822, socket
-#         import sys
-#         h = urllib2.FileHandler()
-#         o = h.parent = MockOpener()
+    def test_file(self):
+        import rfc822
+        h = urllib2.FileHandler()
+        o = h.parent = MockOpener()
 
-#         sys.stderr.write('--------1-----------\n')
+        TESTFN = test_support.TESTFN
+        urlpath = sanepathname2url(os.path.abspath(TESTFN))
+        towrite = "hello, world\n"
+        urls = [
+            "file://localhost%s" % urlpath,
+            "file://%s" % urlpath,
+            "file://%s%s" % (socket.gethostbyname('localhost'), urlpath),
+            ]
+        try:
+            localaddr = socket.gethostbyname(socket.gethostname())
+        except socket.gaierror:
+            localaddr = ''
+        if localaddr:
+            urls.append("file://%s%s" % (localaddr, urlpath))
 
-#         TESTFN = test_support.TESTFN
-#         urlpath = sanepathname2url(os.path.abspath(TESTFN))
-#         towrite = "hello, world\n"
-#         urls = [
-#             "file://localhost%s" % urlpath,
-#             "file://%s" % urlpath,
-#             "file://%s%s" % (socket.gethostbyname('localhost'), urlpath),
-#             ]
-#         sys.stderr.write('--------1-----------\n')
-#         try:
-#             localaddr = socket.gethostbyname(socket.gethostname())
-#         except socket.gaierror:
-#             localaddr = ''
-#         if localaddr:
-#             urls.append("file://%s%s" % (localaddr, urlpath))
+        for url in urls:
+            f = open(TESTFN, "wb")
+            try:
+                try:
+                    f.write(towrite)
+                finally:
+                    f.close()
 
-#         sys.stderr.write('--------1-----------\n')
-#         for url in urls:
-#             f = open(TESTFN, "wb")
-#             try:
-#                 try:
-#                     f.write(towrite)
-#                 finally:
-#                     f.close()
+                r = h.file_open(Request(url))
+                try:
+                    data = r.read()
+                    headers = r.info()
+                    newurl = r.geturl()
+                finally:
+                    r.close()
+                stats = os.stat(TESTFN)
+                modified = rfc822.formatdate(stats.st_mtime)
+            finally:
+                os.remove(TESTFN)
+            self.assertEqual(data, towrite)
+            self.assertEqual(headers["Content-type"], "text/plain")
+            self.assertEqual(headers["Content-length"], "13")
+            self.assertEqual(headers["Last-modified"], modified)
 
-#                 sys.stderr.write(`url`)
-#                 sys.stderr.write('\n')
-                
-#                 r = h.file_open(Request(url))
-#                 try:
-#                     data = r.read()
-#                     headers = r.info()
-#                     newurl = r.geturl()
-#                 finally:
-#                     r.close()
-#                 stats = os.stat(TESTFN)
-#                 modified = rfc822.formatdate(stats.st_mtime)
-#             finally:
-#                 os.remove(TESTFN)
-#             self.assertEqual(data, towrite)
-#             self.assertEqual(headers["Content-type"], "text/plain")
-#             self.assertEqual(headers["Content-length"], "13")
-#             self.assertEqual(headers["Last-modified"], modified)
+        for url in [
+            "file://localhost:80%s" % urlpath,
+# XXXX bug: these fail with socket.gaierror, should be URLError
+##             "file://%s:80%s/%s" % (socket.gethostbyname('localhost'),
+##                                    os.getcwd(), TESTFN),
+##             "file://somerandomhost.ontheinternet.com%s/%s" %
+##             (os.getcwd(), TESTFN),
+            ]:
+            try:
+                f = open(TESTFN, "wb")
+                try:
+                    f.write(towrite)
+                finally:
+                    f.close()
 
-#         sys.stderr.write('--------1-----------\n')
-#         for url in [
-#             "file://localhost:80%s" % urlpath,
-# # XXXX bug: these fail with socket.gaierror, should be URLError
-# ##             "file://%s:80%s/%s" % (socket.gethostbyname('localhost'),
-# ##                                    os.getcwd(), TESTFN),
-# ##             "file://somerandomhost.ontheinternet.com%s/%s" %
-# ##             (os.getcwd(), TESTFN),
-#             ]:
-#             try:
-#                 f = open(TESTFN, "wb")
-#                 try:
-#                     f.write(towrite)
-#                 finally:
-#                     f.close()
+                self.assertRaises(urllib2.URLError,
+                                  h.file_open, Request(url))
+            finally:
+                os.remove(TESTFN)
 
-#                 self.assertRaises(urllib2.URLError,
-#                                   h.file_open, Request(url))
-#             finally:
-#                 os.remove(TESTFN)
-
-#         sys.stderr.write('--------1-----------\n')
-#         h = urllib2.FileHandler()
-#         o = h.parent = MockOpener()
-#         # XXXX why does // mean ftp (and /// mean not ftp!), and where
-#         #  is file: scheme specified?  I think this is really a bug, and
-#         #  what was intended was to distinguish between URLs like:
-#         # file:/blah.txt (a file)
-#         # file://localhost/blah.txt (a file)
-#         # file:///blah.txt (a file)
-#         # file://ftp.example.com/blah.txt (an ftp URL)
-#         for url, ftp in [
-#             ("file://ftp.example.com//foo.txt", True),
-#             ("file://ftp.example.com///foo.txt", False),
-# # XXXX bug: fails with OSError, should be URLError
-#             ("file://ftp.example.com/foo.txt", False),
-#             ]:
-#             req = Request(url)
-#             try:
-#                 h.file_open(req)
-#             # XXXX remove OSError when bug fixed
-#             except (urllib2.URLError, OSError):
-#                 self.assert_(not ftp)
-#             else:
-#                 self.assert_(o.req is req)
-#                 self.assertEqual(req.type, "ftp")
+        h = urllib2.FileHandler()
+        o = h.parent = MockOpener()
+        # XXXX why does // mean ftp (and /// mean not ftp!), and where
+        #  is file: scheme specified?  I think this is really a bug, and
+        #  what was intended was to distinguish between URLs like:
+        # file:/blah.txt (a file)
+        # file://localhost/blah.txt (a file)
+        # file:///blah.txt (a file)
+        # file://ftp.example.com/blah.txt (an ftp URL)
+        for url, ftp in [
+            ("file://ftp.example.com//foo.txt", True),
+            ("file://ftp.example.com///foo.txt", False),
+# XXXX bug: fails with OSError, should be URLError
+            ("file://ftp.example.com/foo.txt", False),
+            ]:
+            req = Request(url)
+            try:
+                h.file_open(req)
+            # XXXX remove OSError when bug fixed
+            except (urllib2.URLError, OSError):
+                self.assert_(not ftp)
+            else:
+                self.assert_(o.req is req)
+                self.assertEqual(req.type, "ftp")
 
     def test_http(self):
         class MockHTTPResponse:
@@ -867,22 +857,22 @@ class HandlerTests(unittest.TestCase):
             self.assertEqual(count,
                              urllib2.HTTPRedirectHandler.max_redirections)
 
-# don't want to add test_cookielib here
-#     def test_cookie_redirect(self):
-#         # cookies shouldn't leak into redirected requests
-#         from cookielib import CookieJar
+    # don't want to add test_cookielib here
+    def dont_test_cookie_redirect(self):
+        # cookies shouldn't leak into redirected requests
+        from cookielib import CookieJar
 
-#         from test.test_cookielib import interact_netscape
+        from test.test_cookielib import interact_netscape
 
-#         cj = CookieJar()
-#         interact_netscape(cj, "http://www.example.com/", "spam=eggs")
-#         hh = MockHTTPHandler(302, "Location: http://www.cracker.com/\r\n\r\n")
-#         hdeh = urllib2.HTTPDefaultErrorHandler()
-#         hrh = urllib2.HTTPRedirectHandler()
-#         cp = urllib2.HTTPCookieProcessor(cj)
-#         o = build_test_opener(hh, hdeh, hrh, cp)
-#         o.open("http://www.example.com/")
-#         self.assert_(not hh.req.has_header("Cookie"))
+        cj = CookieJar()
+        interact_netscape(cj, "http://www.example.com/", "spam=eggs")
+        hh = MockHTTPHandler(302, "Location: http://www.cracker.com/\r\n\r\n")
+        hdeh = urllib2.HTTPDefaultErrorHandler()
+        hrh = urllib2.HTTPRedirectHandler()
+        cp = urllib2.HTTPCookieProcessor(cj)
+        o = build_test_opener(hh, hdeh, hrh, cp)
+        o.open("http://www.example.com/")
+        self.assert_(not hh.req.has_header("Cookie"))
 
     def test_proxy(self):
         o = OpenerDirector()
@@ -1064,14 +1054,10 @@ class MiscTests(unittest.TestCase):
 
 
 def test_main(verbose=None):
-    #from test import test_urllib2
-    #test_support.run_doctest(test_urllib2, verbose)
-    #test_support.run_doctest(urllib2, verbose)
     tests = (TrivialTests,
              OpenerDirectorTests,
              HandlerTests,
              MiscTests)
-    tests = [HandlerTests]
     test_support.run_unittest(*tests)
 
 if __name__ == "__main__":

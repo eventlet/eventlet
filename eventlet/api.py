@@ -145,9 +145,7 @@ def trampoline(fd, read=None, write=None, timeout=None, timeout_exc=TimeoutError
         if error is None:
             current.throw(socket.error(32, 'Broken pipe'))
         else:
-            current.throw(getattr(error, 'value', error)) # convert to socket.error
-    def _do_timeout():
-        current.throw(timeout_exc())
+            current.throw(getattr(error, 'value', error)) # XXX convert to socket.error
     def cb(d):
         current.switch()
         # with TwistedHub, descriptor is actually an object (socket_rwdescriptor) which stores
@@ -157,7 +155,7 @@ def trampoline(fd, read=None, write=None, timeout=None, timeout_exc=TimeoutError
         # fd from here. If it will be needed than an indirect reference which is discarded right
         # after the switch above should be used.
     if timeout is not None:
-        t = hub.schedule_call(timeout, _do_timeout)
+        t = hub.schedule_call(timeout, current.throw, timeout_exc)
     try:
         descriptor = hub.add_descriptor(fileno, read and cb, write and cb, _do_close)
         try:

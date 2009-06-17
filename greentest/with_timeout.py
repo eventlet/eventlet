@@ -35,13 +35,14 @@ If program.py exited with non-zero value after several runs, return 10
 import sys
 import os
 import time
+import warnings
 
 if sys.argv[1:2] and sys.argv[1]=='-t':
     del sys.argv[1]
     TIMEOUT = int(sys.argv[1])
     del sys.argv[1]
 else:
-    TIMEOUT = 40
+    TIMEOUT = 20
 
 try:
     disabled_tests
@@ -51,7 +52,9 @@ except NameError:
 try:
     CURRENT_TEST_FILENAME
 except NameError:
-    CURRENT_TEST_FILENAME = '/tmp/eventlet-test-repeat-run.%s' % os.getpid()
+    warnings.filterwarnings('ignore', 'tmpnam is a potential security risk to your program')
+    CURRENT_TEST_FILENAME = os.tmpnam()
+    del warnings.filters[0]
 
 class Alarm(Exception):
     pass
@@ -64,7 +67,7 @@ def _test():
     >>> system('./with_timeout.py -t 3 __init__.py')
     (0, 0)
 
-    >>> system('./with_timeout.py -t 3 /usr/lib/python2.5/BaseHTTPServer.py')
+    >>> system('./with_timeout.py -t 3 /usr/lib/python2.5/BaseHTTPServer.py 0')
     (7, 3)
 
     >>> system('./with_timeout.py -t 3 with_timeout.py --selftest1')

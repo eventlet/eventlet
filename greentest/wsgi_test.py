@@ -22,18 +22,18 @@
 
 import cgi
 import os
+from unittest import TestCase, main
 
 from eventlet import api
 from eventlet import wsgi
 from eventlet import processes
 
+from greentest import find_command
+
 try:
     from cStringIO import StringIO
 except ImportError:
     from StringIO import StringIO
-
-
-from greentest import tests
 
 
 def hello_world(env, start_response):
@@ -105,7 +105,7 @@ def read_http(sock):
     return response_line, headers, body
 
 
-class TestHttpd(tests.TestCase):
+class TestHttpd(TestCase):
     mode = 'static'
     def setUp(self):
         self.logfile = StringIO()
@@ -168,7 +168,7 @@ class TestHttpd(tests.TestCase):
     def skip_test_005_run_apachebench(self):
         url = 'http://localhost:12346/'
         # ab is apachebench
-        out = processes.Process(tests.find_command('ab'),
+        out = processes.Process(find_command('ab'),
                                 ['-c','64','-n','1024', '-k', url])
         print out.read()
 
@@ -308,4 +308,4 @@ class TestHttpd(tests.TestCase):
 
 
 if __name__ == '__main__':
-    tests.main()
+    main()

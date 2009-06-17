@@ -1,5 +1,5 @@
 # @author Bryan O'Sullivan
-# 
+#
 # Copyright (c) 2007, Linden Research, Inc.
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -7,10 +7,10 @@
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -20,6 +20,7 @@
 # THE SOFTWARE.
 
 import cgi
+from unittest import TestCase, main
 
 from eventlet import api
 from eventlet import httpc
@@ -30,9 +31,6 @@ try:
     from cStringIO import StringIO
 except ImportError:
     from StringIO import StringIO
-
-
-from greentest import tests
 
 
 class Site(object):
@@ -127,7 +125,7 @@ class TestBase(object):
         api.kill(self.victim)
 
 
-class TestHttpc(TestBase, tests.TestCase):
+class TestHttpc(TestBase, TestCase):
     def test_get_bad_uri(self):
         self.assertRaises(httpc.NotFound,
                           lambda: httpc.get(self.base_url() + 'b0gu5'))
@@ -259,7 +257,7 @@ class Site307(RedirectSite):
     response_code = "307 Temporary Redirect"
 
 
-class TestHttpc301(TestBase, tests.TestCase):
+class TestHttpc301(TestBase, TestCase):
     site_class = Site301
 
     def base_url(self):
@@ -284,7 +282,7 @@ class TestHttpc301(TestBase, tests.TestCase):
         self.assertEquals(response, data)
 
 
-class TestHttpc302(TestBase, tests.TestCase):
+class TestHttpc302(TestBase, TestCase):
     site_class = Site302
 
     def test_get_expired(self):
@@ -306,7 +304,7 @@ class TestHttpc302(TestBase, tests.TestCase):
         self.assertEquals(httpc.get(self.base_url() + 'expires/hello', max_retries=1), 'hello world')
 
 
-class TestHttpc303(TestBase, tests.TestCase):
+class TestHttpc303(TestBase, TestCase):
     site_class = Site303
 
     def base_url(self):
@@ -322,7 +320,7 @@ class TestHttpc303(TestBase, tests.TestCase):
         self.assertEquals(response, data)
 
 
-class TestHttpc307(TestBase, tests.TestCase):
+class TestHttpc307(TestBase, TestCase):
     site_class = Site307
 
     def base_url(self):
@@ -344,7 +342,7 @@ class Site500(BasicSite):
         return ["screw you world"]
 
 
-class TestHttpc500(TestBase, tests.TestCase):
+class TestHttpc500(TestBase, TestCase):
     site_class = Site500
 
     def base_url(self):
@@ -367,7 +365,7 @@ class Site504(BasicSite):
         return ["screw you world"]
 
 
-class TestHttpc504(TestBase, tests.TestCase):
+class TestHttpc504(TestBase, TestCase):
     site_class = Site504
 
     def base_url(self):
@@ -381,7 +379,7 @@ class TestHttpc504(TestBase, tests.TestCase):
                           lambda: httpc.post(self.base_url(), data=data))
 
 
-class TestHttpTime(tests.TestCase):
+class TestHttpTime(TestCase):
     rfc1123_time = 'Sun, 06 Nov 1994 08:49:37 GMT'
     rfc850_time  = 'Sunday, 06-Nov-94 08:49:37 GMT'
     asctime_time = 'Sun Nov  6 08:49:37 1994'
@@ -395,7 +393,7 @@ class TestHttpTime(tests.TestCase):
             self.assertEqual(ticks, self.secs_since_epoch)
 
 
-class TestProxy(tests.TestCase):
+class TestProxy(TestCase):
     def test_ssl_proxy(self):
         def ssl_proxy(sock):
             conn, addr = sock.accept()
@@ -460,4 +458,4 @@ class TestProxy(tests.TestCase):
 
 
 if __name__ == '__main__':
-    tests.main()
+    main()

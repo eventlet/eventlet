@@ -17,13 +17,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from greentest import tests
+from unittest import TestCase, main
 from eventlet import api
 import socket
 
 # TODO try and reuse unit tests from within Python itself
 
-class TestGreenIo(tests.TestCase):
+class TestGreenIo(TestCase):
     def test_close_with_makefile(self):
         def accept_close_early(listener):
             # verify that the makefile and the socket are truly independent
@@ -98,4 +98,4 @@ class TestGreenIo(tests.TestCase):
         timer.cancel()
                 
 if __name__ == '__main__':
-    tests.main()
+    main()

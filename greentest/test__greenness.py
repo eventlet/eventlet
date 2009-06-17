@@ -38,9 +38,8 @@ def start_http_server():
     #print "Serving HTTP on", sa[0], "port", sa[1], "..."
     httpd.request_count = 0
     def serve():
-        while 1:
-            httpd.handle_request()
-            httpd.request_count += 1
+        httpd.handle_request()
+        httpd.request_count += 1
     return spawn(serve), httpd
 
 class TestGreenness(unittest.TestCase):

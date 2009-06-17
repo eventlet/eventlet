@@ -27,6 +27,7 @@ The db_pool module is useful for managing database connections.  It provides thr
 
 A ConnectionPool object represents a pool of connections open to a particular database.  The arguments to the constructor include the database-software-specific module, the host name, and the credentials required for authentication.  After construction, the ConnectionPool object decides when to create and sever connections with the target database.
 
+>>> import MySQLdb
 >>> cp = ConnectionPool(MySQLdb, host='localhost', user='root', passwd='')
 
 Once you have this pool object, you connect to the database by calling get() on it:
@@ -37,20 +38,20 @@ This call may either create a new connection, or reuse an existing open connecti
 
 >>> conn = cp.get()
 >>> try:
->>>    conn.cursor().execute('SELECT NOW()')
->>> finally:
->>>    cp.put(conn)
+...     result = conn.cursor().execute('SELECT NOW()')
+... finally:
+...     cp.put(conn)
 
 or
 
 >>> conn = cp.get()
->>> conn.cursor().execute('SELECT NOW()')
+>>> result = conn.cursor().execute('SELECT NOW()')
 >>> conn.close()
 
 or
 
 >>> conn = cp.get()
->>> conn.cursor().execute('SELECT NOW()')
+>>> result = conn.cursor().execute('SELECT NOW()')
 >>> del conn
 
 Try/finally is the preferred method, because it has no reliance on __del__ being called by garbage collection.
@@ -75,10 +76,8 @@ The constructor arguments:
 * credentials : A dictionary, or dictionary-alike, mapping hostname to connection-argument-dictionary.  This is used for the constructors of the ConnectionPool objects.  Example:
 
 >>> dc = DatabaseConnector(MySQLdb,
-        {'db.internal.example.com':
-            {'user':'internal', 'passwd':'s33kr1t'},
-         'localhost':
-            {'user':'root', 'passwd':''})
+...      {'db.internal.example.com': {'user': 'internal', 'passwd': 's33kr1t'},
+...       'localhost': {'user': 'root', 'passwd': ''}})
 
 If the credentials contain a host named 'default', then the value for 'default' is used whenever trying to connect to a host that has no explicit entry in the database.  This is useful if there is some pool of hosts that share arguments.
 

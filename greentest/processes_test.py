@@ -20,11 +20,11 @@
 # THE SOFTWARE.
 
 import sys
+from unittest import TestCase, main
 
-from greentest import tests
 from eventlet import processes
 
-class TestEchoPool(tests.TestCase):
+class TestEchoPool(TestCase):
     def setUp(self):
         self.pool = processes.ProcessPool('echo', ["hello"])
 
@@ -47,7 +47,7 @@ class TestEchoPool(tests.TestCase):
             self.pool.put(proc)
 
 
-class TestCatPool(tests.TestCase):
+class TestCatPool(TestCase):
     def setUp(self):
         self.pool = processes.ProcessPool('cat')
 
@@ -88,7 +88,7 @@ class TestCatPool(tests.TestCase):
             self.pool.put(proc)
 
 
-class TestDyingProcessesLeavePool(tests.TestCase):
+class TestDyingProcessesLeavePool(TestCase):
     def setUp(self):
         self.pool = processes.ProcessPool('echo', ['hello'], max_size=1)
 
@@ -107,7 +107,7 @@ class TestDyingProcessesLeavePool(tests.TestCase):
         self.assert_(proc is not proc2)
 
 
-class TestProcessLivesForever(tests.TestCase):
+class TestProcessLivesForever(TestCase):
     def setUp(self):
         self.pool = processes.ProcessPool(sys.executable, ['-c', 'print "y"; import time; time.sleep(0.4); print "y"'], max_size=1)
 
@@ -131,4 +131,4 @@ class TestProcessLivesForever(tests.TestCase):
 
 
 if __name__ == '__main__':
-    tests.main()
+    main()
