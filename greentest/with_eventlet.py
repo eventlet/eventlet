@@ -26,11 +26,6 @@ Usage: %prog [--hub HUB] [--reactor REACTOR] program.py
 """
 import sys
 
-def import_green(modulename):
-    m = __import__('eventlet.green.' + modulename)
-    m = m.green.getattr(modulename)
-    return m
-
 def import_reactor(reactor):
     m = __import__('twisted.internet.' + reactor)
     return getattr(m.internet, reactor)
