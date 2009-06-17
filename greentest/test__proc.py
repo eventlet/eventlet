@@ -120,7 +120,6 @@ class TestCase(LimitedTestCase):
 
         try:
             self.link(p)
-            api.sleep(0)
         except kill_exc_type:
             if first_time:
                 raise
