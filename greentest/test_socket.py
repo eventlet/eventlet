@@ -888,7 +888,11 @@ class TCPTimeoutTest(SocketTCPTest):
             pass
         def alarm_handler(signal, frame):
             raise Alarm
-        old_alarm = signal.signal(signal.SIGALRM, alarm_handler)
+        from eventlet.api import get_hub
+        if hasattr(get_hub(), 'signal'):
+            myalarm = get_hub().signal(signal.SIGALRM, alarm_handler)
+        else:
+            old_alarm = signal.signal(signal.SIGALRM, alarm_handler)
         try:
             try:
                 signal.alarm(2)    # POSIX allows alarm to be up to 1 second early
@@ -907,7 +911,10 @@ class TCPTimeoutTest(SocketTCPTest):
                 self.fail("got Alarm in wrong place")
         finally:
             # no alarm can be pending.  Safe to restore old handler.
-            signal.signal(signal.SIGALRM, old_alarm)
+            if hasattr(get_hub(), 'signal'):
+                myalarm.cancel()
+            else:
+                signal.signal(signal.SIGALRM, old_alarm)
 
 class UDPTimeoutTest(SocketUDPTest):
 
