@@ -117,7 +117,7 @@ class Hub(object):
 
     @property
     def running(self):
-        return True if self.greenlet else False
+        return bool(self.greenlet)
 
     def add_descriptor(self, fileno, read=None, write=None, exc=None):
         if read:
