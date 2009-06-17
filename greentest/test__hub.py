@@ -47,7 +47,7 @@ class TestCloseSocketWhilePolling(unittest.TestCase):
         try:
             sock = socket.socket()
             api.call_after(0, sock.close)
-            sock.connect(('127.0.0.1', 80))
+            sock.connect(('python.org', 81))
         except Exception:
             api.sleep(0)
         else:
