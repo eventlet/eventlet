@@ -1,5 +1,3 @@
 __select = __import__('select')
-for var in dir(__select):
-    exec "%s = __select.%s" % (var, var)
+error = __select.error
 from eventlet.api import select
-del poll
