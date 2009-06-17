@@ -301,5 +301,5 @@ class BaseHub(object):
         return self.excs
 
     def get_timers_count(hub):
-        return max(len(x) for x in [hub.timers, hub.timers_by_greenlet.items(), hub.next_timers])
+        return max(len(x) for x in [hub.timers, hub.next_timers])
 
