@@ -25,6 +25,7 @@ from eventlet import api, timer
 
 class TestTimer(TestCase):
     mode = 'static'
+
     def test_copy(self):
         t = timer.Timer(0, lambda: None)
         t2 = t.copy()
@@ -45,7 +46,6 @@ class TestTimer(TestCase):
 
     def test_schedule(self):
         hub = api.get_hub()
-##         r = hub.runloop
         # clean up the runloop, preventing side effects from previous tests
         # on this thread
         if hub.running:
@@ -54,6 +54,10 @@ class TestTimer(TestCase):
         called = []
         #t = timer.Timer(0, lambda: (called.append(True), hub.abort()))
         #t.schedule()
+        # let's have a timer somewhere in the future; make sure abort() still works
+        # (for libevent, its dispatcher() does not exit if there is something scheduled)
+        # XXX libevent handles this, other hubs do not
+        #api.get_hub().schedule_call_global(10000, lambda: (called.append(True), hub.abort()))
         api.get_hub().schedule_call_global(0, lambda: (called.append(True), hub.abort()))
         hub.default_sleep = lambda: 0.0
         hub.switch()
