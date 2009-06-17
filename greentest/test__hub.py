@@ -20,10 +20,11 @@
 # THE SOFTWARE.
 
 import unittest
+import time
 from eventlet import api
 from eventlet.green import socket
 
-DELAY = 0.01
+DELAY = 0.1
 
 
 class TestScheduleCall(unittest.TestCase):
@@ -52,6 +53,28 @@ class TestCloseSocketWhilePolling(unittest.TestCase):
             api.sleep(0)
         else:
             assert False, 'expected an error here'
+
+
+class TestExceptionInMainloop(unittest.TestCase):
+
+    def test_sleep(self):
+        # even if there was an error in the mainloop, the hub should continue to work
+        start = time.time()
+        api.sleep(DELAY)
+        delay = time.time() - start
+
+        assert delay >= DELAY*0.9, 'sleep returned after %s seconds (was scheduled for %s)' % (delay, DELAY)
+
+        def fail():
+            1/0
+
+        api.get_hub().schedule_call_global(0, fail)
+
+        start = time.time()
+        api.sleep(DELAY)
+        delay = time.time() - start
+
+        assert delay >= DELAY*0.9, 'sleep returned after %s seconds (was scheduled for %s)' % (delay, DELAY)
 
 
 if __name__=='__main__':
