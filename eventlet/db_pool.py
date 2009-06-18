@@ -463,7 +463,9 @@ class PooledConnectionWrapper(GenericConnectionWrapper):
         self._destroy()
 
     def __del__(self):
-        self.close()
+        return  # this causes some issues if __del__ is called in the 
+                # main coroutine, so for now this is disabled
+        #self.close()
 
 
 class DatabaseConnector(object):
