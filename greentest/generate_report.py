@@ -195,7 +195,7 @@ def format_header(rev, changeset, pyversion):
     return result
 
 def format_html(table, rev, changeset, pyversion):
-    r = '<html><head><style type="text/css">a.x {color: black; text-decoration: none;} </style></head><body>'
+    r = '<html><head><style type="text/css">a.x {color: black; text-decoration: none;}  a.x:hover {text-decoration: underline;} </style></head><body>'
     r += format_header(rev, changeset, pyversion)
     r += table
     r += '</body></html>'
