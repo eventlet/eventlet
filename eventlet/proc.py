@@ -730,7 +730,3 @@ class Pool(object):
         g.link(lambda *_args: self.semaphore.release())
         return g
 
-
-if __name__=='__main__':
-    import doctest
-    doctest.testmod()

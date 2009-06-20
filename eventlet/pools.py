@@ -207,7 +207,3 @@ class ExceptionWrapper(object):
     def __init__(self, e):
         self.e = e
 
-
-if __name__=='__main__':
-    import doctest
-    doctest.testmod()

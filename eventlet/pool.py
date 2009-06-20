@@ -280,7 +280,3 @@ class Pool(object):
             yield q.wait()
             finished += 1
 
-
-if __name__=='__main__':
-    import doctest
-    doctest.testmod()

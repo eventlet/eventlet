@@ -567,11 +567,3 @@ class Actor(object):
         """
         raise NotImplementedError()
 
-
-def _test():
-    print "Running doctests.  There will be no further output if they succeed."
-    import doctest
-    doctest.testmod()
-
-if __name__ == "__main__":
-    _test()
