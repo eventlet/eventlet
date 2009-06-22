@@ -260,6 +260,13 @@ class Semaphore(object):
     def __exit__(self, typ, val, tb):
         self.release()
 
+    @property
+    def balance(self):
+        # positive means there are free items
+        # zero means there are no free items but nobody has requested one
+        # negative means there are requests for items, but no items
+        return self.counter - len(self._waiters)
+
 
 class BoundedSemaphore(object):
     """A bounded semaphore.
@@ -321,7 +328,7 @@ class BoundedSemaphore(object):
 
     @property
     def balance(self):
-        return self.lower_bound.counter - self.upper_bound.counter
+        return self.lower_bound.balance - self.upper_bound.balance
 
 
 def semaphore(count=0, limit=None):
