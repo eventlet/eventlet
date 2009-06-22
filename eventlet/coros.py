@@ -505,6 +505,8 @@ class Channel(object):
             exc = (exc, )
         if api.getcurrent() is api.get_hub().greenlet:
             self.items.append((result, exc))
+            if self._waiters:
+                api.get_hub().schedule_call_global(0, self._do_switch)
         else:
 #             if self._waiters and self._senders:
 #                 api.sleep(0)
