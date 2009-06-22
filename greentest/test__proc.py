@@ -269,7 +269,7 @@ class TestRaise_link(TestCase):
         for _ in xrange(3):
             self._test_kill(p, False, proc.LinkedKilled)
 
-class TestRaise_link_exception(TestCase):
+class TestRaise_link_exception(TestRaise_link):
     link_method = 'link_exception'
 
 
