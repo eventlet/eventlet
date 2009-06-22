@@ -125,3 +125,10 @@ def backdoor((conn, addr), locals=None):
     greenlet = SocketConsole(fl, (host, port), locals)
     hub = api.get_hub()
     hub.schedule_call_global(0, greenlet.switch)
+
+
+if __name__ == '__main__':
+    api.tcp_server(api.tcp_listener(('127.0.0.1', 9000)),
+                   backdoor,
+                   {})
+
