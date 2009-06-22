@@ -124,21 +124,24 @@ class TestIntPool(TestCase):
 
     def test_putting_to_queue(self):
         timer = api.exc_after(0.1, api.TimeoutError)
-        size = 2
-        self.pool = IntPool(min_size=0, max_size=size)
-        queue = coros.queue()
-        results = []
-        def just_put(pool_item, index):
-            self.pool.put(pool_item)
-            queue.send(index)
-        for index in xrange(size + 1):
-            pool_item = self.pool.get()
-            api.spawn(just_put, pool_item, index)
+        try:
+            size = 2
+            self.pool = IntPool(min_size=0, max_size=size)
+            queue = coros.queue()
+            results = []
+            def just_put(pool_item, index):
+                self.pool.put(pool_item)
+                queue.send(index)
+            for index in xrange(size + 1):
+                pool_item = self.pool.get()
+                api.spawn(just_put, pool_item, index)
 
-        while results != range(size + 1):
-            x = queue.wait()
-            results.append(x)
-        timer.cancel()
+            for _ in range(size+1):
+                x = queue.wait()
+                results.append(x)
+            self.assertEqual(sorted(results), range(size + 1))
+        finally:
+            timer.cancel()
 
 
 class TestAbstract(TestCase):
