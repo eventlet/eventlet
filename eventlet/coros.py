@@ -232,10 +232,11 @@ class Semaphore(object):
     def acquire(self, blocking=True):
         if not blocking and self.locked():
             return False
-        while self.counter<=0:
+        if self.counter <= 0:
             self._waiters[api.getcurrent()] = None
             try:
-                api.get_hub().switch()
+                while self.counter <= 0:
+                    api.get_hub().switch()
             finally:
                 self._waiters.pop(api.getcurrent(), None)
         self.counter -= 1
