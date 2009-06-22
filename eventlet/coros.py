@@ -214,9 +214,13 @@ class Semaphore(object):
         self.counter  = count
         self._waiters = {}
 
+    def __repr__(self):
+        params = (self.__class__.__name__, hex(id(self)), self.counter, len(self._waiters))
+        return '<%s at %s c=%s _w[%s]>' % params
+
     def __str__(self):
-        params = (self.__class__.__name__, hex(id(self)), self.counter)
-        return '<%s at %s counter=%r>' % params
+        params = (self.__class__.__name__, self.counter, len(self._waiters))
+        return '<%s c=%s _w[%s]>' % params
 
     def locked(self):
         return self.counter <= 0
@@ -271,9 +275,13 @@ class BoundedSemaphore(object):
         self.lower_bound = Semaphore(count)
         self.upper_bound = Semaphore(limit-count)
 
+    def __repr__(self):
+        params = (self.__class__.__name__, hex(id(self)), self.balance, self.lower_bound, self.upper_bound)
+        return '<%s at %s b=%s l=%s u=%s>' % params
+
     def __str__(self):
-        params = (self.__class__.__name__, hex(id(self)), self.lower_bound.counter, self.upper_bound.counter)
-        return '<%s at %s %r/%r>' % params
+        params = (self.__class__.__name__, self.balance, self.lower_bound, self.upper_bound)
+        return '<%s b=%s l=%s u=%s>' % params
 
     def locked(self):
         return self.lower_bound.locked()
