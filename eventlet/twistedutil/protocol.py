@@ -29,10 +29,10 @@ from twisted.python import failure
 
 from eventlet import proc
 from eventlet.api import getcurrent
-from eventlet.coros import queue, event
+from eventlet.coros import Queue, event
 
 
-class ValueQueue(queue):
+class ValueQueue(Queue):
     """Queue that keeps the last item forever in the queue if it's an exception.
     Useful if you send an exception over queue only once, and once sent it must be always
     available.
@@ -40,23 +40,18 @@ class ValueQueue(queue):
 
     def send(self, value=None, exc=None):
         if exc is not None or not self.has_error():
-            queue.send(self, value, exc)
+            Queue.send(self, value, exc)
 
     def wait(self):
-        """The difference from queue.wait: if there is an only item in the
-        queue and it is an exception, raise it, but keep it in the queue, so
+        """The difference from Queue.wait: if there is an only item in the
+        Queue and it is an exception, raise it, but keep it in the Queue, so
         that future calls to wait() will raise it again.
         """
-        self.sem.acquire()
         if self.has_error() and len(self.items)==1:
-            # the last item, which is an exception, raise without emptying the queue
-            self.sem.release()
+            # the last item, which is an exception, raise without emptying the Queue
             getcurrent().throw(*self.items[0][1])
         else:
-            result, exc = self.items.popleft()
-            if exc is not None:
-                getcurrent().throw(*exc)
-            return result
+            return Queue.wait(self)
 
     def has_error(self):
         return self.items and self.items[-1][1] is not None
