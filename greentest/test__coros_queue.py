@@ -184,7 +184,7 @@ class TestQueue(LimitedTestCase):
         api.sleep(0)
         self.assertEquals(0, q.waiting())
         self.assertEquals('hi', e1.wait())
-        self.assertEquals(0, waiting(q))
+        self.assertEquals(0, q.waiting())
 
 
 class TestChannel(LimitedTestCase):
