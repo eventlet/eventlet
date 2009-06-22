@@ -27,6 +27,8 @@ from greentest import LimitedTestCase
 
 DELAY = 0.01
 
+class ExpectedError(Exception):
+    pass
 
 class TestLink_Signal(LimitedTestCase):
 
@@ -218,8 +220,8 @@ class TestRaise_link(TestCase):
 
         assert not p, p
 
-        self.assertRaises(ValueError, event.wait)
-        self.assertRaises(ValueError, queue.wait)
+        self.assertRaises(ExpectedError, event.wait)
+        self.assertRaises(ExpectedError, queue.wait)
         self.assertRaises(kill_exc_type, receiver.wait)
         self.assertRaises(kill_exc_type, proc.waitall, [receiver])
         sleep(DELAY)
@@ -229,7 +231,7 @@ class TestRaise_link(TestCase):
         self.check_timed_out(*xxxxx)
 
     def test_raise(self):
-        p = self.p = proc.spawn(int, 'badint')
+        p = self.p = proc.spawn(lambda : api.getcurrent().throw(ExpectedError('test_raise')))
         self._test_raise(p, True, proc.LinkedFailed)
         # repeating the same with dead process
         for _ in xrange(3):
@@ -293,26 +295,26 @@ class TestStuff(unittest.TestCase):
             return 1
         x = proc.spawn(x)
         z = proc.spawn(lambda : 3)
-        y = proc.spawn(int, 'badint')
+        y = proc.spawn(lambda : api.getcurrent().throw(ExpectedError('test_wait_error')))
         y.link(x)
         x.link(y)
         y.link(z)
         z.link(y)
-        self.assertRaises(ValueError, proc.waitall, [x, y, z])
+        self.assertRaises(ExpectedError, proc.waitall, [x, y, z])
         self.assertRaises(proc.LinkedFailed, proc.waitall, [x])
         self.assertEqual(proc.waitall([z]), [3])
-        self.assertRaises(ValueError, proc.waitall, [y])
+        self.assertRaises(ExpectedError, proc.waitall, [y])
 
     def test_wait_all_exception_order(self):
         # if there're several exceptions raised, the earliest one must be raised by wait
-        def badint():
+        def first():
             sleep(0.1)
-            int('first')
-        a = proc.spawn(badint)
-        b = proc.spawn(int, 'second')
+            raise ExpectedError('first')
+        a = proc.spawn(first)
+        b = proc.spawn(lambda : api.getcurrent().throw(ExpectedError('second')))
         try:
             proc.waitall([a, b])
-        except ValueError, ex:
+        except ExpectedError, ex:
             assert 'second' in str(ex), repr(str(ex))
 
     def test_multiple_listeners_error(self):
@@ -324,19 +326,19 @@ class TestStuff(unittest.TestCase):
         results = []
         def listener1(*args):
             results.append(10)
-            1/0
+            raise ExpectedError('listener1')
         def listener2(*args):
             results.append(20)
-            2/0
+            raise ExpectedError('listener2')
         def listener3(*args):
-            3/0
+            raise ExpectedError('listener3')
         p.link(listener1)
         p.link(listener2)
         p.link(listener3)
         sleep(DELAY*10)
         assert results in [[10, 20], [20, 10]], results
 
-        p = proc.spawn(int, 'hello')
+        p = proc.spawn(lambda : api.getcurrent().throw(ExpectedError('test_multiple_listeners_error')))
         results = []
         p.link(listener1)
         p.link(listener2)
@@ -351,13 +353,13 @@ class TestStuff(unittest.TestCase):
         def listener1(*args):
             p.unlink(listener2)
             results.append(5)
-            1/0
+            raise ExpectedError('listener1')
         def listener2(*args):
             p.unlink(listener1)
             results.append(5)
-            2/0
+            raise ExpectedError('listener2')
         def listener3(*args):
-            3/0
+            raise ExpectedError('listener3')
         p.link(listener1)
         p.link(listener2)
         p.link(listener3)
@@ -377,14 +379,14 @@ class TestStuff(unittest.TestCase):
         e = coros.event()
         def func():
             try:
-                1/0
+                raise ExpectedError('test_killing_unlinked')
             except:
                 e.send_exception(*sys.exc_info())
         p = proc.spawn_link(func)
         try:
             try:
                 e.wait()
-            except ZeroDivisionError:
+            except ExpectedError:
                 pass
         finally:
             p.unlink() # this disables LinkedCompleted that otherwise would be raised by the next line
