@@ -92,7 +92,7 @@ class Hub(object):
         except ValueError:
             pass
         return self.greenlet.switch()
- 
+
     def run(self):
         while True:
             try:
@@ -168,9 +168,6 @@ class Hub(object):
                 exc(fileno)
             except:
                 traceback.print_exc()
-
-    def timer_finished(self, t): pass
-    def timer_canceled(self, t): pass
 
     def get_readers(self):
         return self.readers
