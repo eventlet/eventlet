@@ -64,7 +64,7 @@ class LocalTimer(event_wrapper):
 
 class Hub(object):
 
-    SYSTEM_EXCEPTIONS = (KeyboardInterrupt, SystemExit, api.GreenletExit)
+    SYSTEM_EXCEPTIONS = (KeyboardInterrupt, SystemExit)
 
     def __init__(self, clock=time.time):
         event.init()
