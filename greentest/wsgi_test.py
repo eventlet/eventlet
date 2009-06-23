@@ -57,6 +57,14 @@ def big_chunks(env, start_response):
     for x in range(10):
         yield line
 
+def chunked_post(env, start_response):
+    start_response('200 OK', [('Content-type', 'text/plain')])
+    if env['PATH_INFO'] == '/a':
+        return [env['wsgi.input'].read()]
+    elif env['PATH_INFO'] == '/b':
+        return [x for x in iter(lambda: env['wsgi.input'].read(4096), '')]
+    elif env['PATH_INFO'] == '/c':
+        return [x for x in iter(lambda: env['wsgi.input'].read(1), '')]
 
 class Site(object):
     def __init__(self):
@@ -291,6 +299,34 @@ class TestHttpd(TestCase):
         res = httpc.get("https://localhost:4202/foo")
         self.assertEquals(res, '')
 
+    def test_014_chunked_post(self):
+        self.site.application = chunked_post
+        sock = api.connect_tcp(('127.0.0.1', 12346))
+        fd = sock.makeGreenFile()
+        fd.write('PUT /a HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n'
+                 'Transfer-Encoding: chunked\r\n\r\n'
+                 '2\r\noh\r\n4\r\n hai\r\n0\r\n\r\n')
+        fd.readuntil('\r\n\r\n')
+        response = fd.read()
+        self.assert_(response == 'oh hai', 'invalid response %s' % response)
+
+        sock = api.connect_tcp(('127.0.0.1', 12346))
+        fd = sock.makeGreenFile()
+        fd.write('PUT /b HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n'
+                 'Transfer-Encoding: chunked\r\n\r\n'
+                 '2\r\noh\r\n4\r\n hai\r\n0\r\n\r\n')
+        fd.readuntil('\r\n\r\n')
+        response = fd.read()
+        self.assert_(response == 'oh hai', 'invalid response %s' % response)
+
+        sock = api.connect_tcp(('127.0.0.1', 12346))
+        fd = sock.makeGreenFile()
+        fd.write('PUT /c HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n'
+                 'Transfer-Encoding: chunked\r\n\r\n'
+                 '2\r\noh\r\n4\r\n hai\r\n0\r\n\r\n')
+        fd.readuntil('\r\n\r\n')
+        response = fd.read(8192)
+        self.assert_(response == 'oh hai', 'invalid response %s' % response)
 
 if __name__ == '__main__':
     main()
