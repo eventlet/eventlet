@@ -28,8 +28,6 @@ import traceback
 from eventlet.green import urllib
 from eventlet.green import socket
 from eventlet.green import BaseHTTPServer
-
-from eventlet import api
 from eventlet.pool import Pool
 
 
@@ -400,7 +398,6 @@ def server(sock, site, log=None, environ=None, max_size=None, max_http_version=D
                         raise
                 pool.execute_async(serv.process_request, client_socket)
             except KeyboardInterrupt:
-                api.get_hub().remove_descriptor(sock.fileno())
                 print "wsgi exiting"
                 break
     finally:
