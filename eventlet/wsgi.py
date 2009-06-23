@@ -402,5 +402,5 @@ def server(sock, site, log=None, environ=None, max_size=None, max_http_version=D
             sock.close()
         except socket.error, e:
             if e[0] != errno.EPIPE:
-                raise
+                traceback.print_exc()
 
