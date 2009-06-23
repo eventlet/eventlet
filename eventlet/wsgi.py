@@ -268,7 +268,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.environ['eventlet.input'].read()
             finish = time.time()
 
-            self.server.log_message('%s - - [%s] "%s" %s %s %.6f\n' % (
+            self.server.log_message('%s - - [%s] "%s" %s %s %.6f' % (
                 self.client_address[0],
                 self.log_date_time_string(),
                 self.requestline,
