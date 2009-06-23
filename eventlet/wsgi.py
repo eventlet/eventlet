@@ -25,6 +25,7 @@ import os
 import sys
 import time
 import traceback
+
 from eventlet.green import urllib
 from eventlet.green import socket
 from eventlet.green import BaseHTTPServer
@@ -32,9 +33,9 @@ from eventlet.pool import Pool
 
 
 DEFAULT_MAX_SIMULTANEOUS_REQUESTS = 1024
-
-
 DEFAULT_MAX_HTTP_VERSION = 'HTTP/1.1'
+MAX_REQUEST_LINE = 8192
+MINIMUM_CHUNK_SIZE = 4096
 
 
 # Weekday and month names for HTTP date/time formatting; always English!
@@ -90,10 +91,6 @@ class Input(object):
 
     def __iter__(self):
         return iter(self.read())
-
-
-MAX_REQUEST_LINE = 8192
-MINIMUM_CHUNK_SIZE = 4096
 
 
 class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
