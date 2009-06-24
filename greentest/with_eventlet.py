@@ -25,6 +25,7 @@
 Usage: %prog [--hub HUB] [--reactor REACTOR] program.py
 """
 import sys
+import os
 
 def import_reactor(reactor):
     m = __import__('twisted.internet.' + reactor)
@@ -64,9 +65,27 @@ def parse_args():
 if __name__=='__main__':
     hub, reactor = parse_args()
     setup_hub(hub, reactor)
+    from eventlet import __version__
     from eventlet.api import get_hub
     hub = get_hub() # set up the hub now
-    print '===HUB=%r' % hub
+    try:
+        version_info = ' version_info=%s' % (hub._version_info(), )
+    except:
+        version_info = ''
+    try:
+        diffstat = os.popen(r"hg diff 2> /dev/null | diffstat -q").read().strip()
+    except:
+        diffstat = None
+    try:
+        changeset = os.popen(r"hg log -r tip 2> /dev/null | grep changeset").readlines()[0].replace('changeset:', '').strip().replace(':', '_')
+        if diffstat:
+            changeset += '+'
+        changeset = '(%s)' % (changeset, )
+    except:
+        changeset = ''
+    print '===HUB=%r version=%s%s%s' % (hub, __version__, changeset, version_info)
+    if diffstat:
+        print diffstat
     if 'twisted.internet.reactor' in sys.modules:
         print '===REACTOR=%r' % sys.modules['twisted.internet.reactor']
     sys.stdout.flush()
