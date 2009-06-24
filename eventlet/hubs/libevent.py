@@ -28,8 +28,9 @@ from eventlet import api
 
 class event_wrapper(object):
 
-    def __init__(self, impl):
+    def __init__(self, impl=None, seconds=None):
         self.impl = impl
+        self.seconds = seconds
 
     def __repr__(self):
         if self.impl is not None:
@@ -49,19 +50,6 @@ class event_wrapper(object):
             self.impl = None
 
 
-class LocalTimer(event_wrapper):
-
-    def __init__(self, cb, args, kwargs):
-        self.tpl =  cb, args, kwargs
-        self.greenlet = api.getcurrent()
-        # 'impl' attribute must be set to libevent's timeout instance
-
-    def __call__(self):
-        if self.greenlet:
-            cb, args, kwargs = self.tpl
-            cb(*args, **kwargs)
-
-
 class Hub(object):
 
     SYSTEM_EXCEPTIONS = (KeyboardInterrupt, SystemExit)
@@ -75,6 +63,7 @@ class Hub(object):
         self.greenlet = api.Greenlet(self.run)
         self.signal_exc_info = None
         self.signal(2, lambda signalnum, frame: self.greenlet.parent.throw(KeyboardInterrupt))
+        self.events_to_add = []
 
     def switch(self):
         cur = api.getcurrent()
@@ -93,11 +82,30 @@ class Hub(object):
             pass
         return self.greenlet.switch()
 
+    def dispatch(self):
+        loop = event.loop
+        while True:
+            for e in self.events_to_add:
+                if e is not None and e.impl is not None and e.seconds is not None:
+                    e.impl.add(e.seconds)
+                    e.seconds = None
+            self.events_to_add = []
+            result = loop()
+
+            if getattr(event, '__event_exc', None) is not None:
+                # only have to do this because of bug in event.loop
+                t = getattr(event, '__event_exc')
+                setattr(event, '__event_exc', None)
+                assert getattr(event, '__event_exc') is None
+                raise t[0], t[1], t[2]
+
+            if result != 0:
+                return result
+
     def run(self):
         while True:
             try:
-                event.dispatch()
-                break
+                self.dispatch()
             except api.GreenletExit:
                 break
             except self.SYSTEM_EXCEPTIONS:
@@ -158,16 +166,21 @@ class Hub(object):
         self.excs.pop(fileno, None)
 
     def schedule_call_local(self, seconds, cb, *args, **kwargs):
-        timer = LocalTimer(cb, args, kwargs)
-        event_timeout = event.timeout(seconds, timer)
-        timer.impl = event_timeout
-        return timer
+        current = api.getcurrent()
+        if current is self.greenlet:
+            return self.schedule_call_global(seconds, cb, *args, **kwargs)
+        event_impl = event.event(_scheduled_call_local, (cb, args, kwargs, current))
+        wrapper = event_wrapper(event_impl, seconds=seconds)
+        self.events_to_add.append(wrapper)
+        return wrapper
 
     schedule_call = schedule_call_local
 
     def schedule_call_global(self, seconds, cb, *args, **kwargs):
-        event_timeout = event.timeout(seconds, lambda : cb(*args, **kwargs) and None)
-        return event_wrapper(event_timeout)
+        event_impl = event.event(_scheduled_call, (cb, args, kwargs))
+        wrapper = event_wrapper(event_impl, seconds=seconds)
+        self.events_to_add.append(wrapper)
+        return wrapper
 
     def exc_descriptor(self, fileno):
         exc = self.excs.get(fileno)
@@ -185,4 +198,20 @@ class Hub(object):
 
     def get_excs(self):
         return self.excs
+
+
+def _scheduled_call(event_impl, handle, evtype, arg):
+    cb, args, kwargs = arg
+    try:
+        cb(*args, **kwargs)
+    finally:
+        event_impl.delete()
+
+def _scheduled_call_local(event_impl, handle, evtype, arg):
+    cb, args, kwargs, caller_greenlet = arg
+    try:
+        if not caller_greenlet.dead:
+            cb(*args, **kwargs)
+    finally:
+        event_impl.delete()
 
