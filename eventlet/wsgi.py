@@ -247,18 +247,10 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             return write
 
         try:
-            result = self.application(self.environ, start_response)
-        except Exception, e:
-            exc = ''.join(traceback.format_exception(*sys.exc_info()))
-            print exc
-            if not headers_set:
-                start_response("500 Internal Server Error", [('Content-type', 'text/plain')])
-                write(exc)
-                return
-        if not headers_sent and hasattr(result, '__len__'):
-            headers_set[1].append(('content-length', str(sum(map(len, result)))))
-        try:
             try:
+                result = self.application(self.environ, start_response)
+                if not headers_sent and hasattr(result, '__len__'):
+                    headers_set[1].append(('content-length', str(sum(map(len, result)))))
                 towrite = []
                 for data in result:
                     if data:
@@ -268,12 +260,12 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 if use_chunked[0]:
                     wfile.write('0\r\n\r\n')
             except Exception, e:
+                self.close_connection = 1
                 exc = traceback.format_exc()
                 print exc
                 if not headers_set:
                     start_response("500 Internal Server Error", [('Content-type', 'text/plain')])
                     write(exc)
-                    return
         finally:
             if hasattr(result, 'close'):
                 result.close()
