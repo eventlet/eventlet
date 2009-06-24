@@ -24,6 +24,7 @@ are not leaked by the hub.
 """
 #import sys
 import unittest
+from pprint import pformat
 from eventlet.green import socket
 from eventlet.green.thread import start_new_thread
 from eventlet.green.time import sleep
@@ -84,11 +85,11 @@ def run_interaction(run_client):
 def run_and_check(run_client):
     w = run_interaction(run_client=run_client)
     if w():
-        print gc.get_referrers(w())
+        print pformat(gc.get_referrers(w()))
         for x in gc.get_referrers(w()):
-            print x
+            print pformat(x)
             for y in gc.get_referrers(x):
-                print '-', y
+                print '-', pformat(y)
         raise AssertionError('server should be dead by now')
 
 class test(unittest.TestCase):
