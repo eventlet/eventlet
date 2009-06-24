@@ -155,7 +155,7 @@ def trampoline(fd, read=None, write=None, timeout=None, timeout_exc=TimeoutError
         # fd from here. If it will be needed than an indirect reference which is discarded right
         # after the switch above should be used.
     if timeout is not None:
-        t = hub.schedule_call(timeout, current.throw, timeout_exc)
+        t = hub.schedule_call_global(timeout, current.throw, timeout_exc)
     try:
         descriptor = hub.add_descriptor(fileno, read and cb, write and cb, _do_close)
         try:
@@ -207,7 +207,7 @@ def select(read_list, write_list, error_list, timeout=None):
         current.switch(([], [], []))
 
     if timeout is not None:
-        t = hub.schedule_call(timeout, on_timeout)
+        t = hub.schedule_call_global(timeout, on_timeout)
     try:
         for k, v in ds.iteritems():
             d = hub.add_descriptor(k,
@@ -261,7 +261,7 @@ def spawn(function, *args, **kwds):
     return g
 
 def kill(g, *throw_args):
-    get_hub().schedule_call(0, g.throw, *throw_args)
+    get_hub().schedule_call_global(0, g.throw, *throw_args)
     if getcurrent() is not get_hub().greenlet:
         sleep(0)
 
@@ -490,7 +490,7 @@ def sleep(seconds=0):
     """
     hub = get_hub()
     assert hub.greenlet is not greenlet.getcurrent(), 'do not call blocking functions from the mainloop'
-    timer = hub.schedule_call(seconds, greenlet.getcurrent().switch)
+    timer = hub.schedule_call_global(seconds, greenlet.getcurrent().switch)
     try:
         hub.switch()
     finally:
