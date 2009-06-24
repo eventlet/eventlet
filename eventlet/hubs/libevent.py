@@ -118,10 +118,7 @@ class Hub(object):
                     traceback.print_exc()
 
     def abort(self):
-        # schedule an exception, because otherwise dispatch() will not exit if
-        # there are timeouts scheduled
         self.schedule_call_global(0, self.greenlet.throw, api.GreenletExit)
-        event.abort()
 
     @property
     def running(self):
