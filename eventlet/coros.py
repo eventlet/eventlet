@@ -57,7 +57,7 @@ class event(object):
     """
     _result = None
     def __init__(self):
-        self._waiters = {}
+        self._waiters = set()
         self.reset()
 
     def __str__(self):
@@ -146,11 +146,11 @@ class event(object):
         'result'
         """
         if self._result is NOT_USED:
-            self._waiters[api.getcurrent()] = True
+            self._waiters.add(api.getcurrent())
             try:
                 return api.get_hub().switch()
             finally:
-                self._waiters.pop(api.getcurrent(), None)
+                self._waiters.discard(api.getcurrent())
         if self._exc is not None:
             api.getcurrent().throw(*self._exc)
         return self._result
@@ -188,7 +188,7 @@ class event(object):
         self._exc = exc
         hub = api.get_hub()
         if self._waiters:
-            hub.schedule_call_global(0, self._do_send, self._result, self._exc, self._waiters.keys())
+            hub.schedule_call_global(0, self._do_send, self._result, self._exc, self._waiters.copy())
 
     def _do_send(self, result, exc, waiters):
         while waiters:
@@ -213,7 +213,7 @@ class Semaphore(object):
 
     def __init__(self, count=0):
         self.counter  = count
-        self._waiters = {}
+        self._waiters = set()
 
     def __repr__(self):
         params = (self.__class__.__name__, hex(id(self)), self.counter, len(self._waiters))
@@ -234,12 +234,12 @@ class Semaphore(object):
         if not blocking and self.locked():
             return False
         if self.counter <= 0:
-            self._waiters[api.getcurrent()] = None
+            self._waiters.add(api.getcurrent())
             try:
                 while self.counter <= 0:
                     api.get_hub().switch()
             finally:
-                self._waiters.pop(api.getcurrent(), None)
+                self._waiters.discard(api.getcurrent())
         self.counter -= 1
         return True
 
@@ -255,7 +255,7 @@ class Semaphore(object):
 
     def _do_acquire(self):
         if self._waiters and self.counter>0:
-            waiter, _unused = self._waiters.popitem()
+            waiter = self._waiters.pop()
             waiter.switch()
 
     def __exit__(self, typ, val, tb):
