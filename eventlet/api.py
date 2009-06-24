@@ -425,7 +425,6 @@ def exc_after(seconds, *throw_args):
             else:
                 timer.cancel()
     """
-    hub = get_hub()
     return call_after(seconds, getcurrent().throw, *throw_args)
 
 
