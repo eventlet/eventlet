@@ -122,11 +122,11 @@ class Hub(object):
     def add_descriptor(self, fileno, read=None, write=None, exc=None):
         if read:
             evt = event.read(fileno, read, fileno)
-            self.readers[fileno] = evt, read
+            self.readers[fileno] = evt
 
         if write:
             evt = event.write(fileno, write, fileno)
-            self.writers[fileno] = evt, write
+            self.writers[fileno] = evt
 
         if exc:
             self.excs[fileno] = exc
@@ -143,10 +143,18 @@ class Hub(object):
         return event_wrapper(event.signal(signalnum, wrapper))
 
     def remove_descriptor(self, fileno):
-        for queue in (self.readers, self.writers):
-            tpl = queue.pop(fileno, None)
-            if tpl is not None:
-                tpl[0].delete()
+        reader = self.readers.pop(fileno, None)
+        if reader is not None:
+            try:
+                reader.delete()
+            except:
+                traceback.print_exc()
+        writer = self.writers.pop(fileno, None)
+        if writer is not None:
+            try:
+                writer.delete()
+            except:
+                traceback.print_exc()
         self.excs.pop(fileno, None)
 
     def schedule_call_local(self, seconds, cb, *args, **kwargs):
