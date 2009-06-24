@@ -73,7 +73,7 @@ class Hub(object):
         self.writers = {}
         self.excs = {}
         self.greenlet = api.Greenlet(self.run)
-        self.exc_info = None
+        self.signal_exc_info = None
         self.signal(2, lambda signalnum, frame: self.greenlet.parent.throw(KeyboardInterrupt))
 
     def switch(self):
@@ -103,9 +103,9 @@ class Hub(object):
             except self.SYSTEM_EXCEPTIONS:
                 raise
             except:
-                if self.exc_info is not None:
-                    self.schedule_call_global(0, api.getcurrent().parent.throw, *self.exc_info)
-                    self.exc_info = None
+                if self.signal_exc_info is not None:
+                    self.schedule_call_global(0, api.getcurrent().parent.throw, *self.signal_exc_info)
+                    self.signal_exc_info = None
                 else:
                     traceback.print_exc()
 
@@ -138,7 +138,7 @@ class Hub(object):
             try:
                 handler(signalnum, None)
             except:
-                self.exc_info = sys.exc_info()
+                self.signal_exc_info = sys.exc_info()
                 event.abort()
         return event_wrapper(event.signal(signalnum, wrapper))
 
