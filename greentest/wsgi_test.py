@@ -57,6 +57,16 @@ def big_chunks(env, start_response):
     for x in range(10):
         yield line
 
+def use_write(env, start_response):
+    if env['PATH_INFO'] == '/a':
+        write = start_response('200 OK', [('Content-type', 'text/plain'),
+                                          ('Content-Length', '5')])
+        write('abcde')
+    if env['PATH_INFO'] == '/b':
+        write = start_response('200 OK', [('Content-type', 'text/plain')])
+        write('abcde')
+    return []
+
 def chunked_post(env, start_response):
     start_response('200 OK', [('Content-type', 'text/plain')])
     if env['PATH_INFO'] == '/a':
@@ -327,6 +337,21 @@ class TestHttpd(TestCase):
         fd.readuntil('\r\n\r\n')
         response = fd.read(8192)
         self.assert_(response == 'oh hai', 'invalid response %s' % response)
+
+    def test_015_write(self):
+        self.site.application = use_write
+        sock = api.connect_tcp(('127.0.0.1', 12346))
+        fd = sock.makeGreenFile()
+        fd.write('GET /a HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
+        response_line, headers, body = read_http(sock)
+        self.assert_('content-length' in headers)
+
+        sock = api.connect_tcp(('127.0.0.1', 12346))
+        fd = sock.makeGreenFile()
+        fd.write('GET /b HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
+        response_line, headers, body = read_http(sock)
+        self.assert_('transfer-encoding' in headers)
+        self.assert_(headers['transfer-encoding'] == 'chunked')
 
 if __name__ == '__main__':
     main()

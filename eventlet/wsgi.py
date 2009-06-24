@@ -181,9 +181,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         header_dict = {}
 
         wfile = self.wfile
-        num_blocks = None
         result = None
-        use_chunked = False
+        use_chunked = [False]
         length = [0]
         status_code = [200]
 
@@ -203,17 +202,15 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 # send Date header?
                 if 'date' not in header_dict:
                     towrite.append('Date: %s\r\n' % (format_date_time(time.time()),))
-                if num_blocks is not None:
-                    if 'content-length' not in header_dict:
-                        towrite.append('Content-Length: %s\r\n' % (len(''.join(result)),))
-                elif use_chunked:
-                    towrite.append('Transfer-Encoding: chunked\r\n')
-                else:
+                if self.request_version == 'HTTP/1.0':
                     towrite.append('Connection: close\r\n')
                     self.close_connection = 1
+                elif 'content-length' not in header_dict:
+                    use_chunked[0] = True
+                    towrite.append('Transfer-Encoding: chunked\r\n')
                 towrite.append('\r\n')
 
-            if use_chunked:
+            if use_chunked[0]:
                 ## Write the chunked encoding
                 towrite.append("%x\r\n%s\r\n" % (len(data), data))
             else:
@@ -258,37 +255,25 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 start_response("500 Internal Server Error", [('Content-type', 'text/plain')])
                 write(exc)
                 return
-        try:
-            num_blocks = len(result)
-        except (TypeError, AttributeError, NotImplementedError):
-            if self.request_version == 'HTTP/1.1':
-                use_chunked = True
+        if not headers_sent and hasattr(result, '__len__'):
+            headers_set[1].append(('content-length', str(sum(map(len, result)))))
         try:
             try:
                 towrite = []
-                try:
-                    for data in result:
-                        if data:
-                            towrite.append(data)
-                            if use_chunked and sum(map(len, towrite)) > self.minimum_chunk_size:
-                                write(''.join(towrite))
-                                del towrite[:]
-                except Exception, e:
-                    exc = traceback.format_exc()
-                    print exc
-                    if not headers_set:
-                        start_response("500 Internal Server Error", [('Content-type', 'text/plain')])
-                        write(exc)
-                        return
-
-                if towrite:
-                    write(''.join(towrite))
+                for data in result:
+                    if data:
+                        write(data)
                 if not headers_sent:
                     write('')
-                if use_chunked:
+                if use_chunked[0]:
                     wfile.write('0\r\n\r\n')
             except Exception, e:
-                traceback.print_exc()
+                exc = traceback.format_exc()
+                print exc
+                if not headers_set:
+                    start_response("500 Internal Server Error", [('Content-type', 'text/plain')])
+                    write(exc)
+                    return
         finally:
             if hasattr(result, 'close'):
                 result.close()
