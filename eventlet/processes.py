@@ -67,7 +67,7 @@ def wait_on_children():
 
 def sig_child(signal, frame):
     from eventlet import api
-    api.call_after(0, wait_on_children)
+    api.call_after_global(0, wait_on_children)
 signal.signal(signal.SIGCHLD, sig_child)
     
 
