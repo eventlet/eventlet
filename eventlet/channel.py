@@ -1,6 +1,6 @@
 from eventlet import coros
 
-class channel(coros.queue):
+class channel(coros.Queue):
 
     def __init__(self):
         coros.queue.__init__(self, 0)
