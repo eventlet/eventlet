@@ -45,6 +45,12 @@ The following classes are still present but will be removed in the future versio
 - channel.channel (use coros.Channel)
 - coros.CoroutinePool (use pool.Pool)
 
+saranwrap.py now correctly closes the child process when the referring object is deleted, received some fixes to its detection of child process death, now correctly deals with the in keyword, and it is now possible to use coroutines in a non-blocking fashion in the child process.
+
+Time-based expiry added to db_pool.  This adds the ability to expire connections both by idleness and also by total time open.  There is also a connection timeout option.
+
+A small bug in httpd's error method was fixed.
+
 Python 2.3 is no longer supported.
 
 A number of tests was added along with a script to run all of them for all the configurations.
