@@ -1,13 +1,59 @@
-0.9.0
-=====
+0.8.11
+======
 
-Merged many eventlet-twisted integration patches by Denis Bilenko. It is now possible to mix eventlet-using code with twisted-using code.
+Eventlet can now run on top of twisted reactor. Twisted-based hub is enabled automatically if
+twisted.internet.reactor is imported. It is also possible to "embed" eventlet into a twisted
+application via eventlet.twistedutil.join_reactor. See the examples for details.
 
-Much of the core functionality has been refactored and cleaned up, including the removal of eventlet.greenlib. This means that it is now possible to use plain greenlets without modification in eventlet, and plain old subclasses of greenlet instead of the old eventlet.greenlib.GreenletContext. Calling eventlet.api.get_hub().switch() now checks to see whether the current greenlet has a "switch_out" method and calls it if so, providing the same functionality that the GreenletContext.swap_out used to. The swap_in behavior can be duplicated by overriding the switch method, and the finalize functionality can be duplicated by having a try: finally: block around the greenlet's main implementation. The eventlet.backdoor module has been ported to this new scheme, although it's signature had to change slightly so existing code that used the backdoor will have to be modified.
+A new package, eventlet.twistedutil, is added that makes integration of twisted and eventlet
+easier. It has block_on function that allows to wait for a Deferred to fire and it wraps
+twisted's Protocol in a synchronous interface. This is similar to and is inspired by Christopher
+Armstrong's corotwine library. Thanks to Dan Pascu for reviewing the package.
 
-Monkey-patching is now no longer the default way to use eventlet. Instead, there are a series of standard library networking modules that have been patched to cooperate using the eventlet hub inside the eventlet.green module. For example, using "from eventlet.green import httplib" is equivalent to the old practice of doing "from eventlet import util; util.wrap_socket_with_coroutine_socket(); import httplib".
+Another new package, eventlet.green, was added to provide some of the standard modules
+that are fixed not to block other greenlets. This is an alternative to monkey-patching
+the socket, which is impossible to do if you are running twisted's reactor.
+The package includes socket, httplib, urllib2.
 
-eventlet.httpd has been removed. Use eventlet.wsgi instead.
+Much of the core functionality has been refactored and cleaned up, including the removal
+of eventlet.greenlib. This means that it is now possible to use plain greenlets without
+modification in eventlet, and plain old subclasses of greenlet instead of the old
+eventlet.greenlib.GreenletContext. Calling eventlet.api.get_hub().switch() now checks to
+see whether the current greenlet has a "switch_out" method and calls it if so, providing the
+same functionality that the GreenletContext.swap_out used to. The swap_in behavior can be
+duplicated by overriding the switch method, and the finalize functionality can be duplicated
+by having a try: finally: block around the greenlet's main implementation. The eventlet.backdoor
+module has been ported to this new scheme, although it's signature had to change slightly so
+existing code that used the backdoor will have to be modified.
+
+A number of bugs related to unproper scheduling of switch calls has been fixed.
+The fixed functions and classes include api.trampoline, api.sleep, coros.event,
+coros.semaphore, coros.queue.
+
+Many methods of greenio.GreenSocket were fixed to make its behavior more like that of a regular
+socket. Thanks to Marcin Bachry for fixing GreenSocket.dup to preserve the timeout.
+
+Added proc module which provides an easy way to subscribe to coroutine's results. This makes
+it easy to wait() for a single greenlet to complete or to waitall() for several greenlets.
+
+wsgi.py now supports chunked transfer requests (patch by Mike Barton)
+
+The following modules were deprecated or removed because they were broken:
+hubs.nginx, hubs.libev, support.pycurls, support.twisteds, cancel method of coros.event class
+
+The following classes are still present but will be removed in the future version:
+- channel.channel (use coros.Channel)
+- coros.CoroutinePool (use pool.Pool)
+
+Python 2.3 is no longer supported.
+
+A number of tests was added along with a script to run all of them for all the configurations.
+The script generates an html page with the results.
+
+Thanks to Brian Brunswick for investigation of popen4 badness (eventlet.process)
+Thanks to Marcus Cavanaugh for pointing out some coros.queue(0) bugs.
+
+The twisted integration as well as many other improvements were funded by AG Projects (http://ag-projects.com), thanks!
 
 0.8.x
 =====

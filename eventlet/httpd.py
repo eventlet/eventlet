@@ -499,18 +499,13 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
             try:
                 try:
-                    try:
-                        self.server.site.handle_request(request)
-                    except ErrorResponse, err:
-                        request.response(code=err.code,
-                                         reason_phrase=err.reason,
-                                         headers=err.headers,
-                                         body=err.body)
-                finally:                            
-                    # clean up any timers that might have been left around by the handling code
-                    #api.get_hub().cancel_timers(api.getcurrent())
-                    pass
-                    
+                    self.server.site.handle_request(request)
+                except ErrorResponse, err:
+                    request.response(code=err.code,
+                                     reason_phrase=err.reason,
+                                     headers=err.headers,
+                                     body=err.body)
+
                 # throw an exception if it failed to write a body
                 if not request.response_written():
                     raise NotImplementedError("Handler failed to write response to request: %s" % request)

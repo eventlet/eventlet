@@ -111,7 +111,6 @@ def tcp_server(listensocket, server, *args, **kw):
     \*\*kw
         The keyword arguments to pass to *server*.
     """
-    print "tcpserver spawning %s on %s" % (server, listensocket.getsockname())
     try:
         try:
             while True:

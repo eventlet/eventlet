@@ -99,4 +99,4 @@ class channel(object):
         return self._send_tasklet(None, exc)
 
 import warnings
-warnings.warn("channel is deprecated; use coros.queue(0) which behaves the same", DeprecationWarning, stacklevel=2)
+warnings.warn("channel is deprecated by coros.Channel", DeprecationWarning, stacklevel=2)
