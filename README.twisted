@@ -7,8 +7,8 @@ Eventlet makes asynchronous programming look like synchronous, thus
 achieving higher signal-to-noise ratio than traditional twisted programs have.
 
 Eventlet on top of twisted provides:
- * [stable twisted]
- * [usable and readable synchronous style]
+ * stable twisted
+ * usable and readable synchronous style
  * existing twisted code can be used without any changes
  * existing blocking code can be used after trivial changes applied
 
@@ -62,7 +62,7 @@ to call from anywhere:
    twistedutil.deferToGreenThread and others based on api.spawn.
 
 2. send(), send_exception(), poll(), ready() methods of coros.event
-   and _unbounded_ coros.queue.
+   and coros.Queue.
 
 3. wait(timeout=0) is identical to poll(). Currently only Proc.wait
    supports timeout parameter.
@@ -136,13 +136,13 @@ How does eventlet work
 ----------------------
 
 Twisted's reactor and eventlet's hub are very similar in what they do.
-Both continuously preform polling on the list of registered descriptors
+Both continuously perform polling on the list of registered descriptors
 and each time a specific event is fired, the associated callback function
 is called. In addition, both maintain a list of scheduled calls.
 
 Polling is performed by the main loop - a function that both reactor and hub have.
 When twisted calls user's callback it's expected to return almost immediately,
-without any blocking I/O calls. Deferreds help there.
+without any blocking I/O calls.
 
 Eventlet runs the main loop in a dedicated greenlet (MAIN_LOOP). It is the same
 greenlet as MAIN if you use join_reactor. Otherwise it's a separate greenlet
