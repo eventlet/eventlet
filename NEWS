@@ -17,7 +17,7 @@ The package includes socket, httplib, urllib2.
 
 Much of the core functionality has been refactored and cleaned up, including the removal
 of eventlet.greenlib. This means that it is now possible to use plain greenlets without
-modification in eventlet, and plain old subclasses of greenlet instead of the old
+modification in eventlet, and the subclasses of greenlet instead of the old
 eventlet.greenlib.GreenletContext. Calling eventlet.api.get_hub().switch() now checks to
 see whether the current greenlet has a "switch_out" method and calls it if so, providing the
 same functionality that the GreenletContext.swap_out used to. The swap_in behavior can be
@@ -34,7 +34,7 @@ Many methods of greenio.GreenSocket were fixed to make its behavior more like th
 socket. Thanks to Marcin Bachry for fixing GreenSocket.dup to preserve the timeout.
 
 Added proc module which provides an easy way to subscribe to coroutine's results. This makes
-it easy to wait() for a single greenlet to complete or to waitall() for several greenlets.
+it easy to wait for a single greenlet or for a set of greenlets to complete.
 
 wsgi.py now supports chunked transfer requests (patch by Mike Barton)
 
@@ -45,9 +45,12 @@ The following classes are still present but will be removed in the future versio
 - channel.channel (use coros.Channel)
 - coros.CoroutinePool (use pool.Pool)
 
-saranwrap.py now correctly closes the child process when the referring object is deleted, received some fixes to its detection of child process death, now correctly deals with the in keyword, and it is now possible to use coroutines in a non-blocking fashion in the child process.
+saranwrap.py now correctly closes the child process when the referring object is deleted,
+received some fixes to its detection of child process death, now correctly deals with the in
+keyword, and it is now possible to use coroutines in a non-blocking fashion in the child process.
 
-Time-based expiry added to db_pool.  This adds the ability to expire connections both by idleness and also by total time open.  There is also a connection timeout option.
+Time-based expiry added to db_pool.  This adds the ability to expire connections both by idleness
+and also by total time open.  There is also a connection timeout option.
 
 A small bug in httpd's error method was fixed.
 
