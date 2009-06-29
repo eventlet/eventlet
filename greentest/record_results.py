@@ -38,7 +38,7 @@ warnings.simplefilter('ignore')
 
 PYTHON_VERSION = '%s.%s.%s' % sys.version_info[:3]
 
-COMMAND_CHANGESET = r"hg log -r tip | grep changeset"
+COMMAND_CHANGESET = r"hg log -r tip 2> /dev/null | grep changeset"
 
 def record(changeset, argv, stdout, returncode):
     c = sqlite3.connect('results.%s_%s.db' % (changeset, PYTHON_VERSION))
@@ -58,7 +58,10 @@ def main():
         del argv[0]
     else:
         debug = False
-    changeset = os.popen(COMMAND_CHANGESET).readlines()[0].replace('changeset:', '').strip().replace(':', '_')
+    try:
+        changeset = os.popen(COMMAND_CHANGESET).readlines()[0].replace('changeset:', '').strip().replace(':', '_')
+    except Exception:
+        changeset = 'revision_unknown'
     output_name = os.tmpnam()
     arg = ' '.join(argv) + ' &> %s' % output_name
     print arg
