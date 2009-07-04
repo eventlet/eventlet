@@ -19,6 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+
 import cgi
 import os
 from unittest import TestCase, main
@@ -291,9 +292,23 @@ class TestHttpd(TestCase):
         sock = api.ssl_listener(('', 4201), certificate_file, private_key_file)
 
         api.spawn(wsgi.server, sock, wsgi_app)
-
+    
         result = httpc.post("https://localhost:4201/foo", "abc")
         self.assertEquals(result, 'abc')
+        
+    def test_013_empty_return(self):
+        from eventlet import httpc
+        def wsgi_app(environ, start_response):
+            start_response("200 OK", [])
+            return [""]
+    
+        certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
+        private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
+        sock = api.ssl_listener(('', 4202), certificate_file, private_key_file)
+        api.spawn(wsgi.server, sock, wsgi_app)
+        
+        res = httpc.get("https://localhost:4202/foo")
+        self.assertEquals(res, '')
 
     def test_013_empty_return(self):
         from eventlet import httpc
