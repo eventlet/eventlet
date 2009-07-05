@@ -9,4 +9,4 @@ htmlreports
 *.esproj
 .DS_Store
 results.*.db
-
+doc/_build
