@@ -24,6 +24,10 @@ import sys, os
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.todo', 'sphinx.ext.coverage']
 
+# If this is True, '.. todo::' and '.. todolist::' produce output, else they produce
+# nothing. The default is False.
+todo_include_todos = True
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -173,7 +177,7 @@ htmlhelp_basename = 'Eventletdoc'
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
   ('index', 'Eventlet.tex', u'Eventlet Documentation',
-   u'Donovan Preston, Denis Bilenko, Ryan Williams', 'manual'),
+   u'<eventlet contributors>', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
