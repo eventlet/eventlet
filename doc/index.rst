@@ -4,7 +4,7 @@ Eventlet
 Eventlet is a networking library written in Python. It achieves high scalability by using `non-blocking io <http://en.wikipedia.org/wiki/Asynchronous_I/O#Select.28.2Fpoll.29_loops>`_ while at the same time retaining high programmer usability by using `coroutines <http://en.wikipedia.org/wiki/Coroutine>`_ to make the non-blocking io operations appear blocking at the source code level.
 
 Web Crawler Example
---------
+-------------------
 
 This is a simple web "crawler" that fetches a bunch of urls using a coroutine pool.  It has as much concurrency (i.e. pages being fetched simultaneously) as coroutines in the pool.
 
@@ -73,7 +73,10 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   modules.rst
+   basic_usage
+   chat_server_example
+
+   modules
 
 Indices and tables
 ==================
