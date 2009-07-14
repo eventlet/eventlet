@@ -308,20 +308,28 @@ call_after = call_after_local
 class _SilentException:
     pass
 
-class FakeTimer:
-
+class FakeTimer(object):
     def cancel(self):
         pass
 
-class timeout:
+class timeout(object):
     """Raise an exception in the block after timeout.
+    
+    Example::
 
-    with timeout(seconds[, exc]):
-        ... code block ...
+     with timeout(10):
+         urllib2.open('http://example.com')
 
     Assuming code block is yielding (i.e. gives up control to the hub),
-    an exception provided in `exc' argument will be raised
-    (TimeoutError if `exc' is omitted).
+    an exception provided in 'exc' argument will be raised
+    (TimeoutError if 'exc' is omitted)::
+    
+     try:
+         with timeout(10, MySpecialError, error_arg_1):
+             urllib2.open('http://example.com')
+     except MySpecialError, e:
+         print "special error received"
+
 
     When exc is None, code block is interrupted silently.
     """
@@ -497,7 +505,6 @@ def sleep(seconds=0):
 
 getcurrent = greenlet.getcurrent
 GreenletExit = greenlet.GreenletExit
-
 
 class Spew(object):
     """
