@@ -43,9 +43,10 @@ class event(object):
     can wait for one event from another.
 
     Events differ from channels in two ways:
-      1) calling send() does not unschedule the current coroutine
-      2) send() can only be called once; use reset() to prepare the event for
-         another send()
+    1. calling send() does not unschedule the current coroutine
+    2. send() can only be called once; use reset() to prepare the event for
+    another send()
+    
     They are ideal for communicating return values between coroutines.
 
     >>> from eventlet import coros, api

@@ -6,18 +6,10 @@ Module Reference
 
    modules/api
    modules/backdoor
-   modules/channel
    modules/corolocal
    modules/coros
    modules/db_pool
    modules/greenio
-   modules/greenlib
-   modules/httpc
-   modules/httpdate
-   modules/httpd
-   modules/jsonhttp
-   modules/logutil
-   modules/oldchannel
    modules/pool
    modules/pools
    modules/processes
