@@ -14,6 +14,18 @@ class Pool(object):
         else:
             self.results = None
 
+    def resize(self, new_max_size):
+        """ Change the max_size of the pool.
+
+        If the pool gets resized when there are more than new_max_size
+        coroutines checked out, when they are returned to the pool
+        they will be discarded.  The return value of free() will be
+        negative in this situation.
+        """
+        max_size_delta = new_max_size - self.max_size 
+        self.sem.counter += max_size_delta
+        self.max_size = new_max_size
+
     @property
     def current_size(self):
         return len(self.procs)
