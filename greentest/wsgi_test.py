@@ -25,6 +25,7 @@ import os
 from unittest import TestCase, main
 
 from eventlet import api
+from eventlet import util
 from eventlet import wsgi
 from eventlet import processes
 
@@ -281,7 +282,6 @@ class TestHttpd(TestCase):
         self.assert_(chunks > 1)
 
     def test_012_ssl_server(self):
-        from eventlet import httpc
         def wsgi_app(environ, start_response):
             start_response('200 OK', {})
             return [environ['wsgi.input'].read()]
@@ -293,8 +293,12 @@ class TestHttpd(TestCase):
 
         api.spawn(wsgi.server, sock, wsgi_app)
     
-        result = httpc.post("https://localhost:4201/foo", "abc")
-        self.assertEquals(result, 'abc')
+        sock = api.connect_tcp(('127.0.0.1', 4201))
+        sock = util.wrap_ssl(sock)
+        fd = sock.makeGreenFile()
+        fd.write('POST /foo HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\nContent-length:3\r\n\r\nabc')
+        result = fd.read(8192)
+        self.assertEquals(result[-3:], 'abc')
         
     def test_013_empty_return(self):
         from eventlet import httpc
@@ -311,7 +315,6 @@ class TestHttpd(TestCase):
         self.assertEquals(res, '')
 
     def test_013_empty_return(self):
-        from eventlet import httpc
         def wsgi_app(environ, start_response):
             start_response("200 OK", [])
             return [""]
@@ -321,8 +324,12 @@ class TestHttpd(TestCase):
         sock = api.ssl_listener(('', 4202), certificate_file, private_key_file)
         api.spawn(wsgi.server, sock, wsgi_app)
 
-        res = httpc.get("https://localhost:4202/foo")
-        self.assertEquals(res, '')
+        sock = api.connect_tcp(('127.0.0.1', 4202))
+        sock = util.wrap_ssl(sock)
+        fd = sock.makeGreenFile()
+        fd.write('GET /foo HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
+        result = fd.read(8192)
+        self.assertEquals(result[-4:], '\r\n\r\n')
 
     def test_014_chunked_post(self):
         self.site.application = chunked_post
