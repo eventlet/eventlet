@@ -368,5 +368,20 @@ class TestHttpd(TestCase):
         self.assert_('transfer-encoding' in headers)
         self.assert_(headers['transfer-encoding'] == 'chunked')
 
+    def test_016_repeated_content_length(self):
+        """
+        content-length header was being doubled up if it was set in
+        start_response and could also be inferred from the iterator
+        """
+        def wsgi_app(environ, start_response):
+            start_response('200 OK', [('Content-Length', '7')])
+            return ['testing']
+        sock = api.connect_tcp(('127.0.0.1', 12346))
+        fd = sock.makeGreenFile()
+        fd.write('GET /a HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
+        headerlines = fd.readuntil('\r\n\r\n').splitlines()
+        self.assertEquals(1, len([l for l in headerlines
+                if l.lower().startswith('content-length')]))
+
 if __name__ == '__main__':
     main()
