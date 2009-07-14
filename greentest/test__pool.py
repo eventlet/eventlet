@@ -69,6 +69,56 @@ class TestCoroutinePool(LimitedTestCase):
 
         pool.execute_async(reenter_async)
         evt.wait()
+
+    def assert_pool_has_free(self, pool, num_free):
+        def wait_long_time(e):
+            e.wait()
+        timer = api.exc_after(1, api.TimeoutError)
+        try:
+            evt = coros.event()
+            for x in xrange(num_free):
+                pool.execute(wait_long_time, evt)
+                # if the pool has fewer free than we expect,
+                # then we'll hit the timeout error
+        finally:
+            timer.cancel()
+
+        # if the runtime error is not raised it means the pool had
+        # some unexpected free items
+        timer = api.exc_after(0, RuntimeError)
+        self.assertRaises(RuntimeError, pool.execute, wait_long_time, evt)
+
+        # clean up by causing all the wait_long_time functions to return
+        evt.send(None)
+        api.sleep(0)
+        api.sleep(0)
+
+    def test_resize(self):
+        pool = self.klass(max_size=2)
+        evt = coros.event()
+        def wait_long_time(e):
+            e.wait()
+        pool.execute(wait_long_time, evt)
+        pool.execute(wait_long_time, evt)
+        self.assertEquals(pool.free(), 0)
+        self.assert_pool_has_free(pool, 0)
+
+        # verify that the pool discards excess items put into it
+        pool.resize(1)
+        
+        # cause the wait_long_time functions to return, which will
+        # trigger puts to the pool
+        evt.send(None)
+        api.sleep(0)
+        api.sleep(0)
+        
+        self.assertEquals(pool.free(), 1)
+        self.assert_pool_has_free(pool, 1)
+
+        # resize larger and assert that there are more free items
+        pool.resize(2)
+        self.assertEquals(pool.free(), 2)
+        self.assert_pool_has_free(pool, 2)
         
     def test_stderr_raising(self):
         # testing that really egregious errors in the error handling code 

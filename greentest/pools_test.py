@@ -143,6 +143,22 @@ class TestIntPool(TestCase):
         finally:
             timer.cancel()
 
+    def test_resize(self):
+        pool = IntPool(max_size=2)
+        a = pool.get()
+        b = pool.get()
+        self.assertEquals(pool.free(), 0)
+
+        # verify that the pool discards excess items put into it
+        pool.resize(1)
+        pool.put(a)
+        pool.put(b)
+        self.assertEquals(pool.free(), 1)
+
+        # resize larger and assert that there are more free items
+        pool.resize(2)
+        self.assertEquals(pool.free(), 2)
+
 
 class TestAbstract(TestCase):
     mode = 'static'
