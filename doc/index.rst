@@ -34,25 +34,8 @@ This is a simple web "crawler" that fetches a bunch of urls using a coroutine po
   for waiter in waiters:
       waiter.wait()
 
-Requirements
-------------
-
-Eventlet runs on Python version 2.4 or greater, with the following dependencies:
-
-* `Greenlet <http://cheeseshop.python.org/pypi/greenlet>`_
-* `pyOpenSSL <http://pyopenssl.sourceforge.net/>`_
-
-Areas That Need Work
---------------------
-
-* Not enough test coverage -- the goal is 100%, but we are not there yet.
-* Not tested on Windows
- 
- * There are probably some simple Unix dependencies we introduced by accident.  If you're running Eventlet on Windows and run into errors, let us know.
- * The eventlet.processes module is known to not work on Windows.
-
-
-Contents:
+Contents
+=========
 
 .. toctree::
    :maxdepth: 2
@@ -63,12 +46,23 @@ Contents:
 
    modules
 
-Indices and tables
-==================
+Requirements
+------------
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+Eventlet runs on Python version 2.4 or greater, with the following dependencies:
+
+* `Greenlet <http://cheeseshop.python.org/pypi/greenlet>`_
+* `pyOpenSSL <http://pyopenssl.sourceforge.net/>`_
+
+
+Areas That Need Work
+--------------------
+
+* Not enough test coverage -- the goal is 100%, but we are not there yet.
+* Not tested on Windows
+ 
+ * There are probably some simple Unix dependencies we introduced by accident.  If you're running Eventlet on Windows and run into errors, let us know.
+ * The eventlet.processes module is known to not work on Windows.
 
 
 License
@@ -86,3 +80,9 @@ The above copyright notice and this permission notice shall be included in all c
 	
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`

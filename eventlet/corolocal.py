@@ -1,8 +1,8 @@
 from eventlet import api
 
 def get_ident():
+    """ Returns id() of current greenlet.  Useful for debugging."""
     return id(api.getcurrent())
-
 
 class local(object):
 
