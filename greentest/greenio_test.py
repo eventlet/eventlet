@@ -18,7 +18,8 @@
 # THE SOFTWARE.
 
 from unittest import TestCase, main
-from eventlet import api
+from eventlet import api, util
+import os
 import socket
 
 # TODO try and reuse unit tests from within Python itself
@@ -96,6 +97,48 @@ class TestGreenIo(TestCase):
         assert fd.read() == ''
         
         timer.cancel()
+ 
+def test_server(sock, func, *args):
+    """ Convenience function for writing cheap test servers.
+    
+    It calls *func* on each incoming connection from *sock*, with the first argument
+    being a file for the incoming connector.
+    """
+    def inner_server(connaddr, *args):
+        conn, addr = connaddr
+        fd = conn.makefile()
+        func(fd, *args)
+            
+    if sock is None:
+        sock = api.tcp_listener(('', 9909))
+    api.spawn(api.tcp_server, sock, inner_server, *args)
+
+
+class SSLTest(TestCase):
+    def setUp(self):
+        self.timer = api.exc_after(1, api.TimeoutError)
+        
+    def tearDown(self):
+        self.timer.cancel()
+
+    def test_amazon_response(self):
+        def serve(sock):
+            line = True
+            while line != '\r\n':
+                line = sock.readline()
+                print '<', line.strip()
+            sock.write('response')
+  
+        certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
+        private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
+        sock = api.ssl_listener(('', 4201), certificate_file, private_key_file)
+        test_server(sock, serve)
+        
+        client = util.wrap_ssl(api.connect_tcp(('localhost', 4201)))
+        f = client.makefile()
+        
+        f.write('line 1\r\nline 2\r\n\r\n')
+        f.read(8192)
                 
 if __name__ == '__main__':
     main()
