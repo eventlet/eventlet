@@ -98,6 +98,7 @@ class TestGreenIo(TestCase):
         
         timer.cancel()
  
+ 
 def test_server(sock, func, *args):
     """ Convenience function for writing cheap test servers.
     
@@ -108,6 +109,8 @@ def test_server(sock, func, *args):
         conn, addr = connaddr
         fd = conn.makefile()
         func(fd, *args)
+        fd.close()
+        conn.close()
             
     if sock is None:
         sock = api.tcp_listener(('', 9909))
@@ -121,7 +124,7 @@ class SSLTest(TestCase):
     def tearDown(self):
         self.timer.cancel()
 
-    def test_amazon_response(self):
+    def dont_test_duplex_response(self):
         def serve(sock):
             line = True
             while line != '\r\n':

@@ -387,33 +387,6 @@ class GreenSocket(object):
     def gettimeout(self):
         return self.timeout
 
-def read(self, size=None):
-    if size is not None and not isinstance(size, (int, long)):
-        raise TypeError('Expecting an int or long for size, got %s: %s' % (type(size), repr(size)))
-    buf, self.sock.recvbuffer = self.sock.recvbuffer, ''
-    lst = [buf]
-    if size is None:
-        while True:
-            d = self.sock.recv(BUFFER_SIZE)
-            if not d:
-                break
-            lst.append(d)
-    else:
-        buflen = len(buf)
-        while buflen < size:
-            d = self.sock.recv(BUFFER_SIZE)
-            if not d:
-                break
-            buflen += len(d)
-            lst.append(d)
-        else:
-            d = lst[-1]
-            overbite = buflen - size
-            if overbite:
-                lst[-1], self.sock.recvbuffer = d[:-overbite], d[-overbite:]
-            else:
-                lst[-1], self.sock.recvbuffer = d, ''
-    return ''.join(lst)
 
 
 class GreenFile(object):
@@ -501,7 +474,34 @@ class GreenFile(object):
         for line in lines:
             self.write(line)
 
-    read = read
+    def read(self, size=None):
+        if size is not None and not isinstance(size, (int, long)):
+            raise TypeError('Expecting an int or long for size, got %s: %s' % (type(size), repr(size)))
+        buf, self.sock.recvbuffer = self.sock.recvbuffer, ''
+        lst = [buf]
+        if size is None:
+            while True:
+                d = self.sock.recv(BUFFER_SIZE)
+                if not d:
+                    break
+                lst.append(d)
+        else:
+            buflen = len(buf)
+            while buflen < size:
+                d = self.sock.recv(BUFFER_SIZE)
+                if not d:
+                    break
+                buflen += len(d)
+                lst.append(d)
+            else:
+                d = lst[-1]
+                overbite = buflen - size
+                if overbite:
+                    lst[-1], self.sock.recvbuffer = d[:-overbite], d[-overbite:]
+                else:
+                    lst[-1], self.sock.recvbuffer = d, ''
+        return ''.join(lst)
+
 
 
 class GreenPipeSocket(GreenSocket):
@@ -550,12 +550,30 @@ class RefCount(object):
 class GreenSSL(GreenSocket):
     def __init__(self, fd, refcount = None):
         GreenSocket.__init__(self, fd)
+        assert(isinstance(fd, (util.SSL.ConnectionType)),
+               "GreenSSL can only be constructed with an "\
+               "OpenSSL Connection object")
         self.sock = self
         self._refcount = refcount
         if refcount is None:
             self._refcount = RefCount()
 
-    read = read
+    def read(self, size=None):
+        """ Read up to *size* bytes from the socket.  This may return fewer than
+        *size* bytes in some circumstances, but everything appears to work as
+        long as you don't treat this precisely like standard socket read()."""
+        pending = self.fd.pending()
+        if pending:
+            return self.fd.recv(min(pending, buflen))
+            
+        # no pending() == we must wait for IO on the underlying socket
+        trampoline(self.fd.fileno(), read=True, 
+                               timeout=self.timeout, 
+                               timeout_exc=socket.timeout)
+        return self.fd.recv(size)
+
+            
+    recv = read
     
     def sendall(self, data):
         # overriding sendall because ssl sockets behave badly when asked to 
