@@ -562,16 +562,14 @@ class GreenSSL(GreenSocket):
         """ Read up to *size* bytes from the socket.  This may return fewer than
         *size* bytes in some circumstances, but everything appears to work as
         long as you don't treat this precisely like standard socket read()."""
-        pending = self.fd.pending()
-        if pending:
-            return self.fd.recv(min(pending, size))
-            
-        # no pending() == we must wait for IO on the underlying socket
-        trampoline(self.fd.fileno(), read=True, 
-                               timeout=self.timeout, 
-                               timeout_exc=socket.timeout)
-        return self.fd.recv(size)
-
+        while True:
+            try:
+                return self.fd.read(size)
+            except util.SSL.WantReadError:
+                trampoline(self.fd.fileno(), 
+                           read=True, 
+                           timeout=self.timeout, 
+                           timeout_exc=socket.timeout)
             
     recv = read
     
