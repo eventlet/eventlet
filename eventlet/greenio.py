@@ -564,7 +564,7 @@ class GreenSSL(GreenSocket):
         long as you don't treat this precisely like standard socket read()."""
         pending = self.fd.pending()
         if pending:
-            return self.fd.recv(min(pending, buflen))
+            return self.fd.recv(min(pending, size))
             
         # no pending() == we must wait for IO on the underlying socket
         trampoline(self.fd.fileno(), read=True, 
