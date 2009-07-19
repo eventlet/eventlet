@@ -548,6 +548,8 @@ class RefCount(object):
 
 
 class GreenSSL(GreenSocket):
+    """ Nonblocking wrapper for SSL.Connection objects.
+    """
     def __init__(self, fd, refcount = None):
         GreenSocket.__init__(self, fd)
         assert(isinstance(fd, (util.SSL.ConnectionType)),
@@ -558,7 +560,7 @@ class GreenSSL(GreenSocket):
         if refcount is None:
             self._refcount = RefCount()
 
-    def read(self, size=None):
+    def read(self, size):
         """Works like a blocking call to SSL_read(), whose behavior is 
         described here:  http://www.openssl.org/docs/ssl/SSL_read.html"""
         while True:
@@ -599,8 +601,17 @@ class GreenSSL(GreenSocket):
                            timeout=self.timeout, 
                            timeout_exc=socket.timeout)
                            
-    sendall = write
     send = write
+    
+    def sendall(self, data):
+        """Send "all" data on the connection. This calls send() repeatedly until
+        all data is sent. If an error occurs, it's impossible to tell how much data
+        has been sent.
+
+        No return value."""
+        tail = self.send(data)
+        while tail < len(data):
+            tail += self.send(data[tail:])
 
     def server(self):
         return self.fd.server()
