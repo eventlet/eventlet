@@ -606,6 +606,46 @@ class GreenSSL(GreenSocket):
     def pending(self, *args, **kw):
         fn = self.pending = self.fd.pending
         return fn(*args, **kw)
+        
+        
+class GreenSSLObject(object):
+    """ Wrapper object around the SSLObjects returned by socket.ssl, which have a 
+    slightly different interface from SSL.Connection objects. """
+    def __init__(self, green_ssl_obj):
+        """ Should only be called by a 'green' socket.ssl """
+        assert(isinstance(green_ssl_obj, GreenSSL))
+        self.connection = green_ssl_obj
+        
+    def read(self, n=None):
+        """If n is provided, read n bytes from the SSL connection, otherwise read
+        until EOF. The return value is a string of the bytes read."""
+        if n is None:
+            # don't support this until someone needs it
+            raise NotImplementedError("GreenSSLObject does not support "\
+            " unlimited reads until we hear of someone needing to use them.")
+        else:
+            return self.connection.read(n)
+            
+    def write(self, s):
+        """Writes the string s to the on the object's SSL connection. 
+        The return value is the number of bytes written. """
+        return self.connection.write(s)
+
+    def server(self):
+        """ Returns a string describing the server's certificate. Useful for debugging
+        purposes; do not parse the content of this string because its format can't be
+        parsed unambiguously. """
+        # NOTE: probably not the same as the real SSLObject, but, if someone actually
+        # uses this then we can fix it.
+        return str(self.connection.get_peer_certificate())
+        
+    def issuer(self):
+        """Returns a string describing the issuer of the server's certificate. Useful
+        for debugging purposes; do not parse the content of this string because its 
+        format can't be parsed unambiguously."""
+        # NOTE: probably not the same as the real SSLObject, but, if someone actually
+        # uses this then we can fix it.
+        return str(self.connection.get_peer_certificate().get_issuer())
                 
 
 def socketpair(*args):

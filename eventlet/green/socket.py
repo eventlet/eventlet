@@ -4,7 +4,9 @@ for var in __socket.__all__:
 _fileobject = __socket._fileobject
 
 from eventlet.api import get_hub
-from eventlet.greenio import GreenSocket as socket, GreenSSL as _GreenSSL
+from eventlet.greenio import GreenSocket as socket
+from eventlet.greenio import GreenSSL as _GreenSSL
+from eventlet.greenio import GreenSSLObject as _GreenSSLObject
 from eventlet.greenio import socketpair, fromfd
 
 def fromfd(*args):
@@ -79,4 +81,4 @@ def ssl(sock, certificate=None, private_key=None):
     ## TODO only do this on client sockets? how?
     connection = SSL.Connection(context, sock)
     connection.set_connect_state()
-    return _GreenSSL(connection)
+    return _GreenSSLObject(_GreenSSL(connection))
