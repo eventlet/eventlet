@@ -379,8 +379,25 @@ class Server(BaseHTTPServer.HTTPServer):
         self.log.write(message + '\n')
 
 
-def server(sock, site, log=None, environ=None, max_size=None, max_http_version=DEFAULT_MAX_HTTP_VERSION, protocol=HttpProtocol, server_event=None, minimum_chunk_size=None):
-    serv = Server(sock, sock.getsockname(), site, log, environ=None, max_http_version=max_http_version, protocol=protocol, minimum_chunk_size=minimum_chunk_size)
+def server(sock, site, 
+           log=None, 
+           environ=None, 
+           max_size=None,
+           max_http_version=DEFAULT_MAX_HTTP_VERSION, 
+           protocol=HttpProtocol,
+           server_event=None, 
+           minimum_chunk_size=None):
+    """  Start up a wsgi server handling requests from the supplied server socket.
+    
+    This function loops forever.
+    """
+
+    serv = Server(sock, sock.getsockname(), 
+                  site, log, 
+                  environ=None, 
+                  max_http_version=max_http_version, 
+                  protocol=protocol, 
+                  minimum_chunk_size=minimum_chunk_size)
     if server_event is not None:
         server_event.send(serv)
     if max_size is None:
@@ -407,7 +424,7 @@ def server(sock, site, log=None, environ=None, max_size=None, max_http_version=D
                     if e[0] != errno.EPIPE and e[0] != errno.EBADF:
                         raise
                 pool.execute_async(serv.process_request, client_socket)
-            except KeyboardInterrupt:
+            except (KeyboardInterrupt, SystemExit):
                 print "wsgi exiting"
                 break
     finally:
