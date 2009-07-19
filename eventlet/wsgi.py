@@ -52,8 +52,13 @@ def format_date_time(timestamp):
 
 
 class Input(object):
-    def __init__(self, rfile, content_length, wfile=None, wfile_line=None,
-            chunked_input=False):
+    def __init__(self, 
+                 rfile, 
+                 content_length, 
+                 wfile=None, 
+                 wfile_line=None,
+                 chunked_input=False):
+                 
         self.rfile = rfile
         if content_length is not None:
             content_length = int(content_length)
@@ -341,7 +346,16 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
 
 class Server(BaseHTTPServer.HTTPServer):
-    def __init__(self, socket, address, app, log=None, environ=None, max_http_version=None, protocol=HttpProtocol, minimum_chunk_size=None):
+    def __init__(self, 
+                 socket, 
+                 address, 
+                 app, 
+                 log=None, 
+                 environ=None, 
+                 max_http_version=None, 
+                 protocol=HttpProtocol, 
+                 minimum_chunk_size=None):
+                 
         self.outstanding_requests = 0
         self.socket = socket
         self.address = address
