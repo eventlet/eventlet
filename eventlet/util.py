@@ -74,6 +74,13 @@ def wrap_ssl(sock, certificate=None, private_key=None):
     return greenio.GreenSSL(connection)
 
 
+def wrap_ssl_obj(sock, certificate=None, private_key=None):
+    """ For 100% compatibility with the socket module, this wraps and handshakes an 
+    open connection, returning a SSLObject."""
+    from eventlet import greenio
+    wrapped = wrap_ssl(sock, certificate, private_key)
+    return greenio.GreenSSLObject(wrapped)
+
 socket_already_wrapped = False
 def wrap_socket_with_coroutine_socket(use_thread_pool=True):
     global socket_already_wrapped
@@ -86,10 +93,7 @@ def wrap_socket_with_coroutine_socket(use_thread_pool=True):
     socket.socket = new_socket
 
     # for 100% compatibility, return a GreenSSLObject
-    def new_ssl(sock, certificate=None, private_key=None):
-        wrapped = wrap_ssl(sock, certificate, private_key)
-        return greenio.GreenSSLObject(wrapped)
-    socket.ssl = new_ssl
+    socket.ssl = wrap_ssl_obj
 
     if use_thread_pool:
         from eventlet import tpool

@@ -4,6 +4,7 @@ for var in __socket.__all__:
 _fileobject = __socket._fileobject
 
 from eventlet.api import get_hub
+from eventlet.util import wrap_ssl_obj
 from eventlet.greenio import GreenSocket as socket
 from eventlet.greenio import GreenSSL as _GreenSSL
 from eventlet.greenio import GreenSSLObject as _GreenSSLObject
@@ -70,15 +71,4 @@ def create_connection(address, timeout=_GLOBAL_DEFAULT_TIMEOUT):
 
 
 def ssl(sock, certificate=None, private_key=None):
-    from OpenSSL import SSL
-    context = SSL.Context(SSL.SSLv23_METHOD)
-    if certificate is not None:
-        context.use_certificate_file(certificate)
-    if private_key is not None:
-        context.use_privatekey_file(private_key)
-    context.set_verify(SSL.VERIFY_NONE, lambda *x: True)
-
-    ## TODO only do this on client sockets? how?
-    connection = SSL.Connection(context, sock)
-    connection.set_connect_state()
-    return _GreenSSLObject(_GreenSSL(connection))
+    return wrap_ssl_obj(sock, certificate, private_key)

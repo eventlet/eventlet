@@ -710,6 +710,10 @@ class GreenSSL(GreenSocket):
         return fn(*args, **kw)
         
         
+def _convert_to_sslerror(ex):
+    """ Transliterates SSL.SysCallErrors to socket.sslerrors"""
+    return socket.sslerror((ex[0], ex[1]))
+        
 class GreenSSLObject(object):
     """ Wrapper object around the SSLObjects returned by socket.ssl, which have a 
     slightly different interface from SSL.Connection objects. """
@@ -717,6 +721,10 @@ class GreenSSLObject(object):
         """ Should only be called by a 'green' socket.ssl """
         assert(isinstance(green_ssl_obj, GreenSSL))
         self.connection = green_ssl_obj
+        try:
+            self.connection.do_handshake()
+        except SSL.SysCallError, e:
+            raise _convert_to_sslerror(e)
         
     def read(self, n=None):
         """If n is provided, read n bytes from the SSL connection, otherwise read
@@ -726,28 +734,31 @@ class GreenSSLObject(object):
             raise NotImplementedError("GreenSSLObject does not support "\
             " unlimited reads until we hear of someone needing to use them.")
         else:
-            return self.connection.read(n)
+            try:
+                return self.connection.read(n)
+            except SSL.SysCallError, e:
+                raise _convert_to_sslerror(e)
             
     def write(self, s):
         """Writes the string s to the on the object's SSL connection. 
         The return value is the number of bytes written. """
-        return self.connection.write(s)
+        try:
+            return self.connection.write(s)
+        except SSL.SysCallError, e:
+            raise _convert_to_sslerror(e)
 
     def server(self):
         """ Returns a string describing the server's certificate. Useful for debugging
         purposes; do not parse the content of this string because its format can't be
         parsed unambiguously. """
-        # NOTE: probably not the same as the real SSLObject, but, if someone actually
-        # uses this then we can fix it.
-        return str(self.connection.get_peer_certificate())
+        return str(self.connection.get_peer_certificate().get_subject())
         
     def issuer(self):
         """Returns a string describing the issuer of the server's certificate. Useful
         for debugging purposes; do not parse the content of this string because its 
         format can't be parsed unambiguously."""
-        # NOTE: probably not the same as the real SSLObject, but, if someone actually
-        # uses this then we can fix it.
         return str(self.connection.get_peer_certificate().get_issuer())
+        
                 
 
 def socketpair(*args):
