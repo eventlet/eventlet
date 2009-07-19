@@ -37,15 +37,15 @@ from errno import EWOULDBLOCK, EAGAIN
 __all__ = ['GreenSocket', 'GreenFile', 'GreenPipe']
 
 def higher_order_recv(recv_func):
-    def recv(self, buflen):
+    def recv(self, buflen, flags=0):
         if self.act_non_blocking:
-            return self.fd.recv(buflen)
+            return self.fd.recv(buflen, flags)
         buf = self.recvbuffer
         if buf:
             chunk, self.recvbuffer = buf[:buflen], buf[buflen:]
             return chunk
         fd = self.fd
-        bytes = recv_func(fd, buflen)
+        bytes = recv_func(fd, buflen, flags)
         if self.gettimeout():
             end = time.time()+self.gettimeout()
         else:
@@ -64,17 +64,17 @@ def higher_order_recv(recv_func):
                 else:
                     raise
             else:
-                bytes = recv_func(fd, buflen)
+                bytes = recv_func(fd, buflen, flags)
         self.recvcount += len(bytes)
         return bytes
     return recv
 
 
 def higher_order_send(send_func):
-    def send(self, data):
+    def send(self, data, flags=0):
         if self.act_non_blocking:
-            return self.fd.send(data)
-        count = send_func(self.fd, data)
+            return self.fd.send(data, flags)
+        count = send_func(self.fd, data, flags)
         if not count:
             return 0
         self.sendcount += count
@@ -102,9 +102,9 @@ def socket_accept(descriptor):
         raise
 
 
-def socket_send(descriptor, data):
+def socket_send(descriptor, data, flags=0):
     try:
-        return descriptor.send(data)
+        return descriptor.send(data, flags)
     except socket.error, e:
         if e[0] == errno.EWOULDBLOCK or e[0] == errno.ENOTCONN:
             return 0
@@ -116,9 +116,9 @@ def socket_send(descriptor, data):
 
 # winsock sometimes throws ENOTCONN
 SOCKET_CLOSED = (errno.ECONNRESET, errno.ENOTCONN, errno.ESHUTDOWN)
-def socket_recv(descriptor, buflen):
+def socket_recv(descriptor, buflen, flags=0):
     try:
-        return descriptor.recv(buflen)
+        return descriptor.recv(buflen, flags)
     except socket.error, e:
         if e[0] == errno.EWOULDBLOCK:
             return None
@@ -135,7 +135,7 @@ def socket_recv(descriptor, buflen):
         raise
 
 
-def file_recv(fd, buflen):
+def file_recv(fd, buflen, flags=0):
     try:
         return fd.read(buflen)
     except IOError, e:
@@ -148,7 +148,7 @@ def file_recv(fd, buflen):
         raise
 
 
-def file_send(fd, data):
+def file_send(fd, data, flags=0):
     try:
         fd.write(data)
         fd.flush()
@@ -338,12 +338,12 @@ class GreenSocket(object):
 
     send = higher_order_send(socket_send)
 
-    def sendall(self, data):
+    def sendall(self, data, flags=0):
         fd = self.fd
-        tail = self.send(data)
+        tail = self.send(data, flags)
         while tail < len(data):
             trampoline(self.fd, write=True, timeout_exc=socket.timeout)
-            tail += self.send(data[tail:])
+            tail += self.send(data[tail:], flags)
 
     def sendto(self, *args):
         trampoline(self.fd, write=True, timeout_exc=socket.timeout)
