@@ -358,6 +358,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
     def finish(self):
         BaseHTTPServer.BaseHTTPRequestHandler.finish(self)
+        if self.connection.is_secure:
+            self.connection.shutdown()
         self.connection.close()
 
 
@@ -459,6 +461,8 @@ def server(sock, site,
                 break
     finally:
         try:
+            if sock.is_secure:
+                sock.shutdown()
             sock.close()
         except socket.error, e:
             if e[0] != errno.EPIPE:

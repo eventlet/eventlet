@@ -21,6 +21,7 @@
 
 import os
 import os.path
+import socket
 from unittest import TestCase, main
 
 from eventlet import api
@@ -60,7 +61,7 @@ class TestApi(TestCase):
         def accept_once(listenfd):
             try:
                 conn, addr = listenfd.accept()
-                fd = conn.makeGreenFile()
+                fd = conn.makefile()
                 conn.close()
                 fd.write('hello\n')
                 fd.close()
@@ -71,7 +72,7 @@ class TestApi(TestCase):
         api.spawn(accept_once, server)
 
         client = api.connect_tcp(('127.0.0.1', server.getsockname()[1]))
-        fd = client.makeGreenFile()
+        fd = client.makefile()
         client.close()
         assert fd.readline() == 'hello\n'
 
@@ -84,9 +85,7 @@ class TestApi(TestCase):
         def accept_once(listenfd):
             try:
                 conn, addr = listenfd.accept()
-                fl = conn.makeGreenFile('w')
-                fl.write('hello\r\n')
-                fl.close()
+                conn.write('hello\r\n')
                 conn.close()
             finally:
                 listenfd.close()
@@ -98,10 +97,10 @@ class TestApi(TestCase):
 
         client = util.wrap_ssl(
             api.connect_tcp(('127.0.0.1', server.getsockname()[1])))
-        client = client.makeGreenFile()
+        fd = socket._fileobject(client, 'rb', 8192)
 
-        assert client.readline() == 'hello\r\n'
-        assert client.read() == ''
+        assert fd.readline() == 'hello\r\n'
+        assert fd.read() == ''
         client.close()
 
     def test_server(self):
