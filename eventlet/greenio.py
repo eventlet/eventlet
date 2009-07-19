@@ -559,9 +559,8 @@ class GreenSSL(GreenSocket):
             self._refcount = RefCount()
 
     def read(self, size=None):
-        """ Read up to *size* bytes from the socket.  This may return fewer than
-        *size* bytes in some circumstances, but everything appears to work as
-        long as you don't treat this precisely like standard socket read()."""
+        """Works like a blocking call to SSL_read(), whose behavior is 
+        described here:  http://www.openssl.org/docs/ssl/SSL_read.html"""
         while True:
             try:
                 return self.fd.read(size)
@@ -570,21 +569,38 @@ class GreenSSL(GreenSocket):
                            read=True, 
                            timeout=self.timeout, 
                            timeout_exc=socket.timeout)
+            except util.SSL.WantWriteError:
+                trampoline(self.fd.fileno(), 
+                           write=True, 
+                           timeout=self.timeout, 
+                           timeout_exc=socket.timeout)
+            except util.SSL.SysCallError, e:
+                if e[0] == -1:
+                    return ''
             
     recv = read
-    
-    def sendall(self, data):
-        # overriding sendall because ssl sockets behave badly when asked to 
-        # send empty strings; 'normal' sockets don't have a problem
-        if not data:
-            return
-        super(GreenSSL, self).sendall(data)
 
     def write(self, data):
-        try:
-            return self.sendall(data)
-        except util.SSL.Error, ex:
-            raise socket.sslerror(str(ex))
+        """Works like a blocking call to SSL_write(), whose behavior is 
+        described here:  http://www.openssl.org/docs/ssl/SSL_write.html"""
+        if not data:
+            return 0 # calling SSL_write() with 0 bytes to be sent is undefined
+        while True:
+            try:
+                return self.fd.write(data)
+            except util.SSL.WantReadError:
+                trampoline(self.fd.fileno(), 
+                           read=True, 
+                           timeout=self.timeout, 
+                           timeout_exc=socket.timeout)
+            except util.SSL.WantWriteError:
+                trampoline(self.fd.fileno(), 
+                           write=True, 
+                           timeout=self.timeout, 
+                           timeout_exc=socket.timeout)
+                           
+    sendall = write
+    send = write
 
     def server(self):
         return self.fd.server()
@@ -595,12 +611,16 @@ class GreenSSL(GreenSocket):
     def dup(self):
         raise NotImplementedError("Dup not supported on SSL sockets")
 
+    # TODO: remove and fix wsgi.py so that it doesn't call makefile on
+    # ssl sockets (see http://code.activestate.com/recipes/442473/)
     def makefile(self, *args, **kw):
         self._refcount.increment()
         return GreenFile(type(self)(self.fd, refcount = self._refcount))
-        
+    
+    # TODO: remove along with makefile
     makeGreenFile = makefile
 
+    # TODO: remove along with makefile
     def close(self):
         self._refcount.decrement()
         if self._refcount.is_referenced():
