@@ -109,10 +109,6 @@ def socket_send(descriptor, data, flags=0):
         if e[0] == errno.EWOULDBLOCK or e[0] == errno.ENOTCONN:
             return 0
         raise
-    except util.SSL.WantWriteError:
-        return 0
-    except util.SSL.WantReadError:
-        return 0
 
 # winsock sometimes throws ENOTCONN
 SOCKET_CLOSED = (errno.ECONNRESET, errno.ENOTCONN, errno.ESHUTDOWN)
@@ -123,14 +119,6 @@ def socket_recv(descriptor, buflen, flags=0):
         if e[0] == errno.EWOULDBLOCK:
             return None
         if e[0] in SOCKET_CLOSED:
-            return ''
-        raise
-    except util.SSL.WantReadError:
-        return None
-    except util.SSL.ZeroReturnError:
-        return ''
-    except util.SSL.SysCallError, e:
-        if e[0] == -1 or e[0] > 0:
             return ''
         raise
 
@@ -521,6 +509,22 @@ class GreenPipe(GreenFile):
         self.fd.fd.flush()
 
 
+try:
+    from OpenSSL import SSL
+except ImportError:
+    class SSL(object):
+        class WantWriteError(object):
+            pass
+
+        class WantReadError(object):
+            pass
+
+        class ZeroReturnError(object):
+            pass
+
+        class SysCallError(object):
+            pass
+
 class GreenSSL(GreenSocket):
     """ Nonblocking wrapper for SSL.Connection objects.
     
@@ -530,7 +534,7 @@ class GreenSSL(GreenSocket):
     """
     def __init__(self, fd):
         super(GreenSSL, self).__init__(fd)
-        assert(isinstance(fd, (util.SSL.ConnectionType)),
+        assert(isinstance(fd, (SSL.ConnectionType)),
                "GreenSSL can only be constructed with an "\
                "OpenSSL Connection object")
         self.sock = self
@@ -551,12 +555,12 @@ class GreenSSL(GreenSocket):
         while True:
             try:
                 return self.fd.do_handshake()
-            except util.SSL.WantReadError:
+            except SSL.WantReadError:
                 trampoline(self.fd.fileno(), 
                            read=True, 
                            timeout=self.timeout, 
                            timeout_exc=socket.timeout)
-            except util.SSL.WantWriteError:
+            except SSL.WantWriteError:
                 trampoline(self.fd.fileno(), 
                            write=True, 
                            timeout=self.timeout, 
@@ -600,18 +604,20 @@ class GreenSSL(GreenSocket):
         while True:
             try:
                 return self.fd.read(size)
-            except util.SSL.WantReadError:
+            except SSL.WantReadError:
                 trampoline(self.fd.fileno(), 
                            read=True, 
                            timeout=self.timeout, 
                            timeout_exc=socket.timeout)
-            except util.SSL.WantWriteError:
+            except SSL.WantWriteError:
                 trampoline(self.fd.fileno(), 
                            write=True, 
                            timeout=self.timeout, 
                            timeout_exc=socket.timeout)
-            except util.SSL.SysCallError, e:
-                if e[0] == -1:
+            except SSL.ZeroReturnError:
+                return ''
+            except SSL.SysCallError, e:
+                if e[0] == -1 or e[0] > 0:
                     return ''
             
     recv = read
@@ -630,12 +636,12 @@ class GreenSSL(GreenSocket):
         while True:
             try:
                 return self.fd.write(data)
-            except util.SSL.WantReadError:
+            except SSL.WantReadError:
                 trampoline(self.fd.fileno(), 
                            read=True, 
                            timeout=self.timeout, 
                            timeout_exc=socket.timeout)
-            except util.SSL.WantWriteError:
+            except SSL.WantWriteError:
                 trampoline(self.fd.fileno(), 
                            write=True, 
                            timeout=self.timeout, 
@@ -667,12 +673,12 @@ class GreenSSL(GreenSocket):
         while True:
             try:
                 return self.fd.shutdown()
-            except util.SSL.WantReadError:
+            except SSL.WantReadError:
                 trampoline(self.fd.fileno(), 
                            read=True, 
                            timeout=self.timeout, 
                            timeout_exc=socket.timeout)
-            except util.SSL.WantWriteError:
+            except SSL.WantWriteError:
                 trampoline(self.fd.fileno(), 
                            write=True, 
                            timeout=self.timeout, 

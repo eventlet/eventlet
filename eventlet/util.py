@@ -25,23 +25,6 @@ import select
 import socket
 import errno
 
-try:
-    from OpenSSL import SSL
-except ImportError:
-    class SSL(object):
-        class WantWriteError(object):
-            pass
-
-        class WantReadError(object):
-            pass
-
-        class ZeroReturnError(object):
-            pass
-
-        class SysCallError(object):
-            pass
-
-
 def g_log(*args):
     import sys
     from eventlet.support import greenlets as greenlet
