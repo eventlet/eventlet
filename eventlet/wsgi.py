@@ -142,7 +142,6 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         try:
             self.rfile = conn.makefile('rb', self.rbufsize)
             self.wfile = conn.makefile('wb', self.wbufsize)
-            print "have a regular socket", conn.makefile
         except (AttributeError, NotImplementedError):
             if hasattr(conn, 'send') and hasattr(conn, 'recv'):
                 # it's an SSL.Connection
