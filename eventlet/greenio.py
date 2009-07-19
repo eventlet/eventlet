@@ -530,35 +530,19 @@ class GreenPipe(GreenFile):
         self.fd.fd.flush()
 
 
-
-class RefCount(object):
-    """ Reference counting class only to be used with GreenSSL objects """
-    def __init__(self):
-        self._count = 1
-
-    def increment(self):
-        self._count += 1
-
-    def decrement(self):
-        self._count -= 1
-        assert self._count >= 0
-
-    def is_referenced(self):
-        return self._count > 0
-
-
 class GreenSSL(GreenSocket):
     """ Nonblocking wrapper for SSL.Connection objects.
+    
+    Note: not compatible with SSLObject 
+    (http://www.python.org/doc/2.5.2/lib/ssl-objects.html) because it does not 
+    implement server() or issuer(), and the read() method has a mandatory size.
     """
-    def __init__(self, fd, refcount = None):
-        GreenSocket.__init__(self, fd)
+    def __init__(self, fd):
+        super(GreenSSL, self).__init__(fd)
         assert(isinstance(fd, (util.SSL.ConnectionType)),
                "GreenSSL can only be constructed with an "\
                "OpenSSL Connection object")
         self.sock = self
-        self._refcount = refcount
-        if refcount is None:
-            self._refcount = RefCount()
 
     def read(self, size):
         """Works like a blocking call to SSL_read(), whose behavior is 
@@ -613,33 +597,16 @@ class GreenSSL(GreenSocket):
         while tail < len(data):
             tail += self.send(data[tail:])
 
-    def server(self):
-        return self.fd.server()
-
-    def issuer(self):
-        return self.fd.issuer()
-
     def dup(self):
         raise NotImplementedError("Dup not supported on SSL sockets")
-
-    # TODO: remove and fix wsgi.py so that it doesn't call makefile on
-    # ssl sockets (see http://code.activestate.com/recipes/442473/)
-    def makefile(self, *args, **kw):
-        self._refcount.increment()
-        return GreenFile(type(self)(self.fd, refcount = self._refcount))
     
-    # TODO: remove along with makefile
-    makeGreenFile = makefile
+    def makefile(self, mode='r', bufsize=-1):
+        raise NotImplementedError("Makefile not supported on SSL sockets")
 
-    # TODO: remove along with makefile
-    def close(self):
-        self._refcount.decrement()
-        if self._refcount.is_referenced():
-            return
-        super(GreenSSL, self).close()
-
-
-    
+    def pending(self, *args, **kw):
+        fn = self.pending = self.fd.pending
+        return fn(*args, **kw)
+                
 
 def socketpair(*args):
     one, two = socket.socketpair(*args)

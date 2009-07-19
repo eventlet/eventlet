@@ -295,9 +295,8 @@ class TestHttpd(TestCase):
     
         sock = api.connect_tcp(('127.0.0.1', 4201))
         sock = util.wrap_ssl(sock)
-        fd = sock.makeGreenFile()
-        fd.write('POST /foo HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\nContent-length:3\r\n\r\nabc')
-        result = fd.read(8192)
+        sock.write('POST /foo HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\nContent-length:3\r\n\r\nabc')
+        result = sock.read(8192)
         self.assertEquals(result[-3:], 'abc')
         
     def test_013_empty_return(self):
@@ -326,9 +325,8 @@ class TestHttpd(TestCase):
 
         sock = api.connect_tcp(('127.0.0.1', 4202))
         sock = util.wrap_ssl(sock)
-        fd = sock.makeGreenFile()
-        fd.write('GET /foo HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
-        result = fd.read(8192)
+        sock.write('GET /foo HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
+        result = sock.read(8192)
         self.assertEquals(result[-4:], '\r\n\r\n')
 
     def test_014_chunked_post(self):

@@ -135,6 +135,23 @@ class Input(object):
 class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
     protocol_version = 'HTTP/1.1'
     minimum_chunk_size = MINIMUM_CHUNK_SIZE
+    
+    def setup(self):
+        # overriding SocketServer.setup to correctly handle SSL.Connection objects
+        conn = self.connection = self.request
+        try:
+            self.rfile = conn.makefile('rb', self.rbufsize)
+            self.wfile = conn.makefile('wb', self.wbufsize)
+            print "have a regular socket", conn.makefile
+        except (AttributeError, NotImplementedError):
+            if hasattr(conn, 'send') and hasattr(conn, 'recv'):
+                # it's an SSL.Connection
+                self.rfile = socket._fileobject(conn, "rb", self.rbufsize)
+                self.wfile = socket._fileobject(conn, "wb", self.wbufsize)
+            else:
+                # it's a SSLObject, or a martian
+                raise NotImplementedError("wsgi.py doesn't support sockets "\
+                                          "of type %s" % type(conn))
 
     def handle_one_request(self):
         if self.server.max_http_version:
