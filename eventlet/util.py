@@ -45,7 +45,11 @@ def g_log(*args):
 __original_socket__ = socket.socket
 __original_gethostbyname__ = socket.gethostbyname
 __original_getaddrinfo__ = socket.getaddrinfo
-__original_fromfd__ = socket.fromfd
+try:
+    __original_fromfd__ = socket.fromfd
+except AttributeError:
+    # Windows
+    __original_fromfd__ = None
 
 def tcp_socket():
     s = __original_socket__(socket.AF_INET, socket.SOCK_STREAM)
@@ -107,10 +111,11 @@ def wrap_socket_with_coroutine_socket(use_thread_pool=True):
                 __original_getaddrinfo__, *args, **kw)
         socket.getaddrinfo = new_getaddrinfo
 
-    def new_fromfd(*args, **kw):
-        from eventlet import greenio
-        return greenio.GreenSocket(__original_fromfd__(*args, **kw))
-    socket.fromfd = new_fromfd
+    if __original_fromfd__ is not None:
+        def new_fromfd(*args, **kw):
+            from eventlet import greenio
+            return greenio.GreenSocket(__original_fromfd__(*args, **kw))
+        socket.fromfd = new_fromfd
 
     socket_already_wrapped = True
 
