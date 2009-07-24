@@ -12,9 +12,8 @@ https://lists.secondlife.com/cgi-bin/mailman/listinfo/eventletdev
 
 == requirements ===
 
-Eventlet runs on Python version 2.3 or greater, with the following dependenceis:
+Eventlet runs on Python version 2.4 or greater, with the following dependenceis:
 * http://cheeseshop.python.org/pypi/greenlet
-* (if running python versions < 2.4) collections.py from the 2.4 distribution or later
 
 == limitations ==
 
