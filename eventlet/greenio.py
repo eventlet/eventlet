@@ -758,14 +758,3 @@ class GreenSSLObject(object):
         for debugging purposes; do not parse the content of this string because its 
         format can't be parsed unambiguously."""
         return str(self.connection.get_peer_certificate().get_issuer())
-        
-                
-
-def socketpair(*args):
-    one, two = socket.socketpair(*args)
-    return GreenSocket(one), GreenSocket(two)
-
-
-def fromfd(*args):
-    return GreenSocket(socket.fromfd(*args))
-    

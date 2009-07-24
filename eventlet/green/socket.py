@@ -8,10 +8,13 @@ from eventlet.util import wrap_ssl_obj
 from eventlet.greenio import GreenSocket as socket
 from eventlet.greenio import GreenSSL as _GreenSSL
 from eventlet.greenio import GreenSSLObject as _GreenSSLObject
-from eventlet.greenio import socketpair, fromfd
 
 def fromfd(*args):
-    return socket(__socket.fromfd(*args))
+    return socket(__socket.fromfd(*args))    
+    
+def socketpair(*args):
+    one, two = __socket.socketpair(*args)
+    return socket(one), socket(two)
 
 def gethostbyname(name):
     if getattr(get_hub(), 'uses_twisted_reactor', None):
