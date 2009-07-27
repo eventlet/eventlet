@@ -219,39 +219,6 @@ SOMETIMES = RuntimeError('I fail half the time')
 class TestTookTooLong(Exception):
     pass
 
-class TestFan(TestCase):
-    mode = 'static'
-    def setUp(self):
-        self.timer = api.exc_after(1, TestTookTooLong())
-        self.pool = IntPool(max_size=2)
-
-    def tearDown(self):
-        self.timer.cancel()
-
-    def test_with_list(self):
-        list_of_input = ['agent-one', 'agent-two', 'agent-three']
-
-        def my_callable(pool_item, next_thing):
-            ## Do some "blocking" (yielding) thing
-            api.sleep(0.01)
-            return next_thing
-
-        output = self.pool.fan(my_callable, list_of_input)
-        self.assertEquals(list_of_input, output)
-
-    def test_all_fail(self):
-        def my_failure(pool_item, next_thing):
-            raise ALWAYS
-        self.assertRaises(pools.AllFailed, self.pool.fan, my_failure, range(4))
-
-    def test_some_fail(self):
-        def my_failing_callable(pool_item, next_thing):
-            if next_thing % 2:
-                raise SOMETIMES
-            return next_thing
-        self.assertRaises(pools.SomeFailed, self.pool.fan, my_failing_callable, range(4))
-
-
 if __name__ == '__main__':
     main()
 

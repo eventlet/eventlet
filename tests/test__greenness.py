@@ -24,7 +24,7 @@ To do that spawn a green server and then access it using a green socket.
 If either operation blocked the whole script would block and timeout.
 """
 import unittest
-from greentest import test_support
+from tests import test_support
 from eventlet.green import urllib2, BaseHTTPServer
 from eventlet.api import spawn, kill
 

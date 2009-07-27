@@ -21,7 +21,7 @@
 
 import unittest
 from eventlet import api, coros
-from greentest import LimitedTestCase
+from tests import LimitedTestCase
 
 class TestSemaphore(LimitedTestCase):
 

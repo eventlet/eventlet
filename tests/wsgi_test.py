@@ -29,7 +29,7 @@ from eventlet import util
 from eventlet import wsgi
 from eventlet import processes
 
-from greentest import find_command
+from tests import find_command
 
 try:
     from cStringIO import StringIO

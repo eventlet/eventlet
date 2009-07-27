@@ -1,5 +1,5 @@
 import unittest
-from greentest import test_support
+from tests import test_support
 
 import os
 from eventlet.green import socket

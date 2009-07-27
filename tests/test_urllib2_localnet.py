@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
-from greentest import exit_unless_25; exit_unless_25()
+from tests import exit_unless_25; exit_unless_25()
 
 import sys
 import urlparse
 import unittest
 import hashlib
-from greentest import test_support
+from tests import test_support
 from eventlet.green import threading
 from eventlet.green import socket
 from eventlet.green import urllib2

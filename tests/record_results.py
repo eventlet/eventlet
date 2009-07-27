@@ -32,7 +32,7 @@ try:
 except ImportError:
     import pysqlite2.dbapi2 as sqlite3
 import warnings
-from greentest import disabled_marker
+from tests import disabled_marker
 
 warnings.simplefilter('ignore')
 

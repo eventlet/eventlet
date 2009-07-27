@@ -1,7 +1,7 @@
 """Unit tests for socket timeout feature."""
 
 import unittest
-from greentest import test_support
+from tests import test_support
 
 # This requires the 'network' resource as given on the regrtest command line.
 skip_expected = not test_support.is_resource_enabled('network')

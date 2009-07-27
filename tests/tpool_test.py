@@ -165,7 +165,7 @@ class TestTpool(TestCase):
         self.assertEqual(opts.n, 'foo')
 
     def test_contention(self):
-        from greentest import tpool_test
+        from tests import tpool_test
         prox = tpool.Proxy(tpool_test)
 
         pool = coros.CoroutinePool(max_size=4)

@@ -2,7 +2,7 @@
 
 # Create a bunch of threads, let each do some work, wait until all are done
 
-from greentest.test_support import verbose
+from tests.test_support import verbose
 import random
 from eventlet.green import thread
 from eventlet.green import time

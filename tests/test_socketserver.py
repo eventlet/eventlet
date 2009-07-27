@@ -1,8 +1,8 @@
 # Test suite for SocketServer.py
 # converted to unittest (Denis)
 
-from greentest import test_support
-from greentest.test_support import (verbose, verify, TESTFN, TestSkipped,
+from tests import test_support
+from tests.test_support import (verbose, verify, TESTFN, TestSkipped,
                                reap_children)
 test_support.requires('network')
 

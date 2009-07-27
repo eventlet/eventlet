@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import unittest
-from greentest import test_support
+from tests import test_support
 
 from eventlet.green import socket
 from eventlet.green import select

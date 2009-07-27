@@ -23,7 +23,7 @@ import sys
 import unittest
 from eventlet.api import sleep, with_timeout
 from eventlet import api, proc, coros
-from greentest import LimitedTestCase
+from tests import LimitedTestCase
 
 DELAY = 0.01
 

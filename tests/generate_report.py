@@ -152,7 +152,7 @@ class TestResult:
         return '<td align=center valign=%s bgcolor=%s>%s</td>' % (valign, self.color(), text)
 
 def format_testname(changeset, test):
-    return '<a href="%s/src/%s/greentest/%s">%s</a>' % (REPO_URL, changeset, test, test)
+    return '<a href="%s/src/%s/tests/%s">%s</a>' % (REPO_URL, changeset, test, test)
 
 def format_table(table, hubs, tests, hub_stats, changeset):
     r = '<table border=1>\n<tr>\n<td/>\n'

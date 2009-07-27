@@ -1,7 +1,7 @@
 # Test just the SSL support in the socket module, in a moderately bogus way.
 
 import sys
-from greentest import test_support
+from tests import test_support
 from eventlet.green import socket
 import errno
 import unittest

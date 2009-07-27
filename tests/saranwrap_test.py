@@ -245,7 +245,7 @@ class TestSaranwrap(unittest.TestCase):
         tid = make_uuid()
         self.assertEqual(tid.get_version(), uuid.uuid4().get_version())
         def make_list():
-            from greentest import saranwrap_test
+            from tests import saranwrap_test
             prox = saranwrap.wrap(saranwrap_test.list_maker)
             # after this function returns, prox should fall out of scope
             return prox()
@@ -290,7 +290,7 @@ sys_path = sys.path""")
             sys.path.remove(temp_dir)
 
     def test_contention(self):
-        from greentest import saranwrap_test
+        from tests import saranwrap_test
         prox = saranwrap.wrap(saranwrap_test)
 
         pool = Pool(max_size=4)
@@ -316,7 +316,7 @@ sys_path = sys.path""")
 
     def test_list_of_functions(self):
         return # this test is known to fail, we can implement it sometime in the future if we wish
-        from greentest import saranwrap_test
+        from tests import saranwrap_test
         prox = saranwrap.wrap([saranwrap_test.list_maker])
         self.assertEquals(list_maker(), prox[0]())
 
@@ -325,7 +325,7 @@ sys_path = sys.path""")
         # a function.  Then we want to saranwrap that class, have
         # the object call the coroutine and verify that it ran
 
-        from greentest import saranwrap_test
+        from tests import saranwrap_test
         mod_proxy = saranwrap.wrap(saranwrap_test)
         obj_proxy = mod_proxy.CoroutineCallingClass()
         obj_proxy.run_coroutine()

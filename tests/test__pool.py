@@ -1,5 +1,5 @@
 from eventlet import pool, coros, api
-from greentest import LimitedTestCase
+from tests import LimitedTestCase
 from unittest import main
 
 class TestCoroutinePool(LimitedTestCase):

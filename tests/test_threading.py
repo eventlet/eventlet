@@ -1,7 +1,7 @@
 # Very rudimentary test of threading module
 
-import greentest.test_support
-from greentest.test_support import verbose
+import tests.test_support
+from tests.test_support import verbose
 import random
 import sys
 from eventlet.green import threading
@@ -299,7 +299,7 @@ class ThreadJoinOnShutdown(unittest.TestCase):
 
 
 def test_main():
-    greentest.test_support.run_unittest(ThreadTests,
+    tests.test_support.run_unittest(ThreadTests,
                                         ThreadJoinOnShutdown)
 
 if __name__ == "__main__":

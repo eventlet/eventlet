@@ -1,6 +1,6 @@
 import unittest
 from doctest import DocTestSuite
-from greentest import test_support
+from tests import test_support
 
 class ThreadingLocalTest(unittest.TestCase):
     def test_derived(self):

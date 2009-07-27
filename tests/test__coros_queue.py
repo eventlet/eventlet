@@ -1,4 +1,4 @@
-from greentest import LimitedTestCase
+from tests import LimitedTestCase
 from unittest import main
 from eventlet import api, coros, proc
 

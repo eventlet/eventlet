@@ -20,7 +20,7 @@
 # THE SOFTWARE.
 
 from twisted.internet import reactor
-from greentest import exit_unless_twisted
+from tests import exit_unless_twisted
 exit_unless_twisted()
 import unittest
 from twisted.internet.error import DNSLookupError

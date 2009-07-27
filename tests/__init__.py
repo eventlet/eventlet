@@ -19,7 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-# package is named greentest, not test, so it won't be confused with test in stdlib
+# package is named tests, not test, so it won't be confused with test in stdlib
 import sys
 import os
 import errno
