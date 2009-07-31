@@ -25,6 +25,7 @@ help:
 	@echo "  changes   to make an overview of all changed/added/deprecated items"
 	@echo "  linkcheck to check all external links for integrity"
 	@echo "  doctest   to run all doctests embedded in the documentation (if enabled)"
+	@echo "  coverage  to generate a docstring coverage report"
 
 clean:
 	-rm -rf _build/*
@@ -86,3 +87,8 @@ doctest:
 	$(SPHINXBUILD) -b doctest $(ALLSPHINXOPTS) _build/doctest
 	@echo "Testing of doctests in the sources finished, look at the " \
 	      "results in _build/doctest/output.txt."
+	      
+coverage:
+	$(SPHINXBUILD) -b coverage $(ALLSPHINXOPTS) _build/coverage
+	@echo "Coverage report finished, look at the " \
+		  "results in _build/coverage/python.txt."
