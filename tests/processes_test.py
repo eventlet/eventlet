@@ -22,7 +22,7 @@
 import sys
 from unittest import TestCase, main
 
-from eventlet import processes
+from eventlet import processes, api
 
 class TestEchoPool(TestCase):
     def setUp(self):
@@ -49,6 +49,7 @@ class TestEchoPool(TestCase):
 
 class TestCatPool(TestCase):
     def setUp(self):
+        api.sleep(0)
         self.pool = processes.ProcessPool('cat')
 
     def test_cat(self):

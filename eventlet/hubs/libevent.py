@@ -59,7 +59,7 @@ class Hub(object):
         self.clock = clock
         self.readers = {}
         self.writers = {}
-        self.excs = {}
+        
         self.greenlet = api.Greenlet(self.run)
         self.signal_exc_info = None
         self.signal(2, lambda signalnum, frame: self.greenlet.parent.throw(KeyboardInterrupt))
@@ -124,19 +124,25 @@ class Hub(object):
     def running(self):
         return bool(self.greenlet)
 
-    def add_descriptor(self, fileno, read=None, write=None, exc=None):
-        if read:
-            evt = event.read(fileno, read, fileno)
-            self.readers[fileno] = evt
+    def add_reader(self, fileno, read_cb):
+        """ Signals an intent to read from a particular file descriptor.
 
-        if write:
-            evt = event.write(fileno, write, fileno)
-            self.writers[fileno] = evt
+        The *fileno* argument is the file number of the file of interest.
 
-        if exc:
-            self.excs[fileno] = exc
+        The *read_cb* argument is the callback which will be called when the file
+        is ready for reading.
+        """
+        self.readers[fileno] = event.read(fileno, read_cb, fileno)
+            
+    def add_writer(self, fileno, write_cb):
+        """ Signals an intent to write to a particular file descriptor.
 
-        return fileno
+        The *fileno* argument is the file number of the file of interest.
+
+        The *write_cb* argument is the callback which will be called when the file
+        is ready for writing.
+        """
+        self.readers[fileno] = event.write(fileno, write_cb, fileno)
 
     def signal(self, signalnum, handler):
         def wrapper():
@@ -146,7 +152,7 @@ class Hub(object):
                 self.signal_exc_info = sys.exc_info()
                 event.abort()
         return event_wrapper(event.signal(signalnum, wrapper))
-
+        
     def remove_descriptor(self, fileno):
         reader = self.readers.pop(fileno, None)
         if reader is not None:
@@ -160,7 +166,6 @@ class Hub(object):
                 writer.delete()
             except:
                 traceback.print_exc()
-        self.excs.pop(fileno, None)
 
     def schedule_call_local(self, seconds, cb, *args, **kwargs):
         current = api.getcurrent()
@@ -178,23 +183,12 @@ class Hub(object):
         wrapper = event_wrapper(event_impl, seconds=seconds)
         self.events_to_add.append(wrapper)
         return wrapper
-
-    def exc_descriptor(self, fileno):
-        exc = self.excs.get(fileno)
-        if exc is not None:
-            try:
-                exc(fileno)
-            except:
-                traceback.print_exc()
-
+        
     def get_readers(self):
         return self.readers
 
     def get_writers(self):
         return self.writers
-
-    def get_excs(self):
-        return self.excs
 
     def _version_info(self):
         baseversion = event.__version__

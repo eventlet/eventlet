@@ -36,7 +36,7 @@ class BaseHub(object):
     def __init__(self, clock=time.time):
         self.readers = {}
         self.writers = {}
-        self.excs = {}
+        self.closed_fds = []
 
         self.clock = clock
         self.greenlet = greenlet.greenlet(self.run)
@@ -52,50 +52,36 @@ class BaseHub(object):
             'after_waiting': [],
             'exit': [],
         }
+        
+    def add_reader(self, fileno, reader):
+        """ Signals an intent to read from a particular file descriptor.
 
-    def add_descriptor(self, fileno, read=None, write=None, exc=None):
-        """ Signals an intent to read/write from a particular file descriptor.
+        The *fileno* argument is the file number of the file of interest.
 
-        The fileno argument is the file number of the file of interest.  The other
-        arguments are either callbacks or None.  If there is a callback for read
-        or write, the hub sets things up so that when the file descriptor is
-        ready to be read or written, the callback is called.
-
-        The exc callback is called when the socket represented by the file
-        descriptor is closed.  The intent is that the the exc callbacks should
-        only be present when either a read or write callback is also present,
-        so the exc callback happens instead of the respective read or write
-        callback.
+        The *reader* argument is the greenlet which will be switched to when the file
+        is ready for reading.
         """
-        read = read or self.readers.get(fileno)
-        if read is not None:
-            self.readers[fileno] = read
-        else:
-            self.readers.pop(fileno, None)
-        write = write or self.writers.get(fileno)
-        if write is not None:
-            self.writers[fileno] = write
-        else:
-            self.writers.pop(fileno, None)
-        exc = exc or self.excs.get(fileno)
-        if exc is not None:
-            self.excs[fileno] = exc
-        else:
-            self.excs.pop(fileno, None)
-        return fileno
+        self.readers[fileno] = reader
+            
+    def add_writer(self, fileno, writer):
+        """ Signals an intent to write to a particular file descriptor.
 
+        The *fileno* argument is the file number of the file of interest.
+
+        The *write_cb* argument is the callback which will be called when the file
+        is ready for writing.
+        """
+        self.writers[fileno] = writer
+
+    def closed(self, fileno):
+        """ Clean up any references so that we don't try and
+        do I/O on a closed fd.
+        """
+        self.closed_fds.append(fileno)
+        
     def remove_descriptor(self, fileno):
         self.readers.pop(fileno, None)
         self.writers.pop(fileno, None)
-        self.excs.pop(fileno, None)
-
-    def exc_descriptor(self, fileno):
-        exc = self.excs.get(fileno)
-        if exc is not None:
-            try:
-                exc(fileno)
-            except self.SYSTEM_EXCEPTIONS:
-                self.squelch_exception(fileno, sys.exc_info())
 
     def stop(self):
         self.abort()
@@ -296,9 +282,6 @@ class BaseHub(object):
 
     def get_writers(self):
         return self.writers
-
-    def get_excs(self):
-        return self.excs
 
     def get_timers_count(hub):
         return max(len(x) for x in [hub.timers, hub.next_timers])

@@ -42,19 +42,6 @@ class TestScheduleCall(unittest.TestCase):
         assert lst == [], lst
 
 
-class TestCloseSocketWhilePolling(unittest.TestCase):
-
-    def test(self):
-        try:
-            sock = socket.socket()
-            api.call_after(0, sock.close)
-            sock.connect(('python.org', 81))
-        except Exception:
-            api.sleep(0)
-        else:
-            assert False, 'expected an error here'
-
-
 class TestExceptionInMainloop(unittest.TestCase):
 
     def test_sleep(self):

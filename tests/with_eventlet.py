@@ -73,7 +73,8 @@ if __name__=='__main__':
     except:
         version_info = ''
     try:
-        diffstat = os.popen(r"hg diff 2> /dev/null | diffstat -q").read().strip()
+        diffstat = os.popen(r"hg diff 2> /dev/null | diffstat").read().strip()
+        diffstat = diffstate.replace('0 files changed', '')
     except:
         diffstat = None
     try:

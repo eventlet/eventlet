@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+import errno
 import sys
 import socket
 import string
@@ -100,7 +101,7 @@ def tcp_server(listensocket, server, *args, **kw):
     """
     Given a socket, accept connections forever, spawning greenlets
     and executing *server* for each new incoming connection.
-    When *listensocket* is closed, the ``tcp_server()`` greenlet will end.
+    When *server* returns False, the ``tcp_server()`` greenlet will end.
 
     listensocket
         The socket from which to accept connections.
@@ -111,16 +112,18 @@ def tcp_server(listensocket, server, *args, **kw):
     \*\*kw
         The keyword arguments to pass to *server*.
     """
+    working = [True]
     try:
-        try:
-            while True:
-                spawn(server, listensocket.accept(), *args, **kw)
-        except socket.error, e:
-            # Broken pipe means it was shutdown
-            if e[0] != 32:
-                raise
-    finally:
-        listensocket.close()
+        while working[0] is not False:
+            def tcp_server_wrapper(sock):
+                working[0] = server(sock, *args, **kw)
+            spawn(tcp_server_wrapper, listensocket.accept())
+    except socket.timeout, e:
+        raise
+    except socket.error, e:
+        # EBADF means the socket was closed
+        if e[0] is not errno.EBADF:
+            raise
 
 def trampoline(fd, read=None, write=None, timeout=None, timeout_exc=TimeoutError):
     """Suspend the current coroutine until the given socket object or file
@@ -139,28 +142,21 @@ def trampoline(fd, read=None, write=None, timeout=None, timeout_exc=TimeoutError
     hub = get_hub()
     current = greenlet.getcurrent()
     assert hub.greenlet is not current, 'do not call blocking functions from the mainloop'
+    assert not (read and write), 'not allowed to trampoline for reading and writing'
     fileno = getattr(fd, 'fileno', lambda: fd)()
-    def _do_close(_d, error=None):
-        if error is None:
-            current.throw(socket.error(32, 'Broken pipe'))
-        else:
-            current.throw(getattr(error, 'value', error)) # XXX convert to socket.error
     def cb(d):
         current.switch()
-        # with TwistedHub, descriptor is actually an object (socket_rwdescriptor) which stores
-        # this callback. If this callback stores a reference to the socket instance (fd)
-        # then descriptor has a reference to that instance. This makes socket not collected
-        # after greenlet exit. Since nobody actually uses the results of this switch, I removed
-        # fd from here. If it will be needed than an indirect reference which is discarded right
-        # after the switch above should be used.
     if timeout is not None:
         t = hub.schedule_call_global(timeout, current.throw, timeout_exc)
     try:
-        descriptor = hub.add_descriptor(fileno, read and cb, write and cb, _do_close)
+        if read:
+            hub.add_reader(fileno, cb)
+        if write:
+            hub.add_writer(fileno, cb)
         try:
             return hub.switch()
         finally:
-            hub.remove_descriptor(descriptor)
+            hub.remove_descriptor(fileno)
     finally:
         if t is not None:
             t.cancel()
@@ -209,11 +205,11 @@ def select(read_list, write_list, error_list, timeout=None):
         t = hub.schedule_call_global(timeout, on_timeout)
     try:
         for k, v in ds.iteritems():
-            d = hub.add_descriptor(k,
-                                   v.get('read') is not None and on_read,
-                                   v.get('write') is not None and on_write,
-                                   v.get('error') is not None and on_error)
-            descriptors.append(d)
+            if v.get('read'):
+                hub.add_reader(k, on_read)
+            if v.get('write'):
+                hub.add_writer(k, on_read)
+            descriptors.append(k)
         try:
             return hub.switch()
         finally:

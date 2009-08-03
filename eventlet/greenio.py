@@ -211,7 +211,8 @@ class GreenSocket(object):
                 client, addr = res
                 set_nonblocking(client)
                 return type(self)(client), addr
-            trampoline(fd, read=True, timeout=self.gettimeout(), timeout_exc=socket.timeout)
+            trampoline(fd, read=True, timeout=self.gettimeout(),
+                           timeout_exc=socket.timeout)
 
     def bind(self, *args, **kw):
         fn = self.bind = self.fd.bind
@@ -221,13 +222,11 @@ class GreenSocket(object):
         if self.closed:
             return
         self.closed = True
-        fn = self.close = self.fd.close
+        fileno = self.fileno()
         try:
-            res = fn(*args, **kw)
+            res = self.fd.close()
         finally:
-            # This will raise socket.error(32, 'Broken pipe') if there's
-            # a caller waiting on trampoline (e.g. server on .accept())
-            get_hub().exc_descriptor(self._fileno)
+            get_hub().closed(fileno)
         return res
 
     def connect(self, address):

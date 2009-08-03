@@ -34,7 +34,7 @@ def check_hub():
     api.sleep(0)
     api.sleep(0)
     hub = api.get_hub()
-    for nm in 'get_readers', 'get_writers', 'get_excs':
+    for nm in 'get_readers', 'get_writers':
         dct = getattr(hub, nm)()
         assert not dct, "hub.%s not empty: %s" % (nm, dct)
     # Stop the runloop (unless it's twistedhub which does not support that)
@@ -108,19 +108,20 @@ class TestApi(TestCase):
         server = api.tcp_listener(('0.0.0.0', 0))
         bound_port = server.getsockname()[1]
 
+        done = [False]
         def accept_twice((conn, addr)):
             connected.append(True)
             conn.close()
             if len(connected) == 2:
                 server.close()
+                done[0] = True
 
         api.call_after(0, api.connect_tcp, ('127.0.0.1', bound_port))
         api.call_after(0, api.connect_tcp, ('127.0.0.1', bound_port))
-        try:
-            api.tcp_server(server, accept_twice)
-        except:
-            api.sleep(0.1)
-            raise
+        server_coro = api.spawn(api.tcp_server, server, accept_twice)
+        while not done[0]:
+            api.sleep(0)
+        api.kill(server_coro)
 
         assert len(connected) == 2
         check_hub()
@@ -144,6 +145,7 @@ class TestApi(TestCase):
         server = api.tcp_listener(('0.0.0.0', 0))
         bound_port = server.getsockname()[1]
 
+        done = [False]
         def client_connected((conn, addr)):
             conn.close()
 
@@ -153,16 +155,20 @@ class TestApi(TestCase):
             desc = greenio.GreenSocket(client)
             desc.connect(('127.0.0.1', bound_port))
             try:
-                api.trampoline(desc, read=True, write=True, timeout=0.1)
+                api.trampoline(desc, read=True, timeout=0.1)
             except api.TimeoutError:
                 assert False, "Timed out"
 
             server.close()
             client.close()
+            done[0] = True
 
         api.call_after(0, go)
 
-        api.tcp_server(server, client_connected)
+        server_coro = api.spawn(api.tcp_server, server, client_connected)
+        while not done[0]:
+            api.sleep(0)
+        api.kill(server_coro)
 
         check_hub()
 

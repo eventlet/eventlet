@@ -25,32 +25,44 @@ import time
 
 from eventlet.hubs import hub
 
-
 class Hub(hub.BaseHub):
+    def _remove_closed_fds(self):
+        """ Iterate through fds that have had their socket objects recently closed,
+        removing the ones that are actually closed per the operating system.
+        """
+        for fd in self.closed_fds:
+            try:
+                select.select([fd], [], [], 0)
+            except select.error, e:
+                if e.args[0] == errno.EBADF:
+                    self.remove_descriptor(fd)
+
     def wait(self, seconds=None):
         readers = self.readers
         writers = self.writers
-        excs = self.excs
-        if not readers and not writers and not excs:
+        if not readers and not writers:
             if seconds:
                 time.sleep(seconds)
             return
         try:
             r, w, ig = select.select(readers.keys(), writers.keys(), [], seconds)
+            self.closed_fds = []
         except select.error, e:
             if e.args[0] == errno.EINTR:
                 return
-            raise
-        SYSTEM_EXCEPTIONS = self.SYSTEM_EXCEPTIONS
+            elif e.args[0] == errno.EBADF:
+                self._remove_closed_fds()
+                self.closed_fds = []
+                return
+            else:
+                raise
         for observed, events in ((readers, r), (writers, w)):
-            #print "events", r, " ", w
             for fileno in events:
                 try:
-                    cb = observed.get(fileno)
-                    #print "cb", cb, " ", observed
+                    cb = observed.pop(fileno, None)
                     if cb is not None:
                         cb(fileno)
-                except SYSTEM_EXCEPTIONS:
+                except self.SYSTEM_EXCEPTIONS:
                     raise
                 except:
                     self.squelch_exception(fileno, sys.exc_info())

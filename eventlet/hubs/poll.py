@@ -37,15 +37,37 @@ class Hub(hub.BaseHub):
         super(Hub, self).__init__(clock)
         self.poll = select.poll()
 
-    def add_descriptor(self, fileno, read=None, write=None, exc=None):
-        oldmask = self.get_fn_mask(self.readers.get(fileno), self.writers.get(fileno))
-        result = super(Hub, self).add_descriptor(fileno, read, write, exc)
+    def add_reader(self, fileno, read_cb):
+        """ Signals an intent to read from a particular file descriptor.
 
-        mask = self.get_fn_mask(read, write)
-        if mask != oldmask:
+        The *fileno* argument is the file number of the file of interest.
+
+        The *read_cb* argument is the callback which will be called when the file
+        is ready for reading.
+        """
+        oldreader = self.readers.get(fileno)
+        super(Hub, self).add_reader(fileno, read_cb)
+
+        if not oldreader:
             # Only need to re-register this fileno if the mask changes
+            mask = self.get_fn_mask(oldreader, self.writers.get(fileno))
             self.poll.register(fileno, mask)
-        return result
+            
+    def add_writer(self, fileno, write_cb):
+        """ Signals an intent to write to a particular file descriptor.
+
+        The *fileno* argument is the file number of the file of interest.
+
+        The *write_cb* argument is the callback which will be called when the file
+        is ready for writing.
+        """
+        oldwriter = self.writer.get(fileno)
+        super(Hub, self).add_writer(fileno, write_cb)
+
+        if not oldwriter:
+            # Only need to re-register this fileno if the mask changes
+            mask = self.get_fn_mask(oldwriter, self.readers.get(fileno))
+            self.poll.register(fileno, mask)
 
     def get_fn_mask(self, read, write):
         mask = 0
@@ -54,7 +76,6 @@ class Hub(hub.BaseHub):
         if write is not None:
             mask |= WRITE_MASK
         return mask
-
 
     def remove_descriptor(self, fileno):
         super(Hub, self).remove_descriptor(fileno)
@@ -66,9 +87,8 @@ class Hub(hub.BaseHub):
     def wait(self, seconds=None):
         readers = self.readers
         writers = self.writers
-        excs = self.excs
 
-        if not readers and not writers and not excs:
+        if not readers and not writers:
             if seconds:
                 sleep(seconds)
             return
@@ -81,9 +101,12 @@ class Hub(hub.BaseHub):
         SYSTEM_EXCEPTIONS = self.SYSTEM_EXCEPTIONS
 
         for fileno, event in presult:
-            for dct, mask in ((readers, READ_MASK), (writers, WRITE_MASK), (excs, EXC_MASK)):
-                func = dct.get(fileno)
-                if func is not None and event & mask:
+            for dct, mask in ((readers, READ_MASK), (writers, WRITE_MASK)):
+                cb = dct.get(fileno)
+                func = None
+                if cb is not None and event & mask:
+                    func = cb
+                if func:
                     try:
                         func(fileno)
                     except SYSTEM_EXCEPTIONS:
