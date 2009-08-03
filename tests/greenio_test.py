@@ -104,42 +104,25 @@ class TestGreenIo(TestCase):
         listener = api.tcp_listener(('127.0.0.1', 0))
 
         def send_large(sock):
-            print "about to send large"
             # needs to send enough data that trampoline() is called
             sock.sendall('*' * 100000)
-            print "sent large"
 
         def server():
             (client, addr) = listener.accept()
-            print "accepted"
             # start reading, then, while reading, start writing. 
             # the reader should not hang forever
             api.spawn(send_large, client)
-            print "spawned send_large"
             api.sleep(0) # allow send_large to execute up to the trampoline
-            print "slept"
             result = client.recv(1000)
-            print "received"
             assert result == 'hello world', result
                 
         server_evt = coros.execute(server)
-        print "spawned server"
         client = api.connect_tcp(('127.0.0.1', listener.getsockname()[1]))
         api.spawn(client.makefile().read)
-        print "spawned read"
         api.sleep(0)
-        print "slept 2"
         client.send('hello world')
-        print "sent hello world"
-        
-        # close() hangs
         client.close()
-        print "closed"
-        
-        # this tests "full duplex" bug which is still not fixed
         server_evt.wait()
-        print "waited"
-
  
  
 def test_server(sock, func, *args):

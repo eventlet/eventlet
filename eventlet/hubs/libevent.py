@@ -64,6 +64,9 @@ class Hub(object):
         self.signal_exc_info = None
         self.signal(2, lambda signalnum, frame: self.greenlet.parent.throw(KeyboardInterrupt))
         self.events_to_add = []
+        
+    def closed(self, fd):
+        pass
 
     def switch(self):
         cur = api.getcurrent()

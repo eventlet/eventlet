@@ -53,17 +53,17 @@ class BaseHub(object):
             'exit': [],
         }
         
-    def add_reader(self, fileno, reader):
+    def add_reader(self, fileno, read_cb):
         """ Signals an intent to read from a particular file descriptor.
 
         The *fileno* argument is the file number of the file of interest.
 
-        The *reader* argument is the greenlet which will be switched to when the file
+        The *read_cb* argument is the callback which will be called when the file
         is ready for reading.
         """
-        self.readers[fileno] = reader
+        self.readers[fileno] = read_cb
             
-    def add_writer(self, fileno, writer):
+    def add_writer(self, fileno, write_cb):
         """ Signals an intent to write to a particular file descriptor.
 
         The *fileno* argument is the file number of the file of interest.
@@ -71,7 +71,8 @@ class BaseHub(object):
         The *write_cb* argument is the callback which will be called when the file
         is ready for writing.
         """
-        self.writers[fileno] = writer
+
+        self.writers[fileno] = write_cb
 
     def closed(self, fileno):
         """ Clean up any references so that we don't try and
