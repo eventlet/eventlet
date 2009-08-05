@@ -615,7 +615,7 @@ when the id is None."""
                     #_log("objects: %s" % str(self._objects))
                     self.respond(['object', self._next_id])
                     self._next_id += 1
-            except SystemExit, e:
+            except (KeyboardInterrupt, SystemExit), e:
                 raise e
             except Exception, e:
                 self.write_exception(e)
