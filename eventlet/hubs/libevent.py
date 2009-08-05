@@ -195,15 +195,6 @@ class Hub(object):
 
     def _version_info(self):
         baseversion = event.__version__
-        try:
-            from ctypes import CDLL, util, c_char_p
-            c = CDLL(util.find_library('event'))
-            c.event_get_version.restype = c_char_p
-            baseversion += '/libevent=%s' % (c.event_get_version(), )
-            c.event_get_method.restype = c_char_p
-            baseversion += '/method=%s' % (c.event_get_method(), )
-        except Exception, ex:
-            print ex or type(ex).__name__
         return baseversion
 
 
