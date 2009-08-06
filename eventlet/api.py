@@ -435,7 +435,14 @@ def get_default_hub():
     """Select the default hub implementation based on what multiplexing
     libraries are installed. Tries twistedr if a twisted reactor is imported,
     then poll, then select.
-    """
+    """    
+    
+    # libevent hub disabled for now because it is not thread-safe
+    #try:
+    #    import eventlet.hubs.libevent
+    #    return eventlet.hubs.libevent
+    #except:
+    #    pass
 
     if 'twisted.internet.reactor' in sys.modules:
         from eventlet.hubs import twistedr

@@ -110,7 +110,7 @@ class TestDyingProcessesLeavePool(TestCase):
 
 class TestProcessLivesForever(TestCase):
     def setUp(self):
-        self.pool = processes.ProcessPool(sys.executable, ['-c', 'print "y"; import time; time.sleep(0.4); print "y"'], max_size=1)
+        self.pool = processes.ProcessPool(sys.executable, ['-c', 'print "y"; import time; time.sleep(0.5); print "y"'], max_size=1)
 
     def test_reading_twice_from_same_process(self):
         # this test is a little timing-sensitive in that if the sub-process

@@ -18,73 +18,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-"""
-@author Phoenix
-@date 2007-07-13
-@brief A simple, pickle based rpc mechanism which reflects python objects and
-callables.
-
-This file provides classes and exceptions used for simple python level
-remote procedure calls. This is achieved by intercepting the basic
-getattr and setattr calls in a client proxy, which commnicates those
-down to the server which will dispatch them to objects in it's process
-space.
-
-The basic protocol to get and set attributes is for the client proxy
-to issue the command:
-
-getattr $id $name
-setattr $id $name $value
-
-getitem $id $item
-setitem $id $item $value
-eq $id $rhs
-del $id
-
-When the get returns a callable, the client proxy will provide a
-callable proxy which will invoke a remote procedure call. The command
-issued from the callable proxy to server is:
-
-call $id $name $args $kwargs
-
-If the client supplies an id of None, then the get/set/call is applied
-to the object(s) exported from the server.
-
-The server will parse the get/set/call, take the action indicated, and
-return back to the caller one of:
-
-value $val
-callable
-object $id
-exception $excp
-
-To handle object expiration, the proxy will instruct the rpc server to
-discard objects which are no longer in use. This is handled by
-catching proxy deletion and sending the command:
-
-del $id
-
-The server will handle this by removing clearing it's own internal
-references. This does not mean that the object will necessarily be
-cleaned from the server, but no artificial references will remain
-after successfully completing. On completion, the server will return
-one of:
-
-value None
-exception $excp
-
-The server also accepts a special command for debugging purposes:
-
-status
-
-Which will be intercepted by the server to write back:
-
-status {...}
-
-The wire protocol is to pickle the Request class in this file. The
-request class is basically an action and a map of parameters'
-"""
-
 from cPickle import dumps, loads
 import os
 import struct
@@ -230,8 +163,7 @@ _g_logfile = None
 def _log(message):
     global _g_logfile
     if _g_logfile:
-        _g_logfile.write(str(os.getpid()) + ' ' + message)
-        _g_logfile.write('\n')
+        _g_logfile.write(str(os.getpid()) + ' ' + message + '\n')
         _g_logfile.flush()
 
 def _unmunge_attr_name(name):
@@ -706,12 +638,20 @@ def main():
     class NullSTDOut(object):
         def noop(*args):
             pass
+        def log_write(self, message):
+            self.message = getattr(self, 'message', '') + message
+            if '\n' in message:
+                _log(self.message.rstrip())
+                self.message = ''
         write = noop
         read = noop
         flush = noop
 
     sys.stderr = NullSTDOut()
     sys.stdout = NullSTDOut()
+    if _g_debug_mode:
+        sys.stdout.write = sys.stdout.log_write
+        sys.stderr.write = sys.stderr.log_write
 
     # Loop until EOF
     server.loop()
