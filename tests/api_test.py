@@ -220,6 +220,39 @@ class TestApi(TestCase):
 
         result = evt.wait()
         self.assertEquals(result, 'sent via event')
+        
+        
+    def test_killing_dormant(self):
+        DELAY = 0.1
+        state = []
+        def test():
+            try:
+                state.append('start')
+                api.sleep(DELAY)
+            except:
+                state.append('except')
+                # catching GreenletExit
+                pass
+            # when switching to hub, hub makes itself the parent of this greenlet,
+            # thus after the function's done, the control will go to the parent
+            # QQQ why the first sleep is not enough?
+            api.sleep(0)
+            state.append('finished')
+        g = api.spawn(test)
+        api.sleep(DELAY/2)
+        assert state == ['start'], state
+        api.kill(g)
+        # will not get there, unless switching is explicitly scheduled by kill
+        assert state == ['start', 'except'], state
+        api.sleep(DELAY)
+        assert state == ['start', 'except', 'finished'], state
+
+    def test_nested_with_timeout(self):
+        def func():
+            return api.with_timeout(0.2, api.sleep, 2, timeout_value=1)
+        self.assertRaises(api.TimeoutError, api.with_timeout, 0.1, func)
+
+
 
 
 class Foo(object):
