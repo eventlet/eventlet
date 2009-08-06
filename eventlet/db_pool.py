@@ -1,4 +1,4 @@
-# @brief A pool of nonblocking database connections.
+# A pool of nonblocking database connections.
 #
 # Copyright (c) 2007, Linden Research, Inc.
 #
@@ -402,14 +402,16 @@ class PooledConnectionWrapper(GenericConnectionWrapper):
 
 class DatabaseConnector(object):
     """\
-@brief This is an object which will maintain a collection of database
+    This is an object which will maintain a collection of database
 connection pools on a per-host basis."""
     def __init__(self, module, credentials,
                  conn_pool=None, *args, **kwargs):
         """\
-        @brief constructor
-        @param module Database module to use.
-        @param credentials Mapping of hostname to connect arguments (e.g. username and password)"""
+        constructor
+        *module*
+            Database module to use.
+        *credentials*
+            Mapping of hostname to connect arguments (e.g. username and password)"""
         assert(module)
         self._conn_pool_class = conn_pool
         if self._conn_pool_class is None:

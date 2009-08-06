@@ -171,7 +171,8 @@ class Process(object):
 
 class ProcessPool(pools.Pool):
     def __init__(self, command, args=None, min_size=0, max_size=4):
-        """@param command the command to run
+        """*command*
+            the command to run
         """
         self.command = command
         if args is None:

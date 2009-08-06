@@ -34,16 +34,18 @@ if _g_debug_mode:
 
 def pythonpath_sync():
     """
-@brief apply the current sys.path to the environment variable PYTHONPATH, so that child processes have the same paths as the caller does.
+    apply the current sys.path to the environment variable PYTHONPATH, so that child processes have the same paths as the caller does.
 """
     pypath = os.pathsep.join(sys.path)
     os.environ['PYTHONPATH'] = pypath
 
 def wrap(obj, dead_callback = None):
     """
-@brief wrap in object in another process through a saranwrap proxy
-@param object The object to wrap.
-@param dead_callback A callable to invoke if the process exits."""
+    wrap in object in another process through a saranwrap proxy
+    *object*
+        The object to wrap.
+    *dead_callback*
+        A callable to invoke if the process exits."""
 
     if type(obj).__name__ == 'module':
         return wrap_module(obj.__name__, dead_callback)
@@ -58,9 +60,11 @@ def wrap(obj, dead_callback = None):
 
 def wrap_module(fqname, dead_callback = None):
     """
-@brief wrap a module in another process through a saranwrap proxy
-@param fqname The fully qualified name of the module.
-@param dead_callback A callable to invoke if the process exits."""
+    wrap a module in another process through a saranwrap proxy
+    *fqname*
+        The fully qualified name of the module.
+    *dead_callback*
+        A callable to invoke if the process exits."""
     pythonpath_sync()
     global _g_debug_mode
     if _g_debug_mode:
@@ -72,8 +76,9 @@ def wrap_module(fqname, dead_callback = None):
 
 def status(proxy):
     """
-@brief get the status from the server through a proxy
-@param proxy a saranwrap.Proxy object connected to a server."""
+    get the status from the server through a proxy
+    *proxy*
+        a saranwrap.Proxy object connected to a server."""
     return proxy.__local_dict['_cp'].make_request(Request('status', {}))
 
 class BadResponse(Exception):
@@ -90,7 +95,7 @@ class UnrecoverableError(Exception):
     pass
 
 class Request(object):
-    "@brief A wrapper class for proxy requests to the server."
+    "A wrapper class for proxy requests to the server."
     def __init__(self, action, param):
         self._action = action
         self._param = param
@@ -115,7 +120,7 @@ def _read_lp_hunk(stream):
     return body
 
 def _read_response(id, attribute, input, cp):
-    """@brief local helper method to read respones from the rpc server."""
+    """local helper method to read respones from the rpc server."""
     try:
         str = _read_lp_hunk(input)
         _prnt(`str`)
@@ -184,9 +189,12 @@ class ChildProcess(object):
     """
     def __init__(self, instr, outstr, dead_list = None):
         """
-        @param instr a file-like object which supports read().
-        @param outstr a file-like object which supports write() and flush().
-        @param dead_list a list of ids of remote objects that are dead
+        *instr*
+            a file-like object which supports read().
+        *outstr*
+            a file-like object which supports write() and flush().
+        *dead_list*
+            a list of ids of remote objects that are dead
         """
         # default dead_list inside the function because all objects in method
         # argument lists are init-ed only once globally
@@ -216,8 +224,8 @@ class ChildProcess(object):
 
 class Proxy(object):
     """\
-@class Proxy
-@brief This is the class you will typically use as a client to a child
+
+    This is the class you will typically use as a client to a child
 process.
 
 Simply instantiate one around a file-like interface and start
@@ -225,7 +233,8 @@ calling methods on the thing that is exported. The dir() builtin is
 not supported, so you have to know what has been exported.
 """
     def __init__(self, cp):
-        """@param A ChildProcess instance that wraps the i/o to the child process.
+        """*cp*
+            ChildProcess instance that wraps the i/o to the child process.
         """
         #_prnt("Proxy::__init__")
         self.__local_dict = dict(
@@ -277,16 +286,18 @@ not supported, so you have to know what has been exported.
 
 class ObjectProxy(Proxy):
     """\
-@class ObjectProxy
-@brief This class wraps a remote object in the Server
+
+    This class wraps a remote object in the Server
 
 This class will be created during normal operation, and users should
 not need to deal with this class directly."""
 
     def __init__(self, cp, _id):
         """\
-@param cp A ChildProcess object that wraps the i/o of a child process.
-@param _id an identifier for the remote object. humans do not provide this.
+    *cp*
+        A ChildProcess object that wraps the i/o of a child process.
+    *_id*
+        an identifier for the remote object. humans do not provide this.
 """
         Proxy.__init__(self, cp)
         self.__local_dict['_id'] = _id
@@ -380,8 +391,8 @@ def getpid(self):
 
 class CallableProxy(object):
     """\
-@class CallableProxy
-@brief This class wraps a remote function in the Server
+
+    This class wraps a remote function in the Server
 
 This class will be created by an Proxy during normal operation,
 and users should not need to deal with this class directly."""
@@ -405,9 +416,12 @@ and users should not need to deal with this class directly."""
 class Server(object):
     def __init__(self, input, output, export):
         """\
-@param input a file-like object which supports read().
-@param output a file-like object which supports write() and flush().
-@param export an object, function, or map which is exported to clients
+    *input*
+        a file-like object which supports read().
+    *output*
+        a file-like object which supports write() and flush().
+    *export*
+        an object, function, or map which is exported to clients
 when the id is None."""
         #_log("Server::__init__")
         self._in = input
@@ -491,7 +505,7 @@ when the id is None."""
         return obj
 
     def loop(self):
-        """@brief Loop forever and respond to all requests."""
+        """Loop forever and respond to all requests."""
         _log("Server::loop")
         while True:
             try:
@@ -556,8 +570,9 @@ when the id is None."""
 
     def is_value(self, value):
         """\
-@brief Test if value should be serialized as a simple dataset.
-@param value The value to test.
+    Test if value should be serialized as a simple dataset.
+    *value*
+        The value to test.
 @return Returns true if value is a simple serializeable set of data.
 """
         return type(value) in (str,unicode,int,float,long,bool,type(None))
@@ -570,7 +585,7 @@ when the id is None."""
         str_ = _write_lp_hunk(self._out, s)
 
     def write_exception(self, e):
-        """@brief Helper method to respond with an exception."""
+        """Helper method to respond with an exception."""
         #_log("exception: %s" % sys.exc_info()[0])
         # TODO: serialize traceback using generalization of code from mulib.htmlexception
 
