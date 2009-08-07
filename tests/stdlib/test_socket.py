@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from test import test_socket
-from test.test_socket import *
 
 from eventlet.green import socket
 from eventlet.green import select
@@ -14,6 +13,8 @@ test_socket.select = select
 test_socket.time = time
 test_socket.thread = thread
 test_socket.threading = threading
+
+from test.test_socket import *
 
 if __name__ == "__main__":
     test_main()
