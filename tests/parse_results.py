@@ -23,7 +23,10 @@
 import sys
 import os
 import traceback
-import sqlite3
+try:
+    import sqlite3
+except ImportError:
+    import pysqlite2.dbapi2 as sqlite3
 import re
 import glob
 

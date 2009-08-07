@@ -532,7 +532,7 @@ when the id is None."""
                     pass
                 if obj is None or id is None:
                     id = None
-                    obj = self._export
+                    obj = self._export()
                     #_log("found object %s" % str(obj))
 
                 # Handle the request via a method with a special name on the server
@@ -639,15 +639,23 @@ def main():
         _g_logfile = open(options.logfile, 'a')
 
     from eventlet import tpool
+    base_obj = [None]
     if options.module:
-        export = api.named(options.module)
+        def get_module():
+            if base_obj[0] is None:
+                base_obj[0] = api.named(options.module)
+            return base_obj[0]
         server = Server(tpool.Proxy(sys.stdin),
                         tpool.Proxy(sys.stdout),
-                        export)
+                        get_module)
     elif options.child:
+        def get_base():
+            if base_obj[0] is None:
+                base_obj[0] = {}
+            return base_obj[0]
         server = Server(tpool.Proxy(sys.stdin),
                         tpool.Proxy(sys.stdout),
-                        {})
+                        get_base)
 
     # *HACK: some modules may emit on stderr, which breaks everything.
     class NullSTDOut(object):

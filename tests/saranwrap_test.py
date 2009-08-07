@@ -270,11 +270,10 @@ sys_path = sys.path""")
 
         # this should fail because we haven't stuck the temp_dir in our path yet
         prox = saranwrap.wrap_module('jitar_hero')
-        import cPickle
         try:
             prox.pypath
             self.fail()
-        except cPickle.UnpicklingError:
+        except ImportError:
             pass
 
         # now try to saranwrap it

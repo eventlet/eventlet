@@ -22,7 +22,10 @@
 
 import sys
 import os
-import sqlite3
+try:
+    import sqlite3
+except ImportError:
+    import pysqlite2.dbapi2 as sqlite3
 import glob
 
 REPO_URL = 'http://bitbucket.org/denis/eventlet'

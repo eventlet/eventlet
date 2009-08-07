@@ -50,7 +50,7 @@ class Hub(hub.BaseHub):
 
         if not oldreader:
             # Only need to re-register this fileno if the mask changes
-            mask = self.get_fn_mask(oldreader, self.writers.get(fileno))
+            mask = self.get_fn_mask(read_cb, self.writers.get(fileno))
             self.poll.register(fileno, mask)
             
     def add_writer(self, fileno, write_cb):
@@ -61,12 +61,12 @@ class Hub(hub.BaseHub):
         The *write_cb* argument is the callback which will be called when the file
         is ready for writing.
         """
-        oldwriter = self.writer.get(fileno)
+        oldwriter = self.writers.get(fileno)
         super(Hub, self).add_writer(fileno, write_cb)
 
         if not oldwriter:
             # Only need to re-register this fileno if the mask changes
-            mask = self.get_fn_mask(oldwriter, self.readers.get(fileno))
+            mask = self.get_fn_mask(self.readers.get(fileno), write_cb)
             self.poll.register(fileno, mask)
 
     def get_fn_mask(self, read, write):
