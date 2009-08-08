@@ -59,7 +59,11 @@ def tcp_socket():
 
 
 try:
-    __original_ssl__ = socket.ssl
+    try:
+        import ssl
+        __original_ssl__ = ssl.wrap_socket
+    except ImportError:
+        __original_ssl__ = socket.ssl
 except AttributeError:
     __original_ssl__ = None
 

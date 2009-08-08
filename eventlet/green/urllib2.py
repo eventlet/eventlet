@@ -51,7 +51,7 @@ def build_opener(*handlers):
     default_classes = [ProxyHandler, UnknownHandler, HTTPHandler,
                        HTTPDefaultErrorHandler, HTTPRedirectHandler,
                        FTPHandler, FileHandler, HTTPErrorProcessor]
-    if hasattr(httplib, 'HTTPS'):
+    if hasattr(urllib2, 'HTTPSHandler'):
         default_classes.append(HTTPSHandler)
     skip = set()
     for klass in default_classes:
