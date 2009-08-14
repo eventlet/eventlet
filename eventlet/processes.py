@@ -68,8 +68,10 @@ def wait_on_children():
 def sig_child(signal, frame):
     from eventlet import api
     api.call_after_global(0, wait_on_children)
-signal.signal(signal.SIGCHLD, sig_child)
-    
+try:
+    signal.signal(signal.SIGCHLD, sig_child)
+except AttributeError:
+    pass  # Windows
 
 def _add_child_pobj(pobj):
     """Add the given popen4 object to the list of child

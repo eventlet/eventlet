@@ -47,9 +47,11 @@ __original_gethostbyname__ = socket.gethostbyname
 __original_getaddrinfo__ = socket.getaddrinfo
 try:
     __original_fromfd__ = socket.fromfd
+    __original_fork__ = os.fork
 except AttributeError:
     # Windows
     __original_fromfd__ = None
+    __original_fork__ = None
 
 def tcp_socket():
     s = __original_socket__(socket.AF_INET, socket.SOCK_STREAM)
@@ -100,16 +102,19 @@ def wrap_socket_with_coroutine_socket(use_thread_pool=True):
     socket.ssl = wrap_ssl_obj
 
     if use_thread_pool:
-        from eventlet import tpool
-        def new_gethostbyname(*args, **kw):
-            return tpool.execute(
-                __original_gethostbyname__, *args, **kw)
-        socket.gethostbyname = new_gethostbyname
+        try:
+            from eventlet import tpool
+            def new_gethostbyname(*args, **kw):
+                return tpool.execute(
+                    __original_gethostbyname__, *args, **kw)
+            socket.gethostbyname = new_gethostbyname
 
-        def new_getaddrinfo(*args, **kw):
-            return tpool.execute(
-                __original_getaddrinfo__, *args, **kw)
-        socket.getaddrinfo = new_getaddrinfo
+            def new_getaddrinfo(*args, **kw):
+                return tpool.execute(
+                    __original_getaddrinfo__, *args, **kw)
+            socket.getaddrinfo = new_getaddrinfo
+        except ImportError:
+            pass # Windows
 
     if __original_fromfd__ is not None:
         def new_fromfd(*args, **kw):
@@ -124,7 +129,6 @@ __original_fdopen__ = os.fdopen
 __original_read__ = os.read
 __original_write__ = os.write
 __original_waitpid__ = os.waitpid
-__original_fork__ = os.fork
 ## TODO wrappings for popen functions? not really needed since Process object exists?
 
 
@@ -171,7 +175,8 @@ def wrap_pipes_with_coroutine_pipes():
     os.fdopen = new_fdopen
     os.read = new_read
     os.write = new_write
-    os.fork = new_fork
+    if __original_fork is not None:
+        os.fork = new_fork
     os.waitpid = new_waitpid
 
 __original_select__ = select.select
