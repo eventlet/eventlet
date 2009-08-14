@@ -25,19 +25,24 @@ import os
 import errno
 import unittest
 
-disabled_marker = '-*-*-*-*-*- disabled -*-*-*-*-*-'
-def exit_disabled():
-    sys.exit(disabled_marker)
-
 def exit_unless_twisted():
     from eventlet.api import get_hub
     if 'Twisted' not in type(get_hub()).__name__:
         exit_disabled()
 
-def exit_unless_25():
+def requires_25(func):
     if sys.version_info[:2]<(2, 5):
-        exit_disabled()
-
+        try:
+            from nose.plugins.skip import SkipTest
+            def skipme(*a, **k):
+                raise SkipTest()
+            skipme.__name__ == func.__name__
+            return skipme
+        except ImportError:
+            return lambda *a, **k: None
+    else:
+        return func
+        
 class LimitedTestCase(unittest.TestCase):
 
     def setUp(self):
