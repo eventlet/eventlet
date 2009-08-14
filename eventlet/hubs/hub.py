@@ -27,6 +27,17 @@ from eventlet.timer import Timer, LocalTimer
 
 _g_debug = True
 
+class FdListener(object):
+    def __init__(self, evtype, fileno, cb):
+        self.evtype = evtype
+        self.fileno = fileno
+        self.cb = cb
+    def __call__(self, *args, **kw):
+        return self.cb(*args, **kw)
+    def __repr__(self):
+        return "FdListener(%r, %r, %r)" % (self.evtype, self.fileno, self.cb)
+    __str__ = __repr__
+
 class BaseHub(object):
     """ Base hub class for easing the implementation of subclasses that are
     specific to a particular underlying event architecture. """
@@ -34,8 +45,7 @@ class BaseHub(object):
     SYSTEM_EXCEPTIONS = (KeyboardInterrupt, SystemExit)
 
     def __init__(self, clock=time.time):
-        self.readers = {}
-        self.writers = {}
+        self.listeners = {'read':{}, 'write':{}}
         self.closed_fds = []
 
         self.clock = clock
@@ -53,27 +63,29 @@ class BaseHub(object):
             'exit': [],
         }
         
-    def add_reader(self, fileno, read_cb):
-        """ Signals an intent to read from a particular file descriptor.
+    def add(self, evtype, fileno, cb):
+        """ Signals an intent to or write a particular file descriptor.
+
+        The *evtype* argument is either the string 'read' or the string 'write'.
 
         The *fileno* argument is the file number of the file of interest.
 
-        The *read_cb* argument is the callback which will be called when the file
-        is ready for reading.
+        The *cb* argument is the callback which will be called when the file
+        is ready for reading/writing.
         """
-        self.readers[fileno] = read_cb
-            
-    def add_writer(self, fileno, write_cb):
-        """ Signals an intent to write to a particular file descriptor.
+        listener = FdListener(evtype, fileno, cb)
+        self.listeners[evtype].setdefault(fileno, []).append(listener)
+        return listener
 
-        The *fileno* argument is the file number of the file of interest.
-
-        The *write_cb* argument is the callback which will be called when the file
-        is ready for writing.
-        """
-
-        self.writers[fileno] = write_cb
-
+    def remove(self, listener):
+        listener_list = self.listeners[listener.evtype].pop(listener.fileno, [])
+        try:
+            listener_list.remove(listener)
+        except ValueError:
+            pass
+        if listener_list:
+            self.listeners[listener.evtype][listener.fileno] = listener_list
+        
     def closed(self, fileno):
         """ Clean up any references so that we don't try and
         do I/O on a closed fd.
@@ -81,8 +93,9 @@ class BaseHub(object):
         self.closed_fds.append(fileno)
         
     def remove_descriptor(self, fileno):
-        self.readers.pop(fileno, None)
-        self.writers.pop(fileno, None)
+        """ Completely remove all listeners for this fileno."""
+        self.listeners['read'].pop(fileno, None)
+        self.listeners['write'].pop(fileno, None)
 
     def stop(self):
         self.abort()
@@ -279,11 +292,16 @@ class BaseHub(object):
     # for debugging:
 
     def get_readers(self):
-        return self.readers
+        return self.listeners['read']
 
     def get_writers(self):
-        return self.writers
+        return self.listeners['write']
 
     def get_timers_count(hub):
         return max(len(x) for x in [hub.timers, hub.next_timers])
+        
+    def describe_listeners(self):
+        import pprint
+        return pprint.pformat(self.listeners)
+            
 

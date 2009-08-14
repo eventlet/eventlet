@@ -24,6 +24,7 @@ import traceback
 import event
 
 from eventlet import api
+from eventlet.hubs.hub import BaseHub, FdListener
 
 
 class event_wrapper(object):
@@ -50,17 +51,14 @@ class event_wrapper(object):
             self.impl = None
 
 
-class Hub(object):
+class Hub(BaseHub):
 
     SYSTEM_EXCEPTIONS = (KeyboardInterrupt, SystemExit)
 
     def __init__(self, clock=time.time):
+        super(Hub,self).__init__(clock)
         event.init()
-        self.clock = clock
-        self.readers = {}
-        self.writers = {}
         
-        self.greenlet = api.Greenlet(self.run)
         self.signal_exc_info = None
         self.signal(2, lambda signalnum, frame: self.greenlet.parent.throw(KeyboardInterrupt))
         self.events_to_add = []
@@ -123,29 +121,22 @@ class Hub(object):
     def abort(self):
         self.schedule_call_global(0, self.greenlet.throw, api.GreenletExit)
 
-    @property
-    def running(self):
+    def _getrunning(self):
         return bool(self.greenlet)
+    
+    def _setrunning(self, value):
+        pass  # exists for compatibility with BaseHub
+    running = property(_getrunning, _setrunning)
 
-    def add_reader(self, fileno, read_cb):
-        """ Signals an intent to read from a particular file descriptor.
-
-        The *fileno* argument is the file number of the file of interest.
-
-        The *read_cb* argument is the callback which will be called when the file
-        is ready for reading.
-        """
-        self.readers[fileno] = event.read(fileno, read_cb, fileno)
+    def add(self, evtype, fileno, cb):
+        if evtype == 'read':
+            evt = event.read(fileno, cb, fileno)
+        elif evtype == 'write':
+            evt = event.write(fileno, cb, fileno)
             
-    def add_writer(self, fileno, write_cb):
-        """ Signals an intent to write to a particular file descriptor.
-
-        The *fileno* argument is the file number of the file of interest.
-
-        The *write_cb* argument is the callback which will be called when the file
-        is ready for writing.
-        """
-        self.readers[fileno] = event.write(fileno, write_cb, fileno)
+        listener = FdListener(evtype, fileno, evt)
+        self.listeners[evtype].setdefault(fileno, []).append(listener)
+        return listener
 
     def signal(self, signalnum, handler):
         def wrapper():
@@ -155,21 +146,22 @@ class Hub(object):
                 self.signal_exc_info = sys.exc_info()
                 event.abort()
         return event_wrapper(event.signal(signalnum, wrapper))
-        
+    
+    def remove(self, listener):
+        super(Hub, self).remove(listener)
+        listener.cb.delete()
+      
     def remove_descriptor(self, fileno):
-        reader = self.readers.pop(fileno, None)
-        if reader is not None:
-            try:
-                reader.delete()
-            except:
-                traceback.print_exc()
-        writer = self.writers.pop(fileno, None)
-        if writer is not None:
-            try:
-                writer.delete()
-            except:
-                traceback.print_exc()
-
+        for lcontainer in self.listeners.itervalues():
+            l_list = lcontainer.pop(fileno, None)
+            for listener in l_list:
+                try:
+                    listener.cb.delete()
+                except SYSTEM_EXCEPTIONS:
+                    raise
+                except:
+                    traceback.print_exc()
+                    
     def schedule_call_local(self, seconds, cb, *args, **kwargs):
         current = api.getcurrent()
         if current is self.greenlet:
@@ -188,10 +180,10 @@ class Hub(object):
         return wrapper
         
     def get_readers(self):
-        return self.readers
+        return self.listeners['read']
 
     def get_writers(self):
-        return self.writers
+        return self.listeners['write']
 
     def _version_info(self):
         baseversion = event.__version__

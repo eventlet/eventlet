@@ -100,7 +100,7 @@ def socket_accept(descriptor):
         if e[0] == errno.EWOULDBLOCK:
             return None
         raise
-
+        
 
 def socket_send(descriptor, data, flags=0):
     try:

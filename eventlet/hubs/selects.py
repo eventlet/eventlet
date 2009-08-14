@@ -38,14 +38,15 @@ class Hub(hub.BaseHub):
                     self.remove_descriptor(fd)
 
     def wait(self, seconds=None):
-        readers = self.readers
-        writers = self.writers
+        readers = self.listeners['read']
+        writers = self.listeners['write']
         if not readers and not writers:
             if seconds:
                 time.sleep(seconds)
             return
         try:
-            r, w, ig = select.select(readers.keys(), writers.keys(), [], seconds)
+            print "waiting", readers, writers
+            r, w, er = select.select(readers.keys(), writers.keys(), readers.keys() + writers.keys(), seconds)
             self.closed_fds = []
         except select.error, e:
             if e.args[0] == errno.EINTR:
@@ -56,12 +57,19 @@ class Hub(hub.BaseHub):
                 return
             else:
                 raise
-        for observed, events in ((readers, r), (writers, w)):
+
+        for fileno in er:
+            for r in readers.get(fileno):
+                r(fileno)
+            for w in writers.get(fileno):
+                w(fileno)
+            
+        for listeners, events in ((readers, r), (writers, w)):
             for fileno in events:
                 try:
-                    cb = observed.pop(fileno, None)
-                    if cb is not None:
-                        cb(fileno)
+                    l_list = listeners[fileno]
+                    if l_list:
+                        l_list[0](fileno)
                 except self.SYSTEM_EXCEPTIONS:
                     raise
                 except:

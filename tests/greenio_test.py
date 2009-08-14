@@ -22,7 +22,14 @@ from eventlet import api, util
 import os
 import socket
 
-# TODO try and reuse unit tests from within Python itself
+
+def bufsized(sock, size=1):
+    """ Resize both send and receive buffers on a socket.
+    Useful for testing trampoline.  Returns the socket."""
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, size)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, size)
+    return sock
+
 
 class TestGreenIo(TestCase):
     def test_close_with_makefile(self):
@@ -101,35 +108,119 @@ class TestGreenIo(TestCase):
         
     def test_full_duplex(self):
         from eventlet import coros
-        listener = api.tcp_listener(('127.0.0.1', 0))
+        large_data = '*' * 10
+        listener = bufsized(api.tcp_listener(('127.0.0.1', 0)))
 
         def send_large(sock):
-            # needs to send enough data that trampoline() is called
-            sock.sendall('*' * 100000)
+            sock.sendall(large_data)
+            
+        def read_large(sock):
+            result = sock.recv(len(large_data))
+            expected = 'hello world'
+            while len(result) < len(large_data):
+                result += sock.recv(len(large_data))
+            self.assertEquals(result, large_data)
 
         def server():
-            (client, addr) = listener.accept()
-            # start reading, then, while reading, start writing. 
-            # the reader should not hang forever
-            api.spawn(send_large, client)
-            api.sleep(0) # allow send_large to execute up to the trampoline
-            result = client.recv(1000)
-            assert result == 'hello world', result
+            (sock, addr) = listener.accept()
+            sock = bufsized(sock)
+            send_large_coro = coros.execute(send_large, sock)
+            api.sleep(0)
+            result = sock.recv(10)
+            expected = 'hello world'
+            while len(result) < len(expected):
+                result += sock.recv(10)
+            self.assertEquals(result, expected)
+            send_large_coro.wait()
                 
         server_evt = coros.execute(server)
-        client = api.connect_tcp(('127.0.0.1', listener.getsockname()[1]))
-        api.spawn(client.makefile().read)
+        client = bufsized(api.connect_tcp(('127.0.0.1', 
+                                           listener.getsockname()[1])))
+        large_evt = coros.execute(read_large, client)
         api.sleep(0)
-        client.send('hello world')
-        client.close()
+        client.sendall('hello world')
         server_evt.wait()
+        client.close()
+        
+    def test_sendall(self):
+        from eventlet import proc
+        # test adapted from Brian Brunswick's email
+        timer = api.exc_after(1, api.TimeoutError)
+        
+        MANY_BYTES = 1000
+        SECOND_SEND = 10
+        def sender(listener):
+            (sock, addr) = listener.accept()
+            sock = bufsized(sock)
+            sock.sendall('x'*MANY_BYTES)
+            sock.sendall('y'*SECOND_SEND)
+            
+        sender_coro = proc.spawn(sender, api.tcp_listener(("", 9020)))
+        client = bufsized(api.connect_tcp(('localhost', 9020)))
+        total = 0
+        while total < MANY_BYTES:
+            data = client.recv(min(MANY_BYTES - total, MANY_BYTES/10))
+            if data == '':
+                print "ENDED", data
+                break
+            total += len(data)
+        
+        total2 = 0
+        while total < SECOND_SEND:
+            data = client.recv(SECOND_SEND)
+            if data == '':
+                print "ENDED2", data
+                break
+            total2 += len(data)
+
+        sender_coro.wait()
+        client.close()
+        timer.cancel()
+        
+    def test_multiple_readers(self):
+        # test that we can have multiple coroutines reading
+        # from the same fd.  We make no guarantees about which one gets which
+        # bytes, but they should both get at least some
+        from eventlet import proc
+        def reader(sock, results):
+            while True:
+                data = sock.recv(1)
+                if data == '':
+                    break
+                results.append(data)
+            
+        results1 = []
+        results2 = []
+        listener = api.tcp_listener(('127.0.0.1', 0))
+        def server():
+            (sock, addr) = listener.accept()
+            sock = bufsized(sock)
+            try:
+                c1 = proc.spawn(reader, sock, results1)
+                c2 = proc.spawn(reader, sock, results2)
+                c1.wait()
+                c2.wait()
+            finally:
+                api.kill(c1)
+                api.kill(c2)
+
+        server_coro = proc.spawn(server)
+        client = bufsized(api.connect_tcp(('127.0.0.1', 
+                                           listener.getsockname()[1])))
+        client.sendall('*' * 10)
+        client.close()
+        server_coro.wait()
+        listener.close()
+        
+        self.assert_(len(results1) > 0)
+        self.assert_(len(results2) > 0)
  
  
 def test_server(sock, func, *args):
     """ Convenience function for writing cheap test servers.
     
-    It calls *func* on each incoming connection from *sock*, with the first argument
-    being a file for the incoming connector.
+    It calls *func* on each incoming connection from *sock*, with the first 
+    argument being a file for the incoming connector.
     """
     def inner_server(connaddr, *args):
         conn, addr = connaddr

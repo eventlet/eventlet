@@ -37,45 +37,32 @@ class Hub(hub.BaseHub):
         super(Hub, self).__init__(clock)
         self.poll = select.poll()
 
-    def add_reader(self, fileno, read_cb):
-        """ Signals an intent to read from a particular file descriptor.
+    def add(self, evtype, fileno, cb):
+        oldlisteners = self.listeners[evtype].get(fileno)
+        
+        listener = super(Hub, self).add(evtype, fileno, cb)
+        if not oldlisteners:
+            # Means we've added a new listener
+            self.register(fileno)
+        return listener
+    
+    def remove(self, listener):
+        super(Hub, self).remove(listener)
+        self.register(listener.fileno)
 
-        The *fileno* argument is the file number of the file of interest.
-
-        The *read_cb* argument is the callback which will be called when the file
-        is ready for reading.
-        """
-        oldreader = self.readers.get(fileno)
-        super(Hub, self).add_reader(fileno, read_cb)
-
-        if not oldreader:
-            # Only need to re-register this fileno if the mask changes
-            mask = self.get_fn_mask(read_cb, self.writers.get(fileno))
-            self.poll.register(fileno, mask)
-            
-    def add_writer(self, fileno, write_cb):
-        """ Signals an intent to write to a particular file descriptor.
-
-        The *fileno* argument is the file number of the file of interest.
-
-        The *write_cb* argument is the callback which will be called when the file
-        is ready for writing.
-        """
-        oldwriter = self.writers.get(fileno)
-        super(Hub, self).add_writer(fileno, write_cb)
-
-        if not oldwriter:
-            # Only need to re-register this fileno if the mask changes
-            mask = self.get_fn_mask(self.readers.get(fileno), write_cb)
-            self.poll.register(fileno, mask)
-
-    def get_fn_mask(self, read, write):
+    def register(self, fileno):
         mask = 0
-        if read is not None:
+        if self.listeners['read'].get(fileno):
             mask |= READ_MASK
-        if write is not None:
+        if self.listeners['write'].get(fileno):
             mask |= WRITE_MASK
-        return mask
+        if mask:
+            self.poll.register(fileno, mask)
+        else: 
+            try:
+                self.poll.unregister(fileno)
+            except KeyError:
+                pass
 
     def remove_descriptor(self, fileno):
         super(Hub, self).remove_descriptor(fileno)
@@ -85,8 +72,8 @@ class Hub(hub.BaseHub):
             pass
 
     def wait(self, seconds=None):
-        readers = self.readers
-        writers = self.writers
+        readers = self.listeners['read']
+        writers = self.listeners['write']
 
         if not readers and not writers:
             if seconds:
@@ -102,13 +89,26 @@ class Hub(hub.BaseHub):
 
         for fileno, event in presult:
             for dct, mask in ((readers, READ_MASK), (writers, WRITE_MASK)):
-                cb = dct.get(fileno)
-                func = None
-                if cb is not None and event & mask:
-                    func = cb
-                if func:
+                if not mask & event:
+                    continue
+                listeners = dct.get(fileno)
+                if listeners:
                     try:
-                        func(fileno)
+                        listeners[0](fileno)
+                    except SYSTEM_EXCEPTIONS:
+                        raise
+                    except:
+                        self.squelch_exception(fileno, sys.exc_info())
+        for fileno, event in presult:
+            if not EXC_MASK & event:
+                continue
+            if event & select.POLLNVAL:
+                self.remove_descriptor(fileno)
+                continue
+            for listeners in (readers.get(fileno), writers.get(fileno)):
+                if listeners:
+                    try:
+                        listeners[0](fileno)
                     except SYSTEM_EXCEPTIONS:
                         raise
                     except:
