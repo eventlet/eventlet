@@ -45,7 +45,6 @@ class Hub(hub.BaseHub):
                 time.sleep(seconds)
             return
         try:
-            print "waiting", readers, writers
             r, w, er = select.select(readers.keys(), writers.keys(), readers.keys() + writers.keys(), seconds)
             self.closed_fds = []
         except select.error, e:
