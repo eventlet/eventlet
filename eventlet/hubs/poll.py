@@ -88,28 +88,24 @@ class Hub(hub.BaseHub):
         SYSTEM_EXCEPTIONS = self.SYSTEM_EXCEPTIONS
 
         for fileno, event in presult:
-            for dct, mask in ((readers, READ_MASK), (writers, WRITE_MASK)):
-                if not mask & event:
+            try:
+                if event & READ_MASK:
+                    listeners = readers.get(fileno)
+                    if listeners:
+                        listeners[0](fileno)
+                if event & WRITE_MASK:
+                    listeners = writers.get(fileno)
+                    if listeners:
+                        listeners[0](fileno)
+                if event & select.POLLNVAL:
+                    self.remove_descriptor(fileno)
                     continue
-                listeners = dct.get(fileno)
-                if listeners:
-                    try:
-                        listeners[0](fileno)
-                    except SYSTEM_EXCEPTIONS:
-                        raise
-                    except:
-                        self.squelch_exception(fileno, sys.exc_info())
-        for fileno, event in presult:
-            if not EXC_MASK & event:
-                continue
-            if event & select.POLLNVAL:
-                self.remove_descriptor(fileno)
-                continue
-            for listeners in (readers.get(fileno), writers.get(fileno)):
-                if listeners:
-                    try:
-                        listeners[0](fileno)
-                    except SYSTEM_EXCEPTIONS:
-                        raise
-                    except:
-                        self.squelch_exception(fileno, sys.exc_info())
+                if event & EXC_MASK:
+                    for listeners in (readers.get(fileno, []), 
+                                      writers.get(fileno, [])):
+                        for listener in listeners:
+                            listener(fileno)
+            except SYSTEM_EXCEPTIONS:
+                raise
+            except:
+                self.squelch_exception(fileno, sys.exc_info())
