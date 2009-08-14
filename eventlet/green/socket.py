@@ -3,6 +3,11 @@ for var in __socket.__all__:
     exec "%s = __socket.%s" % (var, var)
 _fileobject = __socket._fileobject
 
+try:
+    sslerror = socket.sslerror
+except AttributeError:
+    pass
+
 from eventlet.api import get_hub
 from eventlet.util import wrap_ssl_obj
 from eventlet.greenio import GreenSocket as socket
