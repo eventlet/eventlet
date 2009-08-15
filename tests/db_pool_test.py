@@ -21,6 +21,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+from tests import skipped
 from unittest import TestCase, main
 from eventlet import api, coros
 from eventlet import db_pool
@@ -132,7 +133,8 @@ class TestDBConnectionPool(DBTester):
         self.assert_(self.pool.free() == 1)
         self.assertRaises(AttributeError, self.connection.cursor)
 
-    def dont_test_deletion_does_a_put(self):
+    @skipped
+    def test_deletion_does_a_put(self):
         # doing a put on del causes some issues if __del__ is called in the 
         # main coroutine, so, not doing that for now
         self.assert_(self.pool.free() == 0)
@@ -223,8 +225,8 @@ class TestDBConnectionPool(DBTester):
             curs.execute("delete from gargleblatz where a=314159")
             conn.commit()
         
-
-    def dont_test_two_simultaneous_connections(self):
+    @skipped
+    def test_two_simultaneous_connections(self):
         # timing-sensitive test, disabled until we come up with a better 
         # way to do this
         self.pool = self.create_pool(2)
@@ -313,7 +315,8 @@ class TestDBConnectionPool(DBTester):
         self.connection.close()
         self.assertEquals(len(self.pool.free_items), 0)
         
-    def dont_test_max_idle(self):
+    @skipped
+    def test_max_idle(self):
         # This test is timing-sensitive.  Rename the function without the "dont" to run it, but beware that it could fail or take a while.
         self.pool = self.create_pool(max_size=2, max_idle=0.02)
         self.connection = self.pool.get()
@@ -332,7 +335,8 @@ class TestDBConnectionPool(DBTester):
         api.sleep(0.03) # long enough to trigger idle timeout for real
         self.assertEquals(len(self.pool.free_items), 0)
 
-    def dont_test_max_idle_many(self):
+    @skipped
+    def test_max_idle_many(self):
         # This test is timing-sensitive.  Rename the function without the "dont" to run it, but beware that it could fail or take a while.
         self.pool = self.create_pool(max_size=2, max_idle=0.02)
         self.connection, conn2 = self.pool.get(), self.pool.get()
@@ -344,7 +348,8 @@ class TestDBConnectionPool(DBTester):
         api.sleep(0.02)  # trigger cleanup of conn1 but not conn2
         self.assertEquals(len(self.pool.free_items), 1)
 
-    def dont_test_max_age(self):
+    @skipped
+    def test_max_age(self):
         # This test is timing-sensitive.  Rename the function without the "dont" to run it, but beware that it could fail or take a while.
         self.pool = self.create_pool(max_size=2, max_age=0.05)
         self.connection = self.pool.get()
@@ -358,7 +363,8 @@ class TestDBConnectionPool(DBTester):
         api.sleep(0.05) # long enough to trigger age timeout
         self.assertEquals(len(self.pool.free_items), 0)
 
-    def dont_test_max_age_many(self):
+    @skipped
+    def test_max_age_many(self):
         # This test is timing-sensitive.  Rename the function without the "dont" to run it, but beware that it could fail or take a while.
         self.pool = self.create_pool(max_size=2, max_age=0.15)
         self.connection, conn2 = self.pool.get(), self.pool.get()
@@ -402,7 +408,8 @@ class TestDBConnectionPool(DBTester):
         self.assertEquals(self.pool.free(), 0)
         self.assertEquals(self.pool.waiting(), 0)
 
-    def dont_test_0_straight_benchmark(self):
+    @skipped
+    def test_0_straight_benchmark(self):
         """ Benchmark; don't run unless you want to wait a while."""
         import time
         iterations = 20000

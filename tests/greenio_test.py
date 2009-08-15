@@ -17,6 +17,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+from tests import skipped
 from unittest import TestCase, main
 from eventlet import api, util
 import os
@@ -243,7 +244,8 @@ class SSLTest(TestCase):
     def tearDown(self):
         self.timer.cancel()
 
-    def dont_test_duplex_response(self):
+    @skipped
+    def test_duplex_response(self):
         def serve(sock):
             line = True
             while line != '\r\n':

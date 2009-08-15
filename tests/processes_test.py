@@ -108,28 +108,5 @@ class TestDyingProcessesLeavePool(TestCase):
         self.assert_(proc is not proc2)
 
 
-class TestProcessLivesForever(TestCase):
-    def setUp(self):
-        self.pool = processes.ProcessPool(sys.executable, ['-c', 'print "y"; import time; time.sleep(0.5); print "y"'], max_size=1)
-
-    def test_reading_twice_from_same_process(self):
-        # this test is a little timing-sensitive in that if the sub-process
-        # completes its sleep before we do a full put/get then it will fail
-        proc = self.pool.get()
-        try:
-            result = proc.read(2)
-            self.assertEquals(result, 'y\n')
-        finally:
-            self.pool.put(proc)
-
-        proc2 = self.pool.get()
-        self.assert_(proc is proc2, "This will fail if there is a timing issue")
-        try:
-            result = proc2.read(2)
-            self.assertEquals(result, 'y\n')
-        finally:
-            self.pool.put(proc2)
-
-
 if __name__ == '__main__':
     main()

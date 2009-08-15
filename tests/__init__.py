@@ -25,22 +25,39 @@ import os
 import errno
 import unittest
 
+def skipped(func):
+    """ Decorator that marks a function as skipped.  Uses nose's SkipTest exception
+    if installed, otherwise simply does a no-op test.  Without nose, this will make
+    skipped tests look like passing tests."""
+    try:
+        from nose.plugins.skip import SkipTest
+        def skipme(*a, **k):
+            raise SkipTest()
+        skipme.__name__ == func.__name__
+        return skipme
+    except ImportError:
+        # no nose, we'll just skip the test ourselves
+        return lambda *a, **k: None
+
+def skip_unless_requirement(requirement):
+    """ Decorator that skips a test if the *requirement* does not return True.
+    *requirement* is a callable that accepts one argument, the function to be decorated, 
+    and returns True if the requirement is satisfied.
+    """
+    def skipped_wrapper(func):        
+        if not requirement(func):
+            return skipped(func)
+        else:
+            return func
+    return skipped_wrapper
 
 def requires_twisted(func):
-    from eventlet.api import get_hub
-    if 'Twisted' not in type(get_hub()).__name__:
-        try:
-            from nose.plugins.skip import SkipTest
-            def skipme(*a, **k):
-                raise SkipTest()
-            skipme.__name__ == func.__name__
-            return skipme
-        except ImportError:
-            # no nose, we'll just skip the test ourselves
-            return lambda *a, **k: None
-    else:
-        return func
-        
+    """ Decorator that skips a test if Twisted is not present."""
+    def requirement(_f):
+        from eventlet.api import get_hub
+        return 'Twisted' in type(get_hub()).__name__
+    return skip_unless_requirement(requirement)(func)
+            
 class LimitedTestCase(unittest.TestCase):
 
     def setUp(self):
