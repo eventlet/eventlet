@@ -175,7 +175,7 @@ def wrap_pipes_with_coroutine_pipes():
     os.fdopen = new_fdopen
     os.read = new_read
     os.write = new_write
-    if __original_fork is not None:
+    if __original_fork__ is not None:
         os.fork = new_fork
     os.waitpid = new_waitpid
 
