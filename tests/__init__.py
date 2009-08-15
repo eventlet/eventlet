@@ -25,13 +25,10 @@ import os
 import errno
 import unittest
 
-def exit_unless_twisted():
+
+def requires_twisted(func):
     from eventlet.api import get_hub
     if 'Twisted' not in type(get_hub()).__name__:
-        exit_disabled()
-
-def requires_25(func):
-    if sys.version_info[:2]<(2, 5):
         try:
             from nose.plugins.skip import SkipTest
             def skipme(*a, **k):
@@ -39,6 +36,7 @@ def requires_25(func):
             skipme.__name__ == func.__name__
             return skipme
         except ImportError:
+            # no nose, we'll just skip the test ourselves
             return lambda *a, **k: None
     else:
         return func

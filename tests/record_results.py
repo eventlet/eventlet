@@ -32,7 +32,6 @@ try:
 except ImportError:
     import pysqlite2.dbapi2 as sqlite3
 import warnings
-from tests import disabled_marker
 
 warnings.simplefilter('ignore')
 
@@ -70,8 +69,6 @@ def main():
     stdout = codecs.open(output_name, mode='r', encoding='utf-8', errors='replace').read().replace('\x00', '?')
     if not debug:
         if returncode==1:
-            pass
-        elif returncode==8 and disabled_marker in stdout:
             pass
         else:
             record(changeset, argv, stdout, returncode)

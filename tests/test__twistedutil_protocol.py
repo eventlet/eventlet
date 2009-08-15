@@ -19,15 +19,25 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from twisted.internet import reactor
-from tests import exit_unless_twisted
-exit_unless_twisted()
+from tests import requires_twisted
 
 import unittest
-from twisted.internet.error import ConnectionDone
-
-import eventlet.twistedutil.protocol as pr
-from eventlet.twistedutil.protocols.basic import LineOnlyReceiverTransport
+try:
+    from twisted.internet import reactor
+    from twisted.internet.error import ConnectionDone
+    import eventlet.twistedutil.protocol as pr
+    from eventlet.twistedutil.protocols.basic import LineOnlyReceiverTransport
+except ImportError:
+    # stub out some of the twisted dependencies so it at least imports
+    class dummy(object):
+        pass
+    pr = dummy()
+    pr.UnbufferedTransport = None
+    pr.GreenTransport = None
+    pr.GreenClientCreator = lambda *a, **k: None
+    class reactor(object):
+        pass
+    
 from eventlet.api import spawn, sleep, with_timeout, call_after
 from eventlet.coros import event
 
@@ -93,12 +103,14 @@ class TestUnbufferedTransport(TestCase):
     gtransportClass = pr.UnbufferedTransport
     setup_server = setup_server_SpawnFactory
 
+    @requires_twisted
     def test_full_read(self):
         self.conn.write('hello\r\n')
         self.assertEqual(self.conn.read(), 'you said hello. BYE')
         self.assertEqual(self.conn.read(), '')
         self.assertEqual(self.conn.read(), '')
 
+    @requires_twisted
     def test_iterator(self):
         self.conn.write('iterator\r\n')
         self.assertEqual('you said iterator. BYE', ''.join(self.conn))
@@ -111,6 +123,7 @@ class TestGreenTransport(TestUnbufferedTransport):
     gtransportClass = pr.GreenTransport
     setup_server = setup_server_SpawnFactory
 
+    @requires_twisted
     def test_read(self):
         self.conn.write('hello\r\n')
         self.assertEqual(self.conn.read(9), 'you said ')
@@ -120,30 +133,35 @@ class TestGreenTransport(TestUnbufferedTransport):
         self.assertEqual(self.conn.recv(9), '')
         self.assertEqual(self.conn.recv(1), '')
 
+    @requires_twisted
     def test_read2(self):
         self.conn.write('world\r\n')
         self.assertEqual(self.conn.read(), 'you said world. BYE')
         self.assertEqual(self.conn.read(), '')
         self.assertEqual(self.conn.recv(), '')
 
+    @requires_twisted
     def test_iterator(self):
         self.conn.write('iterator\r\n')
         self.assertEqual('you said iterator. BYE', ''.join(self.conn))
 
     _tests = [x for x in locals().keys() if x.startswith('test_')]
 
+    @requires_twisted
     def test_resume_producing(self):
         for test in self._tests:
             self.setUp()
             self.conn.resumeProducing()
             getattr(self, test)()
 
+    @requires_twisted
     def test_pause_producing(self):
         self.conn.pauseProducing()
         self.conn.write('hi\r\n')
         result = with_timeout(DELAY*10, self.conn.read, timeout_value='timed out')
         self.assertEqual('timed out', result)
 
+    @requires_twisted
     def test_pauseresume_producing(self):
         self.conn.pauseProducing()
         call_after(DELAY*5, self.conn.resumeProducing)
@@ -206,7 +224,7 @@ if socket is not None:
 
 
 class TestTLSError(unittest.TestCase):
-
+    @requires_twisted
     def test_server_connectionMade_never_called(self):
         # trigger case when protocol instance is created,
         # but it's connectionMade is never called
@@ -229,6 +247,9 @@ try:
 except ImportError:
     del TestTLSError
 
-if __name__=='__main__':
+@requires_twisted
+def main():
     unittest.main()
 
+if __name__=='__main__':
+    main()
