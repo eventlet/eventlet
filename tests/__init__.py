@@ -25,6 +25,7 @@ import os
 import errno
 import unittest
 
+
 def skipped(func):
     """ Decorator that marks a function as skipped.  Uses nose's SkipTest exception
     if installed, otherwise simply does a no-op test.  Without nose, this will make
@@ -39,6 +40,7 @@ def skipped(func):
         # no nose, we'll just skip the test ourselves
         return lambda *a, **k: None
 
+
 def skip_unless_requirement(requirement):
     """ Decorator that skips a test if the *requirement* does not return True.
     *requirement* is a callable that accepts one argument, the function to be decorated, 
@@ -51,21 +53,35 @@ def skip_unless_requirement(requirement):
             return func
     return skipped_wrapper
 
+
 def requires_twisted(func):
     """ Decorator that skips a test if Twisted is not present."""
     def requirement(_f):
         from eventlet.api import get_hub
         return 'Twisted' in type(get_hub()).__name__
     return skip_unless_requirement(requirement)(func)
-            
-class LimitedTestCase(unittest.TestCase):
 
+
+class TestIsTakingTooLong(Exception):
+    """ Custom exception class to be raised when a test's runtime exceeds a limit. """
+    pass
+
+
+class LimitedTestCase(unittest.TestCase):
+    """ Unittest subclass that adds a timeout to all tests.  Subclasses must
+    be sure to call the LimitedTestCase setUp and tearDown methods.  The default 
+    timeout is 1 second, change it by setting self.TEST_TIMEOUT to the desired
+    quantity."""
+    
+    TEST_TIMEOUT = 1
     def setUp(self):
         from eventlet import api
-        self.timer = api.exc_after(1, RuntimeError('test is taking too long'))
+        self.timer = api.exc_after(self.TEST_TIMEOUT, 
+                                   TestIsTakingTooLong(self.TEST_TIMEOUT))
 
     def tearDown(self):
         self.timer.cancel()
+
 
 def find_command(command):
     for dir in os.getenv('PATH', '/usr/bin:/usr/sbin').split(os.pathsep):

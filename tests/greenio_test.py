@@ -17,8 +17,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from tests import skipped
-from unittest import TestCase, main
+from tests import skipped, LimitedTestCase
+from unittest import main
 from eventlet import api, util
 import os
 import socket
@@ -26,13 +26,17 @@ import socket
 
 def bufsized(sock, size=1):
     """ Resize both send and receive buffers on a socket.
-    Useful for testing trampoline.  Returns the socket."""
+    Useful for testing trampoline.  Returns the socket.
+    
+    >>> import socket
+    >>> sock = bufsized(socket.socket(socket.AF_INET, socket.SOCK_STREAM))
+    """
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, size)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, size)
     return sock
 
 
-class TestGreenIo(TestCase):
+class TestGreenIo(LimitedTestCase):
     def test_close_with_makefile(self):
         def accept_close_early(listener):
             # verify that the makefile and the socket are truly independent
@@ -82,7 +86,6 @@ class TestGreenIo(TestCase):
         api.kill(killer)
         
     def test_del_closes_socket(self):
-        timer = api.exc_after(0.5, api.TimeoutError)
         def accept_once(listener):
             # delete/overwrite the original conn
             # object, only keeping the file object around
@@ -103,7 +106,6 @@ class TestGreenIo(TestCase):
         assert fd.read() == 'hello\n'    
         assert fd.read() == ''
         
-        timer.cancel()
         api.kill(killer)
         
     def test_full_duplex(self):
@@ -142,6 +144,7 @@ class TestGreenIo(TestCase):
         server_evt.wait()
         client.close()
         
+    @skipped
     def test_sendall(self):
         from eventlet import proc
         # test adapted from Brian Brunswick's email
@@ -152,7 +155,6 @@ class TestGreenIo(TestCase):
         second_bytes = 10
         def test_sendall_impl(many_bytes):
             bufsize = max(many_bytes/45, 2)
-            timer = api.exc_after(1, api.TimeoutError)
             def sender(listener):
                 (sock, addr) = listener.accept()
                 sock = bufsized(sock, size=bufsize)
@@ -180,7 +182,6 @@ class TestGreenIo(TestCase):
     
             sender_coro.wait()
             client.close()
-            timer.cancel()
         
         for bytes in (1000, 10000, 100000, 1000000):
             test_sendall_impl(bytes)
@@ -224,13 +225,7 @@ class TestGreenIo(TestCase):
         self.assert_(len(results2) > 0)
 
 
-class SSLTest(TestCase):
-    def setUp(self):
-        self.timer = api.exc_after(1, api.TimeoutError)
-        
-    def tearDown(self):
-        self.timer.cancel()
-
+class SSLTest(LimitedTestCase):
     def test_duplex_response(self):
         from eventlet import coros
         def serve(listener):
