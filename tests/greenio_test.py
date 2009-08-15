@@ -154,9 +154,11 @@ class TestGreenIo(TestCase):
             sock = bufsized(sock)
             sock.sendall('x'*MANY_BYTES)
             sock.sendall('y'*SECOND_SEND)
-            
-        sender_coro = proc.spawn(sender, api.tcp_listener(("", 9020)))
-        client = bufsized(api.connect_tcp(('localhost', 9020)))
+        
+        listener = api.tcp_listener(("", 0))
+        sender_coro = proc.spawn(sender, listener)
+        client = bufsized(api.connect_tcp(('localhost', 
+                                           listener.getsockname()[1])))
         total = 0
         while total < MANY_BYTES:
             data = client.recv(min(MANY_BYTES - total, MANY_BYTES/10))
