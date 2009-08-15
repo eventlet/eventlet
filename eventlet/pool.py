@@ -83,6 +83,14 @@ class Pool(object):
         """Wait for the next execute in the pool to complete,
         and return the result."""
         return self.results.wait()
+        
+    def waiting(self):
+        """Return the number of coroutines waiting to execute.
+        """
+        if self.sem.balance < 0:
+            return -self.sem.balance
+        else:
+            return 0
 
     def killall(self):
         """ Kill every running coroutine as immediately as possible."""

@@ -20,6 +20,30 @@ class TestCoroutinePool(LimitedTestCase):
         pool = self.klass(0, 2)
         worker = pool.execute(some_work)
         self.assertEqual(value, worker.wait())
+        
+    def test_waiting(self):
+        pool = self.klass(0,1)
+        done = coros.event()
+        def consume():
+            done.wait()
+        def waiter(pool):
+            evt = pool.execute(consume)
+            evt.wait()
+        
+        waiters = []
+        waiters.append(coros.execute(waiter, pool))
+        api.sleep(0)
+        self.assertEqual(pool.waiting(), 0)
+        waiters.append(coros.execute(waiter, pool))
+        api.sleep(0)
+        self.assertEqual(pool.waiting(), 1)
+        waiters.append(coros.execute(waiter, pool))
+        api.sleep(0)
+        self.assertEqual(pool.waiting(), 2)
+        done.send(None)
+        for w in waiters:
+            w.wait()
+        self.assertEqual(pool.waiting(), 0)
 
     def test_multiple_coros(self):
         evt = coros.event()
