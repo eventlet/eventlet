@@ -80,7 +80,6 @@ class TestGreenIo(TestCase):
         killer = api.spawn(accept_close_late, server)
         did_it_work(server)
         api.kill(killer)
-
         
     def test_del_closes_socket(self):
         timer = api.exc_after(0.5, api.TimeoutError)
@@ -105,7 +104,7 @@ class TestGreenIo(TestCase):
         assert fd.read() == ''
         
         timer.cancel()
-        
+        api.kill(killer)
         
     def test_full_duplex(self):
         from eventlet import coros
@@ -146,39 +145,45 @@ class TestGreenIo(TestCase):
     def test_sendall(self):
         from eventlet import proc
         # test adapted from Brian Brunswick's email
-        timer = api.exc_after(1, api.TimeoutError)
+        # It spawns off a coroutine that tries to write varying amounts of data
+        # to a socket that the main coroutine is reading from; then it sends a
+        # small amount of data over the same socket.  We verify that both quantities
+        # of data are received correctly, and do so for a varying number of bytes sent.
+        second_bytes = 10
+        def test_sendall_impl(many_bytes):
+            bufsize = max(many_bytes/45, 2)
+            timer = api.exc_after(1, api.TimeoutError)
+            def sender(listener):
+                (sock, addr) = listener.accept()
+                sock = bufsized(sock, size=bufsize)
+                sock.sendall('x'*many_bytes)
+                sock.sendall('y'*second_bytes)
+            
+            listener = api.tcp_listener(("", 0))
+            sender_coro = proc.spawn(sender, listener)
+            client = bufsized(api.connect_tcp(('localhost', 
+                                               listener.getsockname()[1])),
+                              size=bufsize)
+            total = 0
+            while total < many_bytes:
+                data = client.recv(min(many_bytes - total, many_bytes/10))
+                if data == '':
+                    break
+                total += len(data)
+            
+            total2 = 0
+            while total < second_bytes:
+                data = client.recv(second_bytes)
+                if data == '':
+                    break
+                total2 += len(data)
+    
+            sender_coro.wait()
+            client.close()
+            timer.cancel()
         
-        MANY_BYTES = 1000
-        SECOND_SEND = 10
-        def sender(listener):
-            (sock, addr) = listener.accept()
-            sock = bufsized(sock)
-            sock.sendall('x'*MANY_BYTES)
-            sock.sendall('y'*SECOND_SEND)
-        
-        listener = api.tcp_listener(("", 0))
-        sender_coro = proc.spawn(sender, listener)
-        client = bufsized(api.connect_tcp(('localhost', 
-                                           listener.getsockname()[1])))
-        total = 0
-        while total < MANY_BYTES:
-            data = client.recv(min(MANY_BYTES - total, MANY_BYTES/10))
-            if data == '':
-                print "ENDED", data
-                break
-            total += len(data)
-        
-        total2 = 0
-        while total < SECOND_SEND:
-            data = client.recv(SECOND_SEND)
-            if data == '':
-                print "ENDED2", data
-                break
-            total2 += len(data)
-
-        sender_coro.wait()
-        client.close()
-        timer.cancel()
+        for bytes in (1000, 10000, 100000, 1000000):
+            test_sendall_impl(bytes)
         
     def test_multiple_readers(self):
         # test that we can have multiple coroutines reading
