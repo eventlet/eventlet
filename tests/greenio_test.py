@@ -19,7 +19,7 @@
 
 from tests import skipped, LimitedTestCase
 from unittest import main
-from eventlet import api, util
+from eventlet import api, util, coros, proc
 import os
 import socket
 
@@ -76,15 +76,15 @@ class TestGreenIo(LimitedTestCase):
             fd.close()
             
         server = api.tcp_listener(('0.0.0.0', 0))
-        killer = api.spawn(accept_close_early, server)
+        killer = coros.execute(accept_close_early, server)
         did_it_work(server)
-        api.kill(killer)
+        killer.wait()
         
         server = api.tcp_listener(('0.0.0.0', 0))
-        killer = api.spawn(accept_close_late, server)
+        killer = coros.execute(accept_close_late, server)
         did_it_work(server)
-        api.kill(killer)
-        
+        killer.wait()
+    
     def test_del_closes_socket(self):
         def accept_once(listener):
             # delete/overwrite the original conn
@@ -99,17 +99,16 @@ class TestGreenIo(LimitedTestCase):
             finally:
                 listener.close()
         server = api.tcp_listener(('0.0.0.0', 0))
-        killer = api.spawn(accept_once, server)
+        killer = coros.execute(accept_once, server)
         client = api.connect_tcp(('127.0.0.1', server.getsockname()[1]))
         fd = client.makeGreenFile()
         client.close()
         assert fd.read() == 'hello\n'    
         assert fd.read() == ''
         
-        api.kill(killer)
-        
+        killer.wait()
+     
     def test_full_duplex(self):
-        from eventlet import coros
         large_data = '*' * 10
         listener = bufsized(api.tcp_listener(('127.0.0.1', 0)))
 
@@ -142,11 +141,12 @@ class TestGreenIo(LimitedTestCase):
         api.sleep(0)
         client.sendall('hello world')
         server_evt.wait()
+        large_evt.wait()
         client.close()
+     
         
     @skipped
     def test_sendall(self):
-        from eventlet import proc
         # test adapted from Brian Brunswick's email
         # It spawns off a coroutine that tries to write varying amounts of data
         # to a socket that the main coroutine is reading from; then it sends a
@@ -190,7 +190,6 @@ class TestGreenIo(LimitedTestCase):
         # test that we can have multiple coroutines reading
         # from the same fd.  We make no guarantees about which one gets which
         # bytes, but they should both get at least some
-        from eventlet import proc
         def reader(sock, results):
             while True:
                 data = sock.recv(1)
@@ -210,8 +209,9 @@ class TestGreenIo(LimitedTestCase):
                 c1.wait()
                 c2.wait()
             finally:
-                api.kill(c1)
-                api.kill(c2)
+                c1.kill()
+                c2.kill()
+                sock.close()
 
         server_coro = proc.spawn(server)
         client = bufsized(api.connect_tcp(('127.0.0.1', 
@@ -227,7 +227,6 @@ class TestGreenIo(LimitedTestCase):
 
 class SSLTest(LimitedTestCase):
     def test_duplex_response(self):
-        from eventlet import coros
         def serve(listener):
             sock, addr = listener.accept()
             stuff = sock.read(8192)
