@@ -28,9 +28,12 @@ class Pool(object):
 
     @property
     def current_size(self):
+        """ The number of coroutines that are currently executing jobs. """
         return len(self.procs)
 
     def free(self):
+        """ Returns the number of coroutines that are available for doing
+        work."""
         return self.sem.counter
 
     def execute(self, func, *args, **kwargs):
@@ -70,6 +73,8 @@ class Pool(object):
         return p
 
     def waitall(self):
+        """ Calling this function blocks until every coroutine 
+        completes its work (i.e. there are 0 running coroutines)."""
         return self.procs.waitall()
 
     wait_all = waitall
@@ -80,6 +85,7 @@ class Pool(object):
         return self.results.wait()
 
     def killall(self):
+        """ Kill every running coroutine as immediately as possible."""
         return self.procs.killall()
 
     def launch_all(self, function, iterable):
