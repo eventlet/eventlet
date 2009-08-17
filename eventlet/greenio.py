@@ -533,9 +533,9 @@ class GreenSSL(GreenSocket):
     """
     def __init__(self, fd):
         super(GreenSSL, self).__init__(fd)
-        assert(isinstance(fd, (SSL.ConnectionType)),
+        assert isinstance(fd, (SSL.ConnectionType)), \
                "GreenSSL can only be constructed with an "\
-               "OpenSSL Connection object")
+               "OpenSSL Connection object"
         self.sock = self
         
     def close(self):
