@@ -28,17 +28,19 @@ import unittest
 
 def skipped(func):
     """ Decorator that marks a function as skipped.  Uses nose's SkipTest exception
-    if installed, otherwise simply does a no-op test.  Without nose, this will make
-    skipped tests look like passing tests."""
+    if installed.  Without nose, this will count skipped tests as passing tests."""
     try:
         from nose.plugins.skip import SkipTest
         def skipme(*a, **k):
             raise SkipTest()
-        skipme.__name__ == func.__name__
+        skipme.__name__ = func.__name__
         return skipme
     except ImportError:
         # no nose, we'll just skip the test ourselves
-        return lambda *a, **k: None
+        def skipme(*a, **k):
+            print "Skipping", func.__name__
+        skipme.__name__ = func.__name__
+        return skipme
 
 
 def skip_unless_requirement(requirement):
