@@ -144,17 +144,13 @@ class TestGreenIo(LimitedTestCase):
         large_evt.wait()
         client.close()
      
-        
-    @skipped
     def test_sendall(self):
         # test adapted from Brian Brunswick's email
-        # It spawns off a coroutine that tries to write varying amounts of data
-        # to a socket that the main coroutine is reading from; then it sends a
-        # small amount of data over the same socket.  We verify that both quantities
-        # of data are received correctly, and do so for a varying number of bytes sent.
+        # it may legitimately take a while, but will eventually complete
+        self.timer.cancel()
         second_bytes = 10
         def test_sendall_impl(many_bytes):
-            bufsize = max(many_bytes/45, 2)
+            bufsize = max(many_bytes/15, 2)
             def sender(listener):
                 (sock, addr) = listener.accept()
                 sock = bufsized(sock, size=bufsize)

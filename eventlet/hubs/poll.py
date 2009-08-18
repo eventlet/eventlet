@@ -28,7 +28,7 @@ import time
 
 from eventlet.hubs import hub
 
-EXC_MASK = select.POLLERR | select.POLLHUP | select.POLLNVAL
+EXC_MASK = select.POLLERR | select.POLLHUP
 READ_MASK = select.POLLIN
 WRITE_MASK = select.POLLOUT
 
