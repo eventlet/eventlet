@@ -11,8 +11,9 @@ setup(
     description='Coroutine-based networking library',
     author='Linden Lab',
     author_email='eventletdev@lists.secondlife.com',
-    url='http://wiki.secondlife.com/wiki/Eventlet',
-    packages=find_packages(exclude=['greentest']),
+    url='http://eventlet.net',
+    packages=find_packages(exclude=['tests']),
+    install_requires=['greenlet >= 0.2', 'pyopenssl'],
     long_description="""
     Eventlet is a networking library written in Python. It achieves
     high scalability by using non-blocking io while at the same time
@@ -24,6 +25,7 @@ setup(
     "Programming Language :: Python",
     "Operating System :: MacOS :: MacOS X",
     "Operating System :: POSIX",
+    "Operating System :: Microsoft :: Windows",
     "Topic :: Internet",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Intended Audience :: Developers",
