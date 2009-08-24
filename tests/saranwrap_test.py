@@ -22,7 +22,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from tests import skipped
 from eventlet import api, saranwrap
 from eventlet.pool import Pool
 
@@ -151,7 +150,6 @@ class TestSaranwrap(unittest.TestCase):
             prox.never_name_a_function_like_this()
         self.assertRaises(AttributeError, nofunc)
 
-    @skipped
     def test_unpicklable_server_exception(self):
         prox = saranwrap.wrap(saranwrap)
         def unpickle():
