@@ -613,8 +613,6 @@ class GreenSSL(GreenSocket):
                            write=True, 
                            timeout=self.timeout, 
                            timeout_exc=socket.timeout)
-            except SSL.ZeroReturnError:
-                return ''
             except SSL.SysCallError, e:
                 if e[0] == -1 or e[0] > 0:
                     return ''
