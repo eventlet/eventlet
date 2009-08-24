@@ -86,8 +86,10 @@ class TestApi(TestCase):
             try:
                 conn, addr = listenfd.accept()
                 conn.write('hello\r\n')
+                conn.shutdown()
                 conn.close()
             finally:
+                listenfd.shutdown()
                 listenfd.close()
 
         server = api.ssl_listener(('0.0.0.0', 0),
@@ -100,8 +102,11 @@ class TestApi(TestCase):
         fd = socket._fileobject(client, 'rb', 8192)
 
         assert fd.readline() == 'hello\r\n'
-        assert fd.read() == ''
+        self.assertRaises(greenio.SSL.ZeroReturnError, fd.read)
+        client.shutdown()
         client.close()
+        
+        check_hub()
 
     def test_server(self):
         connected = []
