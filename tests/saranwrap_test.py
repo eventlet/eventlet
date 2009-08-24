@@ -22,6 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+from tests import skipped
 from eventlet import api, saranwrap
 from eventlet.pool import Pool
 
@@ -150,18 +151,7 @@ class TestSaranwrap(unittest.TestCase):
             prox.never_name_a_function_like_this()
         self.assertRaises(AttributeError, nofunc)
 
-    def test_raising_weird_exceptions(self):
-        # the recursion is killing me!
-        prox = saranwrap.wrap(saranwrap)
-        try:
-            prox.raise_a_weird_error()
-            self.assert_(False)
-        except:
-            import sys
-            ex = sys.exc_info()[0]
-            self.assertEqual(ex, "oh noes you can raise a string")
-        self.assert_server_exists(prox)
-
+    @skipped
     def test_unpicklable_server_exception(self):
         prox = saranwrap.wrap(saranwrap)
         def unpickle():

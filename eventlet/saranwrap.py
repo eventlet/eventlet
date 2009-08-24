@@ -565,8 +565,6 @@ when the id is None."""
                 raise e
             except Exception, e:
                 self.write_exception(e)
-            except:
-                self.write_exception(sys.exc_info()[0])
 
     def is_value(self, value):
         """\
@@ -595,10 +593,6 @@ when the id is None."""
 
         self.respond(['exception', e])
 
-
-# test function used for testing that final except clause
-def raise_a_weird_error():
-    raise "oh noes you can raise a string"
 
 # test function used for testing return of unpicklable exceptions
 def raise_an_unpicklable_error():
