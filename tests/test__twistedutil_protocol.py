@@ -92,7 +92,8 @@ class TestCase(unittest.TestCase):
     @property
     def connector(self):
         return pr.GreenClientCreator(reactor, self.gtransportClass, self.transportBufferSize)
-
+    
+    @requires_twisted
     def setUp(self):
         port = self.setup_server()
         self.conn = self.connector.connectTCP('127.0.0.1', port)
