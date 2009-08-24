@@ -17,6 +17,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+# disable popen2-related warnings until we complete eventlet.green.subprocess
+# because they break saranwrap
+import warnings
+warnings.filterwarnings(action = 'ignore',
+                        message='.*popen2.*',
+                        category=DeprecationWarning)
+
 import errno
 import os
 import popen2
