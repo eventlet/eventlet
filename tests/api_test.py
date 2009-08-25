@@ -188,7 +188,7 @@ class TestApi(TestCase):
             check_hub()
 
     def test_named(self):
-        named_foo = api.named('api_test.Foo')
+        named_foo = api.named('tests.api_test.Foo')
         self.assertEquals(
             named_foo.__name__,
             "Foo")

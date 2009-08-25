@@ -22,12 +22,7 @@ from eventlet import api, coros, greenio
 
 QUIET=False
 
-_rpipe, _wpipe = os.pipe()
-_rfile = os.fdopen(_rpipe,"r",0)
-## Work whether or not wrap_pipe_with_coroutine_pipe was called
-if not isinstance(_rfile, greenio.GreenPipe):
-    _rfile = greenio.GreenPipe(_rfile)
-
+_rpipe = _wpipe = _rfile = None
 
 def _signal_t2e():
     from eventlet import util
@@ -39,7 +34,10 @@ _rspq = Queue(maxsize=-1)
 def tpool_trampoline():
     global _reqq, _rspq
     while(True):
-        _c = _rfile.recv(1)
+        try:
+            _c = _rfile.recv(1)
+        except ValueError:
+            break  # will be raised when pipe is closed
         assert(_c != "")
         while not _rspq.empty():
             try:
@@ -95,6 +93,7 @@ def execute(meth,*args, **kwargs):
     """Execute method in a thread, blocking the current
     coroutine until the method completes.
     """
+    setup()
     e = esend(meth,*args,**kwargs)
     rv = erecv(e)
     return rv
@@ -166,21 +165,35 @@ class Proxy(object):
 
 _nthreads = int(os.environ.get('EVENTLET_THREADPOOL_SIZE', 20))
 _threads = {}
+_coro = None
+_setup_already = False
 def setup():
-    global _threads
+    if _setup_already:
+        return
+    else:
+        _setup_already = True
+    global _rpipe, _wpipe, _rfile, _threads, _coro, _setup_already
+    _rpipe, _wpipe = os.pipe()
+    _rfile = os.fdopen(_rpipe,"r",0)
+    ## Work whether or not wrap_pipe_with_coroutine_pipe was called
+    if not isinstance(_rfile, greenio.GreenPipe):
+        _rfile = greenio.GreenPipe(_rfile)
+
     for i in range(0,_nthreads):
         _threads[i] = threading.Thread(target=tworker)
         _threads[i].setDaemon(True)
         _threads[i].start()
 
-    api.spawn(tpool_trampoline)
-
-setup()
-
+    _coro = api.spawn(tpool_trampoline)
 
 def killall():
+    global _setup_already
+    if not _setup_already:
+        return
     for i in _threads:
         _reqq.put(None)
     for thr in _threads.values():
         thr.join()
-
+    _rfile.close()
+    api.kill(_coro)
+    _setup_already = False

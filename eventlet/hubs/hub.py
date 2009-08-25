@@ -25,8 +25,6 @@ import time
 from eventlet.support import greenlets as greenlet
 from eventlet.timer import Timer, LocalTimer
 
-_g_debug = True
-
 class FdListener(object):
     def __init__(self, evtype, fileno, cb):
         self.evtype = evtype
@@ -37,6 +35,18 @@ class FdListener(object):
     def __repr__(self):
         return "FdListener(%r, %r, %r)" % (self.evtype, self.fileno, self.cb)
     __str__ = __repr__
+    
+    
+# in debug mode, track the call site that created the listener
+class DebugListener(FdListener):
+    def __init__(self, evtype, fileno, cb):
+        import traceback
+        self.where_called = traceback.format_stack()
+        super(DebugListener, self).__init__(evtype, fileno, cb)
+    def __repr__(self):
+        return "DebugListener(%r, %r, %r)\n%sEndDebugFdListener" % (self.evtype, self.fileno, self.cb, ''.join(self.where_called))
+    __str__ = __repr__
+    
 
 class BaseHub(object):
     """ Base hub class for easing the implementation of subclasses that are
@@ -62,6 +72,7 @@ class BaseHub(object):
             'after_waiting': [],
             'exit': [],
         }
+        self.lclass = FdListener
         
     def add(self, evtype, fileno, cb):
         """ Signals an intent to or write a particular file descriptor.
@@ -73,7 +84,7 @@ class BaseHub(object):
         The *cb* argument is the callback which will be called when the file
         is ready for reading/writing.
         """
-        listener = FdListener(evtype, fileno, cb)
+        listener = self.lclass(evtype, fileno, cb)
         self.listeners[evtype].setdefault(fileno, []).append(listener)
         return listener
 
@@ -300,8 +311,13 @@ class BaseHub(object):
     def get_timers_count(hub):
         return max(len(x) for x in [hub.timers, hub.next_timers])
         
-    def describe_listeners(self):
-        import pprint
-        return pprint.pformat(self.listeners)
+    def _setdebug(self, value):
+        if value:
+            self.lclass = DebugListener
+        else:
+            self.lclass = FdListener
             
-
+    def _getdebug(self):
+        return self.lclass == DebugListener
+        
+    debug = property(_getdebug, _setdebug)

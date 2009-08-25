@@ -41,6 +41,14 @@ class TestScheduleCall(unittest.TestCase):
         api.sleep(DELAY*2)
         assert lst == [], lst
 
+        
+class TestDebug(unittest.TestCase):
+    def test_debug(self):
+        api.get_hub().debug = True
+        self.assert_(api.get_hub().debug)
+        api.get_hub().debug = False        
+        self.assert_(not api.get_hub().debug)
+
 
 class TestExceptionInMainloop(unittest.TestCase):
 

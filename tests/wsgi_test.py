@@ -22,6 +22,7 @@
 
 import cgi
 import os
+from tests import skipped
 from unittest import TestCase, main
 
 from eventlet import api
@@ -129,9 +130,13 @@ class TestHttpd(TestCase):
     def setUp(self):
         self.logfile = StringIO()
         self.site = Site()
+        listener = api.tcp_listener(('0.0.0.0', 12346))
         self.killer = api.spawn(
             wsgi.server,
-            api.tcp_listener(('0.0.0.0', 12346)), self.site, max_size=128, log=self.logfile)
+            listener, 
+            self.site, 
+            max_size=128, 
+            log=self.logfile)
 
     def tearDown(self):
         api.kill(self.killer)
@@ -184,7 +189,8 @@ class TestHttpd(TestCase):
         self.assertRaises(ConnectionClosed, read_http, sock)
         fd.close()
 
-    def skip_test_005_run_apachebench(self):
+    @skipped
+    def test_005_run_apachebench(self):
         url = 'http://localhost:12346/'
         # ab is apachebench
         out = processes.Process(find_command('ab'),
@@ -387,6 +393,7 @@ class TestHttpd(TestCase):
         headerlines = fd.readuntil('\r\n\r\n').splitlines()
         self.assertEquals(1, len([l for l in headerlines
                 if l.lower().startswith('content-length')]))
+                
 
 if __name__ == '__main__':
     main()

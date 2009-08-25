@@ -465,6 +465,7 @@ class TestTpoolConnectionPool(TestDBConnectionPool):
     def tearDown(self):
         from eventlet import tpool
         tpool.QUIET = False
+        tpool.killall()
         super(TestTpoolConnectionPool, self).tearDown()
 
 

@@ -64,9 +64,11 @@ class TestTpool(TestCase):
         # turn off exception printing, because we'll be deliberately
         # triggering exceptions in our tests
         tpool.QUIET = True
+        tpool.setup()
 
     def tearDown(self):
         tpool.QUIET = False
+        tpool.killall()
 
     def test_a_buncha_stuff(self):
         pool = coros.CoroutinePool(max_size=10)
@@ -183,7 +185,10 @@ class TestTpool(TestCase):
         self.assertRaises(api.TimeoutError,
                           tpool.execute, time.sleep, 0.3)
 
-
+    def test_killall(self):
+        tpool.killall()
+        tpool.setup()
+        
     @skipped
     def test_benchmark(self):
         """ Benchmark computing the amount of overhead tpool adds to function calls."""
