@@ -13,10 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import random
 from sys import stdout
 import time
+from tests import skipped
 from unittest import TestCase, main
-import random
 import uuid
 
 from eventlet import coros, api, tpool
@@ -183,8 +184,9 @@ class TestTpool(TestCase):
                           tpool.execute, time.sleep, 0.3)
 
 
-    def dont_test_benchmark(self):
-        """ Benchmark computing the amount of overhead tpool adds to function calls.  Rename to activate."""
+    @skipped
+    def test_benchmark(self):
+        """ Benchmark computing the amount of overhead tpool adds to function calls."""
         iterations = 10000
         def bench(f, *args, **kw):
             for i in xrange(iterations):

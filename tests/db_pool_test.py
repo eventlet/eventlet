@@ -21,12 +21,13 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from tests import skipped
+from tests import skipped, skip_unless_requirement
 from unittest import TestCase, main
 from eventlet import api, coros
 from eventlet import db_pool
 
 class DBTester(object):
+    __test__ = False  # so that nose doesn't try to execute this directly
     def setUp(self):
         self.create_db()
         self.connection = None
@@ -77,6 +78,7 @@ class Mock(object):
 
 
 class TestDBConnectionPool(DBTester):
+    __test__ = False  # so that nose doesn't try to execute this directly
     def setUp(self):
         super(TestDBConnectionPool, self).setUp()
         self.pool = self.create_pool()
@@ -444,6 +446,7 @@ class RaisingDBModule(object):
     
 
 class TestTpoolConnectionPool(TestDBConnectionPool):
+    __test__ = False  # so that nose doesn't try to execute this directly
     def create_pool(self, max_size = 1, max_idle = 10, max_age = 10, connect_timeout=0.5, module=None):
         if module is None:
             module = self._dbmodule
@@ -466,6 +469,7 @@ class TestTpoolConnectionPool(TestDBConnectionPool):
 
 
 class TestSaranwrapConnectionPool(TestDBConnectionPool):
+    __test__ = False  # so that nose doesn't try to execute this directly
     def create_pool(self, max_size = 1, max_idle = 10, max_age = 10, connect_timeout= 0.5, module=None):
         if module is None:
             module = self._dbmodule
@@ -482,6 +486,7 @@ class TestSaranwrapConnectionPool(TestDBConnectionPool):
 
 
 class TestRawConnectionPool(TestDBConnectionPool):
+    __test__ = False  # so that nose doesn't try to execute this directly
     def create_pool(self, max_size = 1, max_idle = 10, max_age = 10, connect_timeout= 0.5, module=None):
         if module is None:
             module = self._dbmodule
@@ -495,19 +500,37 @@ class TestRawConnectionPool(TestDBConnectionPool):
         pass # not gonna work for raw connections because they're not nonblocking
 
 
+def get_auth():
+    try:
+        import simplejson
+        import os.path
+        auth_utf8 = simplejson.load(open(os.path.join(os.path.dirname(__file__), 'auth.json')))
+        # have to convert unicode objects to str objects because mysqldb is dum
+        return dict([(str(k), str(v))
+                     for k, v in auth_utf8.items()])
+    except (IOError, ImportError), e:
+        return {'host': 'localhost','user': 'root','passwd': '','db': 'persist0'}
+
+
+def mysql_requirement(_f):
+    try:
+        import MySQLdb
+        try:
+            MySQLdb.connect(**get_auth())
+            return True
+        except MySQLdb.OperationalError:
+            return False
+    except ImportError:
+        return False
+
 class TestMysqlConnectionPool(object):
+    __test__ = True
+
+    @skip_unless_requirement(mysql_requirement)
     def setUp(self):
         import MySQLdb
         self._dbmodule = MySQLdb
-        try:
-            import simplejson
-            import os.path
-            auth_utf8 = simplejson.load(open(os.path.join(os.path.dirname(__file__), 'auth.json')))
-            # have to convert unicode objects to str objects because mysqldb is dum
-            self._auth = dict([(str(k), str(v))
-                         for k, v in auth_utf8.items()])
-        except (IOError, ImportError), e:
-            self._auth = {'host': 'localhost','user': 'root','passwd': '','db': 'persist0'}
+        self._auth = get_auth()
         super(TestMysqlConnectionPool, self).setUp()
         
     def tearDown(self):
@@ -543,12 +566,6 @@ class Test03MysqlRaw(TestMysqlConnectionPool, TestRawConnectionPool, TestCase):
     pass
 
 
+
 if __name__ == '__main__':
-    try:
-        import MySQLdb
-    except ImportError:
-        print "Unable to import MySQLdb, skipping db_pool_test."
-    else:
-        main()
-else:
-    import MySQLdb
+    main()
