@@ -3,10 +3,12 @@ Eventlet
 
 Eventlet is a networking library written in Python. It achieves high scalability by using `non-blocking io <http://en.wikipedia.org/wiki/Asynchronous_I/O#Select.28.2Fpoll.29_loops>`_ while at the same time retaining high programmer usability by using `coroutines <http://en.wikipedia.org/wiki/Coroutine>`_ to make the non-blocking io operations appear blocking at the source code level.
 
+Eventlet is different from all the other event-based frameworks out there because it doesn't require you to restructure your code to use it.  You don't have to rewrite your code to use callbacks, and you don't have to replace your main() method with some sort of dispatch method.  You can just sprinkle eventlet on top of your normal-looking code.
+
 Web Crawler Example
 -------------------
 
-This is a simple web "crawler" that fetches a bunch of urls using a coroutine pool.  It has as much concurrency (i.e. pages being fetched simultaneously) as coroutines in the pool.
+This is a simple web "crawler" that fetches a bunch of urls using a coroutine pool.  It has as much concurrency (i.e. pages being fetched simultaneously) as coroutines in the pool (in our example, 4).
 
 ::
 
@@ -33,6 +35,7 @@ This is a simple web "crawler" that fetches a bunch of urls using a coroutine po
   # wait for all the coroutines to come back before exiting the process
   for waiter in waiters:
       waiter.wait()
+      
 
 Contents
 =========
