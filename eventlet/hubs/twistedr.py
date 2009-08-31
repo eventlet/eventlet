@@ -23,6 +23,7 @@ import sys
 import threading
 from twisted.internet.base import DelayedCall as TwistedDelayedCall
 from eventlet import api
+from eventlet.hubs import hub
 
 
 class DelayedCall(TwistedDelayedCall):
@@ -62,31 +63,29 @@ def callLater(DelayedCallClass, reactor, _seconds, _f, *args, **kw):
     reactor._newTimedCalls.append(tple)
     return tple
 
-class socket_rwdescriptor:
+class socket_rwdescriptor(hub.FdListener):
     #implements(IReadWriteDescriptor)
+    def __init__(self, evtype, fileno, cb):
+        super(socket_rwdescriptor, self).__init__(evtype, fileno, cb)
+        # Twisted expects fileno to be a callable, not an attribute
+        self.fileno = lambda: fileno
 
     # required by glib2reactor
     disconnected = False
 
-    def __init__(self, fileno, read, write, error):
-        self._fileno = fileno
-        self.read = read
-        self.write = write
-        self.error = error
-
     def doRead(self):
-        if self.read:
-            self.read(self)
+        if self.evtype == 'read':
+            self.cb(self)
 
     def doWrite(self):
-        if self.write:
-            self.write(self)
+        if self.evtype == 'write':
+            self.cb(self)
 
     def connectionLost(self, reason):
         self.disconnected = True
-        if self.error:
-            self.error(self, reason)
-        # trampoline() will now throw() into the greenlet that owns the socket
+        if self.cb:
+            self.cb(reason)
+        # trampoline() will now switch into the greenlet that owns the socket
         # leaving the mainloop unscheduled. However, when the next switch
         # to the mainloop occurs, twisted will not re-evaluate the delayed calls
         # because it assumes that none were scheduled since no client code was executed
@@ -94,9 +93,6 @@ class socket_rwdescriptor:
         # XXX this is not enough, pollreactor prints the traceback for this and epollreactor
         # times out. see test__hub.TestCloseSocketWhilePolling
         raise api.GreenletExit
-
-    def fileno(self):
-        return self._fileno
 
     logstr = "twistedr"
 
@@ -131,24 +127,19 @@ class BaseTwistedHub(object):
         from twisted.internet import reactor
         reactor.stop()
 
-    def add_descriptor(self, fileno, read=None, write=None, exc=None):
+    def add(self, evtype, fileno, cb):
         from twisted.internet import reactor
-        descriptor = socket_rwdescriptor(fileno, read, write, exc)
-        if read:
+        descriptor = socket_rwdescriptor(evtype, fileno, cb)
+        if evtype == 'read':
             reactor.addReader(descriptor)
-        if write:
+        if evtype == 'write':
             reactor.addWriter(descriptor)
-        # XXX exc will not work if no read nor write
         return descriptor
 
-    def remove_descriptor(self, descriptor):
+    def remove(self, descriptor):
         from twisted.internet import reactor
         reactor.removeReader(descriptor)
         reactor.removeWriter(descriptor)
-
-    # required by GreenSocket
-    def exc_descriptor(self, _fileno):
-        pass # XXX do something sensible here
 
     def schedule_call_local(self, seconds, func, *args, **kwargs):
         from twisted.internet import reactor
@@ -186,8 +177,6 @@ class BaseTwistedHub(object):
         from twisted.internet import reactor
         return reactor.getWriters()
 
-    def get_excs(self):
-        return []
 
     def get_timers_count(self):
         from twisted.internet import reactor

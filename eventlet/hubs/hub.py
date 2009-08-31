@@ -27,13 +27,14 @@ from eventlet.timer import Timer, LocalTimer
 
 class FdListener(object):
     def __init__(self, evtype, fileno, cb):
+        assert (evtype == 'read' or evtype == 'write')
         self.evtype = evtype
         self.fileno = fileno
         self.cb = cb
     def __call__(self, *args, **kw):
         return self.cb(*args, **kw)
     def __repr__(self):
-        return "FdListener(%r, %r, %r)" % (self.evtype, self.fileno, self.cb)
+        return "%s(%r, %r, %r)" % (type(self).__name__, self._evtype, self._fileno, self._cb)
     __str__ = __repr__
     
     
