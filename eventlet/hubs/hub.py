@@ -34,7 +34,7 @@ class FdListener(object):
     def __call__(self, *args, **kw):
         return self.cb(*args, **kw)
     def __repr__(self):
-        return "%s(%r, %r, %r)" % (type(self).__name__, self._evtype, self._fileno, self._cb)
+        return "%s(%r, %r, %r)" % (type(self).__name__, self.evtype, self.fileno, self.cb)
     __str__ = __repr__
     
     
