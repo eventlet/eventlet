@@ -188,6 +188,10 @@ class GreenSocket(object):
         # when client calls setblocking(0) or settimeout(0) the socket must
         # act non-blocking
         self.act_non_blocking = False
+        
+    @property
+    def _sock(self):
+        return self
 
     @property
     def family(self):

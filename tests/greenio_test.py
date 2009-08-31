@@ -219,6 +219,15 @@ class TestGreenIo(LimitedTestCase):
         
         self.assert_(len(results1) > 0)
         self.assert_(len(results2) > 0)
+        
+    def test_wrap_socket(self):
+        try:
+            import ssl
+        except ImportError:
+            pass  # pre-2.6
+        else:
+            sock = api.tcp_listener(('127.0.0.1', 0))
+            ssl_sock = ssl.wrap_socket(sock)
 
 
 class SSLTest(LimitedTestCase):
