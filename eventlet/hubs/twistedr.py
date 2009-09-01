@@ -63,7 +63,7 @@ def callLater(DelayedCallClass, reactor, _seconds, _f, *args, **kw):
     reactor._newTimedCalls.append(tple)
     return tple
 
-class socket_rwdescriptor(hub.FdListener):
+class socket_rwdescriptor(FdListener):
     #implements(IReadWriteDescriptor)
     def __init__(self, evtype, fileno, cb):
         super(socket_rwdescriptor, self).__init__(evtype, fileno, cb)
