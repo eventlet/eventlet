@@ -28,15 +28,11 @@ class EventletHub(Plugin):
         " specified, the default hub for the current configuration is printed "\
         " and used."
         
-        
     def beforeContext(self):
         """Select the desired hub.
         """
         if self.hub_name is None:
             log.warn('using *default* eventlet hub: %s', api.get_hub())
         else:
-            try:
-                api.use_hub(self.hub_name)
-                log.info('using hub %s', api.get_hub())
-            except ImportError, ex:
-                log.exception('eventlet hub %s not importing', self.hub_name)        
+            api.use_hub(self.hub_name)
+            log.info('using hub %s', api.get_hub())

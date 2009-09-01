@@ -17,7 +17,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from tests import skipped, LimitedTestCase
+from tests import skipped, LimitedTestCase, skip_with_libevent
 from unittest import main
 from eventlet import api, util, coros, proc
 import os
@@ -182,6 +182,7 @@ class TestGreenIo(LimitedTestCase):
         for bytes in (1000, 10000, 100000, 1000000):
             test_sendall_impl(bytes)
         
+    @skip_with_libevent
     def test_multiple_readers(self):
         # test that we can have multiple coroutines reading
         # from the same fd.  We make no guarantees about which one gets which

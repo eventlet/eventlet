@@ -65,6 +65,14 @@ def requires_twisted(func):
         except Exception:
             return False
     return skip_unless_requirement(requirement)(func)
+    
+    
+def skip_with_libevent(func):
+    """ Decorator that skips a test if we're using the libevent hub."""
+    def requirement(_f):
+        from eventlet.api import get_hub
+        return not('libevent' in type(get_hub()).__module__)
+    return skip_unless_requirement(requirement)(func)
 
 
 class TestIsTakingTooLong(Exception):
