@@ -23,9 +23,9 @@ import select
 import errno
 import time
 
-from eventlet.hubs import hub
+from eventlet.hubs.hub import BaseHub, READ, WRITE
 
-class Hub(hub.BaseHub):
+class Hub(BaseHub):
     def _remove_closed_fds(self):
         """ Iterate through fds that have had their socket objects recently closed,
         removing the ones that are actually closed per the operating system.
@@ -38,8 +38,8 @@ class Hub(hub.BaseHub):
                     self.remove_descriptor(fd)
 
     def wait(self, seconds=None):
-        readers = self.listeners['read']
-        writers = self.listeners['write']
+        readers = self.listeners[READ]
+        writers = self.listeners[WRITE]
         if not readers and not writers:
             if seconds:
                 time.sleep(seconds)

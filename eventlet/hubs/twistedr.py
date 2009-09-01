@@ -23,7 +23,7 @@ import sys
 import threading
 from twisted.internet.base import DelayedCall as TwistedDelayedCall
 from eventlet import api
-from eventlet.hubs import hub
+from eventlet.hubs.hub import FdListener, READ, WRITE
 
 
 class DelayedCall(TwistedDelayedCall):
@@ -74,11 +74,11 @@ class socket_rwdescriptor(hub.FdListener):
     disconnected = False
 
     def doRead(self):
-        if self.evtype == 'read':
+        if self.evtype is READ:
             self.cb(self)
 
     def doWrite(self):
-        if self.evtype == 'write':
+        if self.evtype == WRITE:
             self.cb(self)
 
     def connectionLost(self, reason):
@@ -130,9 +130,9 @@ class BaseTwistedHub(object):
     def add(self, evtype, fileno, cb):
         from twisted.internet import reactor
         descriptor = socket_rwdescriptor(evtype, fileno, cb)
-        if evtype == 'read':
+        if evtype is READ:
             reactor.addReader(descriptor)
-        if evtype == 'write':
+        if evtype is WRITE:
             reactor.addWriter(descriptor)
         return descriptor
 

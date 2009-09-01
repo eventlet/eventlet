@@ -24,7 +24,7 @@ import traceback
 import event
 
 from eventlet import api
-from eventlet.hubs.hub import BaseHub, FdListener
+from eventlet.hubs.hub import BaseHub, FdListener, READ, WRITE
 
 
 class event_wrapper(object):
@@ -129,9 +129,9 @@ class Hub(BaseHub):
     running = property(_getrunning, _setrunning)
 
     def add(self, evtype, fileno, cb):
-        if evtype == 'read':
+        if evtype is READ:
             evt = event.read(fileno, cb, fileno)
-        elif evtype == 'write':
+        elif evtype is WRITE:
             evt = event.write(fileno, cb, fileno)
             
         listener = FdListener(evtype, fileno, evt)
@@ -179,12 +179,6 @@ class Hub(BaseHub):
         self.events_to_add.append(wrapper)
         return wrapper
         
-    def get_readers(self):
-        return self.listeners['read']
-
-    def get_writers(self):
-        return self.listeners['write']
-
     def _version_info(self):
         baseversion = event.__version__
         return baseversion

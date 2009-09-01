@@ -25,9 +25,12 @@ import time
 from eventlet.support import greenlets as greenlet
 from eventlet.timer import Timer, LocalTimer
 
+READ="read"
+WRITE="write"
+
 class FdListener(object):
     def __init__(self, evtype, fileno, cb):
-        assert (evtype == 'read' or evtype == 'write')
+        assert (evtype is READ or evtype is WRITE)
         self.evtype = evtype
         self.fileno = fileno
         self.cb = cb
@@ -54,9 +57,12 @@ class BaseHub(object):
     specific to a particular underlying event architecture. """
 
     SYSTEM_EXCEPTIONS = (KeyboardInterrupt, SystemExit)
+    
+    READ = READ
+    WRITE = WRITE
 
     def __init__(self, clock=time.time):
-        self.listeners = {'read':{}, 'write':{}}
+        self.listeners = {READ:{}, WRITE:{}}
         self.closed_fds = []
 
         self.clock = clock
@@ -78,7 +84,7 @@ class BaseHub(object):
     def add(self, evtype, fileno, cb):
         """ Signals an intent to or write a particular file descriptor.
 
-        The *evtype* argument is either the string 'read' or the string 'write'.
+        The *evtype* argument is either the constant READ or WRITE.
 
         The *fileno* argument is the file number of the file of interest.
 
@@ -106,8 +112,8 @@ class BaseHub(object):
         
     def remove_descriptor(self, fileno):
         """ Completely remove all listeners for this fileno."""
-        self.listeners['read'].pop(fileno, None)
-        self.listeners['write'].pop(fileno, None)
+        self.listeners[READ].pop(fileno, None)
+        self.listeners[WRITE].pop(fileno, None)
 
     def stop(self):
         self.abort()
@@ -304,10 +310,10 @@ class BaseHub(object):
     # for debugging:
 
     def get_readers(self):
-        return self.listeners['read']
+        return self.listeners[READ]
 
     def get_writers(self):
-        return self.listeners['write']
+        return self.listeners[WRITE]
 
     def get_timers_count(hub):
         return max(len(x) for x in [hub.timers, hub.next_timers])

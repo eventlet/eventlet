@@ -26,13 +26,13 @@ import errno
 from time import sleep
 import time
 
-from eventlet.hubs import hub
+from eventlet.hubs.hub import BaseHub, READ, WRITE
 
 EXC_MASK = select.POLLERR | select.POLLHUP
 READ_MASK = select.POLLIN
 WRITE_MASK = select.POLLOUT
 
-class Hub(hub.BaseHub):
+class Hub(BaseHub):
     def __init__(self, clock=time.time):
         super(Hub, self).__init__(clock)
         self.poll = select.poll()
@@ -52,9 +52,9 @@ class Hub(hub.BaseHub):
 
     def register(self, fileno):
         mask = 0
-        if self.listeners['read'].get(fileno):
+        if self.listeners[READ].get(fileno):
             mask |= READ_MASK
-        if self.listeners['write'].get(fileno):
+        if self.listeners[WRITE].get(fileno):
             mask |= WRITE_MASK
         if mask:
             self.poll.register(fileno, mask)
@@ -72,8 +72,8 @@ class Hub(hub.BaseHub):
             pass
 
     def wait(self, seconds=None):
-        readers = self.listeners['read']
-        writers = self.listeners['write']
+        readers = self.listeners[READ]
+        writers = self.listeners[WRITE]
 
         if not readers and not writers:
             if seconds:

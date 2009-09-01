@@ -150,9 +150,9 @@ def trampoline(fd, read=None, write=None, timeout=None, timeout_exc=TimeoutError
         t = hub.schedule_call_global(timeout, current.throw, timeout_exc)
     try:
         if read:
-            listener = hub.add("read", fileno, cb)
+            listener = hub.add(hub.READ, fileno, cb)
         if write:
-            listener = hub.add("write", fileno, cb)
+            listener = hub.add(hub.WRITE, fileno, cb)
         try:
             return hub.switch()
         finally:
@@ -206,9 +206,9 @@ def select(read_list, write_list, error_list, timeout=None):
     try:
         for k, v in ds.iteritems():
             if v.get('read'):
-                hub.add('read', k, on_read)
+                hub.add(hub.READ, k, on_read)
             if v.get('write'):
-                hub.add_writer('write', k, on_write)
+                hub.add(hub.WRITE, k, on_write)
             descriptors.append(k)
         try:
             return hub.switch()
