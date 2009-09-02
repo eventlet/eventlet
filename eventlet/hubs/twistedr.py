@@ -111,6 +111,9 @@ class BaseTwistedHub(object):
     # XXX: remove me from here. make functions that depend on reactor
     # XXX: hub's methods
     uses_twisted_reactor = True
+    
+    WRITE = WRITE
+    READ = READ
 
     def __init__(self, mainloop_greenlet):
         self.greenlet = mainloop_greenlet
