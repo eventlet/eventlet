@@ -720,7 +720,7 @@ class GreenSSLObject(object):
     slightly different interface from SSL.Connection objects. """
     def __init__(self, green_ssl_obj):
         """ Should only be called by a 'green' socket.ssl """
-        assert(isinstance(green_ssl_obj, GreenSSL))
+        assert isinstance(green_ssl_obj, GreenSSL)
         self.connection = green_ssl_obj
         try:
             self.connection.do_handshake()
@@ -737,6 +737,8 @@ class GreenSSLObject(object):
         else:
             try:
                 return self.connection.read(n)
+            except SSL.ZeroReturnError:
+                return ''
             except SSL.SysCallError, e:
                 raise _convert_to_sslerror(e)
             

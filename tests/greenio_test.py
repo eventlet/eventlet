@@ -19,7 +19,7 @@
 
 from tests import skipped, LimitedTestCase, skip_with_libevent
 from unittest import main
-from eventlet import api, util, coros, proc
+from eventlet import api, util, coros, proc, greenio
 import os
 import socket
 
@@ -232,21 +232,39 @@ class TestGreenIo(LimitedTestCase):
 
 
 class SSLTest(LimitedTestCase):
+    def setUp(self):
+        super(SSLTest, self).setUp()
+        self.certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
+        self.private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
+
     def test_duplex_response(self):
         def serve(listener):
             sock, addr = listener.accept()
             stuff = sock.read(8192)
             sock.write('response')
   
-        certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
-        private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
-        sock = api.ssl_listener(('', 4201), certificate_file, private_key_file)
+        sock = api.ssl_listener(('', 4201), self.certificate_file, self.private_key_file)
         server_coro = coros.execute(serve, sock)
         
         client = util.wrap_ssl(api.connect_tcp(('localhost', 4201)))
         client.write('line 1\r\nline 2\r\n\r\n')
         self.assertEquals(client.read(8192), 'response')
         server_coro.wait()
-                
+
+    def test_greensslobject(self):
+        def serve(listener):
+            sock, addr = listener.accept()
+            sock.write('content')
+            sock.shutdown()
+            sock.close()
+        listener = api.ssl_listener(('', 4209), 
+                                    self.certificate_file, 
+                                    self.private_key_file)
+        killer = api.spawn(serve, listener)
+        client = util.wrap_ssl(api.connect_tcp(('localhost', 4209)))
+        client = greenio.GreenSSLObject(client)
+        self.assertEquals(client.read(1024), 'content')
+        self.assertEquals(client.read(1024), '')
+                        
 if __name__ == '__main__':
     main()
