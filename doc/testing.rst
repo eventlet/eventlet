@@ -24,4 +24,4 @@ Run the standard library tests with nose; simply do:
   $ cd tests/
   $ nosetests stdlib
   
-That should get you started.  Note that most of the test failures are caused by `Nose issue 162 <http://code.google.com/p/python-nose/issues/detail?id=162>`_, which incorrectly identifies helper methods as test cases.  Therefore, ignore any failure for the reason "TypeError: foo() takes exactly N arguments (2 given)", and sit tight until a version of Nose is released that fixes the issue.
+That should get you started.  Note that most of the test failures are caused by `Nose issue 162 <http://code.google.com/p/python-nose/issues/detail?id=162>`_, which incorrectly identifies helper methods as test cases.  Therefore, ignore any failure for the reason ``TypeError: foo() takes exactly N arguments (2 given)``, and sit tight until a version of Nose is released that fixes the issue.

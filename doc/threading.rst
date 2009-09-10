@@ -7,7 +7,7 @@ Eventlet is thread-safe and can be used in conjunction with normal Python thread
 
 You can only communicate cross-thread using the "real" thread primitives and pipes.  Fortunately, there's little reason to use threads for concurrency when you're already using coroutines.
 
-The vast majority of the times you'll want to use threads are to wrap some operation that is not "green", such as a C library that uses its own OS calls to do socket operations.  The tpool module is provided to make these uses simpler.
+The vast majority of the times you'll want to use threads are to wrap some operation that is not "green", such as a C library that uses its own OS calls to do socket operations.  The :doc:`tpool </modules/tpool>` module is provided to make these uses simpler.
 
 The simplest thing to do with tpool is to ``execute`` a function with it.  The function will be run in a random thread in the pool, while the calling coroutine blocks on its completion::
 
@@ -15,6 +15,7 @@ The simplest thing to do with tpool is to ``execute`` a function with it.  The f
  >>> from eventlet import tpool
  >>> def my_func(starting_ident):
  ...     print "running in new thread:", starting_ident != thread.get_ident()
+ ...
  >>> tpool.execute(my_func, thread.get_ident())
  running in new thread: True
 
