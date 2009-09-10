@@ -24,7 +24,6 @@ To do that spawn a green server and then access it using a green socket.
 If either operation blocked the whole script would block and timeout.
 """
 import unittest
-from tests import test_support
 from eventlet.green import urllib2, BaseHTTPServer
 from eventlet.api import spawn, kill
 
@@ -62,4 +61,4 @@ class TestGreenness(unittest.TestCase):
         self.assertEqual(self.server.request_count, 1)
 
 if __name__ == '__main__':
-    test_support.run_unittest(TestGreenness)
+    unittest.main()

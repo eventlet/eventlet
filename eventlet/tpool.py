@@ -168,11 +168,11 @@ _threads = {}
 _coro = None
 _setup_already = False
 def setup():
+    global _rpipe, _wpipe, _rfile, _threads, _coro, _setup_already
     if _setup_already:
         return
     else:
         _setup_already = True
-    global _rpipe, _wpipe, _rfile, _threads, _coro, _setup_already
     _rpipe, _wpipe = os.pipe()
     _rfile = os.fdopen(_rpipe,"r",0)
     ## Work whether or not wrap_pipe_with_coroutine_pipe was called

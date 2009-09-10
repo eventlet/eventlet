@@ -46,6 +46,7 @@ Contents
    basic_usage
    chat_server_example
    threading
+   testing
    history
 
    modules
