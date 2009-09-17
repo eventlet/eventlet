@@ -279,7 +279,8 @@ class SaranwrappedConnectionPool(BaseConnectionPool):
 
 
 class TpooledConnectionPool(BaseConnectionPool):
-    """A pool which gives out tpool.Proxy-based database connections.
+    """A pool which gives out :class:`~eventlet.tpool.Proxy`-based database
+    connections.
     """
     def create(self):
         return self.connect(self._db_module,
@@ -368,7 +369,7 @@ class GenericConnectionWrapper(object):
 class PooledConnectionWrapper(GenericConnectionWrapper):
     """ A connection wrapper where:
     - the close method returns the connection to the pool instead of closing it directly
-    - bool(conn) returns a reasonable value
+    - ``bool(conn)`` returns a reasonable value
     - returns itself to the pool if it gets garbage collected
     """
     def __init__(self, baseconn, pool):

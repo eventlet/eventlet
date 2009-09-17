@@ -43,9 +43,10 @@ class event(object):
     can wait for one event from another.
 
     Events differ from channels in two ways:
-    1. calling send() does not unschedule the current coroutine
-    2. send() can only be called once; use reset() to prepare the event for
-    another send()
+
+    1. calling :meth:`send` does not unschedule the current coroutine
+    2. :meth:`send` can only be called once; use :meth:`reset` to prepare the
+       event for another :meth:`send`
     
     They are ideal for communicating return values between coroutines.
 
@@ -69,7 +70,7 @@ class event(object):
 
     def reset(self):
         """ Reset this event so it can be used to send again.
-        Can only be called after send has been called.
+        Can only be called after :meth:`send` has been called.
 
         >>> from eventlet import coros
         >>> evt = coros.event()
@@ -94,11 +95,11 @@ class event(object):
         self._exc = None
 
     def ready(self):
-        """ Return true if the wait() call will return immediately.
+        """ Return true if the :meth:`wait` call will return immediately.
         Used to avoid waiting for things that might take a while to time out.
         For example, you can put a bunch of events into a list, and then visit
-        them all repeatedly, calling ready() until one returns True, and then
-        you can wait() on that one."""
+        them all repeatedly, calling :meth:`ready` until one returns ``True``,
+        and then you can :meth:`wait` on that one."""
         return self._result is not NOT_USED
 
     def has_exception(self):
@@ -128,9 +129,9 @@ class event(object):
         return notready
 
     def wait(self):
-        """Wait until another coroutine calls send.
+        """Wait until another coroutine calls :meth:`send`.
         Returns the value the other coroutine passed to
-        send.
+        :meth:`send`.
 
         >>> from eventlet import coros, api
         >>> evt = coros.event()
@@ -175,14 +176,14 @@ class event(object):
         >>> api.sleep(0)
         waited for a
 
-        It is an error to call send() multiple times on the same event.
+        It is an error to call :meth:`send` multiple times on the same event.
 
         >>> evt.send('whoops')
         Traceback (most recent call last):
         ...
         AssertionError: Trying to re-send() an already-triggered event.
 
-        Use reset() between send()s to reuse an event object.
+        Use :meth:`reset` between :meth:`send` s to reuse an event object.
         """
         assert self._result is NOT_USED, 'Trying to re-send() an already-triggered event.'
         self._result = result
@@ -209,9 +210,10 @@ class event(object):
 
 class Semaphore(object):
     """An unbounded semaphore.
-    Optionally initialize with a resource count, then acquire() and release()
-    resources as needed. Attempting to acquire() when count is zero suspends
-    the calling coroutine until count becomes nonzero again.
+    Optionally initialize with a resource *count*, then :meth:`acquire` and
+    :meth:`release` resources as needed. Attempting to :meth:`acquire` when
+    *count* is zero suspends the calling coroutine until *count* becomes
+    nonzero again.
     """
 
     def __init__(self, count=0):
@@ -274,11 +276,12 @@ class Semaphore(object):
 
 class BoundedSemaphore(object):
     """A bounded semaphore.
-    Optionally initialize with a resource count, then acquire() and release()
-    resources as needed. Attempting to acquire() when count is zero suspends
-    the calling coroutine until count becomes nonzero again.  Attempting to
-    release() after count has reached limit suspends the calling coroutine until
-    count becomes less than limit again.
+    Optionally initialize with a resource *count*, then :meth:`acquire` and
+    :meth:`release` resources as needed. Attempting to :meth:`acquire` when
+    *count* is zero suspends the calling coroutine until count becomes nonzero
+    again.  Attempting to :meth:`release` after *count* has reached *limit*
+    suspends the calling coroutine until *count* becomes less than *limit*
+    again.
     """
     def __init__(self, count, limit):
         if count > limit:
@@ -368,7 +371,7 @@ class metaphore(object):
 
     def inc(self, by=1):
         """Increment our counter. If this transitions the counter from zero to
-        nonzero, make any subsequent wait() call wait.
+        nonzero, make any subsequent :meth:`wait` call wait.
         """
         assert by > 0
         self.counter += by
@@ -402,9 +405,9 @@ def execute(func, *args, **kw):
     """ Executes an operation asynchronously in a new coroutine, returning
     an event to retrieve the return value.
 
-    This has the same api as the CoroutinePool.execute method; the only
-    difference is that this one creates a new coroutine instead of drawing
-    from a pool.
+    This has the same api as the :meth:`eventlet.coros.CoroutinePool.execute`
+    method; the only difference is that this one creates a new coroutine
+    instead of drawing from a pool.
 
     >>> from eventlet import coros
     >>> evt = coros.execute(lambda a: ('foo', a), 1)
@@ -591,7 +594,7 @@ class Actor(object):
 
     Kind of the equivalent of an Erlang process, really.  It processes
     a queue of messages in the order that they were sent.  You must
-    subclass this and implement your own version of receive().
+    subclass this and implement your own version of :meth:`received`.
 
     The actor's reference count will never drop to zero while the
     coroutine exists; if you lose all references to the actor object
@@ -653,7 +656,7 @@ class Actor(object):
 
         This example uses events to synchronize between the actor and the main
         coroutine in a predictable manner, but this kinda defeats the point of
-        the Actor, so don't do it in a real application.
+        the :class:`Actor`, so don't do it in a real application.
 
         >>> evt = event()
         >>> a.cast( ("message 1", evt) )

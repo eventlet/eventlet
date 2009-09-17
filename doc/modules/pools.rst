@@ -1,4 +1,4 @@
-Pools
+:mod:`pools`
 ==================
 
 .. automodule:: eventlet.pools

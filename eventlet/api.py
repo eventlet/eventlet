@@ -52,13 +52,13 @@ _threadlocal = threading.local()
 
 def tcp_listener(address, backlog=50):
     """
-    Listen on the given (ip, port) *address* with a TCP socket.
-    Returns a socket object on which one should call ``accept()`` to
-    accept a connection on the newly bound socket.
+    Listen on the given ``(ip, port)`` *address* with a TCP socket.  Returns a
+    socket object on which one should call ``accept()`` to accept a connection
+    on the newly bound socket.
 
-    Generally, the returned socket will be passed to ``tcp_server()``,
-    which accepts connections forever and spawns greenlets for
-    each incoming connection.
+    Generally, the returned socket will be passed to :func:`tcp_server`, which
+    accepts connections forever and spawns greenlets for each incoming
+    connection.
     """
     from eventlet import greenio, util
     socket = greenio.GreenSocket(util.tcp_socket())
@@ -75,9 +75,9 @@ def ssl_listener(address, certificate, private_key):
     Returns a socket object on which one should call ``accept()`` to
     accept a connection on the newly bound socket.
 
-    Generally, the returned socket will be passed to ``tcp_server()``,
-    which accepts connections forever and spawns greenlets for
-    each incoming connection.
+    Generally, the returned socket will be passed to
+    :func:`~eventlet.api.tcp_server`, which accepts connections forever and
+    spawns greenlets for each incoming connection.
     """
     from eventlet import util
     socket = util.wrap_ssl(util.tcp_socket(), certificate, private_key)
@@ -87,8 +87,8 @@ def ssl_listener(address, certificate, private_key):
 
 def connect_tcp(address, localaddr=None):
     """
-    Create a TCP connection to address (host, port) and return the socket.
-    Optionally, bind to localaddr (host, port) first.
+    Create a TCP connection to address ``(host, port)`` and return the socket.
+    Optionally, bind to localaddr ``(host, port)`` first.
     """
     from eventlet import greenio, util
     desc = greenio.GreenSocket(util.tcp_socket())
@@ -99,18 +99,14 @@ def connect_tcp(address, localaddr=None):
 
 def tcp_server(listensocket, server, *args, **kw):
     """
-    Given a socket, accept connections forever, spawning greenlets
-    and executing *server* for each new incoming connection.
-    When *server* returns False, the ``tcp_server()`` greenlet will end.
+    Given a socket, accept connections forever, spawning greenlets and
+    executing *server* for each new incoming connection.  When *server* returns
+    False, the :func:`tcp_server()` greenlet will end.
 
-    listensocket
-        The socket from which to accept connections.
-    server
-        The callable to call when a new connection is made.
-    \*args
-        The positional arguments to pass to *server*.
-    \*\*kw
-        The keyword arguments to pass to *server*.
+    :param listensocket: The socket from which to accept connections.
+    :param server: The callable to call when a new connection is made.
+    :param \*args: The positional arguments to pass to *server*.
+    :param \*\*kw: The keyword arguments to pass to *server*.
     """
     working = [True]
     try:
@@ -242,8 +238,8 @@ def spawn(function, *args, **kwds):
     *kwds* and will remain in control unless it cooperatively yields by
     calling a socket method or ``sleep()``.
 
-    ``spawn()`` returns control to the caller immediately, and *function* will
-    be called in a future main loop iteration.
+    :func:`spawn` returns control to the caller immediately, and *function*
+    will be called in a future main loop iteration.
 
     An uncaught exception in *function* or any child will terminate the new
     coroutine with a log message.
@@ -317,8 +313,8 @@ class timeout(object):
          urllib2.open('http://example.com')
 
     Assuming code block is yielding (i.e. gives up control to the hub),
-    an exception provided in 'exc' argument will be raised
-    (TimeoutError if 'exc' is omitted)::
+    an exception provided in *exc* argument will be raised
+    (:class:`~eventlet.api.TimeoutError` if *exc* is omitted)::
     
      try:
          with timeout(10, MySpecialError, error_arg_1):
@@ -327,7 +323,7 @@ class timeout(object):
          print "special error received"
 
 
-    When exc is None, code block is interrupted silently.
+    When *exc* is ``None``, code block is interrupted silently.
     """
 
     def __init__(self, seconds, *throw_args):
@@ -358,25 +354,21 @@ def with_timeout(seconds, func, *args, **kwds):
     function fails to return before the timeout, cancel it and return a flag
     value.
 
-    seconds
-      (int or float) seconds before timeout occurs
-    func
-      the callable to execute with a timeout; must be one of the functions
-      that implicitly or explicitly yields
-    \*args, \*\*kwds
-      (positional, keyword) arguments to pass to *func*
-    timeout_value=
-      value to return if timeout occurs (default raise ``TimeoutError``)
+    :param seconds: seconds before timeout occurs
+    :type seconds: int or float
+    :param func: the callable to execute with a timeout; must be one of the
+      functions that implicitly or explicitly yields
+    :param \*args: positional arguments to pass to *func*
+    :param \*\*kwds: keyword arguments to pass to *func*
+    :param timeout_value: value to return if timeout occurs (default raise
+      :class:`~eventlet.api.TimeoutError`)
 
-    **Returns**:
+    :rtype: Value returned by *func* if *func* returns before *seconds*, else
+      *timeout_value* if provided, else raise ``TimeoutError``
 
-    Value returned by *func* if *func* returns before *seconds*, else
-    *timeout_value* if provided, else raise ``TimeoutError``
-
-    **Raises**:
-
-    Any exception raised by *func*, and ``TimeoutError`` if *func* times out
-    and no ``timeout_value`` has been provided.
+    :exception TimeoutError: if *func* times out and no ``timeout_value`` has
+      been provided.
+    :exception *any*: Any exception raised by *func*
 
     **Example**::
 
@@ -412,10 +404,11 @@ def exc_after(seconds, *throw_args):
     used to set timeouts after which a network operation or series of
     operations will be canceled.
 
-    Returns a timer object with a ``cancel()`` method which should be used to
+    Returns a :class:`~eventlet.timer.Timer` object with a
+    :meth:`~eventlet.timer.Timer.cancel` method which should be used to
     prevent the exception if the operation completes successfully.
 
-    See also ``with_timeout()`` that encapsulates the idiom below.
+    See also :func:`~eventlet.api.with_timeout` that encapsulates the idiom below.
 
     Example::
 
@@ -491,11 +484,11 @@ def sleep(seconds=0):
     elapsed.
 
     *seconds* may be specified as an integer, or a float if fractional seconds
-    are desired. Calling sleep with *seconds* of 0 is the canonical way of
-    expressing a cooperative yield. For example, if one is looping over a
-    large list performing an expensive calculation without calling any socket
-    methods, it's a good idea to call ``sleep(0)`` occasionally; otherwise
-    nothing else will run.
+    are desired. Calling :func:`~eventlet.api.sleep` with *seconds* of 0 is the
+    canonical way of expressing a cooperative yield. For example, if one is
+    looping over a large list performing an expensive calculation without
+    calling any socket methods, it's a good idea to call ``sleep(0)``
+    occasionally; otherwise nothing else will run.
     """
     hub = get_hub()
     assert hub.greenlet is not greenlet.getcurrent(), 'do not call blocking functions from the mainloop'

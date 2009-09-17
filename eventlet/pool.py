@@ -15,12 +15,12 @@ class Pool(object):
             self.results = None
 
     def resize(self, new_max_size):
-        """ Change the max_size of the pool.
+        """ Change the :attr:`max_size` of the pool.
 
-        If the pool gets resized when there are more than new_max_size
-        coroutines checked out, when they are returned to the pool
-        they will be discarded.  The return value of free() will be
-        negative in this situation.
+        If the pool gets resized when there are more than *new_max_size*
+        coroutines checked out, when they are returned to the pool they will be
+        discarded.  The return value of :meth:`free` will be negative in this
+        situation.
         """
         max_size_delta = new_max_size - self.max_size 
         self.sem.counter += max_size_delta
@@ -40,8 +40,8 @@ class Pool(object):
         """Execute func in one of the coroutines maintained
         by the pool, when one is free.
 
-        Immediately returns a Proc object which can be queried
-        for the func's result.
+        Immediately returns a :class:`~eventlet.proc.Proc` object which can be
+        queried for the func's result.
 
         >>> pool = Pool()
         >>> task = pool.execute(lambda a: ('foo', a), 1)
@@ -97,11 +97,12 @@ class Pool(object):
         return self.procs.killall()
 
     def launch_all(self, function, iterable):
-        """For each tuple (sequence) in iterable, launch function(*tuple) in
-        its own coroutine -- like itertools.starmap(), but in parallel.
-        Discard values returned by function(). You should call wait_all() to
-        wait for all coroutines, newly-launched plus any previously-submitted
-        execute() or execute_async() calls, to complete.
+        """For each tuple (sequence) in *iterable*, launch ``function(*tuple)``
+        in its own coroutine -- like ``itertools.starmap()``, but in parallel.
+        Discard values returned by ``function()``. You should call
+        ``wait_all()`` to wait for all coroutines, newly-launched plus any
+        previously-submitted :meth:`execute` or :meth:`execute_async` calls, to
+        complete.
 
         >>> pool = Pool()
         >>> def saw(x):
@@ -117,11 +118,11 @@ class Pool(object):
             self.execute(function, *tup)
 
     def process_all(self, function, iterable):
-        """For each tuple (sequence) in iterable, launch function(*tuple) in
-        its own coroutine -- like itertools.starmap(), but in parallel.
-        Discard values returned by function(). Don't return until all
-        coroutines, newly-launched plus any previously-submitted execute() or
-        execute_async() calls, have completed.
+        """For each tuple (sequence) in *iterable*, launch ``function(*tuple)``
+        in its own coroutine -- like ``itertools.starmap()``, but in parallel.
+        Discard values returned by ``function()``. Don't return until all
+        coroutines, newly-launched plus any previously-submitted :meth:`execute()`
+        or :meth:`execute_async` calls, have completed.
 
         >>> from eventlet import coros
         >>> pool = coros.CoroutinePool()
@@ -136,45 +137,48 @@ class Pool(object):
         self.wait_all()
 
     def generate_results(self, function, iterable, qsize=None):
-        """For each tuple (sequence) in iterable, launch function(*tuple) in
-        its own coroutine -- like itertools.starmap(), but in parallel.
-        Yield each of the values returned by function(), in the order they're
-        completed rather than the order the coroutines were launched.
+        """For each tuple (sequence) in *iterable*, launch ``function(*tuple)``
+        in its own coroutine -- like ``itertools.starmap()``, but in parallel.
+        Yield each of the values returned by ``function()``, in the order
+        they're completed rather than the order the coroutines were launched.
 
         Iteration stops when we've yielded results for each arguments tuple in
-        iterable. Unlike wait_all() and process_all(), this function does not
-        wait for any previously-submitted execute() or execute_async() calls.
+        *iterable*. Unlike :meth:`wait_all` and :meth:`process_all`, this
+        function does not wait for any previously-submitted :meth:`execute` or
+        :meth:`execute_async` calls.
 
-        Results are temporarily buffered in a queue. If you pass qsize=, this
+        Results are temporarily buffered in a queue. If you pass *qsize=*, this
         value is used to limit the max size of the queue: an attempt to buffer
-        too many results will suspend the completed CoroutinePool coroutine
-        until the requesting coroutine (the caller of generate_results()) has
-        retrieved one or more results by calling this generator-iterator's
-        next().
+        too many results will suspend the completed :class:`CoroutinePool`
+        coroutine until the requesting coroutine (the caller of
+        :meth:`generate_results`) has retrieved one or more results by calling
+        this generator-iterator's ``next()``.
 
         If any coroutine raises an uncaught exception, that exception will
-        propagate to the requesting coroutine via the corresponding next() call.
+        propagate to the requesting coroutine via the corresponding ``next()``
+        call.
 
         What I particularly want these tests to illustrate is that using this
-        generator function:
+        generator function::
 
-        for result in generate_results(function, iterable):
-            # ... do something with result ...
+            for result in generate_results(function, iterable):
+                # ... do something with result ...
+                pass
 
         executes coroutines at least as aggressively as the classic eventlet
-        idiom:
+        idiom::
 
-        events = [pool.execute(function, *args) for args in iterable]
-        for event in events:
-            result = event.wait()
-            # ... do something with result ...
+            events = [pool.execute(function, *args) for args in iterable]
+            for event in events:
+                result = event.wait()
+                # ... do something with result ...
 
-        even without a distinct event object for every arg tuple in iterable,
+        even without a distinct event object for every arg tuple in *iterable*,
         and despite the funny flow control from interleaving launches of new
         coroutines with yields of completed coroutines' results.
 
         (The use case that makes this function preferable to the classic idiom
-        above is when the iterable, which may itself be a generator, produces
+        above is when the *iterable*, which may itself be a generator, produces
         millions of items.)
 
         >>> from eventlet import coros
@@ -190,7 +194,7 @@ class Pool(object):
         ...     return desc
         ...
 
-        (Instead of using a for loop, step through generate_results()
+        (Instead of using a ``for`` loop, step through :meth:`generate_results`
         items individually to illustrate timing)
 
         >>> step = iter(pool.generate_results(quicktask, string.ascii_lowercase))

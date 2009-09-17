@@ -5,6 +5,6 @@ Eventlet began life as Donovan Preston was talking to Bob Ippolito about corouti
 
 * http://svn.red-bean.com/bob/eventlet/trunk/
 
-When Donovan started at Linden Lab in May of 2006, he added eventlet as an svn external in the indra/lib/python directory, to be a dependency of the yet-to-be-named backbone project (at the time, it was named restserv). However, including eventlet as an svn external meant that any time the externally hosted project had hosting issues, Linden developers were not able to perform svn updates. Thus, the eventlet source was imported into the linden source tree at the same location, and became a fork.
+When Donovan started at Linden Lab in May of 2006, he added eventlet as an svn external in the ``indra/lib/python directory``, to be a dependency of the yet-to-be-named backbone project (at the time, it was named restserv). However, including eventlet as an svn external meant that any time the externally hosted project had hosting issues, Linden developers were not able to perform svn updates. Thus, the eventlet source was imported into the linden source tree at the same location, and became a fork.
 
 Bob Ippolito has ceased working on eventlet and has stated his desire for Linden to take it's fork forward to the open source world as "the" eventlet.

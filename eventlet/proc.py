@@ -19,35 +19,35 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-"""Advanced coroutine control.
-
+"""
 This module provides means to spawn, kill and link coroutines. Linking means
 subscribing to the coroutine's result, either in form of return value or
 unhandled exception.
 
 To create a linkable coroutine use spawn function provided by this module:
 
->>> def demofunc(x, y):
-...    return x / y
+    >>> def demofunc(x, y):
+    ...    return x / y
+    >>> p = spawn(demofunc, 6, 2)
 
->>> p = spawn(demofunc, 6, 2)
+The return value of :func:`spawn` is an instance of :class:`Proc` class that
+you can "link":
 
-The return value of spawn is an instance of Proc class that you can "link":
+ * ``p.link(obj)`` - notify *obj* when the coroutine is finished
 
- * p.link(obj) - notify obj when the coroutine is finished
-
-What does "notify" means here depends on the type of `obj': a callable is
-simply called, an event or a queue is notified using send/send_exception
-methods and if `obj' is another greenlet it's killed with LinkedExited
-exception.
+What "notify" means here depends on the type of *obj*: a callable is simply
+called, an :class:`~eventlet.coros.event` or a :class:`~eventlet.coros.queue`
+is notified using ``send``/``send_exception`` methods and if *obj* is another
+greenlet it's killed with :class:`LinkedExited` exception.
 
 Here's an example:
+
 >>> event = coros.event()
 >>> _ = p.link(event)
 >>> event.wait()
 3
 
-Now, even though `p' is finished it's still possible to link it. In this
+Now, even though *p* is finished it's still possible to link it. In this
 case the notification is performed immediatelly:
 
 >>> try:
@@ -56,13 +56,14 @@ case the notification is performed immediatelly:
 ...     print 'LinkedCompleted'
 LinkedCompleted
 
-(Without an argument, link is created to the current greenlet)
+(Without an argument, the link is created to the current greenlet)
 
-There are also link_value and link_exception methods that only deliver a return
-value and an unhandled exception respectively (plain `link' deliver both).
-Suppose we want to spawn a greenlet to do an important part of the task; if it
-fails then there's no way to complete the task so the parent must fail as well;
-`link_exception' is useful here:
+There are also :meth:`~eventlet.proc.Source.link_value` and
+:func:`link_exception` methods that only deliver a return value and an
+unhandled exception respectively (plain :meth:`~eventlet.proc.Source.link`
+delivers both).  Suppose we want to spawn a greenlet to do an important part of
+the task; if it fails then there's no way to complete the task so the parent
+must fail as well; :meth:`~eventlet.proc.Source.link_exception` is useful here:
 
 >>> p = spawn(demofunc, 1, 0)
 >>> _ = p.link_exception()
@@ -72,8 +73,9 @@ fails then there's no way to complete the task so the parent must fail as well;
 ...     print 'LinkedFailed'
 LinkedFailed
 
-One application of linking is `waitall' function: link to a bunch of coroutines
-and wait for all them to complete. Such function is provided by this module.
+One application of linking is :func:`waitall` function: link to a bunch of
+coroutines and wait for all them to complete. Such a function is provided by
+this module.
 """
 import sys
 from eventlet import api, coros
@@ -83,8 +85,9 @@ __all__ = ['LinkedExited',
            'LinkedCompleted',
            'LinkedKilled',
            'ProcExit',
+           'Link',
            'waitall',
-           'killall'
+           'killall',
            'Source',
            'Proc',
            'spawn',
@@ -133,6 +136,9 @@ class ProcExit(api.GreenletExit):
 
 
 class Link(object):
+    """
+    A link to a greenlet, triggered when the greenlet exits.
+    """
 
     def __init__(self, listener):
         self.listener = listener
@@ -233,9 +239,9 @@ _NOT_USED = NotUsed()
 
 
 def spawn_greenlet(function, *args):
-    """Create a new greenlet that will run `function(*args)'.
+    """Create a new greenlet that will run ``function(*args)``.
     The current greenlet won't be unscheduled. Keyword arguments aren't
-    supported (limitation of greenlet), use spawn() to work around that.
+    supported (limitation of greenlet), use :func:`spawn` to work around that.
     """
     g = api.Greenlet(function)
     g.parent = api.get_hub().greenlet
@@ -247,22 +253,23 @@ class Source(object):
     """Maintain a set of links to the listeners. Delegate the sent value or
     the exception to all of them.
 
-    To set up a link, use link_value, link_exception or link method. The
-    latter establishes both "value" and "exception" link. It is possible to
-    link to events, queues, greenlets and callables.
+    To set up a link, use :meth:`link_value`, :meth:`link_exception` or
+    :meth:`link` method. The latter establishes both "value" and "exception"
+    link. It is possible to link to events, queues, greenlets and callables.
 
     >>> source = Source()
     >>> event = coros.event()
     >>> _ = source.link(event)
 
-    Once source's send or send_exception method is called, all the listeners
-    with the right type of link will be notified ("right type" means that
-    exceptions won't be delivered to "value" links and values won't be
-    delivered to "exception" links). Once link has been fired it is removed.
+    Once source's :meth:`send` or :meth:`send_exception` method is called, all
+    the listeners with the right type of link will be notified ("right type"
+    means that exceptions won't be delivered to "value" links and values won't
+    be delivered to "exception" links). Once link has been fired it is removed.
 
-    Notifying listeners is performed in the MAINLOOP greenlet. Under the hood
-    notifying a link means executing a callback, see Link class for details. Notification
-    must not attempt to switch to the hub, i.e. call any of blocking functions.
+    Notifying listeners is performed in the **mainloop** greenlet. Under the
+    hood notifying a link means executing a callback, see :class:`Link` class
+    for details. Notification *must not* attempt to switch to the hub, i.e.
+    call any blocking functions.
 
     >>> source.send('hello')
     >>> event.wait()
@@ -273,16 +280,17 @@ class Source(object):
 
     There 3 kinds of listeners supported:
 
-     1. If `listener' is a greenlet (regardless if it's a raw greenlet or an
-        extension like Proc), a subclass of LinkedExited exception is raised
-        in it.
+     1. If *listener* is a greenlet (regardless if it's a raw greenlet or an
+        extension like :class:`Proc`), a subclass of :class:`LinkedExited`
+        exception is raised in it.
 
-     2. If `listener' is something with send/send_exception methods (event,
-        queue, Source but not Proc) the relevant method is called.
+     2. If *listener* is something with send/send_exception methods (event,
+        queue, :class:`Source` but not :class:`Proc`) the relevant method is
+        called.
 
-     3. If `listener' is a callable, it is called with 1 argument (the result)
-        for "value" links and with 3 arguments (typ, value, tb) for "exception"
-        links.
+     3. If *listener* is a callable, it is called with 1 argument (the result)
+        for "value" links and with 3 arguments ``(typ, value, tb)`` for
+        "exception" links.
     """
 
     def __init__(self, name=None):
@@ -433,13 +441,14 @@ class Source(object):
                 raise
 
     def wait(self, timeout=None, *throw_args):
-        """Wait until send() or send_exception() is called or `timeout' has
-        expired. Return the argument of send or raise the argument of
-        send_exception. If timeout has expired, None is returned.
+        """Wait until :meth:`send` or :meth:`send_exception` is called or
+        *timeout* has expired. Return the argument of :meth:`send` or raise the
+        argument of :meth:`send_exception`. If *timeout* has expired, ``None``
+        is returned.
 
         The arguments, when provided, specify how many seconds to wait and what
-        to do when timeout has expired. They are treated the same way as
-        api.timeout treats them.
+        to do when *timeout* has expired. They are treated the same way as
+        :func:`~eventlet.api.timeout` treats them.
         """
         if self.value is not _NOT_USED:
             if self._exc is None:
@@ -547,15 +556,15 @@ class Proc(Source):
 
     @classmethod
     def spawn(cls, function, *args, **kwargs):
-        """Return a new Proc instance that is scheduled to execute
-        function(*args, **kwargs) upon the next hub iteration.
+        """Return a new :class:`Proc` instance that is scheduled to execute
+        ``function(*args, **kwargs)`` upon the next hub iteration.
         """
         proc = cls()
         proc.run(function, *args, **kwargs)
         return proc
 
     def run(self, function, *args, **kwargs):
-        """Create a new greenlet to execute `function(*args, **kwargs)'.
+        """Create a new greenlet to execute ``function(*args, **kwargs)``.
         The created greenlet is scheduled to run upon the next hub iteration.
         """
         assert self.greenlet is None, "'run' can only be called once per instance"
@@ -578,9 +587,10 @@ class Proc(Source):
     def throw(self, *throw_args):
         """Used internally to raise the exception.
 
-        Behaves exactly like greenlet's 'throw' with the exception that ProcExit
-        is raised by default. Do not use this function as it leaves the current
-        greenlet unscheduled forever. Use kill() method instead.
+        Behaves exactly like greenlet's 'throw' with the exception that
+        :class:`ProcExit` is raised by default. Do not use this function as it
+        leaves the current greenlet unscheduled forever. Use :meth:`kill`
+        method instead.
         """
         if not self.dead:
             if not throw_args:
@@ -588,11 +598,12 @@ class Proc(Source):
             self.greenlet.throw(*throw_args)
 
     def kill(self, *throw_args):
-        """Raise an exception in the greenlet. Unschedule the current greenlet
-        so that this Proc can handle the exception (or die).
+        """
+        Raise an exception in the greenlet. Unschedule the current greenlet so
+        that this :class:`Proc` can handle the exception (or die).
 
-        The exception can be specified with throw_args. By default, ProcExit is
-        raised.
+        The exception can be specified with *throw_args*. By default,
+        :class:`ProcExit` is raised.
         """
         if not self.dead:
             if not throw_args:
@@ -679,8 +690,11 @@ class wrap_errors(object):
 
 
 class RunningProcSet(object):
-    """Maintain a set of Procs that are still running, that is, automatically remove
-    a proc when it's finished. Provide a way to wait/kill all of them"""
+    """
+    Maintain a set of :class:`Proc` s that are still running, that is,
+    automatically remove a proc when it's finished. Provide a way to wait/kill
+    all of them
+    """
 
     def __init__(self, *args):
         self.procs = set(*args)

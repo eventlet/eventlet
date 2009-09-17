@@ -183,12 +183,13 @@ __original_select__ = select.select
 
 
 def fake_select(r, w, e, timeout):
-    """This is to cooperate with people who are trying to do blocking
-    reads with a timeout. This only works if r, w, and e aren't
-    bigger than len 1, and if either r or w is populated.
+    """
+    This is to cooperate with people who are trying to do blocking reads with a
+    *timeout*. This only works if *r*, *w*, and *e* aren't bigger than len 1,
+    and if either *r* or *w* is populated.
 
-    Install this with wrap_select_with_coroutine_select,
-    which makes the global select.select into fake_select.
+    Install this with :func:`wrap_select_with_coroutine_select`, which makes
+    the global ``select.select`` into :func:`fake_select`.
     """
     from eventlet import api
 
@@ -224,9 +225,10 @@ except ImportError:
 
 
 def wrap_threading_local_with_coro_local():
-    """monkey patch threading.local with something that is
-    greenlet aware. Since greenlets cannot cross threads,
-    so this should be semantically identical to threadlocal.local
+    """
+    monkey patch ``threading.local`` with something that is greenlet aware.
+    Since greenlets cannot cross threads, so this should be semantically
+    identical to ``threadlocal.local``
     """
     from eventlet import api
     def get_ident():

@@ -1,4 +1,4 @@
-Processes
+:mod:`processes` -- Running child processes
 ==================
 
 .. automodule:: eventlet.processes

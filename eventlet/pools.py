@@ -38,7 +38,9 @@ class AllFailed(FanFailed):
 
 class Pool(object):
     """
-    When using the pool, if you do a get, you should ALWAYS do a put.
+    When using the pool, if you do a get, you should **always** do a
+    :meth:`put`.
+
     The pattern is::
 
      thing = self.pool.get()
@@ -47,10 +49,11 @@ class Pool(object):
      finally:
          self.pool.put(thing)
 
-    The maximum size of the pool can be modified at runtime via the max_size attribute.
-    Adjusting this number does not affect existing items checked out of the pool, nor
-    on any waiters who are waiting for an item to free up.  Some indeterminate number
-    of get/put cycles will be necessary before the new maximum size truly matches the
+    The maximum size of the pool can be modified at runtime via the
+    :attr:`max_size` attribute.  Adjusting this number does not affect existing
+    items checked out of the pool, nor on any waiters who are waiting for an
+    item to free up.  Some indeterminate number of :meth:`get`/:meth:`put`
+    cycles will be necessary before the new maximum size truly matches the
     actual operation of the pool.
     """
     def __init__(self, min_size=0, max_size=4, order_as_stack=False):
@@ -60,12 +63,12 @@ class Pool(object):
         the pool, the pool will cause any getter to cooperatively yield until an
         item is put in.
 
-        *order_as_stack* governs the ordering of the items in the free pool.  If
-        False (the default), the free items collection (of items that were
-        created and were put back in the pool) acts as a round-robin, giving
-        each item approximately equal utilization.  If True, the free pool acts
-        as a FILO stack, which preferentially re-uses items that have most
-        recently been used.
+        *order_as_stack* governs the ordering of the items in the free pool.
+        If ``False`` (the default), the free items collection (of items that
+        were created and were put back in the pool) acts as a round-robin,
+        giving each item approximately equal utilization.  If ``True``, the
+        free pool acts as a FILO stack, which preferentially re-uses items that
+        have most recently been used.
         """
         self.min_size = min_size
         self.max_size = max_size

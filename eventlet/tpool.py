@@ -90,8 +90,9 @@ def erecv(e):
 
 
 def execute(meth,*args, **kwargs):
-    """Execute method in a thread, blocking the current
-    coroutine until the method completes.
+    """
+    Execute *meth* in a thread, blocking the current coroutine until the method
+    completes.
     """
     setup()
     e = esend(meth,*args,**kwargs)
@@ -104,11 +105,13 @@ erpc = execute
 
 
 def proxy_call(autowrap, f, *args, **kwargs):
-    """ Call a function *f* and returns the value.  If the type of the
-    return value is in the *autowrap* collection, then it is wrapped in
-    a Proxy object before return.  Normally *f* will be called
-    nonblocking with the execute method; if the keyword argument
-    "nonblocking" is set to true, it will simply be executed directly."""
+    """
+    Call a function *f* and returns the value.  If the type of the return value
+    is in the *autowrap* collection, then it is wrapped in a :class:`Proxy`
+    object before return.  Normally *f* will be called nonblocking with the
+    execute method; if the keyword argument "nonblocking" is set to ``True``,
+    it will simply be executed directly.
+    """
     if kwargs.pop('nonblocking',False):
         rv = f(*args, **kwargs)
     else:
@@ -119,11 +122,13 @@ def proxy_call(autowrap, f, *args, **kwargs):
         return rv
 
 class Proxy(object):
-    """ a simple proxy-wrapper of any object that comes with a methods-only interface,
-    in order to forward every method invocation onto a thread in the native-thread pool.
-    A key restriction is that the object's methods cannot call into eventlets, since the
-    eventlet dispatcher runs on a different native thread.  This is for running native-threaded
-    code only. """
+    """
+    a simple proxy-wrapper of any object that comes with a methods-only
+    interface, in order to forward every method invocation onto a thread in the
+    native-thread pool.  A key restriction is that the object's methods cannot
+    call into eventlets, since the eventlet dispatcher runs on a different
+    native thread.  This is for running native-threaded code only.
+    """
     def __init__(self, obj,autowrap=()):
         self._obj = obj
         self._autowrap = autowrap

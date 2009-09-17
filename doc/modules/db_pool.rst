@@ -1,4 +1,4 @@
-Db_pool
+:mod:`db_pool` -- DBAPI 2 database connection pooling
 ==================
 
 The db_pool module is useful for managing database connections.  It provides three primary benefits: cooperative yielding during database operations, concurrency limiting to a database host, and connection reuse.  db_pool is intended to be database-agnostic, compatible with any DB-API 2.0 database module.
@@ -10,7 +10,7 @@ A ConnectionPool object represents a pool of connections open to a particular da
 >>> import MySQLdb
 >>> cp = ConnectionPool(MySQLdb, host='localhost', user='root', passwd='')
 
-Once you have this pool object, you connect to the database by calling get() on it:
+Once you have this pool object, you connect to the database by calling :meth:`~eventlet.db_pool.ConnectionPool.get` on it:
 
 >>> conn = cp.get()
 

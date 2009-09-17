@@ -52,7 +52,7 @@ When you run the tests, Eventlet will use the most appropriate hub for the curre
 * ``--with-eventlethub`` enables the eventlethub plugin.
 * ``--hub=HUB`` specifies which Eventlet hub to use during the tests.
 
-If you wish to run tests against a particular Twisted reactor, use `--reactor=REACTOR` instead of ``--hub``.  The full list of eventlet hubs is currently:
+If you wish to run tests against a particular Twisted reactor, use ``--reactor=REACTOR`` instead of ``--hub``.  The full list of eventlet hubs is currently:
 
 * poll
 * selects

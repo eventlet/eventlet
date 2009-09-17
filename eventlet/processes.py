@@ -42,12 +42,12 @@ def cooperative_wait(pobj, check_interval=0.01):
     """ Waits for a child process to exit, returning the status
     code.
 
-    Unlike os.wait, cooperative_wait does not block the entire
-    process, only the calling coroutine.  If the child process does
-    not die, cooperative_wait could wait forever.
+    Unlike ``os.wait``, :func:`cooperative_wait` does not block the entire
+    process, only the calling coroutine.  If the child process does not die,
+    :func:`cooperative_wait` could wait forever.
 
-    The argument check_interval is the amount of time, in seconds,
-    that cooperative_wait will sleep between calls to os.waitpid.
+    The argument *check_interval* is the amount of time, in seconds, that
+    :func:`cooperative_wait` will sleep between calls to ``os.waitpid``.
     """
     try:
         while True:

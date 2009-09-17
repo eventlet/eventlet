@@ -1,4 +1,4 @@
-Timer
+:mod:`timer`
 ==================
 
 .. automodule:: eventlet.timer

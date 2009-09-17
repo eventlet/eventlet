@@ -34,18 +34,18 @@ if _g_debug_mode:
 
 def pythonpath_sync():
     """
-    apply the current sys.path to the environment variable PYTHONPATH, so that child processes have the same paths as the caller does.
-"""
+    apply the current ``sys.path`` to the environment variable ``PYTHONPATH``,
+    so that child processes have the same paths as the caller does.
+    """
     pypath = os.pathsep.join(sys.path)
     os.environ['PYTHONPATH'] = pypath
 
 def wrap(obj, dead_callback = None):
     """
     wrap in object in another process through a saranwrap proxy
-    *object*
-        The object to wrap.
-    *dead_callback*
-        A callable to invoke if the process exits."""
+    :param object: The object to wrap.
+    :dead_callback: A callable to invoke if the process exits.
+    """
 
     if type(obj).__name__ == 'module':
         return wrap_module(obj.__name__, dead_callback)
@@ -61,10 +61,10 @@ def wrap(obj, dead_callback = None):
 def wrap_module(fqname, dead_callback = None):
     """
     wrap a module in another process through a saranwrap proxy
-    *fqname*
-        The fully qualified name of the module.
-    *dead_callback*
-        A callable to invoke if the process exits."""
+
+    :param fqname: The fully qualified name of the module.
+    :param dead_callback: A callable to invoke if the process exits.
+    """
     pythonpath_sync()
     global _g_debug_mode
     if _g_debug_mode:
@@ -77,17 +77,19 @@ def wrap_module(fqname, dead_callback = None):
 def status(proxy):
     """
     get the status from the server through a proxy
-    *proxy*
-        a saranwrap.Proxy object connected to a server."""
+
+    :param proxy: a :class:`eventlet.saranwrap.Proxy` object connected to a
+        server.
+    """
     return proxy.__local_dict['_cp'].make_request(Request('status', {}))
 
 class BadResponse(Exception):
-    """"This exception is raised by an saranwrap client when it could
+    """This exception is raised by an saranwrap client when it could
     parse but cannot understand the response from the server."""
     pass
 
 class BadRequest(Exception):
-    """"This exception is raised by a saranwrap server when it could parse
+    """This exception is raised by a saranwrap server when it could parse
     but cannot understand the response from the server."""
     pass
 
@@ -152,7 +154,7 @@ def _write_request(param, output):
     _write_lp_hunk(output, str)
 
 def _is_local(attribute):
-    "Return true if the attribute should be handled locally"
+    "Return ``True`` if the attribute should be handled locally"
 #    return attribute in ('_in', '_out', '_id', '__getattribute__', '__setattr__', '__dict__')
     # good enough for now. :)
     if '__local_dict' in attribute:
@@ -183,18 +185,16 @@ def _unmunge_attr_name(name):
     return name
 
 class ChildProcess(object):
-    """\
-    This class wraps a remote python process, presumably available
-    in an instance of an Server.
+    """
+    This class wraps a remote python process, presumably available in an
+    instance of a :class:`Server`.
     """
     def __init__(self, instr, outstr, dead_list = None):
         """
-        *instr*
-            a file-like object which supports read().
-        *outstr*
-            a file-like object which supports write() and flush().
-        *dead_list*
-            a list of ids of remote objects that are dead
+        :param instr: a file-like object which supports ``read()``.
+        :param outstr: a file-like object which supports ``write()`` and
+            ``flush()``.
+        :param dead_list: a list of ids of remote objects that are dead
         """
         # default dead_list inside the function because all objects in method
         # argument lists are init-ed only once globally
@@ -223,18 +223,18 @@ class ChildProcess(object):
 
 
 class Proxy(object):
-    """\
-
+    """
     This is the class you will typically use as a client to a child
-process.
+    process.
 
-Simply instantiate one around a file-like interface and start
-calling methods on the thing that is exported. The dir() builtin is
-not supported, so you have to know what has been exported.
-"""
+    Simply instantiate one around a file-like interface and start calling
+    methods on the thing that is exported. The ``dir()`` builtin is not
+    supported, so you have to know what has been exported.
+    """
     def __init__(self, cp):
-        """*cp*
-            ChildProcess instance that wraps the i/o to the child process.
+        """
+        :param cp: :class:`ChildProcess` instance that wraps the i/o to the
+            child process.
         """
         #_prnt("Proxy::__init__")
         self.__local_dict = dict(
@@ -285,20 +285,20 @@ not supported, so you have to know what has been exported.
             return my_cp.make_request(request, attribute=attribute)
 
 class ObjectProxy(Proxy):
-    """\
+    """
+    This class wraps a remote object in the :class:`Server`
 
-    This class wraps a remote object in the Server
-
-This class will be created during normal operation, and users should
-not need to deal with this class directly."""
+    This class will be created during normal operation, and users should
+    not need to deal with this class directly.
+    """
 
     def __init__(self, cp, _id):
-        """\
-    *cp*
-        A ChildProcess object that wraps the i/o of a child process.
-    *_id*
-        an identifier for the remote object. humans do not provide this.
-"""
+        """
+        :param cp: A :class:`ChildProcess` object that wraps the i/o of a child
+            process.
+        :param _id: an identifier for the remote object. humans do not provide
+            this.
+        """
         Proxy.__init__(self, cp)
         self.__local_dict['_id'] = _id
         #_prnt("ObjectProxy::__init__ %s" % _id)
@@ -390,12 +390,12 @@ def getpid(self):
 
 
 class CallableProxy(object):
-    """\
+    """
+    This class wraps a remote function in the :class:`Server`
 
-    This class wraps a remote function in the Server
-
-This class will be created by an Proxy during normal operation,
-and users should not need to deal with this class directly."""
+    This class will be created by an :class:`Proxy` during normal operation,
+    and users should not need to deal with this class directly.
+    """
 
     def __init__(self, object_id, name, cp):
         #_prnt("CallableProxy::__init__: %s, %s" % (object_id, name))
@@ -415,14 +415,13 @@ and users should not need to deal with this class directly."""
 
 class Server(object):
     def __init__(self, input, output, export):
-        """\
-    *input*
-        a file-like object which supports read().
-    *output*
-        a file-like object which supports write() and flush().
-    *export*
-        an object, function, or map which is exported to clients
-when the id is None."""
+        """
+        :param input: a file-like object which supports ``read()``.
+        :param output: a file-like object which supports ``write()`` and
+            ``flush()``.
+        :param export: an object, function, or map which is exported to clients
+            when the id is ``None``.
+        """
         #_log("Server::__init__")
         self._in = input
         self._out = output
@@ -567,12 +566,13 @@ when the id is None."""
                 self.write_exception(e)
 
     def is_value(self, value):
-        """\
-    Test if value should be serialized as a simple dataset.
-    *value*
-        The value to test.
-@return Returns true if value is a simple serializeable set of data.
-"""
+        """
+        Test if *value* should be serialized as a simple dataset.
+
+        :param value: The value to test.
+        :return: Returns ``True`` if *value* is a simple serializeable set of
+            data.
+        """
         return type(value) in (str,unicode,int,float,long,bool,type(None))
 
     def respond(self, body):

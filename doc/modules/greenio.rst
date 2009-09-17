@@ -1,4 +1,4 @@
-Greenio
+:mod:`greenio` -- Greenlet file objects
 ==================
 
 .. automodule:: eventlet.greenio
