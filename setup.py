@@ -28,6 +28,7 @@ setup(
     retaining high programmer usability by using coroutines to make
     the non-blocking io operations appear blocking at the source code
     level.""",
+    test_suite = 'nose.collector',
     classifiers=[
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python",

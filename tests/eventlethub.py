@@ -23,26 +23,26 @@ import logging
 from nose.plugins.base import Plugin
 from eventlet import api
 
-log = logging.getLogger('nose.plugins.eventlet_hub')
+log = logging.getLogger('nose.plugins.eventlethub')
 
 class EventletHub(Plugin):
     name = 'eventlethub'
 
     def options(self, parser, env):
         super(EventletHub, self).options(parser, env)
-        parser.add_option('--eventlet-hub',
+        parser.add_option('--hub',
                           dest="eventlet_hub",
                           metavar="HUB",
                           default=env.get('NOSE_EVENTLET_HUB'),
                           help="Use the specified eventlet hub for the tests."\
                            " [NOSE_EVENTLET_HUB]")
-        parser.add_option('--eventlet-reactor',
+        parser.add_option('--reactor',
                           dest="eventlet_reactor",
                           metavar="REACTOR",
                           default=env.get('NOSE_EVENTLET_REACTOR'),
                           help="Use the specified Twisted reactor for the "\
                           "tests.  Use of this flag forces the twisted hub, "\
-                          "as if --eventlet-hub=twistedr was also supplied. "\
+                          "as if --hub=twistedr was also supplied. "\
                           "[NOSE_EVENTLET_REACTOR]")
 
                            
@@ -59,7 +59,7 @@ class EventletHub(Plugin):
             self.twisted_already_used = False
             if self.reactor is None:
                 raise ValueError("Can't have twisted hub without specifying a "\
-                "reactor.  Use --eventlet-reactor instead.")
+                "reactor.  Use --reactor instead.")
 
             m = __import__('twisted.internet.' + self.reactor)
             getattr(m.internet, self.reactor).install()
@@ -74,7 +74,9 @@ class EventletHub(Plugin):
         """Select the desired hub.
         """        
         if self.hub_name is None:
-            log.warn('using *default* eventlet hub: %s', api.get_hub())
+            log.warn('Using default eventlet hub: %s, did you mean '\
+                     'to supply --hub command line argument?', 
+                     api.get_hub().__module__)
         else:
             if self.hub_name == 'twistedr':
                 if self.twisted_already_used:
