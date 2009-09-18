@@ -30,7 +30,8 @@ import sys
 import tempfile
 import time
 import unittest
-import uuid
+import re
+import StringIO
 
 # random test stuff
 def list_maker():
@@ -95,41 +96,41 @@ class TestSaranwrap(unittest.TestCase):
         self.assertEqual('saran:' + `my_object`, `prox`)
 
     def test_wrap_module_class(self):
-        prox = saranwrap.wrap(uuid)
+        prox = saranwrap.wrap(re)
         self.assertEqual(saranwrap.Proxy, type(prox))
-        id = prox.uuid4()
-        self.assertEqual(id.get_version(), uuid.uuid4().get_version())
-        self.assert_(repr(prox.uuid4))
+        exp = prox.compile('.')
+        self.assertEqual(exp.flags, 0)
+        self.assert_(repr(prox.compile))
 
     def test_wrap_eq(self):
-        prox = saranwrap.wrap(uuid)
-        id1 = prox.uuid4()
-        id2 = prox.UUID(str(id1))
-        self.assertEqual(id1, id2)
-        id3 = prox.uuid4()
-        self.assert_(id1 != id3)
+        prox = saranwrap.wrap(re)
+        exp1 = prox.compile('.')
+        exp2 = prox.compile(exp1.pattern)
+        self.assertEqual(exp1, exp2)
+        exp3 = prox.compile('/')
+        self.assert_(exp1 != exp3)
 
     def test_wrap_nonzero(self):
-        prox = saranwrap.wrap(uuid)
-        id1 = prox.uuid4()
-        self.assert_(bool(id1))
-        prox2 = saranwrap.wrap([1, 2, 3])
+        prox = saranwrap.wrap(re)
+        exp1 = prox.compile('.')
+        self.assert_(bool(exp1))
+        prox2 = saranwrap.Proxy([1, 2, 3])
         self.assert_(bool(prox2))
 
     def test_multiple_wraps(self):
-        prox1 = saranwrap.wrap(uuid)
-        prox2 = saranwrap.wrap(uuid)
-        x1 = prox1.uuid4()
-        x2 = prox1.uuid4()
+        prox1 = saranwrap.wrap(re)
+        prox2 = saranwrap.wrap(re)
+        x1 = prox1.compile('.')
+        x2 = prox1.compile('.')
         del x2
-        x3 = prox2.uuid4()
+        x3 = prox2.compile('.')
 
     def test_dict_passthru(self):
-        prox = saranwrap.wrap(uuid)
-        x = prox.uuid4()
+        prox = saranwrap.wrap(StringIO)
+        x = prox.StringIO('a')
         self.assertEqual(type(x.__dict__), saranwrap.ObjectProxy)
         # try it all on one line just for the sake of it
-        self.assertEqual(type(saranwrap.wrap(uuid).uuid4().__dict__), saranwrap.ObjectProxy)
+        self.assertEqual(type(saranwrap.wrap(StringIO).StringIO('a').__dict__), saranwrap.ObjectProxy)
 
     def test_is_value(self):
         server = saranwrap.Server(None, None, None)
@@ -145,7 +146,7 @@ class TestSaranwrap(unittest.TestCase):
         self.assertEqual(prox[1], 2)
 
     def test_raising_exceptions(self):
-        prox = saranwrap.wrap(uuid)
+        prox = saranwrap.wrap(re)
         def nofunc():
             prox.never_name_a_function_like_this()
         self.assertRaises(AttributeError, nofunc)
@@ -196,7 +197,7 @@ class TestSaranwrap(unittest.TestCase):
         status = saranwrap.status(prox)
         self.assertEqual(status['object_count'], 1)
         self.assertEqual(status['next_id'], 3)
-        prox2 = saranwrap.wrap(uuid)
+        prox2 = saranwrap.wrap(re)
         self.assert_(status['pid'] != saranwrap.status(prox2)['pid'])
 
     def test_del(self):
@@ -226,12 +227,12 @@ class TestSaranwrap(unittest.TestCase):
         self.assertEqual(opts.n, 'foo')
 
     def test_original_proxy_going_out_of_scope(self):
-        def make_uuid():
-            prox = saranwrap.wrap(uuid)
+        def make_re():
+            prox = saranwrap.wrap(re)
             # after this function returns, prox should fall out of scope
-            return prox.uuid4()
-        tid = make_uuid()
-        self.assertEqual(tid.get_version(), uuid.uuid4().get_version())
+            return prox.compile('.')
+        tid = make_re()
+        self.assertEqual(tid.flags, 0)
         def make_list():
             from tests import saranwrap_test
             prox = saranwrap.wrap(saranwrap_test.list_maker)
