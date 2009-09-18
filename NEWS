@@ -1,3 +1,50 @@
+0.9.0
+=====
+
+* Full-duplex sockets (simultaneous readers and writers in the same process).
+* Remove modules that distract from the core mission of making it straightforward to write event-driven networking apps: 
+    httpd, httpc, channel, greenlib, httpdate, jsonhttp, logutil
+* Removed test dependency on sqlite, using nose instead.
+* Marked known-broken tests using nose's mechanism (most of these are not broken but are simply run in the incorrect context, such as threading-related tests that are incompatible with the libevent hub).
+* Remove copied code from python standard libs (in tests).
+
+0.8.16
+======
+* GreenSSLObject properly masks ZeroReturnErrors with an empty read; with unit test.
+* Fixed 2.6 SSL compatibility issue.
+
+0.8.15
+======
+
+* GreenSSL object no longer converts ZeroReturnErrors into empty reads, because that is more compatible with the underlying SSLConnection object.
+* Fixed issue caused by SIGCHLD handler in processes.py
+* Stopped supporting string exceptions in saranwrap and fixed a few test failures.
+
+0.8.14
+======
+* Fixed some more Windows compatibility problems, resolving EVT-37 : 
+http://jira.secondlife.com/browse/EVT-37
+* waiting() method on Pool class, which was lost when the Pool implementation
+replaced CoroutinePool.
+
+0.8.13
+======
+* 2.6 SSL compatibility patch by Marcus Cavanaugh.
+* Added greenlet and pyopenssl as dependencies in setup.py.
+
+0.8.12
+======
+
+* The ability to resize() pools of coroutines, which was lost when the 
+Pool implementation replaced CoroutinePool.
+* Fixed Cesar's issue with SSL connections, and furthermore did a 
+complete overhaul of SSL handling in eventlet so that it's much closer 
+to the behavior of the built-in libraries.  In particular, users of 
+GreenSSL sockets must now call shutdown() before close(), exactly 
+like SSL.Connection objects.
+* A small patch that makes Eventlet work on Windows.  This is the first 
+release of Eventlet that works on Windows.
+
 0.8.11
 ======
 
