@@ -629,7 +629,7 @@ class HTTPConnection:
     debuglevel = 0
     strict = 0
 
-    def __init__(self, host, port=None, strict=None):
+    def __init__(self, host, port=None, strict=None, timeout=0):
         self.sock = None
         self._buffer = []
         self.__response = None
@@ -1122,7 +1122,7 @@ class HTTPSConnection(HTTPConnection):
     default_port = HTTPS_PORT
 
     def __init__(self, host, port=None, key_file=None, cert_file=None,
-                 strict=None):
+                 strict=None, timeout=0):
         HTTPConnection.__init__(self, host, port, strict)
         self.key_file = key_file
         self.cert_file = cert_file
