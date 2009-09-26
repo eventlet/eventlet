@@ -393,7 +393,40 @@ class TestHttpd(TestCase):
         headerlines = fd.readuntil('\r\n\r\n').splitlines()
         self.assertEquals(1, len([l for l in headerlines
                 if l.lower().startswith('content-length')]))
-                
+
+    def test_017_ssl_zeroreturnerror(self):
+
+        def server(sock, site, log=None):
+            try:
+                serv = wsgi.Server(sock, sock.getsockname(), site, log)
+                client_socket = sock.accept()
+                serv.process_request(client_socket)
+                return True
+            except:
+                return False
+
+        def wsgi_app(environ, start_response):
+            start_response('200 OK', {})
+            return [environ['wsgi.input'].read()]
+
+        certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
+        private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
+
+        port = 4204
+
+        sock = api.ssl_listener(('', port), certificate_file, private_key_file)
+
+        from eventlet import coros
+        server_coro = coros.execute(server, sock, wsgi_app)
+
+        client = api.connect_tcp(('127.0.0.1', port))
+        client = util.wrap_ssl(client)
+        client.write('X') # non-empty payload so that SSL handshake occurs
+        client.shutdown()
+
+        success = server_coro.wait()
+        self.assert_(success)
+
 
 if __name__ == '__main__':
     main()

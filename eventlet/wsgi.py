@@ -31,6 +31,7 @@ from eventlet.green import socket
 from eventlet.green import BaseHTTPServer
 from eventlet.pool import Pool
 
+import greenio
 
 DEFAULT_MAX_SIMULTANEOUS_REQUESTS = 1024
 DEFAULT_MAX_HTTP_VERSION = 'HTTP/1.1'
@@ -84,7 +85,10 @@ class Input(object):
             length = self.content_length - self.position
         if not length:
             return ''
-        read = reader(length)
+        try:
+            read = reader(length)
+        except greenio.SSL.ZeroReturnError:
+            read = ''
         self.position += len(read)
         return read
 
@@ -96,25 +100,28 @@ class Input(object):
             self.wfile_line = None
 
         response = []
-        if length is None:
-            if self.chunk_length > self.position:
-                response.append(rfile.read(self.chunk_length - self.position))
-            while self.chunk_length != 0:
-                self.chunk_length = int(rfile.readline(), 16)
-                response.append(rfile.read(self.chunk_length))
-                rfile.readline()
-        else:
-            while length > 0 and self.chunk_length != 0:
+        try:
+            if length is None:
                 if self.chunk_length > self.position:
-                    response.append(rfile.read(
-                            min(self.chunk_length - self.position, length)))
-                    length -= len(response[-1])
-                    self.position += len(response[-1])
-                    if self.chunk_length == self.position:
-                        rfile.readline()
-                else:
+                    response.append(rfile.read(self.chunk_length - self.position))
+                while self.chunk_length != 0:
                     self.chunk_length = int(rfile.readline(), 16)
-                    self.position = 0
+                    response.append(rfile.read(self.chunk_length))
+                    rfile.readline()
+            else:
+                while length > 0 and self.chunk_length != 0:
+                    if self.chunk_length > self.position:
+                        response.append(rfile.read(
+                                min(self.chunk_length - self.position, length)))
+                        length -= len(response[-1])
+                        self.position += len(response[-1])
+                        if self.chunk_length == self.position:
+                            rfile.readline()
+                    else:
+                        self.chunk_length = int(rfile.readline(), 16)
+                        self.position = 0
+        except greenio.SSL.ZeroReturnError:
+            pass
         return ''.join(response)
 
     def read(self, length=None):
@@ -167,6 +174,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     "HTTP/1.0 414 Request URI Too Long\r\nConnection: close\r\nContent-length: 0\r\n\r\n")
                 self.close_connection = 1
                 return
+        except greenio.SSL.ZeroReturnError:
+            self.raw_requestline = ''
         except socket.error, e:
             if e[0] != errno.EBADF:
                 raise
