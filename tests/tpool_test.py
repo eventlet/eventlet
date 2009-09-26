@@ -16,9 +16,9 @@
 import random
 from sys import stdout
 import time
+import re
 from tests import skipped, skip_with_libevent
 from unittest import TestCase, main
-import uuid
 
 from eventlet import coros, api, tpool
 
@@ -119,37 +119,37 @@ class TestTpool(TestCase):
 
     @skip_with_libevent
     def test_wrap_module_class(self):
-        prox = tpool.Proxy(uuid)
+        prox = tpool.Proxy(re)
         self.assertEqual(tpool.Proxy, type(prox))
-        id = prox.uuid4()
-        self.assertEqual(id.get_version(), uuid.uuid4().get_version())
-        self.assert_(repr(prox.uuid4))
+        exp = prox.compile('.')
+        self.assertEqual(exp.flags, 0)
+        self.assert_(repr(prox.compile))
 
     @skip_with_libevent
     def test_wrap_eq(self):
-        prox = tpool.Proxy(uuid)
-        id1 = prox.uuid4()
-        id2 = prox.UUID(str(id1))
-        self.assertEqual(id1, id2)
-        id3 = prox.uuid4()
-        self.assert_(id1 != id3)
+        prox = tpool.Proxy(re)
+        exp1 = prox.compile('.')
+        exp2 = prox.compile(exp1.pattern)
+        self.assertEqual(exp1, exp2)
+        exp3 = prox.compile('/')
+        self.assert_(exp1 != exp3)
 
     @skip_with_libevent
     def test_wrap_nonzero(self):
-        prox = tpool.Proxy(uuid)
-        id1 = prox.uuid4()
-        self.assert_(bool(id1))
+        prox = tpool.Proxy(re)
+        exp1 = prox.compile('.')
+        self.assert_(bool(exp1))
         prox2 = tpool.Proxy([1, 2, 3])
         self.assert_(bool(prox2))
 
     @skip_with_libevent
     def test_multiple_wraps(self):
-        prox1 = tpool.Proxy(uuid)
-        prox2 = tpool.Proxy(uuid)
-        x1 = prox1.uuid4()
-        x2 = prox1.uuid4()
+        prox1 = tpool.Proxy(re)
+        prox2 = tpool.Proxy(re)
+        x1 = prox1.compile('.')
+        x2 = prox1.compile('.')
         del x2
-        x3 = prox2.uuid4()
+        x3 = prox2.compile('.')
 
     @skip_with_libevent
     def test_wrap_getitem(self):
@@ -164,7 +164,7 @@ class TestTpool(TestCase):
 
     @skip_with_libevent
     def test_raising_exceptions(self):
-        prox = tpool.Proxy(uuid)
+        prox = tpool.Proxy(re)
         def nofunc():
             prox.never_name_a_function_like_this()
         self.assertRaises(AttributeError, nofunc)
