@@ -232,6 +232,26 @@ class TestChannel(LimitedTestCase):
         api.sleep(0)
         self.assertEqual(['waiting', 'sending hello', 'hello', 'sending world', 'world', 'sent world'], events)
 
+    def test_waiters(self):
+        c = coros.Channel()
+        w1 = coros.execute(c.wait)
+        w2 = coros.execute(c.wait)
+        w3 = coros.execute(c.wait)
+        api.sleep(0)
+        self.assertEquals(c.waiting(), 3)
+        s1 = coros.execute(c.send, 1)
+        s2 = coros.execute(c.send, 2)
+        s3 = coros.execute(c.send, 3)
+        api.sleep(0)  # this gets all the sends into a waiting state
+        self.assertEquals(c.waiting(), 0)
+
+        s1.wait()
+        s2.wait()
+        s3.wait()
+        self.assertEquals(w1.wait(), 1)
+        self.assertEquals(w2.wait(), 2)
+        self.assertEquals(w3.wait(), 3)
+
 
 if __name__=='__main__':
     main()

@@ -514,8 +514,6 @@ class Channel(object):
             if self._waiters:
                 api.get_hub().schedule_call_global(0, self._do_switch)
         else:
-            if self._waiters and self._senders:
-                api.sleep(0)
             self.items.append((result, exc))
             # note that send() does not work well with timeouts. if your timeout fires
             # after this point, the item will remain in the queue

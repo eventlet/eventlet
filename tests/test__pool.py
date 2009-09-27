@@ -266,6 +266,32 @@ class PoolBasicTests(LimitedTestCase):
         p = self.klass()
         evt = p.execute(lambda a: ('foo', a), 1)
         self.assertEqual(evt.wait(), ('foo', 1))
+        
+    def test_with_intpool(self):
+        from eventlet import pools
+        class IntPool(pools.Pool):
+            def create(self):
+                self.current_integer = getattr(self, 'current_integer', 0) + 1
+                return self.current_integer
+        
+        def subtest(intpool_size, pool_size, num_executes):        
+            def run(int_pool):
+                token = int_pool.get()
+                api.sleep(0.0001)
+                int_pool.put(token)
+                return token
+            
+            int_pool = IntPool(max_size=intpool_size)
+            pool = self.klass(max_size=pool_size)
+            for ix in xrange(num_executes):
+                pool.execute(run, int_pool)
+            pool.waitall()
+            
+        subtest(4, 7, 7)
+        subtest(50, 75, 100)
+        for isize in (20, 30, 40, 50):
+            for psize in (25, 35, 50):
+                subtest(isize, psize, psize)
 
 
 if __name__=='__main__':

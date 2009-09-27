@@ -726,7 +726,7 @@ class RunningProcSet(object):
         self.add(p)
         return p
 
-    def waitall(self, trap_errors=True):
+    def waitall(self, trap_errors=False):
         while self.procs:
             waitall(self.procs, trap_errors=trap_errors)
 
