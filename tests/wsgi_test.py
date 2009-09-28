@@ -22,8 +22,8 @@
 
 import cgi
 import os
-from tests import skipped
-from unittest import TestCase, main
+from tests import skipped, LimitedTestCase
+from unittest import main
 
 from eventlet import api
 from eventlet import util
@@ -125,7 +125,7 @@ def read_http(sock):
     return response_line, headers, body
 
 
-class TestHttpd(TestCase):
+class TestHttpd(LimitedTestCase):
     mode = 'static'
     def setUp(self):
         self.logfile = StringIO()
@@ -426,6 +426,22 @@ class TestHttpd(TestCase):
 
         success = server_coro.wait()
         self.assert_(success)
+        
+    def test_018_http_10_keepalive(self):
+        # verify that if an http/1.0 client sends connection: keep-alive
+        # that we don't close the connection
+        sock = api.connect_tcp(
+            ('127.0.0.1', 12346))
+
+        fd = sock.makeGreenFile()
+        fd.write('GET / HTTP/1.0\r\nHost: localhost\r\nConnection: keep-alive\r\n\r\n')
+        self.assert_('connection: keep-alive' in 
+                     fd.readuntil('\r\n\r\n').lower())
+        # repeat request to verify connection is actually still open
+        fd.write('GET / HTTP/1.0\r\nHost: localhost\r\nConnection: keep-alive\r\n\r\n')                     
+        self.assert_('connection: keep-alive' in 
+                     fd.readuntil('\r\n\r\n').lower())
+        
 
 
 if __name__ == '__main__':

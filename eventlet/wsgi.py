@@ -230,8 +230,12 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 if 'date' not in header_list:
                     towrite.append('Date: %s\r\n' % (format_date_time(time.time()),))
                 if self.request_version == 'HTTP/1.0':
-                    towrite.append('Connection: close\r\n')
-                    self.close_connection = 1
+                    if self.headers.get('Connection', "").lower() == 'keep-alive':
+                        towrite.append('Connection: keep-alive\r\n')
+                        self.close_connection = 0
+                    else:
+                        towrite.append('Connection: close\r\n')
+                        self.close_connection = 1
                 elif 'content-length' not in header_list:
                     use_chunked[0] = True
                     towrite.append('Transfer-Encoding: chunked\r\n')
