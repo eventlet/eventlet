@@ -57,3 +57,16 @@ If you wish to run tests against a particular Twisted reactor, use ``--reactor=R
 * poll
 * selects
 * libevent  (requires pyevent)
+
+Writing Tests
+-------------
+
+What follows are some notes on writing tests, in no particular order.
+
+The filename convention when writing a test for module `foo` is to name the test `foo_test.py`.  We don't yet have a convention for tests that are of finer granularity, but a sensible one might be `foo_class_test.py`.
+
+If you are writing a test that involves a client connecting to a spawned server, it is best to not use a hardcoded port because that makes it harder to parallelize tests.  Instead bind the server to 0, and then look up its port when connecting the client, like this::
+
+  server_sock = api.tcp_listener(('127.0.0.1', 0))
+  client_sock = api.connect_tcp(('localhost', server_sock.getsockname()[1]))
+

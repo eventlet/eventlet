@@ -31,17 +31,15 @@ from eventlet.green.time import sleep
 import weakref
 import gc
 
-address = ('0.0.0.0', 7878)
-
 SOCKET_TIMEOUT = 0.1
 
 def init_server():
     s = socket.socket()
     s.settimeout(SOCKET_TIMEOUT)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    s.bind(address)
+    s.bind(('localhost', 0))
     s.listen(5)
-    return s
+    return s, s.getsockname()[1]
 
 def handle_request(s, raise_on_timeout):
     try:
@@ -60,10 +58,10 @@ def handle_request(s, raise_on_timeout):
     #print 'handle_request - conn refcount: %s' % sys.getrefcount(conn)
     #conn.close()
 
-def make_request():
+def make_request(port):
     #print 'make_request'
     s = socket.socket()
-    s.connect(address)
+    s.connect(('localhost', port))
     #print 'make_request - connected'
     res = s.send('hello')
     #print 'make_request - sent %s' % res
@@ -73,10 +71,10 @@ def make_request():
     #s.close()
 
 def run_interaction(run_client):
-    s = init_server()
+    s, port = init_server()
     start_new_thread(handle_request, (s, run_client))
     if run_client:
-        start_new_thread(make_request, ())
+        start_new_thread(make_request, (port,))
     sleep(0.1+SOCKET_TIMEOUT)
     #print sys.getrefcount(s.fd)
     #s.close()
