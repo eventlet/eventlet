@@ -399,14 +399,12 @@ class TestHttpd(LimitedTestCase):
         certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
         private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
 
-        port = 4204
-
-        sock = api.ssl_listener(('', port), certificate_file, private_key_file)
+        sock = api.ssl_listener(('localhost', 0), certificate_file, private_key_file)
 
         from eventlet import coros
         server_coro = coros.execute(server, sock, wsgi_app)
 
-        client = api.connect_tcp(('127.0.0.1', port))
+        client = api.connect_tcp(('localhost', sock.getsockname()[1]))
         client = util.wrap_ssl(client)
         client.write('X') # non-empty payload so that SSL handshake occurs
         client.shutdown()

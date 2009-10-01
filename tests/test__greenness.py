@@ -27,10 +27,8 @@ import unittest
 from eventlet.green import urllib2, BaseHTTPServer
 from eventlet.api import spawn, kill
 
-port = 18341
-
 def start_http_server():
-    server_address = ('', port)
+    server_address = ('localhost', 0)
     BaseHTTPServer.BaseHTTPRequestHandler.protocol_version = "HTTP/1.0"
     httpd = BaseHTTPServer.HTTPServer(server_address, BaseHTTPServer.BaseHTTPRequestHandler)
     sa = httpd.socket.getsockname()
@@ -39,12 +37,12 @@ def start_http_server():
     def serve():
         httpd.handle_request()
         httpd.request_count += 1
-    return spawn(serve), httpd
+    return spawn(serve), httpd, sa[1]
 
 class TestGreenness(unittest.TestCase):
 
     def setUp(self):
-        self.gthread, self.server = start_http_server()
+        self.gthread, self.server,self.port = start_http_server()
         #print 'Spawned the server'
 
     def tearDown(self):
@@ -54,7 +52,7 @@ class TestGreenness(unittest.TestCase):
     def test_urllib2(self):
         self.assertEqual(self.server.request_count, 0)
         try:
-            urllib2.urlopen('http://127.0.0.1:%s' % port)
+            urllib2.urlopen('http://127.0.0.1:%s' % self.port)
             assert False, 'should not get there'
         except urllib2.HTTPError, ex:
             assert ex.code == 501, `ex`
