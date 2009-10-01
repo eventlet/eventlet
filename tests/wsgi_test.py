@@ -130,7 +130,8 @@ class TestHttpd(LimitedTestCase):
     def setUp(self):
         self.logfile = StringIO()
         self.site = Site()
-        listener = api.tcp_listener(('0.0.0.0', 12346))
+        listener = api.tcp_listener(('localhost', 0))
+        self.port = listener.getsockname()[1]
         self.killer = api.spawn(
             wsgi.server,
             listener, 
@@ -143,7 +144,7 @@ class TestHttpd(LimitedTestCase):
 
     def test_001_server(self):
         sock = api.connect_tcp(
-            ('127.0.0.1', 12346))
+            ('localhost', self.port))
 
         fd = sock.makeGreenFile()
         fd.write('GET / HTTP/1.0\r\nHost: localhost\r\n\r\n')
@@ -155,7 +156,7 @@ class TestHttpd(LimitedTestCase):
 
     def test_002_keepalive(self):
         sock = api.connect_tcp(
-            ('127.0.0.1', 12346))
+            ('localhost', self.port))
 
         fd = sock.makeGreenFile()
         fd.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
@@ -167,7 +168,7 @@ class TestHttpd(LimitedTestCase):
     def test_003_passing_non_int_to_read(self):
         # This should go in greenio_test
         sock = api.connect_tcp(
-            ('127.0.0.1', 12346))
+            ('localhost', self.port))
 
         fd = sock.makeGreenFile()
         fd.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
@@ -178,7 +179,7 @@ class TestHttpd(LimitedTestCase):
 
     def test_004_close_keepalive(self):
         sock = api.connect_tcp(
-            ('127.0.0.1', 12346))
+            ('localhost', self.port))
 
         fd = sock.makeGreenFile()
         fd.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
@@ -199,7 +200,7 @@ class TestHttpd(LimitedTestCase):
 
     def test_006_reject_long_urls(self):
         sock = api.connect_tcp(
-            ('127.0.0.1', 12346))
+            ('localhost', self.port))
         path_parts = []
         for ii in range(3000):
             path_parts.append('path')
@@ -221,7 +222,7 @@ class TestHttpd(LimitedTestCase):
             return ['a is %s, body is %s' % (a, body)]
         self.site.application = new_app
         sock = api.connect_tcp(
-            ('127.0.0.1', 12346))
+            ('localhost', self.port))
         request = '\r\n'.join((
             'POST / HTTP/1.0',
             'Host: localhost',
@@ -239,7 +240,7 @@ class TestHttpd(LimitedTestCase):
 
     def test_008_correctresponse(self):
         sock = api.connect_tcp(
-            ('127.0.0.1', 12346))
+            ('localhost', self.port))
 
         fd = sock.makeGreenFile()
         fd.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
@@ -254,7 +255,7 @@ class TestHttpd(LimitedTestCase):
     def test_009_chunked_response(self):
         self.site.application = chunked_app
         sock = api.connect_tcp(
-            ('127.0.0.1', 12346))
+            ('localhost', self.port))
 
         fd = sock.makeGreenFile()
         fd.write('GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
@@ -263,7 +264,7 @@ class TestHttpd(LimitedTestCase):
     def test_010_no_chunked_http_1_0(self):
         self.site.application = chunked_app
         sock = api.connect_tcp(
-            ('127.0.0.1', 12346))
+            ('localhost', self.port))
 
         fd = sock.makeGreenFile()
         fd.write('GET / HTTP/1.0\r\nHost: localhost\r\nConnection: close\r\n\r\n')
@@ -272,7 +273,7 @@ class TestHttpd(LimitedTestCase):
     def test_011_multiple_chunks(self):
         self.site.application = big_chunks
         sock = api.connect_tcp(
-            ('127.0.0.1', 12346))
+            ('localhost', self.port))
 
         fd = sock.makeGreenFile()
         fd.write('GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
@@ -337,7 +338,7 @@ class TestHttpd(LimitedTestCase):
 
     def test_014_chunked_post(self):
         self.site.application = chunked_post
-        sock = api.connect_tcp(('127.0.0.1', 12346))
+        sock = api.connect_tcp(('localhost', self.port))
         fd = sock.makeGreenFile()
         fd.write('PUT /a HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n'
                  'Transfer-Encoding: chunked\r\n\r\n'
@@ -346,7 +347,7 @@ class TestHttpd(LimitedTestCase):
         response = fd.read()
         self.assert_(response == 'oh hai', 'invalid response %s' % response)
 
-        sock = api.connect_tcp(('127.0.0.1', 12346))
+        sock = api.connect_tcp(('localhost', self.port))
         fd = sock.makeGreenFile()
         fd.write('PUT /b HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n'
                  'Transfer-Encoding: chunked\r\n\r\n'
@@ -355,7 +356,7 @@ class TestHttpd(LimitedTestCase):
         response = fd.read()
         self.assert_(response == 'oh hai', 'invalid response %s' % response)
 
-        sock = api.connect_tcp(('127.0.0.1', 12346))
+        sock = api.connect_tcp(('localhost', self.port))
         fd = sock.makeGreenFile()
         fd.write('PUT /c HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n'
                  'Transfer-Encoding: chunked\r\n\r\n'
@@ -366,13 +367,13 @@ class TestHttpd(LimitedTestCase):
 
     def test_015_write(self):
         self.site.application = use_write
-        sock = api.connect_tcp(('127.0.0.1', 12346))
+        sock = api.connect_tcp(('localhost', self.port))
         fd = sock.makeGreenFile()
         fd.write('GET /a HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
         response_line, headers, body = read_http(sock)
         self.assert_('content-length' in headers)
 
-        sock = api.connect_tcp(('127.0.0.1', 12346))
+        sock = api.connect_tcp(('localhost', self.port))
         fd = sock.makeGreenFile()
         fd.write('GET /b HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
         response_line, headers, body = read_http(sock)
@@ -387,7 +388,7 @@ class TestHttpd(LimitedTestCase):
         def wsgi_app(environ, start_response):
             start_response('200 OK', [('Content-Length', '7')])
             return ['testing']
-        sock = api.connect_tcp(('127.0.0.1', 12346))
+        sock = api.connect_tcp(('localhost', self.port))
         fd = sock.makeGreenFile()
         fd.write('GET /a HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
         headerlines = fd.readuntil('\r\n\r\n').splitlines()
@@ -431,7 +432,7 @@ class TestHttpd(LimitedTestCase):
         # verify that if an http/1.0 client sends connection: keep-alive
         # that we don't close the connection
         sock = api.connect_tcp(
-            ('127.0.0.1', 12346))
+            ('localhost', self.port))
 
         fd = sock.makeGreenFile()
         fd.write('GET / HTTP/1.0\r\nHost: localhost\r\nConnection: keep-alive\r\n\r\n')
