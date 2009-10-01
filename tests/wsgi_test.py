@@ -296,41 +296,27 @@ class TestHttpd(LimitedTestCase):
         certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
         private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
 
-        sock = api.ssl_listener(('', 4201), certificate_file, private_key_file)
+        server_sock = api.ssl_listener(('localhost', 0), certificate_file, private_key_file)
 
-        api.spawn(wsgi.server, sock, wsgi_app)
+        api.spawn(wsgi.server, server_sock, wsgi_app)
     
-        sock = api.connect_tcp(('127.0.0.1', 4201))
+        sock = api.connect_tcp(('localhost', server_sock.getsockname()[1]))
         sock = util.wrap_ssl(sock)
         sock.write('POST /foo HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\nContent-length:3\r\n\r\nabc')
         result = sock.read(8192)
         self.assertEquals(result[-3:], 'abc')
         
     def test_013_empty_return(self):
-        from eventlet import httpc
-        def wsgi_app(environ, start_response):
-            start_response("200 OK", [])
-            return [""]
-    
-        certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
-        private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
-        sock = api.ssl_listener(('', 4202), certificate_file, private_key_file)
-        api.spawn(wsgi.server, sock, wsgi_app)
-        
-        res = httpc.get("https://localhost:4202/foo")
-        self.assertEquals(res, '')
-
-    def test_013_empty_return(self):
         def wsgi_app(environ, start_response):
             start_response("200 OK", [])
             return [""]
 
         certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
         private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
-        sock = api.ssl_listener(('', 4202), certificate_file, private_key_file)
-        api.spawn(wsgi.server, sock, wsgi_app)
+        server_sock = api.ssl_listener(('localhost', 0), certificate_file, private_key_file)
+        api.spawn(wsgi.server, server_sock, wsgi_app)
 
-        sock = api.connect_tcp(('127.0.0.1', 4202))
+        sock = api.connect_tcp(('localhost', server_sock.getsockname()[1]))
         sock = util.wrap_ssl(sock)
         sock.write('GET /foo HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
         result = sock.read(8192)
