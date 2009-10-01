@@ -17,12 +17,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from tests import skipped, LimitedTestCase, skip_with_libevent
+from tests import skipped, LimitedTestCase, skip_with_libevent, TestIsTakingTooLong
 from unittest import main
 from eventlet import api, util, coros, proc, greenio
 import os
 import socket
-
+import sys
 
 def bufsized(sock, size=1):
     """ Resize both send and receive buffers on a socket.
@@ -184,12 +184,26 @@ class TestGreenIo(LimitedTestCase):
         
     @skip_with_libevent
     def test_multiple_readers(self):
+        recvsize = 1
+        sendsize = 10
+        if sys.version_info < (2,5):
+            # 2.4 doesn't implement buffer sizing exactly the way we
+            # expect so we have to send more data to ensure that we
+            # actually call trampoline() multiple times during this
+            # function
+            recvsize = 4000
+            sendsize = 40000
+            # and reset the timer because we're going to be taking
+            # longer to send all this extra data
+            self.timer.cancel()
+            self.timer = api.exc_after(10, TestIsTakingTooLong(10))
+        
         # test that we can have multiple coroutines reading
         # from the same fd.  We make no guarantees about which one gets which
         # bytes, but they should both get at least some
         def reader(sock, results):
             while True:
-                data = sock.recv(1)
+                data = sock.recv(recvsize)
                 if data == '':
                     break
                 results.append(data)
@@ -213,11 +227,11 @@ class TestGreenIo(LimitedTestCase):
         server_coro = proc.spawn(server)
         client = bufsized(api.connect_tcp(('127.0.0.1', 
                                            listener.getsockname()[1])))
-        client.sendall('*' * 10)
+        client.sendall('*' * sendsize)
         client.close()
         server_coro.wait()
         listener.close()
-        
+        print len(results1), len(results2)
         self.assert_(len(results1) > 0)
         self.assert_(len(results2) > 0)
         
