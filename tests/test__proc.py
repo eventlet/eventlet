@@ -23,7 +23,7 @@ import sys
 import unittest
 from eventlet.api import sleep, with_timeout
 from eventlet import api, proc, coros
-from tests import LimitedTestCase
+from tests import LimitedTestCase, skipped
 
 DELAY = 0.01
 
@@ -289,6 +289,8 @@ class TestStuff(unittest.TestCase):
         self.assertEqual(e.wait(), 1)
         self.assertEqual([proc.waitall([X]) for X in [x, y, z]], [[1], [2], [3]])
 
+    # this test is timing-sensitive
+    @skipped
     def test_wait_error(self):
         def x():
             sleep(DELAY)
