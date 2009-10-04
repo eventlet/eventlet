@@ -1,0 +1,111 @@
+from eventlet import api,coros
+import sys
+
+__all__ = ['spawn', 'detach', 'Parallel']
+
+class ResultGreenlet(api.Greenlet):
+    def __init__(self):
+        api.Greenlet.__init__(self, self.main)
+        from eventlet import coros
+        self._exit_event = coros.event()
+
+    def wait(self):
+        return self._exit_event.wait()
+        
+    def link(self, func):
+        self._exit_funcs = getattr(self, '_exit_funcs', [])
+        self._exit_funcs.append(func)
+        
+    def main(self, *a):
+        function, args, kwargs = a
+        try:
+            result = function(*args, **kwargs)
+        except:
+            self._exit_event.send_exception(*sys.exc_info())
+            for f in getattr(self, '_exit_funcs', []):
+                f(self, exc=sys.exc_info())
+        else:
+            self._exit_event.send(result)
+            for f in getattr(self, '_exit_funcs', []):
+                f(self, result)
+
+
+
+def spawn(func, *args, **kwargs):
+    """ Create a coroutine to run func(*args, **kwargs) without any 
+    way to retrieve the results.  Returns the greenlet object.
+    """
+    # TODO: relying on the existence of hub.greenlet may lead to sadness?
+    g = ResultGreenlet()
+    g.parent = api.get_hub().greenlet
+    api.get_hub().schedule_call_global(0, g.switch, func, args, kwargs)
+    return g
+    
+    
+class Parallel(object):
+    """ The Parallel class allows you to easily control coroutine concurrency.
+    """
+    def __init__(self, max_size):
+        self.max_size = max_size
+        self.coroutines_running = set()
+        self.sem = coros.Semaphore(max_size)
+        self._results = coros.Queue()
+    
+    def resize(self, new_max_size):
+        """ Change the max number of coroutines doing work at any given time.
+    
+        If resize is called when there are more than *new_max_size*
+        coroutines already working on tasks, they will be allowed to complete but no 
+        new tasks will be allowed to get launched until enough coroutines finish their
+        tasks to drop the overall quantity below *new_max_size*.  Until then, the 
+        return value of free() will be negative.
+        """
+        max_size_delta = new_max_size - self.max_size 
+        self.sem.counter += max_size_delta
+        self.max_size = new_max_size
+    
+    @property
+    def current_size(self):
+        """ The current size is the number of coroutines that are currently 
+        executing functions in the Parallel's pool."""
+        return len(self.coroutines_running)
+
+    def free(self):
+        """ Returns the number of coroutines available for use."""
+        return self.sem.counter
+
+    def _coro_done(self, coro, result, exc=None):
+        self.sem.release()
+        self.coroutines_running.remove(coro)
+        self._results.send(result)
+        # if done processing (no more work is being done),
+        # send StopIteration so that the queue knows it's done
+        if self.sem.balance == self.max_size:
+            self._results.send_exception(StopIteration)
+                        
+    def spawn(self, func, *args, **kwargs):
+        """ Create a coroutine to run func(*args, **kwargs).  Returns a 
+        Coro object that can be used to retrieve the results of the function.
+        """
+        # if reentering an empty pool, don't try to wait on a coroutine freeing
+        # itself -- instead, just execute in the current coroutine
+        current = api.getcurrent()
+        if self.sem.locked() and current in self.coroutines_running:
+            func(*args, **kwargs)
+        else:
+            self.sem.acquire()
+            p = spawn(func, *args, **kwargs)
+            self.coroutines_running.add(p)
+            p.link(self._coro_done)
+
+        return p
+                
+    def wait(self):
+        """Wait for the next execute in the pool to complete,
+        and return the result."""
+        return self.results.wait()
+        
+    def results(self):
+        """ Returns an iterator over the results collected so far; when iterating over
+        the result set, """
+        return self._results
