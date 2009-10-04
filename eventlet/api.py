@@ -225,31 +225,44 @@ def _spawn_startup(cb, args, kw, cancel=None):
             cancel()
     return cb(*args, **kw)
 
-def _spawn(g):
-    g.parent = greenlet.getcurrent()
-    g.switch()
+
+class ResultGreenlet(Greenlet):
+    def __init__(self):
+        Greenlet.__init__(self, self.main)
+        from eventlet import coros
+        self._exit_event = coros.event()
+
+    def wait(self):
+        return self._exit_event.wait()
+        
+    def link(self, func):
+        self._exit_funcs = getattr(self, '_exit_funcs', [])
+        self._exit_funcs.append(func)
+        
+    def main(self, *a):
+        function, args, kwargs = a
+        try:
+            result = function(*args, **kwargs)
+        except:
+            self._exit_event.send_exception(*sys.exc_info())
+            for f in getattr(self, '_exit_funcs', []):
+                f(self, exc=sys.exc_info())
+        else:
+            self._exit_event.send(result)
+            for f in getattr(self, '_exit_funcs', []):
+                f(self, result)
 
 
-def spawn(function, *args, **kwds):
-    """Create a new coroutine, or cooperative thread of control, within which
-    to execute *function*.
-
-    The *function* will be called with the given *args* and keyword arguments
-    *kwds* and will remain in control unless it cooperatively yields by
-    calling a socket method or ``sleep()``.
-
-    :func:`spawn` returns control to the caller immediately, and *function*
-    will be called in a future main loop iteration.
-
-    An uncaught exception in *function* or any child will terminate the new
-    coroutine with a log message.
+def spawn(func, *args, **kwargs):
+    """ Create a coroutine to run func(*args, **kwargs) without any 
+    way to retrieve the results.  Returns the greenlet object.
     """
-    # killable
-    t = None
-    g = Greenlet(_spawn_startup)
-    t = get_hub().schedule_call_global(0, _spawn, g)
-    g.switch(function, args, kwds, t.cancel)
+    g = ResultGreenlet()
+    hub = get_hub()
+    g.parent = hub.greenlet
+    hub.schedule_call_global(0, g.switch, func, args, kwargs)
     return g
+    
 
 def kill(g, *throw_args):
     get_hub().schedule_call_global(0, g.throw, *throw_args)

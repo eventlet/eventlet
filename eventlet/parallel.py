@@ -1,46 +1,8 @@
-from eventlet import api,coros
+from eventlet.coros import Semaphore, Queue
+from eventlet.api import spawn, getcurrent
 import sys
 
-__all__ = ['spawn', 'detach', 'Parallel']
-
-class ResultGreenlet(api.Greenlet):
-    def __init__(self):
-        api.Greenlet.__init__(self, self.main)
-        from eventlet import coros
-        self._exit_event = coros.event()
-
-    def wait(self):
-        return self._exit_event.wait()
-        
-    def link(self, func):
-        self._exit_funcs = getattr(self, '_exit_funcs', [])
-        self._exit_funcs.append(func)
-        
-    def main(self, *a):
-        function, args, kwargs = a
-        try:
-            result = function(*args, **kwargs)
-        except:
-            self._exit_event.send_exception(*sys.exc_info())
-            for f in getattr(self, '_exit_funcs', []):
-                f(self, exc=sys.exc_info())
-        else:
-            self._exit_event.send(result)
-            for f in getattr(self, '_exit_funcs', []):
-                f(self, result)
-
-
-
-def spawn(func, *args, **kwargs):
-    """ Create a coroutine to run func(*args, **kwargs) without any 
-    way to retrieve the results.  Returns the greenlet object.
-    """
-    # TODO: relying on the existence of hub.greenlet may lead to sadness?
-    g = ResultGreenlet()
-    g.parent = api.get_hub().greenlet
-    api.get_hub().schedule_call_global(0, g.switch, func, args, kwargs)
-    return g
-    
+__all__ = ['Parallel']
     
 class Parallel(object):
     """ The Parallel class allows you to easily control coroutine concurrency.
@@ -48,8 +10,8 @@ class Parallel(object):
     def __init__(self, max_size):
         self.max_size = max_size
         self.coroutines_running = set()
-        self.sem = coros.Semaphore(max_size)
-        self._results = coros.Queue()
+        self.sem = Semaphore(max_size)
+        self._results = Queue()
     
     def resize(self, new_max_size):
         """ Change the max number of coroutines doing work at any given time.
@@ -89,7 +51,7 @@ class Parallel(object):
         """
         # if reentering an empty pool, don't try to wait on a coroutine freeing
         # itself -- instead, just execute in the current coroutine
-        current = api.getcurrent()
+        current = getcurrent()
         if self.sem.locked() and current in self.coroutines_running:
             func(*args, **kwargs)
         else:
