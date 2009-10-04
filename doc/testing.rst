@@ -23,6 +23,16 @@ That's it!  The output from running nose is the same as unittest's output, if th
 
 Many tests are skipped based on environmental factors; for example, it makes no sense to test Twisted-specific functionality when Twisted is not installed.  These are printed as S's during execution, and in the summary printed after the tests run it will tell you how many were skipped.
 
+Doctests
+--------
+
+To run the doctests included in many of the eventlet modules, use this command:
+
+.. code-block :: sh
+
+  $ nosetests --with-doctest eventlet/*.py
+  
+Currently there are 14 doctests.
 
 Standard Library Tests
 ----------------------
