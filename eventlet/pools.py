@@ -90,7 +90,31 @@ class Pool(object):
             self.current_size += 1
             return created
         return self.channel.wait()
-    
+
+    try:
+        from contextlib import contextmanager
+        @contextmanager
+        def item(self):
+            """ Get an object out of the pool, for use with with statement. 
+
+            >>> from eventlet import pools
+            >>> pool = pools.TokenPool(max_size=4)
+            >>> with pool.item() as obj:
+            ...     print "got token"
+            ...
+            got token
+            >>> pool.free()
+            4
+            """
+            obj = self.get()
+            try:
+                yield obj
+            finally:
+                self.put(obj)
+    except ImportError:
+        pass
+
+
     def put(self, item):
         """Put an item back into the pool, when done
         """
@@ -139,8 +163,4 @@ class TokenPool(Pool):
     def create(self):
         return Token()
         
-
-class ExceptionWrapper(object):
-    def __init__(self, e):
-        self.e = e
 
