@@ -68,6 +68,20 @@ class Parallel(object):
         return self.results.wait()
         
     def results(self):
-        """ Returns an iterator over the results collected so far; when iterating over
-        the result set, """
+        """ Returns an iterator over the results from the worker coroutines."""
         return self._results
+        
+    def _do_spawn_all(self, func, iterable):
+        for i in iterable:
+            if not isinstance(i, tuple):
+                self.spawn(func, i)
+            else:
+                self.spawn(func, *i)
+    
+    def spawn_all(self, func, iterable):
+        """ Applies *func* over every item in *iterable* using the concurrency 
+        present in the pool.  This function is a generator which yields the 
+        results of *func* as applied to the members of the iterable."""
+        
+        spawn(self._do_spawn_all, func, iterable)
+        return self.results()
