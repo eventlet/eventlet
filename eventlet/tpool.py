@@ -1,4 +1,4 @@
-# Copyright (c) 2007, Linden Research, Inc.
+# Copyright (c) 2007-2009, Linden Research, Inc.
 # Copyright (c) 2007, IBM Corp.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");

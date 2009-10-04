@@ -1,4 +1,3 @@
-
 try:
     import greenlet
     getcurrent = greenlet.getcurrent

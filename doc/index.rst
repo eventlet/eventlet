@@ -50,6 +50,8 @@ Contents
    history
 
    modules
+   
+   authors
 
 Requirements
 ------------
@@ -64,26 +66,13 @@ Areas That Need Work
 --------------------
 
 * Not enough test coverage -- the goal is 100%, but we are not there yet.
-* Not tested on Windows
- 
- * There are probably some simple Unix dependencies we introduced by accident.  If you're running Eventlet on Windows and run into errors, let us know.
+* Not well-tested on Windows
  * The eventlet.processes module is known to not work on Windows.
 
 
 License
 ---------
-Eventlet is made available under the terms of the open source MIT license below.
-
-**EVENTLET**
-
-Copyright (c) 2005-2006, Bob Ippolito
-Copyright (c) 2007, Linden Research, Inc.
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-	
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-	
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+Eventlet is made available under the terms of the open source `MIT license <http://www.opensource.org/licenses/mit-license.php>`_
 
 Indices and tables
 ==================
