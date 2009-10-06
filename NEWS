@@ -7,6 +7,7 @@
 * Removed test dependency on sqlite, using nose instead.
 * Marked known-broken tests using nose's mechanism (most of these are not broken but are simply run in the incorrect context, such as threading-related tests that are incompatible with the libevent hub).
 * Remove copied code from python standard libs (in tests).
+* Added eventlet.patcher which can be used to import "greened" modules.
 
 0.8.16
 ======
