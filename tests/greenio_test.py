@@ -145,7 +145,7 @@ class TestGreenIo(LimitedTestCase):
         client.close()
      
     def test_sendall(self):
-        # test adapted from Brian Brunswick's email
+        # test adapted from Marcus Cavanaugh's email
         # it may legitimately take a while, but will eventually complete
         self.timer.cancel()
         second_bytes = 10
