@@ -27,3 +27,4 @@ Thanks To
 * Brian Brunswick, for many helpful questions and suggestions on the mailing list
 * Cesar Alaniz, for uncovering bugs of great import
 * the grugq, for contributing patches, suggestions, and use cases
+* Ralf Schmitt, for wsgi/webob incompatibility bug report and suggested fix

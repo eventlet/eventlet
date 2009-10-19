@@ -404,7 +404,27 @@ class TestHttpd(LimitedTestCase):
         fd.write('GET / HTTP/1.0\r\nHost: localhost\r\nConnection: keep-alive\r\n\r\n')                     
         self.assert_('connection: keep-alive' in 
                      fd.readuntil('\r\n\r\n').lower())
-        
+                     
+    def test_019_fieldstorage_compat(self):
+        def use_fieldstorage(environ, start_response):
+            import cgi
+            fs = cgi.FieldStorage(fp=environ['wsgi.input'],
+                                  environ=environ)
+            start_response('200 OK', [('Content-type', 'text/plain')])
+            return ['hello!']
+                             
+        self.site.application = use_fieldstorage
+        sock = api.connect_tcp(
+            ('localhost', self.port))
+
+        fd = sock.makeGreenFile()
+        fd.write('POST / HTTP/1.1\r\n'
+                 'Host: localhost\r\n'
+                 'Connection: close\r\n'
+                 'Transfer-Encoding: chunked\r\n\r\n'
+                 '2\r\noh\r\n'
+                 '4\r\n hai\r\n0\r\n\r\n')
+        self.assert_('hello!' in fd.read())
 
 
 if __name__ == '__main__':
