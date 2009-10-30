@@ -140,7 +140,8 @@ def get_fileno(obj):
     try:
         f = obj.fileno
     except AttributeError:
-        assert isinstance(obj, (int, long))
+        if not isinstance(obj, (int, long)):
+            raise TypeError("Expected int or long, got " + type(obj))
         return obj
     else:
         return f()
@@ -158,7 +159,7 @@ def select(read_list, write_list, error_list, timeout=None):
     for e in error_list:
         ds.setdefault(get_fileno(e), {})['error'] = e
 
-    descriptors = []
+    listeners = []
 
     def on_read(d):
         original = ds[get_fileno(d)]['read']
@@ -180,15 +181,14 @@ def select(read_list, write_list, error_list, timeout=None):
     try:
         for k, v in ds.iteritems():
             if v.get('read'):
-                hub.add(hub.READ, k, on_read)
+                listeners.append(hub.add(hub.READ, k, on_read))
             if v.get('write'):
-                hub.add(hub.WRITE, k, on_write)
-            descriptors.append(k)
+                listeners.append(hub.add(hub.WRITE, k, on_write))
         try:
             return hub.switch()
         finally:
-            for d in descriptors:
-                hub.remove_descriptor(d)
+            for l in listeners:
+                hub.remove(l)
     finally:
         if t is not None:
             t.cancel()

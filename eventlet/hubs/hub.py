@@ -92,7 +92,8 @@ class BaseHub(object):
         self.closed_fds.append(fileno)
         
     def remove_descriptor(self, fileno):
-        """ Completely remove all listeners for this fileno."""
+        """ Completely remove all listeners for this fileno.  For internal use 
+        only."""
         self.listeners[READ].pop(fileno, None)
         self.listeners[WRITE].pop(fileno, None)
 

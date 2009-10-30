@@ -33,6 +33,8 @@ class LocalDelayedCall(DelayedCall):
 def callLater(DelayedCallClass, reactor, _seconds, _f, *args, **kw):
     # the same as original but creates fixed DelayedCall instance
     assert callable(_f), "%s is not callable" % _f
+    if not isinstance(_seconds, (int, long, float)):
+        raise TypeError("Seconds must be int, long, or float, was " + type(_seconds))
     assert sys.maxint >= _seconds >= 0, \
            "%s is not greater than or equal to 0 seconds" % (_seconds,)
     tple = DelayedCallClass(reactor.seconds() + _seconds, _f, args, kw,
@@ -46,8 +48,12 @@ class socket_rwdescriptor(FdListener):
     #implements(IReadWriteDescriptor)
     def __init__(self, evtype, fileno, cb):
         super(socket_rwdescriptor, self).__init__(evtype, fileno, cb)
-        # Twisted expects fileno to be a callable, not an attribute
-        self.fileno = lambda: fileno
+        if not isinstance(fileno, (int,long)):
+            raise TypeError("Expected int or long, got %s" % type(fileno))
+        # Twisted expects fileno to be a callable, not an attribute            
+        def _fileno():
+            return fileno
+        self.fileno = _fileno
 
     # required by glib2reactor
     disconnected = False
@@ -122,7 +128,7 @@ class BaseTwistedHub(object):
         from twisted.internet import reactor
         reactor.removeReader(descriptor)
         reactor.removeWriter(descriptor)
-
+        
     def schedule_call_local(self, seconds, func, *args, **kwargs):
         from twisted.internet import reactor
         def call_if_greenlet_alive(*args1, **kwargs1):
