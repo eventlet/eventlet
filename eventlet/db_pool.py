@@ -245,15 +245,14 @@ class SaranwrappedConnectionPool(BaseConnectionPool):
                                     *self._args,
                                     **self._kwargs)
 
-    def connect(self, db_module, connect_timeout, *args, **kw):
+    @classmethod
+    def connect(cls, db_module, connect_timeout, *args, **kw):
         timeout = api.exc_after(connect_timeout, ConnectTimeout())
         try:
             from eventlet import saranwrap
             return saranwrap.wrap(db_module).connect(*args, **kw)
         finally:
             timeout.cancel()
-
-    connect = classmethod(connect)
 
 
 class TpooledConnectionPool(BaseConnectionPool):
@@ -266,7 +265,8 @@ class TpooledConnectionPool(BaseConnectionPool):
                                     *self._args,
                                     **self._kwargs)
 
-    def connect(self, db_module, connect_timeout, *args, **kw):
+    @classmethod
+    def connect(cls, db_module, connect_timeout, *args, **kw):
         timeout = api.exc_after(connect_timeout, ConnectTimeout())
         try:
             from eventlet import tpool
@@ -280,8 +280,6 @@ class TpooledConnectionPool(BaseConnectionPool):
         finally:
             timeout.cancel()
 
-    connect = classmethod(connect)
-
 
 class RawConnectionPool(BaseConnectionPool):
     """A pool which gives out plain database connections.
@@ -292,14 +290,13 @@ class RawConnectionPool(BaseConnectionPool):
                                     *self._args,
                                     **self._kwargs)
 
-    def connect(self, db_module, connect_timeout, *args, **kw):
+    @classmethod
+    def connect(cls, db_module, connect_timeout, *args, **kw):
         timeout = api.exc_after(connect_timeout, ConnectTimeout())
         try:
             return db_module.connect(*args, **kw)
         finally:
             timeout.cancel()
-
-    connect = classmethod(connect)
 
 
 # default connection pool is the tpool one
