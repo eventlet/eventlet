@@ -22,11 +22,11 @@ from eventlet import api, coros, greenio
 
 QUIET=False
 
-_rpipe = _wpipe = _rfile = None
+_rfile = _wfile = None
 
 def _signal_t2e():
     from eventlet import util
-    nwritten = util.__original_write__(_wpipe, ' ')
+    sent = util.__original_write__(_wfile.fileno(), ' ')
 
 _reqq = Queue(maxsize=-1)
 _rspq = Queue(maxsize=-1)
@@ -35,7 +35,7 @@ def tpool_trampoline():
     global _reqq, _rspq
     while(True):
         try:
-            _c = _rfile.recv(1)
+            _c = _rfile.read(1)
         except ValueError:
             break  # will be raised when pipe is closed
         assert(_c != "")
@@ -173,16 +173,33 @@ _threads = {}
 _coro = None
 _setup_already = False
 def setup():
-    global _rpipe, _wpipe, _rfile, _threads, _coro, _setup_already
+    global _rfile, _wfile, _threads, _coro, _setup_already
     if _setup_already:
         return
     else:
         _setup_already = True
-    _rpipe, _wpipe = os.pipe()
-    _rfile = os.fdopen(_rpipe,"r",0)
-    ## Work whether or not wrap_pipe_with_coroutine_pipe was called
-    if not isinstance(_rfile, greenio.GreenPipe):
-        _rfile = greenio.GreenPipe(_rfile)
+    try:
+        _rpipe, _wpipe = os.pipe()
+        _wfile = os.fdopen(_wpipe,"w",0)
+        _rfile = os.fdopen(_rpipe,"r",0)
+        ## Work whether or not wrap_pipe_with_coroutine_pipe was called
+        if not isinstance(_rfile, greenio.GreenPipe):
+            _rfile = greenio.GreenPipe(_rfile)
+    except ImportError:
+        # This is Windows compatibility -- use a socket instead of a pipe because
+        # pipes don't really exist on Windows.
+        import socket
+        from eventlet import util
+        sock = util.__original_socket__(socket.AF_INET, socket.SOCK_STREAM)
+        sock.bind(('localhost', 0))
+        sock.listen(50)
+        csock = util.__original_socket__(socket.AF_INET, socket.SOCK_STREAM)
+        csock.connect(('localhost', sock.getsockname()[1]))
+        csock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+        nsock, addr = sock.accept()
+        nsock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+        _rfile = greenio.GreenFile(greenio.GreenSocket(csock))
+        _wfile = nsock.makefile()
 
     for i in range(0,_nthreads):
         _threads[i] = threading.Thread(target=tworker)
@@ -199,6 +216,7 @@ def killall():
         _reqq.put(None)
     for thr in _threads.values():
         thr.join()
-    _rfile.close()
     api.kill(_coro)
+    _rfile.close()
+    _wfile.close()
     _setup_already = False

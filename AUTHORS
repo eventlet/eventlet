@@ -23,6 +23,7 @@ Linden Lab Contributors
 
 Thanks To
 ---------
+* R. Tyler Ballance, bug report on tpool on Windows
 * Sergey Shepelev, PEP 8 police  :-)
 * Luci Stanescu, for reporting twisted hub bug
 * Marcus Cavanaugh, for test case code that has been incredibly useful in tracking down bugs
