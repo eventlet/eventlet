@@ -5,6 +5,11 @@ import os
 import socket
 import sys
 
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from StringIO import StringIO
+
 def bufsized(sock, size=1):
     """ Resize both send and receive buffers on a socket.
     Useful for testing trampoline.  Returns the socket.
@@ -212,7 +217,6 @@ class TestGreenIo(LimitedTestCase):
         client.close()
         server_coro.wait()
         listener.close()
-        print len(results1), len(results2)
         self.assert_(len(results1) > 0)
         self.assert_(len(results2) > 0)
         
@@ -224,6 +228,27 @@ class TestGreenIo(LimitedTestCase):
         else:
             sock = api.tcp_listener(('127.0.0.1', 0))
             ssl_sock = ssl.wrap_socket(sock)
+            
+    def test_exception_squelching(self):
+        server = api.tcp_listener(('0.0.0.0', 0))
+        client = api.connect_tcp(('127.0.0.1', server.getsockname()[1]))
+        client_2, addr = server.accept()
+        
+        def hurl(s):
+            s.recv(1)
+            {}[1]  # keyerror
+
+        fake = StringIO()
+        orig = sys.stderr
+        sys.stderr = fake
+        try:
+            api.spawn(hurl, client_2)            
+            api.sleep(0)
+            client.send(' ')
+            api.sleep(0)
+        finally:
+            sys.stderr = orig
+        self.assert_('Traceback' in fake.getvalue())
 
 
 class SSLTest(LimitedTestCase):

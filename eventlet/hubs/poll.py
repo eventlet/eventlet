@@ -67,10 +67,17 @@ class Hub(BaseHub):
 
         for fileno, event in presult:
             try:
-                if event & READ_MASK:
-                    readers[fileno][0](fileno)
-                if event & WRITE_MASK:
-                    writers[fileno][0](fileno)
+                listener = None
+                try:
+                    if event & READ_MASK:
+                        listener = readers[fileno][0]
+                    if event & WRITE_MASK:
+                        listener = writers[fileno][0]
+                except KeyError:
+                    pass
+                else:
+                    if listener:
+                        listener(fileno)
                 if event & select.POLLNVAL:
                     self.remove_descriptor(fileno)
                     continue
@@ -79,8 +86,6 @@ class Hub(BaseHub):
                                       writers.get(fileno, [])):
                         for listener in listeners:
                             listener(fileno)
-            except KeyError:
-                pass
             except SYSTEM_EXCEPTIONS:
                 raise
             except:

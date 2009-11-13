@@ -23,6 +23,7 @@ Linden Lab Contributors
 
 Thanks To
 ---------
+* Taso Du Val, reproing an exception squelching bug, saving children's lives  ;-)
 * R. Tyler Ballance, bug report on tpool on Windows
 * Sergey Shepelev, PEP 8 police  :-)
 * Luci Stanescu, for reporting twisted hub bug
