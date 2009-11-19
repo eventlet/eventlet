@@ -438,7 +438,7 @@ def server(sock, site,
             if port == ':80':
                 port = ''
 
-        print "(%s) wsgi starting up on %s://%s%s/" % (os.getpid(), scheme, host, port)
+        serv.log.write("(%s) wsgi starting up on %s://%s%s/\n" % (os.getpid(), scheme, host, port))
         while True:
             try:
                 try:
@@ -448,7 +448,7 @@ def server(sock, site,
                         raise
                 pool.execute_async(serv.process_request, client_socket)
             except (KeyboardInterrupt, SystemExit):
-                print "wsgi exiting"
+                serv.log.write("wsgi exiting\n")
                 break
     finally:
         try:
