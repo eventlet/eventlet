@@ -275,7 +275,7 @@ class SSLTest(LimitedTestCase):
         def serve(listener):
             sock, addr = listener.accept()
             sock.write('content')
-            sock.shutdown()
+            greenio.shutdown_safe(sock)
             sock.close()
         listener = api.ssl_listener(('', 0), 
                                     self.certificate_file, 
@@ -285,6 +285,22 @@ class SSLTest(LimitedTestCase):
         client = greenio.GreenSSLObject(client)
         self.assertEquals(client.read(1024), 'content')
         self.assertEquals(client.read(1024), '')
+        
+    def test_ssl_close(self):
+        def serve(listener):
+            sock, addr = listener.accept()
+            stuff = sock.read(8192)
+            empt = sock.read(8192)
+  
+        sock = api.ssl_listener(('127.0.0.1', 0), self.certificate_file, self.private_key_file)
+        server_coro = coros.execute(serve, sock)
+        
+        raw_client = api.connect_tcp(('127.0.0.1', sock.getsockname()[1]))
+        client = util.wrap_ssl(raw_client)
+        client.write('X')
+        greenio.shutdown_safe(client)
+        client.close()
+        server_coro.wait()
                         
 if __name__ == '__main__':
     main()

@@ -146,7 +146,6 @@ def set_nonblocking(fd):
 
 
 class GreenSocket(object):
-    is_secure = False
     timeout = None
     def __init__(self, family_or_realsock=socket.AF_INET, *args, **kwargs):
         if isinstance(family_or_realsock, (int, long)):
@@ -689,23 +688,59 @@ class GreenSSL(GreenSocket):
     def want_write(self, *args, **kw):
         fn = self.want_write = self.fd.want_write
         return fn(*args, **kw)
-        
-        
+
+
+def shutdown_safe(sock):
+    """ Shuts down the socket. This is a convenience method for
+    code that wants to gracefully handle regular sockets, SSL.Connection 
+    sockets from PyOpenSSL and ssl.SSLSocket objects from Python 2.6
+    interchangeably.  Both types of ssl socket require a shutdown() before
+    close, but they have different arity on their shutdown method.
+    
+    Regular sockets don't need a shutdown before close, but it doesn't hurt.
+    """
+    try:
+        try:
+            # socket, ssl.SSLSocket
+            return sock.shutdown(socket.SHUT_RDWR)
+        except TypeError:
+            # SSL.Connection
+            return sock.shutdown()
+    except socket.error, e:
+        # we don't care if the socket is already closed;
+        # this will often be the case in an http server context
+        if e[0] != errno.ENOTCONN:
+            raise
+
+
 def _convert_to_sslerror(ex):
     """ Transliterates SSL.SysCallErrors to socket.sslerrors"""
     return socket.sslerror((ex[0], ex[1]))
+    
         
 class GreenSSLObject(object):
     """ Wrapper object around the SSLObjects returned by socket.ssl, which have a 
     slightly different interface from SSL.Connection objects. """
     def __init__(self, green_ssl_obj):
         """ Should only be called by a 'green' socket.ssl """
-        assert isinstance(green_ssl_obj, GreenSSL)
+        try:
+            from eventlet.green.ssl import GreenSSLSocket
+        except ImportError:
+            class GreenSSLSocket(object):
+                pass
+        
+        assert isinstance(green_ssl_obj, (GreenSSL, GreenSSLSocket))
         self.connection = green_ssl_obj
         try:
-            self.connection.do_handshake()
-        except SSL.SysCallError, e:
-            raise _convert_to_sslerror(e)
+            # if it's already connected, do the handshake
+            self.connection.getpeername()
+        except:
+            pass
+        else:
+            try:
+                self.connection.do_handshake()
+            except SSL.SysCallError, e:
+                raise _convert_to_sslerror(e)
         
     def read(self, n=None):
         """If n is provided, read n bytes from the SSL connection, otherwise read

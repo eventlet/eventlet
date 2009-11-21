@@ -35,39 +35,49 @@ def tcp_socket():
     s = __original_socket__(socket.AF_INET, socket.SOCK_STREAM)
     return s
 
-
 try:
-    try:
-        import ssl
-        __original_ssl__ = ssl.wrap_socket
-    except ImportError:
-        __original_ssl__ = socket.ssl
-except AttributeError:
-    __original_ssl__ = None
+    # if ssl is available, use eventlet.green.ssl for our ssl implementation
+    import ssl as _ssl
+    def wrap_ssl(sock, certificate=None, private_key=None, server_side=False):
+        from eventlet.green import ssl
+        return ssl.wrap_socket(sock,
+            keyfile=private_key, certfile=certificate,
+            server_side=server_side, cert_reqs=ssl.CERT_NONE,
+            ssl_version=ssl.PROTOCOL_SSLv23, ca_certs=None,
+            do_handshake_on_connect=True,
+            suppress_ragged_eofs=True)
 
-
-def wrap_ssl(sock, certificate=None, private_key=None):
-    from OpenSSL import SSL
-    from eventlet import greenio
-    context = SSL.Context(SSL.SSLv23_METHOD)
-    if certificate is not None:
-        context.use_certificate_file(certificate)
-    if private_key is not None:
-        context.use_privatekey_file(private_key)
-    context.set_verify(SSL.VERIFY_NONE, lambda *x: True)
-
-    ## TODO only do this on client sockets? how?
-    connection = SSL.Connection(context, sock)
-    connection.set_connect_state()
-    return greenio.GreenSSL(connection)
-
-
-def wrap_ssl_obj(sock, certificate=None, private_key=None):
-    """ For 100% compatibility with the socket module, this wraps and handshakes an 
-    open connection, returning a SSLObject."""
-    from eventlet import greenio
-    wrapped = wrap_ssl(sock, certificate, private_key)
-    return greenio.GreenSSLObject(wrapped)
+    def wrap_ssl_obj(sock, certificate=None, private_key=None):
+        from eventlet import ssl
+        warnings.warn("socket.ssl() is deprecated.  Use ssl.wrap_socket() instead.",
+                      DeprecationWarning, stacklevel=2)
+        return ssl.sslwrap_simple(sock, keyfile, certfile)
+        
+except ImportError:
+    # if ssl is not available, use PyOpenSSL
+    def wrap_ssl(sock, certificate=None, private_key=None, server_side=False):
+        from OpenSSL import SSL
+        from eventlet import greenio
+        context = SSL.Context(SSL.SSLv23_METHOD)
+        if certificate is not None:
+            context.use_certificate_file(certificate)
+        if private_key is not None:
+            context.use_privatekey_file(private_key)
+        context.set_verify(SSL.VERIFY_NONE, lambda *x: True)
+    
+        connection = SSL.Connection(context, sock)
+        if server_side:
+            connection.set_accept_state()
+        else:
+            connection.set_connect_state()
+        return greenio.GreenSSL(connection)
+    
+    def wrap_ssl_obj(sock, certificate=None, private_key=None):
+        """ For 100% compatibility with the socket module, this wraps and handshakes an 
+        open connection, returning a SSLObject."""
+        from eventlet import greenio
+        wrapped = wrap_ssl(sock, certificate, private_key)
+        return greenio.GreenSSLObject(wrapped)
 
 socket_already_wrapped = False
 def wrap_socket_with_coroutine_socket(use_thread_pool=True):
@@ -80,8 +90,13 @@ def wrap_socket_with_coroutine_socket(use_thread_pool=True):
         return greenio.GreenSocket(__original_socket__(*args, **kw))
     socket.socket = new_socket
 
-    # for 100% compatibility, return a GreenSSLObject
-    socket.ssl = wrap_ssl_obj
+    socket.ssl = wrap_ssl_obj    
+    try:
+        import ssl as _ssl
+        from eventlet.green import ssl
+        _ssl.wrap_socket = ssl.wrap_socket
+    except ImportError:
+        pass
 
     if use_thread_pool:
         try:
@@ -254,8 +269,7 @@ def set_reuse_addr(descriptor):
         descriptor.setsockopt(
             socket.SOL_SOCKET,
             socket.SO_REUSEADDR,
-            descriptor.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR) | 1,
-        )
+            descriptor.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR) | 1)
     except socket.error:
         pass
 

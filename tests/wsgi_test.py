@@ -1,10 +1,12 @@
 import cgi
 import os
+import socket
 from tests import skipped, LimitedTestCase
 from unittest import main
 
 from eventlet import api
 from eventlet import util
+from eventlet import greenio
 from eventlet import wsgi
 from eventlet import processes
 
@@ -368,6 +370,8 @@ class TestHttpd(LimitedTestCase):
                 serv.process_request(client_socket)
                 return True
             except:
+                import traceback
+                traceback.print_exc()
                 return False
 
         def wsgi_app(environ, start_response):
@@ -385,7 +389,8 @@ class TestHttpd(LimitedTestCase):
         client = api.connect_tcp(('localhost', sock.getsockname()[1]))
         client = util.wrap_ssl(client)
         client.write('X') # non-empty payload so that SSL handshake occurs
-        client.shutdown()
+        greenio.shutdown_safe(client)
+        client.close()
 
         success = server_coro.wait()
         self.assert_(success)

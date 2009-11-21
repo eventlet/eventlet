@@ -29,7 +29,6 @@ def format_date_time(timestamp):
         _weekdayname[wd], day, _monthname[month], year, hh, mm, ss
     )
 
-
 class Input(object):
     def __init__(self, 
                  rfile, 
@@ -349,8 +348,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
     def finish(self):
         BaseHTTPServer.BaseHTTPRequestHandler.finish(self)
-        if self.connection.is_secure:
-            self.connection.shutdown()
+        greenio.shutdown_safe(self.connection)
         self.connection.close()
 
 
@@ -429,7 +427,7 @@ def server(sock, site,
     try:
         host, port = sock.getsockname()
         port = ':%s' % (port, )
-        if sock.is_secure:
+        if hasattr(sock, 'do_handshake'):
             scheme = 'https'
             if port == ':443':
                 port = ''
@@ -452,8 +450,7 @@ def server(sock, site,
                 break
     finally:
         try:
-            if sock.is_secure:
-                sock.shutdown()
+            greenio.shutdown_safe(sock)
             sock.close()
         except socket.error, e:
             if e[0] != errno.EPIPE:

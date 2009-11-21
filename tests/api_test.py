@@ -65,10 +65,10 @@ class TestApi(TestCase):
             try:
                 conn, addr = listenfd.accept()
                 conn.write('hello\r\n')
-                conn.shutdown()
+                greenio.shutdown_safe(conn)
                 conn.close()
             finally:
-                listenfd.shutdown()
+                greenio.shutdown_safe(listenfd)
                 listenfd.close()
 
         server = api.ssl_listener(('0.0.0.0', 0),
@@ -76,13 +76,17 @@ class TestApi(TestCase):
                                   self.private_key_file)
         api.spawn(accept_once, server)
 
-        client = util.wrap_ssl(
-            api.connect_tcp(('127.0.0.1', server.getsockname()[1])))
+        raw_client = api.connect_tcp(('127.0.0.1', server.getsockname()[1]))
+        client = util.wrap_ssl(raw_client)
         fd = socket._fileobject(client, 'rb', 8192)
 
         assert fd.readline() == 'hello\r\n'
-        self.assertRaises(greenio.SSL.ZeroReturnError, fd.read)
-        client.shutdown()
+        try:
+            self.assertEquals('', fd.read(10))
+        except greenio.SSL.ZeroReturnError:
+            # if it's a GreenSSL object it'll do this
+            pass
+        greenio.shutdown_safe(client)
         client.close()
         
         check_hub()

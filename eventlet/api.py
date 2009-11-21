@@ -58,9 +58,8 @@ def ssl_listener(address, certificate, private_key):
     spawns greenlets for each incoming connection.
     """
     from eventlet import util
-    socket = util.wrap_ssl(util.tcp_socket(), certificate, private_key)
+    socket = util.wrap_ssl(util.tcp_socket(), certificate, private_key, True)
     util.socket_bind_and_listen(socket, address)
-    socket.is_secure = True
     return socket
 
 def connect_tcp(address, localaddr=None):
