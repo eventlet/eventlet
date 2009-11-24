@@ -98,20 +98,15 @@ class GreenSSLObject(object):
             except _SSL.SysCallError, e:
                 raise _convert_to_sslerror(e)
         
-    def read(self, n=None):
+    def read(self, n=1024):
         """If n is provided, read n bytes from the SSL connection, otherwise read
         until EOF. The return value is a string of the bytes read."""
-        if n is None:
-            # don't support this until someone needs it
-            raise NotImplementedError("GreenSSLObject does not support "\
-            " unlimited reads until we hear of someone needing to use them.")
-        else:
-            try:
-                return self.connection.read(n)
-            except _SSL.ZeroReturnError:
-                return ''
-            except _SSL.SysCallError, e:
-                raise _convert_to_sslerror(e)
+        try:
+            return self.connection.read(n)
+        except _SSL.ZeroReturnError:
+            return ''
+        except _SSL.SysCallError, e:
+            raise _convert_to_sslerror(e)
             
     def write(self, s):
         """Writes the string s to the on the object's SSL connection. 
