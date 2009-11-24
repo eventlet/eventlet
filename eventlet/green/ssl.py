@@ -290,7 +290,6 @@ def sslwrap_simple(sock, keyfile=None, certfile=None):
     """A replacement for the old socket.ssl function.  Designed
     for compability with Python 2.5 and earlier.  Will disappear in
     Python 3.0."""
-    from eventlet.green.socket import GreenSSLObject
     ssl_sock = GreenSSLSocket(sock, 0, keyfile, certfile, CERT_NONE,
                               PROTOCOL_SSLv23, None)
-    return GreenSSLObject(ssl_sock)
+    return ssl_sock
