@@ -8,6 +8,8 @@ import threading
 
 from eventlet.support import greenlets as greenlet
 
+import warnings
+
 __all__ = [
     'call_after', 'exc_after', 'getcurrent', 'get_default_hub', 'get_hub',
     'GreenletExit', 'kill', 'sleep', 'spawn', 'spew', 'switch',
@@ -33,10 +35,6 @@ def tcp_listener(address, backlog=50):
     Listen on the given ``(ip, port)`` *address* with a TCP socket.  Returns a
     socket object on which one should call ``accept()`` to accept a connection
     on the newly bound socket.
-
-    Generally, the returned socket will be passed to :func:`tcp_server`, which
-    accepts connections forever and spawns greenlets for each incoming
-    connection.
     """
     from eventlet import greenio, util
     socket = greenio.GreenSocket(util.tcp_socket())
@@ -52,10 +50,6 @@ def ssl_listener(address, certificate, private_key):
 
     Returns a socket object on which one should call ``accept()`` to
     accept a connection on the newly bound socket.
-
-    Generally, the returned socket will be passed to
-    :func:`~eventlet.api.tcp_server`, which accepts connections forever and
-    spawns greenlets for each incoming connection.
     """
     from eventlet import util
     socket = util.wrap_ssl(util.tcp_socket(), certificate, private_key, True)
@@ -76,6 +70,14 @@ def connect_tcp(address, localaddr=None):
 
 def tcp_server(listensocket, server, *args, **kw):
     """
+    **Deprecated** Please write your own accept loop instead, like this::
+
+       while True:
+           api.spawn(server, listensocket.accept(), <other_args>)
+           
+    A more complex accept loop can be found in ``examples/accept_loop.py``.
+    
+    *Original documentation:*
     Given a socket, accept connections forever, spawning greenlets and
     executing *server* for each new incoming connection.  When *server* returns
     False, the :func:`tcp_server()` greenlet will end.
@@ -85,6 +87,9 @@ def tcp_server(listensocket, server, *args, **kw):
     :param \*args: The positional arguments to pass to *server*.
     :param \*\*kw: The keyword arguments to pass to *server*.
     """
+    warnings.warn("tcp_server is deprecated, please write your own "\
+                  "accept loop instead (see examples/accept_loop.py)",
+                      DeprecationWarning, stacklevel=2)
     working = [True]
     try:
         while working[0] is not False:

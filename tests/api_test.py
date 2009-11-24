@@ -91,7 +91,12 @@ class TestApi(TestCase):
         
         check_hub()
 
-    def test_server(self):
+    def test_tcp_server(self):
+        import warnings
+        # disabling tcp_server warnings because we're testing tcp_server here
+        warnings.filterwarnings(action = 'ignore',
+                        message='.*tcp_server.*',
+                        category=DeprecationWarning)
         connected = []
         server = api.tcp_listener(('0.0.0.0', 0))
         bound_port = server.getsockname()[1]
@@ -134,8 +139,10 @@ class TestApi(TestCase):
         bound_port = server.getsockname()[1]
 
         done = [False]
-        def client_connected((conn, addr)):
-            conn.close()
+        def client_closer(sock):
+            while True:
+                (conn, addr) = sock.accept()
+                conn.close()
 
         def go():
             client = util.tcp_socket()
@@ -153,7 +160,7 @@ class TestApi(TestCase):
 
         api.call_after(0, go)
 
-        server_coro = api.spawn(api.tcp_server, server, client_connected)
+        server_coro = api.spawn(client_closer, server)
         while not done[0]:
             api.sleep(0)
         api.kill(server_coro)

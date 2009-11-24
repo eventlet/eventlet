@@ -130,12 +130,14 @@ class GreenSSLObject(object):
         
 
 try:
+    # >= Python 2.6
     from eventlet.green import ssl
     def ssl(sock, certificate=None, private_key=None):
         warnings.warn("socket.ssl() is deprecated.  Use ssl.wrap_socket() instead.",
                       DeprecationWarning, stacklevel=2)
         return ssl.sslwrap_simple(sock, keyfile, certfile)
 except ImportError:
+    # <= Python 2.5 compatibility
     def ssl(sock, certificate=None, private_key=None):
         from eventlet import util
         wrapped = util.wrap_ssl(sock, certificate, private_key)
