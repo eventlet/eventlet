@@ -3,6 +3,8 @@ import select
 import socket
 import errno
 
+from eventlet import greenio
+
 def g_log(*args):
     import sys
     from eventlet.support import greenlets as greenlet
@@ -37,27 +39,21 @@ def tcp_socket():
 
 try:
     # if ssl is available, use eventlet.green.ssl for our ssl implementation
-    import ssl as _ssl
+    from eventlet.green import ssl
     def wrap_ssl(sock, certificate=None, private_key=None, server_side=False):
-        from eventlet.green import ssl
         return ssl.wrap_socket(sock,
             keyfile=private_key, certfile=certificate,
             server_side=server_side, cert_reqs=ssl.CERT_NONE,
             ssl_version=ssl.PROTOCOL_SSLv23, ca_certs=None,
             do_handshake_on_connect=True,
-            suppress_ragged_eofs=True)
-
-    def wrap_ssl_obj(sock, certificate=None, private_key=None):
-        from eventlet import ssl
-        warnings.warn("socket.ssl() is deprecated.  Use ssl.wrap_socket() instead.",
-                      DeprecationWarning, stacklevel=2)
-        return ssl.sslwrap_simple(sock, keyfile, certfile)
-        
+            suppress_ragged_eofs=True) 
 except ImportError:
     # if ssl is not available, use PyOpenSSL
     def wrap_ssl(sock, certificate=None, private_key=None, server_side=False):
-        from OpenSSL import SSL
-        from eventlet import greenio
+        try:
+            from OpenSSL import SSL
+        except ImportError:
+            raise ImportError("To use SSL with Eventlet, you must install PyOpenSSL or use Python 2.6 or later.")
         context = SSL.Context(SSL.SSLv23_METHOD)
         if certificate is not None:
             context.use_certificate_file(certificate)
@@ -71,13 +67,6 @@ except ImportError:
         else:
             connection.set_connect_state()
         return greenio.GreenSSL(connection)
-    
-    def wrap_ssl_obj(sock, certificate=None, private_key=None):
-        """ For 100% compatibility with the socket module, this wraps and handshakes an 
-        open connection, returning a SSLObject."""
-        from eventlet import greenio
-        wrapped = wrap_ssl(sock, certificate, private_key)
-        return greenio.GreenSSLObject(wrapped)
 
 socket_already_wrapped = False
 def wrap_socket_with_coroutine_socket(use_thread_pool=True):
@@ -85,12 +74,9 @@ def wrap_socket_with_coroutine_socket(use_thread_pool=True):
     if socket_already_wrapped:
         return
 
-    def new_socket(*args, **kw):
-        from eventlet import greenio
-        return greenio.GreenSocket(__original_socket__(*args, **kw))
-    socket.socket = new_socket
-
-    socket.ssl = wrap_ssl_obj    
+    import eventlet.green.socket
+    socket.socket = eventlet.green.socket.socket
+    socket.ssl = eventlet.green.socket.ssl
     try:
         import ssl as _ssl
         from eventlet.green import ssl
@@ -115,7 +101,6 @@ def wrap_socket_with_coroutine_socket(use_thread_pool=True):
 
     if __original_fromfd__ is not None:
         def new_fromfd(*args, **kw):
-            from eventlet import greenio
             return greenio.GreenSocket(__original_fromfd__(*args, **kw))
         socket.fromfd = new_fromfd
 
@@ -136,7 +121,6 @@ def wrap_pipes_with_coroutine_pipes():
     if pipes_already_wrapped:
         return
     def new_fdopen(*args, **kw):
-        from eventlet import greenio
         return greenio.GreenPipe(__original_fdopen__(*args, **kw))
     def new_read(fd, *args, **kw):
         from eventlet import api

@@ -8,7 +8,7 @@ import time
 
 from eventlet.api import trampoline, getcurrent
 from thread import get_ident
-from eventlet.greenio import set_nonblocking, GreenSocket, GreenSSLObject, SOCKET_CLOSED, CONNECT_ERR, CONNECT_SUCCESS
+from eventlet.greenio import set_nonblocking, GreenSocket, SOCKET_CLOSED, CONNECT_ERR, CONNECT_SUCCESS
 orig_socket = __import__('socket')
 socket = orig_socket.socket
 
@@ -290,6 +290,7 @@ def sslwrap_simple(sock, keyfile=None, certfile=None):
     """A replacement for the old socket.ssl function.  Designed
     for compability with Python 2.5 and earlier.  Will disappear in
     Python 3.0."""
+    from eventlet.green.socket import GreenSSLObject
     ssl_sock = GreenSSLSocket(sock, 0, keyfile, certfile, CERT_NONE,
                               PROTOCOL_SSLv23, None)
     return GreenSSLObject(ssl_sock)

@@ -1,6 +1,7 @@
 from tests import skipped, LimitedTestCase, skip_with_libevent, TestIsTakingTooLong
 from unittest import main
 from eventlet import api, util, coros, proc, greenio
+from eventlet.green.socket import GreenSSLObject
 import os
 import socket
 import sys
@@ -282,7 +283,7 @@ class SSLTest(LimitedTestCase):
                                     self.private_key_file)
         killer = api.spawn(serve, listener)
         client = util.wrap_ssl(api.connect_tcp(('localhost', listener.getsockname()[1])))
-        client = greenio.GreenSSLObject(client)
+        client = GreenSSLObject(client)
         self.assertEquals(client.read(1024), 'content')
         self.assertEquals(client.read(1024), '')
         
@@ -290,7 +291,10 @@ class SSLTest(LimitedTestCase):
         def serve(listener):
             sock, addr = listener.accept()
             stuff = sock.read(8192)
-            empt = sock.read(8192)
+            try:
+                self.assertEquals("", sock.read(8192))
+            except greenio.SSL.ZeroReturnError:
+                pass
   
         sock = api.ssl_listener(('127.0.0.1', 0), self.certificate_file, self.private_key_file)
         server_coro = coros.execute(serve, sock)
