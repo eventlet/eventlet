@@ -2,6 +2,16 @@ __select = __import__('select')
 error = __select.error
 from eventlet.api import get_hub, getcurrent
 
+def get_fileno(obj):
+    try:
+        f = obj.fileno
+    except AttributeError:
+        if not isinstance(obj, (int, long)):
+            raise TypeError("Expected int or long, got " + type(obj))
+        return obj
+    else:
+        return f()
+
 def select(read_list, write_list, error_list, timeout=None):
     hub = get_hub()
     t = None

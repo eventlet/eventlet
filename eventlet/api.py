@@ -135,17 +135,6 @@ def trampoline(fd, read=None, write=None, timeout=None, timeout_exc=TimeoutError
             t.cancel()
 
 
-def get_fileno(obj):
-    try:
-        f = obj.fileno
-    except AttributeError:
-        if not isinstance(obj, (int, long)):
-            raise TypeError("Expected int or long, got " + type(obj))
-        return obj
-    else:
-        return f()
-
-
 def _spawn_startup(cb, args, kw, cancel=None):
     try:
         greenlet.getcurrent().parent.switch()
