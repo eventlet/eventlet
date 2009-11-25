@@ -278,7 +278,7 @@ class TestHttpd(LimitedTestCase):
 
         server_sock = api.ssl_listener(('localhost', 0), certificate_file, private_key_file)
 
-        api.spawn(wsgi.server, server_sock, wsgi_app)
+        api.spawn(wsgi.server, server_sock, wsgi_app, log=StringIO())
     
         sock = api.connect_tcp(('localhost', server_sock.getsockname()[1]))
         sock = util.wrap_ssl(sock)
@@ -294,7 +294,7 @@ class TestHttpd(LimitedTestCase):
         certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
         private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
         server_sock = api.ssl_listener(('localhost', 0), certificate_file, private_key_file)
-        api.spawn(wsgi.server, server_sock, wsgi_app)
+        api.spawn(wsgi.server, server_sock, wsgi_app, log=StringIO())
 
         sock = api.connect_tcp(('localhost', server_sock.getsockname()[1]))
         sock = util.wrap_ssl(sock)
@@ -354,6 +354,7 @@ class TestHttpd(LimitedTestCase):
         def wsgi_app(environ, start_response):
             start_response('200 OK', [('Content-Length', '7')])
             return ['testing']
+        self.site.application = wsgi_app
         sock = api.connect_tcp(('localhost', self.port))
         fd = sock.makeGreenFile()
         fd.write('GET /a HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
@@ -363,7 +364,7 @@ class TestHttpd(LimitedTestCase):
 
     def test_017_ssl_zeroreturnerror(self):
 
-        def server(sock, site, log=None):
+        def server(sock, site, log):
             try:
                 serv = wsgi.Server(sock, sock.getsockname(), site, log)
                 client_socket = sock.accept()
@@ -375,7 +376,7 @@ class TestHttpd(LimitedTestCase):
                 return False
 
         def wsgi_app(environ, start_response):
-            start_response('200 OK', {})
+            start_response('200 OK', [])
             return [environ['wsgi.input'].read()]
 
         certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
@@ -384,7 +385,7 @@ class TestHttpd(LimitedTestCase):
         sock = api.ssl_listener(('localhost', 0), certificate_file, private_key_file)
 
         from eventlet import coros
-        server_coro = coros.execute(server, sock, wsgi_app)
+        server_coro = coros.execute(server, sock, wsgi_app, self.logfile)
 
         client = api.connect_tcp(('localhost', sock.getsockname()[1]))
         client = util.wrap_ssl(client)
@@ -431,6 +432,34 @@ class TestHttpd(LimitedTestCase):
                  '4\r\n hai\r\n0\r\n\r\n')
         self.assert_('hello!' in fd.read())
 
-
+    def test_020_x_forwarded_for(self):
+        sock = api.connect_tcp(('localhost', self.port))
+        sock.sendall('GET / HTTP/1.1\r\nHost: localhost\r\nX-Forwarded-For: 1.2.3.4, 5.6.7.8\r\n\r\n')
+        sock.recv(1024)
+        sock.close()
+        self.assert_('1.2.3.4,5.6.7.8,127.0.0.1' in self.logfile.getvalue())
+        
+        # turning off the option should work too
+        self.logfile = StringIO()
+        api.kill(self.killer)
+        listener = api.tcp_listener(('localhost', 0))
+        self.port = listener.getsockname()[1]
+        self.killer = api.spawn(
+            wsgi.server,
+            listener, 
+            self.site, 
+            max_size=128, 
+            log=self.logfile,
+            log_x_forwarded_for=False)
+            
+        sock = api.connect_tcp(('localhost', self.port))
+        sock.sendall('GET / HTTP/1.1\r\nHost: localhost\r\nX-Forwarded-For: 1.2.3.4, 5.6.7.8\r\n\r\n')
+        sock.recv(1024)
+        sock.close()
+        self.assert_('1.2.3.4' not in self.logfile.getvalue())
+        self.assert_('5.6.7.8' not in self.logfile.getvalue())        
+        self.assert_('127.0.0.1' in self.logfile.getvalue())
+              
+        
 if __name__ == '__main__':
     main()

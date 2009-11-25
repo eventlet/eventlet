@@ -286,12 +286,20 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             finish = time.time()
 
             self.server.log_message('%s - - [%s] "%s" %s %s %.6f' % (
-                self.client_address[0],
+                self.get_client_ip(),
                 self.log_date_time_string(),
                 self.requestline,
                 status_code[0],
                 length[0],
                 finish - start))
+                
+    def get_client_ip(self):
+        client_ip = self.client_address[0]
+        if self.server.log_x_forwarded_for:
+            forward = self.headers.get('X-Forwarded-For', '').replace(' ', '')
+            if forward:
+                client_ip = "%s,%s" % (forward, client_ip)
+        return client_ip
 
     def get_environ(self):
         env = self.server.get_environ()
@@ -361,7 +369,8 @@ class Server(BaseHTTPServer.HTTPServer):
                  environ=None, 
                  max_http_version=None, 
                  protocol=HttpProtocol, 
-                 minimum_chunk_size=None):
+                 minimum_chunk_size=None,
+                 log_x_forwarded_for=True):
                  
         self.outstanding_requests = 0
         self.socket = socket
@@ -377,6 +386,7 @@ class Server(BaseHTTPServer.HTTPServer):
         self.pid = os.getpid()
         if minimum_chunk_size is not None:
             protocol.minimum_chunk_size = minimum_chunk_size
+        self.log_x_forwarded_for = log_x_forwarded_for
 
     def get_environ(self):
         socket = self.socket
@@ -407,7 +417,8 @@ def server(sock, site,
            max_http_version=DEFAULT_MAX_HTTP_VERSION, 
            protocol=HttpProtocol,
            server_event=None, 
-           minimum_chunk_size=None):
+           minimum_chunk_size=None,
+           log_x_forwarded_for=True):
     """  Start up a wsgi server handling requests from the supplied server socket.
     
     This function loops forever.
@@ -418,7 +429,8 @@ def server(sock, site,
                   environ=None, 
                   max_http_version=max_http_version, 
                   protocol=protocol, 
-                  minimum_chunk_size=minimum_chunk_size)
+                  minimum_chunk_size=minimum_chunk_size,
+                  log_x_forwarded_for=log_x_forwarded_for)
     if server_event is not None:
         server_event.send(serv)
     if max_size is None:
