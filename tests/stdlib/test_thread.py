@@ -1,3 +1,4 @@
+from eventlet import patcher
 from eventlet.green import thread
 from eventlet.green import time
 
@@ -5,16 +6,13 @@ from eventlet.green import time
 from eventlet import api
 api.get_hub()
 
-# in Python < 2.5, the import does all the testing,
-# so we have to wrap that in test_main as well
-def test_main():
-    import sys
-    sys.modules['thread'] = thread
-    sys.modules['time'] = time
-    from test import test_thread
-    if hasattr(test_thread, 'test_main'):
-        # > 2.6
-        test_thread.test_main()
+patcher.inject('test.test_thread',
+    globals(),
+    ('time', time),
+    ('thread', thread))
 
 if __name__ == "__main__":
-    test_main()
+    try:
+        test_main()
+    except NameError:
+        pass  # 2.5
