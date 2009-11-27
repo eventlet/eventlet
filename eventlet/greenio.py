@@ -6,6 +6,7 @@ import errno
 import os
 import socket
 from socket import socket as _original_socket
+import sys
 import time
 
 
@@ -88,13 +89,20 @@ def socket_send(descriptor, data, flags=0):
             return 0
         raise
 
-# winsock sometimes throws ENOTCONN
-SOCKET_CLOSED = (errno.ECONNRESET, errno.ENOTCONN, errno.ESHUTDOWN)
+if sys.platform[:3]=="win":
+    # winsock sometimes throws ENOTCONN
+    SOCKET_BLOCKING = (errno.EWOULDBLOCK,)
+    SOCKET_CLOSED = (errno.ECONNRESET, errno.ENOTCONN, errno.ESHUTDOWN)
+else:
+    # oddly, on linux/darwin, an unconnected socket is expected to block,
+    # so we treat ENOTCONN the same as EWOULDBLOCK
+    SOCKET_BLOCKING = (errno.EWOULDBLOCK, errno.ENOTCONN)
+    SOCKET_CLOSED = (errno.ECONNRESET, errno.ESHUTDOWN)
 def socket_recv(descriptor, buflen, flags=0):
     try:
         return descriptor.recv(buflen, flags)
     except socket.error, e:
-        if e[0] == errno.EWOULDBLOCK:
+        if e[0] in SOCKET_BLOCKING:
             return None
         if e[0] in SOCKET_CLOSED:
             return ''
