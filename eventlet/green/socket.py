@@ -3,11 +3,6 @@ for var in __socket.__all__:
     exec "%s = __socket.%s" % (var, var)
 _fileobject = __socket._fileobject
 
-try:
-    sslerror = socket.sslerror
-except AttributeError:
-    pass
-
 from eventlet.api import get_hub
 from eventlet.greenio import GreenSocket as socket
 from eventlet.greenio import SSL as _SSL
@@ -78,7 +73,7 @@ def create_connection(address, timeout=_GLOBAL_DEFAULT_TIMEOUT):
 
 def _convert_to_sslerror(ex):
     """ Transliterates SSL.SysCallErrors to socket.sslerrors"""
-    return socket.sslerror((ex[0], ex[1]))
+    return sslerror((ex[0], ex[1]))
     
         
 class GreenSSLObject(object):
@@ -130,16 +125,24 @@ class GreenSSLObject(object):
         
 
 try:
-    # >= Python 2.6
-    from eventlet.green import ssl
-    def ssl(sock, certificate=None, private_key=None):
-        warnings.warn("socket.ssl() is deprecated.  Use ssl.wrap_socket() instead.",
-                      DeprecationWarning, stacklevel=2)
-        return ssl.sslwrap_simple(sock, keyfile, certfile)
-except ImportError:
-    # <= Python 2.5 compatibility
-    def ssl(sock, certificate=None, private_key=None):
-        from eventlet import util
-        wrapped = util.wrap_ssl(sock, certificate, private_key)
-        return GreenSSLObject(wrapped)
-
+    try:
+        # >= Python 2.6
+        from eventlet.green import ssl
+        sslerror = __socket.sslerror
+        __socket.ssl
+        def ssl(sock, certificate=None, private_key=None):
+            warnings.warn("socket.ssl() is deprecated.  Use ssl.wrap_socket() instead.",
+                          DeprecationWarning, stacklevel=2)
+            return ssl.sslwrap_simple(sock, keyfile, certfile)
+    except ImportError:
+        # <= Python 2.5 compatibility
+        sslerror = __socket.sslerror
+        __socket.ssl
+        def ssl(sock, certificate=None, private_key=None):
+            from eventlet import util
+            wrapped = util.wrap_ssl(sock, certificate, private_key)
+            return GreenSSLObject(wrapped)
+except AttributeError:
+    # if the real socket module doesn't have the ssl method or sslerror
+    # exception, it hardly seems useful to emulate them
+    pass
