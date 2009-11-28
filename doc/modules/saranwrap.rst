@@ -1,5 +1,5 @@
 :mod:`saranwrap` -- Running code in separate processes
-==================
+=======================================================
 
 This is a convenient way of bundling code off into a separate process.  If you are using Python 2.6, the multiprocessing module probably suits your needs better than saranwrap will.
 

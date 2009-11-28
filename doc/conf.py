@@ -22,7 +22,8 @@ import sys, os
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.todo', 'sphinx.ext.coverage']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.todo', 'sphinx.ext.coverage', 
+              'sphinx.ext.intersphinx']
 
 # If this is True, '.. todo::' and '.. todolist::' produce output, else they produce
 # nothing. The default is False.
@@ -90,6 +91,9 @@ pygments_style = 'sphinx'
 
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []
+
+# Intersphinx references
+intersphinx_mapping = {'http://docs.python.org/': None}
 
 
 # -- Options for HTML output ---------------------------------------------------

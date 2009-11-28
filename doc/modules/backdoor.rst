@@ -1,5 +1,5 @@
-:mod:`backdoor` -- Python interactive interpreter within an eventlet instance
-==================
+:mod:`backdoor` -- Python interactive interpreter within a running process
+===============================================================================
 
 .. automodule:: eventlet.backdoor
 	:members:
