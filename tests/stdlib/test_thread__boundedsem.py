@@ -8,4 +8,5 @@ def allocate_lock():
 thread.allocate_lock = allocate_lock
 thread.LockType = coros.BoundedSemaphore
 
-execfile('stdlib/test_thread.py')
+import os.path
+execfile(os.path.join(os.path.dirname(__file__), 'test_thread.py'))
