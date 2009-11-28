@@ -43,7 +43,7 @@ def tcp_listener(address, backlog=50):
 
 def ssl_listener(address, certificate, private_key):
     """Listen on the given (ip, port) *address* with a TCP socket that
-    can do SSL.
+    can do SSL.  Primarily useful for unit tests, don't use in production.
 
     *certificate* and *private_key* should be the filenames of the appropriate
     certificate and private key files to use with the SSL socket.
