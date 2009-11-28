@@ -10,3 +10,4 @@ htmlreports
 .DS_Store
 results.*.db
 doc/_build
+annotated

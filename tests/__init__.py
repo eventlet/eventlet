@@ -21,16 +21,24 @@ def skipped(func):
         return skipme
 
 
-def skip_unless_requirement(requirement):
+def skip_unless(requirement):
     """ Decorator that skips a test if the *requirement* does not return True.
-    *requirement* is a callable that accepts one argument, the function to be decorated, 
-    and returns True if the requirement is satisfied.
+    *requirement* can be a boolean or a callable that accepts one argument.
+    The callable will be called with the  function to be decorated, and 
+    should return True if the requirement is satisfied.
     """
-    def skipped_wrapper(func):        
-        if not requirement(func):
-            return skipped(func)
-        else:
-            return func
+    if isinstance(requirement, bool):
+        def skipped_wrapper(func):        
+            if not requirement:
+                return skipped(func)
+            else:
+                return func    
+    else:
+        def skipped_wrapper(func):        
+            if not requirement(func):
+                return skipped(func)
+            else:
+                return func
     return skipped_wrapper
 
 
@@ -42,7 +50,7 @@ def requires_twisted(func):
             return 'Twisted' in type(get_hub()).__name__
         except Exception:
             return False
-    return skip_unless_requirement(requirement)(func)
+    return skip_unless(requirement)(func)
     
     
 def skip_with_libevent(func):
@@ -50,7 +58,7 @@ def skip_with_libevent(func):
     def requirement(_f):
         from eventlet.api import get_hub
         return not('libevent' in type(get_hub()).__module__)
-    return skip_unless_requirement(requirement)(func)
+    return skip_unless(requirement)(func)
 
 
 class TestIsTakingTooLong(Exception):

@@ -79,4 +79,22 @@ If you are writing a test that involves a client connecting to a spawned server,
 
   server_sock = api.tcp_listener(('127.0.0.1', 0))
   client_sock = api.connect_tcp(('localhost', server_sock.getsockname()[1]))
+  
+Coverage
+--------
 
+Coverage.py is an awesome tool for evaluating how much code was exercised by unit tests.  Nose supports it if both are installed, so it's easy to generate coverage reports for eventlet.  Here's how:
+
+.. code-block:: sh
+
+ nosetests --with-coverage
+ 
+After running the tests to completion, this will emit a huge wodge of module names and line numbers.  For some reason, the ``--cover-inclusive`` option breaks everything rather than serving its purpose of limiting the coverage to the local files, so don't use that.
+
+The annotate option is quite useful because it generates annotated source files that are much easier to read than line-number soup.  Here's a command that runs the annotation, dumping the annotated files into a directory called "annotated":
+
+.. code-block:: sh
+
+ coverage annotate -d annotated --omit tempmod
+ 
+(``tempmod`` is omitted because it gets thrown away at the completion of its unit test and coverage.py isn't smart enough to detect this)

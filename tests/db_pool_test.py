@@ -1,6 +1,6 @@
 "Test cases for db_pool"
 
-from tests import skipped, skip_unless_requirement
+from tests import skipped, skip_unless
 from unittest import TestCase, main
 from eventlet import api, coros
 from eventlet import db_pool
@@ -506,7 +506,7 @@ def mysql_requirement(_f):
 class TestMysqlConnectionPool(object):
     __test__ = True
 
-    @skip_unless_requirement(mysql_requirement)
+    @skip_unless(mysql_requirement)
     def setUp(self):
         import MySQLdb
         self._dbmodule = MySQLdb

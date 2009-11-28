@@ -51,7 +51,7 @@ except ImportError:
     # if ssl is not available, use PyOpenSSL
     def wrap_ssl(sock, certificate=None, private_key=None, server_side=False):
         try:
-            from OpenSSL import SSL
+            from eventlet.green.OpenSSL import SSL
         except ImportError:
             raise ImportError("To use SSL with Eventlet, you must install PyOpenSSL or use Python 2.6 or later.")
         context = SSL.Context(SSL.SSLv23_METHOD)
@@ -66,7 +66,7 @@ except ImportError:
             connection.set_accept_state()
         else:
             connection.set_connect_state()
-        return greenio.GreenSSL(connection)
+        return connection
 
 socket_already_wrapped = False
 def wrap_socket_with_coroutine_socket(use_thread_pool=True):

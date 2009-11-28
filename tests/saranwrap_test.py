@@ -227,14 +227,14 @@ class TestSaranwrap(unittest.TestCase):
     def test_not_inheriting_pythonpath(self):
         # construct a fake module in the temp directory
         temp_dir = tempfile.mkdtemp("saranwrap_test")
-        fp = open(os.path.join(temp_dir, "jitar_hero.py"), "w")
+        fp = open(os.path.join(temp_dir, "tempmod.py"), "w")
         fp.write("""import os, sys
 pypath = os.environ['PYTHONPATH']
 sys_path = sys.path""")
         fp.close()
 
         # this should fail because we haven't stuck the temp_dir in our path yet
-        prox = saranwrap.wrap_module('jitar_hero')
+        prox = saranwrap.wrap_module('tempmod')
         try:
             prox.pypath
             self.fail()
@@ -244,8 +244,8 @@ sys_path = sys.path""")
         # now try to saranwrap it
         sys.path.append(temp_dir)
         try:
-            import jitar_hero
-            prox = saranwrap.wrap(jitar_hero)
+            import tempmod
+            prox = saranwrap.wrap(tempmod)
             self.assert_(prox.pypath.count(temp_dir))
             self.assert_(prox.sys_path.count(temp_dir))
         finally:

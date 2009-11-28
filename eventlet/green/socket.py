@@ -5,7 +5,8 @@ _fileobject = __socket._fileobject
 
 from eventlet.api import get_hub
 from eventlet.greenio import GreenSocket as socket
-from eventlet.greenio import SSL as _SSL
+from eventlet.greenio import SSL as _SSL  # for exceptions
+import warnings
 
 def fromfd(*args):
     return socket(__socket.fromfd(*args))    
@@ -127,13 +128,13 @@ class GreenSSLObject(object):
 try:
     try:
         # >= Python 2.6
-        from eventlet.green import ssl
+        from eventlet.green import ssl as ssl_module
         sslerror = __socket.sslerror
         __socket.ssl
         def ssl(sock, certificate=None, private_key=None):
             warnings.warn("socket.ssl() is deprecated.  Use ssl.wrap_socket() instead.",
                           DeprecationWarning, stacklevel=2)
-            return ssl.sslwrap_simple(sock, keyfile, certfile)
+            return ssl_module.sslwrap_simple(sock, private_key, certificate)
     except ImportError:
         # <= Python 2.5 compatibility
         sslerror = __socket.sslerror
@@ -144,5 +145,5 @@ try:
             return GreenSSLObject(wrapped)
 except AttributeError:
     # if the real socket module doesn't have the ssl method or sslerror
-    # exception, it hardly seems useful to emulate them
+    # exception, we can't emulate them
     pass

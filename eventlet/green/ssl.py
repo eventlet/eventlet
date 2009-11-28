@@ -286,10 +286,14 @@ def wrap_socket(sock, keyfile=None, certfile=None,
                      suppress_ragged_eofs=suppress_ragged_eofs)
 
 
-def sslwrap_simple(sock, keyfile=None, certfile=None):
-    """A replacement for the old socket.ssl function.  Designed
-    for compability with Python 2.5 and earlier.  Will disappear in
-    Python 3.0."""
-    ssl_sock = GreenSSLSocket(sock, 0, keyfile, certfile, CERT_NONE,
-                              PROTOCOL_SSLv23, None)
-    return ssl_sock
+if hasattr(__ssl, 'sslwrap_simple'):
+    def sslwrap_simple(sock, keyfile=None, certfile=None):
+        """A replacement for the old socket.ssl function.  Designed
+        for compability with Python 2.5 and earlier.  Will disappear in
+        Python 3.0."""
+        ssl_sock = GreenSSLSocket(sock, keyfile=keyfile, certfile=certfile,
+                                  server_side=False, 
+                                  cert_reqs=CERT_NONE, 
+                                  ssl_version=PROTOCOL_SSLv23, 
+                                  ca_certs=None)
+        return ssl_sock
