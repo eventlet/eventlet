@@ -152,6 +152,12 @@ def set_nonblocking(fd):
         setblocking(0)
 
 
+try:
+    from socket import _GLOBAL_DEFAULT_TIMEOUT
+except ImportError:
+    _GLOBAL_DEFAULT_TIMEOUT = object()
+    
+
 class GreenSocket(object):
     timeout = None
     def __init__(self, family_or_realsock=socket.AF_INET, *args, **kwargs):
@@ -337,7 +343,7 @@ class GreenSocket(object):
         return fn(*args, **kw)
 
     def settimeout(self, howlong):
-        if howlong is None:
+        if howlong is None or howlong == _GLOBAL_DEFAULT_TIMEOUT:
             self.setblocking(True)
             return
         try:
