@@ -161,7 +161,7 @@ class GreenSocket(object):
             fd = family_or_realsock
             assert not args, args
             assert not kwargs, kwargs
-
+        
         set_nonblocking(fd)
         self.fd = fd
         self._fileno = fd.fileno()
