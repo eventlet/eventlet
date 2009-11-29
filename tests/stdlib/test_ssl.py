@@ -4,10 +4,10 @@ from eventlet.green import BaseHTTPServer
 from eventlet.green import select
 from eventlet.green import socket
 from eventlet.green import SocketServer
+from eventlet.green import SimpleHTTPServer
 from eventlet.green import ssl
 from eventlet.green import threading
 from eventlet.green import urllib
-# *TODO: SimpleHTTPServer
 
 # stupid test_support messing with our mojo
 import test.test_support
