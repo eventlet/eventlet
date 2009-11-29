@@ -42,7 +42,13 @@ class GreenSSLSocket(__ssl.SSLSocket):
     def gettimeout(self):
         return self.timeout
     
-    setblocking = GreenSocket.setblocking
+    def setblocking(self, flag):
+        if flag:
+            self.act_non_blocking = False
+            self.timeout = None
+        else:
+            self.act_non_blocking = True
+            self.timeout = 0.0
 
     def _call_trampolining(self, func, *a, **kw):
         if self.act_non_blocking:
