@@ -17,22 +17,41 @@ def import_main(g, name):
             modobj.test_main.__name__ = name + '.test_main'
         except AttributeError:
             print "No test_main for %s, assuming it tests on import" % name
-
+            
+    
+# quick and dirty way of testing whether we can access
+# remote hosts; any tests that try internet connections
+# will fail if we cannot   
+import socket
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+try:
+    s.settimeout(0.5)
+    s.connect(('eventlet.net', 80))
+    s.close()
+    have_network_access = True
+except socket.error, e:
+    have_network_access = False
+    
+        
 import_main(globals(), 'test_SimpleHTTPServer')
 import_main(globals(), 'test_asynchat')
 import_main(globals(), 'test_asyncore')
 import_main(globals(), 'test_ftplib')
 import_main(globals(), 'test_httplib')
-#import_main(globals(), 'test_httpservers')
+if have_network_access:
+    import_main(globals(), 'test_httpservers')
 import_main(globals(), 'test_select')
-import_main(globals(), 'test_socket')
-#import_main(globals(), 'test_socket_ssl')
+if have_network_access:
+    import_main(globals(), 'test_socket')
+import_main(globals(), 'test_socket_ssl')
 import_main(globals(), 'test_socketserver')
 #import_main(globals(), 'test_ssl')
 import_main(globals(), 'test_thread')
-#import_main(globals(), 'test_threading')
-#import_main(globals(), 'test_threading_local')
-import_main(globals(), 'test_timeout')
+import_main(globals(), 'test_threading')
+import_main(globals(), 'test_threading_local')
+if have_network_access:
+    import_main(globals(), 'test_timeout')
 import_main(globals(), 'test_urllib')
-import_main(globals(), 'test_urllib2')
+if have_network_access:
+    import_main(globals(), 'test_urllib2')
 import_main(globals(), 'test_urllib2_localnet')
