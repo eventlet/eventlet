@@ -30,9 +30,10 @@ try:
     s.close()
     have_network_access = True
 except socket.error, e:
+    print "Skipping network tests"
     have_network_access = False
     
-        
+import_main(globals(), 'test_select')
 import_main(globals(), 'test_SimpleHTTPServer')
 import_main(globals(), 'test_asynchat')
 import_main(globals(), 'test_asyncore')
@@ -40,7 +41,6 @@ import_main(globals(), 'test_ftplib')
 import_main(globals(), 'test_httplib')
 if have_network_access:
     import_main(globals(), 'test_httpservers')
-import_main(globals(), 'test_select')
 if have_network_access:
     import_main(globals(), 'test_socket')
 import_main(globals(), 'test_socket_ssl')
