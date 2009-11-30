@@ -39,14 +39,14 @@ Standard Library Tests
 
 Eventlet provides for the ability to test itself with the standard Python networking tests.  This verifies that the libraries it wraps work at least as well as the standard ones do.  The directory tests/stdlib contains a bunch of stubs that import the standard lib tests from your system and run them.  If you do not have any tests in your python distribution, they'll simply fail to import.
 
-Run the standard library tests with nose; simply do:
+There's a convenience module called all.py designed to handle the impedance mismatch between Nose and the standard tests:
 
 .. code-block:: sh
 
-  $ cd tests/
-  $ nosetests stdlib
+  $ nosetests tests/stdlib/all.py
   
-That should get you started.  At this time this generates a bunch of spurious failures, due to `Nose issue 162 <http://code.google.com/p/python-nose/issues/detail?id=162>`_, which incorrectly identifies helper methods as test cases.  Therefore, ignore any failure for the reason ``TypeError: foo() takes exactly N arguments (2 given)``, and sit tight until a version of Nose is released that fixes the issue.
+That will run all the tests, though the output will be a little weird because it will look like Nose is running about 20 tests, each of which consists of a bunch of sub-tests.  Not all test modules are present in all versions of Python, so there will be an occasional printout of "Not importing %s, it doesn't exist in this installation/version of Python".
+
 
 Testing Eventlet Hubs
 ---------------------
