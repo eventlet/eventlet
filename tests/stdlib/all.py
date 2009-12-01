@@ -45,7 +45,8 @@ if have_network_access:
     import_main(globals(), 'test_socket')
 import_main(globals(), 'test_socket_ssl')
 import_main(globals(), 'test_socketserver')
-#import_main(globals(), 'test_ssl')
+if have_network_access:
+    import_main(globals(), 'test_ssl')
 import_main(globals(), 'test_thread')
 import_main(globals(), 'test_threading')
 import_main(globals(), 'test_threading_local')
