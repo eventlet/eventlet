@@ -28,7 +28,7 @@ Once pyOpenSSL is installed, you can then use the ``eventlet.green`` modules, li
 PyOpenSSL
 ----------
 
-:mod:`eventlet.green.OpenSSL` has exactly the same interface as pyOpenSSL_ '(docs) <http://pyopenssl.sourceforge.net/pyOpenSSL.html/>`_, and works in all versions of Python.  This module is much more powerful than :func:`socket.ssl`, and may have some advantages over :mod:`ssl`, depending on your needs.
+:mod:`eventlet.green.OpenSSL` has exactly the same interface as pyOpenSSL_ `(docs) <http://pyopenssl.sourceforge.net/pyOpenSSL.html/>`_, and works in all versions of Python.  This module is much more powerful than :func:`socket.ssl`, and may have some advantages over :mod:`ssl`, depending on your needs.
 
 Here's an example of a server::
 
