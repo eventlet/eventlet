@@ -2,8 +2,9 @@
 =====
 
 * PyOpenSSL is no longer required for Python 2.6: use the eventlet.green.ssl module. 2.5 and 2.4 still require PyOpenSSL.
-* Documentation on using SSL added.
 * Cleaned up the eventlet.green packages and their associated tests, this should result in fewer version-dependent bugs with these modules.
+* PyOpenSSL is now fully wrapped in eventlet.green.OpenSSL; using it is therefore more consistent with using other green modules.
+* Documentation on using SSL added.
 * New green modules: ayncore, asynchat, SimpleHTTPServer, CGIHTTPServer, ftplib.
 * Fuller thread/threading compatibility: patching threadlocal with corolocal so coroutines behave even more like threads.
 * Improved Windows compatibility for tpool.py
@@ -13,6 +14,7 @@
 * api.tcp_server is now deprecated, will be removed in a future release.
 * Added instructions on how to generate coverage reports to the documentation.
 * Bug fixes in: wsgi.py, twistedr.py, poll.py, greenio.py, util.py, select.py
+
 
 0.9.0
 =====
