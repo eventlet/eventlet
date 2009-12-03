@@ -76,6 +76,7 @@ class Process(object):
         self.send = self.child_stdin.write
         self.recv = self.child_stdout_stderr.read
         self.readline = self.child_stdout_stderr.readline
+        self._read_first_result = False
 
     def wait(self):
         return cooperative_wait(self.popen4)
@@ -94,11 +95,17 @@ class Process(object):
         raise RuntimeError("Unknown mode", mode)
 
     def read(self, amount=None):
+        """Reads from the stdout and stderr of the child process.
+        The first call to read() will return a string; subsequent
+        calls may raise a DeadProcess when EOF occurs on the pipe.
+        """
         result = self.child_stdout_stderr.read(amount)
-        if result == '':
+        if result == '' and self._read_first_result:
             # This process is dead.
             self.dead_callback()
             raise DeadProcess
+        else:
+            self._read_first_result = True
         return result
 
     def write(self, stuff):
