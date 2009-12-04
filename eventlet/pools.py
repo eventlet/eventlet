@@ -14,6 +14,33 @@ class SomeFailed(FanFailed):
 class AllFailed(FanFailed):
     pass
 
+# have to stick this in an exec so it works in 2.4
+try:
+    from contextlib import contextmanager
+    exec('''
+        @contextmanager
+        def item_impl(self):
+            """ Get an object out of the pool, for use with with statement. 
+
+            >>> from eventlet import pools
+            >>> pool = pools.TokenPool(max_size=4)
+            >>> with pool.item() as obj:
+            ...     print "got token"
+            ...
+            got token
+            >>> pool.free()
+            4
+            """
+            obj = self.get()
+            try:
+                yield obj
+            finally:
+                self.put(obj)
+            ''')
+except ImportError:
+    item_impl = None
+
+
 
 class Pool(object):
     """
@@ -70,29 +97,8 @@ class Pool(object):
             return created
         return self.channel.wait()
 
-    try:
-        from contextlib import contextmanager
-        @contextmanager
-        def item(self):
-            """ Get an object out of the pool, for use with with statement. 
-
-            >>> from eventlet import pools
-            >>> pool = pools.TokenPool(max_size=4)
-            >>> with pool.item() as obj:
-            ...     print "got token"
-            ...
-            got token
-            >>> pool.free()
-            4
-            """
-            obj = self.get()
-            try:
-                yield obj
-            finally:
-                self.put(obj)
-    except ImportError:
-        pass
-
+    if item_impl is not None:
+        item = item_impl
 
     def put(self, item):
         """Put an item back into the pool, when done
