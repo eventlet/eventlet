@@ -190,24 +190,29 @@ class TestApi(TestCase):
     def test_timeout_and_final_write(self):
         # This test verifies that a write on a socket that we've
         # stopped listening for doesn't result in an incorrect switch
-        rpipe, wpipe = os.pipe()
-        rfile = os.fdopen(rpipe,"r",0)
-        wrap_rfile = greenio.GreenPipe(rfile)
-        wfile = os.fdopen(wpipe,"w",0)
-        wrap_wfile = greenio.GreenPipe(wfile)
-
+        server = api.tcp_listener(('127.0.0.1', 0))
+        bound_port = server.getsockname()[1]
+        
         def sender(evt):
+            s2, addr = server.accept()
+            wrap_wfile = s2.makefile()
+            
             api.sleep(0.02)
             wrap_wfile.write('hi')
+            s2.close()
             evt.send('sent via event')
 
         from eventlet import coros
         evt = coros.event()
         api.spawn(sender, evt)
+        api.sleep(0)  # lets the socket enter accept mode, which
+                      # is necessary for connect to succeed on windows
         try:
             # try and get some data off of this pipe
             # but bail before any is sent
             api.exc_after(0.01, api.TimeoutError)
+            client = api.connect_tcp(('127.0.0.1', bound_port))
+            wrap_rfile = client.makefile()
             _c = wrap_rfile.read(1)
             self.fail()
         except api.TimeoutError:
@@ -215,6 +220,8 @@ class TestApi(TestCase):
 
         result = evt.wait()
         self.assertEquals(result, 'sent via event')
+        server.close()
+        client.close()
         
         
     def test_killing_dormant(self):
