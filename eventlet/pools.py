@@ -18,25 +18,25 @@ class AllFailed(FanFailed):
 try:
     from contextlib import contextmanager
     exec('''
-        @contextmanager
-        def item_impl(self):
-            """ Get an object out of the pool, for use with with statement. 
+@contextmanager
+def item_impl(self):
+    """ Get an object out of the pool, for use with with statement. 
 
-            >>> from eventlet import pools
-            >>> pool = pools.TokenPool(max_size=4)
-            >>> with pool.item() as obj:
-            ...     print "got token"
-            ...
-            got token
-            >>> pool.free()
-            4
-            """
-            obj = self.get()
-            try:
-                yield obj
-            finally:
-                self.put(obj)
-            ''')
+    >>> from eventlet import pools
+    >>> pool = pools.TokenPool(max_size=4)
+    >>> with pool.item() as obj:
+    ...     print "got token"
+    ...
+    got token
+    >>> pool.free()
+    4
+    """
+    obj = self.get()
+    try:
+        yield obj
+    finally:
+        self.put(obj)
+''')
 except ImportError:
     item_impl = None
 
