@@ -22,6 +22,11 @@ def bufsized(sock, size=1):
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, size)
     return sock
 
+def min_buf_size():
+    """Return the minimum buffer size that the platform supports."""
+    test_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    test_sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 1)
+    return test_sock.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
 
 class TestGreenIo(LimitedTestCase):
     def test_close_with_makefile(self):
@@ -96,7 +101,7 @@ class TestGreenIo(LimitedTestCase):
         killer.wait()
      
     def test_full_duplex(self):
-        large_data = '*' * 10
+        large_data = '*' * 10 * min_buf_size()
         listener = bufsized(api.tcp_listener(('127.0.0.1', 0)))
 
         def send_large(sock):
@@ -171,16 +176,10 @@ class TestGreenIo(LimitedTestCase):
         
     @skip_with_libevent
     def test_multiple_readers(self):
-        recvsize = 1
-        sendsize = 10
-        if sys.version_info < (2,5):
-            # 2.4 doesn't implement buffer sizing exactly the way we
-            # expect so we have to send more data to ensure that we
-            # actually call trampoline() multiple times during this
-            # function
-            recvsize = 4000
-            sendsize = 40000
-            # and reset the timer because we're going to be taking
+        recvsize = 2 * min_buf_size()
+        sendsize = 10 * recvsize
+        if recvsize > 100:
+            # reset the timer because we're going to be taking
             # longer to send all this extra data
             self.timer.cancel()
             self.timer = api.exc_after(10, TestIsTakingTooLong(10))

@@ -13,8 +13,7 @@
 * Added support for logging x-forwarded-for header in wsgi.
 * api.tcp_server is now deprecated, will be removed in a future release.
 * Added instructions on how to generate coverage reports to the documentation.
-* Bug fixes in: wsgi.py, twistedr.py, poll.py, greenio.py, util.py, select.py
-
+* Bug fixes in: wsgi.py, twistedr.py, poll.py, greenio.py, util.py, select.py, processes.py
 
 0.9.0
 =====

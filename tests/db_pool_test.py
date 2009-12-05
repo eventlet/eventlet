@@ -132,7 +132,7 @@ class TestDBConnectionPool(DBTester):
         self.connection.close()
         self.assert_(not self.connection)
 
-    def fill_test_table(self, conn):
+    def fill_up_table(self, conn):
         curs = conn.cursor()
         for i in range(1000):
             curs.execute('insert into test_table (value_int) values (%s)' % i)
@@ -142,7 +142,7 @@ class TestDBConnectionPool(DBTester):
         self.pool = self.create_pool()
         conn = self.pool.get()
         self.set_up_test_table(conn)
-        self.fill_test_table(conn)
+        self.fill_up_table(conn)
         curs = conn.cursor()
         results = []
         SHORT_QUERY = "select * from test_table"
@@ -213,11 +213,11 @@ class TestDBConnectionPool(DBTester):
         self.pool = self.create_pool(2)
         conn = self.pool.get()
         self.set_up_test_table(conn)
-        self.fill_test_table(conn)
+        self.fill_up_table(conn)
         curs = conn.cursor()
         conn2 = self.pool.get()
         self.set_up_test_table(conn2)
-        self.fill_test_table(conn2)
+        self.fill_up_table(conn2)
         curs2 = conn2.cursor()
         results = []
         LONG_QUERY = "select * from test_table"

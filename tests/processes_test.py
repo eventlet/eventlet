@@ -24,7 +24,12 @@ class TestEchoPool(TestCase):
             self.assertRaises(processes.DeadProcess, proc.read)
         finally:
             self.pool.put(proc)
-
+    
+    def test_empty_echo(self):
+        p = processes.Process('echo', ['-n'])
+        self.assertEquals('', p.read())
+        self.assertRaises(processes.DeadProcess, p.read)
+            
 
 class TestCatPool(TestCase):
     def setUp(self):
