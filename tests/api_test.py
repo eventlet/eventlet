@@ -120,18 +120,24 @@ class TestApi(TestCase):
         check_hub()
 
     def test_001_trampoline_timeout(self):
-        server = api.tcp_listener(('0.0.0.0', 0))
-        bound_port = server.getsockname()[1]
-
+        from eventlet import coros
+        server_sock = api.tcp_listener(('127.0.0.1', 0))
+        bound_port = server_sock.getsockname()[1]
+        def server(sock):
+            client, addr = sock.accept()
+            api.sleep(0.1)
+        server_evt = coros.execute(server, server_sock)
+        api.sleep(0)
         try:
             desc = greenio.GreenSocket(util.tcp_socket())
             desc.connect(('127.0.0.1', bound_port))
-            api.trampoline(desc, read=True, write=False, timeout=0.1)
+            api.trampoline(desc, read=True, write=False, timeout=0.001)
         except api.TimeoutError:
             pass # test passed
         else:
             assert False, "Didn't timeout"
 
+        server_evt.wait()
         check_hub()
 
     def test_timeout_cancel(self):

@@ -43,10 +43,10 @@ class Hub(BaseHub):
                 raise
 
         for fileno in er:
-            for r in readers.get(fileno):
-                r(fileno)
-            for w in writers.get(fileno):
-                w(fileno)
+            for reader in readers.get(fileno, ()):
+                reader(fileno)
+            for writer in writers.get(fileno, ()):
+                writer(fileno)
             
         for listeners, events in ((readers, r), (writers, w)):
             for fileno in events:
