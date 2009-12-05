@@ -280,9 +280,9 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         finally:
             if hasattr(result, 'close'):
                 result.close()
-            if self.environ['eventlet.input'].position < self.environ.get('CONTENT_LENGTH', 0):
+            if self.environ['wsgi.input'].position < self.environ.get('CONTENT_LENGTH', 0):
                 ## Read and discard body
-                self.environ['eventlet.input'].read()
+                self.environ['wsgi.input'].read()
             finish = time.time()
 
             self.server.log_message('%s - - [%s] "%s" %s %s %.6f' % (
@@ -348,7 +348,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             wfile = None
             wfile_line = None
         chunked = env.get('HTTP_TRANSFER_ENCODING', '').lower() == 'chunked'
-        env['wsgi.input'] = env['eventlet.input'] = Input(
+        env['wsgi.input'] = Input(
             self.rfile, length, wfile=wfile, wfile_line=wfile_line,
             chunked_input=chunked)
 
