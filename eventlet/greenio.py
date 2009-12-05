@@ -167,7 +167,10 @@ class GreenSocket(object):
             fd = family_or_realsock
             assert not args, args
             assert not kwargs, kwargs
-        orig_timeout = fd.gettimeout()
+        try:
+            orig_timeout = fd.gettimeout()
+        except AttributeError:
+            orig_timeout = None
         
         set_nonblocking(fd)
         self.fd = fd
