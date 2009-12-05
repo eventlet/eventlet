@@ -200,7 +200,7 @@ def setup():
         csock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         nsock, addr = sock.accept()
         nsock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-        _rfile = greenio.GreenFile(greenio.GreenSocket(csock))
+        _rfile = greenio.Green_fileobject(greenio.GreenSocket(csock))
         _wfile = nsock.makefile()
 
     for i in range(0,_nthreads):

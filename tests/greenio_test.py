@@ -2,6 +2,7 @@ from tests import skipped, LimitedTestCase, skip_with_libevent, TestIsTakingTooL
 from unittest import main
 from eventlet import api, util, coros, proc, greenio
 from eventlet.green.socket import GreenSSLObject
+import errno
 import os
 import socket
 import sys
@@ -33,7 +34,12 @@ class TestGreenIo(LimitedTestCase):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(0.1)
         gs = greenio.GreenSocket(s)
-        self.assertRaises(socket.timeout, gs.connect, ('192.0.2.1', 80))
+        try:
+            self.assertRaises(socket.timeout, gs.connect, ('192.0.2.1', 80))
+        except socket.error, e:
+            # unreachable is also a valid outcome
+            if e[0] != errno.EHOSTUNREACH:
+                raise
 
     def test_close_with_makefile(self):
         def accept_close_early(listener):

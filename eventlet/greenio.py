@@ -14,7 +14,7 @@ import warnings
 from errno import EWOULDBLOCK, EAGAIN
 
 
-__all__ = ['GreenSocket', 'GreenFile', 'GreenPipe']
+__all__ = ['GreenSocket', 'GreenPipe']
 
 def higher_order_recv(recv_func):
     def recv(self, buflen, flags=0):
@@ -302,7 +302,7 @@ class GreenSocket(object):
         return socket._fileobject(self.dup(), mode, bufsize)
 
     def makeGreenFile(self, mode='r', bufsize=-1):
-        return GreenFile(self.dup())
+        return Green_fileobject(self.dup())
 
     recv = higher_order_recv(socket_recv)
 
@@ -370,8 +370,9 @@ class GreenSocket(object):
         return self.timeout
 
 
-
-class GreenFile(object):
+class Green_fileobject(object):
+    """Green version of socket._fileobject, for use only with regular 
+    sockets."""
     newlines = '\r\n'
     mode = 'wb+'
 
@@ -494,7 +495,7 @@ class GreenPipeSocket(GreenSocket):
     send = higher_order_send(file_send)
 
 
-class GreenPipe(GreenFile):
+class GreenPipe(Green_fileobject):
     def __init__(self, fd):
         set_nonblocking(fd)
         self.fd = GreenPipeSocket(fd)
