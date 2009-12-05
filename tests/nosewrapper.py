@@ -13,6 +13,14 @@ if sys.version_info < (2,5):
     argv = sys.argv + ["--exclude=.*test__api_timeout.*"]
 else:
     argv = sys.argv
+    
+# hudson does a better job printing the test results if the exit value is 0
+zero_status = '--force-zero-status'
+if zero_status in sys.argv:
+    sys.argv.remove(zero_status)
+    launch = nose.run
+else:
+    launch = nose.main
 
 from tests import eventlethub
-nose.main(addplugins=[eventlethub.EventletHub()], argv=argv)
+launch(addplugins=[eventlethub.EventletHub()])
