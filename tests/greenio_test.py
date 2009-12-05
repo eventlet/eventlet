@@ -29,6 +29,12 @@ def min_buf_size():
     return test_sock.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
 
 class TestGreenIo(LimitedTestCase):
+    def test_connect_timeout(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(0.1)
+        gs = greenio.GreenSocket(s)
+        self.assertRaises(socket.timeout, gs.connect, ('192.0.2.1', 80))
+
     def test_close_with_makefile(self):
         def accept_close_early(listener):
             # verify that the makefile and the socket are truly independent

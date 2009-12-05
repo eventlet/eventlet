@@ -167,6 +167,7 @@ class GreenSocket(object):
             fd = family_or_realsock
             assert not args, args
             assert not kwargs, kwargs
+        orig_timeout = fd.gettimeout()
         
         set_nonblocking(fd)
         self.fd = fd
@@ -180,6 +181,10 @@ class GreenSocket(object):
         # when client calls setblocking(0) or settimeout(0) the socket must
         # act non-blocking
         self.act_non_blocking = False
+        
+        # import timeout from the other fd if it's distinct
+        if orig_timeout and orig_timeout is not self.timeout:
+            self.settimeout(orig_timeout)
         
     @property
     def _sock(self):
