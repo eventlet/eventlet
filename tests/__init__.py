@@ -82,6 +82,20 @@ class LimitedTestCase(unittest.TestCase):
         self.timer.cancel()
 
 
+class SilencedTestCase(LimitedTestCase):
+    """ Subclass of LimitedTestCase that also silences the printing of timer
+    exceptions."""
+    def setUp(self):
+        from eventlet import api
+        super(SilencedTestCase, self).setUp()
+        api.get_hub().silent_timer_exceptions = True
+
+    def tearDown(self):        
+        from eventlet import api
+        super(SilencedTestCase, self).tearDown()
+        api.get_hub().silent_timer_exceptions = False
+
+
 def find_command(command):
     for dir in os.getenv('PATH', '/usr/bin:/usr/sbin').split(os.pathsep):
         p = os.path.join(dir, command)

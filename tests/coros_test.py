@@ -1,15 +1,8 @@
-from unittest import TestCase, main
+from unittest import main, TestCase
+from tests import SilencedTestCase
 from eventlet import coros, api
 
-class TestEvent(TestCase):
-    mode = 'static'
-    def setUp(self):
-        # raise an exception if we're waiting forever
-        self._cancel_timeout = api.exc_after(1, RuntimeError('test takes too long'))
-
-    def tearDown(self):
-        self._cancel_timeout.cancel()
-
+class TestEvent(SilencedTestCase):
     def test_waiting_for_event(self):
         evt = coros.event()
         value = 'some stuff'
@@ -81,15 +74,14 @@ class IncrActor(coros.Actor):
         if evt: evt.send()
 
 
-class TestActor(TestCase):
+class TestActor(SilencedTestCase):
     mode = 'static'
     def setUp(self):
-        # raise an exception if we're waiting forever
-        self._cancel_timeout = api.exc_after(1, api.TimeoutError())
+        super(TestActor, self).setUp()
         self.actor = IncrActor()
 
     def tearDown(self):
-        self._cancel_timeout.cancel()
+        super(TestActor, self).tearDown()
         api.kill(self.actor._killer)
 
     def test_cast(self):
