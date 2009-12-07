@@ -25,9 +25,9 @@ QUIET=False
 _rfile = _wfile = None
 
 def _signal_t2e():
-    from eventlet import util
-    sent = util.__original_write__(_wfile.fileno(), ' ')
-
+    _wfile.write(' ')
+    _wfile.flush()
+    
 _reqq = Queue(maxsize=-1)
 _rspq = Queue(maxsize=-1)
 
@@ -36,9 +36,9 @@ def tpool_trampoline():
     while(True):
         try:
             _c = _rfile.read(1)
+            assert(_c != "")
         except ValueError:
             break  # will be raised when pipe is closed
-        assert(_c != "")
         while not _rspq.empty():
             try:
                 (e,rv) = _rspq.get(block=False)
@@ -197,9 +197,7 @@ def setup():
         sock.listen(50)
         csock = util.__original_socket__(socket.AF_INET, socket.SOCK_STREAM)
         csock.connect(('localhost', sock.getsockname()[1]))
-        csock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         nsock, addr = sock.accept()
-        nsock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         _rfile = greenio.Green_fileobject(greenio.GreenSocket(csock))
         _wfile = nsock.makefile()
 
@@ -218,7 +216,8 @@ def killall():
         _reqq.put(None)
     for thr in _threads.values():
         thr.join()
-    api.kill(_coro)
+    if _coro:
+        api.kill(_coro)
     _rfile.close()
     _wfile.close()
     _setup_already = False
