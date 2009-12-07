@@ -4,6 +4,9 @@ import os
 import errno
 import unittest
 
+# convenience
+main = unittest.main
+
 def skipped(func):
     """ Decorator that marks a function as skipped.  Uses nose's SkipTest exception
     if installed.  Without nose, this will count skipped tests as passing tests."""
@@ -21,24 +24,39 @@ def skipped(func):
         return skipme
 
 
-def skip_unless(requirement):
-    """ Decorator that skips a test if the *requirement* does not return True.
-    *requirement* can be a boolean or a callable that accepts one argument.
-    The callable will be called with the  function to be decorated, and 
-    should return True if the requirement is satisfied.
+def skip_if(condition):
+    """ Decorator that skips a test if the *condition* evaluates True.
+    *condition* can be a boolean or a callable that accepts one argument.
+    The callable will be called with the function to be decorated, and 
+    should return True to skip the test.
     """
-    if isinstance(requirement, bool):
-        def skipped_wrapper(func):        
-            if not requirement:
-                return skipped(func)
-            else:
-                return func    
-    else:
-        def skipped_wrapper(func):        
-            if not requirement(func):
-                return skipped(func)
-            else:
-                return func
+    def skipped_wrapper(func):
+        if isinstance(condition, bool):
+            result = condition
+        else:
+            result = condition(func)
+        if result:
+            return skipped(func)
+        else:
+            return func
+    return skipped_wrapper
+
+
+def skip_unless(condition):
+    """ Decorator that skips a test if the *condition* does not return True.
+    *condition* can be a boolean or a callable that accepts one argument.
+    The callable will be called with the  function to be decorated, and 
+    should return True if the condition is satisfied.
+    """    
+    def skipped_wrapper(func):
+        if isinstance(condition, bool):
+            result = condition
+        else:
+            result = condition(func)
+        if not result:
+            return skipped(func)
+        else:
+            return func
     return skipped_wrapper
 
 
@@ -55,10 +73,15 @@ def requires_twisted(func):
     
 def skip_with_libevent(func):
     """ Decorator that skips a test if we're using the libevent hub."""
-    def requirement(_f):
+    def using_libevent(_f):
         from eventlet.api import get_hub
-        return not('libevent' in type(get_hub()).__module__)
-    return skip_unless(requirement)(func)
+        return 'libevent' in type(get_hub()).__module__
+    return skip_if(using_libevent)(func)
+
+
+def skip_on_windows(func):
+    import sys
+    return skip_if(sys.platform.startswith('win'))(func)
 
 
 class TestIsTakingTooLong(Exception):
