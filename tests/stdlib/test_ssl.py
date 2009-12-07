@@ -30,9 +30,9 @@ patcher.inject('test.test_ssl',
     ('threading', threading),
     ('urllib', urllib))
 
-# these appear to not work due to some wonkiness in the threading
-# module... skipping them for now (can't use SkipTest either because
-# test_main doesn't understand it)
+# these don't pass because nonblocking ssl sockets don't report
+# when the socket is closed uncleanly, per the docstring on 
+# eventlet.green.GreenSSLSocket
 # *TODO: fix and restore these tests
 ThreadedTests.testProtocolSSL2 = lambda s: None
 ThreadedTests.testProtocolSSL3 = lambda s: None
