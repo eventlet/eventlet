@@ -12,9 +12,10 @@ class TestSocketErrors(unittest.TestCase):
         s = socket.socket()
         try:
             s.connect(('127.0.0.1', 81))
+            self.fail("Shouldn't have connected")
         except socket.error, ex:
             code, text = ex.args
-            assert code in [111, 61], (code, text)
+            assert code in [111, 61, 10061], (code, text)
             assert 'refused' in text.lower(), (code, text)
 
 if __name__=='__main__':

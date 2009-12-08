@@ -154,7 +154,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         except greenio.SSL.ZeroReturnError:
             self.raw_requestline = ''
         except socket.error, e:
-            if e[0] != errno.EBADF:
+            if e[0] != errno.EBADF and e[0] != 10053:
                 raise
             self.raw_requestline = ''
 

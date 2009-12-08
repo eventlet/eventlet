@@ -22,6 +22,7 @@ class TestEvent(LimitedTestCase):
         obj = Exception()
         e.send(exc=obj)
         sleep(0)
+        sleep(0)
         assert log == [('catched', obj)], log
 
     def test_send(self):
