@@ -236,25 +236,6 @@ class BaseConnectionPool(Pool):
         self.clear()
 
 
-class SaranwrappedConnectionPool(BaseConnectionPool):
-    """A pool which gives out saranwrapped database connections.
-    """
-    def create(self):
-        return self.connect(self._db_module,
-                                    self.connect_timeout,
-                                    *self._args,
-                                    **self._kwargs)
-
-    @classmethod
-    def connect(cls, db_module, connect_timeout, *args, **kw):
-        timeout = api.exc_after(connect_timeout, ConnectTimeout())
-        try:
-            from eventlet import saranwrap
-            return saranwrap.wrap(db_module).connect(*args, **kw)
-        finally:
-            timeout.cancel()
-
-
 class TpooledConnectionPool(BaseConnectionPool):
     """A pool which gives out :class:`~eventlet.tpool.Proxy`-based database
     connections.

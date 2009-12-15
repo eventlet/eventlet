@@ -448,23 +448,6 @@ class TestTpoolConnectionPool(TestDBConnectionPool):
         super(TestTpoolConnectionPool, self).tearDown()
 
 
-class TestSaranwrapConnectionPool(TestDBConnectionPool):
-    __test__ = False  # so that nose doesn't try to execute this directly
-    def create_pool(self, max_size = 1, max_idle = 10, max_age = 10, connect_timeout= 0.5, module=None):
-        if module is None:
-            module = self._dbmodule
-        return db_pool.SaranwrappedConnectionPool(module,
-            min_size=0, max_size=max_size, 
-            max_idle=max_idle, max_age=max_age,
-            connect_timeout=connect_timeout,
-            **self._auth)
-
-    def test_raising_create(self):
-        # *TODO: this fails because of saranwrap's unwillingness to
-        # wrap objects in tests, but it should be fixable
-        pass
-
-
 class TestRawConnectionPool(TestDBConnectionPool):
     __test__ = False  # so that nose doesn't try to execute this directly
     def create_pool(self, max_size = 1, max_idle = 10, max_age = 10, connect_timeout= 0.5, module=None):
@@ -477,7 +460,7 @@ class TestRawConnectionPool(TestDBConnectionPool):
             **self._auth)
 
     def test_connection_timeout(self):
-        pass # not gonna work for raw connections because they're not nonblocking
+        pass # not gonna work for raw connections because they're blocking
 
 
 def get_auth():
@@ -535,14 +518,10 @@ class TestMysqlConnectionPool(object):
         del db
 
 
-# for some reason the tpool test hangs if run after the saranwrap test
 class Test01MysqlTpool(TestMysqlConnectionPool, TestTpoolConnectionPool, TestCase):
     pass
 
-class Test02MysqlSaranwrap(TestMysqlConnectionPool, TestSaranwrapConnectionPool, TestCase):
-    pass
-
-class Test03MysqlRaw(TestMysqlConnectionPool, TestRawConnectionPool, TestCase):
+class Test02MysqlRaw(TestMysqlConnectionPool, TestRawConnectionPool, TestCase):
     pass
 
 
