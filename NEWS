@@ -1,3 +1,10 @@
+0.9.2
+=====
+
+* Bugfix for wsgi.py where it was improperly expecting the environ variable to be a constant when passed to the application.
+* Tpool.py now passes its tests on Windows.
+* Fixed minor performance issue in wsgi.
+
 0.9.1
 =====
 
