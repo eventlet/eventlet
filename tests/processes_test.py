@@ -1,12 +1,14 @@
 import sys
-from unittest import TestCase, main
+from tests import LimitedTestCase, main, skip_on_windows
 
 from eventlet import processes, api
 
-class TestEchoPool(TestCase):
+class TestEchoPool(LimitedTestCase):
     def setUp(self):
+        super(TestEchoPool, self).setUp()
         self.pool = processes.ProcessPool('echo', ["hello"])
 
+    @skip_on_windows
     def test_echo(self):
         result = None
 
@@ -17,6 +19,7 @@ class TestEchoPool(TestCase):
             self.pool.put(proc)
         self.assertEquals(result, 'hello\n')
 
+    @skip_on_windows
     def test_read_eof(self):
         proc = self.pool.get()
         try:
@@ -24,18 +27,21 @@ class TestEchoPool(TestCase):
             self.assertRaises(processes.DeadProcess, proc.read)
         finally:
             self.pool.put(proc)
-    
+
+    @skip_on_windows    
     def test_empty_echo(self):
         p = processes.Process('echo', ['-n'])
         self.assertEquals('', p.read())
         self.assertRaises(processes.DeadProcess, p.read)
             
 
-class TestCatPool(TestCase):
+class TestCatPool(LimitedTestCase):
     def setUp(self):
+        super(TestCatPool, self).setUp()
         api.sleep(0)
         self.pool = processes.ProcessPool('cat')
 
+    @skip_on_windows
     def test_cat(self):
         result = None
 
@@ -49,6 +55,7 @@ class TestCatPool(TestCase):
 
         self.assertEquals(result, 'goodbye')
 
+    @skip_on_windows
     def test_write_to_dead(self):
         result = None
 
@@ -61,6 +68,7 @@ class TestCatPool(TestCase):
         finally:
             self.pool.put(proc)
 
+    @skip_on_windows
     def test_close(self):
         result = None
 
@@ -73,10 +81,12 @@ class TestCatPool(TestCase):
             self.pool.put(proc)
 
 
-class TestDyingProcessesLeavePool(TestCase):
+class TestDyingProcessesLeavePool(LimitedTestCase):
     def setUp(self):
+        super(TestDyingProcessesLeavePool, self).setUp()
         self.pool = processes.ProcessPool('echo', ['hello'], max_size=1)
 
+    @skip_on_windows
     def test_dead_process_not_inserted_into_pool(self):
         proc = self.pool.get()
         try:

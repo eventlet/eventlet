@@ -1,4 +1,5 @@
 import unittest
+from tests import SilencedTestCase
 import time
 from eventlet import api
 from eventlet.green import socket
@@ -29,7 +30,7 @@ class TestDebug(unittest.TestCase):
         self.assert_(not api.get_hub().debug)
 
 
-class TestExceptionInMainloop(unittest.TestCase):
+class TestExceptionInMainloop(SilencedTestCase):
 
     def test_sleep(self):
         # even if there was an error in the mainloop, the hub should continue to work

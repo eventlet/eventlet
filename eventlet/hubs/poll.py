@@ -7,7 +7,7 @@ import time
 from eventlet.hubs.hub import BaseHub, READ, WRITE
 
 EXC_MASK = select.POLLERR | select.POLLHUP
-READ_MASK = select.POLLIN
+READ_MASK = select.POLLIN | select.POLLPRI
 WRITE_MASK = select.POLLOUT
 
 class Hub(BaseHub):

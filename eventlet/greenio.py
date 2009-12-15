@@ -14,7 +14,7 @@ import warnings
 from errno import EWOULDBLOCK, EAGAIN
 
 
-__all__ = ['GreenSocket', 'GreenFile', 'GreenPipe']
+__all__ = ['GreenSocket', 'GreenPipe']
 
 def higher_order_recv(recv_func):
     def recv(self, buflen, flags=0):
@@ -167,6 +167,10 @@ class GreenSocket(object):
             fd = family_or_realsock
             assert not args, args
             assert not kwargs, kwargs
+        try:
+            orig_timeout = fd.gettimeout()
+        except AttributeError:
+            orig_timeout = None
         
         set_nonblocking(fd)
         self.fd = fd
@@ -180,6 +184,10 @@ class GreenSocket(object):
         # when client calls setblocking(0) or settimeout(0) the socket must
         # act non-blocking
         self.act_non_blocking = False
+        
+        # import timeout from the other fd if it's distinct
+        if orig_timeout and orig_timeout is not self.timeout:
+            self.settimeout(orig_timeout)
         
     @property
     def _sock(self):
@@ -294,7 +302,7 @@ class GreenSocket(object):
         return socket._fileobject(self.dup(), mode, bufsize)
 
     def makeGreenFile(self, mode='r', bufsize=-1):
-        return GreenFile(self.dup())
+        return Green_fileobject(self.dup())
 
     recv = higher_order_recv(socket_recv)
 
@@ -362,8 +370,9 @@ class GreenSocket(object):
         return self.timeout
 
 
-
-class GreenFile(object):
+class Green_fileobject(object):
+    """Green version of socket._fileobject, for use only with regular 
+    sockets."""
     newlines = '\r\n'
     mode = 'wb+'
 
@@ -486,7 +495,7 @@ class GreenPipeSocket(GreenSocket):
     send = higher_order_send(file_send)
 
 
-class GreenPipe(GreenFile):
+class GreenPipe(Green_fileobject):
     def __init__(self, fd):
         set_nonblocking(fd)
         self.fd = GreenPipeSocket(fd)

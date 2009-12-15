@@ -2,14 +2,14 @@ import sys
 import unittest
 from eventlet.api import sleep, with_timeout
 from eventlet import api, proc, coros
-from tests import LimitedTestCase, skipped
+from tests import SilencedTestCase, skipped
 
 DELAY = 0.01
 
 class ExpectedError(Exception):
     pass
 
-class TestLink_Signal(LimitedTestCase):
+class TestLink_Signal(SilencedTestCase):
 
     def test_send(self):
         s = proc.Source()
@@ -48,7 +48,7 @@ class TestLink_Signal(LimitedTestCase):
         self.assertRaises(OSError, s.wait)
 
 
-class TestProc(LimitedTestCase):
+class TestProc(SilencedTestCase):
 
     def test_proc(self):
         p = proc.spawn(lambda : 100)
@@ -76,13 +76,13 @@ class TestProc(LimitedTestCase):
         self.assertRaises(proc.LinkedCompleted, sleep, 0.1)
 
 
-class TestCase(LimitedTestCase):
+class TestCase(SilencedTestCase):
 
     def link(self, p, listener=None):
         getattr(p, self.link_method)(listener)
 
     def tearDown(self):
-        LimitedTestCase.tearDown(self)
+        SilencedTestCase.tearDown(self)
         self.p.unlink()
 
     def set_links(self, p, first_time, kill_exc_type):
@@ -252,7 +252,7 @@ class TestRaise_link_exception(TestRaise_link):
     link_method = 'link_exception'
 
 
-class TestStuff(unittest.TestCase):
+class TestStuff(SilencedTestCase):
 
     def test_wait_noerrors(self):
         x = proc.spawn(lambda : 1)
@@ -297,6 +297,7 @@ class TestStuff(unittest.TestCase):
             proc.waitall([a, b])
         except ExpectedError, ex:
             assert 'second' in str(ex), repr(str(ex))
+        api.sleep(0.2)   # sleep to ensure that the other timer is raised
 
     def test_multiple_listeners_error(self):
         # if there was an error while calling a callback
