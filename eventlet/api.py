@@ -365,13 +365,17 @@ def get_default_hub():
         from eventlet.hubs import twistedr
         return twistedr
 
-    import select
-    if hasattr(select, 'poll'):
-        import eventlet.hubs.poll
-        return eventlet.hubs.poll
-    else:
-        import eventlet.hubs.selects
-        return eventlet.hubs.selects
+    try:
+        import eventlet.hubs.epolls
+        return eventlet.hubs.epolls
+    except ImportError:
+        import select
+        if hasattr(select, 'poll'):
+            import eventlet.hubs.poll
+            return eventlet.hubs.poll
+        else:
+            import eventlet.hubs.selects
+            return eventlet.hubs.selects
 
 
 def use_hub(mod=None):

@@ -11,9 +11,16 @@ READ_MASK = select.POLLIN | select.POLLPRI
 WRITE_MASK = select.POLLOUT
 
 class Hub(BaseHub):
+    WAIT_MULTIPLIER=1000.0 # poll.poll's timeout is measured in milliseconds
+
     def __init__(self, clock=time.time):
         super(Hub, self).__init__(clock)
         self.poll = select.poll()
+        # poll.modify is new to 2.6
+        try:
+            self.modify = self.poll.modify
+        except AttributeError:
+            self.modify = self.poll.register
 
     def add(self, evtype, fileno, cb):
         oldlisteners = self.listeners[evtype].get(fileno)
@@ -21,21 +28,24 @@ class Hub(BaseHub):
         listener = super(Hub, self).add(evtype, fileno, cb)
         if not oldlisteners:
             # Means we've added a new listener
-            self.register(fileno)
+            self.register(fileno, new=True)
         return listener
     
     def remove(self, listener):
         super(Hub, self).remove(listener)
         self.register(listener.fileno)
 
-    def register(self, fileno):
+    def register(self, fileno, new=False):
         mask = 0
         if self.listeners[READ].get(fileno):
             mask |= READ_MASK
         if self.listeners[WRITE].get(fileno):
             mask |= WRITE_MASK
         if mask:
-            self.poll.register(fileno, mask)
+            if new:
+                self.poll.register(fileno, mask)
+            else:
+                self.modify(fileno, mask)
         else: 
             try:
                 self.poll.unregister(fileno)
@@ -58,7 +68,7 @@ class Hub(BaseHub):
                 sleep(seconds)
             return
         try:
-            presult = self.poll.poll(seconds * 1000.0)
+            presult = self.poll.poll(seconds * self.WAIT_MULTIPLIER)
         except select.error, e:
             if e.args[0] == errno.EINTR:
                 return
