@@ -23,6 +23,7 @@ Linden Lab Contributors
 
 Thanks To
 ---------
+* Luke Tucker, bug report regarding wsgi + webob
 * Chuck Thier, reporting a bug in processes.py
 * Brantley Harris, reporting bug #4
 * Taso Du Val, reproing an exception squelching bug, saving children's lives  ;-)

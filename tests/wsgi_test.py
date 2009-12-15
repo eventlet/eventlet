@@ -113,6 +113,7 @@ def read_http(sock):
 class TestHttpd(LimitedTestCase):
     mode = 'static'
     def setUp(self):
+        super(TestHttpd, self).setUp()
         self.logfile = StringIO()
         self.site = Site()
         listener = api.tcp_listener(('localhost', 0))
@@ -125,7 +126,9 @@ class TestHttpd(LimitedTestCase):
             log=self.logfile)
 
     def tearDown(self):
+        super(TestHttpd, self).tearDown()
         api.kill(self.killer)
+        api.sleep(0)
 
     def test_001_server(self):
         sock = api.connect_tcp(
@@ -468,6 +471,26 @@ class TestHttpd(LimitedTestCase):
         self.assert_('5.6.7.8' not in self.logfile.getvalue())        
         self.assert_('127.0.0.1' in self.logfile.getvalue())
               
+    def test_021_environ_clobbering(self):
+        def clobberin_time(environ, start_response):
+            for environ_var in ['wsgi.version', 'wsgi.url_scheme',
+                'wsgi.input', 'wsgi.errors', 'wsgi.multithread',
+                'wsgi.multiprocess', 'wsgi.run_once', 'REQUEST_METHOD',
+                'SCRIPT_NAME', 'PATH_INFO', 'QUERY_STRING', 'CONTENT_TYPE',
+                'CONTENT_LENGTH', 'SERVER_NAME', 'SERVER_PORT', 
+                'SERVER_PROTOCOL']:
+                environ[environ_var] = None
+            start_response('200 OK', [('Content-type', 'text/plain')])
+            return []
+        self.site.application = clobberin_time
+        sock = api.connect_tcp(('localhost', self.port))
+        fd = sock.makeGreenFile()
+        fd.write('GET / HTTP/1.1\r\n'
+                 'Host: localhost\r\n'
+                 'Connection: close\r\n'
+                 '\r\n\r\n')
+        self.assert_('200 OK' in fd.read())
+        
         
 if __name__ == '__main__':
     main()
