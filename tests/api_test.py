@@ -91,34 +91,6 @@ class TestApi(TestCase):
         
         check_hub()
 
-    def test_tcp_server(self):
-        import warnings
-        # disabling tcp_server warnings because we're testing tcp_server here
-        warnings.filterwarnings(action = 'ignore',
-                        message='.*tcp_server.*',
-                        category=DeprecationWarning)
-        connected = []
-        server = api.tcp_listener(('0.0.0.0', 0))
-        bound_port = server.getsockname()[1]
-
-        done = [False]
-        def accept_twice((conn, addr)):
-            connected.append(True)
-            conn.close()
-            if len(connected) == 2:
-                server.close()
-                done[0] = True
-
-        api.call_after(0, api.connect_tcp, ('127.0.0.1', bound_port))
-        api.call_after(0, api.connect_tcp, ('127.0.0.1', bound_port))
-        server_coro = api.spawn(api.tcp_server, server, accept_twice)
-        while not done[0]:
-            api.sleep(0)
-        api.kill(server_coro)
-
-        assert len(connected) == 2
-        check_hub()
-
     def test_001_trampoline_timeout(self):
         from eventlet import coros
         server_sock = api.tcp_listener(('127.0.0.1', 0))

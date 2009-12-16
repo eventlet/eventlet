@@ -613,16 +613,6 @@ def spawn_link_exception(function, *args, **kwargs):
     return p
 
 
-def trap_errors(errors, func, *args, **kwargs):
-    """DEPRECATED; use wrap_errors"""
-    import warnings
-    warnings.warn("proc.trap_errors function is deprecated in favor of proc.wrap_errors class",
-                  DeprecationWarning, stacklevel=2)
-    try:
-        return func(*args, **kwargs)
-    except errors, ex:
-        return ex
-
 
 class wrap_errors(object):
     """Helper to make function return an exception, rather than raise it.

@@ -99,12 +99,6 @@ def execute(meth,*args, **kwargs):
     rv = erecv(e)
     return rv
 
-def erpc(meth, *args, **kwargs):
-    import warnings
-    warnings.warn("erpc is deprecated.  Call execute instead.",
-                  DeprecationWarning, stacklevel=2)
-    execute(meth, *args, **kwargs)
-
 
 def proxy_call(autowrap, f, *args, **kwargs):
     """

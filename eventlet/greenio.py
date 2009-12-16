@@ -513,21 +513,9 @@ class GreenPipe(Green_fileobject):
         self.fd.fd.flush()
 
 
-# backwards compatibility with old GreenSSL stuff
+# import SSL module here so we can refer to greenio.SSL.exceptionclass
 try:
     from OpenSSL import SSL
-    def GreenSSL(fd):
-        assert isinstance(fd, (SSL.ConnectionType)), \
-           "GreenSSL must be constructed with an "\
-           "OpenSSL Connection object"
-
-        warnings.warn("GreenSSL is deprecated, please use "\
-            "eventlet.green.OpenSSL.Connection instead (if on "\
-            "Python 2.5) or eventlet.green.ssl.wrap_socket() "\
-            "(if on Python 2.6 or later)",
-              DeprecationWarning, stacklevel=2)
-        import eventlet.green.OpenSSL.SSL
-        return eventlet.green.OpenSSL.SSL.Connection(None, fd)
 except ImportError:
     # pyOpenSSL not installed, define exceptions anyway for convenience
     class SSL(object):

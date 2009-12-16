@@ -68,40 +68,6 @@ def connect_tcp(address, localaddr=None):
     desc.connect(address)
     return desc
 
-def tcp_server(listensocket, server, *args, **kw):
-    """
-    **Deprecated** Please write your own accept loop instead, like this::
-
-       while True:
-           api.spawn(server, listensocket.accept(), <other_args>)
-           
-    A more complex accept loop can be found in ``examples/accept_loop.py``.
-    
-    *Original documentation:*
-    Given a socket, accept connections forever, spawning greenlets and
-    executing *server* for each new incoming connection.  When *server* returns
-    False, the :func:`tcp_server()` greenlet will end.
-
-    :param listensocket: The socket from which to accept connections.
-    :param server: The callable to call when a new connection is made.
-    :param \*args: The positional arguments to pass to *server*.
-    :param \*\*kw: The keyword arguments to pass to *server*.
-    """
-    warnings.warn("tcp_server is deprecated, please write your own "\
-                  "accept loop instead (see examples/accept_loop.py)",
-                      DeprecationWarning, stacklevel=2)
-    working = [True]
-    try:
-        while working[0] is not False:
-            def tcp_server_wrapper(sock):
-                working[0] = server(sock, *args, **kw)
-            spawn(tcp_server_wrapper, listensocket.accept())
-    except socket.timeout, e:
-        raise
-    except socket.error, e:
-        # EBADF means the socket was closed
-        if e[0] is not errno.EBADF:
-            raise
 
 def trampoline(fd, read=None, write=None, timeout=None, timeout_exc=TimeoutError):
     """Suspend the current coroutine until the given socket object or file
