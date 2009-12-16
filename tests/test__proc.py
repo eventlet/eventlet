@@ -61,12 +61,12 @@ class TestProc(SilencedTestCase):
 
     def test_event(self):
         p = proc.spawn(lambda : 100)
-        event = coros.event()
+        event = coros.Event()
         p.link(event)
         self.assertEqual(event.wait(), 100)
 
         for i in xrange(3):
-            event2 = coros.event()
+            event2 = coros.Event()
             p.link(event2)
             self.assertEqual(event2.wait(), 100)
 
@@ -86,7 +86,7 @@ class TestCase(SilencedTestCase):
         self.p.unlink()
 
     def set_links(self, p, first_time, kill_exc_type):
-        event = coros.event()
+        event = coros.Event()
         self.link(p, event)
 
         proc_flag = []
@@ -111,13 +111,13 @@ class TestCase(SilencedTestCase):
         self.link(p, lambda *args: callback_flag.remove('initial'))
 
         for _ in range(10):
-            self.link(p, coros.event())
+            self.link(p, coros.Event())
             self.link(p, coros.queue(1))
         return event, receiver, proc_flag, queue, callback_flag
 
     def set_links_timeout(self, link):
         # stuff that won't be touched
-        event = coros.event()
+        event = coros.Event()
         link(event)
 
         proc_finished_flag = []
@@ -259,11 +259,11 @@ class TestStuff(SilencedTestCase):
         y = proc.spawn(lambda : 2)
         z = proc.spawn(lambda : 3)
         self.assertEqual(proc.waitall([x, y, z]), [1, 2, 3])
-        e = coros.event()
+        e = coros.Event()
         x.link(e)
         self.assertEqual(e.wait(), 1)
         x.unlink(e)
-        e = coros.event()
+        e = coros.Event()
         x.link(e)
         self.assertEqual(e.wait(), 1)
         self.assertEqual([proc.waitall([X]) for X in [x, y, z]], [[1], [2], [3]])
@@ -358,7 +358,7 @@ class TestStuff(SilencedTestCase):
         self._test_multiple_listeners_error_unlink(p)
 
     def test_killing_unlinked(self):
-        e = coros.event()
+        e = coros.Event()
         def func():
             try:
                 raise ExpectedError('test_killing_unlinked')

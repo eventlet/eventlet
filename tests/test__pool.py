@@ -6,7 +6,7 @@ class TestCoroutinePool(LimitedTestCase):
     klass = pool.Pool
 
     def test_execute_async(self):
-        done = coros.event()
+        done = coros.Event()
         def some_work():
             done.send()
         pool = self.klass(0, 2)
@@ -23,7 +23,7 @@ class TestCoroutinePool(LimitedTestCase):
         
     def test_waiting(self):
         pool = self.klass(0,1)
-        done = coros.event()
+        done = coros.Event()
         def consume():
             done.wait()
         def waiter(pool):
@@ -46,7 +46,7 @@ class TestCoroutinePool(LimitedTestCase):
         self.assertEqual(pool.waiting(), 0)
 
     def test_multiple_coros(self):
-        evt = coros.event()
+        evt = coros.Event()
         results = []
         def producer():
             results.append('prod')
@@ -86,7 +86,7 @@ class TestCoroutinePool(LimitedTestCase):
         outer_waiter = pool.execute(reenter)
         outer_waiter.wait()
 
-        evt = coros.event()
+        evt = coros.Event()
         def reenter_async():
             pool.execute_async(lambda a: a, 'reenter')
             evt.send('done')
@@ -99,7 +99,7 @@ class TestCoroutinePool(LimitedTestCase):
             e.wait()
         timer = api.exc_after(1, api.TimeoutError)
         try:
-            evt = coros.event()
+            evt = coros.Event()
             for x in xrange(num_free):
                 pool.execute(wait_long_time, evt)
                 # if the pool has fewer free than we expect,
@@ -119,7 +119,7 @@ class TestCoroutinePool(LimitedTestCase):
 
     def test_resize(self):
         pool = self.klass(max_size=2)
-        evt = coros.event()
+        evt = coros.Event()
         def wait_long_time(e):
             e.wait()
         pool.execute(wait_long_time, evt)

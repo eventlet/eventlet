@@ -18,7 +18,7 @@ except ImportError:
         pass
     
 from eventlet.api import spawn, sleep, with_timeout, call_after
-from eventlet.coros import event
+from eventlet.coros import Event
 
 try:
     from eventlet.green import socket
@@ -211,7 +211,7 @@ class TestTLSError(unittest.TestCase):
         from gnutls.interfaces.twisted import X509Credentials
         from gnutls.errors import GNUTLSError
         cred = X509Credentials(None, None)
-        ev = event()
+        ev = Event()
         def handle(conn):
             ev.send("handle must not be called")
         s = reactor.listenTLS(0, pr.SpawnFactory(handle, LineOnlyReceiverTransport), cred)

@@ -15,13 +15,13 @@ you can "link":
  * ``p.link(obj)`` - notify *obj* when the coroutine is finished
 
 What "notify" means here depends on the type of *obj*: a callable is simply
-called, an :class:`~eventlet.coros.event` or a :class:`~eventlet.coros.queue`
+called, an :class:`~eventlet.coros.Event` or a :class:`~eventlet.coros.queue`
 is notified using ``send``/``send_exception`` methods and if *obj* is another
 greenlet it's killed with :class:`LinkedExited` exception.
 
 Here's an example:
 
->>> event = coros.event()
+>>> event = coros.Event()
 >>> _ = p.link(event)
 >>> event.wait()
 3
@@ -237,7 +237,7 @@ class Source(object):
     link. It is possible to link to events, queues, greenlets and callables.
 
     >>> source = Source()
-    >>> event = coros.event()
+    >>> event = coros.Event()
     >>> _ = source.link(event)
 
     Once source's :meth:`send` or :meth:`send_exception` method is called, all

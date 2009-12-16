@@ -1,6 +1,7 @@
 0.9.3
 =====
 
+* Renamed coros.event to coros.Event
 * Removed previously-deprecated features tcp_server, GreenSSL, erpc, and trap_errors.
 * Removed saranwrap as an option for making db connections nonblocking in db_pool.
 

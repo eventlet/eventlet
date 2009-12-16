@@ -13,7 +13,7 @@ import warnings
 __all__ = [
     'call_after', 'exc_after', 'getcurrent', 'get_default_hub', 'get_hub',
     'GreenletExit', 'kill', 'sleep', 'spawn', 'spew', 'switch',
-    'ssl_listener', 'tcp_listener', 'tcp_server', 'trampoline',
+    'ssl_listener', 'tcp_listener', 'trampoline',
     'unspew', 'use_hub', 'with_timeout', 'timeout']
 
 
