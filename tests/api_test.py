@@ -181,7 +181,7 @@ class TestApi(TestCase):
             evt.send('sent via event')
 
         from eventlet import coros
-        evt = coros.event()
+        evt = coros.Event()
         api.spawn(sender, evt)
         api.sleep(0)  # lets the socket enter accept mode, which
                       # is necessary for connect to succeed on windows

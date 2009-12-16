@@ -1,5 +1,5 @@
 import unittest
-from eventlet.coros import event
+from eventlet.coros import Event
 from eventlet.api import spawn, sleep, exc_after, with_timeout
 from tests import LimitedTestCase
 
@@ -9,7 +9,7 @@ class TestEvent(LimitedTestCase):
     
     def test_send_exc(self):
         log = []
-        e = event()
+        e = Event()
 
         def waiter():
             try:
@@ -26,8 +26,8 @@ class TestEvent(LimitedTestCase):
         assert log == [('catched', obj)], log
 
     def test_send(self):
-        event1 = event()
-        event2 = event()
+        event1 = Event()
+        event2 = Event()
 
         spawn(event1.send, 'hello event1')
         exc_after(0, ValueError('interrupted'))

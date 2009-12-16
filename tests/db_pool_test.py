@@ -146,13 +146,13 @@ class TestDBConnectionPool(DBTester):
         curs = conn.cursor()
         results = []
         SHORT_QUERY = "select * from test_table"
-        evt = coros.event()
+        evt = coros.Event()
         def a_query():
             self.assert_cursor_works(curs)
             curs.execute(SHORT_QUERY)
             results.append(2)
             evt.send()
-        evt2 = coros.event()
+        evt2 = coros.Event()
         api.spawn(a_query)
         results.append(1)
         self.assertEqual([1], results)
@@ -223,13 +223,13 @@ class TestDBConnectionPool(DBTester):
         LONG_QUERY = "select * from test_table"
         SHORT_QUERY = "select * from test_table where row_id <= 20"
 
-        evt = coros.event()
+        evt = coros.Event()
         def long_running_query():
             self.assert_cursor_works(curs)
             curs.execute(LONG_QUERY)
             results.append(1)
             evt.send()
-        evt2 = coros.event()
+        evt2 = coros.Event()
         def short_running_query():
             self.assert_cursor_works(curs2)
             curs2.execute(SHORT_QUERY)
@@ -373,7 +373,7 @@ class TestDBConnectionPool(DBTester):
         conn = self.pool.get()
         self.assertEquals(self.pool.free(), 0)
         self.assertEquals(self.pool.waiting(), 0)
-        e = coros.event()
+        e = coros.Event()
         def retrieve(pool, ev):
             c = pool.get()
             ev.send(c)

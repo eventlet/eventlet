@@ -4,7 +4,7 @@ from eventlet import coros, api
 
 class TestEvent(SilencedTestCase):
     def test_waiting_for_event(self):
-        evt = coros.event()
+        evt = coros.Event()
         value = 'some stuff'
         def send_to_event():
             evt.send(value)
@@ -12,7 +12,7 @@ class TestEvent(SilencedTestCase):
         self.assertEqual(evt.wait(), value)
 
     def test_multiple_waiters(self):
-        evt = coros.event()
+        evt = coros.Event()
         value = 'some stuff'
         results = []
         def wait_on_event(i_am_done):
@@ -23,7 +23,7 @@ class TestEvent(SilencedTestCase):
         waiters = []
         count = 5
         for i in range(count):
-            waiters.append(coros.event())
+            waiters.append(coros.Event())
             api.spawn(wait_on_event, waiters[-1])
         evt.send()
 
@@ -33,7 +33,7 @@ class TestEvent(SilencedTestCase):
         self.assertEqual(len(results), count)
 
     def test_reset(self):
-        evt = coros.event()
+        evt = coros.Event()
 
         # calling reset before send should throw
         self.assertRaises(AssertionError, evt.reset)
@@ -58,7 +58,7 @@ class TestEvent(SilencedTestCase):
         self.assertEqual(evt.wait(), value2)
 
     def test_double_exception(self):
-        evt = coros.event()
+        evt = coros.Event()
         # send an exception through the event
         evt.send(exc=RuntimeError('from test_double_exception'))
         self.assertRaises(RuntimeError, evt.wait)
@@ -85,7 +85,7 @@ class TestActor(SilencedTestCase):
         api.kill(self.actor._killer)
 
     def test_cast(self):
-        evt = coros.event()
+        evt = coros.Event()
         self.actor.cast(evt)
         evt.wait()
         evt.reset()
@@ -96,8 +96,8 @@ class TestActor(SilencedTestCase):
 
     def test_cast_multi_1(self):
         # make sure that both messages make it in there
-        evt = coros.event()
-        evt1 = coros.event()
+        evt = coros.Event()
+        evt1 = coros.Event()
         self.actor.cast(evt)
         self.actor.cast(evt1)
         evt.wait()
@@ -121,17 +121,17 @@ class TestActor(SilencedTestCase):
             evt.send()
         self.actor.received = received
 
-        waiters.append(coros.event())
+        waiters.append(coros.Event())
         self.actor.cast( (1, waiters[-1]))
         api.sleep(0)
-        waiters.append(coros.event())
+        waiters.append(coros.Event())
         self.actor.cast( (2, waiters[-1]) )
-        waiters.append(coros.event())
+        waiters.append(coros.Event())
         self.actor.cast( (3, waiters[-1]) )
         api.sleep(0)
-        waiters.append(coros.event())
+        waiters.append(coros.Event())
         self.actor.cast( (4, waiters[-1]) )
-        waiters.append(coros.event())
+        waiters.append(coros.Event())
         self.actor.cast( (5, waiters[-1]) )
         for evt in waiters:
             evt.wait()
@@ -148,7 +148,7 @@ class TestActor(SilencedTestCase):
 
         self.actor.received = received
 
-        evt = coros.event()
+        evt = coros.Event()
         self.actor.cast( ('fail', evt) )
         evt.wait()
         evt.reset()
@@ -168,8 +168,8 @@ class TestActor(SilencedTestCase):
         def onemoment():
             api.sleep(0.1)
 
-        evt = coros.event()
-        evt1 = coros.event()
+        evt = coros.Event()
+        evt1 = coros.Event()
 
         self.actor.cast( (onemoment, evt, 1) )
         self.actor.cast( (lambda: None, evt1, 2) )

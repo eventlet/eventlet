@@ -49,7 +49,7 @@ def tpool_trampoline():
 
 def esend(meth,*args, **kwargs):
     global _reqq, _rspq
-    e = coros.event()
+    e = coros.Event()
     _reqq.put((e,meth,args,kwargs))
     return e
 
