@@ -4,8 +4,8 @@ from eventlet.green import threading
 from eventlet.green import time
 
 # hub requires initialization before test can run
-from eventlet import api
-api.get_hub()
+from eventlet import hubs
+hubs.get_hub()
 
 patcher.inject('test.test_threading_local',
     globals(),

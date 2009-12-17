@@ -6,21 +6,21 @@ from unittest import TestCase, main
 from eventlet import api
 from eventlet import greenio
 from eventlet import util
-
+from eventlet import hubs
 
 def check_hub():
     # Clear through the descriptor queue
     api.sleep(0)
     api.sleep(0)
-    hub = api.get_hub()
+    hub = hubs.get_hub()
     for nm in 'get_readers', 'get_writers':
         dct = getattr(hub, nm)()
         assert not dct, "hub.%s not empty: %s" % (nm, dct)
     # Stop the runloop (unless it's twistedhub which does not support that)
-    if not getattr(api.get_hub(), 'uses_twisted_reactor', None):
-        api.get_hub().abort()
+    if not getattr(hub, 'uses_twisted_reactor', None):
+        hub.abort()
         api.sleep(0)
-        ### ??? assert not api.get_hub().running
+        ### ??? assert not hubs.get_hub().running
 
 
 class TestApi(TestCase):
@@ -145,16 +145,6 @@ class TestApi(TestCase):
 
         check_hub()
 
-    if not getattr(api.get_hub(), 'uses_twisted_reactor', None):
-        def test_explicit_hub(self):
-            oldhub = api.get_hub()
-            try:
-                api.use_hub(Foo)
-                assert isinstance(api.get_hub(), Foo), api.get_hub()
-            finally:
-                api._threadlocal.hub = oldhub
-            check_hub()
-
     def test_named(self):
         named_foo = api.named('tests.api_test.Foo')
         self.assertEquals(
@@ -231,8 +221,6 @@ class TestApi(TestCase):
         def func():
             return api.with_timeout(0.2, api.sleep, 2, timeout_value=1)
         self.assertRaises(api.TimeoutError, api.with_timeout, 0.1, func)
-
-
 
 
 class Foo(object):

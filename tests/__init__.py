@@ -4,7 +4,7 @@ import os
 import errno
 import unittest
 
-# convenience
+# convenience for importers
 main = unittest.main
 
 def skipped(func):
@@ -63,7 +63,7 @@ def skip_unless(condition):
 def requires_twisted(func):
     """ Decorator that skips a test if Twisted is not present."""
     def requirement(_f):
-        from eventlet.api import get_hub
+        from eventlet.hubs import get_hub
         try:
             return 'Twisted' in type(get_hub()).__name__
         except Exception:
@@ -74,12 +74,13 @@ def requires_twisted(func):
 def skip_with_pyevent(func):
     """ Decorator that skips a test if we're using the pyevent hub."""
     def using_pyevent(_f):
-        from eventlet.api import get_hub
+        from eventlet.hubs import get_hub
         return 'pyevent' in type(get_hub()).__module__
     return skip_if(using_pyevent)(func)
 
 
 def skip_on_windows(func):
+    """ Decorator that skips a test on Windows."""
     import sys
     return skip_if(sys.platform.startswith('win'))(func)
 
@@ -109,14 +110,14 @@ class SilencedTestCase(LimitedTestCase):
     """ Subclass of LimitedTestCase that also silences the printing of timer
     exceptions."""
     def setUp(self):
-        from eventlet import api
+        from eventlet import hubs
         super(SilencedTestCase, self).setUp()
-        api.get_hub().silent_timer_exceptions = True
+        hubs.get_hub().silent_timer_exceptions = True
 
     def tearDown(self):        
-        from eventlet import api
+        from eventlet import hubs
         super(SilencedTestCase, self).tearDown()
-        api.get_hub().silent_timer_exceptions = False
+        hubs.get_hub().silent_timer_exceptions = False
 
 
 def find_command(command):

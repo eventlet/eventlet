@@ -1,6 +1,7 @@
 __select = __import__('select')
 error = __select.error
-from eventlet.api import get_hub, getcurrent
+from eventlet.api import getcurrent
+from eventlet.hubs import get_hub
 
 def get_fileno(obj):
     try:

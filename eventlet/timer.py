@@ -1,4 +1,5 @@
-from eventlet.api import get_hub, getcurrent
+from eventlet.api import getcurrent
+from eventlet.hubs import get_hub
 
 """ If true, captures a stack trace for each timer when constructed.  This is
 useful for debugging leaking timers, to find out where the timer was set up. """

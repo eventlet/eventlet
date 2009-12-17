@@ -1,4 +1,4 @@
-from eventlet import pool, coros, api
+from eventlet import pool, coros, api, hubs
 from tests import LimitedTestCase
 from unittest import main
 
@@ -70,7 +70,7 @@ class TestCoroutinePool(LimitedTestCase):
         def fire_timer():
             timer_fired.append(True)
         def some_work():
-            api.get_hub().schedule_call_local(0, fire_timer)
+            hubs.get_hub().schedule_call_local(0, fire_timer)
         pool = self.klass(0, 2)
         worker = pool.execute(some_work)
         worker.wait()

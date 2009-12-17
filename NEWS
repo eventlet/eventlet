@@ -1,6 +1,7 @@
 0.9.3
 =====
 
+* Moved get_hub, use_hub, get_default_hub to eventlet.hubs
 * Renamed libevent hub to pyevent.
 * Renamed coros.event to coros.Event
 * Removed previously-deprecated features tcp_server, GreenSSL, erpc, and trap_errors.

@@ -1,13 +1,8 @@
 import unittest
 from eventlet import api
+from eventlet.green import socket
 
-if hasattr(api._threadlocal, 'hub'):
-    from eventlet.green import socket
-else:
-    import socket
-
-class TestSocketErrors(unittest.TestCase):
-    
+class TestSocketErrors(unittest.TestCase):    
     def test_connection_refused(self):
         # open and close a dummy server to find an unused port
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

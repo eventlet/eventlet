@@ -3,7 +3,7 @@ for var in __socket.__all__:
     exec "%s = __socket.%s" % (var, var)
 _fileobject = __socket._fileobject
 
-from eventlet.api import get_hub
+from eventlet.hubs import get_hub
 from eventlet.greenio import GreenSocket as socket
 from eventlet.greenio import SSL as _SSL  # for exceptions
 import warnings

@@ -96,7 +96,7 @@ def backdoor((conn, addr), locals=None):
     fl = conn.makeGreenFile("rw")
     fl.newlines = '\n'
     greenlet = SocketConsole(fl, (host, port), locals)
-    hub = api.get_hub()
+    hub = hubs.get_hub()
     hub.schedule_call_global(0, greenlet.switch)
 
 

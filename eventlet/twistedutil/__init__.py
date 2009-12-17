@@ -1,6 +1,7 @@
 from twisted.internet import defer
 from twisted.python import failure
-from eventlet.api import get_hub, spawn, getcurrent
+from eventlet.api import spawn, getcurrent
+from eventlet.hubs import get_hub
 
 def block_on(deferred):
     cur = [getcurrent()]

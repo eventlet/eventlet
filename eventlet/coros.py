@@ -4,6 +4,7 @@ import traceback
 import warnings
 
 from eventlet import api
+from eventlet import hubs
 
 
 class Cancelled(RuntimeError):
@@ -130,7 +131,7 @@ class Event(object):
         if self._result is NOT_USED:
             self._waiters.add(api.getcurrent())
             try:
-                return api.get_hub().switch()
+                return hubs.get_hub().switch()
             finally:
                 self._waiters.discard(api.getcurrent())
         if self._exc is not None:
@@ -168,7 +169,7 @@ class Event(object):
         if exc is not None and not isinstance(exc, tuple):
             exc = (exc, )
         self._exc = exc
-        hub = api.get_hub()
+        hub = hubs.get_hub()
         if self._waiters:
             hub.schedule_call_global(0, self._do_send, self._result, self._exc, self._waiters.copy())
 
@@ -224,7 +225,7 @@ class Semaphore(object):
             self._waiters.add(api.getcurrent())
             try:
                 while self.counter <= 0:
-                    api.get_hub().switch()
+                    hubs.get_hub().switch()
             finally:
                 self._waiters.discard(api.getcurrent())
         self.counter -= 1
@@ -237,7 +238,7 @@ class Semaphore(object):
         # `blocking' parameter is for consistency with BoundedSemaphore and is ignored
         self.counter += 1
         if self._waiters:
-            api.get_hub().schedule_call_global(0, self._do_acquire)
+            hubs.get_hub().schedule_call_global(0, self._do_acquire)
         return True
 
     def _do_acquire(self):
@@ -429,7 +430,7 @@ class Queue(object):
             exc = (exc, )
         self.items.append((result, exc))
         if self._waiters:
-            api.get_hub().schedule_call_global(0, self._do_send)
+            hubs.get_hub().schedule_call_global(0, self._do_send)
 
     def send_exception(self, *args):
         # the arguments are the same as for greenlet.throw
@@ -451,7 +452,7 @@ class Queue(object):
         else:
             self._waiters.add(api.getcurrent())
             try:
-                result, exc = api.get_hub().switch()
+                result, exc = hubs.get_hub().switch()
                 if exc is None:
                     return result
                 else:
@@ -491,20 +492,20 @@ class Channel(object):
     def send(self, result=None, exc=None):
         if exc is not None and not isinstance(exc, tuple):
             exc = (exc, )
-        if api.getcurrent() is api.get_hub().greenlet:
+        if api.getcurrent() is hubs.get_hub().greenlet:
             self.items.append((result, exc))
             if self._waiters:
-                api.get_hub().schedule_call_global(0, self._do_switch)
+                hubs.get_hub().schedule_call_global(0, self._do_switch)
         else:
             self.items.append((result, exc))
             # note that send() does not work well with timeouts. if your timeout fires
             # after this point, the item will remain in the queue
             if self._waiters:
-                api.get_hub().schedule_call_global(0, self._do_switch)
+                hubs.get_hub().schedule_call_global(0, self._do_switch)
             if len(self.items) > self.max_size:
                 self._senders.add(api.getcurrent())
                 try:
-                    api.get_hub().switch()
+                    hubs.get_hub().switch()
                 finally:
                     self._senders.discard(api.getcurrent())
 
@@ -534,17 +535,17 @@ class Channel(object):
         if self.items:
             result, exc = self.items.popleft()
             if len(self.items) <= self.max_size:
-                api.get_hub().schedule_call_global(0, self._do_switch)
+                hubs.get_hub().schedule_call_global(0, self._do_switch)
             if exc is None:
                 return result
             else:
                 api.getcurrent().throw(*exc)
         else:
             if self._senders:
-                api.get_hub().schedule_call_global(0, self._do_switch)
+                hubs.get_hub().schedule_call_global(0, self._do_switch)
             self._waiters.add(api.getcurrent())
             try:
-                result, exc = api.get_hub().switch()
+                result, exc = hubs.get_hub().switch()
                 if exc is None:
                     return result
                 else:

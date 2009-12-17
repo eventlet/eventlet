@@ -4,11 +4,9 @@ import socket
 import string
 import linecache
 import inspect
-import threading
 
 from eventlet.support import greenlets as greenlet
-
-import warnings
+from eventlet.hubs import get_hub as get_hub_, get_default_hub as get_default_hub_, use_hub as use_hub_
 
 __all__ = [
     'call_after', 'exc_after', 'getcurrent', 'get_default_hub', 'get_hub',
@@ -16,6 +14,22 @@ __all__ = [
     'ssl_listener', 'tcp_listener', 'trampoline',
     'unspew', 'use_hub', 'with_timeout', 'timeout']
 
+
+import warnings
+def get_hub(*a, **kw):
+    warnings.warn("eventlet.api.get_hub has moved to eventlet.hubs.get_hub",
+        DeprecationWarning, stacklevel=2)
+    return get_hub_(*a, **kw)    
+def get_default_hub(*a, **kw):
+    warnings.warn("eventlet.api.get_default_hub has moved to"
+        " eventlet.hubs.get_default_hub",
+        DeprecationWarning, stacklevel=2)
+    return get_default_hub_(*a, **kw)
+def use_hub(*a, **kw):
+    warnings.warn("eventlet.api.use_hub has moved to eventlet.hubs.use_hub",
+        DeprecationWarning, stacklevel=2)
+    return use_hub_(*a, **kw)
+    
 
 def switch(coro, result=None, exc=None):
     if exc is not None:
@@ -28,7 +42,6 @@ class TimeoutError(Exception):
     """Exception raised if an asynchronous operation times out"""
     pass
 
-_threadlocal = threading.local()
 
 def tcp_listener(address, backlog=50):
     """
@@ -83,7 +96,7 @@ def trampoline(fd, read=None, write=None, timeout=None, timeout_exc=TimeoutError
     returning normally.
     """
     t = None
-    hub = get_hub()
+    hub = get_hub_()
     current = greenlet.getcurrent()
     assert hub.greenlet is not current, 'do not call blocking functions from the mainloop'
     assert not (read and write), 'not allowed to trampoline for reading and writing'
@@ -137,13 +150,13 @@ def spawn(function, *args, **kwds):
     # killable
     t = None
     g = Greenlet(_spawn_startup)
-    t = get_hub().schedule_call_global(0, _spawn, g)
+    t = get_hub_().schedule_call_global(0, _spawn, g)
     g.switch(function, args, kwds, t.cancel)
     return g
 
 def kill(g, *throw_args):
-    get_hub().schedule_call_global(0, g.throw, *throw_args)
-    if getcurrent() is not get_hub().greenlet:
+    get_hub_().schedule_call_global(0, g.throw, *throw_args)
+    if getcurrent() is not get_hub_().greenlet:
         sleep(0)
 
 def call_after_global(seconds, function, *args, **kwds):
@@ -162,7 +175,7 @@ def call_after_global(seconds, function, *args, **kwds):
         g = Greenlet(_spawn_startup)
         g.switch(function, args, kwds)
         g.switch()
-    t = get_hub().schedule_call_global(seconds, startup)
+    t = get_hub_().schedule_call_global(seconds, startup)
     return t
 
 def call_after_local(seconds, function, *args, **kwds):
@@ -181,7 +194,7 @@ def call_after_local(seconds, function, *args, **kwds):
         g = Greenlet(_spawn_startup)
         g.switch(function, args, kwds)
         g.switch()
-    t = get_hub().schedule_call_local(seconds, startup)
+    t = get_hub_().schedule_call_local(seconds, startup)
     return t
 
 # for compatibility with original eventlet API
@@ -313,66 +326,6 @@ def exc_after(seconds, *throw_args):
     """
     return call_after(seconds, getcurrent().throw, *throw_args)
 
-
-def get_default_hub():
-    """Select the default hub implementation based on what multiplexing
-    libraries are installed. Tries twistedr if a twisted reactor is imported,
-    then poll, then select.
-    """    
-    
-    # pyevent hub disabled for now because it is not thread-safe
-    #try:
-    #    import eventlet.hubs.pyevent
-    #    return eventlet.hubs.pyevent
-    #except:
-    #    pass
-
-    if 'twisted.internet.reactor' in sys.modules:
-        from eventlet.hubs import twistedr
-        return twistedr
-
-    try:
-        import eventlet.hubs.epolls
-        return eventlet.hubs.epolls
-    except ImportError:
-        import select
-        if hasattr(select, 'poll'):
-            import eventlet.hubs.poll
-            return eventlet.hubs.poll
-        else:
-            import eventlet.hubs.selects
-            return eventlet.hubs.selects
-
-
-def use_hub(mod=None):
-    """Use the module *mod*, containing a class called Hub, as the
-    event hub. Usually not required; the default hub is usually fine.
-    """
-    if mod is None:
-        mod = get_default_hub()
-    if hasattr(_threadlocal, 'hub'):
-        del _threadlocal.hub
-    if isinstance(mod, str):
-        mod = __import__('eventlet.hubs.' + mod, globals(), locals(), ['Hub'])
-    if hasattr(mod, 'Hub'):
-        _threadlocal.Hub = mod.Hub
-    else:
-        _threadlocal.Hub = mod
-
-def get_hub():
-    """Get the current event hub singleton object.
-    """
-    try:
-        hub = _threadlocal.hub
-    except AttributeError:
-        try:
-            _threadlocal.Hub
-        except AttributeError:
-            use_hub()
-        hub = _threadlocal.hub = _threadlocal.Hub()
-    return hub
-
-
 def sleep(seconds=0):
     """Yield control to another eligible coroutine until at least *seconds* have
     elapsed.
@@ -384,7 +337,7 @@ def sleep(seconds=0):
     calling any socket methods, it's a good idea to call ``sleep(0)``
     occasionally; otherwise nothing else will run.
     """
-    hub = get_hub()
+    hub = get_hub_()
     assert hub.greenlet is not greenlet.getcurrent(), 'do not call blocking functions from the mainloop'
     timer = hub.schedule_call_global(seconds, greenlet.getcurrent().switch)
     try:

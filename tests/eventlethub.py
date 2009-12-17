@@ -1,7 +1,7 @@
 import logging
 
 from nose.plugins.base import Plugin
-from eventlet import api
+from eventlet import hubs
 
 log = logging.getLogger('nose.plugins.eventlethub')
 
@@ -56,13 +56,13 @@ class EventletHub(Plugin):
         if self.hub_name is None:
             log.warn('Using default eventlet hub: %s, did you mean '\
                      'to supply --hub command line argument?', 
-                     api.get_hub().__module__)
+                     hubs.get_hub().__module__)
         else:
             if self.hub_name == 'twistedr':
                 if self.twisted_already_used:
                     return
                 else:
                     self.twisted_already_used = True 
-            api.use_hub(self.hub_name)
-            log.info('using hub %s', api.get_hub())
+            hubs.use_hub(self.hub_name)
+            log.info('using hub %s', hubs.get_hub())
  
