@@ -34,8 +34,8 @@ class TestTimer(TestCase):
         #t = timer.Timer(0, lambda: (called.append(True), hub.abort()))
         #t.schedule()
         # let's have a timer somewhere in the future; make sure abort() still works
-        # (for libevent, its dispatcher() does not exit if there is something scheduled)
-        # XXX libevent handles this, other hubs do not
+        # (for pyevent, its dispatcher() does not exit if there is something scheduled)
+        # XXX pyevent handles this, other hubs do not
         #api.get_hub().schedule_call_global(10000, lambda: (called.append(True), hub.abort()))
         api.get_hub().schedule_call_global(0, lambda: (called.append(True), hub.abort()))
         hub.default_sleep = lambda: 0.0

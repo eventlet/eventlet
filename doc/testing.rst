@@ -66,7 +66,7 @@ If you wish to run tests against a particular Twisted reactor, use ``--reactor=R
 
 * poll
 * selects
-* libevent  (requires pyevent)
+* pyevent  (requires pyevent installed on your system)
 
 Writing Tests
 -------------

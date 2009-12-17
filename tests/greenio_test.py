@@ -1,4 +1,4 @@
-from tests import skipped, LimitedTestCase, skip_with_libevent, TestIsTakingTooLong
+from tests import skipped, LimitedTestCase, skip_with_pyevent, TestIsTakingTooLong
 from unittest import main
 from eventlet import api, util, coros, proc, greenio
 from eventlet.green.socket import GreenSSLObject
@@ -186,7 +186,7 @@ class TestGreenIo(LimitedTestCase):
         for bytes in (1000, 10000, 100000, 1000000):
             test_sendall_impl(bytes)
         
-    @skip_with_libevent
+    @skip_with_pyevent
     def test_multiple_readers(self):
         recvsize = 2 * min_buf_size()
         sendsize = 10 * recvsize

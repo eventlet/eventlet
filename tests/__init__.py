@@ -71,12 +71,12 @@ def requires_twisted(func):
     return skip_unless(requirement)(func)
     
     
-def skip_with_libevent(func):
-    """ Decorator that skips a test if we're using the libevent hub."""
-    def using_libevent(_f):
+def skip_with_pyevent(func):
+    """ Decorator that skips a test if we're using the pyevent hub."""
+    def using_pyevent(_f):
         from eventlet.api import get_hub
-        return 'libevent' in type(get_hub()).__module__
-    return skip_if(using_libevent)(func)
+        return 'pyevent' in type(get_hub()).__module__
+    return skip_if(using_pyevent)(func)
 
 
 def skip_on_windows(func):

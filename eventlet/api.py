@@ -320,10 +320,10 @@ def get_default_hub():
     then poll, then select.
     """    
     
-    # libevent hub disabled for now because it is not thread-safe
+    # pyevent hub disabled for now because it is not thread-safe
     #try:
-    #    import eventlet.hubs.libevent
-    #    return eventlet.hubs.libevent
+    #    import eventlet.hubs.pyevent
+    #    return eventlet.hubs.pyevent
     #except:
     #    pass
 

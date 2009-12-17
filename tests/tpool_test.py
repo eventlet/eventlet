@@ -17,7 +17,7 @@ import random
 from sys import stdout
 import time
 import re
-from tests import skipped, skip_with_libevent
+from tests import skipped, skip_with_pyevent
 from unittest import TestCase, main
 
 from eventlet import coros, api, tpool
@@ -70,7 +70,7 @@ class TestTpool(TestCase):
         tpool.QUIET = False
         tpool.killall()
 
-    @skip_with_libevent
+    @skip_with_pyevent
     def test_a_buncha_stuff(self):
         pool = coros.CoroutinePool(max_size=10)
         waiters = []
@@ -79,7 +79,7 @@ class TestTpool(TestCase):
         for waiter in waiters:
             waiter.wait()
 
-    @skip_with_libevent
+    @skip_with_pyevent
     def test_wrap_tuple(self):
         my_tuple = (1, 2)
         prox = tpool.Proxy(my_tuple)
@@ -87,7 +87,7 @@ class TestTpool(TestCase):
         self.assertEqual(prox[1], 2)
         self.assertEqual(len(my_tuple), 2)
 
-    @skip_with_libevent
+    @skip_with_pyevent
     def test_wrap_string(self):
         my_object = "whatever"
         prox = tpool.Proxy(my_object)
@@ -95,7 +95,7 @@ class TestTpool(TestCase):
         self.assertEqual(len(my_object), len(prox))
         self.assertEqual(my_object.join(['a', 'b']), prox.join(['a', 'b']))
 
-    @skip_with_libevent
+    @skip_with_pyevent
     def test_wrap_uniterable(self):
         # here we're treating the exception as just a normal class
         prox = tpool.Proxy(FloatingPointError())
@@ -107,7 +107,7 @@ class TestTpool(TestCase):
         self.assertRaises(IndexError, index)
         self.assertRaises(TypeError, key)
 
-    @skip_with_libevent
+    @skip_with_pyevent
     def test_wrap_dict(self):
         my_object = {'a':1}
         prox = tpool.Proxy(my_object)
@@ -117,7 +117,7 @@ class TestTpool(TestCase):
         self.assertEqual(repr(my_object), repr(prox))
         self.assertEqual(`my_object`, `prox`)
 
-    @skip_with_libevent
+    @skip_with_pyevent
     def test_wrap_module_class(self):
         prox = tpool.Proxy(re)
         self.assertEqual(tpool.Proxy, type(prox))
@@ -125,7 +125,7 @@ class TestTpool(TestCase):
         self.assertEqual(exp.flags, 0)
         self.assert_(repr(prox.compile))
 
-    @skip_with_libevent
+    @skip_with_pyevent
     def test_wrap_eq(self):
         prox = tpool.Proxy(re)
         exp1 = prox.compile('.')
@@ -134,7 +134,7 @@ class TestTpool(TestCase):
         exp3 = prox.compile('/')
         self.assert_(exp1 != exp3)
 
-    @skip_with_libevent
+    @skip_with_pyevent
     def test_wrap_nonzero(self):
         prox = tpool.Proxy(re)
         exp1 = prox.compile('.')
@@ -142,7 +142,7 @@ class TestTpool(TestCase):
         prox2 = tpool.Proxy([1, 2, 3])
         self.assert_(bool(prox2))
 
-    @skip_with_libevent
+    @skip_with_pyevent
     def test_multiple_wraps(self):
         prox1 = tpool.Proxy(re)
         prox2 = tpool.Proxy(re)
@@ -151,18 +151,18 @@ class TestTpool(TestCase):
         del x2
         x3 = prox2.compile('.')
 
-    @skip_with_libevent
+    @skip_with_pyevent
     def test_wrap_getitem(self):
         prox = tpool.Proxy([0,1,2])
         self.assertEqual(prox[0], 0)
 
-    @skip_with_libevent
+    @skip_with_pyevent
     def test_wrap_setitem(self):
         prox = tpool.Proxy([0,1,2])
         prox[1] = 2
         self.assertEqual(prox[1], 2)
 
-    @skip_with_libevent
+    @skip_with_pyevent
     def test_raising_exceptions(self):
         prox = tpool.Proxy(re)
         def nofunc():
@@ -172,7 +172,7 @@ class TestTpool(TestCase):
     def assertLessThan(self, a, b):
         self.assert_(a < b, "%s is not less than %s" % (a, b))
 
-    @skip_with_libevent
+    @skip_with_pyevent
     def test_variable_and_keyword_arguments_with_function_calls(self):
         import optparse
         parser = tpool.Proxy(optparse.OptionParser())
@@ -180,7 +180,7 @@ class TestTpool(TestCase):
         opts,args = parser.parse_args(["-nfoo"])
         self.assertEqual(opts.n, 'foo')
 
-    @skip_with_libevent
+    @skip_with_pyevent
     def test_contention(self):
         from tests import tpool_test
         prox = tpool.Proxy(tpool_test)
@@ -193,14 +193,14 @@ class TestTpool(TestCase):
         for waiter in waiters:
             waiter.wait()
 
-    @skip_with_libevent
+    @skip_with_pyevent
     def test_timeout(self):
         import time
         api.exc_after(0.1, api.TimeoutError())
         self.assertRaises(api.TimeoutError,
                           tpool.execute, time.sleep, 0.3)
 
-    @skip_with_libevent
+    @skip_with_pyevent
     def test_killall(self):
         tpool.killall()
         tpool.setup()
