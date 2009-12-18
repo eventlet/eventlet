@@ -22,39 +22,6 @@ from unittest import TestCase, main
 
 from eventlet import coros, api, tpool
 
-r = random.WichmannHill()
-_g_debug = False
-
-def prnt(msg):
-    if _g_debug:
-        print msg
-
-class yadda(object):
-    def __init__(self):
-        pass
-
-    def foo(self,when,n=None):
-        assert(n is not None)
-        prnt("foo: %s, %s" % (when,n))
-        time.sleep(r.random()/20.0)
-        return n
-
-def sender_loop(pfx):
-    n = 0
-    obj = tpool.Proxy(yadda())
-    while n < 10:
-        if not (n % 5):
-            stdout.write('.')
-            stdout.flush()
-        api.sleep(0)
-        now = time.time()
-        prnt("%s: send (%s,%s)" % (pfx,now,n))
-        rv = obj.foo(now,n=n)
-        prnt("%s: recv %s" % (pfx, rv))
-        assert(n == rv)
-        api.sleep(0)
-        n += 1
-
 one = 1
 two = 2
 three = 3
@@ -72,9 +39,27 @@ class TestTpool(TestCase):
 
     @skip_with_pyevent
     def test_a_buncha_stuff(self):
+        assert_ = self.assert_
+        class Dummy(object):
+            def foo(self,when,token=None):
+                assert_(token is not None)
+                time.sleep(random.random()/200.0)
+                return token
+        
+        def sender_loop(loopnum):
+            obj = tpool.Proxy(Dummy())
+            count = 100
+            for n in xrange(count):
+                api.sleep(random.random()/200.0)
+                now = time.time()
+                token = loopnum * count + n
+                rv = obj.foo(now,token=token)
+                self.assertEquals(token, rv)
+                api.sleep(random.random()/200.0)
+
         pool = coros.CoroutinePool(max_size=10)
         waiters = []
-        for i in range(0,9):
+        for i in xrange(10):
             waiters.append(pool.execute(sender_loop,i))
         for waiter in waiters:
             waiter.wait()
