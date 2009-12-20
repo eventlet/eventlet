@@ -469,6 +469,12 @@ class Queue(object):
 
     def waiting(self):
         return len(self._waiters)
+        
+    def __iter__(self):
+        return self
+    
+    def next(self):
+        return self.wait()
 
 
 class Channel(object):
