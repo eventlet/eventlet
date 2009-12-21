@@ -1,4 +1,4 @@
-from eventlet.coros import Semaphore, Queue
+from eventlet.coros import Semaphore, Queue, Event
 from eventlet.api import spawn, getcurrent
 import sys
 
@@ -11,8 +11,9 @@ class Parallel(object):
         self.max_size = max_size
         self.coroutines_running = set()
         self.sem = Semaphore(max_size)
+        self.no_coros_running = Event()
         self._results = Queue()
-    
+            
     def resize(self, new_max_size):
         """ Change the max number of coroutines doing work at any given time.
     
@@ -36,19 +37,27 @@ class Parallel(object):
         """ Returns the number of coroutines available for use."""
         return self.sem.counter
 
-    def _coro_done(self, coro, result, exc=None):
-        self.sem.release()
-        self.coroutines_running.remove(coro)
-        self._results.send(result)
-        # if done processing (no more work is being done),
-        # send StopIteration so that the queue knows it's done
-        if self.sem.balance == self.max_size:
-            self._results.send_exception(StopIteration)
-                        
     def spawn(self, func, *args, **kwargs):
-        """ Create a coroutine to run func(*args, **kwargs).  Returns a 
-        Coro object that can be used to retrieve the results of the function.
+        """Run func(*args, **kwargs) in its own green thread.
         """
+        return self._spawn(False, func, *args, **kwargs)
+        
+    def spawn_q(self, func, *args, **kwargs):
+        """Run func(*args, **kwargs) in its own green thread.
+        
+        The results of func are stuck in the results() iterator.
+        """
+        self._spawn(True, func, *args, **kwargs)
+        
+    def spawn_n(self, func, *args, **kwargs):
+        """ Create a coroutine to run func(*args, **kwargs).
+        
+        Returns None; the results of the function are not retrievable.  
+        The results of the function are not put into the results() iterator.
+        """
+        self._spawn(False, func, *args, **kwargs)
+
+    def _spawn(self, send_result, func, *args, **kwargs):
         # if reentering an empty pool, don't try to wait on a coroutine freeing
         # itself -- instead, just execute in the current coroutine
         current = getcurrent()
@@ -57,11 +66,28 @@ class Parallel(object):
         else:
             self.sem.acquire()
             p = spawn(func, *args, **kwargs)
+            if not self.coroutines_running:
+                self.no_coros_running = Event()
             self.coroutines_running.add(p)
-            p.link(self._coro_done)
-
+            p.link(self._spawn_done, send_result=send_result, coro=p)
         return p
-                
+
+    def waitall(self):
+        """Waits until all coroutines in the pool are finished working."""
+        self.no_coros_running.wait()
+    
+    def _spawn_done(self, result=None, exc=None, send_result=False, coro=None):
+        self.sem.release()
+        self.coroutines_running.remove(coro)
+        if send_result:
+            self._results.send(result)
+        # if done processing (no more work is waiting for processing),
+        # send StopIteration so that the queue knows it's done
+        if self.sem.balance == self.max_size:
+            if send_result:
+                self._results.send_exception(StopIteration)
+            self.no_coros_running.send(None)            
+
     def wait(self):
         """Wait for the next execute in the pool to complete,
         and return the result."""
@@ -73,10 +99,11 @@ class Parallel(object):
         
     def _do_spawn_all(self, func, iterable):
         for i in iterable:
-            if not isinstance(i, tuple):
-                self.spawn(func, i)
+            # if the list is composed of single arguments, use those
+            if not isinstance(i, (tuple, list)):
+                self.spawn_q(func, i)
             else:
-                self.spawn(func, *i)
+                self.spawn_q(func, *i)
     
     def spawn_all(self, func, iterable):
         """ Applies *func* over every item in *iterable* using the concurrency 

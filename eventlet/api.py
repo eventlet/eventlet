@@ -129,41 +129,65 @@ def _spawn_startup(cb, args, kw, cancel=None):
     return cb(*args, **kw)
 
 
-class ResultGreenlet(Greenlet):
-    def __init__(self):
-        Greenlet.__init__(self, self.main)
+class GreenThread(Greenlet):
+    def __init__(self, parent):
+        Greenlet.__init__(self, self.main, parent)
         from eventlet import coros
-        self._exit_event = coros.event()
+        self._exit_event = coros.Event()
 
     def wait(self):
         return self._exit_event.wait()
         
-    def link(self, func):
-        self._exit_funcs = getattr(self, '_exit_funcs', [])
-        self._exit_funcs.append(func)
+    def link(self, func, *curried_args, **curried_kwargs):
+        """ Set up a function to be called with the results of the GreenThread.
         
-    def main(self, *a):
-        function, args, kwargs = a
+        The function must have the following signature:
+          def f(result=None, exc=None, [curried args/kwargs]):
+        """
+        self._exit_funcs = getattr(self, '_exit_funcs', [])
+        self._exit_funcs.append((func, curried_args, curried_kwargs))
+        
+    def main(self, function, args, kwargs):
         try:
             result = function(*args, **kwargs)
         except:
             self._exit_event.send_exception(*sys.exc_info())
-            for f in getattr(self, '_exit_funcs', []):
-                f(self, exc=sys.exc_info())
+            # ca and ckw are the curried function arguments
+            for f, ca, ckw in getattr(self, '_exit_funcs', []):
+                f(exc=sys.exc_info(), *ca, **ckw)
+            raise
         else:
             self._exit_event.send(result)
-            for f in getattr(self, '_exit_funcs', []):
-                f(self, result)
+            for f, ca, ckw in getattr(self, '_exit_funcs', []):
+                f(result, *ca, **ckw)
 
 
 def spawn(func, *args, **kwargs):
-    """ Create a coroutine to run func(*args, **kwargs) without any 
-    way to retrieve the results.  Returns the greenlet object.
+    """Create a green thread to run func(*args, **kwargs).  Returns a GreenThread 
+    object which you can use to get the results of the call.
     """
-    g = ResultGreenlet()
-    hub = get_hub()
-    g.parent = hub.greenlet
+    hub = get_hub_()
+    g = GreenThread(hub.greenlet)
     hub.schedule_call_global(0, g.switch, func, args, kwargs)
+    return g
+    
+    
+def _main_wrapper(func, args, kwargs):
+    # function that gets around the fact that greenlet.switch
+    # doesn't accept keyword arguments
+    return func(*args, **kwargs)
+    
+def spawn_n(func, *args, **kwargs):
+    """Same as spawn, but returns a greenlet object from which it is not possible
+    to retrieve the results.  This is slightly faster than spawn; it is fastest 
+    if there are no keyword arguments."""
+    hub = get_hub_()
+    if kwargs:
+        g = Greenlet(_main_wrapper, parent=hub.greenlet)
+        hub.schedule_call_global(0, g.switch, func, args, kwargs)
+    else:
+        g = Greenlet(func, parent=hub.greenlet)
+        hub.schedule_call_global(0, g.switch, *args)
     return g
     
 

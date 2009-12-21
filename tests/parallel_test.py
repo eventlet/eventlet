@@ -17,7 +17,7 @@ class Parallel(unittest.TestCase):
     def test_parallel(self):
         p = parallel.Parallel(4)
         for i in xrange(10):
-            p.spawn(passthru, i)
+            p.spawn_q(passthru, i)
         result_list = list(p.results())
         self.assertEquals(result_list, range(10))
         
@@ -25,3 +25,15 @@ class Parallel(unittest.TestCase):
         p = parallel.Parallel(4)
         result_list = list(p.spawn_all(passthru, xrange(10)))
         self.assertEquals(result_list, range(10))
+
+    def test_spawn_n(self):
+        p = parallel.Parallel(4)
+        results_closure = []
+        def do_something(a):
+            api.sleep(0.01)
+            results_closure.append(a)
+        for i in xrange(10):
+            p.spawn(do_something, i)
+        p.waitall()
+        self.assertEquals(results_closure, range(10))
+
