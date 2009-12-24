@@ -1,7 +1,5 @@
-from eventlet.coros import Semaphore, Queue, Event
 from eventlet import api
-from collections import deque
-import sys
+from eventlet import coros
 
 __all__ = ['GreenPool', 'GreenPile']
     
@@ -11,8 +9,8 @@ class GreenPool(object):
     def __init__(self, size):
         self.size = size
         self.coroutines_running = set()
-        self.sem = Semaphore(size)
-        self.no_coros_running = Event()
+        self.sem = coros.Semaphore(size)
+        self.no_coros_running = coros.Event()
             
     def resize(self, new_size):
         """ Change the max number of coroutines doing work at any given time.
@@ -63,7 +61,7 @@ class GreenPool(object):
             self.sem.acquire()
             gt = api.spawn(func, *args, **kwargs)
             if not self.coroutines_running:
-                self.no_coros_running = Event()
+                self.no_coros_running = coros.Event()
             self.coroutines_running.add(gt)
             gt.link(self._spawn_done, coro=gt)
         return gt
@@ -106,7 +104,7 @@ class GreenPile(object):
             self.pool = size_or_pool
         else:
             self.pool = GreenPool(size_or_pool)
-        self.waiters = Queue()
+        self.waiters = coros.Queue()
         self.counter = 0
             
     def spawn(self, func, *args, **kw):
