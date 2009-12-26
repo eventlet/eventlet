@@ -1,4 +1,4 @@
-from eventlet import api
+from eventlet import greenthread
 from eventlet import coros
 
 __all__ = ['GreenPool', 'GreenPile']
@@ -10,7 +10,7 @@ class GreenPool(object):
         self.size = size
         self.coroutines_running = set()
         self.sem = coros.Semaphore(size)
-        self.no_coros_running = coros.Event()
+        self.no_coros_running = greenthread.Event()
             
     def resize(self, new_size):
         """ Change the max number of coroutines doing work at any given time.
@@ -36,35 +36,58 @@ class GreenPool(object):
 
     def spawn(self, func, *args, **kwargs):
         """Run func(*args, **kwargs) in its own green thread.  Returns the
-        GreenThread object that is running the function.  
+        GreenThread object that is running the function, which can be used
+        to retrieve the results.
         """
-        return self._spawn(func, *args, **kwargs)
-        
-    def spawn_n(self, func, *args, **kwargs):
-        """ Create a coroutine to run func(*args, **kwargs).
-        
-        Returns None; the results of the function are not retrievable.  
-        The results of the function are not put into the results() iterator.
-        """
-        self._spawn(func, *args, **kwargs)
-
-    def _spawn(self, func, *args, **kwargs):
         # if reentering an empty pool, don't try to wait on a coroutine freeing
         # itself -- instead, just execute in the current coroutine
-        current = api.getcurrent()
+        current = greenthread.getcurrent()
         if self.sem.locked() and current in self.coroutines_running:
             # a bit hacky to use the GT without switching to it
-            gt = api.GreenThread(current)
+            gt = greenthread.GreenThread(current)
             gt.main(func, args, kwargs)
             return gt
         else:
             self.sem.acquire()
-            gt = api.spawn(func, *args, **kwargs)
+            gt = greenthread.spawn(func, *args, **kwargs)
             if not self.coroutines_running:
-                self.no_coros_running = coros.Event()
+                self.no_coros_running = greenthread.Event()
             self.coroutines_running.add(gt)
             gt.link(self._spawn_done, coro=gt)
         return gt
+    
+    def _spawn_n_impl(self, func, args, kwargs, coro=None):
+        try:
+            try:
+                func(*args, **kwargs)
+            except (KeyboardInterrupt, SystemExit):
+                raise
+            except:
+                # TODO in debug mode print these
+                pass
+        finally:
+            if coro is None:
+                return
+            else:
+                coro = greenthread.getcurrent()
+                self._spawn_done(coro=coro)
+    
+    def spawn_n(self, func, *args, **kwargs):
+        """ Create a coroutine to run func(*args, **kwargs).
+        
+        Returns None; the results of the function are not retrievable.
+        """
+        # if reentering an empty pool, don't try to wait on a coroutine freeing
+        # itself -- instead, just execute in the current coroutine
+        current = greenthread.getcurrent()
+        if self.sem.locked() and current in self.coroutines_running:
+            self._spawn_n_impl(func, args, kwargs)
+        else:
+            self.sem.acquire()
+            g = greenthread.spawn_n(self._spawn_n_impl, func, args, kwargs, coro=True)
+            if not self.coroutines_running:
+                self.no_coros_running = coros.Event()
+            self.coroutines_running.add(g)
 
     def waitall(self):
         """Waits until all coroutines in the pool are finished working."""
@@ -72,7 +95,8 @@ class GreenPool(object):
     
     def _spawn_done(self, result=None, exc=None, coro=None):
         self.sem.release()
-        self.coroutines_running.remove(coro)
+        if coro is not None:
+            self.coroutines_running.remove(coro)
         # if done processing (no more work is waiting for processing),
         # send StopIteration so that the queue knows it's done
         if self.sem.balance == self.size:
@@ -92,7 +116,7 @@ try:
 except NameError:
     def next(it):
         try:
-            it.next()
+            return it.next()
         except AttributeError:
             raise TypeError("%s object is not an iterator" % type(it))
         
@@ -157,5 +181,5 @@ class GreenPile(object):
             # iterates over us
             self.spawn(lambda: next(iter([])))
         # spin off a coroutine to launch the rest of the items
-        api.spawn(self._do_map, function, it)
+        greenthread.spawn(self._do_map, function, it)
         return self

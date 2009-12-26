@@ -5,11 +5,7 @@ import warnings
 
 from eventlet import api
 from eventlet import hubs
-
-
-class Cancelled(RuntimeError):
-    pass
-
+from eventlet import greenthread
 
 class NOT_USED:
     def __repr__(self):
@@ -17,179 +13,19 @@ class NOT_USED:
 
 NOT_USED = NOT_USED()
 
-class Event(object):
-    """An abstraction where an arbitrary number of coroutines
-    can wait for one event from another.
+def Event(*a, **kw):
+    warnings.warn("The Event class has been moved to the greenthread module! " 
+                   "Please construct greenthread.Event objects instead.", 
+                   DeprecationWarning, stacklevel=2)
+    return greenthread.Event(*a, **kw)
 
-    Events differ from channels in two ways:
-
-    1. calling :meth:`send` does not unschedule the current coroutine
-    2. :meth:`send` can only be called once; use :meth:`reset` to prepare the
-       event for another :meth:`send`
-    
-    They are ideal for communicating return values between coroutines.
-
-    >>> from eventlet import coros, api
-    >>> evt = coros.Event()
-    >>> def baz(b):
-    ...     evt.send(b + 1)
-    ...
-    >>> _ = api.spawn(baz, 3)
-    >>> evt.wait()
-    4
-    """
-    _result = None
-    def __init__(self):
-        self._waiters = set()
-        self.reset()
-
-    def __str__(self):
-        params = (self.__class__.__name__, hex(id(self)), self._result, self._exc, len(self._waiters))
-        return '<%s at %s result=%r _exc=%r _waiters[%d]>' % params
-
-    def reset(self):
-        """ Reset this event so it can be used to send again.
-        Can only be called after :meth:`send` has been called.
-
-        >>> from eventlet import coros
-        >>> evt = coros.Event()
-        >>> evt.send(1)
-        >>> evt.reset()
-        >>> evt.send(2)
-        >>> evt.wait()
-        2
-
-        Calling reset multiple times in a row is an error.
-
-        >>> evt.reset()
-        >>> evt.reset()
-        Traceback (most recent call last):
-        ...
-        AssertionError: Trying to re-reset() a fresh event.
-
-        """
-        assert self._result is not NOT_USED, 'Trying to re-reset() a fresh event.'
-        self.epoch = time.time()
-        self._result = NOT_USED
-        self._exc = None
-
-    def ready(self):
-        """ Return true if the :meth:`wait` call will return immediately.
-        Used to avoid waiting for things that might take a while to time out.
-        For example, you can put a bunch of events into a list, and then visit
-        them all repeatedly, calling :meth:`ready` until one returns ``True``,
-        and then you can :meth:`wait` on that one."""
-        return self._result is not NOT_USED
-
-    def has_exception(self):
-        return self._exc is not None
-
-    def has_result(self):
-        return self._result is not NOT_USED and self._exc is None
-
-    def poll(self, notready=None):
-        if self.ready():
-            return self.wait()
-        return notready
-
-    # QQQ make it return tuple (type, value, tb) instead of raising
-    # because
-    # 1) "poll" does not imply raising
-    # 2) it's better not to screw up caller's sys.exc_info() by default
-    #    (e.g. if caller wants to calls the function in except or finally)
-    def poll_exception(self, notready=None):
-        if self.has_exception():
-            return self.wait()
-        return notready
-
-    def poll_result(self, notready=None):
-        if self.has_result():
-            return self.wait()
-        return notready
-
-    def wait(self):
-        """Wait until another coroutine calls :meth:`send`.
-        Returns the value the other coroutine passed to
-        :meth:`send`.
-
-        >>> from eventlet import coros, api
-        >>> evt = coros.Event()
-        >>> def wait_on():
-        ...    retval = evt.wait()
-        ...    print "waited for", retval
-        >>> _ = api.spawn(wait_on)
-        >>> evt.send('result')
-        >>> api.sleep(0)
-        waited for result
-
-        Returns immediately if the event has already
-        occured.
-
-        >>> evt.wait()
-        'result'
-        """
-        if self._result is NOT_USED:
-            self._waiters.add(api.getcurrent())
-            try:
-                return hubs.get_hub().switch()
-            finally:
-                self._waiters.discard(api.getcurrent())
-        if self._exc is not None:
-            api.getcurrent().throw(*self._exc)
-        return self._result
-
-    def send(self, result=None, exc=None):
-        """Makes arrangements for the waiters to be woken with the
-        result and then returns immediately to the parent.
-
-        >>> from eventlet import coros, api
-        >>> evt = coros.Event()
-        >>> def waiter():
-        ...     print 'about to wait'
-        ...     result = evt.wait()
-        ...     print 'waited for', result
-        >>> _ = api.spawn(waiter)
-        >>> api.sleep(0)
-        about to wait
-        >>> evt.send('a')
-        >>> api.sleep(0)
-        waited for a
-
-        It is an error to call :meth:`send` multiple times on the same event.
-
-        >>> evt.send('whoops')
-        Traceback (most recent call last):
-        ...
-        AssertionError: Trying to re-send() an already-triggered event.
-
-        Use :meth:`reset` between :meth:`send` s to reuse an event object.
-        """
-        assert self._result is NOT_USED, 'Trying to re-send() an already-triggered event.'
-        self._result = result
-        if exc is not None and not isinstance(exc, tuple):
-            exc = (exc, )
-        self._exc = exc
-        hub = hubs.get_hub()
-        if self._waiters:
-            hub.schedule_call_global(0, self._do_send, self._result, self._exc, self._waiters.copy())
-
-    def _do_send(self, result, exc, waiters):
-        while waiters:
-            waiter = waiters.pop()
-            if waiter in self._waiters:
-                if exc is None:
-                    waiter.switch(result)
-                else:
-                    waiter.throw(*exc)
-
-    def send_exception(self, *args):
-        # the arguments and the same as for greenlet.throw
-        return self.send(None, args)
 
 def event(*a, **kw):
-    warnings.warn("The event class has been capitalized!  Please construct"
-        " Event objects instead.", DeprecationWarning, stacklevel=2)
-    return Event(*a, **kw)
+    warnings.warn("The event class has been capitalized and moved!  Please "
+        "construct greenthread.Event objects instead.", 
+        DeprecationWarning, stacklevel=2)
+    return greenthread.Event(*a, **kw)
+
 
 class Semaphore(object):
     """An unbounded semaphore.
@@ -348,7 +184,7 @@ class metaphore(object):
     """
     def __init__(self):
         self.counter = 0
-        self.event   = Event()
+        self.event = greenthread.Event()
         # send() right away, else we'd wait on the default 0 count!
         self.event.send()
 
@@ -397,14 +233,14 @@ def execute(func, *args, **kw):
     >>> evt.wait()
     ('foo', 1)
     """
-    evt = Event()
-    def _really_execute():
-        evt.send(func(*args, **kw))
-    api.spawn(_really_execute)
-    return evt
+    warnings.warn("Coros.execute is deprecated.  Please use eventlet.spawn "
+        "instead.", DeprecationWarning, stacklevel=2)
+    return greenthread.spawn(func, *args, **kw)
 
 
 def CoroutinePool(*args, **kwargs):
+    warnings.warn("CoroutinePool is deprecated.  Please use "
+        "eventlet.GreenPool instead.", DeprecationWarning, stacklevel=2)
     from eventlet.pool import Pool
     return Pool(*args, **kwargs)
 
@@ -595,7 +431,7 @@ class Actor(object):
         serially.
         """
         self._mailbox = collections.deque()
-        self._event = Event()
+        self._event = greenthread.Event()
         self._killer = api.spawn(self.run_forever)
         self._pool = CoroutinePool(min_size=0, max_size=concurrency)
 
@@ -604,7 +440,7 @@ class Actor(object):
         while True:
             if not self._mailbox:
                 self._event.wait()
-                self._event = Event()
+                self._event = greenthread.Event()
             else:
                 # leave the message in the mailbox until after it's
                 # been processed so the event doesn't get triggered
@@ -645,7 +481,7 @@ class Actor(object):
         coroutine in a predictable manner, but this kinda defeats the point of
         the :class:`Actor`, so don't do it in a real application.
 
-        >>> evt = Event()
+        >>> evt = greenthread.Event()
         >>> a.cast( ("message 1", evt) )
         >>> evt.wait()  # force it to run at this exact moment
         received message 1

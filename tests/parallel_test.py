@@ -1,7 +1,10 @@
 import gc
+import os
 import random 
 
-from eventlet import api, hubs, parallel, coros
+import eventlet
+from eventlet import api
+from eventlet import hubs, parallel, coros
 import tests
 
 class Spawn(tests.LimitedTestCase):
@@ -10,11 +13,11 @@ class Spawn(tests.LimitedTestCase):
         def f(a, b=None):
             return (a,b)
         
-        gt = parallel.api.  spawn(f, 1, b=2)
+        gt = eventlet.spawn(f, 1, b=2)
         self.assertEquals(gt.wait(), (1,2))
 
 def passthru(a):
-    api.sleep(0.01)
+    eventlet.sleep(0.01)
     return a
         
 class GreenPool(tests.LimitedTestCase):
@@ -30,7 +33,7 @@ class GreenPool(tests.LimitedTestCase):
         p = parallel.GreenPool(4)
         results_closure = []
         def do_something(a):
-            api.sleep(0.01)
+            eventlet.sleep(0.01)
             results_closure.append(a)
         for i in xrange(10):
             p.spawn(do_something, i)
@@ -48,14 +51,14 @@ class GreenPool(tests.LimitedTestCase):
         
         waiters = []
         self.assertEqual(pool.running(), 0)
-        waiters.append(api.spawn(waiter, pool))
-        api.sleep(0)
+        waiters.append(eventlet.spawn(waiter, pool))
+        eventlet.sleep(0)
         self.assertEqual(pool.waiting(), 0)
-        waiters.append(api.spawn(waiter, pool))
-        api.sleep(0)
+        waiters.append(eventlet.spawn(waiter, pool))
+        eventlet.sleep(0)
         self.assertEqual(pool.waiting(), 1)
-        waiters.append(api.spawn(waiter, pool))
-        api.sleep(0)
+        waiters.append(eventlet.spawn(waiter, pool))
+        eventlet.sleep(0)
         self.assertEqual(pool.waiting(), 2)
         self.assertEqual(pool.running(), 1)
         done.send(None)
@@ -92,8 +95,8 @@ class GreenPool(tests.LimitedTestCase):
         pool = parallel.GreenPool(2)
         worker = pool.spawn(some_work)
         worker.wait()
-        api.sleep(0)
-        api.sleep(0)
+        eventlet.sleep(0)
+        eventlet.sleep(0)
         self.assertEquals(timer_fired, [])
         
     def test_reentrant(self):
@@ -136,8 +139,8 @@ class GreenPool(tests.LimitedTestCase):
 
         # clean up by causing all the wait_long_time functions to return
         evt.send(None)
-        api.sleep(0)
-        api.sleep(0)
+        eventlet.sleep(0)
+        eventlet.sleep(0)
         
     def test_resize(self):
         pool = parallel.GreenPool(2)
@@ -156,8 +159,8 @@ class GreenPool(tests.LimitedTestCase):
         # cause the wait_long_time functions to return, which will
         # trigger puts to the pool
         evt.send(None)
-        api.sleep(0)
-        api.sleep(0)
+        eventlet.sleep(0)
+        eventlet.sleep(0)
         
         self.assertEquals(pool.free(), 1)
         self.assertEquals(pool.running(), 0)
@@ -195,7 +198,7 @@ class GreenPool(tests.LimitedTestCase):
         # the pool can get some random item back
         def send_wakeup(tp):
             tp.put('wakeup')
-        gt = api.spawn(send_wakeup, tp)
+        gt = eventlet.spawn(send_wakeup, tp)
 
         # now we ask the pool to run something else, which should not
         # be affected by the previous send at all
@@ -218,7 +221,7 @@ class GreenPool(tests.LimitedTestCase):
         self.assertEqual(p.free(), 1)
         gt.wait()
         self.assertEqual(r, [1])
-        api.sleep(0)
+        eventlet.sleep(0)
         self.assertEqual(p.free(), 2)
 
         #Once the pool is exhausted, spawning forces a yield.
@@ -232,7 +235,7 @@ class GreenPool(tests.LimitedTestCase):
 
         p.spawn_n(foo, 4)
         self.assertEqual(set(r), set([1,2,3]))
-        api.sleep(0)
+        eventlet.sleep(0)
         self.assertEqual(set(r), set([1,2,3,4]))
 
 class GreenPile(tests.LimitedTestCase):
@@ -245,6 +248,11 @@ class GreenPile(tests.LimitedTestCase):
         p = parallel.GreenPile(4)
         result_iter = p.imap(passthru, [])
         self.assertRaises(StopIteration, result_iter.next)
+        
+    def test_imap_nonefunc(self):
+        p = parallel.GreenPile(4)
+        result_list = list(p.imap(None, xrange(10)))
+        self.assertEquals(result_list, [(x,) for x in xrange(10)])
 
     def test_pile(self):
         p = parallel.GreenPile(4)
@@ -273,12 +281,11 @@ class GreenPile(tests.LimitedTestCase):
         def bunch_of_work(pile, unique):
             for i in xrange(10):
                 pile.spawn(passthru, i + unique)
-        api.spawn(bunch_of_work, pile1, 0)
-        api.spawn(bunch_of_work, pile2, 100)
-        api.sleep(0)
+        eventlet.spawn(bunch_of_work, pile1, 0)
+        eventlet.spawn(bunch_of_work, pile2, 100)
+        eventlet.sleep(0)
         self.assertEquals(list(pile2), list(xrange(100,110)))
         self.assertEquals(list(pile1), list(xrange(10)))
-            
 
 
 class StressException(Exception):
@@ -287,16 +294,16 @@ class StressException(Exception):
 r = random.Random(0)
 def pressure(arg):
     while r.random() < 0.5:
-        api.sleep(r.random() * 0.001)
+        eventlet.sleep(r.random() * 0.001)
     if r.random() < 0.8:
         return arg
     else:
         raise StressException(arg)
         
-# TODO: skip these unless explicitly demanded by the user
 class Stress(tests.SilencedTestCase):
     # tests will take extra-long
     TEST_TIMEOUT=10
+    @tests.skip_unless(os.environ.get('RUN_STRESS_TESTS') == 'YES')
     def spawn_memory(self, concurrency):
         # checks that piles are strictly ordered
         # and bounded in memory
@@ -306,9 +313,9 @@ class Stress(tests.SilencedTestCase):
                 token = (unique, i)
                 p.spawn(pressure, token)
         
-        api.spawn(makework, 1000, 1)
-        api.spawn(makework, 1000, 2)
-        api.spawn(makework, 1000, 3)
+        eventlet.spawn(makework, 1000, 1)
+        eventlet.spawn(makework, 1000, 2)
+        eventlet.spawn(makework, 1000, 3)
         p.spawn(pressure, (0,0))
         latest = [-1] * 4
         received = 0
@@ -330,15 +337,19 @@ class Stress(tests.SilencedTestCase):
             self.assert_(latest[unique] < order)
             latest[unique] = order
 
+    @tests.skip_unless(os.environ.get('RUN_STRESS_TESTS') == 'YES')
     def test_memory_5(self):
         self.spawn_memory(5)
     
+    @tests.skip_unless(os.environ.get('RUN_STRESS_TESTS') == 'YES')
     def test_memory_50(self):
         self.spawn_memory(50)
         
+    @tests.skip_unless(os.environ.get('RUN_STRESS_TESTS') == 'YES')
     def test_memory_500(self):
         self.spawn_memory(50)
-        
+
+    @tests.skip_unless(os.environ.get('RUN_STRESS_TESTS') == 'YES')
     def test_with_intpool(self):
         from eventlet import pools
         class IntPool(pools.Pool):
@@ -349,7 +360,7 @@ class Stress(tests.SilencedTestCase):
         def subtest(intpool_size, pool_size, num_executes):        
             def run(int_pool):
                 token = int_pool.get()
-                api.sleep(0.0001)
+                eventlet.sleep(0.0001)
                 int_pool.put(token)
                 return token
             

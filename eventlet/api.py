@@ -119,6 +119,10 @@ def trampoline(fd, read=None, write=None, timeout=None, timeout_exc=TimeoutError
             t.cancel()
 
 
+from eventlet import greenthread
+spawn = greenthread.spawn
+spawn_n = greenthread.spawn_n
+
 def _spawn_startup(cb, args, kw, cancel=None):
     try:
         greenlet.getcurrent().parent.switch()
@@ -127,69 +131,6 @@ def _spawn_startup(cb, args, kw, cancel=None):
         if cancel is not None:
             cancel()
     return cb(*args, **kw)
-
-
-class GreenThread(Greenlet):
-    def __init__(self, parent):
-        Greenlet.__init__(self, self.main, parent)
-        from eventlet import coros
-        self._exit_event = coros.Event()
-
-    def wait(self):
-        return self._exit_event.wait()
-        
-    def link(self, func, *curried_args, **curried_kwargs):
-        """ Set up a function to be called with the results of the GreenThread.
-        
-        The function must have the following signature:
-          def f(result=None, exc=None, [curried args/kwargs]):
-        """
-        self._exit_funcs = getattr(self, '_exit_funcs', [])
-        self._exit_funcs.append((func, curried_args, curried_kwargs))
-        
-    def main(self, function, args, kwargs):
-        try:
-            result = function(*args, **kwargs)
-        except:
-            self._exit_event.send_exception(*sys.exc_info())
-            # ca and ckw are the curried function arguments
-            for f, ca, ckw in getattr(self, '_exit_funcs', []):
-                f(exc=sys.exc_info(), *ca, **ckw)
-            raise
-        else:
-            self._exit_event.send(result)
-            for f, ca, ckw in getattr(self, '_exit_funcs', []):
-                f(result, *ca, **ckw)
-
-
-def spawn(func, *args, **kwargs):
-    """Create a green thread to run func(*args, **kwargs).  Returns a GreenThread 
-    object which you can use to get the results of the call.
-    """
-    hub = get_hub_()
-    g = GreenThread(hub.greenlet)
-    hub.schedule_call_global(0, g.switch, func, args, kwargs)
-    return g
-    
-    
-def _main_wrapper(func, args, kwargs):
-    # function that gets around the fact that greenlet.switch
-    # doesn't accept keyword arguments
-    return func(*args, **kwargs)
-    
-def spawn_n(func, *args, **kwargs):
-    """Same as spawn, but returns a greenlet object from which it is not possible
-    to retrieve the results.  This is slightly faster than spawn; it is fastest 
-    if there are no keyword arguments."""
-    hub = get_hub_()
-    if kwargs:
-        g = Greenlet(_main_wrapper, parent=hub.greenlet)
-        hub.schedule_call_global(0, g.switch, func, args, kwargs)
-    else:
-        g = Greenlet(func, parent=hub.greenlet)
-        hub.schedule_call_global(0, g.switch, *args)
-    return g
-    
 
 def kill(g, *throw_args):
     get_hub_().schedule_call_global(0, g.throw, *throw_args)
@@ -362,26 +303,9 @@ def exc_after(seconds, *throw_args):
                 timer.cancel()
     """
     return call_after(seconds, getcurrent().throw, *throw_args)
-
-def sleep(seconds=0):
-    """Yield control to another eligible coroutine until at least *seconds* have
-    elapsed.
-
-    *seconds* may be specified as an integer, or a float if fractional seconds
-    are desired. Calling :func:`~eventlet.api.sleep` with *seconds* of 0 is the
-    canonical way of expressing a cooperative yield. For example, if one is
-    looping over a large list performing an expensive calculation without
-    calling any socket methods, it's a good idea to call ``sleep(0)``
-    occasionally; otherwise nothing else will run.
-    """
-    hub = get_hub_()
-    assert hub.greenlet is not greenlet.getcurrent(), 'do not call blocking functions from the mainloop'
-    timer = hub.schedule_call_global(seconds, greenlet.getcurrent().switch)
-    try:
-        hub.switch()
-    finally:
-        timer.cancel()
-
+    
+    
+sleep = greenthread.sleep
 
 getcurrent = greenlet.getcurrent
 GreenletExit = greenlet.GreenletExit
