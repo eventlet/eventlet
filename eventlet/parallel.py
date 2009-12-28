@@ -1,3 +1,5 @@
+import itertools
+
 from eventlet import greenthread
 from eventlet import coros
 
@@ -108,7 +110,37 @@ class GreenPool(object):
         if self.sem.balance < 0:
             return -self.sem.balance
         else:
-            return 0
+            return 0           
+            
+    def _do_imap(self, func, it, q):
+        while True:
+            try:
+                args = it.next()
+                q.send(self.spawn(func, *args))
+            except StopIteration:
+                q.send(self.spawn(raise_stop_iteration))
+                return
+
+    def imap(self, function, *iterables):
+        """This is the same as itertools.imap, except that *func* is 
+        executed in separate green threads, with the specified concurrency 
+        control.  Using imap consumes a constant amount of memory,
+        proportional to the size of the pool, and is thus suited for iterating
+        over extremely long input lists.
+        
+        One caveat: if *function* raises an exception, the caller of imap
+        will see a StopIteration exception, not the actual raised exception.  
+        This is a bug.
+        """
+        if function is None:
+            function = lambda *a: a
+        it = itertools.izip(*iterables)
+        q = coros.Channel(max_size=self.size)
+        greenthread.spawn_n(self._do_imap, function, it, q)
+        while True:
+            # FIX: if wait() raises an exception the caller
+            # sees a stopiteration, should see the exception
+            yield q.wait().wait()
                     
             
 try:
@@ -155,31 +187,6 @@ class GreenPile(object):
         finally:
             self.counter -= 1
             
-    def _do_map(self, func, iterables):
-        while True:
-            try:
-                i = map(next, iterables)
-                self.spawn(func, *i)
-            except StopIteration:
-                break
-    
-    def imap(self, function, *iterables):
-        """This is the same as itertools.imap, except that *func* is 
-        executed in separate green threads, with the specified concurrency 
-        control.
-        """
-        if function is None:
-            function = lambda *a: a
-        # spawn first item to prime the pump
-        try:
-            it = map(iter, iterables)
-            i = map(next, it)
-            self.spawn(function, *i)
-        except StopIteration:
-            # if the iterable has no items, we need
-            # to defer the StopIteration till someone
-            # iterates over us
-            self.spawn(lambda: next(iter([])))
-        # spin off a coroutine to launch the rest of the items
-        greenthread.spawn(self._do_map, function, it)
-        return self
+            
+def raise_stop_iteration():
+    raise StopIteration()
