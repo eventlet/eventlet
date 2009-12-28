@@ -4,6 +4,7 @@ import socket
 import string
 import linecache
 import inspect
+import warnings
 
 from eventlet.support import greenlets as greenlet
 from eventlet.hubs import get_hub as get_hub_, get_default_hub as get_default_hub_, use_hub as use_hub_
@@ -14,8 +15,6 @@ __all__ = [
     'ssl_listener', 'tcp_listener', 'trampoline',
     'unspew', 'use_hub', 'with_timeout', 'timeout']
 
-
-import warnings
 def get_hub(*a, **kw):
     warnings.warn("eventlet.api.get_hub has moved to eventlet.hubs.get_hub",
         DeprecationWarning, stacklevel=2)
@@ -123,60 +122,17 @@ from eventlet import greenthread
 spawn = greenthread.spawn
 spawn_n = greenthread.spawn_n
 
-def _spawn_startup(cb, args, kw, cancel=None):
-    try:
-        greenlet.getcurrent().parent.switch()
-        cancel = None
-    finally:
-        if cancel is not None:
-            cancel()
-    return cb(*args, **kw)
 
 def kill(g, *throw_args):
     get_hub_().schedule_call_global(0, g.throw, *throw_args)
     if getcurrent() is not get_hub_().greenlet:
         sleep(0)
 
-def call_after_global(seconds, function, *args, **kwds):
-    """Schedule *function* to be called after *seconds* have elapsed.
-    The function will be scheduled even if the current greenlet has exited.
 
-    *seconds* may be specified as an integer, or a float if fractional seconds
-    are desired. The *function* will be called with the given *args* and
-    keyword arguments *kwds*, and will be executed within the main loop's
-    coroutine.
+call_after = greenthread.call_after
+call_after_local = greenthread.call_after_local
+call_after_global = greenthread.call_after_global
 
-    Its return value is discarded. Any uncaught exception will be logged.
-    """
-    # cancellable
-    def startup():
-        g = Greenlet(_spawn_startup)
-        g.switch(function, args, kwds)
-        g.switch()
-    t = get_hub_().schedule_call_global(seconds, startup)
-    return t
-
-def call_after_local(seconds, function, *args, **kwds):
-    """Schedule *function* to be called after *seconds* have elapsed.
-    The function will NOT be called if the current greenlet has exited.
-
-    *seconds* may be specified as an integer, or a float if fractional seconds
-    are desired. The *function* will be called with the given *args* and
-    keyword arguments *kwds*, and will be executed within the main loop's
-    coroutine.
-
-    Its return value is discarded. Any uncaught exception will be logged.
-    """
-    # cancellable
-    def startup():
-        g = Greenlet(_spawn_startup)
-        g.switch(function, args, kwds)
-        g.switch()
-    t = get_hub_().schedule_call_local(seconds, startup)
-    return t
-
-# for compatibility with original eventlet API
-call_after = call_after_local
 
 class _SilentException:
     pass

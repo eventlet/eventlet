@@ -41,20 +41,55 @@ def _main_wrapper(func, args, kwargs):
     # function that gets around the fact that greenlet.switch
     # doesn't accept keyword arguments
     return func(*args, **kwargs)
-    
-    
+
+
 def spawn_n(func, *args, **kwargs):
     """Same as spawn, but returns a greenlet object from which it is not 
     possible to retrieve the results.  This is slightly faster than spawn; it is
     fastest if there are no keyword arguments."""
+    return _spawn_n(0, func, args, kwargs)[1]
+
+def call_after_global(seconds, func, *args, **kwargs):
+    """Schedule *function* to be called after *seconds* have elapsed.
+    The function will be scheduled even if the current greenlet has exited.
+
+    *seconds* may be specified as an integer, or a float if fractional seconds
+    are desired. The *function* will be called with the given *args* and
+    keyword arguments *kwargs*, and will be executed within the main loop's
+    coroutine.
+
+    Its return value is discarded. Any uncaught exception will be logged."""
+    return _spawn_n(seconds, func, args, kwargs)[0]
+    
+def call_after_local(seconds, function, *args, **kwargs):
+    """Schedule *function* to be called after *seconds* have elapsed.
+    The function will NOT be called if the current greenlet has exited.
+
+    *seconds* may be specified as an integer, or a float if fractional seconds
+    are desired. The *function* will be called with the given *args* and
+    keyword arguments *kwargs*, and will be executed within the main loop's
+    coroutine.
+
+    Its return value is discarded. Any uncaught exception will be logged.
+    """
+    hub = hubs.get_hub()
+    g = greenlet.greenlet(_main_wrapper, parent=hub.greenlet)
+    t = hub.schedule_call_local(seconds, g.switch, function, args, kwargs)
+    return t
+
+
+call_after = call_after_local
+
+
+def _spawn_n(seconds, func, args, kwargs):
     hub = hubs.get_hub()
     if kwargs:
         g = greenlet.greenlet(_main_wrapper, parent=hub.greenlet)
-        hub.schedule_call_global(0, g.switch, func, args, kwargs)
+        t = hub.schedule_call_global(seconds, g.switch, func, args, kwargs)
     else:
         g = greenlet.greenlet(func, parent=hub.greenlet)
-        hub.schedule_call_global(0, g.switch, *args)
-    return g
+        t = hub.schedule_call_global(seconds, g.switch, *args)
+    return t, g
 
 
 class GreenThread(greenlet.greenlet):
