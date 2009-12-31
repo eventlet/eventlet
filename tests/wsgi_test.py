@@ -517,6 +517,18 @@ class TestHttpd(LimitedTestCase):
         fd.close()
         self.assert_(result.startswith('HTTP'), result)
         self.assert_(result.endswith('hello world'))
+
+    def test_023_bad_content_length(self):
+        sock = api.connect_tcp(
+            ('localhost', self.port))
+        fd = sock.makeGreenFile()
+        fd.write('GET / HTTP/1.0\r\nHost: localhost\r\nContent-length: argh\r\n\r\n')
+        result = fd.read()
+        fd.close()
+        self.assert_(result.startswith('HTTP'), result)
+        self.assert_('400 Bad Request' in result)
+        self.assert_('500' not in result)
+
         
 if __name__ == '__main__':
     main()

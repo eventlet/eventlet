@@ -165,6 +165,17 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         if not self.parse_request():
             return
 
+        content_length = self.headers.getheader('content-length')
+        if content_length:
+            try:
+                int(content_length)
+            except ValueError:
+                self.wfile.write(
+                    "HTTP/1.0 400 Bad Request\r\n"
+                    "Connection: close\r\nContent-length: 0\r\n\r\n")
+                self.close_connection = 1
+                return
+
         self.environ = self.get_environ()
         self.application = self.server.app
         try:
