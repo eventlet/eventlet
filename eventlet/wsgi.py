@@ -421,7 +421,8 @@ def server(sock, site,
            protocol=HttpProtocol,
            server_event=None, 
            minimum_chunk_size=None,
-           log_x_forwarded_for=True):
+           log_x_forwarded_for=True,
+           custom_pool=None):
     """  Start up a wsgi server handling requests from the supplied server socket.
     
     This function loops forever.
@@ -438,7 +439,10 @@ def server(sock, site,
         server_event.send(serv)
     if max_size is None:
         max_size = DEFAULT_MAX_SIMULTANEOUS_REQUESTS
-    pool = Pool(max_size=max_size)
+    if custom_pool is not None:
+        pool = custom_pool
+    else:
+        pool = Pool(max_size=max_size)
     try:
         host, port = sock.getsockname()
         port = ':%s' % (port, )

@@ -23,6 +23,7 @@ Linden Lab Contributors
 
 Thanks To
 ---------
+* gholt, wsgi patch for custom pool
 * Luke Tucker, bug report regarding wsgi + webob
 * Chuck Thier, reporting a bug in processes.py
 * Brantley Harris, reporting bug #4
