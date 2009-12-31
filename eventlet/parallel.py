@@ -4,7 +4,16 @@ from eventlet import greenthread
 from eventlet import coros
 
 __all__ = ['GreenPool', 'GreenPile']
-    
+                
+try:
+    next
+except NameError:
+    def next(it):
+        try:
+            return it.next()
+        except AttributeError:
+            raise TypeError("%s object is not an iterator" % type(it))
+
 class GreenPool(object):
     """ The GreenPool class is a pool of green threads.
     """
@@ -88,7 +97,7 @@ class GreenPool(object):
             self.sem.acquire()
             g = greenthread.spawn_n(self._spawn_n_impl, func, args, kwargs, coro=True)
             if not self.coroutines_running:
-                self.no_coros_running = coros.Event()
+                self.no_coros_running = greenthread.Event()
             self.coroutines_running.add(g)
 
     def waitall(self):
@@ -112,14 +121,10 @@ class GreenPool(object):
         else:
             return 0           
             
-    def _do_imap(self, func, it, q):
-        while True:
-            try:
-                args = it.next()
-                q.send(self.spawn(func, *args))
-            except StopIteration:
-                q.send(self.spawn(raise_stop_iteration))
-                return
+    def _do_imap(self, func, it, gi):
+        for args in it:
+            gi.spawn(func, *args)
+        gi.spawn(raise_stop_iteration)
 
     def imap(self, function, *iterables):
         """This is the same as itertools.imap, except that *func* is 
@@ -127,30 +132,18 @@ class GreenPool(object):
         control.  Using imap consumes a constant amount of memory,
         proportional to the size of the pool, and is thus suited for iterating
         over extremely long input lists.
-        
-        One caveat: if *function* raises an exception, the caller of imap
-        will see a StopIteration exception, not the actual raised exception.  
-        This is a bug.
         """
         if function is None:
             function = lambda *a: a
         it = itertools.izip(*iterables)
-        q = coros.Channel(max_size=self.size)
-        greenthread.spawn_n(self._do_imap, function, it, q)
-        while True:
-            # FIX: if wait() raises an exception the caller
-            # sees a stopiteration, should see the exception
-            yield q.wait().wait()
-                    
-            
-try:
-    next
-except NameError:
-    def next(it):
-        try:
-            return it.next()
-        except AttributeError:
-            raise TypeError("%s object is not an iterator" % type(it))
+        gi = GreenImap(self.size)
+        greenthread.spawn_n(self._do_imap, function, it, gi)
+        return gi
+
+                                        
+def raise_stop_iteration():
+    raise StopIteration()
+
         
 class GreenPile(object):
     """GreenPile is an abstraction representing a bunch of I/O-related tasks.
@@ -161,11 +154,13 @@ class GreenPile(object):
         else:
             self.pool = GreenPool(size_or_pool)
         self.waiters = coros.Queue()
+        self.used = False
         self.counter = 0
             
     def spawn(self, func, *args, **kw):
         """Runs *func* in its own green thread, with the result available by 
         iterating over the GreenPile object."""
+        self.used =  True
         self.counter += 1
         try:
             gt = self.pool.spawn(func, *args, **kw)
@@ -180,13 +175,16 @@ class GreenPile(object):
     def next(self):
         """Wait for the next result, suspending the current coroutine until it
         is available.  Raises StopIteration when there are no more results."""
-        if self.counter == 0:
+        if self.counter == 0 and self.used:
             raise StopIteration()
         try:
             return self.waiters.wait().wait()
         finally:
             self.counter -= 1
             
-            
-def raise_stop_iteration():
-    raise StopIteration()
+# this is identical to GreenPile but it blocks on spawn if the results 
+# aren't consumed
+class GreenImap(GreenPile):
+    def __init__(self, size_or_pool):
+        super(GreenImap, self).__init__(size_or_pool)
+        self.waiters = coros.Channel(max_size=self.pool.size)

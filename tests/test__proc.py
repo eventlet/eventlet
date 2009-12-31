@@ -2,14 +2,14 @@ import sys
 import unittest
 from eventlet.api import sleep, with_timeout
 from eventlet import api, proc, coros
-from tests import SilencedTestCase, skipped
+from tests import LimitedTestCase, skipped
 
 DELAY = 0.01
 
 class ExpectedError(Exception):
     pass
 
-class TestLink_Signal(SilencedTestCase):
+class TestLink_Signal(LimitedTestCase):
 
     def test_send(self):
         s = proc.Source()
@@ -48,7 +48,7 @@ class TestLink_Signal(SilencedTestCase):
         self.assertRaises(OSError, s.wait)
 
 
-class TestProc(SilencedTestCase):
+class TestProc(LimitedTestCase):
 
     def test_proc(self):
         p = proc.spawn(lambda : 100)
@@ -76,13 +76,13 @@ class TestProc(SilencedTestCase):
         self.assertRaises(proc.LinkedCompleted, sleep, 0.1)
 
 
-class TestCase(SilencedTestCase):
+class TestCase(LimitedTestCase):
 
     def link(self, p, listener=None):
         getattr(p, self.link_method)(listener)
 
     def tearDown(self):
-        SilencedTestCase.tearDown(self)
+        LimitedTestCase.tearDown(self)
         self.p.unlink()
 
     def set_links(self, p, first_time, kill_exc_type):
@@ -252,7 +252,7 @@ class TestRaise_link_exception(TestRaise_link):
     link_method = 'link_exception'
 
 
-class TestStuff(SilencedTestCase):
+class TestStuff(LimitedTestCase):
 
     def test_wait_noerrors(self):
         x = proc.spawn(lambda : 1)

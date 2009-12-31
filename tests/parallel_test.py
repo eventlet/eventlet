@@ -1,4 +1,5 @@
 import gc
+import itertools
 import os
 import random 
 
@@ -19,6 +20,10 @@ class Spawn(tests.LimitedTestCase):
 def passthru(a):
     eventlet.sleep(0.01)
     return a
+    
+def passthru2(a, b):
+    eventlet.sleep(0.01)
+    return a,b
         
 class GreenPool(tests.LimitedTestCase):
     def test_spawn(self):
@@ -252,7 +257,34 @@ class GreenPool(tests.LimitedTestCase):
         p = parallel.GreenPool(4)
         result_list = list(p.imap(None, xrange(10)))
         self.assertEquals(result_list, [(x,) for x in xrange(10)])
+        
+    def test_imap_multi_args(self):
+        p = parallel.GreenPool(4)
+        result_list = list(p.imap(passthru2, xrange(10), xrange(10, 20)))
+        self.assertEquals(result_list, list(itertools.izip(xrange(10), xrange(10,20))))
 
+    def test_imap_raises(self):
+        # testing the case where the function raises an exception;
+        # both that the caller sees that exception, and that the iterator
+        # continues to be usable to get the rest of the items
+        p = parallel.GreenPool(4)
+        def raiser(item):
+            if item == 1 or item == 7:
+                raise RuntimeError("intentional error")
+            else:
+                return item
+        it = p.imap(raiser, xrange(10))
+        results = []
+        while True:
+            try:
+                results.append(it.next())
+            except RuntimeError:
+                results.append('r')
+            except StopIteration:
+                break
+        self.assertEquals(results, [0,'r',2,3,4,5,6,'r',8,9])
+        
+            
 class GreenPile(tests.LimitedTestCase):
     def test_pile(self):
         p = parallel.GreenPile(4)
@@ -305,7 +337,7 @@ def passthru(arg):
         eventlet.sleep(r.random() * 0.001)
     return arg
         
-class Stress(tests.SilencedTestCase):
+class Stress(tests.LimitedTestCase):
     # tests will take extra-long
     TEST_TIMEOUT=10
     @tests.skip_unless(os.environ.get('RUN_STRESS_TESTS') == 'YES')
