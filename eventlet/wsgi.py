@@ -446,8 +446,9 @@ def server(sock, site,
     :param max_size: Maximum number of client connections opened at any time by this server.
     :param protocol: Protocol class.  Deprecated.
     :param server_event: Used to collect the Server object.  Deprecated.
-    :param minimum_chunk_size: Minimum size for http chunks, which can be used to improve performance of applications which yield many small strings, though it technically violates the WSGI spec.
-    :param log_x_forwarded_for: If True (the default), logs all ip addresses found in the x-forwarded-for header in addition to the actual client ip address.
+    :param minimum_chunk_size: Minimum size in bytes for http chunks.  This  can be used to improve performance of applications which yield many small strings, though using it technically violates the WSGI spec.
+    :param log_x_forwarded_for: If True (the default), logs the contents of the x-forwarded-for header in addition to the actual client ip address.
+    :param custom_pool: A custom Pool instance which is used to spawn client green threads.  If this is supplied, max_size is ignored.
     """
 
     serv = Server(sock, sock.getsockname(), 
