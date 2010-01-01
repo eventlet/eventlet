@@ -33,6 +33,8 @@ def inject(module_name, new_globals, *additional_modules):
     for name, mod in additional_modules:
         if saved[name] is not None:
             sys.modules[name] = saved[name]
+        else:
+            del sys.modules[name]
 
     return module
 

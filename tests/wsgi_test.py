@@ -490,7 +490,45 @@ class TestHttpd(LimitedTestCase):
                  'Connection: close\r\n'
                  '\r\n\r\n')
         self.assert_('200 OK' in fd.read())
-        
+
+    def test_022_custom_pool(self):
+        # just test that it accepts the parameter for now
+        # TODO: test that it uses the pool and that you can waitall() to
+        # ensure that all clients finished
+        from eventlet import pool
+        p = pool.Pool(max_size=5)
+        api.kill(self.killer)
+        listener = api.tcp_listener(('localhost', 0))
+        self.port = listener.getsockname()[1]
+        self.killer = api.spawn(
+            wsgi.server,
+            listener,
+            self.site, 
+            max_size=128, 
+            log=self.logfile,
+            custom_pool=p)
+            
+        # this stuff is copied from test_001_server, could be better factored
+        sock = api.connect_tcp(
+            ('localhost', self.port))
+        fd = sock.makeGreenFile()
+        fd.write('GET / HTTP/1.0\r\nHost: localhost\r\n\r\n')
+        result = fd.read()
+        fd.close()
+        self.assert_(result.startswith('HTTP'), result)
+        self.assert_(result.endswith('hello world'))
+
+    def test_023_bad_content_length(self):
+        sock = api.connect_tcp(
+            ('localhost', self.port))
+        fd = sock.makeGreenFile()
+        fd.write('GET / HTTP/1.0\r\nHost: localhost\r\nContent-length: argh\r\n\r\n')
+        result = fd.read()
+        fd.close()
+        self.assert_(result.startswith('HTTP'), result)
+        self.assert_('400 Bad Request' in result)
+        self.assert_('500' not in result)
+
         
 if __name__ == '__main__':
     main()

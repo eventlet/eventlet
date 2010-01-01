@@ -167,6 +167,17 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         if not self.parse_request():
             return
 
+        content_length = self.headers.getheader('content-length')
+        if content_length:
+            try:
+                int(content_length)
+            except ValueError:
+                self.wfile.write(
+                    "HTTP/1.0 400 Bad Request\r\n"
+                    "Connection: close\r\nContent-length: 0\r\n\r\n")
+                self.close_connection = 1
+                return
+
         self.environ = self.get_environ()
         self.application = self.server.app
         try:
@@ -423,7 +434,8 @@ def server(sock, site,
            protocol=HttpProtocol,
            server_event=None, 
            minimum_chunk_size=None,
-           log_x_forwarded_for=True):
+           log_x_forwarded_for=True,
+           custom_pool=None):
     """  Start up a `WSGI <http://wsgi.org/wsgi/>`_ server handling requests from the supplied server 
     socket.  This function loops forever.
     
@@ -449,7 +461,10 @@ def server(sock, site,
         server_event.send(serv)
     if max_size is None:
         max_size = DEFAULT_MAX_SIMULTANEOUS_REQUESTS
-    pool = Pool(max_size=max_size)
+    if custom_pool is not None:
+        pool = custom_pool
+    else:
+        pool = Pool(max_size=max_size)
     try:
         host, port = sock.getsockname()
         port = ':%s' % (port, )
