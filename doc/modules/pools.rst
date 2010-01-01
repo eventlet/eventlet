@@ -1,6 +1,5 @@
-:mod:`pools`
-==================
+:mod:`pools` - Generic pools of resources 
+==========================================
 
 .. automodule:: eventlet.pools
 	:members:
-	:undoc-members:

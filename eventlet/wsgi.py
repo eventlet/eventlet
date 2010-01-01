@@ -16,6 +16,7 @@ DEFAULT_MAX_HTTP_VERSION = 'HTTP/1.1'
 MAX_REQUEST_LINE = 8192
 MINIMUM_CHUNK_SIZE = 4096
 
+__all__ = ['server', 'format_date_time']
 
 # Weekday and month names for HTTP date/time formatting; always English!
 _weekdayname = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
@@ -24,6 +25,7 @@ _monthname = [None, # Dummy so we can use 1-based month numbers
               "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 def format_date_time(timestamp):
+    """Formats a unix timestamp into an HTTP standard string."""
     year, month, day, hh, mm, ss, wd, y, z = time.gmtime(timestamp)
     return "%s, %02d %3s %4d %02d:%02d:%02d GMT" % (
         _weekdayname[wd], day, _monthname[month], year, hh, mm, ss
@@ -422,9 +424,18 @@ def server(sock, site,
            server_event=None, 
            minimum_chunk_size=None,
            log_x_forwarded_for=True):
-    """  Start up a wsgi server handling requests from the supplied server socket.
+    """  Start up a `WSGI <http://wsgi.org/wsgi/>`_ server handling requests from the supplied server 
+    socket.  This function loops forever.
     
-    This function loops forever.
+    :param sock: Server socket, must be already bound to a port and listening.
+    :param site: WSGI application function.
+    :param log: File-like object that logs should be written to.  If not specified, sys.stderr is used.
+    :param environ: Additional parameters that go into the environ dictionary of every request.
+    :param max_size: Maximum number of client connections opened at any time by this server.
+    :param protocol: Protocol class.  Deprecated.
+    :param server_event: Used to collect the Server object.  Deprecated.
+    :param minimum_chunk_size: Minimum size for http chunks, which can be used to improve performance of applications which yield many small strings, though it technically violates the WSGI spec.
+    :param log_x_forwarded_for: If True (the default), logs all ip addresses found in the x-forwarded-for header in addition to the actual client ip address.
     """
 
     serv = Server(sock, sock.getsockname(), 
