@@ -10,7 +10,7 @@ Module Reference
    modules/coros
    modules/db_pool
    modules/greenio
-   modules/parallel
+   modules/greenpool
    modules/pool
    modules/pools
    modules/processes

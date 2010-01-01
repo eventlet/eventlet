@@ -2,7 +2,7 @@ version_info = (0, 9, '3pre')
 __version__ = '%s.%s.%s' % version_info
 
 from eventlet import greenthread
-from eventlet import parallel
+from eventlet import greenpool
 
 __all__ = ['sleep', 'spawn', 'spawn_n', 'Event', 'GreenPool', 'GreenPile']
 
@@ -12,5 +12,5 @@ spawn = greenthread.spawn
 spawn_n = greenthread.spawn_n
 Event = greenthread.Event
 
-GreenPool = parallel.GreenPool
-GreenPile = parallel.GreenPile
+GreenPool = greenpool.GreenPool
+GreenPile = greenpool.GreenPile
