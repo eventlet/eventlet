@@ -3,38 +3,26 @@ Eventlet
 
 Eventlet is a networking library written in Python. It achieves high scalability by using `non-blocking io <http://en.wikipedia.org/wiki/Asynchronous_I/O#Select.28.2Fpoll.29_loops>`_ while at the same time retaining high programmer usability by using `coroutines <http://en.wikipedia.org/wiki/Coroutine>`_ to make the non-blocking io operations appear blocking at the source code level.
 
-Eventlet is different from all the other event-based frameworks out there because it doesn't require you to restructure your code to use it.  You don't have to rewrite your code to use callbacks, and you don't have to replace your main() method with some sort of dispatch method.  You can just sprinkle eventlet on top of your normal-looking code.
+Eventlet is different from other event-based frameworks out there because it doesn't require you to restructure your code to use it.  You don't have to rewrite your code to use callbacks, and you don't have to replace your main() method with some sort of dispatch method.  You can just sprinkle eventlet on top of your code.
 
 Web Crawler Example
 -------------------
 
-This is a simple web "crawler" that fetches a bunch of urls using a coroutine pool.  It has as much concurrency (i.e. pages being fetched simultaneously) as coroutines in the pool (in our example, 4).
+This is a simple web crawler that fetches a bunch of urls using a coroutine pool.  It has as much concurrency (i.e. pages being fetched simultaneously) as coroutines in the pool::
 
-::
-
-  urls = ["http://www.google.com/intl/en_ALL/images/logo.gif",
-         "http://wiki.secondlife.com/w/images/secondlife.jpg",
+    urls = ["http://www.google.com/intl/en_ALL/images/logo.gif",
+         "https://wiki.secondlife.com/w/images/secondlife.jpg",
          "http://us.i1.yimg.com/us.yimg.com/i/ww/beta/y3.gif"]
-  
-  import time
-  from eventlet import coros
-  
-  # this imports a special version of the urllib2 module that uses non-blocking IO
-  from eventlet.green import urllib2
-  
-  def fetch(url):
-      print "%s fetching %s" % (time.asctime(), url)
-      data = urllib2.urlopen(url)
-      print "%s fetched %s" % (time.asctime(), data)
-  
-  pool = coros.CoroutinePool(max_size=4)
-  waiters = []
-  for url in urls:
-      waiters.append(pool.execute(fetch, url))
-  
-  # wait for all the coroutines to come back before exiting the process
-  for waiter in waiters:
-      waiter.wait()
+    
+    import eventlet
+    from eventlet.green import urllib2  
+    
+    def fetch(url):
+      return urllib2.urlopen(url).read()
+    
+    pool = eventlet.GreenPool(200)
+    for body in pool.imap(fetch, urls):
+      print "got body", len(body)
       
 
 Contents

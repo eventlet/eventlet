@@ -3,7 +3,7 @@ import sys
 from eventlet import hubs
 from eventlet.support import greenlets as greenlet
 
-__all__ = ['getcurrent', 'sleep', 'spawn', 'spawn_n', 'GreenThread', 'Event'] 
+__all__ = ['getcurrent', 'sleep', 'spawn', 'spawn_n', 'call_after_global', 'call_after_local', 'GreenThread', 'Event'] 
 
 getcurrent = greenlet.getcurrent
 
@@ -28,8 +28,8 @@ def sleep(seconds=0):
         
 
 def spawn(func, *args, **kwargs):
-    """Create a green thread to run func(*args, **kwargs).  Returns a GreenThread 
-    object which you can use to get the results of the call.
+    """Create a green thread to run func(*args, **kwargs).  Returns a 
+    GreenThread object which you can use to get the results of the call.
     """
     hub = hubs.get_hub()
     g = GreenThread(hub.greenlet)

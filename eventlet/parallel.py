@@ -42,13 +42,16 @@ class GreenPool(object):
         return len(self.coroutines_running)
 
     def free(self):
-        """ Returns the number of coroutines available for use."""
+        """ Returns the number of coroutines available for use.
+        
+        If zero or less, the next call to :meth:`spawn` will block the calling
+        coroutine until a slot becomes available."""
         return self.sem.counter
 
-    def spawn(self, func, *args, **kwargs):
-        """Run func(*args, **kwargs) in its own green thread.  Returns the
-        GreenThread object that is running the function, which can be used
-        to retrieve the results.
+    def spawn(self, function, *args, **kwargs):
+        """Run the *function* with its arguments in its own green thread.
+        Returns the GreenThread object that is running the function, which can
+        be used to retrieve the results.
         """
         # if reentering an empty pool, don't try to wait on a coroutine freeing
         # itself -- instead, just execute in the current coroutine
@@ -56,11 +59,11 @@ class GreenPool(object):
         if self.sem.locked() and current in self.coroutines_running:
             # a bit hacky to use the GT without switching to it
             gt = greenthread.GreenThread(current)
-            gt.main(func, args, kwargs)
+            gt.main(function, args, kwargs)
             return gt
         else:
             self.sem.acquire()
-            gt = greenthread.spawn(func, *args, **kwargs)
+            gt = greenthread.spawn(function, *args, **kwargs)
             if not self.coroutines_running:
                 self.no_coros_running = greenthread.Event()
             self.coroutines_running.add(gt)
@@ -84,9 +87,8 @@ class GreenPool(object):
                 self._spawn_done(coro=coro)
     
     def spawn_n(self, func, *args, **kwargs):
-        """ Create a coroutine to run func(*args, **kwargs).
-        
-        Returns None; the results of the function are not retrievable.
+        """ Create a coroutine to run the *function*.  Returns None; the results
+        of the function are not retrievable.
         """
         # if reentering an empty pool, don't try to wait on a coroutine freeing
         # itself -- instead, just execute in the current coroutine
@@ -128,8 +130,8 @@ class GreenPool(object):
 
     def imap(self, function, *iterables):
         """This is the same as itertools.imap, except that *func* is 
-        executed in separate green threads, with the specified concurrency 
-        control.  Using imap consumes a constant amount of memory,
+        executed in separate green threads, with the concurrency controlled by
+        the pool. In operation, imap consumes a constant amount of memory,
         proportional to the size of the pool, and is thus suited for iterating
         over extremely long input lists.
         """
@@ -147,6 +149,14 @@ def raise_stop_iteration():
         
 class GreenPile(object):
     """GreenPile is an abstraction representing a bunch of I/O-related tasks.
+    
+    Construct a GreenPile with an existing GreenPool object.  The GreenPile will
+    then use that pool's concurrency as it processes its jobs.  There can be 
+    many GreenPiles associated with a single GreenPool.
+    
+    A GreenPile can also be constructed standalone, not associated with any 
+    GreenPool.  To do this, construct it with an integer size parameter instead 
+    of a GreenPool
     """
     def __init__(self, size_or_pool):
         if isinstance(size_or_pool, GreenPool):

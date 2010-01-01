@@ -68,9 +68,10 @@ class SocketConsole(greenlets.greenlet):
         print "backdoor closed to %s:%s" % self.hostport
 
 
-def backdoor_server(server, locals=None):
-    """ Runs a backdoor server on the socket, accepting connections and 
-    running backdoor consoles for each client that connects.
+def backdoor_server(sock, locals=None):
+    """ Blocking function that runs a backdoor server on the socket *sock*, 
+    accepting connections and running backdoor consoles for each client that
+    connects.
     """
     print "backdoor server listening on %s:%s" % server.getsockname()
     try:
@@ -87,17 +88,18 @@ def backdoor_server(server, locals=None):
 
 
 def backdoor((conn, addr), locals=None):
-    """Sets up an interactive console on a socket with a connected client.  
-    This does not block the caller, as it spawns a new greenlet to handle 
-    the console.
+    """Sets up an interactive console on a socket with a single connected
+    client.  This does not block the caller, as it spawns a new greenlet to 
+    handle the console.  This is meant to be called from within an accept loop
+    (such as backdoor_server).
     """
     host, port = addr
     print "backdoor to %s:%s" % (host, port)
     fl = conn.makeGreenFile("rw")
     fl.newlines = '\n'
-    greenlet = SocketConsole(fl, (host, port), locals)
+    console = SocketConsole(fl, (host, port), locals)
     hub = hubs.get_hub()
-    hub.schedule_call_global(0, greenlet.switch)
+    hub.schedule_call_global(0, console.switch)
 
 
 if __name__ == '__main__':
