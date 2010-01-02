@@ -16,6 +16,5 @@ Module Reference
    modules/processes
    modules/proc
    modules/saranwrap
-   modules/tpool
    modules/util
    modules/wsgi
