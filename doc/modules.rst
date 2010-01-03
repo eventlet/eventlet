@@ -11,7 +11,6 @@ Module Reference
    modules/db_pool
    modules/greenio
    modules/greenpool
-   modules/pool
    modules/pools
    modules/processes
    modules/proc
