@@ -301,7 +301,7 @@ class GenericConnectionWrapper(object):
     def dump_debug_info(self,*args, **kwargs): return self._base.dump_debug_info(*args, **kwargs)
     def errno(self,*args, **kwargs): return self._base.errno(*args, **kwargs)
     def error(self,*args, **kwargs): return self._base.error(*args, **kwargs)
-    def errorhandler(self, *args, **kwargs): return self._base.errorhandler(conn, curs, errcls, errval)
+    def errorhandler(self, *args, **kwargs): return self._base.errorhandler(*args, **kwargs)
     def literal(self, *args, **kwargs): return self._base.literal(*args, **kwargs)
     def set_character_set(self, *args, **kwargs): return self._base.set_character_set(*args, **kwargs)
     def set_sql_mode(self, *args, **kwargs): return self._base.set_sql_mode(*args, **kwargs)
