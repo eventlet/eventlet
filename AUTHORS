@@ -23,6 +23,7 @@ Linden Lab Contributors
 
 Thanks To
 ---------
+* Michael Barton, 100-continue patch, content-length bugfixes for wsgi
 * gholt, wsgi patches for accepting a custom pool,  and returning 400 if content-length is invalid
 * Luke Tucker, bug report regarding wsgi + webob
 * Chuck Thier, reporting a bug in processes.py
