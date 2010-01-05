@@ -8,6 +8,7 @@ import warnings
 
 from eventlet.support import greenlets as greenlet
 from eventlet.hubs import get_hub as get_hub_, get_default_hub as get_default_hub_, use_hub as use_hub_
+from eventlet import greenthread
 
 __all__ = [
     'call_after', 'exc_after', 'getcurrent', 'get_default_hub', 'get_hub',
@@ -36,10 +37,6 @@ def switch(coro, result=None, exc=None):
     return coro.switch(result)
 
 Greenlet = greenlet.greenlet
-
-class TimeoutError(Exception):
-    """Exception raised if an asynchronous operation times out"""
-    pass
 
 
 def tcp_listener(address, backlog=50):
@@ -80,6 +77,7 @@ def connect_tcp(address, localaddr=None):
     desc.connect(address)
     return desc
 
+TimeoutError = greenthread.TimeoutError
 
 def trampoline(fd, read=None, write=None, timeout=None, timeout_exc=TimeoutError):
     """Suspend the current coroutine until the given socket object or file
@@ -118,7 +116,6 @@ def trampoline(fd, read=None, write=None, timeout=None, timeout_exc=TimeoutError
             t.cancel()
 
 
-from eventlet import greenthread
 spawn = greenthread.spawn
 spawn_n = greenthread.spawn_n
 
@@ -186,80 +183,9 @@ class timeout(object):
         if typ is _SilentException and value in self.throw_args:
             return True
 
-def with_timeout(seconds, func, *args, **kwds):
-    """Wrap a call to some (yielding) function with a timeout; if the called
-    function fails to return before the timeout, cancel it and return a flag
-    value.
+with_timeout = greenthread.with_timeout
 
-    :param seconds: seconds before timeout occurs
-    :type seconds: int or float
-    :param func: the callable to execute with a timeout; must be one of the
-      functions that implicitly or explicitly yields
-    :param \*args: positional arguments to pass to *func*
-    :param \*\*kwds: keyword arguments to pass to *func*
-    :param timeout_value: value to return if timeout occurs (default raise
-      :class:`~eventlet.api.TimeoutError`)
-
-    :rtype: Value returned by *func* if *func* returns before *seconds*, else
-      *timeout_value* if provided, else raise ``TimeoutError``
-
-    :exception TimeoutError: if *func* times out and no ``timeout_value`` has
-      been provided.
-    :exception *any*: Any exception raised by *func*
-
-    **Example**::
-
-      data = with_timeout(30, httpc.get, 'http://www.google.com/', timeout_value="")
-
-    Here *data* is either the result of the ``get()`` call, or the empty string if
-    it took too long to return. Any exception raised by the ``get()`` call is
-    passed through to the caller.
-    """
-    # Recognize a specific keyword argument, while also allowing pass-through
-    # of any other keyword arguments accepted by func. Use pop() so we don't
-    # pass timeout_value through to func().
-    has_timeout_value = "timeout_value" in kwds
-    timeout_value = kwds.pop("timeout_value", None)
-    error = TimeoutError()
-    timeout = exc_after(seconds, error)
-    try:
-        try:
-            return func(*args, **kwds)
-        except TimeoutError, ex:
-            if ex is error and has_timeout_value:
-                return timeout_value
-            raise
-    finally:
-        timeout.cancel()
-
-
-def exc_after(seconds, *throw_args):
-    """Schedule an exception to be raised into the current coroutine
-    after *seconds* have elapsed.
-
-    This only works if the current coroutine is yielding, and is generally
-    used to set timeouts after which a network operation or series of
-    operations will be canceled.
-
-    Returns a :class:`~eventlet.timer.Timer` object with a
-    :meth:`~eventlet.timer.Timer.cancel` method which should be used to
-    prevent the exception if the operation completes successfully.
-
-    See also :func:`~eventlet.api.with_timeout` that encapsulates the idiom below.
-
-    Example::
-
-        def read_with_timeout():
-            timer = api.exc_after(30, RuntimeError())
-            try:
-                httpc.get('http://www.google.com/')
-            except RuntimeError:
-                print "Timed out!"
-            else:
-                timer.cancel()
-    """
-    return call_after(seconds, getcurrent().throw, *throw_args)
-    
+exc_after = greenthread.exc_after  
     
 sleep = greenthread.sleep
 
