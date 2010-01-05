@@ -295,8 +295,10 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             if hasattr(result, 'close'):
                 result.close()
             if self.environ['eventlet.input'].position < self.environ.get('CONTENT_LENGTH', 0):
-                ## Read and discard body
-                self.environ['eventlet.input'].read()
+                ## Read and discard body if there was no pending 100-continue
+                if not self.environ['eventlet.input'].wfile:
+                    while self.environ['eventlet.input'].read(MINIMUM_CHUNK_SIZE):
+                        pass
             finish = time.time()
 
             self.server.log_message('%s - - [%s] "%s" %s %s %.6f' % (

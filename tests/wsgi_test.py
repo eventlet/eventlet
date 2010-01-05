@@ -529,6 +529,30 @@ class TestHttpd(LimitedTestCase):
         self.assert_('400 Bad Request' in result)
         self.assert_('500' not in result)
 
+    def test_024_expect_100_continue(self):
+        def wsgi_app(environ, start_response):
+            if int(environ['CONTENT_LENGTH']) > 1024:
+                start_response('417 Expectation Failed', [('Content-Length', '7')])
+                return ['failure']
+            else:
+                text = environ['wsgi.input'].read()
+                start_response('200 OK', [('Content-Length', str(len(text)))])
+                return [text]
+        self.site.application = wsgi_app
+        sock = api.connect_tcp(('localhost', self.port))
+        fd = sock.makeGreenFile()
+        fd.write('PUT / HTTP/1.1\r\nHost: localhost\r\nContent-length: 1025\r\nExpect: 100-continue\r\n\r\n')
+        result = fd.readuntil('\r\n\r\n')
+        self.assert_(result.startswith('HTTP/1.1 417 Expectation Failed'))
+        self.assertEquals(fd.read(7), 'failure')
+        fd.write('PUT / HTTP/1.1\r\nHost: localhost\r\nContent-length: 7\r\nExpect: 100-continue\r\n\r\ntesting')
+        result = fd.readuntil('\r\n\r\n')
+        self.assert_(result.startswith('HTTP/1.1 100 Continue'))
+        result = fd.readuntil('\r\n\r\n')
+        self.assert_(result.startswith('HTTP/1.1 200 OK'))
+        self.assertEquals(fd.read(7), 'testing')
+        fd.close()
+
         
 if __name__ == '__main__':
     main()
