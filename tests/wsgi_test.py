@@ -596,16 +596,30 @@ class TestHttpd(LimitedTestCase):
                 return [text]
         self.site.application = wsgi_app
         sock = api.connect_tcp(('localhost', self.port))
-        fd = sock.makeGreenFile()
+        fd = sock.makefile()
         fd.write('PUT / HTTP/1.1\r\nHost: localhost\r\nContent-length: 1025\r\nExpect: 100-continue\r\n\r\n')
-        result = fd.readuntil('\r\n\r\n')
-        self.assert_(result.startswith('HTTP/1.1 417 Expectation Failed'))
-        self.assertEquals(fd.read(7), 'failure')
+        fd.flush()
+        response_line, headers, body = read_http(sock)
+        self.assert_(response_line.startswith('HTTP/1.1 417 Expectation Failed'))
+        self.assertEquals(body, 'failure')
         fd.write('PUT / HTTP/1.1\r\nHost: localhost\r\nContent-length: 7\r\nExpect: 100-continue\r\n\r\ntesting')
-        result = fd.readuntil('\r\n\r\n')
-        self.assert_(result.startswith('HTTP/1.1 100 Continue'))
-        result = fd.readuntil('\r\n\r\n')
-        self.assert_(result.startswith('HTTP/1.1 200 OK'))
+        fd.flush()
+        header_lines = []
+        while True:
+            line = fd.readline()
+            if line == '\r\n':
+                break
+            else:
+                header_lines.append(line)
+        self.assert_(header_lines[0].startswith('HTTP/1.1 100 Continue'))
+        header_lines = []
+        while True:
+            line = fd.readline()
+            if line == '\r\n':
+                break
+            else:
+                header_lines.append(line)
+        self.assert_(header_lines[0].startswith('HTTP/1.1 200 OK'))
         self.assertEquals(fd.read(7), 'testing')
         fd.close()
 
