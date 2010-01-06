@@ -4,8 +4,6 @@ __version__ = '%s.%s.%s' % version_info
 from eventlet import greenthread
 from eventlet import greenpool
 
-__all__ = ['sleep', 'spawn', 'spawn_n', 'Event', 'GreenPool', 'GreenPile']
-
 sleep = greenthread.sleep
 
 spawn = greenthread.spawn
