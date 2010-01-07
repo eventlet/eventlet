@@ -1,7 +1,8 @@
 import os
-import tempfile
+import shutil
 import subprocess
 import sys
+import tempfile
 
 from tests import LimitedTestCase
 
@@ -16,49 +17,42 @@ from eventlet.green import socket
 from eventlet.green import urllib
 from eventlet import patcher
 print 'patcher', socket, urllib
-patcher.inject('%s', globals(), ('socket', socket), ('urllib', urllib))
+patcher.inject('base', globals(), ('socket', socket), ('urllib', urllib))
 del patcher
 """
 
 import_module_contents = """
-import %(mod)s
-import httplib
-print "importing", %(mod)s, httplib, %(mod)s.socket, %(mod)s.urllib
+import patching
+import socket
+print "importing", patching, socket, patching.socket, patching.urllib
 """
 
 class Patcher(LimitedTestCase):
     TEST_TIMEOUT=3 # starting processes is time-consuming
     def setUp(self):
         self._saved_syspath = sys.path
-        self.tempfiles = []
+        self.tempdir = tempfile.mkdtemp('_patcher_test')
         
     def tearDown(self):
         sys.path = self._saved_syspath
-        for tf in self.tempfiles:
-            os.remove(tf)
+        shutil.rmtree(self.tempdir)
         
-    def write_to_tempfile(self, contents):
-        fn, filename = tempfile.mkstemp('_patcher_test.py')
-        fd = os.fdopen(fn, 'w')
+    def write_to_tempfile(self, name, contents):
+        filename = os.path.join(self.tempdir, name + '.py')
+        fd = open(filename, "w")
         fd.write(contents)
         fd.close()
-        self.tempfiles.append(filename)
-        return os.path.dirname(filename), os.path.basename(filename)
 
     def test_patch_a_module(self):
-        base = self.write_to_tempfile(base_module_contents)
-        base_modname = os.path.splitext(base[1])[0]
-        patching = self.write_to_tempfile(patching_module_contents % base_modname)
-        patching_modname = os.path.splitext(patching[1])[0]
-        importing = self.write_to_tempfile(
-            import_module_contents % dict(mod=patching_modname))
+        self.write_to_tempfile("base", base_module_contents)
+        self.write_to_tempfile("patching", patching_module_contents)
+        self.write_to_tempfile("importing", import_module_contents)
         
-        python_path = os.pathsep.join(sys.path)
-        python_path += os.pathsep.join((base[0], patching[0], importing[0]))
+        python_path = os.pathsep.join(sys.path + [self.tempdir])
         new_env = os.environ.copy()
         new_env['PYTHONPATH'] = python_path
         p = subprocess.Popen([sys.executable, 
-                    os.path.join(importing[0], importing[1])],
+                              os.path.join(self.tempdir, "importing.py")],
                 stdout=subprocess.PIPE, env=new_env)
         output = p.communicate()
         lines = output[0].split("\n")
