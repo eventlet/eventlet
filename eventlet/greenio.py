@@ -21,6 +21,10 @@ CONNECT_ERR = set((errno.EINPROGRESS, errno.EALREADY, errno.EWOULDBLOCK))
 CONNECT_SUCCESS = set((0, errno.EISCONN))
 
 def socket_connect(descriptor, address):
+    """
+    Attempts to connect to the address, returns the descriptor if it succeeds,
+    returns None if it needs to trampoline, and raises any exceptions.
+    """
     err = descriptor.connect_ex(address)
     if err in CONNECT_ERR:
         return None
@@ -30,6 +34,11 @@ def socket_connect(descriptor, address):
 
 
 def socket_accept(descriptor):
+    """
+    Attempts to accept() on the descriptor, returns a client,address tuple 
+    if it succeeds; returns None if it needs to trampoline, and raises 
+    any exceptions.
+    """
     try:
         return descriptor.accept()
     except socket.error, e:
@@ -50,6 +59,11 @@ else:
 
 
 def set_nonblocking(fd):
+    """
+    Sets the descriptor to be nonblocking.  Works on many file-like
+    objects as well as sockets.  Only sockets can be nonblocking on 
+    Windows, however.
+    """
     try:
         setblocking = fd.setblocking
     except AttributeError:
@@ -70,6 +84,10 @@ except ImportError:
     
 
 class GreenSocket(object):
+    """
+    Green version of socket.socket class, that is intended to be 100%
+    API-compatible.
+    """
     timeout = None
     def __init__(self, family_or_realsock=socket.AF_INET, *args, **kwargs):
         if isinstance(family_or_realsock, (int, long)):
@@ -310,6 +328,8 @@ class GreenSocket(object):
 
 
 class GreenPipe(object):
+    """ GreenPipe is a cooperatively-yielding wrapper around OS pipes.
+    """
     newlines = '\r\n'
     def __init__(self, fd):
         set_nonblocking(fd)

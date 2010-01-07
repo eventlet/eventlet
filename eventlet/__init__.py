@@ -8,7 +8,6 @@ sleep = greenthread.sleep
 
 spawn = greenthread.spawn
 spawn_n = greenthread.spawn_n
-Event = greenthread.Event
 call_after_global = greenthread.call_after_global
 call_after_local = greenthread.call_after_local
 TimeoutError = greenthread.TimeoutError
