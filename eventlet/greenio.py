@@ -143,8 +143,22 @@ def set_nonblocking(fd):
     try:
         setblocking = fd.setblocking
     except AttributeError:
-        # This version of Python predates socket.setblocking()
-        import fcntl
+        # fd has no setblocking() method. It could be that this version of
+        # Python predates socket.setblocking(). In that case, we can still set
+        # the flag "by hand" on the underlying OS fileno using the fcntl
+        # module.
+        try:
+            import fcntl
+        except ImportError:
+            # Whoops, Windows has no fcntl module. This might not be a socket
+            # at all, but rather a file-like object with no setblocking()
+            # method. In particular, on Windows, pipes don't support
+            # non-blocking I/O and therefore don't have that method. Which
+            # means fcntl wouldn't help even if we could load it.
+            raise NotImplementedError("set_nonblocking() on a file object "
+                                      "with no setblocking() method "
+                                      "(Windows pipes don't support non-blocking I/O)")
+        # We managed to import fcntl.
         fileno = fd.fileno()
         flags = fcntl.fcntl(fileno, fcntl.F_GETFL)
         fcntl.fcntl(fileno, fcntl.F_SETFL, flags | os.O_NONBLOCK)
