@@ -210,12 +210,12 @@ class TestApi(TestCase):
             state.append('finished')
         g = api.spawn(test)
         api.sleep(DELAY/2)
-        assert state == ['start'], state
+        self.assertEquals(state, ['start'])
         api.kill(g)
         # will not get there, unless switching is explicitly scheduled by kill
-        assert state == ['start', 'except'], state
+        self.assertEquals(state,['start', 'except'])
         api.sleep(DELAY)
-        assert state == ['start', 'except', 'finished'], state
+        self.assertEquals(state, ['start', 'except', 'finished'])
 
     def test_nested_with_timeout(self):
         def func():
