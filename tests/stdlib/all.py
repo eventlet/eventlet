@@ -1,6 +1,6 @@
-""" Convenience module for running standard library tests with nose.  The standard tests are not especially homogeneous, but they mostly expose a test_main method that does the work of selecting which tests to run based on what is supported by the platform.  On its own, Nose would run all possible tests and many would fail; therefore we collect all of the test_main methods here in one module and Nose can run it.  Hopefully in the future the standard tests get rewritten to be more self-contained.
+""" Convenience module for running standard library tests with nose.  The standard tests are not especially homogeneous, but they mostly expose a test_main method that does the work of selecting which tests to run based on what is supported by the platform.  On its own, Nose would run all possible tests and many would fail; therefore we collect all of the test_main methods here in one module and Nose can run it.  Hopefully in the future the standard tests get rewritten to be more nosey.
 
-Many of these tests make connections to external servers, causing failures when run while disconnected from the internet.
+Many of these tests make connections to external servers, and all.py tries to skip these tests rather than failing them, so you can get some work done on a plane.
 """
 
 
@@ -21,7 +21,7 @@ def import_main(g, name):
     
 # quick and dirty way of testing whether we can access
 # remote hosts; any tests that try internet connections
-# will fail if we cannot   
+# will fail if we cannot
 import socket
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 try:
@@ -48,7 +48,7 @@ import_main(globals(), 'test_socketserver')
 if have_network_access:
     import_main(globals(), 'test_ssl')
 import_main(globals(), 'test_thread')
-import_main(globals(), 'test_threading')
+#import_main(globals(), 'test_threading')
 import_main(globals(), 'test_threading_local')
 if have_network_access:
     import_main(globals(), 'test_timeout')
