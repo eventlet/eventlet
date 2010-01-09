@@ -124,19 +124,35 @@ class TestHttpd(LimitedTestCase):
         super(TestHttpd, self).setUp()
         self.logfile = StringIO()
         self.site = Site()
-        listener = api.tcp_listener(('localhost', 0))
-        self.port = listener.getsockname()[1]
-        self.killer = api.spawn(
-            wsgi.server,
-            listener, 
-            self.site, 
-            max_size=128, 
-            log=self.logfile)
-
+        self.killer = None
+        self.spawn_server()
+        
     def tearDown(self):
         super(TestHttpd, self).tearDown()
         api.kill(self.killer)
         api.sleep(0)
+
+    def spawn_server(self, **kwargs):
+        """Spawns a new wsgi server with the given arguments.
+        Sets self.port to the port of the server, and self.killer is the greenlet
+        running it.
+        
+        Kills any previously-running server."""
+        if self.killer:
+            api.kill(self.killer)
+            
+        new_kwargs = dict(max_size=128, 
+                          log=self.logfile,
+                          site=self.site)
+        new_kwargs.update(kwargs)
+            
+        if 'sock' not in new_kwargs:
+            new_kwargs['sock'] = api.tcp_listener(('localhost', 0))
+            
+        self.port = new_kwargs['sock'].getsockname()[1]
+        self.killer = api.spawn(
+            wsgi.server,
+            **new_kwargs)
 
     def test_001_server(self):
         sock = api.connect_tcp(
@@ -317,10 +333,9 @@ class TestHttpd(LimitedTestCase):
         private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
 
         server_sock = api.ssl_listener(('localhost', 0), certificate_file, private_key_file)
-
-        api.spawn(wsgi.server, server_sock, wsgi_app, log=StringIO())
+        self.spawn_server(sock=server_sock, site=wsgi_app)
     
-        sock = api.connect_tcp(('localhost', server_sock.getsockname()[1]))
+        sock = api.connect_tcp(('localhost', self.port))
         sock = util.wrap_ssl(sock)
         sock.write('POST /foo HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\nContent-length:3\r\n\r\nabc')
         result = sock.read(8192)
@@ -334,7 +349,7 @@ class TestHttpd(LimitedTestCase):
         certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
         private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
         server_sock = api.ssl_listener(('localhost', 0), certificate_file, private_key_file)
-        api.spawn(wsgi.server, server_sock, wsgi_app, log=StringIO())
+        self.spawn_server(sock=server_sock, site=wsgi_app)
 
         sock = api.connect_tcp(('localhost', server_sock.getsockname()[1]))
         sock = util.wrap_ssl(sock)
@@ -505,16 +520,7 @@ class TestHttpd(LimitedTestCase):
         
         # turning off the option should work too
         self.logfile = StringIO()
-        api.kill(self.killer)
-        listener = api.tcp_listener(('localhost', 0))
-        self.port = listener.getsockname()[1]
-        self.killer = api.spawn(
-            wsgi.server,
-            listener, 
-            self.site, 
-            max_size=128, 
-            log=self.logfile,
-            log_x_forwarded_for=False)
+        self.spawn_server(log_x_forwarded_for=False)
             
         sock = api.connect_tcp(('localhost', self.port))
         sock.sendall('GET / HTTP/1.1\r\nHost: localhost\r\nX-Forwarded-For: 1.2.3.4, 5.6.7.8\r\n\r\n')
@@ -551,16 +557,7 @@ class TestHttpd(LimitedTestCase):
         # ensure that all clients finished
         from eventlet import pool
         p = pool.Pool(max_size=5)
-        api.kill(self.killer)
-        listener = api.tcp_listener(('localhost', 0))
-        self.port = listener.getsockname()[1]
-        self.killer = api.spawn(
-            wsgi.server,
-            listener,
-            self.site, 
-            max_size=128, 
-            log=self.logfile,
-            custom_pool=p)
+        self.spawn_server(custom_pool=p)
             
         # this stuff is copied from test_001_server, could be better factored
         sock = api.connect_tcp(
@@ -622,6 +619,14 @@ class TestHttpd(LimitedTestCase):
         self.assert_(header_lines[0].startswith('HTTP/1.1 200 OK'))
         self.assertEquals(fd.read(7), 'testing')
         fd.close()
+
+    def test_025_log_format(self):
+        self.spawn_server(log_format="HI %(request_line)s HI")
+        sock = api.connect_tcp(('localhost', self.port))
+        sock.sendall('GET /yo! HTTP/1.1\r\nHost: localhost\r\n\r\n')
+        sock.recv(1024)
+        sock.close()
+        self.assert_('\nHI GET /yo! HTTP/1.1 HI\n' in self.logfile.getvalue(), self.logfile.getvalue())
 
         
 if __name__ == '__main__':
