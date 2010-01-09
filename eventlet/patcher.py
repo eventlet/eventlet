@@ -60,5 +60,7 @@ def patch_function(func, *additional_modules):
             for name, mod in additional_modules:
                 if saved[name] is not None:
                     sys.modules[name] = saved[name]
+                else:
+                    del sys.modules[name]
     return patched
         

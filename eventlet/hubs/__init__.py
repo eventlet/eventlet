@@ -1,3 +1,4 @@
+import select
 import sys
 import threading
 _threadlocal = threading.local()
@@ -29,7 +30,6 @@ def get_default_hub():
         import eventlet.hubs.epolls
         return eventlet.hubs.epolls
     except ImportError:
-        import select
         if hasattr(select, 'poll'):
             import eventlet.hubs.poll
             return eventlet.hubs.poll
