@@ -69,7 +69,7 @@ except ImportError:
         return connection
 
 socket_already_wrapped = False
-def wrap_socket_with_coroutine_socket(use_thread_pool=True):
+def wrap_socket_with_coroutine_socket(use_thread_pool=False):
     global socket_already_wrapped
     if socket_already_wrapped:
         return
