@@ -4,16 +4,16 @@ Many of these tests make connections to external servers, and all.py tries to sk
 """
 
 
-def import_main(g, name):
+def import_main(name):
     try:
-        modobj = __import__(name, g, fromlist=['test_main'])
+        modobj = __import__(name, globals(), locals(), ['test_main'])
     except ImportError:
         print "Not importing %s, it doesn't exist in this installation/version of Python" % name
         return
     else:
         method_name = name + "_test_main"
         try:
-            g[method_name] = modobj.test_main
+            globals()[method_name] = modobj.test_main
             modobj.test_main.__name__ = name + '.test_main'
         except AttributeError:
             print "No test_main for %s, assuming it tests on import" % name
@@ -33,26 +33,26 @@ except socket.error, e:
     print "Skipping network tests"
     have_network_access = False
     
-import_main(globals(), 'test_select')
-import_main(globals(), 'test_SimpleHTTPServer')
-import_main(globals(), 'test_asynchat')
-import_main(globals(), 'test_asyncore')
-import_main(globals(), 'test_ftplib')
-import_main(globals(), 'test_httplib')
+import_main('test_select')
+import_main('test_SimpleHTTPServer')
+import_main('test_asynchat')
+import_main('test_asyncore')
+import_main('test_ftplib')
+import_main('test_httplib')
 if have_network_access:
-    import_main(globals(), 'test_httpservers')
+    import_main('test_httpservers')
 if have_network_access:
-    import_main(globals(), 'test_socket')
-import_main(globals(), 'test_socket_ssl')
-import_main(globals(), 'test_socketserver')
+    import_main('test_socket')
+import_main('test_socket_ssl')
+import_main('test_socketserver')
 if have_network_access:
-    import_main(globals(), 'test_ssl')
-import_main(globals(), 'test_thread')
-#import_main(globals(), 'test_threading')
-import_main(globals(), 'test_threading_local')
+    import_main('test_ssl')
+import_main('test_thread')
+#import_main('test_threading')
+import_main('test_threading_local')
 if have_network_access:
-    import_main(globals(), 'test_timeout')
-import_main(globals(), 'test_urllib')
+    import_main('test_timeout')
+import_main('test_urllib')
 if have_network_access:
-    import_main(globals(), 'test_urllib2')
-import_main(globals(), 'test_urllib2_localnet')
+    import_main('test_urllib2')
+import_main('test_urllib2_localnet')
