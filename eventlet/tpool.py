@@ -15,6 +15,7 @@
 
 import os
 import threading
+import sys
 
 from Queue import Empty, Queue
 
@@ -22,7 +23,7 @@ from eventlet import api, coros, greenio
 
 __all__ = ['execute', 'Proxy', 'killall']
 
-QUIET=False
+QUIET=True
 
 _rfile = _wfile = None
 
@@ -71,9 +72,7 @@ def tworker():
         except SYS_EXCS:
             raise
         except Exception,exn:
-            import sys
-            (a,b,tb) = sys.exc_info()
-            rv = (exn,a,b,tb)
+            rv = sys.exc_info()
         _rspq.put((e,rv))
         meth = args = kwargs = e = rv = None
         _signal_t2e()
@@ -81,13 +80,13 @@ def tworker():
 
 def erecv(e):
     rv = e.wait()
-    if isinstance(rv,tuple) and len(rv) == 4 and isinstance(rv[0],Exception):
+    if isinstance(rv,tuple) and len(rv) == 3 and isinstance(rv[1],Exception):
         import traceback
-        (e,a,b,tb) = rv
+        (c,e,tb) = rv
         if not QUIET:
-            traceback.print_exception(Exception,e,tb)
+            traceback.print_exception(c,e,tb)
             traceback.print_stack()
-        raise e
+        raise c,e,tb
     return rv
 
 

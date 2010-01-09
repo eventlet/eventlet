@@ -1,4 +1,4 @@
-from cPickle import dumps, loads
+import cPickle as Pickle
 import os
 import struct
 import sys
@@ -106,8 +106,8 @@ def _read_response(id, attribute, input, cp):
     try:
         str = _read_lp_hunk(input)
         _prnt(`str`)
-        response = loads(str)
-    except (AttributeError, DeadProcess), e:
+        response = Pickle.loads(str)
+    except (AttributeError, DeadProcess, Pickle.UnpicklingError), e:
         raise UnrecoverableError(e)
     _prnt("response: %s" % response)
     if response[0] == 'value':
@@ -130,7 +130,7 @@ def _write_lp_hunk(stream, hunk):
 
 def _write_request(param, output):
     _prnt("request: %s" % param)
-    str = dumps(param)
+    str = Pickle.dumps(param)
     _write_lp_hunk(output, str)
 
 def _is_local(attribute):
@@ -495,7 +495,7 @@ class Server(object):
                         _log("Exiting normally")
                     sys.exit(0)
 
-                request = loads(str_)
+                request = Pickle.loads(str_)
                 _log("request: %s (%s)" % (request, self._objects))
                 req = request
                 id = None
@@ -558,7 +558,7 @@ class Server(object):
     def respond(self, body):
         _log("responding with: %s" % body)
         #_log("objects: %s" % self._objects)
-        s = dumps(body)
+        s = Pickle.dumps(body)
         _log(`s`)
         str_ = _write_lp_hunk(self._out, s)
 

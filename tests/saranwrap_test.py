@@ -32,7 +32,7 @@ class CoroutineCallingClass(object):
 
 
 class TestSaranwrap(LimitedTestCase):
-    TEST_TIMEOUT=3
+    TEST_TIMEOUT=8
     def assert_server_exists(self, prox):
         self.assert_(saranwrap.status(prox))
         prox.foo = 0
