@@ -29,6 +29,11 @@ def format_date_time(timestamp):
         _weekdayname[wd], day, _monthname[month], year, hh, mm, ss
     )
 
+# Collections of error codes to compare against.  Not all attributes are set 
+# on errno module on all platforms, so some are literals :(
+BAD_SOCK = set((errno.EBADF, 10053))
+BROKEN_SOCK = set((errno.EPIPE, errno.ECONNRESET))
+
 class Input(object):
     def __init__(self, 
                  rfile, 
@@ -154,7 +159,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         except greenio.SSL.ZeroReturnError:
             self.raw_requestline = ''
         except socket.error, e:
-            if e[0] != errno.EBADF and e[0] != 10053:
+            if getattr(e, 'errno', 0) not in BAD_SOCK:
                 raise
             self.raw_requestline = ''
 
@@ -184,9 +189,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.handle_one_response()
             except socket.error, e:
                 # Broken pipe, connection reset by peer
-                if e[0] in (32, 54):
-                    pass
-                else:
+                if getattr(e, 'errno', 0) not in BROKEN_SOCK:
                     raise
         finally:
             self.server.outstanding_requests -= 1
@@ -474,7 +477,7 @@ def server(sock, site,
                 try:
                     client_socket = sock.accept()
                 except socket.error, e:
-                    if e[0] != errno.EPIPE and e[0] != errno.EBADF:
+                    if getattr(e, 'errno', 0) not in BAD_SOCK + BROKEN_SOCK:
                         raise
                 pool.execute_async(serv.process_request, client_socket)
             except (KeyboardInterrupt, SystemExit):
@@ -485,6 +488,6 @@ def server(sock, site,
             greenio.shutdown_safe(sock)
             sock.close()
         except socket.error, e:
-            if e[0] != errno.EPIPE:
+            if getattr(e, 'errno', 0) not in BROKEN_SOCK:
                 traceback.print_exc()
 
