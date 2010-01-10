@@ -65,9 +65,9 @@ class Test(unittest.TestCase):
         XDELAY=0.1
         start = time.time()
         with timeout(XDELAY, None):
-            sleep(XDELAY*2)
+            sleep(XDELAY*10)
         delta = (time.time()-start)
-        assert delta<XDELAY*2, delta
+        assert delta<XDELAY*10, delta
 
         # passing None as seconds disables the timer
         with timeout(None):
