@@ -29,6 +29,14 @@ patcher.inject('test.test_ssl',
     ('ssl', ssl),
     ('threading', threading),
     ('urllib', urllib))
+    
+    
+# TODO svn.python.org stopped serving up the cert that these tests expect; 
+# presumably they've updated svn trunk but the tests in released versions will
+# probably break forever. This is why you don't write tests that connect to 
+# external servers.
+NetworkedTests.testConnect = lambda s: None
+NetworkedTests.testFetchServerCert = lambda s: None
 
 # these don't pass because nonblocking ssl sockets don't report
 # when the socket is closed uncleanly, per the docstring on 
