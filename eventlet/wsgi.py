@@ -442,7 +442,7 @@ def server(sock, site,
            log_x_forwarded_for=True,
            custom_pool=None,
            log_format=DEFAULT_LOG_FORMAT):
-    """  Start up a `WSGI <http://wsgi.org/wsgi/>`_ server handling requests from the supplied server 
+    """  Start up a wsgi server handling requests from the supplied server 
     socket.  This function loops forever.
     
     :param sock: Server socket, must be already bound to a port and listening.
@@ -450,12 +450,13 @@ def server(sock, site,
     :param log: File-like object that logs should be written to.  If not specified, sys.stderr is used.
     :param environ: Additional parameters that go into the environ dictionary of every request.
     :param max_size: Maximum number of client connections opened at any time by this server.
+    :param max_http_version: Set to "HTTP/1.0" to make the server pretend it only supports HTTP 1.0.  The primary reason to do this is to prevent clients from keeping connections open with keepalives.
     :param protocol: Protocol class.  Deprecated.
     :param server_event: Used to collect the Server object.  Deprecated.
     :param minimum_chunk_size: Minimum size in bytes for http chunks.  This  can be used to improve performance of applications which yield many small strings, though using it technically violates the WSGI spec.
     :param log_x_forwarded_for: If True (the default), logs the contents of the x-forwarded-for header in addition to the actual client ip address in the 'client_ip' field of the log line.
     :param custom_pool: A custom Pool instance which is used to spawn client green threads.  If this is supplied, max_size is ignored.
-    :param log_formar: A python format string that is used as the template to generate log lines.  The following values can be formatted into it: client_ip, date_time, request_line, status_code, body_length, wall_seconds.  Look at DEFAULT_LOG_FORMAT for an example of how to use this.
+    :param log_formar: A python format string that is used as the template to generate log lines.  The following values can be formatted into it: client_ip, date_time, request_line, status_code, body_length, wall_seconds.  Look the default for an example of how to use this.
     """
     serv = Server(sock, sock.getsockname(), 
                   site, log, 
