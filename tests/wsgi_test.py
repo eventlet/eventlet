@@ -1,12 +1,15 @@
 import cgi
+import errno
 import os
 import socket
+import sys
 from tests import skipped, LimitedTestCase
 from unittest import main
 
 from eventlet import api
 from eventlet import util
 from eventlet import greenio
+from eventlet.green import socket as greensocket
 from eventlet import wsgi
 from eventlet import processes
 
@@ -553,6 +556,31 @@ class TestHttpd(LimitedTestCase):
         self.assertEquals(fd.read(7), 'testing')
         fd.close()
 
-        
+    def test_025_accept_errors(self):
+        api.kill(self.killer)
+        listener = greensocket.socket()
+        listener.bind(('localhost', 0))
+        # NOT calling listen, to trigger the error
+        self.port = listener.getsockname()[1]
+        self.killer = api.spawn(
+            wsgi.server,
+            listener,
+            self.site, 
+            max_size=128,
+            log=self.logfile)
+        old_stderr = sys.stderr
+        try:
+            sys.stderr = self.logfile
+            try:
+                api.connect_tcp(('localhost', self.port))
+                self.fail("Didn't expect to connect")
+            except socket.error, exc:
+                self.assertEquals(exc.errno, errno.ECONNREFUSED)
+                
+            self.assert_('Invalid argument' in self.logfile.getvalue(),
+                self.logfile.getvalue())
+        finally:
+            sys.stderr = old_stderr
+                    
 if __name__ == '__main__':
     main()

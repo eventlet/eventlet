@@ -428,6 +428,7 @@ class Server(BaseHTTPServer.HTTPServer):
     def log_message(self, message):
         self.log.write(message + '\n')
 
+ACCEPT_SOCK = set((errno.EPIPE, errno.EBADF))
 
 def server(sock, site, 
            log=None, 
@@ -477,7 +478,7 @@ def server(sock, site,
                 try:
                     client_socket = sock.accept()
                 except socket.error, e:
-                    if getattr(e, 'errno', 0) not in BAD_SOCK + BROKEN_SOCK:
+                    if getattr(e, 'errno', 0) not in ACCEPT_SOCK:
                         raise
                 pool.execute_async(serv.process_request, client_socket)
             except (KeyboardInterrupt, SystemExit):
