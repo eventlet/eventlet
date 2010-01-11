@@ -1,6 +1,6 @@
 from tests import skipped, LimitedTestCase, skip_with_pyevent, TestIsTakingTooLong
 from unittest import main
-from eventlet import api, util, coros, proc, greenio
+from eventlet import api, util, coros, proc, greenio, hubs
 from eventlet.green.socket import GreenSSLObject
 import errno
 import os
@@ -47,11 +47,15 @@ class TestGreenIo(LimitedTestCase):
             # by closing the socket prior to using the made file
             try:
                 conn, addr = listener.accept()
-                fd = conn.makeGreenFile()
+                fd = conn.makefile()
                 conn.close()
                 fd.write('hello\n')
                 fd.close()
-                self.assertRaises(socket.error, fd.write, 'a')
+                # socket._fileobjects are odd: writes don't check
+                # whether the socket is closed or not, and you get an
+                # AttributeError during flush if it is closed
+                fd.write('a')
+                self.assertRaises(Exception, fd.flush)
                 self.assertRaises(socket.error, conn.send, 'b')
             finally:
                 listener.close()
@@ -61,19 +65,20 @@ class TestGreenIo(LimitedTestCase):
             # by closing the made file and then sending a character
             try:
                 conn, addr = listener.accept()
-                fd = conn.makeGreenFile()
+                fd = conn.makefile()
                 fd.write('hello')
                 fd.close()
                 conn.send('\n')
                 conn.close()
-                self.assertRaises(socket.error, fd.write, 'a')
+                fd.write('a')
+                self.assertRaises(Exception, fd.flush)
                 self.assertRaises(socket.error, conn.send, 'b')
             finally:
                 listener.close()
                 
         def did_it_work(server):
             client = api.connect_tcp(('127.0.0.1', server.getsockname()[1]))
-            fd = client.makeGreenFile()
+            fd = client.makefile()
             client.close()
             assert fd.readline() == 'hello\n'    
             assert fd.read() == ''
@@ -96,16 +101,17 @@ class TestGreenIo(LimitedTestCase):
             # closing the file object should close everything
             try:
                 conn, addr = listener.accept()
-                conn = conn.makeGreenFile()
+                conn = conn.makefile()
                 conn.write('hello\n')
                 conn.close()
-                self.assertRaises(socket.error, conn.write, 'a')
+                conn.write('a')
+                self.assertRaises(Exception, conn.flush)
             finally:
                 listener.close()
         server = api.tcp_listener(('0.0.0.0', 0))
         killer = coros.execute(accept_once, server)
         client = api.connect_tcp(('127.0.0.1', server.getsockname()[1]))
-        fd = client.makeGreenFile()
+        fd = client.makefile()
         client.close()
         assert fd.read() == 'hello\n'    
         assert fd.read() == ''
@@ -242,6 +248,8 @@ class TestGreenIo(LimitedTestCase):
             ssl_sock = ssl.wrap_socket(sock)
             
     def test_exception_squelching(self):
+        return  # exception squelching disabled for now (greenthread doesn't 
+        # re-raise exceptions to the hub)
         server = api.tcp_listener(('0.0.0.0', 0))
         client = api.connect_tcp(('127.0.0.1', server.getsockname()[1]))
         client_2, addr = server.accept()
@@ -260,7 +268,8 @@ class TestGreenIo(LimitedTestCase):
             api.sleep(0)
         finally:
             sys.stderr = orig
-        self.assert_('Traceback' in fake.getvalue())
+        self.assert_('Traceback' in fake.getvalue(), 
+            "Traceback not in:\n" + fake.getvalue())
                         
 if __name__ == '__main__':
     main()

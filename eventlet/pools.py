@@ -3,16 +3,7 @@ import collections
 from eventlet import api
 from eventlet import coros
 
-class FanFailed(RuntimeError):
-    pass
-
-
-class SomeFailed(FanFailed):
-    pass
-
-
-class AllFailed(FanFailed):
-    pass
+__all__ = ['Pool', 'TokenPool']
 
 # have to stick this in an exec so it works in 2.4
 try:
@@ -44,6 +35,9 @@ except ImportError:
 
 class Pool(object):
     """
+    Pool is a base class that is meant to be subclassed.  When subclassing,
+    define the :meth:`create` method to implement the desired resource.
+    
     When using the pool, if you do a get, you should **always** do a
     :meth:`put`.
 
@@ -141,8 +135,8 @@ class Token(object):
 
 
 class TokenPool(Pool):
-    """A pool which gives out tokens, an object indicating that
-    the person who holds the token has a right to consume some
+    """A pool which gives out tokens (opaque unique objects), which indicate
+    that the coroutine which holds the token has a right to consume some
     limited resource.
     """
     def create(self):

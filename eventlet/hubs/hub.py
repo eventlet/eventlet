@@ -25,7 +25,6 @@ class FdListener(object):
 # in debug mode, track the call site that created the listener
 class DebugListener(FdListener):
     def __init__(self, evtype, fileno, cb):
-        import traceback
         self.where_called = traceback.format_stack()
         super(DebugListener, self).__init__(evtype, fileno, cb)
     def __repr__(self):
@@ -61,7 +60,6 @@ class BaseHub(object):
             'exit': [],
         }
         self.lclass = FdListener
-        self.silent_timer_exceptions = False
         
     def add(self, evtype, fileno, cb):
         """ Signals an intent to or write a particular file descriptor.
@@ -220,10 +218,14 @@ class BaseHub(object):
             except:
                 self.squelch_observer_exception(observer, sys.exc_info())
 
-    def squelch_timer_exception(self, timer, exc_info):
-        if not self.silent_timer_exceptions:
-            traceback.print_exception(*exc_info)
-            print >>sys.stderr, "Timer raised: %r" % (timer,)
+    def _silent_squelch_timer_exception(self, timer, exc_info):
+        pass
+        
+    def _debug_squelch_timer_exception(self, timer, exc_info):
+        traceback.print_exception(*exc_info)
+        print >>sys.stderr, "Timer raised: %r" % (timer,)
+        
+    squelch_timer_exception = _silent_squelch_timer_exception
 
     def _add_absolute_timer(self, when, info):
         # the 0 placeholder makes it easy to bisect_right using (now, 1)
@@ -302,13 +304,14 @@ class BaseHub(object):
     def get_timers_count(hub):
         return max(len(x) for x in [hub.timers, hub.next_timers])
         
-    def _setdebug(self, value):
+    def set_debug_listeners(self, value):
         if value:
             self.lclass = DebugListener
         else:
             self.lclass = FdListener
             
-    def _getdebug(self):
-        return self.lclass == DebugListener
-        
-    debug = property(_getdebug, _setdebug)
+    def set_timer_exceptions(self, value):
+        if value:
+            self.squelch_timer_exception = self._silent_squelch_timer_exception
+        else:
+            self.squelch_timer_exception = self._debug_squelch_timer_exception

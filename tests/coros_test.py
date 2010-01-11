@@ -1,8 +1,8 @@
 from unittest import main, TestCase
-from tests import SilencedTestCase
+from tests import LimitedTestCase
 from eventlet import coros, api
 
-class TestEvent(SilencedTestCase):
+class TestEvent(LimitedTestCase):
     def test_waiting_for_event(self):
         evt = coros.Event()
         value = 'some stuff'
@@ -74,7 +74,7 @@ class IncrActor(coros.Actor):
         if evt: evt.send()
 
 
-class TestActor(SilencedTestCase):
+class TestActor(LimitedTestCase):
     mode = 'static'
     def setUp(self):
         super(TestActor, self).setUp()

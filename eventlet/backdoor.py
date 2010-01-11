@@ -3,7 +3,7 @@ import sys
 import errno
 from code import InteractiveConsole
 
-from eventlet import api
+from eventlet import api, hubs
 from eventlet.support import greenlets
 
 try:
@@ -16,25 +16,34 @@ except AttributeError:
     sys.ps2 = '... '
 
 
+class FileProxy(object):
+    def __init__(self, f):
+        self.f = f
+        def writeflush(*a, **kw):
+            f.write(*a, **kw)
+            f.flush()
+        self.fixups = {
+            'softspace': 0,
+            'isatty': lambda: True,
+            'flush': lambda: None,
+            'write': writeflush,
+            'readline': lambda *a: f.readline(*a).replace('\r\n', '\n'),
+        }
+
+    def __getattr__(self, attr):
+        fixups = object.__getattribute__(self, 'fixups')
+        if attr in fixups:
+            return fixups[attr]    
+        f = object.__getattribute__(self, 'f')
+        return getattr(f, attr)
+
+
 class SocketConsole(greenlets.greenlet):
     def __init__(self, desc, hostport, locals):
         self.hostport = hostport
         self.locals = locals
         # mangle the socket
-        self.desc = desc
-        readline = desc.readline
-        self.old = {}
-        self.fixups = {
-            'softspace': 0,
-            'isatty': lambda: True,
-            'flush': lambda: None,
-            'readline': lambda *a: readline(*a).replace('\r\n', '\n'),
-        }
-        for key, value in self.fixups.iteritems():
-            if hasattr(desc, key):
-                self.old[key] = getattr(desc, key)
-            setattr(desc, key, value)
-
+        self.desc = FileProxy(desc)
         greenlets.greenlet.__init__(self)
 
     def run(self):
@@ -55,49 +64,41 @@ class SocketConsole(greenlets.greenlet):
 
     def finalize(self):
         # restore the state of the socket
-        for key in self.fixups:
-            try:
-                value = self.old[key]
-            except KeyError:
-                delattr(self.desc, key)
-            else:
-                setattr(self.desc, key, value)
-        self.fixups.clear()
-        self.old.clear()
         self.desc = None
         print "backdoor closed to %s:%s" % self.hostport
 
 
-def backdoor_server(server, locals=None):
-    """ Runs a backdoor server on the socket, accepting connections and 
-    running backdoor consoles for each client that connects.
+def backdoor_server(sock, locals=None):
+    """ Blocking function that runs a backdoor server on the socket *sock*, 
+    accepting connections and running backdoor consoles for each client that
+    connects.
     """
-    print "backdoor server listening on %s:%s" % server.getsockname()
+    print "backdoor server listening on %s:%s" % sock.getsockname()
     try:
         try:
             while True:
-                socketpair = server.accept()
+                socketpair = sock.accept()
                 backdoor(socketpair, locals)
         except socket.error, e:
             # Broken pipe means it was shutdown
             if e[0] != errno.EPIPE:
                 raise
     finally:
-        server.close()
+        sock.close()
 
 
 def backdoor((conn, addr), locals=None):
-    """Sets up an interactive console on a socket with a connected client.  
-    This does not block the caller, as it spawns a new greenlet to handle 
-    the console.
+    """Sets up an interactive console on a socket with a single connected
+    client.  This does not block the caller, as it spawns a new greenlet to 
+    handle the console.  This is meant to be called from within an accept loop
+    (such as backdoor_server).
     """
     host, port = addr
     print "backdoor to %s:%s" % (host, port)
-    fl = conn.makeGreenFile("rw")
-    fl.newlines = '\n'
-    greenlet = SocketConsole(fl, (host, port), locals)
+    fl = conn.makefile("rw")
+    console = SocketConsole(fl, (host, port), locals)
     hub = hubs.get_hub()
-    hub.schedule_call_global(0, greenlet.switch)
+    hub.schedule_call_global(0, console.switch)
 
 
 if __name__ == '__main__':
