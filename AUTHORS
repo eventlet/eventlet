@@ -29,7 +29,7 @@ Thanks To
 * Chuck Thier, reporting a bug in processes.py
 * Brantley Harris, reporting bug #4
 * Taso Du Val, reproing an exception squelching bug, saving children's lives  ;-)
-* R. Tyler Ballance, bug report on tpool on Windows, help with improving corolocal module, profile performance report, suggestion use flush that fixed tpool on Windows
+* R. Tyler Ballance, bug report on tpool on Windows, help with improving corolocal module, profile performance report, suggestion use flush that fixed tpool on Windows, reporting a bug in wsgi the day after it was introduced
 * Sergey Shepelev, PEP 8 police  :-), reporting bug #5
 * Luci Stanescu, for reporting twisted hub bug
 * Marcus Cavanaugh, for test case code that has been incredibly useful in tracking down bugs
