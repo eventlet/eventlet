@@ -610,7 +610,8 @@ class TestHttpd(LimitedTestCase):
                 self.fail("Didn't expect to connect")
             except socket.error, exc:
                 self.assertEquals(exc[0], errno.ECONNREFUSED)
-                
+
+            api.sleep(0) # need to enter server loop
             self.assert_('Invalid argument' in self.logfile.getvalue(),
                 self.logfile.getvalue())
         finally:
