@@ -1,4 +1,5 @@
 import cgi
+import errno
 import os
 import socket
 from tests import skipped, LimitedTestCase
@@ -431,6 +432,37 @@ class TestHttpd(LimitedTestCase):
                  '4\r\n hai\r\n0\r\n\r\n')
         self.assert_('hello!' in fd.read())
 
+    def test_socket_remains_open(self):
+        api.kill(self.killer)
+        server_sock = api.tcp_listener(('localhost', 0))
+        self.port = server_sock.getsockname()[1]
+        server_sock_2 = server_sock.dup()
+        self.killer = api.spawn(wsgi.server, server_sock_2, hello_world)
+        # do a single req/response to verify it's up
+        sock = api.connect_tcp(('localhost', self.port))
+        fd = sock.makeGreenFile()
+        fd.write('GET / HTTP/1.0\r\nHost: localhost\r\n\r\n')
+        result = fd.read()
+        fd.close()
+        self.assert_(result.startswith('HTTP'), result)
+        self.assert_(result.endswith('hello world'))
+
+        # shut down the server and verify the server_socket fd is still open,
+        # but the actual socketobject passed in to wsgi.server is closed
+        api.kill(self.killer)
+        api.sleep(0.01)
+        try:
+            server_sock_2.accept()
+        except socket.error, exc:
+            self.assertEqual(exc[0], errno.EBADF)
+        self.killer = api.spawn(wsgi.server, server_sock, hello_world)
+        sock = api.connect_tcp(('localhost', self.port))
+        fd = sock.makeGreenFile()
+        fd.write('GET / HTTP/1.0\r\nHost: localhost\r\n\r\n')
+        result = fd.read()
+        fd.close()
+        self.assert_(result.startswith('HTTP'), result)
+        self.assert_(result.endswith('hello world'))
 
 if __name__ == '__main__':
     main()

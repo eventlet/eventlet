@@ -410,7 +410,10 @@ def server(sock, site,
            minimum_chunk_size=None):
     """  Start up a wsgi server handling requests from the supplied server socket.
     
-    This function loops forever.
+    This function loops forever.  The *sock* object will be closed after server exits,
+    but the underlying file descriptor will remain open, so if you have a dup() of *sock*,
+    it will remain usable.
+    
     """
 
     serv = Server(sock, sock.getsockname(), 
@@ -450,7 +453,11 @@ def server(sock, site,
                 break
     finally:
         try:
-            greenio.shutdown_safe(sock)
+            # NOTE: It's not clear whether we want this to leave the
+            # socket open or close it.  Use cases like Spawning want
+            # the underlying fd to remain open, but if we're going
+            # that far we might as well not bother closing sock at
+            # all.
             sock.close()
         except socket.error, e:
             if e[0] != errno.EPIPE:
