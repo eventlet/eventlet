@@ -162,7 +162,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         except greenio.SSL.ZeroReturnError:
             self.raw_requestline = ''
         except socket.error, e:
-            if getattr(e, 'errno', 0) not in BAD_SOCK:
+            if e[0] not in BAD_SOCK:
                 raise
             self.raw_requestline = ''
 
@@ -192,7 +192,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.handle_one_response()
             except socket.error, e:
                 # Broken pipe, connection reset by peer
-                if getattr(e, 'errno', 0) not in BROKEN_SOCK:
+                if e[0] not in BROKEN_SOCK:
                     raise
         finally:
             self.server.outstanding_requests -= 1
@@ -433,6 +433,7 @@ class Server(BaseHTTPServer.HTTPServer):
     def log_message(self, message):
         self.log.write(message + '\n')
 
+ACCEPT_SOCK = set((errno.EPIPE, errno.EBADF))
 
 def server(sock, site, 
            log=None, 
@@ -446,7 +447,9 @@ def server(sock, site,
            custom_pool=None,
            log_format=DEFAULT_LOG_FORMAT):
     """  Start up a wsgi server handling requests from the supplied server 
-    socket.  This function loops forever.
+    socket.  This function loops forever.  The *sock* object will be closed after server exits,
+    but the underlying file descriptor will remain open, so if you have a dup() of *sock*,
+    it will remain usable.
     
     :param sock: Server socket, must be already bound to a port and listening.
     :param site: WSGI application function.
@@ -495,7 +498,7 @@ def server(sock, site,
                 try:
                     client_socket = sock.accept()
                 except socket.error, e:
-                    if getattr(e, 'errno', 0) not in BAD_SOCK + BROKEN_SOCK:
+                    if e[0] not in ACCEPT_SOCK:
                         raise
                 pool.execute_async(serv.process_request, client_socket)
             except (KeyboardInterrupt, SystemExit):
@@ -503,9 +506,13 @@ def server(sock, site,
                 break
     finally:
         try:
-            greenio.shutdown_safe(sock)
+            # NOTE: It's not clear whether we want this to leave the
+            # socket open or close it.  Use cases like Spawning want
+            # the underlying fd to remain open, but if we're going
+            # that far we might as well not bother closing sock at
+            # all.
             sock.close()
         except socket.error, e:
-            if getattr(e, 'errno', 0) not in BROKEN_SOCK:
+            if e[0] not in BROKEN_SOCK:
                 traceback.print_exc()
 

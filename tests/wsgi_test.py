@@ -1,12 +1,15 @@
 import cgi
+import errno
 import os
 import socket
+import sys
 from tests import skipped, LimitedTestCase
 from unittest import main
 
 from eventlet import api
 from eventlet import util
 from eventlet import greenio
+from eventlet.green import socket as greensocket
 from eventlet import wsgi
 from eventlet import processes
 
@@ -529,7 +532,41 @@ class TestHttpd(LimitedTestCase):
         self.assert_('1.2.3.4' not in self.logfile.getvalue())
         self.assert_('5.6.7.8' not in self.logfile.getvalue())        
         self.assert_('127.0.0.1' in self.logfile.getvalue())
-              
+
+    def test_socket_remains_open(self):
+        api.kill(self.killer)
+        server_sock = api.tcp_listener(('localhost', 0))
+        self.port = server_sock.getsockname()[1]
+        server_sock_2 = server_sock.dup()
+        self.killer = api.spawn(wsgi.server, server_sock_2, hello_world, 
+                                log=self.logfile)
+        # do a single req/response to verify it's up
+        sock = api.connect_tcp(('localhost', self.port))
+        fd = sock.makeGreenFile()
+        fd.write('GET / HTTP/1.0\r\nHost: localhost\r\n\r\n')
+        result = fd.read()
+        fd.close()
+        self.assert_(result.startswith('HTTP'), result)
+        self.assert_(result.endswith('hello world'))
+
+        # shut down the server and verify the server_socket fd is still open,
+        # but the actual socketobject passed in to wsgi.server is closed
+        api.kill(self.killer)
+        api.sleep(0.01)
+        try:
+            server_sock_2.accept()
+        except socket.error, exc:
+            self.assertEqual(exc[0], errno.EBADF)
+        self.killer = api.spawn(wsgi.server, server_sock, hello_world,
+                                log=self.logfile)
+        sock = api.connect_tcp(('localhost', self.port))
+        fd = sock.makeGreenFile()
+        fd.write('GET / HTTP/1.0\r\nHost: localhost\r\n\r\n')
+        result = fd.read()
+        fd.close()
+        self.assert_(result.startswith('HTTP'), result)
+        self.assert_(result.endswith('hello world'))
+
     def test_021_environ_clobbering(self):
         def clobberin_time(environ, start_response):
             for environ_var in ['wsgi.version', 'wsgi.url_scheme',
@@ -620,7 +657,34 @@ class TestHttpd(LimitedTestCase):
         self.assertEquals(fd.read(7), 'testing')
         fd.close()
 
-    def test_025_log_format(self):
+    def test_025_accept_errors(self):
+        api.kill(self.killer)
+        listener = greensocket.socket()
+        listener.bind(('localhost', 0))
+        # NOT calling listen, to trigger the error
+        self.port = listener.getsockname()[1]
+        self.killer = api.spawn(
+            wsgi.server,
+            listener,
+            self.site, 
+            max_size=128,
+            log=self.logfile)
+        old_stderr = sys.stderr
+        try:
+            sys.stderr = self.logfile
+            api.sleep(0) # need to enter server loop
+            try:
+                api.connect_tcp(('localhost', self.port))
+                self.fail("Didn't expect to connect")
+            except socket.error, exc:
+                self.assertEquals(exc[0], errno.ECONNREFUSED)
+
+            self.assert_('Invalid argument' in self.logfile.getvalue(),
+                self.logfile.getvalue())
+        finally:
+            sys.stderr = old_stderr
+
+    def test_026_log_format(self):
         self.spawn_server(log_format="HI %(request_line)s HI")
         sock = api.connect_tcp(('localhost', self.port))
         sock.sendall('GET /yo! HTTP/1.1\r\nHost: localhost\r\n\r\n')
