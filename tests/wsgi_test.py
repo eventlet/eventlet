@@ -605,13 +605,13 @@ class TestHttpd(LimitedTestCase):
         old_stderr = sys.stderr
         try:
             sys.stderr = self.logfile
+            api.sleep(0) # need to enter server loop
             try:
                 api.connect_tcp(('localhost', self.port))
                 self.fail("Didn't expect to connect")
             except socket.error, exc:
                 self.assertEquals(exc[0], errno.ECONNREFUSED)
 
-            api.sleep(0) # need to enter server loop
             self.assert_('Invalid argument' in self.logfile.getvalue(),
                 self.logfile.getvalue())
         finally:
