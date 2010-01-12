@@ -312,6 +312,6 @@ class BaseHub(object):
             
     def set_timer_exceptions(self, value):
         if value:
-            self.squelch_timer_exception = self._silent_squelch_timer_exception
-        else:
             self.squelch_timer_exception = self._debug_squelch_timer_exception
+        else:
+            self.squelch_timer_exception = self._silent_squelch_timer_exception

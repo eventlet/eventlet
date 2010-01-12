@@ -536,15 +536,14 @@ class TestHttpd(LimitedTestCase):
     def test_socket_remains_open(self):
         api.kill(self.killer)
         server_sock = api.tcp_listener(('localhost', 0))
-        self.port = server_sock.getsockname()[1]
         server_sock_2 = server_sock.dup()
-        self.killer = api.spawn(wsgi.server, server_sock_2, hello_world, 
-                                log=self.logfile)
+        self.spawn_server(sock=server_sock_2)
         # do a single req/response to verify it's up
         sock = api.connect_tcp(('localhost', self.port))
-        fd = sock.makeGreenFile()
+        fd = sock.makefile()
         fd.write('GET / HTTP/1.0\r\nHost: localhost\r\n\r\n')
-        result = fd.read()
+        fd.flush()
+        result = fd.read(1024)
         fd.close()
         self.assert_(result.startswith('HTTP'), result)
         self.assert_(result.endswith('hello world'))
@@ -552,17 +551,18 @@ class TestHttpd(LimitedTestCase):
         # shut down the server and verify the server_socket fd is still open,
         # but the actual socketobject passed in to wsgi.server is closed
         api.kill(self.killer)
-        api.sleep(0.01)
+        api.sleep(0.001) # make the kill go through
         try:
             server_sock_2.accept()
+            # shouldn't be able to use this one anymore
         except socket.error, exc:
             self.assertEqual(exc[0], errno.EBADF)
-        self.killer = api.spawn(wsgi.server, server_sock, hello_world,
-                                log=self.logfile)
+        self.spawn_server(sock=server_sock)
         sock = api.connect_tcp(('localhost', self.port))
-        fd = sock.makeGreenFile()
+        fd = sock.makefile()
         fd.write('GET / HTTP/1.0\r\nHost: localhost\r\n\r\n')
-        result = fd.read()
+        fd.flush()
+        result = fd.read(1024)
         fd.close()
         self.assert_(result.startswith('HTTP'), result)
         self.assert_(result.endswith('hello world'))
@@ -658,17 +658,13 @@ class TestHttpd(LimitedTestCase):
         fd.close()
 
     def test_025_accept_errors(self):
-        api.kill(self.killer)
+        from eventlet import debug
+        debug.hub_exceptions(True)
         listener = greensocket.socket()
         listener.bind(('localhost', 0))
         # NOT calling listen, to trigger the error
-        self.port = listener.getsockname()[1]
-        self.killer = api.spawn(
-            wsgi.server,
-            listener,
-            self.site, 
-            max_size=128,
-            log=self.logfile)
+        self.logfile = StringIO()
+        self.spawn_server(sock=listener)
         old_stderr = sys.stderr
         try:
             sys.stderr = self.logfile
@@ -683,6 +679,7 @@ class TestHttpd(LimitedTestCase):
                 self.logfile.getvalue())
         finally:
             sys.stderr = old_stderr
+        debug.hub_exceptions(False)
 
     def test_026_log_format(self):
         self.spawn_server(log_format="HI %(request_line)s HI")

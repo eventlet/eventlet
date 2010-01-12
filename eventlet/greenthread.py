@@ -199,6 +199,7 @@ class GreenThread(greenlet.greenlet):
             # ca and ckw are the curried function arguments
             for f, ca, ckw in getattr(self, '_exit_funcs', []):
                 f(exc=sys.exc_info(), *ca, **ckw)
+            raise
         else:
             self._exit_event.send(result)
             for f, ca, ckw in getattr(self, '_exit_funcs', []):
