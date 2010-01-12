@@ -184,7 +184,7 @@ class Pool(object):
         >>> from eventlet import coros
         >>> import string
         >>> pool = coros.CoroutinePool(max_size=5)
-        >>> pausers = [coros.event() for x in xrange(2)]
+        >>> pausers = [coros.Event() for x in xrange(2)]
         >>> def longtask(evt, desc):
         ...     print "%s woke up with %s" % (desc, evt.wait())
         ...

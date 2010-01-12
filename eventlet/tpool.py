@@ -15,19 +15,20 @@
 
 import os
 import threading
+import sys
 
 from Queue import Empty, Queue
 
 from eventlet import api, coros, greenio
 
-QUIET=False
+QUIET=True
 
 _rfile = _wfile = None
 
 def _signal_t2e():
-    from eventlet import util
-    sent = util.__original_write__(_wfile.fileno(), ' ')
-
+    _wfile.write(' ')
+    _wfile.flush()
+    
 _reqq = Queue(maxsize=-1)
 _rspq = Queue(maxsize=-1)
 
@@ -36,9 +37,9 @@ def tpool_trampoline():
     while(True):
         try:
             _c = _rfile.read(1)
+            assert(_c != "")
         except ValueError:
             break  # will be raised when pipe is closed
-        assert(_c != "")
         while not _rspq.empty():
             try:
                 (e,rv) = _rspq.get(block=False)
@@ -49,7 +50,7 @@ def tpool_trampoline():
 
 def esend(meth,*args, **kwargs):
     global _reqq, _rspq
-    e = coros.event()
+    e = coros.Event()
     _reqq.put((e,meth,args,kwargs))
     return e
 
@@ -69,9 +70,7 @@ def tworker():
         except SYS_EXCS:
             raise
         except Exception,exn:
-            import sys
-            (a,b,tb) = sys.exc_info()
-            rv = (exn,a,b,tb)
+            rv = sys.exc_info()
         _rspq.put((e,rv))
         meth = args = kwargs = e = rv = None
         _signal_t2e()
@@ -79,13 +78,13 @@ def tworker():
 
 def erecv(e):
     rv = e.wait()
-    if isinstance(rv,tuple) and len(rv) == 4 and isinstance(rv[0],Exception):
+    if isinstance(rv,tuple) and len(rv) == 3 and isinstance(rv[1],Exception):
         import traceback
-        (e,a,b,tb) = rv
+        (c,e,tb) = rv
         if not QUIET:
-            traceback.print_exception(Exception,e,tb)
+            traceback.print_exception(c,e,tb)
             traceback.print_stack()
-        raise e
+        raise c,e,tb
     return rv
 
 
@@ -98,10 +97,6 @@ def execute(meth,*args, **kwargs):
     e = esend(meth,*args,**kwargs)
     rv = erecv(e)
     return rv
-
-## TODO deprecate
-erpc = execute
-
 
 
 def proxy_call(autowrap, f, *args, **kwargs):
@@ -195,10 +190,8 @@ def setup():
         sock.listen(50)
         csock = util.__original_socket__(socket.AF_INET, socket.SOCK_STREAM)
         csock.connect(('localhost', sock.getsockname()[1]))
-        csock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         nsock, addr = sock.accept()
-        nsock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-        _rfile = greenio.GreenFile(greenio.GreenSocket(csock))
+        _rfile = greenio.Green_fileobject(greenio.GreenSocket(csock))
         _wfile = nsock.makefile()
 
     for i in range(0,_nthreads):
@@ -216,7 +209,8 @@ def killall():
         _reqq.put(None)
     for thr in _threads.values():
         thr.join()
-    api.kill(_coro)
+    if _coro:
+        api.kill(_coro)
     _rfile.close()
     _wfile.close()
     _setup_already = False

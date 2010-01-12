@@ -1,5 +1,6 @@
 import socket
 import sys
+import errno
 from code import InteractiveConsole
 
 from eventlet import api
@@ -68,45 +69,37 @@ class SocketConsole(greenlets.greenlet):
 
 
 def backdoor_server(server, locals=None):
-    print "backdoor listening on %s:%s" % server.getsockname()
+    """ Runs a backdoor server on the socket, accepting connections and 
+    running backdoor consoles for each client that connects.
+    """
+    print "backdoor server listening on %s:%s" % server.getsockname()
     try:
         try:
             while True:
-                (conn, (host, port)) = server.accept()
-                print "backdoor connected to %s:%s" % (host, port)
-                fl = conn.makeGreenFile("rw")
-                fl.newlines = '\n'
-                greenlet = SocketConsole(fl, (host, port), locals)
-                hub = api.get_hub()
-                hub.schedule_call_global(0, greenlet.switch)
+                socketpair = server.accept()
+                backdoor(socketpair, locals)
         except socket.error, e:
             # Broken pipe means it was shutdown
-            if e[0] != 32:
+            if e[0] != errno.EPIPE:
                 raise
     finally:
         server.close()
 
 
 def backdoor((conn, addr), locals=None):
-    """
-    Use this with tcp_server like so::
-
-      api.tcp_server(
-                     api.tcp_listener(('127.0.0.1', 9000)),
-                     backdoor.backdoor,
-                     {})
+    """Sets up an interactive console on a socket with a connected client.  
+    This does not block the caller, as it spawns a new greenlet to handle 
+    the console.
     """
     host, port = addr
     print "backdoor to %s:%s" % (host, port)
     fl = conn.makeGreenFile("rw")
     fl.newlines = '\n'
     greenlet = SocketConsole(fl, (host, port), locals)
-    hub = api.get_hub()
+    hub = hubs.get_hub()
     hub.schedule_call_global(0, greenlet.switch)
 
 
 if __name__ == '__main__':
-    api.tcp_server(api.tcp_listener(('127.0.0.1', 9000)),
-                   backdoor,
-                   {})
+    backdoor_server(api.tcp_listener(('127.0.0.1', 9000)), {})
 

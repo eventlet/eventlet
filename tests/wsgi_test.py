@@ -2,12 +2,14 @@ import cgi
 import errno
 import os
 import socket
+import sys
 from tests import skipped, LimitedTestCase
 from unittest import main
 
 from eventlet import api
 from eventlet import util
 from eventlet import greenio
+from eventlet.green import socket as greensocket
 from eventlet import wsgi
 from eventlet import processes
 
@@ -85,7 +87,12 @@ class ConnectionClosed(Exception):
 
 def read_http(sock):
     fd = sock.makeGreenFile()
-    response_line = fd.readline()
+    try:
+        response_line = fd.readline()
+    except socket.error, exc:
+        if exc[0] == 10053:
+            raise ConnectionClosed
+        raise
     if not response_line:
         raise ConnectionClosed
     raw_headers = fd.readuntil('\r\n\r\n').strip()
@@ -109,6 +116,7 @@ def read_http(sock):
 class TestHttpd(LimitedTestCase):
     mode = 'static'
     def setUp(self):
+        super(TestHttpd, self).setUp()
         self.logfile = StringIO()
         self.site = Site()
         listener = api.tcp_listener(('localhost', 0))
@@ -121,7 +129,9 @@ class TestHttpd(LimitedTestCase):
             log=self.logfile)
 
     def tearDown(self):
+        super(TestHttpd, self).tearDown()
         api.kill(self.killer)
+        api.sleep(0)
 
     def test_001_server(self):
         sock = api.connect_tcp(
@@ -190,8 +200,11 @@ class TestHttpd(LimitedTestCase):
         fd = sock.makeGreenFile()
         fd.write(request)
         result = fd.readline()
-        status = result.split(' ')[1]
-        self.assertEqual(status, '414')
+        if result:
+            # windows closes the socket before the data is flushed,
+            # so we never get anything back
+            status = result.split(' ')[1]
+            self.assertEqual(status, '414')
         fd.close()
 
     def test_007_get_arg(self):
@@ -279,7 +292,7 @@ class TestHttpd(LimitedTestCase):
 
         server_sock = api.ssl_listener(('localhost', 0), certificate_file, private_key_file)
 
-        api.spawn(wsgi.server, server_sock, wsgi_app)
+        api.spawn(wsgi.server, server_sock, wsgi_app, log=StringIO())
     
         sock = api.connect_tcp(('localhost', server_sock.getsockname()[1]))
         sock = util.wrap_ssl(sock)
@@ -295,7 +308,7 @@ class TestHttpd(LimitedTestCase):
         certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
         private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
         server_sock = api.ssl_listener(('localhost', 0), certificate_file, private_key_file)
-        api.spawn(wsgi.server, server_sock, wsgi_app)
+        api.spawn(wsgi.server, server_sock, wsgi_app, log=StringIO())
 
         sock = api.connect_tcp(('localhost', server_sock.getsockname()[1]))
         sock = util.wrap_ssl(sock)
@@ -355,6 +368,7 @@ class TestHttpd(LimitedTestCase):
         def wsgi_app(environ, start_response):
             start_response('200 OK', [('Content-Length', '7')])
             return ['testing']
+        self.site.application = wsgi_app
         sock = api.connect_tcp(('localhost', self.port))
         fd = sock.makeGreenFile()
         fd.write('GET /a HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
@@ -364,7 +378,7 @@ class TestHttpd(LimitedTestCase):
 
     def test_017_ssl_zeroreturnerror(self):
 
-        def server(sock, site, log=None):
+        def server(sock, site, log):
             try:
                 serv = wsgi.Server(sock, sock.getsockname(), site, log)
                 client_socket = sock.accept()
@@ -376,7 +390,7 @@ class TestHttpd(LimitedTestCase):
                 return False
 
         def wsgi_app(environ, start_response):
-            start_response('200 OK', {})
+            start_response('200 OK', [])
             return [environ['wsgi.input'].read()]
 
         certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
@@ -385,7 +399,7 @@ class TestHttpd(LimitedTestCase):
         sock = api.ssl_listener(('localhost', 0), certificate_file, private_key_file)
 
         from eventlet import coros
-        server_coro = coros.execute(server, sock, wsgi_app)
+        server_coro = coros.execute(server, sock, wsgi_app, self.logfile)
 
         client = api.connect_tcp(('localhost', sock.getsockname()[1]))
         client = util.wrap_ssl(client)
@@ -432,6 +446,34 @@ class TestHttpd(LimitedTestCase):
                  '4\r\n hai\r\n0\r\n\r\n')
         self.assert_('hello!' in fd.read())
 
+    def test_020_x_forwarded_for(self):
+        sock = api.connect_tcp(('localhost', self.port))
+        sock.sendall('GET / HTTP/1.1\r\nHost: localhost\r\nX-Forwarded-For: 1.2.3.4, 5.6.7.8\r\n\r\n')
+        sock.recv(1024)
+        sock.close()
+        self.assert_('1.2.3.4,5.6.7.8,127.0.0.1' in self.logfile.getvalue())
+        
+        # turning off the option should work too
+        self.logfile = StringIO()
+        api.kill(self.killer)
+        listener = api.tcp_listener(('localhost', 0))
+        self.port = listener.getsockname()[1]
+        self.killer = api.spawn(
+            wsgi.server,
+            listener, 
+            self.site, 
+            max_size=128, 
+            log=self.logfile,
+            log_x_forwarded_for=False)
+            
+        sock = api.connect_tcp(('localhost', self.port))
+        sock.sendall('GET / HTTP/1.1\r\nHost: localhost\r\nX-Forwarded-For: 1.2.3.4, 5.6.7.8\r\n\r\n')
+        sock.recv(1024)
+        sock.close()
+        self.assert_('1.2.3.4' not in self.logfile.getvalue())
+        self.assert_('5.6.7.8' not in self.logfile.getvalue())        
+        self.assert_('127.0.0.1' in self.logfile.getvalue())
+
     def test_socket_remains_open(self):
         api.kill(self.killer)
         server_sock = api.tcp_listener(('localhost', 0))
@@ -464,5 +506,113 @@ class TestHttpd(LimitedTestCase):
         self.assert_(result.startswith('HTTP'), result)
         self.assert_(result.endswith('hello world'))
 
+    def test_021_environ_clobbering(self):
+        def clobberin_time(environ, start_response):
+            for environ_var in ['wsgi.version', 'wsgi.url_scheme',
+                'wsgi.input', 'wsgi.errors', 'wsgi.multithread',
+                'wsgi.multiprocess', 'wsgi.run_once', 'REQUEST_METHOD',
+                'SCRIPT_NAME', 'PATH_INFO', 'QUERY_STRING', 'CONTENT_TYPE',
+                'CONTENT_LENGTH', 'SERVER_NAME', 'SERVER_PORT', 
+                'SERVER_PROTOCOL']:
+                environ[environ_var] = None
+            start_response('200 OK', [('Content-type', 'text/plain')])
+            return []
+        self.site.application = clobberin_time
+        sock = api.connect_tcp(('localhost', self.port))
+        fd = sock.makeGreenFile()
+        fd.write('GET / HTTP/1.1\r\n'
+                 'Host: localhost\r\n'
+                 'Connection: close\r\n'
+                 '\r\n\r\n')
+        self.assert_('200 OK' in fd.read())
+
+    def test_022_custom_pool(self):
+        # just test that it accepts the parameter for now
+        # TODO: test that it uses the pool and that you can waitall() to
+        # ensure that all clients finished
+        from eventlet import pool
+        p = pool.Pool(max_size=5)
+        api.kill(self.killer)
+        listener = api.tcp_listener(('localhost', 0))
+        self.port = listener.getsockname()[1]
+        self.killer = api.spawn(
+            wsgi.server,
+            listener,
+            self.site, 
+            max_size=128, 
+            log=self.logfile,
+            custom_pool=p)
+            
+        # this stuff is copied from test_001_server, could be better factored
+        sock = api.connect_tcp(
+            ('localhost', self.port))
+        fd = sock.makeGreenFile()
+        fd.write('GET / HTTP/1.0\r\nHost: localhost\r\n\r\n')
+        result = fd.read()
+        fd.close()
+        self.assert_(result.startswith('HTTP'), result)
+        self.assert_(result.endswith('hello world'))
+
+    def test_023_bad_content_length(self):
+        sock = api.connect_tcp(
+            ('localhost', self.port))
+        fd = sock.makeGreenFile()
+        fd.write('GET / HTTP/1.0\r\nHost: localhost\r\nContent-length: argh\r\n\r\n')
+        result = fd.read()
+        fd.close()
+        self.assert_(result.startswith('HTTP'), result)
+        self.assert_('400 Bad Request' in result)
+        self.assert_('500' not in result)
+
+    def test_024_expect_100_continue(self):
+        def wsgi_app(environ, start_response):
+            if int(environ['CONTENT_LENGTH']) > 1024:
+                start_response('417 Expectation Failed', [('Content-Length', '7')])
+                return ['failure']
+            else:
+                text = environ['wsgi.input'].read()
+                start_response('200 OK', [('Content-Length', str(len(text)))])
+                return [text]
+        self.site.application = wsgi_app
+        sock = api.connect_tcp(('localhost', self.port))
+        fd = sock.makeGreenFile()
+        fd.write('PUT / HTTP/1.1\r\nHost: localhost\r\nContent-length: 1025\r\nExpect: 100-continue\r\n\r\n')
+        result = fd.readuntil('\r\n\r\n')
+        self.assert_(result.startswith('HTTP/1.1 417 Expectation Failed'))
+        self.assertEquals(fd.read(7), 'failure')
+        fd.write('PUT / HTTP/1.1\r\nHost: localhost\r\nContent-length: 7\r\nExpect: 100-continue\r\n\r\ntesting')
+        result = fd.readuntil('\r\n\r\n')
+        self.assert_(result.startswith('HTTP/1.1 100 Continue'))
+        result = fd.readuntil('\r\n\r\n')
+        self.assert_(result.startswith('HTTP/1.1 200 OK'))
+        self.assertEquals(fd.read(7), 'testing')
+        fd.close()
+
+    def test_025_accept_errors(self):
+        api.kill(self.killer)
+        listener = greensocket.socket()
+        listener.bind(('localhost', 0))
+        # NOT calling listen, to trigger the error
+        self.port = listener.getsockname()[1]
+        self.killer = api.spawn(
+            wsgi.server,
+            listener,
+            self.site, 
+            max_size=128,
+            log=self.logfile)
+        old_stderr = sys.stderr
+        try:
+            sys.stderr = self.logfile
+            try:
+                api.connect_tcp(('localhost', self.port))
+                self.fail("Didn't expect to connect")
+            except socket.error, exc:
+                self.assertEquals(exc.errno, errno.ECONNREFUSED)
+                
+            self.assert_('Invalid argument' in self.logfile.getvalue(),
+                self.logfile.getvalue())
+        finally:
+            sys.stderr = old_stderr
+                    
 if __name__ == '__main__':
     main()

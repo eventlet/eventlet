@@ -3,10 +3,12 @@ syntax: glob
 *.pyc
 *.orig
 dist
-eventlet.egg-info
+*.egg-info
 build
-htmlreports
 *.esproj
 .DS_Store
-results.*.db
 doc/_build
+annotated
+nosetests*.xml
+.coverage
+*,cover

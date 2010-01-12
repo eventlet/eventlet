@@ -39,14 +39,14 @@ Standard Library Tests
 
 Eventlet provides for the ability to test itself with the standard Python networking tests.  This verifies that the libraries it wraps work at least as well as the standard ones do.  The directory tests/stdlib contains a bunch of stubs that import the standard lib tests from your system and run them.  If you do not have any tests in your python distribution, they'll simply fail to import.
 
-Run the standard library tests with nose; simply do:
+There's a convenience module called all.py designed to handle the impedance mismatch between Nose and the standard tests:
 
 .. code-block:: sh
 
-  $ cd tests/
-  $ nosetests stdlib
+  $ nosetests tests/stdlib/all.py
   
-That should get you started.  At this time this generates a bunch of spurious failures, due to `Nose issue 162 <http://code.google.com/p/python-nose/issues/detail?id=162>`_, which incorrectly identifies helper methods as test cases.  Therefore, ignore any failure for the reason ``TypeError: foo() takes exactly N arguments (2 given)``, and sit tight until a version of Nose is released that fixes the issue.
+That will run all the tests, though the output will be a little weird because it will look like Nose is running about 20 tests, each of which consists of a bunch of sub-tests.  Not all test modules are present in all versions of Python, so there will be an occasional printout of "Not importing %s, it doesn't exist in this installation/version of Python".
+
 
 Testing Eventlet Hubs
 ---------------------
@@ -66,7 +66,7 @@ If you wish to run tests against a particular Twisted reactor, use ``--reactor=R
 
 * poll
 * selects
-* libevent  (requires pyevent)
+* pyevent  (requires pyevent installed on your system)
 
 Writing Tests
 -------------
@@ -79,4 +79,22 @@ If you are writing a test that involves a client connecting to a spawned server,
 
   server_sock = api.tcp_listener(('127.0.0.1', 0))
   client_sock = api.connect_tcp(('localhost', server_sock.getsockname()[1]))
+  
+Coverage
+--------
 
+Coverage.py is an awesome tool for evaluating how much code was exercised by unit tests.  Nose supports it if both are installed, so it's easy to generate coverage reports for eventlet.  Here's how:
+
+.. code-block:: sh
+
+ nosetests --with-coverage
+ 
+After running the tests to completion, this will emit a huge wodge of module names and line numbers.  For some reason, the ``--cover-inclusive`` option breaks everything rather than serving its purpose of limiting the coverage to the local files, so don't use that.
+
+The annotate option is quite useful because it generates annotated source files that are much easier to read than line-number soup.  Here's a command that runs the annotation, dumping the annotated files into a directory called "annotated":
+
+.. code-block:: sh
+
+ coverage annotate -d annotated --omit tempmod
+ 
+(``tempmod`` is omitted because it gets thrown away at the completion of its unit test and coverage.py isn't smart enough to detect this)

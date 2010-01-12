@@ -1,3 +1,38 @@
+0.9.3
+=====
+
+* Moved get_hub, use_hub, get_default_hub to eventlet.hubs
+* Renamed libevent hub to pyevent.
+* Renamed coros.event to coros.Event
+* Removed previously-deprecated features tcp_server, GreenSSL, erpc, and trap_errors.
+* Removed saranwrap as an option for making db connections nonblocking in db_pool.
+
+0.9.2
+=====
+
+* Bugfix for wsgi.py where it was improperly expecting the environ variable to be a constant when passed to the application.
+* Tpool.py now passes its tests on Windows.
+* Fixed minor performance issue in wsgi.
+
+0.9.1
+=====
+
+* PyOpenSSL is no longer required for Python 2.6: use the eventlet.green.ssl module. 2.5 and 2.4 still require PyOpenSSL.
+* Cleaned up the eventlet.green packages and their associated tests, this should result in fewer version-dependent bugs with these modules.
+* PyOpenSSL is now fully wrapped in eventlet.green.OpenSSL; using it is therefore more consistent with using other green modules.
+* Documentation on using SSL added.
+* New green modules: ayncore, asynchat, SimpleHTTPServer, CGIHTTPServer, ftplib.
+* Fuller thread/threading compatibility: patching threadlocal with corolocal so coroutines behave even more like threads.
+* Improved Windows compatibility for tpool.py
+* With-statement compatibility for pools.Pool objects.
+* Refactored copyrights in the files, added LICENSE and AUTHORS files.
+* Added support for logging x-forwarded-for header in wsgi.
+* api.tcp_server is now deprecated, will be removed in a future release.
+* Added instructions on how to generate coverage reports to the documentation.
+* Renamed GreenFile to Green_fileobject, to better reflect its purpose.
+* Deprecated erpc method in tpool.py
+* Bug fixes in: wsgi.py, twistedr.py, poll.py, greenio.py, util.py, select.py, processes.py, selects.py
+
 0.9.0
 =====
 

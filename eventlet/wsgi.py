@@ -29,6 +29,11 @@ def format_date_time(timestamp):
         _weekdayname[wd], day, _monthname[month], year, hh, mm, ss
     )
 
+# Collections of error codes to compare against.  Not all attributes are set 
+# on errno module on all platforms, so some are literals :(
+BAD_SOCK = set((errno.EBADF, 10053))
+BROKEN_SOCK = set((errno.EPIPE, errno.ECONNRESET))
+
 class Input(object):
     def __init__(self, 
                  rfile, 
@@ -154,7 +159,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         except greenio.SSL.ZeroReturnError:
             self.raw_requestline = ''
         except socket.error, e:
-            if e[0] != errno.EBADF:
+            if getattr(e, 'errno', 0) not in BAD_SOCK:
                 raise
             self.raw_requestline = ''
 
@@ -165,6 +170,17 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         if not self.parse_request():
             return
 
+        content_length = self.headers.getheader('content-length')
+        if content_length:
+            try:
+                int(content_length)
+            except ValueError:
+                self.wfile.write(
+                    "HTTP/1.0 400 Bad Request\r\n"
+                    "Connection: close\r\nContent-length: 0\r\n\r\n")
+                self.close_connection = 1
+                return
+
         self.environ = self.get_environ()
         self.application = self.server.app
         try:
@@ -173,9 +189,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.handle_one_response()
             except socket.error, e:
                 # Broken pipe, connection reset by peer
-                if e[0] in (32, 54):
-                    pass
-                else:
+                if getattr(e, 'errno', 0) not in BROKEN_SOCK:
                     raise
         finally:
             self.server.outstanding_requests -= 1
@@ -261,11 +275,14 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                         'Content-Length' not in [h for h, v in headers_set[1]]:
                     headers_set[1].append(('Content-Length', str(sum(map(len, result)))))
                 towrite = []
+                towrite_size = 0
                 for data in result:
                     towrite.append(data)
-                    if sum(map(len, towrite)) >= self.minimum_chunk_size:
+                    towrite_size += len(data)
+                    if towrite_size >= self.minimum_chunk_size:
                         write(''.join(towrite))
                         towrite = []
+                        towrite_size = 0
                 if towrite:
                     write(''.join(towrite))
                 if not headers_sent or use_chunked[0]:
@@ -281,17 +298,27 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             if hasattr(result, 'close'):
                 result.close()
             if self.environ['eventlet.input'].position < self.environ.get('CONTENT_LENGTH', 0):
-                ## Read and discard body
-                self.environ['eventlet.input'].read()
+                ## Read and discard body if there was no pending 100-continue
+                if not self.environ['eventlet.input'].wfile:
+                    while self.environ['eventlet.input'].read(MINIMUM_CHUNK_SIZE):
+                        pass
             finish = time.time()
 
             self.server.log_message('%s - - [%s] "%s" %s %s %.6f' % (
-                self.client_address[0],
+                self.get_client_ip(),
                 self.log_date_time_string(),
                 self.requestline,
                 status_code[0],
                 length[0],
                 finish - start))
+                
+    def get_client_ip(self):
+        client_ip = self.client_address[0]
+        if self.server.log_x_forwarded_for:
+            forward = self.headers.get('X-Forwarded-For', '').replace(' ', '')
+            if forward:
+                client_ip = "%s,%s" % (forward, client_ip)
+        return client_ip
 
     def get_environ(self):
         env = self.server.get_environ()
@@ -361,7 +388,8 @@ class Server(BaseHTTPServer.HTTPServer):
                  environ=None, 
                  max_http_version=None, 
                  protocol=HttpProtocol, 
-                 minimum_chunk_size=None):
+                 minimum_chunk_size=None,
+                 log_x_forwarded_for=True):
                  
         self.outstanding_requests = 0
         self.socket = socket
@@ -377,6 +405,7 @@ class Server(BaseHTTPServer.HTTPServer):
         self.pid = os.getpid()
         if minimum_chunk_size is not None:
             protocol.minimum_chunk_size = minimum_chunk_size
+        self.log_x_forwarded_for = log_x_forwarded_for
 
     def get_environ(self):
         socket = self.socket
@@ -399,6 +428,7 @@ class Server(BaseHTTPServer.HTTPServer):
     def log_message(self, message):
         self.log.write(message + '\n')
 
+ACCEPT_SOCK = set((errno.EPIPE, errno.EBADF))
 
 def server(sock, site, 
            log=None, 
@@ -407,7 +437,9 @@ def server(sock, site,
            max_http_version=DEFAULT_MAX_HTTP_VERSION, 
            protocol=HttpProtocol,
            server_event=None, 
-           minimum_chunk_size=None):
+           minimum_chunk_size=None,
+           log_x_forwarded_for=True,
+           custom_pool=None):
     """  Start up a wsgi server handling requests from the supplied server socket.
     
     This function loops forever.  The *sock* object will be closed after server exits,
@@ -421,12 +453,16 @@ def server(sock, site,
                   environ=None, 
                   max_http_version=max_http_version, 
                   protocol=protocol, 
-                  minimum_chunk_size=minimum_chunk_size)
+                  minimum_chunk_size=minimum_chunk_size,
+                  log_x_forwarded_for=log_x_forwarded_for)
     if server_event is not None:
         server_event.send(serv)
     if max_size is None:
         max_size = DEFAULT_MAX_SIMULTANEOUS_REQUESTS
-    pool = Pool(max_size=max_size)
+    if custom_pool is not None:
+        pool = custom_pool
+    else:
+        pool = Pool(max_size=max_size)
     try:
         host, port = sock.getsockname()
         port = ':%s' % (port, )
@@ -445,7 +481,7 @@ def server(sock, site,
                 try:
                     client_socket = sock.accept()
                 except socket.error, e:
-                    if e[0] != errno.EPIPE and e[0] != errno.EBADF:
+                    if getattr(e, 'errno', 0) not in ACCEPT_SOCK:
                         raise
                 pool.execute_async(serv.process_request, client_socket)
             except (KeyboardInterrupt, SystemExit):
@@ -460,6 +496,6 @@ def server(sock, site,
             # all.
             sock.close()
         except socket.error, e:
-            if e[0] != errno.EPIPE:
+            if getattr(e, 'errno', 0) not in BROKEN_SOCK:
                 traceback.print_exc()
 

@@ -8,15 +8,26 @@ import time
 
 from eventlet.api import trampoline, getcurrent
 from thread import get_ident
-from eventlet.greenio import set_nonblocking, GreenSocket, GreenSSLObject, SOCKET_CLOSED, CONNECT_ERR, CONNECT_SUCCESS
+from eventlet.greenio import set_nonblocking, GreenSocket, SOCKET_CLOSED, CONNECT_ERR, CONNECT_SUCCESS
 orig_socket = __import__('socket')
 socket = orig_socket.socket
+timeout_exc = orig_socket.timeout
 
 
 class GreenSSLSocket(__ssl.SSLSocket):
     """ This is a green version of the SSLSocket class from the ssl module added 
     in 2.6.  For documentation on it, please see the Python standard
-    documentation."""
+    documentation.
+    
+    Python nonblocking ssl objects don't give errors when the other end
+    of the socket is closed (they do notice when the other end is shutdown,
+    though).  Any write/read operations will simply hang if the socket is
+    closed from the other end.  There is no obvious fix for this problem;
+    it appears to be a limitation of Python's ssl object implementation.
+    A workaround is to set a reasonable timeout on the socket using
+    settimeout(), and to close/reopen the connection when a timeout 
+    occurs at an unexpected juncture in the code.
+    """
     # we are inheriting from SSLSocket because its constructor calls 
     # do_handshake whose behavior we wish to override
     def __init__(self, sock, *args, **kw):
@@ -42,7 +53,13 @@ class GreenSSLSocket(__ssl.SSLSocket):
     def gettimeout(self):
         return self.timeout
     
-    setblocking = GreenSocket.setblocking
+    def setblocking(self, flag):
+        if flag:
+            self.act_non_blocking = False
+            self.timeout = None
+        else:
+            self.act_non_blocking = True
+            self.timeout = 0.0
 
     def _call_trampolining(self, func, *a, **kw):
         if self.act_non_blocking:
@@ -56,12 +73,12 @@ class GreenSSLSocket(__ssl.SSLSocket):
                         trampoline(self.fileno(), 
                                    read=True, 
                                    timeout=self.gettimeout(), 
-                                   timeout_exc=SSLError)
+                                   timeout_exc=timeout_exc('timed out'))
                     elif exc[0] == SSL_ERROR_WANT_WRITE:
                         trampoline(self.fileno(), 
                                    write=True, 
                                    timeout=self.gettimeout(), 
-                                   timeout_exc=SSLError)
+                                   timeout_exc=timeout_exc('timed out'))
                     else:
                         raise
 
@@ -115,7 +132,7 @@ class GreenSSLSocket(__ssl.SSLSocket):
             raise ValueError("sendto not allowed on instances of %s" %
                              self.__class__)
         else:
-            trampoline(self.fileno(), write=True, timeout_exc=orig_socket.timeout)
+            trampoline(self.fileno(), write=True, timeout_exc=timeout_exc('timed out'))
             return socket.sendto(self, data, addr, flags)
 
     def sendall (self, data, flags=0):
@@ -140,7 +157,7 @@ class GreenSSLSocket(__ssl.SSLSocket):
                         raise
                     if e[0] == errno.EWOULDBLOCK:
                         trampoline(self.fileno(), write=True, 
-                                   timeout=self.gettimeout(), timeout_exc=orig_socket.timeout)
+                                   timeout=self.gettimeout(), timeout_exc=timeout_exc('timed out'))
                     if e[0] in SOCKET_CLOSED:
                         return ''
                     raise
@@ -163,7 +180,7 @@ class GreenSSLSocket(__ssl.SSLSocket):
                         raise
                     if e[0] == errno.EWOULDBLOCK:
                         trampoline(self.fileno(), read=True, 
-                                   timeout=self.gettimeout(), timeout_exc=orig_socket.timeout)
+                                   timeout=self.gettimeout(), timeout_exc=timeout_exc('timed out'))
                     if e[0] in SOCKET_CLOSED:
                         return ''
                     raise
@@ -171,17 +188,17 @@ class GreenSSLSocket(__ssl.SSLSocket):
         
     def recv_into (self, buffer, nbytes=None, flags=0):
         if not self.act_non_blocking:
-            trampoline(self.fileno(), read=True, timeout=self.gettimeout(), timeout_exc=orig_socket.timeout)
+            trampoline(self.fileno(), read=True, timeout=self.gettimeout(), timeout_exc=timeout_exc('timed out'))
         return super(GreenSSLSocket, self).recv_into(buffer, nbytes, flags)
 
     def recvfrom (self, addr, buflen=1024, flags=0):
         if not self.act_non_blocking:
-            trampoline(self.fileno(), read=True, timeout=self.gettimeout(), timeout_exc=orig_socket.timeout)
+            trampoline(self.fileno(), read=True, timeout=self.gettimeout(), timeout_exc=timeout_exc('timed out'))
         return super(GreenSSLSocket, self).recvfrom(addr, buflen, flags)
         
     def recvfrom_into (self, buffer, nbytes=None, flags=0):
         if not self.act_non_blocking:
-            trampoline(self.fileno(), read=True, timeout=self.gettimeout(), timeout_exc=orig_socket.timeout)
+            trampoline(self.fileno(), read=True, timeout=self.gettimeout(), timeout_exc=timeout_exc('timed out'))
         return super(GreenSSLSocket, self).recvfrom_into(buffer, nbytes, flags)
 
     def unwrap(self):
@@ -218,13 +235,13 @@ class GreenSSLSocket(__ssl.SSLSocket):
                     except orig_socket.error, exc:
                         if exc[0] in CONNECT_ERR:
                             trampoline(self.fileno(), write=True, 
-                                       timeout=end-time.time(), timeout_exc=orig_socket.timeout)
+                                       timeout=end-time.time(), timeout_exc=timeout_exc('timed out'))
                         elif exc[0] in CONNECT_SUCCESS:
                             return
                         else:
                             raise
                     if time.time() >= end:
-                        raise orig_socket.timeout
+                        raise timeout_exc('timed out')
     
 
     def connect(self, addr):
@@ -258,7 +275,7 @@ class GreenSSLSocket(__ssl.SSLSocket):
                     if e[0] != errno.EWOULDBLOCK:
                         raise
                     trampoline(self.fileno(), read=True, timeout=self.gettimeout(),
-                                   timeout_exc=orig_socket.timeout)
+                                   timeout_exc=timeout_exc('timed out'))
 
         new_ssl = type(self)(newsock,
                           keyfile=self.keyfile,
@@ -270,7 +287,7 @@ class GreenSSLSocket(__ssl.SSLSocket):
                           do_handshake_on_connect=self.do_handshake_on_connect,
                           suppress_ragged_eofs=self.suppress_ragged_eofs)
         return (new_ssl, addr)
-
+        
                                
 SSLSocket = GreenSSLSocket
 
@@ -286,10 +303,14 @@ def wrap_socket(sock, keyfile=None, certfile=None,
                      suppress_ragged_eofs=suppress_ragged_eofs)
 
 
-def sslwrap_simple(sock, keyfile=None, certfile=None):
-    """A replacement for the old socket.ssl function.  Designed
-    for compability with Python 2.5 and earlier.  Will disappear in
-    Python 3.0."""
-    ssl_sock = GreenSSLSocket(sock, 0, keyfile, certfile, CERT_NONE,
-                              PROTOCOL_SSLv23, None)
-    return GreenSSLObject(ssl_sock)
+if hasattr(__ssl, 'sslwrap_simple'):
+    def sslwrap_simple(sock, keyfile=None, certfile=None):
+        """A replacement for the old socket.ssl function.  Designed
+        for compability with Python 2.5 and earlier.  Will disappear in
+        Python 3.0."""
+        ssl_sock = GreenSSLSocket(sock, keyfile=keyfile, certfile=certfile,
+                                  server_side=False, 
+                                  cert_reqs=CERT_NONE, 
+                                  ssl_version=PROTOCOL_SSLv23, 
+                                  ca_certs=None)
+        return ssl_sock

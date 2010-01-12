@@ -58,8 +58,8 @@ class TestQueue(LimitedTestCase):
             x = q.wait()
             evt.send(x)
 
-        e1 = coros.event()
-        e2 = coros.event()
+        e1 = coros.Event()
+        e2 = coros.Event()
 
         api.spawn(sender, e1, q)
         api.sleep(0)
@@ -76,7 +76,7 @@ class TestQueue(LimitedTestCase):
             evt.send(q.wait())
 
         sendings = ['1', '2', '3', '4']
-        evts = [coros.event() for x in sendings]
+        evts = [coros.Event() for x in sendings]
         for i, x in enumerate(sendings):
             api.spawn(waiter, q, evts[i])
 
@@ -113,7 +113,7 @@ class TestQueue(LimitedTestCase):
                 evt.send('timed out')
 
 
-        evt = coros.event()
+        evt = coros.Event()
         api.spawn(do_receive, q, evt)
         self.assertEquals(evt.wait(), 'timed out')
 
@@ -141,8 +141,8 @@ class TestQueue(LimitedTestCase):
                 evt.send('timed out')
 
         q = coros.queue()
-        dying_evt = coros.event()
-        waiting_evt = coros.event()
+        dying_evt = coros.Event()
+        waiting_evt = coros.Event()
         api.spawn(do_receive, q, dying_evt)
         api.spawn(waiter, q, waiting_evt)
         api.sleep(0)
@@ -160,8 +160,8 @@ class TestQueue(LimitedTestCase):
                 evt.send('timed out')
 
         q = coros.queue()
-        e1 = coros.event()
-        e2 = coros.event()
+        e1 = coros.Event()
+        e2 = coros.Event()
         api.spawn(do_receive, q, e1)
         api.spawn(do_receive, q, e2)
         api.sleep(0)
@@ -176,7 +176,7 @@ class TestQueue(LimitedTestCase):
             evt.send(result)
 
         q = coros.queue()
-        e1 = coros.event()
+        e1 = coros.Event()
         api.spawn(do_wait, q, e1)
         api.sleep(0)
         self.assertEquals(1, q.waiting())

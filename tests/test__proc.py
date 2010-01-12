@@ -2,14 +2,14 @@ import sys
 import unittest
 from eventlet.api import sleep, with_timeout
 from eventlet import api, proc, coros
-from tests import LimitedTestCase, skipped
+from tests import SilencedTestCase, skipped
 
 DELAY = 0.01
 
 class ExpectedError(Exception):
     pass
 
-class TestLink_Signal(LimitedTestCase):
+class TestLink_Signal(SilencedTestCase):
 
     def test_send(self):
         s = proc.Source()
@@ -48,7 +48,7 @@ class TestLink_Signal(LimitedTestCase):
         self.assertRaises(OSError, s.wait)
 
 
-class TestProc(LimitedTestCase):
+class TestProc(SilencedTestCase):
 
     def test_proc(self):
         p = proc.spawn(lambda : 100)
@@ -61,12 +61,12 @@ class TestProc(LimitedTestCase):
 
     def test_event(self):
         p = proc.spawn(lambda : 100)
-        event = coros.event()
+        event = coros.Event()
         p.link(event)
         self.assertEqual(event.wait(), 100)
 
         for i in xrange(3):
-            event2 = coros.event()
+            event2 = coros.Event()
             p.link(event2)
             self.assertEqual(event2.wait(), 100)
 
@@ -76,17 +76,17 @@ class TestProc(LimitedTestCase):
         self.assertRaises(proc.LinkedCompleted, sleep, 0.1)
 
 
-class TestCase(LimitedTestCase):
+class TestCase(SilencedTestCase):
 
     def link(self, p, listener=None):
         getattr(p, self.link_method)(listener)
 
     def tearDown(self):
-        LimitedTestCase.tearDown(self)
+        SilencedTestCase.tearDown(self)
         self.p.unlink()
 
     def set_links(self, p, first_time, kill_exc_type):
-        event = coros.event()
+        event = coros.Event()
         self.link(p, event)
 
         proc_flag = []
@@ -111,13 +111,13 @@ class TestCase(LimitedTestCase):
         self.link(p, lambda *args: callback_flag.remove('initial'))
 
         for _ in range(10):
-            self.link(p, coros.event())
+            self.link(p, coros.Event())
             self.link(p, coros.queue(1))
         return event, receiver, proc_flag, queue, callback_flag
 
     def set_links_timeout(self, link):
         # stuff that won't be touched
-        event = coros.event()
+        event = coros.Event()
         link(event)
 
         proc_finished_flag = []
@@ -252,18 +252,18 @@ class TestRaise_link_exception(TestRaise_link):
     link_method = 'link_exception'
 
 
-class TestStuff(unittest.TestCase):
+class TestStuff(SilencedTestCase):
 
     def test_wait_noerrors(self):
         x = proc.spawn(lambda : 1)
         y = proc.spawn(lambda : 2)
         z = proc.spawn(lambda : 3)
         self.assertEqual(proc.waitall([x, y, z]), [1, 2, 3])
-        e = coros.event()
+        e = coros.Event()
         x.link(e)
         self.assertEqual(e.wait(), 1)
         x.unlink(e)
-        e = coros.event()
+        e = coros.Event()
         x.link(e)
         self.assertEqual(e.wait(), 1)
         self.assertEqual([proc.waitall([X]) for X in [x, y, z]], [[1], [2], [3]])
@@ -297,6 +297,7 @@ class TestStuff(unittest.TestCase):
             proc.waitall([a, b])
         except ExpectedError, ex:
             assert 'second' in str(ex), repr(str(ex))
+        api.sleep(0.2)   # sleep to ensure that the other timer is raised
 
     def test_multiple_listeners_error(self):
         # if there was an error while calling a callback
@@ -357,7 +358,7 @@ class TestStuff(unittest.TestCase):
         self._test_multiple_listeners_error_unlink(p)
 
     def test_killing_unlinked(self):
-        e = coros.event()
+        e = coros.Event()
         def func():
             try:
                 raise ExpectedError('test_killing_unlinked')

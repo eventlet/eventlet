@@ -1,17 +1,17 @@
+from eventlet import patcher
 from eventlet.green import thread
 from eventlet.green import threading
 from eventlet.green import time
 
-from test import test_threading_local
+# hub requires initialization before test can run
+from eventlet import hubs
+hubs.get_hub()
 
-test_threading_local.threading = threading
-
-def test_main():
-    import sys
-    sys.modules['thread'] = thread
-    sys.modules['threading'] = threading
-    sys.modules['time'] = time
-    test_threading_local.test_main()
+patcher.inject('test.test_threading_local',
+    globals(),
+    ('time', time),
+    ('thread', thread),
+    ('threading', threading))
     
 if __name__ == '__main__':
     test_main()

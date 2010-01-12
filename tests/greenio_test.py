@@ -1,6 +1,8 @@
-from tests import skipped, LimitedTestCase, skip_with_libevent, TestIsTakingTooLong
+from tests import skipped, LimitedTestCase, skip_with_pyevent, TestIsTakingTooLong
 from unittest import main
 from eventlet import api, util, coros, proc, greenio
+from eventlet.green.socket import GreenSSLObject
+import errno
 import os
 import socket
 import sys
@@ -21,8 +23,24 @@ def bufsized(sock, size=1):
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, size)
     return sock
 
+def min_buf_size():
+    """Return the minimum buffer size that the platform supports."""
+    test_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    test_sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 1)
+    return test_sock.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
 
 class TestGreenIo(LimitedTestCase):
+    def test_connect_timeout(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(0.1)
+        gs = greenio.GreenSocket(s)
+        try:
+            self.assertRaises(socket.timeout, gs.connect, ('192.0.2.1', 80))
+        except socket.error, e:
+            # unreachable is also a valid outcome
+            if e[0] != errno.EHOSTUNREACH:
+                raise
+
     def test_close_with_makefile(self):
         def accept_close_early(listener):
             # verify that the makefile and the socket are truly independent
@@ -95,7 +113,7 @@ class TestGreenIo(LimitedTestCase):
         killer.wait()
      
     def test_full_duplex(self):
-        large_data = '*' * 10
+        large_data = '*' * 10 * min_buf_size()
         listener = bufsized(api.tcp_listener(('127.0.0.1', 0)))
 
         def send_large(sock):
@@ -168,18 +186,12 @@ class TestGreenIo(LimitedTestCase):
         for bytes in (1000, 10000, 100000, 1000000):
             test_sendall_impl(bytes)
         
-    @skip_with_libevent
+    @skip_with_pyevent
     def test_multiple_readers(self):
-        recvsize = 1
-        sendsize = 10
-        if sys.version_info < (2,5):
-            # 2.4 doesn't implement buffer sizing exactly the way we
-            # expect so we have to send more data to ensure that we
-            # actually call trampoline() multiple times during this
-            # function
-            recvsize = 4000
-            sendsize = 40000
-            # and reset the timer because we're going to be taking
+        recvsize = 2 * min_buf_size()
+        sendsize = 10 * recvsize
+        if recvsize > 100:
+            # reset the timer because we're going to be taking
             # longer to send all this extra data
             self.timer.cancel()
             self.timer = api.exc_after(10, TestIsTakingTooLong(10))
@@ -249,58 +261,6 @@ class TestGreenIo(LimitedTestCase):
         finally:
             sys.stderr = orig
         self.assert_('Traceback' in fake.getvalue())
-
-
-class SSLTest(LimitedTestCase):
-    def setUp(self):
-        super(SSLTest, self).setUp()
-        self.certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
-        self.private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
-
-    def test_duplex_response(self):
-        def serve(listener):
-            sock, addr = listener.accept()
-            stuff = sock.read(8192)
-            sock.write('response')
-  
-        sock = api.ssl_listener(('127.0.0.1', 0), self.certificate_file, self.private_key_file)
-        server_coro = coros.execute(serve, sock)
-        
-        client = util.wrap_ssl(api.connect_tcp(('127.0.0.1', sock.getsockname()[1])))
-        client.write('line 1\r\nline 2\r\n\r\n')
-        self.assertEquals(client.read(8192), 'response')
-        server_coro.wait()
-
-    def test_greensslobject(self):
-        def serve(listener):
-            sock, addr = listener.accept()
-            sock.write('content')
-            greenio.shutdown_safe(sock)
-            sock.close()
-        listener = api.ssl_listener(('', 0), 
-                                    self.certificate_file, 
-                                    self.private_key_file)
-        killer = api.spawn(serve, listener)
-        client = util.wrap_ssl(api.connect_tcp(('localhost', listener.getsockname()[1])))
-        client = greenio.GreenSSLObject(client)
-        self.assertEquals(client.read(1024), 'content')
-        self.assertEquals(client.read(1024), '')
-        
-    def test_ssl_close(self):
-        def serve(listener):
-            sock, addr = listener.accept()
-            stuff = sock.read(8192)
-            empt = sock.read(8192)
-  
-        sock = api.ssl_listener(('127.0.0.1', 0), self.certificate_file, self.private_key_file)
-        server_coro = coros.execute(serve, sock)
-        
-        raw_client = api.connect_tcp(('127.0.0.1', sock.getsockname()[1]))
-        client = util.wrap_ssl(raw_client)
-        client.write('X')
-        greenio.shutdown_safe(client)
-        client.close()
-        server_coro.wait()
                         
 if __name__ == '__main__':
     main()

@@ -1,7 +1,7 @@
 import sys
 
 
-__exclude = ('__builtins__', '__file__', '__name__')
+__exclude = set(('__builtins__', '__file__', '__name__'))
 
 
 def inject(module_name, new_globals, *additional_modules):
@@ -33,6 +33,8 @@ def inject(module_name, new_globals, *additional_modules):
     for name, mod in additional_modules:
         if saved[name] is not None:
             sys.modules[name] = saved[name]
+        else:
+            del sys.modules[name]
 
     return module
 
@@ -43,3 +45,22 @@ def import_patched(module_name, *additional_modules, **kw_additional_modules):
     	None,
     	*additional_modules + tuple(kw_additional_modules.items()))
 
+def patch_function(func, *additional_modules):
+    """Huge hack here -- patches the specified modules for the 
+    duration of the function call."""
+    def patched(*args, **kw):
+        saved = {}
+        for name, mod in additional_modules:
+            saved[name] = sys.modules.get(name, None)
+            sys.modules[name] = mod
+        try:
+            return func(*args, **kw)
+        finally:
+            ## Put all the saved modules back
+            for name, mod in additional_modules:
+                if saved[name] is not None:
+                    sys.modules[name] = saved[name]
+                else:
+                    del sys.modules[name]
+    return patched
+        

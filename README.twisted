@@ -17,7 +17,7 @@ Eventlet features:
  * utilities for spawning and controlling greenlet execution:
    api.spawn, api.kill, proc module
  * utilities for communicating between greenlets:
-   coros.event, coros.queue, proc module
+   coros.Event, coros.Queue, proc module
  * standard Python modules that won't block the reactor:
    eventlet.green package
  * utilities specific to twisted hub:
@@ -61,7 +61,7 @@ to call from anywhere:
 1. Greenlet creation functions: api.spawn, proc.spawn,
    twistedutil.deferToGreenThread and others based on api.spawn.
 
-2. send(), send_exception(), poll(), ready() methods of coros.event
+2. send(), send_exception(), poll(), ready() methods of coros.Event
    and coros.Queue.
 
 3. wait(timeout=0) is identical to poll(). Currently only Proc.wait

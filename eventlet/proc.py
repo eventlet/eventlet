@@ -15,13 +15,13 @@ you can "link":
  * ``p.link(obj)`` - notify *obj* when the coroutine is finished
 
 What "notify" means here depends on the type of *obj*: a callable is simply
-called, an :class:`~eventlet.coros.event` or a :class:`~eventlet.coros.queue`
+called, an :class:`~eventlet.coros.Event` or a :class:`~eventlet.coros.queue`
 is notified using ``send``/``send_exception`` methods and if *obj* is another
 greenlet it's killed with :class:`LinkedExited` exception.
 
 Here's an example:
 
->>> event = coros.event()
+>>> event = coros.Event()
 >>> _ = p.link(event)
 >>> event.wait()
 3
@@ -57,7 +57,7 @@ coroutines and wait for all them to complete. Such a function is provided by
 this module.
 """
 import sys
-from eventlet import api, coros
+from eventlet import api, coros, hubs
 
 __all__ = ['LinkedExited',
            'LinkedFailed',
@@ -202,8 +202,8 @@ def killall(procs, *throw_args, **kwargs):
         raise TypeError('Invalid keyword argument for proc.killall(): %s' % ', '.join(kwargs.keys()))
     for g in procs:
         if not g.dead:
-            api.get_hub().schedule_call_global(0, g.throw, *throw_args)
-    if wait and api.getcurrent() is not api.get_hub().greenlet:
+            hubs.get_hub().schedule_call_global(0, g.throw, *throw_args)
+    if wait and api.getcurrent() is not hubs.get_hub().greenlet:
         api.sleep(0)
 
 
@@ -223,8 +223,8 @@ def spawn_greenlet(function, *args):
     supported (limitation of greenlet), use :func:`spawn` to work around that.
     """
     g = api.Greenlet(function)
-    g.parent = api.get_hub().greenlet
-    api.get_hub().schedule_call_global(0, g.switch, *args)
+    g.parent = hubs.get_hub().greenlet
+    hubs.get_hub().schedule_call_global(0, g.switch, *args)
     return g
 
 
@@ -237,7 +237,7 @@ class Source(object):
     link. It is possible to link to events, queues, greenlets and callables.
 
     >>> source = Source()
-    >>> event = coros.event()
+    >>> event = coros.Event()
     >>> _ = source.link(event)
 
     Once source's :meth:`send` or :meth:`send_exception` method is called, all
@@ -395,7 +395,7 @@ class Source(object):
         self._start_send()
 
     def _start_send(self):
-        api.get_hub().schedule_call_global(0, self._do_send, self._value_links.items(), self._value_links)
+        hubs.get_hub().schedule_call_global(0, self._do_send, self._value_links.items(), self._value_links)
 
     def send_exception(self, *throw_args):
         assert not self.ready(), "%s has been fired already" % self
@@ -404,7 +404,7 @@ class Source(object):
         self._start_send_exception()
 
     def _start_send_exception(self):
-        api.get_hub().schedule_call_global(0, self._do_send, self._exception_links.items(), self._exception_links)
+        hubs.get_hub().schedule_call_global(0, self._do_send, self._exception_links.items(), self._exception_links)
 
     def _do_send(self, links, consult):
         while links:
@@ -416,7 +416,7 @@ class Source(object):
                     finally:
                         consult.pop(listener, None)
             except:
-                api.get_hub().schedule_call_global(0, self._do_send, links, consult)
+                hubs.get_hub().schedule_call_global(0, self._do_send, links, consult)
                 raise
 
     def wait(self, timeout=None, *throw_args):
@@ -474,7 +474,7 @@ class Waiter(object):
         """Wake up the greenlet that is calling wait() currently (if there is one).
         Can only be called from get_hub().greenlet.
         """
-        assert api.getcurrent() is api.get_hub().greenlet
+        assert api.getcurrent() is hubs.get_hub().greenlet
         if self.greenlet is not None:
             self.greenlet.switch(value)
 
@@ -482,7 +482,7 @@ class Waiter(object):
         """Make greenlet calling wait() wake up (if there is a wait()).
         Can only be called from get_hub().greenlet.
         """
-        assert api.getcurrent() is api.get_hub().greenlet
+        assert api.getcurrent() is hubs.get_hub().greenlet
         if self.greenlet is not None:
             self.greenlet.throw(*throw_args)
 
@@ -492,10 +492,10 @@ class Waiter(object):
         """
         assert self.greenlet is None
         current = api.getcurrent()
-        assert current is not api.get_hub().greenlet
+        assert current is not hubs.get_hub().greenlet
         self.greenlet = current
         try:
-            return api.get_hub().switch()
+            return hubs.get_hub().switch()
         finally:
             self.greenlet = None
 
@@ -587,8 +587,8 @@ class Proc(Source):
         if not self.dead:
             if not throw_args:
                 throw_args = (ProcExit, )
-            api.get_hub().schedule_call_global(0, self.greenlet.throw, *throw_args)
-            if api.getcurrent() is not api.get_hub().greenlet:
+            hubs.get_hub().schedule_call_global(0, self.greenlet.throw, *throw_args)
+            if api.getcurrent() is not hubs.get_hub().greenlet:
                 api.sleep(0)
 
     # QQQ maybe Proc should not inherit from Source (because its send() and send_exception()
@@ -612,16 +612,6 @@ def spawn_link_exception(function, *args, **kwargs):
     p.link_exception()
     return p
 
-
-def trap_errors(errors, func, *args, **kwargs):
-    """DEPRECATED; use wrap_errors"""
-    import warnings
-    warnings.warn("proc.trap_errors function is deprecated in favor of proc.wrap_errors class",
-                  DeprecationWarning, stacklevel=2)
-    try:
-        return func(*args, **kwargs)
-    except errors, ex:
-        return ex
 
 
 class wrap_errors(object):

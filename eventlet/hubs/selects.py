@@ -5,6 +5,11 @@ import time
 
 from eventlet.hubs.hub import BaseHub, READ, WRITE
 
+try:
+    BAD_SOCK = (errno.EBADF, errno.WSAENOTSOCK)
+except AttributeError:
+    BAD_SOCK = (errno.EBADF,)
+
 class Hub(BaseHub):
     def _remove_closed_fds(self):
         """ Iterate through fds that have had their socket objects recently closed,
@@ -30,7 +35,7 @@ class Hub(BaseHub):
         except select.error, e:
             if e.args[0] == errno.EINTR:
                 return
-            elif e.args[0] == errno.EBADF:
+            elif e.args[0] in BAD_SOCK:
                 self._remove_closed_fds()
                 self.closed_fds = []
                 return
@@ -38,10 +43,10 @@ class Hub(BaseHub):
                 raise
 
         for fileno in er:
-            for r in readers.get(fileno):
-                r(fileno)
-            for w in writers.get(fileno):
-                w(fileno)
+            for reader in readers.get(fileno, ()):
+                reader(fileno)
+            for writer in writers.get(fileno, ()):
+                writer(fileno)
             
         for listeners, events in ((readers, r), (writers, w)):
             for fileno in events:

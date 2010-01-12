@@ -15,12 +15,25 @@ def get_ident(gr=None):
 def start_new_thread(function, args=(), kwargs={}):
     g = spawn(function, *args, **kwargs)
     return get_ident(g)
+    
+start_new = start_new_thread
 
 def allocate_lock():
     return LockType(1)
 
+allocate = allocate_lock
+
 def exit():
     raise greenlet.GreenletExit
+    
+exit_thread = __thread.exit_thread
+
+def interrupt_main():
+    curr = greenlet.getcurrent()
+    if curr.parent and not curr.parent.dead:
+        curr.parent.throw(KeyboardInterrupt())
+    else:
+        raise KeyboardInterrupt()
 
 if hasattr(__thread, 'stack_size'):
     def stack_size(size=None):
@@ -32,4 +45,4 @@ if hasattr(__thread, 'stack_size'):
             pass
             # not going to decrease stack_size, because otherwise other greenlets in this thread will suffer
 
-# XXX interrupt_main
+from eventlet.corolocal import local as _local

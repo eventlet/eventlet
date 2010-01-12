@@ -236,25 +236,6 @@ class BaseConnectionPool(Pool):
         self.clear()
 
 
-class SaranwrappedConnectionPool(BaseConnectionPool):
-    """A pool which gives out saranwrapped database connections.
-    """
-    def create(self):
-        return self.connect(self._db_module,
-                                    self.connect_timeout,
-                                    *self._args,
-                                    **self._kwargs)
-
-    @classmethod
-    def connect(cls, db_module, connect_timeout, *args, **kw):
-        timeout = api.exc_after(connect_timeout, ConnectTimeout())
-        try:
-            from eventlet import saranwrap
-            return saranwrap.wrap(db_module).connect(*args, **kw)
-        finally:
-            timeout.cancel()
-
-
 class TpooledConnectionPool(BaseConnectionPool):
     """A pool which gives out :class:`~eventlet.tpool.Proxy`-based database
     connections.
@@ -316,14 +297,14 @@ class GenericConnectionWrapper(object):
     def character_set_name(self,*args, **kwargs): return self._base.character_set_name(*args, **kwargs)
     def close(self,*args, **kwargs): return self._base.close(*args, **kwargs)
     def commit(self,*args, **kwargs): return self._base.commit(*args, **kwargs)
-    def cursor(self, cursorclass=None, **kwargs): return self._base.cursor(cursorclass, **kwargs)
+    def cursor(self, *args, **kwargs): return self._base.cursor(*args, **kwargs)
     def dump_debug_info(self,*args, **kwargs): return self._base.dump_debug_info(*args, **kwargs)
     def errno(self,*args, **kwargs): return self._base.errno(*args, **kwargs)
     def error(self,*args, **kwargs): return self._base.error(*args, **kwargs)
-    def errorhandler(self, conn, curs, errcls, errval): return self._base.errorhandler(conn, curs, errcls, errval)
-    def literal(self, o): return self._base.literal(o)
-    def set_character_set(self, charset): return self._base.set_character_set(charset)
-    def set_sql_mode(self, sql_mode): return self._base.set_sql_mode(sql_mode)
+    def errorhandler(self, *args, **kwargs): return self._base.errorhandler(*args, **kwargs)
+    def literal(self, *args, **kwargs): return self._base.literal(*args, **kwargs)
+    def set_character_set(self, *args, **kwargs): return self._base.set_character_set(*args, **kwargs)
+    def set_sql_mode(self, *args, **kwargs): return self._base.set_sql_mode(*args, **kwargs)
     def show_warnings(self): return self._base.show_warnings()
     def warning_count(self): return self._base.warning_count()
     def ping(self,*args, **kwargs): return self._base.ping(*args, **kwargs)
@@ -334,7 +315,7 @@ class GenericConnectionWrapper(object):
     def server_capabilities(self,*args, **kwargs): return self._base.server_capabilities(*args, **kwargs)
     def shutdown(self,*args, **kwargs): return self._base.shutdown(*args, **kwargs)
     def sqlstate(self,*args, **kwargs): return self._base.sqlstate(*args, **kwargs)
-    def stat(self,*args, **kwargs): return self._base.stat(*args, **kwargs)
+    def stat(self, *args, **kwargs): return self._base.stat(*args, **kwargs)
     def store_result(self,*args, **kwargs): return self._base.store_result(*args, **kwargs)
     def string_literal(self,*args, **kwargs): return self._base.string_literal(*args, **kwargs)
     def thread_id(self,*args, **kwargs): return self._base.thread_id(*args, **kwargs)

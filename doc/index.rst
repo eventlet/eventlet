@@ -45,6 +45,7 @@ Contents
 
    basic_usage
    chat_server_example
+   ssl
    threading
    testing
    history
@@ -66,9 +67,8 @@ Areas That Need Work
 --------------------
 
 * Not enough test coverage -- the goal is 100%, but we are not there yet.
-* Not well-tested on Windows
- * The eventlet.processes module is known to not work on Windows.
-
+* Not well-tested on Windows, though it is a supported platform and bug reports are encouraged.
+* The :mod:`eventlet.processes` module is known to not work on Windows.
 
 License
 ---------

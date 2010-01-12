@@ -1,6 +1,5 @@
-from twisted.internet import defer
-from twisted.python import failure
-from eventlet.api import get_hub, spawn, getcurrent
+from eventlet.api import spawn, getcurrent
+from eventlet.hubs import get_hub
 
 def block_on(deferred):
     cur = [getcurrent()]
@@ -12,17 +11,17 @@ def block_on(deferred):
             else:
                 cur[0].switch(value)
         return value
-    def eb(failure):
+    def eb(fail):
         if cur:
             if getcurrent() is cur[0]:
-                synchronous.append((None, failure))
+                synchronous.append((None, fail))
             else:
-                failure.throwExceptionIntoGenerator(cur[0])
+                fail.throwExceptionIntoGenerator(cur[0])
     deferred.addCallbacks(cb, eb)
     if synchronous:
-        result, failure = synchronous[0]
-        if failure is not None:
-            failure.raiseException()
+        result, fail = synchronous[0]
+        if fail is not None:
+            fail.raiseException()
         return result
     try:
         return get_hub().switch()
@@ -33,12 +32,14 @@ def _putResultInDeferred(deferred, f, args, kwargs):
     try:
         result = f(*args, **kwargs)
     except:
+        from twisted.python import failure
         f = failure.Failure()
         deferred.errback(f)
     else:
         deferred.callback(result)
 
 def deferToGreenThread(func, *args, **kwargs):
+    from twisted.internet import defer
     d = defer.Deferred()
     spawn(_putResultInDeferred, d, func, args, kwargs)
     return d

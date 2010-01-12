@@ -1,8 +1,10 @@
 import collections
 import time
 import traceback
+import warnings
 
 from eventlet import api
+from eventlet import hubs
 
 
 class Cancelled(RuntimeError):
@@ -15,7 +17,7 @@ class NOT_USED:
 
 NOT_USED = NOT_USED()
 
-class event(object):
+class Event(object):
     """An abstraction where an arbitrary number of coroutines
     can wait for one event from another.
 
@@ -28,7 +30,7 @@ class event(object):
     They are ideal for communicating return values between coroutines.
 
     >>> from eventlet import coros, api
-    >>> evt = coros.event()
+    >>> evt = coros.Event()
     >>> def baz(b):
     ...     evt.send(b + 1)
     ...
@@ -50,7 +52,7 @@ class event(object):
         Can only be called after :meth:`send` has been called.
 
         >>> from eventlet import coros
-        >>> evt = coros.event()
+        >>> evt = coros.Event()
         >>> evt.send(1)
         >>> evt.reset()
         >>> evt.send(2)
@@ -111,7 +113,7 @@ class event(object):
         :meth:`send`.
 
         >>> from eventlet import coros, api
-        >>> evt = coros.event()
+        >>> evt = coros.Event()
         >>> def wait_on():
         ...    retval = evt.wait()
         ...    print "waited for", retval
@@ -129,7 +131,7 @@ class event(object):
         if self._result is NOT_USED:
             self._waiters.add(api.getcurrent())
             try:
-                return api.get_hub().switch()
+                return hubs.get_hub().switch()
             finally:
                 self._waiters.discard(api.getcurrent())
         if self._exc is not None:
@@ -141,7 +143,7 @@ class event(object):
         result and then returns immediately to the parent.
 
         >>> from eventlet import coros, api
-        >>> evt = coros.event()
+        >>> evt = coros.Event()
         >>> def waiter():
         ...     print 'about to wait'
         ...     result = evt.wait()
@@ -167,7 +169,7 @@ class event(object):
         if exc is not None and not isinstance(exc, tuple):
             exc = (exc, )
         self._exc = exc
-        hub = api.get_hub()
+        hub = hubs.get_hub()
         if self._waiters:
             hub.schedule_call_global(0, self._do_send, self._result, self._exc, self._waiters.copy())
 
@@ -184,6 +186,10 @@ class event(object):
         # the arguments and the same as for greenlet.throw
         return self.send(None, args)
 
+def event(*a, **kw):
+    warnings.warn("The event class has been capitalized!  Please construct"
+        " Event objects instead.", DeprecationWarning, stacklevel=2)
+    return Event(*a, **kw)
 
 class Semaphore(object):
     """An unbounded semaphore.
@@ -219,7 +225,7 @@ class Semaphore(object):
             self._waiters.add(api.getcurrent())
             try:
                 while self.counter <= 0:
-                    api.get_hub().switch()
+                    hubs.get_hub().switch()
             finally:
                 self._waiters.discard(api.getcurrent())
         self.counter -= 1
@@ -232,7 +238,7 @@ class Semaphore(object):
         # `blocking' parameter is for consistency with BoundedSemaphore and is ignored
         self.counter += 1
         if self._waiters:
-            api.get_hub().schedule_call_global(0, self._do_acquire)
+            hubs.get_hub().schedule_call_global(0, self._do_acquire)
         return True
 
     def _do_acquire(self):
@@ -342,7 +348,7 @@ class metaphore(object):
     """
     def __init__(self):
         self.counter = 0
-        self.event   = event()
+        self.event   = Event()
         # send() right away, else we'd wait on the default 0 count!
         self.event.send()
 
@@ -391,7 +397,7 @@ def execute(func, *args, **kw):
     >>> evt.wait()
     ('foo', 1)
     """
-    evt = event()
+    evt = Event()
     def _really_execute():
         evt.send(func(*args, **kw))
     api.spawn(_really_execute)
@@ -424,7 +430,7 @@ class Queue(object):
             exc = (exc, )
         self.items.append((result, exc))
         if self._waiters:
-            api.get_hub().schedule_call_global(0, self._do_send)
+            hubs.get_hub().schedule_call_global(0, self._do_send)
 
     def send_exception(self, *args):
         # the arguments are the same as for greenlet.throw
@@ -446,7 +452,7 @@ class Queue(object):
         else:
             self._waiters.add(api.getcurrent())
             try:
-                result, exc = api.get_hub().switch()
+                result, exc = hubs.get_hub().switch()
                 if exc is None:
                     return result
                 else:
@@ -486,20 +492,20 @@ class Channel(object):
     def send(self, result=None, exc=None):
         if exc is not None and not isinstance(exc, tuple):
             exc = (exc, )
-        if api.getcurrent() is api.get_hub().greenlet:
+        if api.getcurrent() is hubs.get_hub().greenlet:
             self.items.append((result, exc))
             if self._waiters:
-                api.get_hub().schedule_call_global(0, self._do_switch)
+                hubs.get_hub().schedule_call_global(0, self._do_switch)
         else:
             self.items.append((result, exc))
             # note that send() does not work well with timeouts. if your timeout fires
             # after this point, the item will remain in the queue
             if self._waiters:
-                api.get_hub().schedule_call_global(0, self._do_switch)
+                hubs.get_hub().schedule_call_global(0, self._do_switch)
             if len(self.items) > self.max_size:
                 self._senders.add(api.getcurrent())
                 try:
-                    api.get_hub().switch()
+                    hubs.get_hub().switch()
                 finally:
                     self._senders.discard(api.getcurrent())
 
@@ -529,17 +535,17 @@ class Channel(object):
         if self.items:
             result, exc = self.items.popleft()
             if len(self.items) <= self.max_size:
-                api.get_hub().schedule_call_global(0, self._do_switch)
+                hubs.get_hub().schedule_call_global(0, self._do_switch)
             if exc is None:
                 return result
             else:
                 api.getcurrent().throw(*exc)
         else:
             if self._senders:
-                api.get_hub().schedule_call_global(0, self._do_switch)
+                hubs.get_hub().schedule_call_global(0, self._do_switch)
             self._waiters.add(api.getcurrent())
             try:
-                result, exc = api.get_hub().switch()
+                result, exc = hubs.get_hub().switch()
                 if exc is None:
                     return result
                 else:
@@ -583,7 +589,7 @@ class Actor(object):
         serially.
         """
         self._mailbox = collections.deque()
-        self._event = event()
+        self._event = Event()
         self._killer = api.spawn(self.run_forever)
         self._pool = CoroutinePool(min_size=0, max_size=concurrency)
 
@@ -592,7 +598,7 @@ class Actor(object):
         while True:
             if not self._mailbox:
                 self._event.wait()
-                self._event = event()
+                self._event = Event()
             else:
                 # leave the message in the mailbox until after it's
                 # been processed so the event doesn't get triggered
@@ -629,11 +635,11 @@ class Actor(object):
         ...
         >>> a = Greeter()
 
-        This example uses events to synchronize between the actor and the main
+        This example uses Events to synchronize between the actor and the main
         coroutine in a predictable manner, but this kinda defeats the point of
         the :class:`Actor`, so don't do it in a real application.
 
-        >>> evt = event()
+        >>> evt = Event()
         >>> a.cast( ("message 1", evt) )
         >>> evt.wait()  # force it to run at this exact moment
         received message 1

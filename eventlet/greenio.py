@@ -1,6 +1,5 @@
-from eventlet.api import trampoline, get_hub
-from eventlet import util
-
+from eventlet.api import trampoline
+from eventlet.hubs import get_hub
 
 BUFFER_SIZE = 4096
 
@@ -8,13 +7,15 @@ import errno
 import os
 import socket
 from socket import socket as _original_socket
+import sys
 import time
+import warnings
 
 
 from errno import EWOULDBLOCK, EAGAIN
 
 
-__all__ = ['GreenSocket', 'GreenFile', 'GreenPipe']
+__all__ = ['GreenSocket', 'GreenPipe']
 
 def higher_order_recv(recv_func):
     def recv(self, buflen, flags=0):
@@ -90,13 +91,20 @@ def socket_send(descriptor, data, flags=0):
             return 0
         raise
 
-# winsock sometimes throws ENOTCONN
-SOCKET_CLOSED = (errno.ECONNRESET, errno.ENOTCONN, errno.ESHUTDOWN)
+if sys.platform[:3]=="win":
+    # winsock sometimes throws ENOTCONN
+    SOCKET_BLOCKING = (errno.EWOULDBLOCK,)
+    SOCKET_CLOSED = (errno.ECONNRESET, errno.ENOTCONN, errno.ESHUTDOWN)
+else:
+    # oddly, on linux/darwin, an unconnected socket is expected to block,
+    # so we treat ENOTCONN the same as EWOULDBLOCK
+    SOCKET_BLOCKING = (errno.EWOULDBLOCK, errno.ENOTCONN)
+    SOCKET_CLOSED = (errno.ECONNRESET, errno.ESHUTDOWN)
 def socket_recv(descriptor, buflen, flags=0):
     try:
         return descriptor.recv(buflen, flags)
     except socket.error, e:
-        if e[0] == errno.EWOULDBLOCK:
+        if e[0] in SOCKET_BLOCKING:
             return None
         if e[0] in SOCKET_CLOSED:
             return ''
@@ -135,8 +143,22 @@ def set_nonblocking(fd):
     try:
         setblocking = fd.setblocking
     except AttributeError:
-        # This version of Python predates socket.setblocking()
-        import fcntl
+        # fd has no setblocking() method. It could be that this version of
+        # Python predates socket.setblocking(). In that case, we can still set
+        # the flag "by hand" on the underlying OS fileno using the fcntl
+        # module.
+        try:
+            import fcntl
+        except ImportError:
+            # Whoops, Windows has no fcntl module. This might not be a socket
+            # at all, but rather a file-like object with no setblocking()
+            # method. In particular, on Windows, pipes don't support
+            # non-blocking I/O and therefore don't have that method. Which
+            # means fcntl wouldn't help even if we could load it.
+            raise NotImplementedError("set_nonblocking() on a file object "
+                                      "with no setblocking() method "
+                                      "(Windows pipes don't support non-blocking I/O)")
+        # We managed to import fcntl.
         fileno = fd.fileno()
         flags = fcntl.fcntl(fileno, fcntl.F_GETFL)
         fcntl.fcntl(fileno, fcntl.F_SETFL, flags | os.O_NONBLOCK)
@@ -144,6 +166,12 @@ def set_nonblocking(fd):
         # socket supports setblocking()
         setblocking(0)
 
+
+try:
+    from socket import _GLOBAL_DEFAULT_TIMEOUT
+except ImportError:
+    _GLOBAL_DEFAULT_TIMEOUT = object()
+    
 
 class GreenSocket(object):
     timeout = None
@@ -154,7 +182,11 @@ class GreenSocket(object):
             fd = family_or_realsock
             assert not args, args
             assert not kwargs, kwargs
-
+        try:
+            orig_timeout = fd.gettimeout()
+        except AttributeError:
+            orig_timeout = None
+        
         set_nonblocking(fd)
         self.fd = fd
         self._fileno = fd.fileno()
@@ -167,6 +199,10 @@ class GreenSocket(object):
         # when client calls setblocking(0) or settimeout(0) the socket must
         # act non-blocking
         self.act_non_blocking = False
+        
+        # import timeout from the other fd if it's distinct
+        if orig_timeout and orig_timeout is not self.timeout:
+            self.settimeout(orig_timeout)
         
     @property
     def _sock(self):
@@ -281,7 +317,7 @@ class GreenSocket(object):
         return socket._fileobject(self.dup(), mode, bufsize)
 
     def makeGreenFile(self, mode='r', bufsize=-1):
-        return GreenFile(self.dup())
+        return Green_fileobject(self.dup())
 
     recv = higher_order_recv(socket_recv)
 
@@ -330,7 +366,7 @@ class GreenSocket(object):
         return fn(*args, **kw)
 
     def settimeout(self, howlong):
-        if howlong is None:
+        if howlong is None or howlong == _GLOBAL_DEFAULT_TIMEOUT:
             self.setblocking(True)
             return
         try:
@@ -349,8 +385,9 @@ class GreenSocket(object):
         return self.timeout
 
 
-
-class GreenFile(object):
+class Green_fileobject(object):
+    """Green version of socket._fileobject, for use only with regular 
+    sockets."""
     newlines = '\r\n'
     mode = 'wb+'
 
@@ -473,7 +510,7 @@ class GreenPipeSocket(GreenSocket):
     send = higher_order_send(file_send)
 
 
-class GreenPipe(GreenFile):
+class GreenPipe(Green_fileobject):
     def __init__(self, fd):
         set_nonblocking(fd)
         self.fd = GreenPipeSocket(fd)
@@ -491,204 +528,24 @@ class GreenPipe(GreenFile):
         self.fd.fd.flush()
 
 
+# import SSL module here so we can refer to greenio.SSL.exceptionclass
 try:
     from OpenSSL import SSL
 except ImportError:
+    # pyOpenSSL not installed, define exceptions anyway for convenience
     class SSL(object):
         class WantWriteError(object):
             pass
-
+        
         class WantReadError(object):
             pass
-
+        
         class ZeroReturnError(object):
             pass
-
+        
         class SysCallError(object):
             pass
-
-class GreenSSL(GreenSocket):
-    """ Nonblocking wrapper for SSL.Connection objects.
     
-    Note: not compatible with SSLObject 
-    (http://www.python.org/doc/2.5.2/lib/ssl-objects.html) because it does not 
-    implement server() or issuer(), and the read() method has a mandatory size.
-    """
-    def __init__(self, fd):
-        super(GreenSSL, self).__init__(fd)
-        assert isinstance(fd, (SSL.ConnectionType)), \
-               "GreenSSL can only be constructed with an "\
-               "OpenSSL Connection object"
-        self.sock = self
-        
-    def close(self):
-        # *NOTE: in older versions of eventlet, we called shutdown() on SSL sockets
-        # before closing them. That wasn't right because correctly-written clients
-        # would have already called shutdown, and calling shutdown a second time
-        # triggers unwanted bidirectional communication.
-        super(GreenSSL, self).close()
-    
-    def do_handshake(self):
-        """ Perform an SSL handshake (usually called after renegotiate or one of 
-        set_accept_state or set_accept_state). This can raise the same exceptions as 
-        send and recv. """
-        if self.act_non_blocking:
-            return self.fd.do_handshake()
-        while True:
-            try:
-                return self.fd.do_handshake()
-            except SSL.WantReadError:
-                trampoline(self.fd.fileno(), 
-                           read=True, 
-                           timeout=self.timeout, 
-                           timeout_exc=socket.timeout)
-            except SSL.WantWriteError:
-                trampoline(self.fd.fileno(), 
-                           write=True, 
-                           timeout=self.timeout, 
-                           timeout_exc=socket.timeout)
-                           
-    def dup(self):
-        raise NotImplementedError("Dup not supported on SSL sockets")
-        
-    def get_app_data(self, *args, **kw):
-        fn = self.get_app_data = self.fd.get_app_data
-        return fn(*args, **kw)
-
-    def set_app_data(self, *args, **kw):
-        fn = self.set_app_data = self.fd.set_app_data
-        return fn(*args, **kw)        
-    
-    def get_cipher_list(self, *args, **kw):
-        fn = self.get_cipher_list = self.fd.get_cipher_list
-        return fn(*args, **kw)
-        
-    def get_context(self, *args, **kw):
-        fn = self.get_context = self.fd.get_context
-        return fn(*args, **kw)
-    
-    def get_peer_certificate(self, *args, **kw):
-        fn = self.get_peer_certificate = self.fd.get_peer_certificate
-        return fn(*args, **kw)
-        
-    def makefile(self, mode='r', bufsize=-1):
-        raise NotImplementedError("Makefile not supported on SSL sockets")  
-        
-    def pending(self, *args, **kw):
-        fn = self.pending = self.fd.pending
-        return fn(*args, **kw)      
-
-    def read(self, size):
-        """Works like a blocking call to SSL_read(), whose behavior is 
-        described here:  http://www.openssl.org/docs/ssl/SSL_read.html"""
-        if self.act_non_blocking:
-            return self.fd.read(size)
-        while True:
-            try:
-                return self.fd.read(size)
-            except SSL.WantReadError:
-                trampoline(self.fd.fileno(), 
-                           read=True, 
-                           timeout=self.timeout, 
-                           timeout_exc=socket.timeout)
-            except SSL.WantWriteError:
-                trampoline(self.fd.fileno(), 
-                           write=True, 
-                           timeout=self.timeout, 
-                           timeout_exc=socket.timeout)
-            except SSL.SysCallError, e:
-                if e[0] == -1 or e[0] > 0:
-                    return ''
-            
-    recv = read
-    
-    def renegotiate(self, *args, **kw):
-        fn = self.renegotiate = self.fd.renegotiate
-        return fn(*args, **kw)  
-
-    def write(self, data):
-        """Works like a blocking call to SSL_write(), whose behavior is 
-        described here:  http://www.openssl.org/docs/ssl/SSL_write.html"""
-        if not data:
-            return 0 # calling SSL_write() with 0 bytes to be sent is undefined
-        if self.act_non_blocking:
-            return self.fd.write(data)
-        while True:
-            try:
-                return self.fd.write(data)
-            except SSL.WantReadError:
-                trampoline(self.fd.fileno(), 
-                           read=True, 
-                           timeout=self.timeout, 
-                           timeout_exc=socket.timeout)
-            except SSL.WantWriteError:
-                trampoline(self.fd.fileno(), 
-                           write=True, 
-                           timeout=self.timeout, 
-                           timeout_exc=socket.timeout)
-                           
-    send = write
-    
-    def sendall(self, data):
-        """Send "all" data on the connection. This calls send() repeatedly until
-        all data is sent. If an error occurs, it's impossible to tell how much data
-        has been sent.
-
-        No return value."""
-        tail = self.send(data)
-        while tail < len(data):
-            tail += self.send(data[tail:])
-            
-    def set_accept_state(self, *args, **kw):
-        fn = self.set_accept_state = self.fd.set_accept_state
-        return fn(*args, **kw)
-
-    def set_connect_state(self, *args, **kw):
-        fn = self.set_connect_state = self.fd.set_connect_state
-        return fn(*args, **kw)
-        
-    def shutdown(self):
-        if self.act_non_blocking:
-            return self.fd.shutdown()
-        while True:
-            try:
-                return self.fd.shutdown()
-            except SSL.WantReadError:
-                trampoline(self.fd.fileno(), 
-                           read=True, 
-                           timeout=self.timeout, 
-                           timeout_exc=socket.timeout)
-            except SSL.WantWriteError:
-                trampoline(self.fd.fileno(), 
-                           write=True, 
-                           timeout=self.timeout, 
-                           timeout_exc=socket.timeout)
-
-
-    def get_shutdown(self, *args, **kw):
-        fn = self.get_shutdown = self.fd.get_shutdown
-        return fn(*args, **kw)
-        
-    def set_shutdown(self, *args, **kw):
-        fn = self.set_shutdown = self.fd.set_shutdown
-        return fn(*args, **kw)
-
-    def sock_shutdown(self, *args, **kw):
-        fn = self.sock_shutdown = self.fd.sock_shutdown
-        return fn(*args, **kw)
-        
-    def state_string(self, *args, **kw):
-        fn = self.state_string = self.fd.state_string
-        return fn(*args, **kw)
-    
-    def want_read(self, *args, **kw):
-        fn = self.want_read = self.fd.want_read
-        return fn(*args, **kw)
-
-    def want_write(self, *args, **kw):
-        fn = self.want_write = self.fd.want_write
-        return fn(*args, **kw)
-
 
 def shutdown_safe(sock):
     """ Shuts down the socket. This is a convenience method for
@@ -712,67 +569,3 @@ def shutdown_safe(sock):
         if e[0] != errno.ENOTCONN:
             raise
 
-
-def _convert_to_sslerror(ex):
-    """ Transliterates SSL.SysCallErrors to socket.sslerrors"""
-    return socket.sslerror((ex[0], ex[1]))
-    
-        
-class GreenSSLObject(object):
-    """ Wrapper object around the SSLObjects returned by socket.ssl, which have a 
-    slightly different interface from SSL.Connection objects. """
-    def __init__(self, green_ssl_obj):
-        """ Should only be called by a 'green' socket.ssl """
-        try:
-            from eventlet.green.ssl import GreenSSLSocket
-        except ImportError:
-            class GreenSSLSocket(object):
-                pass
-        
-        assert isinstance(green_ssl_obj, (GreenSSL, GreenSSLSocket))
-        self.connection = green_ssl_obj
-        try:
-            # if it's already connected, do the handshake
-            self.connection.getpeername()
-        except:
-            pass
-        else:
-            try:
-                self.connection.do_handshake()
-            except SSL.SysCallError, e:
-                raise _convert_to_sslerror(e)
-        
-    def read(self, n=None):
-        """If n is provided, read n bytes from the SSL connection, otherwise read
-        until EOF. The return value is a string of the bytes read."""
-        if n is None:
-            # don't support this until someone needs it
-            raise NotImplementedError("GreenSSLObject does not support "\
-            " unlimited reads until we hear of someone needing to use them.")
-        else:
-            try:
-                return self.connection.read(n)
-            except SSL.ZeroReturnError:
-                return ''
-            except SSL.SysCallError, e:
-                raise _convert_to_sslerror(e)
-            
-    def write(self, s):
-        """Writes the string s to the on the object's SSL connection. 
-        The return value is the number of bytes written. """
-        try:
-            return self.connection.write(s)
-        except SSL.SysCallError, e:
-            raise _convert_to_sslerror(e)
-
-    def server(self):
-        """ Returns a string describing the server's certificate. Useful for debugging
-        purposes; do not parse the content of this string because its format can't be
-        parsed unambiguously. """
-        return str(self.connection.get_peer_certificate().get_subject())
-        
-    def issuer(self):
-        """Returns a string describing the issuer of the server's certificate. Useful
-        for debugging purposes; do not parse the content of this string because its 
-        format can't be parsed unambiguously."""
-        return str(self.connection.get_peer_certificate().get_issuer())

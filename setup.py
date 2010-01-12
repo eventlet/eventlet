@@ -6,8 +6,7 @@ from eventlet import __version__
 import sys
 
 requirements = []
-for flag, req in [('--without-greenlet','greenlet >= 0.2'),
-                  ('--without-pyopenssl', 'pyopenssl')]:
+for flag, req in [('--without-greenlet','greenlet >= 0.2')]:
     if flag in sys.argv:
         sys.argv.remove(flag)
     else:

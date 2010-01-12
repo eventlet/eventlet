@@ -1,6 +1,6 @@
 "Test cases for db_pool"
 
-from tests import skipped, skip_unless_requirement
+from tests import skipped, skip_unless
 from unittest import TestCase, main
 from eventlet import api, coros
 from eventlet import db_pool
@@ -132,7 +132,7 @@ class TestDBConnectionPool(DBTester):
         self.connection.close()
         self.assert_(not self.connection)
 
-    def fill_test_table(self, conn):
+    def fill_up_table(self, conn):
         curs = conn.cursor()
         for i in range(1000):
             curs.execute('insert into test_table (value_int) values (%s)' % i)
@@ -142,17 +142,17 @@ class TestDBConnectionPool(DBTester):
         self.pool = self.create_pool()
         conn = self.pool.get()
         self.set_up_test_table(conn)
-        self.fill_test_table(conn)
+        self.fill_up_table(conn)
         curs = conn.cursor()
         results = []
         SHORT_QUERY = "select * from test_table"
-        evt = coros.event()
+        evt = coros.Event()
         def a_query():
             self.assert_cursor_works(curs)
             curs.execute(SHORT_QUERY)
             results.append(2)
             evt.send()
-        evt2 = coros.event()
+        evt2 = coros.Event()
         api.spawn(a_query)
         results.append(1)
         self.assertEqual([1], results)
@@ -213,23 +213,23 @@ class TestDBConnectionPool(DBTester):
         self.pool = self.create_pool(2)
         conn = self.pool.get()
         self.set_up_test_table(conn)
-        self.fill_test_table(conn)
+        self.fill_up_table(conn)
         curs = conn.cursor()
         conn2 = self.pool.get()
         self.set_up_test_table(conn2)
-        self.fill_test_table(conn2)
+        self.fill_up_table(conn2)
         curs2 = conn2.cursor()
         results = []
         LONG_QUERY = "select * from test_table"
         SHORT_QUERY = "select * from test_table where row_id <= 20"
 
-        evt = coros.event()
+        evt = coros.Event()
         def long_running_query():
             self.assert_cursor_works(curs)
             curs.execute(LONG_QUERY)
             results.append(1)
             evt.send()
-        evt2 = coros.event()
+        evt2 = coros.Event()
         def short_running_query():
             self.assert_cursor_works(curs2)
             curs2.execute(SHORT_QUERY)
@@ -373,7 +373,7 @@ class TestDBConnectionPool(DBTester):
         conn = self.pool.get()
         self.assertEquals(self.pool.free(), 0)
         self.assertEquals(self.pool.waiting(), 0)
-        e = coros.event()
+        e = coros.Event()
         def retrieve(pool, ev):
             c = pool.get()
             ev.send(c)
@@ -448,23 +448,6 @@ class TestTpoolConnectionPool(TestDBConnectionPool):
         super(TestTpoolConnectionPool, self).tearDown()
 
 
-class TestSaranwrapConnectionPool(TestDBConnectionPool):
-    __test__ = False  # so that nose doesn't try to execute this directly
-    def create_pool(self, max_size = 1, max_idle = 10, max_age = 10, connect_timeout= 0.5, module=None):
-        if module is None:
-            module = self._dbmodule
-        return db_pool.SaranwrappedConnectionPool(module,
-            min_size=0, max_size=max_size, 
-            max_idle=max_idle, max_age=max_age,
-            connect_timeout=connect_timeout,
-            **self._auth)
-
-    def test_raising_create(self):
-        # *TODO: this fails because of saranwrap's unwillingness to
-        # wrap objects in tests, but it should be fixable
-        pass
-
-
 class TestRawConnectionPool(TestDBConnectionPool):
     __test__ = False  # so that nose doesn't try to execute this directly
     def create_pool(self, max_size = 1, max_idle = 10, max_age = 10, connect_timeout= 0.5, module=None):
@@ -477,7 +460,7 @@ class TestRawConnectionPool(TestDBConnectionPool):
             **self._auth)
 
     def test_connection_timeout(self):
-        pass # not gonna work for raw connections because they're not nonblocking
+        pass # not gonna work for raw connections because they're blocking
 
 
 def get_auth():
@@ -506,7 +489,7 @@ def mysql_requirement(_f):
 class TestMysqlConnectionPool(object):
     __test__ = True
 
-    @skip_unless_requirement(mysql_requirement)
+    @skip_unless(mysql_requirement)
     def setUp(self):
         import MySQLdb
         self._dbmodule = MySQLdb
@@ -535,14 +518,10 @@ class TestMysqlConnectionPool(object):
         del db
 
 
-# for some reason the tpool test hangs if run after the saranwrap test
 class Test01MysqlTpool(TestMysqlConnectionPool, TestTpoolConnectionPool, TestCase):
     pass
 
-class Test02MysqlSaranwrap(TestMysqlConnectionPool, TestSaranwrapConnectionPool, TestCase):
-    pass
-
-class Test03MysqlRaw(TestMysqlConnectionPool, TestRawConnectionPool, TestCase):
+class Test02MysqlRaw(TestMysqlConnectionPool, TestRawConnectionPool, TestCase):
     pass
 
 
