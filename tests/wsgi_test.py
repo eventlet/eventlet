@@ -479,7 +479,8 @@ class TestHttpd(LimitedTestCase):
         server_sock = api.tcp_listener(('localhost', 0))
         self.port = server_sock.getsockname()[1]
         server_sock_2 = server_sock.dup()
-        self.killer = api.spawn(wsgi.server, server_sock_2, hello_world)
+        self.killer = api.spawn(wsgi.server, server_sock_2, hello_world, 
+                                log=self.logfile)
         # do a single req/response to verify it's up
         sock = api.connect_tcp(('localhost', self.port))
         fd = sock.makeGreenFile()
@@ -497,7 +498,8 @@ class TestHttpd(LimitedTestCase):
             server_sock_2.accept()
         except socket.error, exc:
             self.assertEqual(exc[0], errno.EBADF)
-        self.killer = api.spawn(wsgi.server, server_sock, hello_world)
+        self.killer = api.spawn(wsgi.server, server_sock, hello_world,
+                                log=self.logfile)
         sock = api.connect_tcp(('localhost', self.port))
         fd = sock.makeGreenFile()
         fd.write('GET / HTTP/1.0\r\nHost: localhost\r\n\r\n')
@@ -607,7 +609,7 @@ class TestHttpd(LimitedTestCase):
                 api.connect_tcp(('localhost', self.port))
                 self.fail("Didn't expect to connect")
             except socket.error, exc:
-                self.assertEquals(exc.errno, errno.ECONNREFUSED)
+                self.assertEquals(exc[0], errno.ECONNREFUSED)
                 
             self.assert_('Invalid argument' in self.logfile.getvalue(),
                 self.logfile.getvalue())
