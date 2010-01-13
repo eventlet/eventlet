@@ -34,6 +34,15 @@ def format_date_time(timestamp):
 BAD_SOCK = set((errno.EBADF, 10053))
 BROKEN_SOCK = set((errno.EPIPE, errno.ECONNRESET))
 
+def get_errno(err):
+    """ Simple method to get the error code out of socket.error objects.  It 
+    compensates for some cases where the code is not in the expected 
+    location."""
+    try:
+        return err[0]
+    except IndexError:
+        return None
+
 class Input(object):
     def __init__(self, 
                  rfile, 
@@ -159,7 +168,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         except greenio.SSL.ZeroReturnError:
             self.raw_requestline = ''
         except socket.error, e:
-            if e[0] not in BAD_SOCK:
+            if get_errno(e) not in BAD_SOCK:
                 raise
             self.raw_requestline = ''
 
@@ -189,7 +198,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.handle_one_response()
             except socket.error, e:
                 # Broken pipe, connection reset by peer
-                if e[0] not in BROKEN_SOCK:
+                if get_errno(e) not in BROKEN_SOCK:
                     raise
         finally:
             self.server.outstanding_requests -= 1
@@ -481,7 +490,7 @@ def server(sock, site,
                 try:
                     client_socket = sock.accept()
                 except socket.error, e:
-                    if e[0] not in ACCEPT_SOCK:
+                    if get_errno(e) not in ACCEPT_SOCK:
                         raise
                 pool.execute_async(serv.process_request, client_socket)
             except (KeyboardInterrupt, SystemExit):
@@ -496,6 +505,6 @@ def server(sock, site,
             # all.
             sock.close()
         except socket.error, e:
-            if e[0] not in BROKEN_SOCK:
+            if get_errno(e) not in BROKEN_SOCK:
                 traceback.print_exc()
 
