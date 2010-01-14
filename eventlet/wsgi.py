@@ -245,12 +245,13 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 else:
                     self.close_connection = 1
 
-                if self.request_version == 'HTTP/1.1' and 'content-length' not in header_list :
-                    use_chunked[0] = True
-                    towrite.append('Transfer-Encoding: chunked\r\n')
-                elif 'content-length' not in header_list:
-                    # client is 1.0 and therefore must read to EOF
-                    self.close_connection = 1
+                if 'content-length' not in header_list:
+                    if self.request_version == 'HTTP/1.1':
+                        use_chunked[0] = True
+                        towrite.append('Transfer-Encoding: chunked\r\n')
+                    elif 'content-length' not in header_list:
+                        # client is 1.0 and therefore must read to EOF
+                        self.close_connection = 1
 
                 if self.close_connection:
                     towrite.append('Connection: close\r\n')
@@ -489,6 +490,7 @@ def server(sock, site,
     :param minimum_chunk_size: Minimum size in bytes for http chunks.  This  can be used to improve performance of applications which yield many small strings, though using it technically violates the WSGI spec.
     :param log_x_forwarded_for: If True (the default), logs the contents of the x-forwarded-for header in addition to the actual client ip address in the 'client_ip' field of the log line.
     :param custom_pool: A custom Pool instance which is used to spawn client green threads.  If this is supplied, max_size is ignored.
+    :param keepalive: If set to False, disables keepalives on the server; all connections will be closed after serving one request.
     :param log_format: A python format string that is used as the template to generate log lines.  The following values can be formatted into it: client_ip, date_time, request_line, status_code, body_length, wall_seconds.  Look the default for an example of how to use this.
     """
     serv = Server(sock, sock.getsockname(), 
