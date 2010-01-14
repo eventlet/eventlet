@@ -229,14 +229,17 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 # send Date header?
                 if 'date' not in header_list:
                     towrite.append('Date: %s\r\n' % (format_date_time(time.time()),))
-                if self.request_version == 'HTTP/1.0':
-                    if self.headers.get('Connection', "").lower() == 'keep-alive':
+
+                client_conn = self.headers.get('Connection', '').lower()
+                if self.server.keepalive and (client_conn == 'keep-alive' or \
+                        (self.request_version == 'HTTP/1.1' and not client_conn == 'close')):
                         towrite.append('Connection: keep-alive\r\n')
                         self.close_connection = 0
-                    else:
-                        towrite.append('Connection: close\r\n')
-                        self.close_connection = 1
-                elif 'content-length' not in header_list:
+                else:
+                    towrite.append('Connection: close\r\n')
+                    self.close_connection = 1
+
+                if self.request_version == 'HTTP/1.1' and 'content-length' not in header_list :
                     use_chunked[0] = True
                     towrite.append('Transfer-Encoding: chunked\r\n')
                 towrite.append('\r\n')
@@ -398,6 +401,7 @@ class Server(BaseHTTPServer.HTTPServer):
                  max_http_version=None, 
                  protocol=HttpProtocol, 
                  minimum_chunk_size=None,
+                 keepalive=True,
                  log_x_forwarded_for=True):
                  
         self.outstanding_requests = 0
@@ -408,6 +412,7 @@ class Server(BaseHTTPServer.HTTPServer):
         else:
             self.log = sys.stderr
         self.app = app
+        self.keepalive = keepalive
         self.environ = environ
         self.max_http_version = max_http_version
         self.protocol = protocol
@@ -448,6 +453,7 @@ def server(sock, site,
            server_event=None, 
            minimum_chunk_size=None,
            log_x_forwarded_for=True,
+           keepalive=True,
            custom_pool=None):
     """  Start up a wsgi server handling requests from the supplied server socket.
     
@@ -463,6 +469,7 @@ def server(sock, site,
                   max_http_version=max_http_version, 
                   protocol=protocol, 
                   minimum_chunk_size=minimum_chunk_size,
+                  keepalive=keepalive,
                   log_x_forwarded_for=log_x_forwarded_for)
     if server_event is not None:
         server_event.send(serv)

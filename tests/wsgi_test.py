@@ -112,11 +112,11 @@ def read_http(sock):
 
     return response_line, headers, body
 
-
-class TestHttpd(LimitedTestCase):
+class HttpdTestCase(LimitedTestCase):
     mode = 'static'
+    keepalive = True
     def setUp(self):
-        super(TestHttpd, self).setUp()
+        super(HttpdTestCase, self).setUp()
         self.logfile = StringIO()
         self.site = Site()
         listener = api.tcp_listener(('localhost', 0))
@@ -126,13 +126,15 @@ class TestHttpd(LimitedTestCase):
             listener, 
             self.site, 
             max_size=128, 
-            log=self.logfile)
+            log=self.logfile,
+            keepalive=self.keepalive)
 
     def tearDown(self):
-        super(TestHttpd, self).tearDown()
+        super(HttpdTestCase, self).tearDown()
         api.kill(self.killer)
         api.sleep(0)
 
+class TestHttpd(HttpdTestCase):
     def test_001_server(self):
         sock = api.connect_tcp(
             ('localhost', self.port))
@@ -424,7 +426,7 @@ class TestHttpd(LimitedTestCase):
         fd.write('GET / HTTP/1.0\r\nHost: localhost\r\nConnection: keep-alive\r\n\r\n')                     
         self.assert_('connection: keep-alive' in 
                      fd.readuntil('\r\n\r\n').lower())
-                     
+
     def test_019_fieldstorage_compat(self):
         def use_fieldstorage(environ, start_response):
             import cgi
@@ -616,6 +618,20 @@ class TestHttpd(LimitedTestCase):
                 self.logfile.getvalue())
         finally:
             sys.stderr = old_stderr
-                    
+
+
+class KeepAliveTestHttpd(HttpdTestCase):
+    keepalive = False
+    def test_026_http_10_nokeepalive(self):
+        # verify that if an http/1.0 client sends connection: keep-alive
+        # and the server doesn't accept keep-alives, we close the connection
+        sock = api.connect_tcp(
+            ('localhost', self.port))
+
+        fd = sock.makeGreenFile()
+        fd.write('GET / HTTP/1.0\r\nHost: localhost\r\nConnection: keep-alive\r\n\r\n')
+        self.assert_('connection: close' in 
+                     fd.readuntil('\r\n\r\n').lower())
+
 if __name__ == '__main__':
     main()
