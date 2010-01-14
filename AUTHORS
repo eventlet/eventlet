@@ -24,13 +24,13 @@ Linden Lab Contributors
 Thanks To
 ---------
 * AdamKG, giving the hint that invalid argument errors were introduced post-0.9.0
-* Michael Barton, 100-continue patch, content-length bugfixes for wsgi
+* Michael Barton, 100-continue patch, content-length bugfixes for wsgi, reviews of wsgi logic
 * gholt, wsgi patches for accepting a custom pool,  and returning 400 if content-length is invalid
 * Luke Tucker, bug report regarding wsgi + webob
 * Chuck Thier, reporting a bug in processes.py
 * Brantley Harris, reporting bug #4
 * Taso Du Val, reproing an exception squelching bug, saving children's lives  ;-)
-* R. Tyler Ballance, bug report on tpool on Windows, help with improving corolocal module, profile performance report, suggestion use flush that fixed tpool on Windows, reporting a bug in wsgi the day after it was introduced, reporting errors found in production use of spawning
+* R. Tyler Ballance, bug report on tpool on Windows, help with improving corolocal module, profile performance report, suggestion that fixed tpool on Windows, quick reporting of wsgi bug, sharing production experiences, patch to support keepalive-disabling
 * Sergey Shepelev, PEP 8 police  :-), reporting bug #5
 * Luci Stanescu, for reporting twisted hub bug
 * Marcus Cavanaugh, for test case code that has been incredibly useful in tracking down bugs

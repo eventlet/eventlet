@@ -231,18 +231,30 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     towrite.append('Date: %s\r\n' % (format_date_time(time.time()),))
 
                 client_conn = self.headers.get('Connection', '').lower()
+                send_keep_alive = False
                 if self.server.keepalive and (client_conn == 'keep-alive' or \
-                        (self.request_version == 'HTTP/1.1' and not client_conn == 'close')):
-                        towrite.append('Connection: keep-alive\r\n')
+                    (self.request_version == 'HTTP/1.1' and
+                     not client_conn == 'close')):
+                        # only send keep-alives back to clients that sent them,
+                        # it's redundant for 1.1 connections
+                        send_keep_alive = (client_conn == 'keep-alive')
                         self.close_connection = 0
                 else:
-                    towrite.append('Connection: close\r\n')
                     self.close_connection = 1
 
                 if self.request_version == 'HTTP/1.1' and 'content-length' not in header_list :
                     use_chunked[0] = True
                     towrite.append('Transfer-Encoding: chunked\r\n')
+                elif 'content-length' not in header_list:
+                    # client is 1.0 and therefore must read to EOF
+                    self.close_connection = 1
+
+                if self.close_connection:
+                    towrite.append('Connection: close\r\n')
+                elif send_keep_alive:
+                    towrite.append('Connection: keep-alive\r\n') 
                 towrite.append('\r\n')
+                # end of header writing
 
             if use_chunked[0]:
                 ## Write the chunked encoding
