@@ -3,6 +3,7 @@ __version__ = '%s.%s.%s' % version_info
 
 from eventlet import greenthread
 from eventlet import greenpool
+from eventlet import queue
 
 sleep = greenthread.sleep
 
@@ -16,3 +17,5 @@ with_timeout = greenthread.with_timeout
 
 GreenPool = greenpool.GreenPool
 GreenPile = greenpool.GreenPile
+
+Queue = queue.Queue
