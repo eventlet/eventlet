@@ -15,57 +15,16 @@ import warnings
 from errno import EWOULDBLOCK, EAGAIN
 
 
-__all__ = ['GreenSocket', 'GreenPipe']
+__all__ = ['GreenSocket', 'GreenPipe', 'shutdown_safe']
 
-def higher_order_recv(recv_func):
-    def recv(self, buflen, flags=0):
-        if self.act_non_blocking:
-            return self.fd.recv(buflen, flags)
-        buf = self.recvbuffer
-        if buf:
-            chunk, self.recvbuffer = buf[:buflen], buf[buflen:]
-            return chunk
-        fd = self.fd
-        bytes = recv_func(fd, buflen, flags)
-        if self.gettimeout():
-            end = time.time()+self.gettimeout()
-        else:
-            end = None
-        timeout = None
-        while bytes is None:
-            try:
-                if end:
-                    timeout = end - time.time()
-                trampoline(fd, read=True, timeout=timeout, timeout_exc=socket.timeout)
-            except socket.timeout:
-                raise
-            except socket.error, e:
-                if e[0] == errno.EPIPE:
-                    bytes = ''
-                else:
-                    raise
-            else:
-                bytes = recv_func(fd, buflen, flags)
-        self.recvcount += len(bytes)
-        return bytes
-    return recv
+CONNECT_ERR = set((errno.EINPROGRESS, errno.EALREADY, errno.EWOULDBLOCK))
+CONNECT_SUCCESS = set((0, errno.EISCONN))
 
-
-def higher_order_send(send_func):
-    def send(self, data, flags=0):
-        if self.act_non_blocking:
-            return self.fd.send(data, flags)
-        count = send_func(self.fd, data, flags)
-        if not count:
-            return 0
-        self.sendcount += count
-        return count
-    return send
-
-
-CONNECT_ERR = (errno.EINPROGRESS, errno.EALREADY, errno.EWOULDBLOCK)
-CONNECT_SUCCESS = (0, errno.EISCONN)
 def socket_connect(descriptor, address):
+    """
+    Attempts to connect to the address, returns the descriptor if it succeeds,
+    returns None if it needs to trampoline, and raises any exceptions.
+    """
     err = descriptor.connect_ex(address)
     if err in CONNECT_ERR:
         return None
@@ -75,6 +34,11 @@ def socket_connect(descriptor, address):
 
 
 def socket_accept(descriptor):
+    """
+    Attempts to accept() on the descriptor, returns a client,address tuple 
+    if it succeeds; returns None if it needs to trampoline, and raises 
+    any exceptions.
+    """
     try:
         return descriptor.accept()
     except socket.error, e:
@@ -83,63 +47,23 @@ def socket_accept(descriptor):
         raise
         
 
-def socket_send(descriptor, data, flags=0):
-    try:
-        return descriptor.send(data, flags)
-    except socket.error, e:
-        if e[0] == errno.EWOULDBLOCK or e[0] == errno.ENOTCONN:
-            return 0
-        raise
-
 if sys.platform[:3]=="win":
     # winsock sometimes throws ENOTCONN
-    SOCKET_BLOCKING = (errno.EWOULDBLOCK,)
-    SOCKET_CLOSED = (errno.ECONNRESET, errno.ENOTCONN, errno.ESHUTDOWN)
+    SOCKET_BLOCKING = set((errno.EWOULDBLOCK,))
+    SOCKET_CLOSED = set((errno.ECONNRESET, errno.ENOTCONN, errno.ESHUTDOWN))
 else:
     # oddly, on linux/darwin, an unconnected socket is expected to block,
     # so we treat ENOTCONN the same as EWOULDBLOCK
-    SOCKET_BLOCKING = (errno.EWOULDBLOCK, errno.ENOTCONN)
-    SOCKET_CLOSED = (errno.ECONNRESET, errno.ESHUTDOWN)
-def socket_recv(descriptor, buflen, flags=0):
-    try:
-        return descriptor.recv(buflen, flags)
-    except socket.error, e:
-        if e[0] in SOCKET_BLOCKING:
-            return None
-        if e[0] in SOCKET_CLOSED:
-            return ''
-        raise
-
-
-def file_recv(fd, buflen, flags=0):
-    try:
-        return fd.read(buflen)
-    except IOError, e:
-        if e[0] == EAGAIN:
-            return None
-        return ''
-    except socket.error, e:
-        if e[0] == errno.EPIPE:
-            return ''
-        raise
-
-
-def file_send(fd, data, flags=0):
-    try:
-        fd.write(data)
-        fd.flush()
-        return len(data)
-    except IOError, e:
-        if e[0] == EAGAIN:
-            return 0
-    except ValueError, e:
-        written = 0
-    except socket.error, e:
-        if e[0] == errno.EPIPE:
-            written = 0
+    SOCKET_BLOCKING = set((errno.EWOULDBLOCK, errno.ENOTCONN))
+    SOCKET_CLOSED = set((errno.ECONNRESET, errno.ESHUTDOWN, errno.EPIPE))
 
 
 def set_nonblocking(fd):
+    """
+    Sets the descriptor to be nonblocking.  Works on many file-like
+    objects as well as sockets.  Only sockets can be nonblocking on 
+    Windows, however.
+    """
     try:
         setblocking = fd.setblocking
     except AttributeError:
@@ -174,6 +98,10 @@ except ImportError:
     
 
 class GreenSocket(object):
+    """
+    Green version of socket.socket class, that is intended to be 100%
+    API-compatible.
+    """
     timeout = None
     def __init__(self, family_or_realsock=socket.AF_INET, *args, **kwargs):
         if isinstance(family_or_realsock, (int, long)):
@@ -190,9 +118,6 @@ class GreenSocket(object):
         set_nonblocking(fd)
         self.fd = fd
         self._fileno = fd.fileno()
-        self.sendcount = 0
-        self.recvcount = 0
-        self.recvbuffer = ''
         self.closed = False
         self.timeout = socket.getdefaulttimeout()
 
@@ -317,9 +242,28 @@ class GreenSocket(object):
         return socket._fileobject(self.dup(), mode, bufsize)
 
     def makeGreenFile(self, mode='r', bufsize=-1):
-        return Green_fileobject(self.dup())
+        warnings.warn("makeGreenFile has been deprecated, please use "
+            "makefile instead", DeprecationWarning, stacklevel=2)
+        return self.makefile(mode, bufsize)
 
-    recv = higher_order_recv(socket_recv)
+    def recv(self, buflen, flags=0):
+        fd = self.fd
+        if self.act_non_blocking:
+            return fd.recv(buflen, flags)
+        while True:
+            try:
+                return fd.recv(buflen, flags)
+            except socket.error, e:
+                if e[0] in SOCKET_BLOCKING:
+                    pass
+                elif e[0] in SOCKET_CLOSED:
+                    return ''
+                else:
+                    raise
+            trampoline(fd, 
+                read=True, 
+                timeout=self.gettimeout(), 
+                timeout_exc=socket.timeout)
 
     def recvfrom(self, *args):
         if not self.act_non_blocking:
@@ -336,13 +280,25 @@ class GreenSocket(object):
             trampoline(self.fd, read=True, timeout=self.gettimeout(), timeout_exc=socket.timeout)
         return self.fd.recv_into(*args)
 
-    send = higher_order_send(socket_send)
+    def send(self, data, flags=0):
+        fd = self.fd
+        if self.act_non_blocking:
+            return fd.send(data, flags)
+        try:
+            return fd.send(data, flags)
+        except socket.error, e:
+            if e[0] in SOCKET_BLOCKING:
+                return 0
+            raise
 
     def sendall(self, data, flags=0):
         fd = self.fd
         tail = self.send(data, flags)
         while tail < len(data):
-            trampoline(self.fd, write=True, timeout_exc=socket.timeout)
+            trampoline(fd, 
+                write=True, 
+                timeout=self.gettimeout(), 
+                timeout_exc=socket.timeout)
             tail += self.send(data[tail:], flags)
 
     def sendto(self, *args):
@@ -385,47 +341,80 @@ class GreenSocket(object):
         return self.timeout
 
 
-class Green_fileobject(object):
-    """Green version of socket._fileobject, for use only with regular 
-    sockets."""
+class GreenPipe(object):
+    """ GreenPipe is a cooperatively-yielding wrapper around OS pipes.
+    """
     newlines = '\r\n'
-    mode = 'wb+'
-
     def __init__(self, fd):
-        if isinstance(fd, GreenSocket):
-            set_nonblocking(fd.fd)
-        else:
-            set_nonblocking(fd)
-        self.sock = fd
+        set_nonblocking(fd)
+        self.fd = fd
         self.closed = False
-
+        self.recvbuffer = ''
+        
     def close(self):
-        self.sock.close()
+        self.fd.close()
         self.closed = True
-
+        
     def fileno(self):
-        return self.sock.fileno()
+        return self.fd.fileno()
 
-    # TODO next
+    def read(self, buflen, flags=0):
+        fd = self.fd
+        if buflen is None:
+            buflen = BUFFER_SIZE
+        buf = self.recvbuffer
+        if buf:
+            chunk, self.recvbuffer = buf[:buflen], buf[buflen:]
+            return chunk
+        while True:
+            try:
+                return fd.read(buflen)
+            except IOError, e:
+                if e[0] != EAGAIN:
+                    return ''
+            except socket.error, e:
+                if e[0] == errno.EPIPE:
+                    return ''
+                raise
+            trampoline(fd, read=True)
+
+    def write(self, data, flags=0):
+        fd = self.fd
+        tail = 0
+        len_data = len(data)
+        while tail < len_data:
+            tosend = data[tail:]
+            try:
+                fd.write(tosend)
+                fd.flush()
+                tail += len(tosend)
+                if tail == len_data:
+                    return len_data
+            except IOError, e:
+                if e[0] != EAGAIN:
+                    raise
+            except ValueError, e:
+                pass
+            except socket.error, e:
+                if e[0] != errno.EPIPE:
+                    raise
+            trampoline(fd, write=True)
 
     def flush(self):
         pass
-
-    def write(self, data):
-        return self.sock.sendall(data)
-
+        
     def readuntil(self, terminator, size=None):
-        buf, self.sock.recvbuffer = self.sock.recvbuffer, ''
+        buf, self.recvbuffer = self.recvbuffer, ''
         checked = 0
         if size is None:
             while True:
                 found = buf.find(terminator, checked)
                 if found != -1:
                     found += len(terminator)
-                    chunk, self.sock.recvbuffer = buf[:found], buf[found:]
+                    chunk, self.recvbuffer = buf[:found], buf[found:]
                     return chunk
                 checked = max(0, len(buf) - (len(terminator) - 1))
-                d = self.sock.recv(BUFFER_SIZE)
+                d = self.fd.read(BUFFER_SIZE)
                 if not d:
                     break
                 buf += d
@@ -434,24 +423,21 @@ class Green_fileobject(object):
             found = buf.find(terminator, checked)
             if found != -1:
                 found += len(terminator)
-                chunk, self.sock.recvbuffer = buf[:found], buf[found:]
+                chunk, self.recvbuffer = buf[:found], buf[found:]
                 return chunk
             checked = len(buf)
-            d = self.sock.recv(BUFFER_SIZE)
+            d = self.fd.read(BUFFER_SIZE)
             if not d:
                 break
             buf += d
-        chunk, self.sock.recvbuffer = buf[:size], buf[size:]
+        chunk, self.recvbuffer = buf[:size], buf[size:]
         return chunk
-
+        
     def readline(self, size=None):
         return self.readuntil(self.newlines, size=size)
 
     def __iter__(self):
         return self.xreadlines()
-
-    def readlines(self, size=None):
-        return list(self.xreadlines(size=size))
 
     def xreadlines(self, size=None):
         if size is None:
@@ -471,61 +457,6 @@ class Green_fileobject(object):
     def writelines(self, lines):
         for line in lines:
             self.write(line)
-
-    def read(self, size=None):
-        if size is not None and not isinstance(size, (int, long)):
-            raise TypeError('Expecting an int or long for size, got %s: %s' % (type(size), repr(size)))
-        buf, self.sock.recvbuffer = self.sock.recvbuffer, ''
-        lst = [buf]
-        if size is None:
-            while True:
-                d = self.sock.recv(BUFFER_SIZE)
-                if not d:
-                    break
-                lst.append(d)
-        else:
-            buflen = len(buf)
-            while buflen < size:
-                d = self.sock.recv(BUFFER_SIZE)
-                if not d:
-                    break
-                buflen += len(d)
-                lst.append(d)
-            else:
-                d = lst[-1]
-                overbite = buflen - size
-                if overbite:
-                    lst[-1], self.sock.recvbuffer = d[:-overbite], d[-overbite:]
-                else:
-                    lst[-1], self.sock.recvbuffer = d, ''
-        return ''.join(lst)
-
-
-
-class GreenPipeSocket(GreenSocket):
-    """ This is a weird class that looks like a socket but expects a file descriptor as an argument instead of a socket.
-    """
-    recv = higher_order_recv(file_recv)
-
-    send = higher_order_send(file_send)
-
-
-class GreenPipe(Green_fileobject):
-    def __init__(self, fd):
-        set_nonblocking(fd)
-        self.fd = GreenPipeSocket(fd)
-        super(GreenPipe, self).__init__(self.fd)
-
-    def recv(self, *args, **kw):
-        fn = self.recv = self.fd.recv
-        return fn(*args, **kw)
-
-    def send(self, *args, **kw):
-        fn = self.send = self.fd.send
-        return fn(*args, **kw)
-
-    def flush(self):
-        self.fd.fd.flush()
 
 
 # import SSL module here so we can refer to greenio.SSL.exceptionclass

@@ -1,4 +1,4 @@
-from eventlet.api import getcurrent
+from eventlet.support import greenlets as greenlet
 from eventlet.hubs import get_hub
 
 """ If true, captures a stack trace for each timer when constructed.  This is
@@ -74,7 +74,7 @@ class Timer(object):
 class LocalTimer(Timer):
 
     def __init__(self, *args, **kwargs):
-        self.greenlet = getcurrent()
+        self.greenlet = greenlet.getcurrent()
         Timer.__init__(self, *args, **kwargs)
 
     @property

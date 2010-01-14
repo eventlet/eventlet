@@ -21,6 +21,8 @@ from Queue import Empty, Queue
 
 from eventlet import api, coros, greenio
 
+__all__ = ['execute', 'Proxy', 'killall']
+
 QUIET=True
 
 _rfile = _wfile = None
@@ -90,8 +92,14 @@ def erecv(e):
 
 def execute(meth,*args, **kwargs):
     """
-    Execute *meth* in a thread, blocking the current coroutine until the method
-    completes.
+    Execute *meth* in a Python thread, blocking the current coroutine/
+    greenthread until the method completes.
+
+    The primary use case for this is to wrap an object or module that is not
+    amenable to monkeypatching or any of the other tricks that Eventlet uses
+    to achieve cooperative yielding.  With tpool, you can force such objects to
+    cooperate with green threads by sticking them in native threads, at the cost
+    of some overhead.
     """
     setup()
     e = esend(meth,*args,**kwargs)
@@ -103,9 +111,13 @@ def proxy_call(autowrap, f, *args, **kwargs):
     """
     Call a function *f* and returns the value.  If the type of the return value
     is in the *autowrap* collection, then it is wrapped in a :class:`Proxy`
-    object before return.  Normally *f* will be called nonblocking with the
-    execute method; if the keyword argument "nonblocking" is set to ``True``,
-    it will simply be executed directly.
+    object before return.  
+    
+    Normally *f* will be called in the threadpool with :func:`execute`; if the
+    keyword argument "nonblocking" is set to ``True``, it will simply be 
+    executed directly.  This is useful if you have an object which has methods
+    that don't need to be called in a separate thread, but which return objects
+    that should be Proxy wrapped.
     """
     if kwargs.pop('nonblocking',False):
         rv = f(*args, **kwargs)
@@ -118,11 +130,17 @@ def proxy_call(autowrap, f, *args, **kwargs):
 
 class Proxy(object):
     """
-    a simple proxy-wrapper of any object that comes with a methods-only
-    interface, in order to forward every method invocation onto a thread in the
-    native-thread pool.  A key restriction is that the object's methods cannot
-    call into eventlets, since the eventlet dispatcher runs on a different
-    native thread.  This is for running native-threaded code only.
+    A simple proxy-wrapper of any object, in order to forward every method
+    invocation onto a thread in the native-thread pool.  A key restriction is
+    that the object's methods cannot use Eventlet primitives without great care,
+    since the Eventlet dispatcher runs on a different native thread.
+    
+    Construct the Proxy with the instance that you want proxied.  The optional 
+    parameter *autowrap* is used when methods are called on the proxied object.  
+    If a method on the proxied object returns something whose type is in 
+    *autowrap*, then that object gets a Proxy wrapped around it, too.  An 
+    example use case for this is ensuring that DB-API connection objects 
+    return cursor objects that are also Proxy-wrapped.
     """
     def __init__(self, obj,autowrap=()):
         self._obj = obj

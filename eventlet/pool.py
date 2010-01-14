@@ -1,8 +1,11 @@
-# replacement of CoroutinePool implemented with proc module
 from eventlet import coros, proc, api
 
-class Pool(object):
+import warnings
+warnings.warn("The pool module is deprecated.  Please use the "
+        "eventlet.GreenPool and eventlet.GreenPile classes instead.",
+        DeprecationWarning, stacklevel=2)
 
+class Pool(object):
     def __init__(self, min_size=0, max_size=4, track_events=False):
         if min_size > max_size:
             raise ValueError('min_size cannot be bigger than max_size')

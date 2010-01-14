@@ -1,4 +1,4 @@
-from tests import LimitedTestCase, SilencedTestCase, main
+from tests import LimitedTestCase, main
 import time
 from eventlet import api
 from eventlet import hubs
@@ -32,14 +32,16 @@ class TestScheduleCall(LimitedTestCase):
 
         
 class TestDebug(LimitedTestCase):
-    def test_debug(self):
-        hubs.get_hub().debug = True
-        self.assert_(hubs.get_hub().debug)
-        hubs.get_hub().debug = False        
-        self.assert_(not hubs.get_hub().debug)
+    def test_debug_listeners(self):
+        hubs.get_hub().set_debug_listeners(True)
+        hubs.get_hub().set_debug_listeners(False)
 
+    def test_timer_exceptions(self):
+        hubs.get_hub().set_timer_exceptions(True)
+        hubs.get_hub().set_timer_exceptions(False)
+        
 
-class TestExceptionInMainloop(SilencedTestCase):
+class TestExceptionInMainloop(LimitedTestCase):
     def test_sleep(self):
         # even if there was an error in the mainloop, the hub should continue to work
         start = time.time()

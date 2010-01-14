@@ -15,7 +15,9 @@ DEFAULT_MAX_SIMULTANEOUS_REQUESTS = 1024
 DEFAULT_MAX_HTTP_VERSION = 'HTTP/1.1'
 MAX_REQUEST_LINE = 8192
 MINIMUM_CHUNK_SIZE = 4096
+DEFAULT_LOG_FORMAT='%(client_ip)s - - [%(date_time)s] "%(request_line)s" %(status_code)s %(body_length)s %(wall_seconds).6f'
 
+__all__ = ['server', 'format_date_time']
 
 # Weekday and month names for HTTP date/time formatting; always English!
 _weekdayname = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
@@ -24,6 +26,7 @@ _monthname = [None, # Dummy so we can use 1-based month numbers
               "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 def format_date_time(timestamp):
+    """Formats a unix timestamp into an HTTP standard string."""
     year, month, day, hh, mm, ss, wd, y, z = time.gmtime(timestamp)
     return "%s, %02d %3s %4d %02d:%02d:%02d GMT" % (
         _weekdayname[wd], day, _monthname[month], year, hh, mm, ss
@@ -328,13 +331,13 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                         pass
             finish = time.time()
 
-            self.server.log_message('%s - - [%s] "%s" %s %s %.6f' % (
-                self.get_client_ip(),
-                self.log_date_time_string(),
-                self.requestline,
-                status_code[0],
-                length[0],
-                finish - start))
+            self.server.log_message(self.server.log_format % dict(
+                client_ip=self.get_client_ip(),
+                date_time=self.log_date_time_string(),
+                request_line=self.requestline,
+                status_code=status_code[0],
+                body_length=length[0],
+                wall_seconds=finish - start))
                 
     def get_client_ip(self):
         client_ip = self.client_address[0]
@@ -413,9 +416,10 @@ class Server(BaseHTTPServer.HTTPServer):
                  max_http_version=None, 
                  protocol=HttpProtocol, 
                  minimum_chunk_size=None,
+                 log_x_forwarded_for=True,
                  keepalive=True,
-                 log_x_forwarded_for=True):
-                 
+                 log_format=DEFAULT_LOG_FORMAT):
+        
         self.outstanding_requests = 0
         self.socket = socket
         self.address = address
@@ -432,6 +436,7 @@ class Server(BaseHTTPServer.HTTPServer):
         if minimum_chunk_size is not None:
             protocol.minimum_chunk_size = minimum_chunk_size
         self.log_x_forwarded_for = log_x_forwarded_for
+        self.log_format = log_format
 
     def get_environ(self):
         socket = self.socket
@@ -465,24 +470,36 @@ def server(sock, site,
            server_event=None, 
            minimum_chunk_size=None,
            log_x_forwarded_for=True,
+           custom_pool=None,
            keepalive=True,
-           custom_pool=None):
-    """  Start up a wsgi server handling requests from the supplied server socket.
-    
-    This function loops forever.  The *sock* object will be closed after server exits,
+           log_format=DEFAULT_LOG_FORMAT):
+    """  Start up a wsgi server handling requests from the supplied server 
+    socket.  This function loops forever.  The *sock* object will be closed after server exits,
     but the underlying file descriptor will remain open, so if you have a dup() of *sock*,
     it will remain usable.
     
+    :param sock: Server socket, must be already bound to a port and listening.
+    :param site: WSGI application function.
+    :param log: File-like object that logs should be written to.  If not specified, sys.stderr is used.
+    :param environ: Additional parameters that go into the environ dictionary of every request.
+    :param max_size: Maximum number of client connections opened at any time by this server.
+    :param max_http_version: Set to "HTTP/1.0" to make the server pretend it only supports HTTP 1.0.  The primary reason to do this is to prevent clients from keeping connections open with keepalives.
+    :param protocol: Protocol class.  Deprecated.
+    :param server_event: Used to collect the Server object.  Deprecated.
+    :param minimum_chunk_size: Minimum size in bytes for http chunks.  This  can be used to improve performance of applications which yield many small strings, though using it technically violates the WSGI spec.
+    :param log_x_forwarded_for: If True (the default), logs the contents of the x-forwarded-for header in addition to the actual client ip address in the 'client_ip' field of the log line.
+    :param custom_pool: A custom Pool instance which is used to spawn client green threads.  If this is supplied, max_size is ignored.
+    :param log_format: A python format string that is used as the template to generate log lines.  The following values can be formatted into it: client_ip, date_time, request_line, status_code, body_length, wall_seconds.  Look the default for an example of how to use this.
     """
-
     serv = Server(sock, sock.getsockname(), 
                   site, log, 
                   environ=None, 
                   max_http_version=max_http_version, 
                   protocol=protocol, 
                   minimum_chunk_size=minimum_chunk_size,
+                  log_x_forwarded_for=log_x_forwarded_for,
                   keepalive=keepalive,
-                  log_x_forwarded_for=log_x_forwarded_for)
+                  log_format=log_format)
     if server_event is not None:
         server_event.send(serv)
     if max_size is None:

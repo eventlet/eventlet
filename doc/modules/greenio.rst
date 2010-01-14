@@ -1,5 +1,5 @@
-:mod:`greenio` -- Greenlet file objects
-========================================
+:mod:`greenio` -- Cooperative network primitives
+=================================================
 
 .. automodule:: eventlet.greenio
 	:members:

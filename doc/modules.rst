@@ -10,12 +10,10 @@ Module Reference
    modules/coros
    modules/db_pool
    modules/greenio
-   modules/pool
+   modules/greenpool
    modules/pools
    modules/processes
    modules/proc
    modules/saranwrap
-   modules/timer
-   modules/tpool
    modules/util
    modules/wsgi

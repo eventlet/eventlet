@@ -96,8 +96,7 @@ class Hub(BaseHub):
                     self.schedule_call_global(0, api.getcurrent().parent.throw, *self.signal_exc_info)
                     self.signal_exc_info = None
                 else:
-                    if not self.silent_timer_exceptions:
-                        traceback.print_exc()
+                    self.squelch_timer_exception(None, sys.exc_info())
 
     def abort(self):
         self.schedule_call_global(0, self.greenlet.throw, api.GreenletExit)
