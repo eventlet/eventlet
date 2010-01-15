@@ -50,7 +50,7 @@ class EventletHub(Plugin):
         " specified, the default hub for the current configuration is printed "\
         " and used."
         
-    def beforeContext(self):
+    def begin(self):
         """Select the desired hub.
         """        
         if self.hub_name is None:
