@@ -3,6 +3,8 @@ import sys
 import threading
 _threadlocal = threading.local()
 
+__all__ = ["use_hub"]
+
 def get_default_hub():
     """Select the default hub implementation based on what multiplexing
     libraries are installed.  The order that the hubs are tried is:

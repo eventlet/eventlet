@@ -35,6 +35,7 @@ Contents
    chat_server_example
    ssl
    threading
+   hubs
    testing
    history
 
