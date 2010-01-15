@@ -294,10 +294,10 @@ class BaseHub(object):
     # for debugging:
 
     def get_readers(self):
-        return self.listeners[READ]
+        return self.listeners[READ].values()
 
     def get_writers(self):
-        return self.listeners[WRITE]
+        return self.listeners[WRITE].values()
 
     def get_timers_count(hub):
         return max(len(x) for x in [hub.timers, hub.next_timers])

@@ -19,13 +19,15 @@ import time
 import re
 from tests import skipped, skip_with_pyevent, LimitedTestCase, main
 
-from eventlet import coros, api, tpool, debug
+from eventlet import api, tpool, debug
+import eventlet
 
 one = 1
 two = 2
 three = 3
 
 class TestTpool(LimitedTestCase):
+    TEST_TIMEOUT=3
     def setUp(self):
         tpool.setup()
         debug.hub_exceptions(True)
@@ -56,12 +58,12 @@ class TestTpool(LimitedTestCase):
                 self.assertEquals(token, rv)
                 api.sleep(random.random()/200.0)
 
-        pool = coros.CoroutinePool(max_size=10)
-        waiters = []
+        pile = eventlet.GreenPile(10)
         for i in xrange(10):
-            waiters.append(pool.execute(sender_loop,i))
-        for waiter in waiters:
-            waiter.wait()
+            pile.spawn(sender_loop,i)
+        results = list(pile)
+        self.assertEquals(len(results), 10)
+            
 
     @skip_with_pyevent
     def test_wrap_tuple(self):
@@ -169,13 +171,12 @@ class TestTpool(LimitedTestCase):
         from tests import tpool_test
         prox = tpool.Proxy(tpool_test)
 
-        pool = coros.CoroutinePool(max_size=4)
-        waiters = []
-        waiters.append(pool.execute(lambda: self.assertEquals(prox.one, 1)))
-        waiters.append(pool.execute(lambda: self.assertEquals(prox.two, 2)))
-        waiters.append(pool.execute(lambda: self.assertEquals(prox.three, 3)))
-        for waiter in waiters:
-            waiter.wait()
+        pile = eventlet.GreenPile(4)
+        pile.spawn(lambda: self.assertEquals(prox.one, 1))
+        pile.spawn(lambda: self.assertEquals(prox.two, 2))
+        pile.spawn(lambda: self.assertEquals(prox.three, 3))
+        results = list(pile)
+        self.assertEquals(len(results), 3)
 
     @skip_with_pyevent
     def test_timeout(self):

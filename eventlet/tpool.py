@@ -50,7 +50,7 @@ def tpool_trampoline():
                 e.send(rv)
                 rv = None
             except Empty:
-                pass    
+                pass
 
 def esend(meth,*args, **kwargs):
     global _reqq, _rspq
@@ -222,6 +222,7 @@ def setup():
         _threads[i].start()
 
     _coro = greenthread.spawn_n(tpool_trampoline)
+    api.sleep(0)  # fix a race condition when calling killall immediately
 
 def killall():
     global _setup_already, _reqq, _rspq, _rfile, _wfile
@@ -231,9 +232,9 @@ def killall():
         _reqq.put(None)
     for thr in _threads.values():
         thr.join()
+    _threads.clear()
     if _coro:
         api.kill(_coro)
-    greenthread.sleep(0.01)
     _rfile.close()
     _wfile.close()
     _rfile = None
