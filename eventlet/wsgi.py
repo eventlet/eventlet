@@ -484,7 +484,7 @@ def server(sock, site,
     :param log: File-like object that logs should be written to.  If not specified, sys.stderr is used.
     :param environ: Additional parameters that go into the environ dictionary of every request.
     :param max_size: Maximum number of client connections opened at any time by this server.
-    :param max_http_version: Set to "HTTP/1.0" to make the server pretend it only supports HTTP 1.0.  The primary reason to do this is to prevent clients from keeping connections open with keepalives.
+    :param max_http_version: Set to "HTTP/1.0" to make the server pretend it only supports HTTP 1.0.  This can help with applications or clients that don't behave properly using HTTP 1.1.
     :param protocol: Protocol class.  Deprecated.
     :param server_event: Used to collect the Server object.  Deprecated.
     :param minimum_chunk_size: Minimum size in bytes for http chunks.  This  can be used to improve performance of applications which yield many small strings, though using it technically violates the WSGI spec.
