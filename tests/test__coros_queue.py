@@ -1,5 +1,6 @@
 from tests import LimitedTestCase
 from unittest import main
+import eventlet
 from eventlet import api, coros, proc
 
 
@@ -234,24 +235,23 @@ class TestChannel(LimitedTestCase):
 
     def test_waiters(self):
         c = coros.Channel()
-        w1 = coros.execute(c.wait)
-        w2 = coros.execute(c.wait)
-        w3 = coros.execute(c.wait)
+        w1 = eventlet.spawn(c.wait)
+        w2 = eventlet.spawn(c.wait)
+        w3 = eventlet.spawn(c.wait)
         api.sleep(0)
         self.assertEquals(c.waiting(), 3)
-        s1 = coros.execute(c.send, 1)
-        s2 = coros.execute(c.send, 2)
-        s3 = coros.execute(c.send, 3)
+        s1 = eventlet.spawn(c.send, 1)
+        s2 = eventlet.spawn(c.send, 2)
+        s3 = eventlet.spawn(c.send, 3)
         api.sleep(0)  # this gets all the sends into a waiting state
         self.assertEquals(c.waiting(), 0)
 
         s1.wait()
         s2.wait()
         s3.wait()
-        self.assertEquals(w1.wait(), 1)
-        self.assertEquals(w2.wait(), 2)
-        self.assertEquals(w3.wait(), 3)
-
+        # NOTE: we don't guarantee that waiters are served in order
+        results = sorted([w1.wait(), w2.wait(), w3.wait()])
+        self.assertEquals(results, [1,2,3])
 
 if __name__=='__main__':
     main()

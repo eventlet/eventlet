@@ -206,9 +206,9 @@ class TestQueue(LimitedTestCase):
         s1.wait()
         s2.wait()
         s3.wait()
-        self.assertEquals(w1.wait(), 1)
-        self.assertEquals(w2.wait(), 2)
-        self.assertEquals(w3.wait(), 3)
+        # NOTE: we don't guarantee that waiters are served in order
+        results = sorted([w1.wait(), w2.wait(), w3.wait()])
+        self.assertEquals(results, [1,2,3])
         
     def test_channel_sender_timing_out(self):
         from eventlet import queue
