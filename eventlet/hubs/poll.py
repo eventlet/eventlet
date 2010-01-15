@@ -23,8 +23,8 @@ class Hub(BaseHub):
             self.modify = self.poll.register
 
     def add(self, evtype, fileno, cb):
-        oldlisteners = self.listeners[evtype].get(fileno)
-        
+        oldlisteners = bool(self.listeners[evtype].get(fileno))
+
         listener = super(Hub, self).add(evtype, fileno, cb)
         if not oldlisteners:
             # Means we've added a new listener

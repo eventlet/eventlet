@@ -17,8 +17,7 @@ import random
 from sys import stdout
 import time
 import re
-from tests import skipped, skip_with_pyevent
-from unittest import TestCase, main
+from tests import skipped, skip_with_pyevent, LimitedTestCase, main
 
 from eventlet import coros, api, tpool, debug
 
@@ -26,16 +25,14 @@ one = 1
 two = 2
 three = 3
 
-class TestTpool(TestCase):
+class TestTpool(LimitedTestCase):
     def setUp(self):
-        # turn off exception printing, because we'll be deliberately
-        # triggering exceptions in our tests
-        tpool.QUIET = True
         tpool.setup()
         debug.hub_exceptions(True)
+        super(TestTpool, self).setUp()
 
     def tearDown(self):
-        tpool.QUIET = False
+        super(TestTpool, self).tearDown()
         tpool.killall()
         debug.hub_exceptions(False)
 

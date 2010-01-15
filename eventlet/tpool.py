@@ -19,7 +19,9 @@ import sys
 
 from Queue import Empty, Queue
 
-from eventlet import api, coros, greenio
+from eventlet import api
+from eventlet import greenio
+from eventlet import greenthread
 
 __all__ = ['execute', 'Proxy', 'killall']
 
@@ -48,11 +50,11 @@ def tpool_trampoline():
                 e.send(rv)
                 rv = None
             except Empty:
-                pass
+                pass    
 
 def esend(meth,*args, **kwargs):
     global _reqq, _rspq
-    e = coros.Event()
+    e = greenthread.Event()
     _reqq.put((e,meth,args,kwargs))
     return e
 
@@ -219,10 +221,10 @@ def setup():
         _threads[i].setDaemon(True)
         _threads[i].start()
 
-    _coro = api.spawn(tpool_trampoline)
+    _coro = greenthread.spawn_n(tpool_trampoline)
 
 def killall():
-    global _setup_already, _reqq, _rspq
+    global _setup_already, _reqq, _rspq, _rfile, _wfile
     if not _setup_already:
         return
     for i in _threads:
@@ -231,8 +233,11 @@ def killall():
         thr.join()
     if _coro:
         api.kill(_coro)
+    greenthread.sleep(0.01)
     _rfile.close()
     _wfile.close()
-    _setup_already = False
+    _rfile = None
+    _wfile = None
     _reqq = None
     _rspq = None
+    _setup_already = False
