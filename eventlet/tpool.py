@@ -31,15 +31,15 @@ def _signal_t2e():
     _wfile.write(' ')
     _wfile.flush()
     
-_reqq = Queue(maxsize=-1)
-_rspq = Queue(maxsize=-1)
+_reqq = None
+_rspq = None
 
 def tpool_trampoline():
     global _reqq, _rspq
     while(True):
         try:
             _c = _rfile.read(1)
-            assert(_c != "")
+            assert _c != ""
         except ValueError:
             break  # will be raised when pipe is closed
         while not _rspq.empty():
@@ -186,7 +186,7 @@ _threads = {}
 _coro = None
 _setup_already = False
 def setup():
-    global _rfile, _wfile, _threads, _coro, _setup_already
+    global _rfile, _wfile, _threads, _coro, _setup_already, _reqq, _rspq
     if _setup_already:
         return
     else:
@@ -212,6 +212,8 @@ def setup():
         _rfile = greenio.Green_fileobject(greenio.GreenSocket(csock))
         _wfile = nsock.makefile()
 
+    _reqq = Queue(maxsize=-1)
+    _rspq = Queue(maxsize=-1)
     for i in range(0,_nthreads):
         _threads[i] = threading.Thread(target=tworker)
         _threads[i].setDaemon(True)
@@ -220,7 +222,7 @@ def setup():
     _coro = api.spawn(tpool_trampoline)
 
 def killall():
-    global _setup_already
+    global _setup_already, _reqq, _rspq
     if not _setup_already:
         return
     for i in _threads:
@@ -232,3 +234,5 @@ def killall():
     _rfile.close()
     _wfile.close()
     _setup_already = False
+    _reqq = None
+    _rspq = None

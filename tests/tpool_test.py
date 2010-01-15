@@ -20,7 +20,7 @@ import re
 from tests import skipped, skip_with_pyevent
 from unittest import TestCase, main
 
-from eventlet import coros, api, tpool
+from eventlet import coros, api, tpool, debug
 
 one = 1
 two = 2
@@ -32,10 +32,12 @@ class TestTpool(TestCase):
         # triggering exceptions in our tests
         tpool.QUIET = True
         tpool.setup()
+        debug.hub_exceptions(True)
 
     def tearDown(self):
         tpool.QUIET = False
         tpool.killall()
+        debug.hub_exceptions(False)
 
     @skip_with_pyevent
     def test_a_buncha_stuff(self):
