@@ -593,8 +593,8 @@ class TestHttpd(LimitedTestCase):
         # just test that it accepts the parameter for now
         # TODO: test that it uses the pool and that you can waitall() to
         # ensure that all clients finished
-        from eventlet import pool
-        p = pool.Pool(max_size=5)
+        from eventlet import greenpool
+        p = greenpool.GreenPool(5)
         self.spawn_server(custom_pool=p)
             
         # this stuff is copied from test_001_server, could be better factored

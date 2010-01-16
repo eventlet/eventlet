@@ -3,13 +3,13 @@ import os
 import sys
 import time
 import traceback
+import warnings
 
 from eventlet.green import urllib
 from eventlet.green import socket
 from eventlet.green import BaseHTTPServer
-from eventlet.pool import Pool
-
-import greenio
+from eventlet import greenpool
+from eventlet import greenio
 
 DEFAULT_MAX_SIMULTANEOUS_REQUESTS = 1024
 DEFAULT_MAX_HTTP_VERSION = 'HTTP/1.1'
@@ -489,7 +489,7 @@ def server(sock, site,
     :param server_event: Used to collect the Server object.  Deprecated.
     :param minimum_chunk_size: Minimum size in bytes for http chunks.  This  can be used to improve performance of applications which yield many small strings, though using it technically violates the WSGI spec.
     :param log_x_forwarded_for: If True (the default), logs the contents of the x-forwarded-for header in addition to the actual client ip address in the 'client_ip' field of the log line.
-    :param custom_pool: A custom Pool instance which is used to spawn client green threads.  If this is supplied, max_size is ignored.
+    :param custom_pool: A custom GreenPool instance which is used to spawn client green threads.  If this is supplied, max_size is ignored.
     :param keepalive: If set to False, disables keepalives on the server; all connections will be closed after serving one request.
     :param log_format: A python format string that is used as the template to generate log lines.  The following values can be formatted into it: client_ip, date_time, request_line, status_code, body_length, wall_seconds.  Look the default for an example of how to use this.
     """
@@ -509,7 +509,7 @@ def server(sock, site,
     if custom_pool is not None:
         pool = custom_pool
     else:
-        pool = Pool(max_size=max_size)
+        pool = greenpool.GreenPool(max_size)
     try:
         host, port = sock.getsockname()
         port = ':%s' % (port, )
@@ -530,7 +530,14 @@ def server(sock, site,
                 except socket.error, e:
                     if get_errno(e) not in ACCEPT_SOCK:
                         raise
-                pool.execute_async(serv.process_request, client_socket)
+                try:
+                    pool.spawn_n(serv.process_request, client_socket)
+                except AttributeError:
+                    warnings.warn("wsgi's pool should be an instance of " \
+                        "eventlet.greenpool.GreenPool, is %s. Please convert your"\
+                        " call site to use GreenPool instead" % type(pool),
+                        DeprecationWarning, stacklevel=2)
+                    pool.execute_async(serv.process_request, client_socket)
             except (KeyboardInterrupt, SystemExit):
                 serv.log.write("wsgi exiting\n")
                 break
