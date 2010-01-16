@@ -13,28 +13,30 @@ def inject(module_name, new_globals, *additional_modules):
 
     ## Remove the old module from sys.modules and reimport it while the specified modules are in place
     old_module = sys.modules.pop(module_name, None)
-    module = __import__(module_name, {}, {}, module_name.split('.')[:-1])
+    try:
+        module = __import__(module_name, {}, {}, module_name.split('.')[:-1])
 
-    if new_globals is not None:
-        ## Update the given globals dictionary with everything from this new module
-        for name in dir(module):
-            if name not in __exclude:
-                new_globals[name] = getattr(module, name)
+        if new_globals is not None:
+            ## Update the given globals dictionary with everything from this new module
+            for name in dir(module):
+                if name not in __exclude:
+                    new_globals[name] = getattr(module, name)
 
-    ## Keep a reference to the new module to prevent it from dying
-    sys.modules['__patched_module_' + module_name] = module
-    ## Put the original module back
-    if old_module is not None:
-        sys.modules[module_name] = old_module
-    else:
-        del sys.modules[module_name]
+        ## Keep a reference to the new module to prevent it from dying
+        sys.modules['__patched_module_' + module_name] = module
+    finally:
+        ## Put the original module back
+        if old_module is not None:
+            sys.modules[module_name] = old_module
+        elif module_name in sys.modules:
+            del sys.modules[module_name]
 
-    ## Put all the saved modules back
-    for name, mod in additional_modules:
-        if saved[name] is not None:
-            sys.modules[name] = saved[name]
-        else:
-            del sys.modules[name]
+        ## Put all the saved modules back
+        for name, mod in additional_modules:
+            if saved[name] is not None:
+                sys.modules[name] = saved[name]
+            else:
+                del sys.modules[name]
 
     return module
 
