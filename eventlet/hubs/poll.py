@@ -56,7 +56,7 @@ class Hub(BaseHub):
         super(Hub, self).remove_descriptor(fileno)
         try:
             self.poll.unregister(fileno)
-        except KeyError:
+        except (KeyError, ValueError):
             pass
 
     def wait(self, seconds=None):

@@ -11,7 +11,10 @@ def get_fileno(obj):
             raise TypeError("Expected int or long, got " + type(obj))
         return obj
     else:
-        return f()
+        rv = f()
+        if not isinstance(rv, (int, long)):
+            raise TypeError("Expected int or long, got " + type(rv))
+        return rv
 
 def select(read_list, write_list, error_list, timeout=None):
     hub = get_hub()

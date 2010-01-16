@@ -26,8 +26,10 @@ one = 1
 two = 2
 three = 3
 
+def noop():
+    pass
+
 class TestTpool(LimitedTestCase):
-    TEST_TIMEOUT=3
     def setUp(self):
         tpool.setup()
         debug.hub_exceptions(True)
@@ -37,33 +39,6 @@ class TestTpool(LimitedTestCase):
         super(TestTpool, self).tearDown()
         tpool.killall()
         debug.hub_exceptions(False)
-
-    @skip_with_pyevent
-    def test_a_buncha_stuff(self):
-        assert_ = self.assert_
-        class Dummy(object):
-            def foo(self,when,token=None):
-                assert_(token is not None)
-                time.sleep(random.random()/200.0)
-                return token
-        
-        def sender_loop(loopnum):
-            obj = tpool.Proxy(Dummy())
-            count = 100
-            for n in xrange(count):
-                api.sleep(random.random()/200.0)
-                now = time.time()
-                token = loopnum * count + n
-                rv = obj.foo(now,token=token)
-                self.assertEquals(token, rv)
-                api.sleep(random.random()/200.0)
-
-        pile = eventlet.GreenPile(10)
-        for i in xrange(10):
-            pile.spawn(sender_loop,i)
-        results = list(pile)
-        self.assertEquals(len(results), 10)
-            
 
     @skip_with_pyevent
     def test_wrap_tuple(self):
@@ -189,35 +164,56 @@ class TestTpool(LimitedTestCase):
     def test_killall(self):
         tpool.killall()
         tpool.setup()
+
+
+class TpoolLongTests(LimitedTestCase):
+    TEST_TIMEOUT=60
+    @skip_with_pyevent
+    def test_a_buncha_stuff(self):
+        assert_ = self.assert_
+        class Dummy(object):
+            def foo(self,when,token=None):
+                assert_(token is not None)
+                time.sleep(random.random()/200.0)
+                return token
+        
+        def sender_loop(loopnum):
+            obj = tpool.Proxy(Dummy())
+            count = 100
+            for n in xrange(count):
+                api.sleep(random.random()/200.0)
+                now = time.time()
+                token = loopnum * count + n
+                rv = obj.foo(now,token=token)
+                self.assertEquals(token, rv)
+                api.sleep(random.random()/200.0)
+
+        pile = eventlet.GreenPile(10)
+        for i in xrange(10):
+            pile.spawn(sender_loop,i)
+        results = list(pile)
+        self.assertEquals(len(results), 10)
         
     @skipped
     def test_benchmark(self):
         """ Benchmark computing the amount of overhead tpool adds to function calls."""
         iterations = 10000
-        def bench(f, *args, **kw):
-            for i in xrange(iterations):
-                f(*args, **kw)
-        def noop():
-            pass
+        import timeit
+        imports = """
+from tests.tpool_test import noop
+from eventlet.tpool import execute
+        """
+        t = timeit.Timer("noop()", imports)
+        results = t.repeat(repeat=3, number=iterations)
+        best_normal = min(results)
 
-        normal_results = []
-        tpool_results = []
-        for i in xrange(3):
-            start = time.time()
-            bench(noop)
-            end = time.time()
-            normal_results.append(end-start)
+        t = timeit.Timer("execute(noop)", imports)
+        results = t.repeat(repeat=3, number=iterations)
+        best_tpool = min(results)
 
-            start = time.time()
-            bench(tpool.execute, noop)
-            end = time.time()
-            tpool_results.append(end-start)
-
-        avg_normal = sum(normal_results)/len(normal_results)
-        avg_tpool =  sum(tpool_results)/len(tpool_results)
-        tpool_overhead = (avg_tpool-avg_normal)/iterations
+        tpool_overhead = (best_tpool-best_normal)/iterations
         print "%s iterations\nTpool overhead is %s seconds per call.  Normal: %s; Tpool: %s" % (
-            iterations, tpool_overhead, normal_results, tpool_results)
+            iterations, tpool_overhead, best_normal, best_tpool)
 
 
 if __name__ == '__main__':
