@@ -339,7 +339,7 @@ def passthru(arg):
         
 class Stress(tests.LimitedTestCase):
     # tests will take extra-long
-    TEST_TIMEOUT=10
+    TEST_TIMEOUT=60
     @tests.skip_unless(os.environ.get('RUN_STRESS_TESTS') == 'YES')
     def spawn_order_check(self, concurrency):
         # checks that piles are strictly ordered
