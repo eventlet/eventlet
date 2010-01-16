@@ -4,6 +4,10 @@ from eventlet.api import getcurrent
 from eventlet.hubs import get_hub
 
 def get_fileno(obj):
+    # The purpose of this function is to exactly replicate
+    # the behavior of the select module when confronted with
+    # abnormal filenos; the details are extensively tested in
+    # the stdlib test/test_select.py.
     try:
         f = obj.fileno
     except AttributeError:
