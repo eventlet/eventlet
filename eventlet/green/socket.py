@@ -6,6 +6,7 @@ _fileobject = __socket._fileobject
 from eventlet.hubs import get_hub
 from eventlet.greenio import GreenSocket as socket
 from eventlet.greenio import SSL as _SSL  # for exceptions
+import sys
 import warnings
 
 def fromfd(*args):
@@ -18,8 +19,13 @@ def socketpair(*args):
 def gethostbyname(name):
     if getattr(get_hub(), 'uses_twisted_reactor', None):
         globals()['gethostbyname'] = _gethostbyname_twisted
+    elif sys.platform.startswith('darwin'):
+        # the thread primitives on Darwin have some bugs that make
+        # it undesirable to use tpool for hostname lookups
+        globals()['gethostbyname'] = __socket.gethostbyname
     else:
         globals()['gethostbyname'] = _gethostbyname_tpool
+    
     return globals()['gethostbyname'](name)
 
 def _gethostbyname_twisted(name):

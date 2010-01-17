@@ -1,3 +1,5 @@
+
+
 __select = __import__('select')
 error = __select.error
 from eventlet.api import getcurrent
@@ -21,6 +23,12 @@ def get_fileno(obj):
         return rv
 
 def select(read_list, write_list, error_list, timeout=None):
+    # error checking like this is required by the stdlib unit tests
+    if timeout is not None:
+        try:
+            timeout = float(timeout)
+        except ValueError:
+            raise TypeError("Expected number for timeout")
     hub = get_hub()
     t = None
     current = getcurrent()
