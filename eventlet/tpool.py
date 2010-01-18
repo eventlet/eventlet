@@ -20,6 +20,7 @@ import sys
 from Queue import Empty, Queue
 
 from eventlet import api
+from eventlet import event
 from eventlet import greenio
 from eventlet import greenthread
 
@@ -54,7 +55,7 @@ def tpool_trampoline():
 
 def esend(meth,*args, **kwargs):
     global _reqq, _rspq
-    e = greenthread.Event()
+    e = event.Event()
     _reqq.put((e,meth,args,kwargs))
     return e
 

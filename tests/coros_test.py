@@ -1,7 +1,9 @@
 from unittest import main, TestCase
 from tests import LimitedTestCase
 import eventlet
-from eventlet import greenthread, api, coros
+from eventlet import coros
+from eventlet import event
+from eventlet import greenthread
 
 class IncrActor(coros.Actor):
     def received(self, evt):
@@ -17,10 +19,10 @@ class TestActor(LimitedTestCase):
 
     def tearDown(self):
         super(TestActor, self).tearDown()
-        api.kill(self.actor._killer)
+        greenthread.kill(self.actor._killer)
 
     def test_cast(self):
-        evt = greenthread.Event()
+        evt = event.Event()
         self.actor.cast(evt)
         evt.wait()
         evt.reset()
@@ -31,8 +33,8 @@ class TestActor(LimitedTestCase):
 
     def test_cast_multi_1(self):
         # make sure that both messages make it in there
-        evt = greenthread.Event()
-        evt1 = greenthread.Event()
+        evt = event.Event()
+        evt1 = event.Event()
         self.actor.cast(evt)
         self.actor.cast(evt1)
         evt.wait()
@@ -56,17 +58,17 @@ class TestActor(LimitedTestCase):
             evt.send()
         self.actor.received = received
 
-        waiters.append(greenthread.Event())
+        waiters.append(event.Event())
         self.actor.cast( (1, waiters[-1]))
         eventlet.sleep(0)
-        waiters.append(greenthread.Event())
+        waiters.append(event.Event())
         self.actor.cast( (2, waiters[-1]) )
-        waiters.append(greenthread.Event())
+        waiters.append(event.Event())
         self.actor.cast( (3, waiters[-1]) )
         eventlet.sleep(0)
-        waiters.append(greenthread.Event())
+        waiters.append(event.Event())
         self.actor.cast( (4, waiters[-1]) )
-        waiters.append(greenthread.Event())
+        waiters.append(event.Event())
         self.actor.cast( (5, waiters[-1]) )
         for evt in waiters:
             evt.wait()
@@ -83,7 +85,7 @@ class TestActor(LimitedTestCase):
 
         self.actor.received = received
 
-        evt = greenthread.Event()
+        evt = event.Event()
         self.actor.cast( ('fail', evt) )
         evt.wait()
         evt.reset()
@@ -103,8 +105,8 @@ class TestActor(LimitedTestCase):
         def onemoment():
             eventlet.sleep(0.1)
 
-        evt = greenthread.Event()
-        evt1 = greenthread.Event()
+        evt = event.Event()
+        evt1 = event.Event()
 
         self.actor.cast( (onemoment, evt, 1) )
         self.actor.cast( (lambda: None, evt1, 2) )

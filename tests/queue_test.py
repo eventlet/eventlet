@@ -1,6 +1,6 @@
 from tests import LimitedTestCase, main
 import eventlet
-from eventlet import greenthread
+from eventlet import event
 
 def do_bail(q):
     eventlet.exc_after(0, RuntimeError())
@@ -59,7 +59,7 @@ class TestQueue(LimitedTestCase):
             x = q.get()
             return x
 
-        evt = greenthread.Event()
+        evt = event.Event()
         gt = eventlet.spawn(sender, evt, q)
         eventlet.sleep(0)
         self.assert_(not evt.ready())

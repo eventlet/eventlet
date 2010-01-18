@@ -4,6 +4,7 @@ import traceback
 import warnings
 
 from eventlet import api
+from eventlet import event as _event
 from eventlet import hubs
 from eventlet import greenthread
 from eventlet import semaphore as semaphoremod
@@ -15,17 +16,17 @@ class NOT_USED:
 NOT_USED = NOT_USED()
 
 def Event(*a, **kw):
-    warnings.warn("The Event class has been moved to the greenthread module! " 
-                   "Please construct greenthread.Event objects instead.", 
+    warnings.warn("The Event class has been moved to the event module! " 
+                   "Please construct event.Event objects instead.", 
                    DeprecationWarning, stacklevel=2)
-    return greenthread.Event(*a, **kw)
+    return _event.Event(*a, **kw)
 
 
 def event(*a, **kw):
     warnings.warn("The event class has been capitalized and moved!  Please "
-        "construct greenthread.Event objects instead.", 
+        "construct event.Event objects instead.", 
         DeprecationWarning, stacklevel=2)
-    return greenthread.Event(*a, **kw)
+    return _event.Event(*a, **kw)
 
 
 def Semaphore(count):
@@ -70,7 +71,7 @@ class metaphore(object):
     """
     def __init__(self):
         self.counter = 0
-        self.event = greenthread.Event()
+        self.event = _event.Event()
         # send() right away, else we'd wait on the default 0 count!
         self.event.send()
 
@@ -317,7 +318,7 @@ class Actor(object):
         serially.
         """
         self._mailbox = collections.deque()
-        self._event = greenthread.Event()
+        self._event = _event.Event()
         self._killer = api.spawn(self.run_forever)
         self._pool = CoroutinePool(min_size=0, max_size=concurrency)
 
@@ -326,7 +327,7 @@ class Actor(object):
         while True:
             if not self._mailbox:
                 self._event.wait()
-                self._event = greenthread.Event()
+                self._event = _event.Event()
             else:
                 # leave the message in the mailbox until after it's
                 # been processed so the event doesn't get triggered
@@ -367,7 +368,7 @@ class Actor(object):
         coroutine in a predictable manner, but this kinda defeats the point of
         the :class:`Actor`, so don't do it in a real application.
 
-        >>> evt = greenthread.Event()
+        >>> evt = event.Event()
         >>> a.cast( ("message 1", evt) )
         >>> evt.wait()  # force it to run at this exact moment
         received message 1

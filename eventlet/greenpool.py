@@ -1,6 +1,7 @@
 import itertools
 
 from eventlet import coros
+from eventlet import event
 from eventlet import greenthread
 from eventlet import semaphore
 
@@ -22,7 +23,7 @@ class GreenPool(object):
         self.size = size
         self.coroutines_running = set()
         self.sem = semaphore.Semaphore(size)
-        self.no_coros_running = greenthread.Event()
+        self.no_coros_running = event.Event()
             
     def resize(self, new_size):
         """ Change the max number of coroutines doing work at any given time.
@@ -66,7 +67,7 @@ class GreenPool(object):
             self.sem.acquire()
             gt = greenthread.spawn(function, *args, **kwargs)
             if not self.coroutines_running:
-                self.no_coros_running = greenthread.Event()
+                self.no_coros_running = event.Event()
             self.coroutines_running.add(gt)
             gt.link(self._spawn_done, coro=gt)
         return gt
@@ -100,7 +101,7 @@ class GreenPool(object):
             self.sem.acquire()
             g = greenthread.spawn_n(self._spawn_n_impl, func, args, kwargs, coro=True)
             if not self.coroutines_running:
-                self.no_coros_running = greenthread.Event()
+                self.no_coros_running = event.Event()
             self.coroutines_running.add(g)
 
     def waitall(self):

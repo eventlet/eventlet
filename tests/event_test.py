@@ -1,10 +1,10 @@
 import eventlet
-from eventlet import greenthread
+from eventlet import event
 from tests import LimitedTestCase
 
 class TestEvent(LimitedTestCase):
     def test_waiting_for_event(self):
-        evt = greenthread.Event()
+        evt = event.Event()
         value = 'some stuff'
         def send_to_event():
             evt.send(value)
@@ -12,7 +12,7 @@ class TestEvent(LimitedTestCase):
         self.assertEqual(evt.wait(), value)
 
     def test_multiple_waiters(self):
-        evt = greenthread.Event()
+        evt = event.Event()
         value = 'some stuff'
         results = []
         def wait_on_event(i_am_done):
@@ -23,7 +23,7 @@ class TestEvent(LimitedTestCase):
         waiters = []
         count = 5
         for i in range(count):
-            waiters.append(greenthread.Event())
+            waiters.append(event.Event())
             eventlet.spawn_n(wait_on_event, waiters[-1])
         evt.send()
 
@@ -33,7 +33,7 @@ class TestEvent(LimitedTestCase):
         self.assertEqual(len(results), count)
 
     def test_reset(self):
-        evt = greenthread.Event()
+        evt = event.Event()
 
         # calling reset before send should throw
         self.assertRaises(AssertionError, evt.reset)
@@ -58,7 +58,7 @@ class TestEvent(LimitedTestCase):
         self.assertEqual(evt.wait(), value2)
 
     def test_double_exception(self):
-        evt = greenthread.Event()
+        evt = event.Event()
         # send an exception through the event
         evt.send(exc=RuntimeError('from test_double_exception'))
         self.assertRaises(RuntimeError, evt.wait)

@@ -5,7 +5,7 @@ import random
 
 import eventlet
 from eventlet import api
-from eventlet import hubs, greenpool, coros, greenthread
+from eventlet import hubs, greenpool, coros, event
 import tests
 
 class Spawn(tests.LimitedTestCase):
@@ -47,7 +47,7 @@ class GreenPool(tests.LimitedTestCase):
         
     def test_waiting(self):
         pool = greenpool.GreenPool(1)
-        done = greenthread.Event()
+        done = event.Event()
         def consume():
             done.wait()
         def waiter(pool):
@@ -73,7 +73,7 @@ class GreenPool(tests.LimitedTestCase):
         self.assertEqual(pool.running(), 0)
         
     def test_multiple_coros(self):
-        evt = greenthread.Event()
+        evt = event.Event()
         results = []
         def producer():
             results.append('prod')
@@ -113,7 +113,7 @@ class GreenPool(tests.LimitedTestCase):
         outer_waiter = pool.spawn(reenter)
         outer_waiter.wait()
 
-        evt = greenthread.Event()
+        evt = event.Event()
         def reenter_async():
             pool.spawn_n(lambda a: a, 'reenter')
             evt.send('done')
@@ -126,7 +126,7 @@ class GreenPool(tests.LimitedTestCase):
             e.wait()
         timer = api.exc_after(1, api.TimeoutError)
         try:
-            evt = greenthread.Event()
+            evt = event.Event()
             for x in xrange(num_free):
                 pool.spawn(wait_long_time, evt)
                 # if the pool has fewer free than we expect,
@@ -149,7 +149,7 @@ class GreenPool(tests.LimitedTestCase):
         
     def test_resize(self):
         pool = greenpool.GreenPool(2)
-        evt = greenthread.Event()
+        evt = event.Event()
         def wait_long_time(e):
             e.wait()
         pool.spawn(wait_long_time, evt)

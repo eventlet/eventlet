@@ -18,7 +18,8 @@ from Queue import Full, Empty
 
 _NONE = object()
 from eventlet.hubs import get_hub
-from eventlet.greenthread import getcurrent, exc_after, Event
+from eventlet.greenthread import getcurrent, exc_after
+from eventlet.event import Event
 
 __all__ = ['Queue', 'PriorityQueue', 'LifoQueue', 'JoinableQueue']
 

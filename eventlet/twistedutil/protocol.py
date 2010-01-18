@@ -9,7 +9,7 @@ from twisted.python import failure
 from eventlet import proc
 from eventlet.api import getcurrent
 from eventlet.coros import Queue
-from eventlet.greenthread import Event
+from eventlet.event import Event
 
 
 class ValueQueue(Queue):
