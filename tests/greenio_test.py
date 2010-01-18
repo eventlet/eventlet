@@ -4,6 +4,7 @@ from eventlet import greenio
 from eventlet import debug
 from eventlet.green.socket import GreenSSLObject
 import errno
+
 import eventlet
 import os
 import socket
@@ -133,7 +134,7 @@ class TestGreenIo(LimitedTestCase):
             (sock, addr) = listener.accept()
             sock = bufsized(sock)
             send_large_coro = eventlet.spawn(send_large, sock)
-            api.sleep(0)
+            eventlet.sleep(0)
             result = sock.recv(10)
             expected = 'hello world'
             while len(result) < len(expected):
@@ -145,7 +146,7 @@ class TestGreenIo(LimitedTestCase):
         client = bufsized(api.connect_tcp(('127.0.0.1', 
                                            listener.getsockname()[1])))
         large_evt = eventlet.spawn(read_large, client)
-        api.sleep(0)
+        eventlet.sleep(0)
         client.sendall('hello world')
         server_evt.wait()
         large_evt.wait()
