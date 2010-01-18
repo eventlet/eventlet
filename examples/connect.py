@@ -14,7 +14,7 @@ def geturl(url):
     return c.recv(1024)
 
 urls = ['www.google.com', 'www.yandex.ru', 'www.python.org']
-pile = eventlet.GreenPile(200)
+pile = eventlet.GreenPile()
 for x in urls:
     pile.spawn(geturl, x)
 

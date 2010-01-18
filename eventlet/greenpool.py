@@ -18,7 +18,7 @@ except NameError:
 class GreenPool(object):
     """ The GreenPool class is a pool of green threads.
     """
-    def __init__(self, size):
+    def __init__(self, size=1000):
         self.size = size
         self.coroutines_running = set()
         self.sem = semaphore.Semaphore(size)
@@ -159,7 +159,7 @@ class GreenPile(object):
     GreenPool.  To do this, construct it with an integer size parameter instead 
     of a GreenPool
     """
-    def __init__(self, size_or_pool):
+    def __init__(self, size_or_pool=1000):
         if isinstance(size_or_pool, GreenPool):
             self.pool = size_or_pool
         else:

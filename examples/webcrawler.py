@@ -1,7 +1,5 @@
 #! /usr/bin/env python
-"""\
-@file webcrawler.py
-
+"""
 This is a simple web "crawler" that fetches a bunch of urls using a pool to 
 control the number of outbound connections. It has as many simultaneously open
 connections as coroutines in the pool.

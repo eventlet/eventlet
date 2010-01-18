@@ -29,7 +29,7 @@ server = socket.socket()
 server.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR, 1)
 server.bind(('0.0.0.0', 6000))
 server.listen(50)
-pool = eventlet.GreenPool(10000)
+pool = eventlet.GreenPool()
 while True:
     try:
         new_sock, address = server.accept()
