@@ -69,7 +69,7 @@ except ImportError:
         return connection
 
 socket_already_wrapped = False
-def wrap_socket_with_coroutine_socket(use_thread_pool=False):
+def wrap_socket_with_coroutine_socket(use_thread_pool=None):
     global socket_already_wrapped
     if socket_already_wrapped:
         return
@@ -84,6 +84,11 @@ def wrap_socket_with_coroutine_socket(use_thread_pool=False):
     except ImportError:
         pass
 
+    if use_thread_pool is None:
+        # if caller doesn't specify, use the environment variable
+        # to decide whether to use tpool or not
+        use_thread_pool = os.environ.get("EVENTLET_TPOOL_GETHOSTBYNAME",
+                                         '').lower() == "yes"
     if use_thread_pool:
         try:
             from eventlet import tpool
