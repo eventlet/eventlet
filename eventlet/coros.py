@@ -369,7 +369,8 @@ class Actor(object):
         coroutine in a predictable manner, but this kinda defeats the point of
         the :class:`Actor`, so don't do it in a real application.
 
-        >>> evt = event.Event()
+        >>> from eventlet.event import Event
+        >>> evt = Event()
         >>> a.cast( ("message 1", evt) )
         >>> evt.wait()  # force it to run at this exact moment
         received message 1
