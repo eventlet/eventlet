@@ -44,7 +44,7 @@ if have_network_access:
 if have_network_access:
     import_main('test_socket')
 import_main('test_socket_ssl')
-import_main('test_socketserver')
+#import_main('test_socketserver')
 if have_network_access:
     import_main('test_ssl')
 import_main('test_thread')
