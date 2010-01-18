@@ -8,15 +8,6 @@ from eventlet import api
 from eventlet import hubs, greenpool, coros, event
 import tests
 
-class Spawn(tests.LimitedTestCase):
-    # TODO: move this test elsewhere
-    def test_simple(self):
-        def f(a, b=None):
-            return (a,b)
-        
-        gt = eventlet.spawn(f, 1, b=2)
-        self.assertEquals(gt.wait(), (1,2))
-
 def passthru(a):
     eventlet.sleep(0.01)
     return a

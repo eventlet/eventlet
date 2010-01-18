@@ -9,17 +9,6 @@ __all__ = ['getcurrent', 'sleep', 'spawn', 'spawn_n', 'call_after_global', 'call
 
 getcurrent = greenlet.getcurrent
 
-def kill(g, *throw_args):
-    """Terminates the target greenthread by raising an exception into it.
-    By default, this exception is GreenletExit, but a specific exception
-    may be specified in the *throw_args*.
-    """
-    hub = hubs.get_hub()
-    hub.schedule_call_global(0, g.throw, *throw_args)
-    if getcurrent() is not hub.greenlet:
-        sleep(0)
-
-
 def sleep(seconds=0):
     """Yield control to another eligible coroutine until at least *seconds* have
     elapsed.
@@ -189,35 +178,82 @@ def _spawn_n(seconds, func, args, kwargs):
 
 
 class GreenThread(greenlet.greenlet):
+    """The GreenThread class is a type of Greenlet which has the additional
+    property of having a retrievable result.  Do not construct GreenThread
+    objects directly; call :func:greenthread.spawn to get one.
+    """
     def __init__(self, parent):
         greenlet.greenlet.__init__(self, self.main, parent)
         self._exit_event = event.Event()
 
     def wait(self):
+        """ Returns the result of the main function of this GreenThread.  If the   
+        result is a normal return value, wait() returns it.  If it raised
+        an exception, wait() will also raise an exception."""
         return self._exit_event.wait()
         
     def link(self, func, *curried_args, **curried_kwargs):
         """ Set up a function to be called with the results of the GreenThread.
         
-        The function must have the following signature:
-          def f(result=None, exc=None, [curried args/kwargs]):
+        The function must have the following signature::
+          def func(gt, [curried args/kwargs]):
+          
+        When the GreenThread finishes its run, it calls *func* with itself
+        and with the arguments supplied at link-time.  If the function wants
+        to retrieve the result of the GreenThread, it should call wait()
+        on its first argument.
         """
         self._exit_funcs = getattr(self, '_exit_funcs', [])
         self._exit_funcs.append((func, curried_args, curried_kwargs))
+        if self._exit_event.ready():
+            self._resolve_links()
         
     def main(self, function, args, kwargs):
         try:
             result = function(*args, **kwargs)
         except:
             self._exit_event.send_exception(*sys.exc_info())
-            # ca and ckw are the curried function arguments
-            for f, ca, ckw in getattr(self, '_exit_funcs', []):
-                f(exc=sys.exc_info(), *ca, **ckw)
+            self._resolve_links()
             raise
         else:
             self._exit_event.send(result)
-            for f, ca, ckw in getattr(self, '_exit_funcs', []):
-                f(result, *ca, **ckw)
-                
+            self._resolve_links()
+    
+    def _resolve_links(self):
+        # ca and ckw are the curried function arguments
+        for f, ca, ckw in getattr(self, '_exit_funcs', []):
+            f(self, *ca, **ckw)
+        self._exit_funcs = [] # so they don't get called again
+    
     def kill(self):
         return kill(self)
+
+
+def kill(g, *throw_args):
+    """Terminates the target greenthread by raising an exception into it.
+    By default, this exception is GreenletExit, but a specific exception
+    may be specified.  *throw_args* should be the same as the arguments to 
+    raise; either an exception instance or an exc_info tuple.
+    """
+    if g.dead:
+        return
+    hub = hubs.get_hub()
+    if not g:
+        # greenlet hasn't started yet and therefore throw won't work
+        # on its own; semantically we want it to be as though the main
+        # method never got called
+        def just_raise(*a, **kw):
+            raise throw_args or greenlet.GreenletExit
+        if hasattr(g, '_exit_event'):
+            # it's a GreenThread object, so we want to call its main
+            # method to take advantage of the notification
+            def raise_main(*a, **kw):
+                g.main(just_raise, (), {})
+            g.run = raise_main
+        else:
+            # regular greenlet; just want to replace its run method so
+            # that whatever it was going to run, doesn't
+            g.run = just_raise
+    hub.schedule_call_global(0, g.throw, *throw_args)
+    if getcurrent() is not hub.greenlet:
+        sleep(0)

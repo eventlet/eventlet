@@ -223,7 +223,7 @@ def setup():
         _threads[i].start()
 
     _coro = greenthread.spawn_n(tpool_trampoline)
-    api.sleep(0)  # fix a race condition when calling killall immediately
+    
 
 def killall():
     global _setup_already, _reqq, _rspq, _rfile, _wfile

@@ -1,4 +1,5 @@
 import itertools
+import traceback
 
 from eventlet import coros
 from eventlet import event
@@ -69,24 +70,23 @@ class GreenPool(object):
             if not self.coroutines_running:
                 self.no_coros_running = event.Event()
             self.coroutines_running.add(gt)
-            gt.link(self._spawn_done, coro=gt)
+            gt.link(self._spawn_done)
         return gt
     
     def _spawn_n_impl(self, func, args, kwargs, coro=None):
         try:
             try:
                 func(*args, **kwargs)
-            except (KeyboardInterrupt, SystemExit):
+            except (KeyboardInterrupt, SystemExit, GreenletExit):
                 raise
             except:
-                # TODO in debug mode print these
-                pass
+                traceback.print_exc()
         finally:
             if coro is None:
                 return
             else:
                 coro = greenthread.getcurrent()
-                self._spawn_done(coro=coro)
+                self._spawn_done(coro)
     
     def spawn_n(self, func, *args, **kwargs):
         """ Create a coroutine to run the *function*.  Returns None; the results
@@ -108,12 +108,12 @@ class GreenPool(object):
         """Waits until all coroutines in the pool are finished working."""
         self.no_coros_running.wait()
     
-    def _spawn_done(self, result=None, exc=None, coro=None):
+    def _spawn_done(self, coro):
         self.sem.release()
         if coro is not None:
             self.coroutines_running.remove(coro)
         # if done processing (no more work is waiting for processing),
-        # send StopIteration so that the queue knows it's done
+        # we can finish off any waitall() calls that might be pending
         if self.sem.balance == self.size:
             self.no_coros_running.send(None)
             
