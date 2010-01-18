@@ -1,72 +1,7 @@
 from unittest import main, TestCase
 from tests import LimitedTestCase
-from eventlet import coros, api
-
-class TestEvent(LimitedTestCase):
-    def test_waiting_for_event(self):
-        evt = coros.Event()
-        value = 'some stuff'
-        def send_to_event():
-            evt.send(value)
-        api.spawn(send_to_event)
-        self.assertEqual(evt.wait(), value)
-
-    def test_multiple_waiters(self):
-        evt = coros.Event()
-        value = 'some stuff'
-        results = []
-        def wait_on_event(i_am_done):
-            evt.wait()
-            results.append(True)
-            i_am_done.send()
-
-        waiters = []
-        count = 5
-        for i in range(count):
-            waiters.append(coros.Event())
-            api.spawn(wait_on_event, waiters[-1])
-        evt.send()
-
-        for w in waiters:
-            w.wait()
-
-        self.assertEqual(len(results), count)
-
-    def test_reset(self):
-        evt = coros.Event()
-
-        # calling reset before send should throw
-        self.assertRaises(AssertionError, evt.reset)
-
-        value = 'some stuff'
-        def send_to_event():
-            evt.send(value)
-        api.spawn(send_to_event)
-        self.assertEqual(evt.wait(), value)
-
-        # now try it again, and we should get the same exact value,
-        # and we shouldn't be allowed to resend without resetting
-        value2 = 'second stuff'
-        self.assertRaises(AssertionError, evt.send, value2)
-        self.assertEqual(evt.wait(), value)
-
-        # reset and everything should be happy
-        evt.reset()
-        def send_to_event2():
-            evt.send(value2)
-        api.spawn(send_to_event2)
-        self.assertEqual(evt.wait(), value2)
-
-    def test_double_exception(self):
-        evt = coros.Event()
-        # send an exception through the event
-        evt.send(exc=RuntimeError('from test_double_exception'))
-        self.assertRaises(RuntimeError, evt.wait)
-        evt.reset()
-        # shouldn't see the RuntimeError again
-        api.exc_after(0.001, api.TimeoutError('from test_double_exception'))
-        self.assertRaises(api.TimeoutError, evt.wait)
-
+import eventlet
+from eventlet import greenthread, api, coros
 
 class IncrActor(coros.Actor):
     def received(self, evt):
@@ -85,7 +20,7 @@ class TestActor(LimitedTestCase):
         api.kill(self.actor._killer)
 
     def test_cast(self):
-        evt = coros.Event()
+        evt = greenthread.Event()
         self.actor.cast(evt)
         evt.wait()
         evt.reset()
@@ -96,8 +31,8 @@ class TestActor(LimitedTestCase):
 
     def test_cast_multi_1(self):
         # make sure that both messages make it in there
-        evt = coros.Event()
-        evt1 = coros.Event()
+        evt = greenthread.Event()
+        evt1 = greenthread.Event()
         self.actor.cast(evt)
         self.actor.cast(evt1)
         evt.wait()
@@ -107,7 +42,7 @@ class TestActor(LimitedTestCase):
     def test_cast_multi_2(self):
         # the actor goes through a slightly different code path if it
         # is forced to enter its event loop prior to any cast()s
-        api.sleep(0)
+        eventlet.sleep(0)
         self.test_cast_multi_1()
 
     def test_sleeping_during_received(self):
@@ -116,22 +51,22 @@ class TestActor(LimitedTestCase):
         msgs = []
         waiters = []
         def received( (message, evt) ):
-            api.sleep(0)
+            eventlet.sleep(0)
             msgs.append(message)
             evt.send()
         self.actor.received = received
 
-        waiters.append(coros.Event())
+        waiters.append(greenthread.Event())
         self.actor.cast( (1, waiters[-1]))
-        api.sleep(0)
-        waiters.append(coros.Event())
+        eventlet.sleep(0)
+        waiters.append(greenthread.Event())
         self.actor.cast( (2, waiters[-1]) )
-        waiters.append(coros.Event())
+        waiters.append(greenthread.Event())
         self.actor.cast( (3, waiters[-1]) )
-        api.sleep(0)
-        waiters.append(coros.Event())
+        eventlet.sleep(0)
+        waiters.append(greenthread.Event())
         self.actor.cast( (4, waiters[-1]) )
-        waiters.append(coros.Event())
+        waiters.append(greenthread.Event())
         self.actor.cast( (5, waiters[-1]) )
         for evt in waiters:
             evt.wait()
@@ -148,7 +83,7 @@ class TestActor(LimitedTestCase):
 
         self.actor.received = received
 
-        evt = coros.Event()
+        evt = greenthread.Event()
         self.actor.cast( ('fail', evt) )
         evt.wait()
         evt.reset()
@@ -166,10 +101,10 @@ class TestActor(LimitedTestCase):
         self.actor.received = received
 
         def onemoment():
-            api.sleep(0.1)
+            eventlet.sleep(0.1)
 
-        evt = coros.Event()
-        evt1 = coros.Event()
+        evt = greenthread.Event()
+        evt1 = greenthread.Event()
 
         self.actor.cast( (onemoment, evt, 1) )
         self.actor.cast( (lambda: None, evt1, 2) )
@@ -178,11 +113,11 @@ class TestActor(LimitedTestCase):
         self.assertEqual(total[0], 2)
         # both coroutines should have been used
         self.assertEqual(self.actor._pool.current_size, 2)
-        api.sleep(0)
+        eventlet.sleep(0)
         self.assertEqual(self.actor._pool.free(), 1)
         evt.wait()
         self.assertEqual(total[0], 3)
-        api.sleep(0)
+        eventlet.sleep(0)
         self.assertEqual(self.actor._pool.free(), 2)
 
 

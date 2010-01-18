@@ -1,0 +1,69 @@
+import eventlet
+from eventlet import greenthread
+from tests import LimitedTestCase
+
+class TestEvent(LimitedTestCase):
+    def test_waiting_for_event(self):
+        evt = greenthread.Event()
+        value = 'some stuff'
+        def send_to_event():
+            evt.send(value)
+        eventlet.spawn_n(send_to_event)
+        self.assertEqual(evt.wait(), value)
+
+    def test_multiple_waiters(self):
+        evt = greenthread.Event()
+        value = 'some stuff'
+        results = []
+        def wait_on_event(i_am_done):
+            evt.wait()
+            results.append(True)
+            i_am_done.send()
+
+        waiters = []
+        count = 5
+        for i in range(count):
+            waiters.append(greenthread.Event())
+            eventlet.spawn_n(wait_on_event, waiters[-1])
+        evt.send()
+
+        for w in waiters:
+            w.wait()
+
+        self.assertEqual(len(results), count)
+
+    def test_reset(self):
+        evt = greenthread.Event()
+
+        # calling reset before send should throw
+        self.assertRaises(AssertionError, evt.reset)
+
+        value = 'some stuff'
+        def send_to_event():
+            evt.send(value)
+        eventlet.spawn_n(send_to_event)
+        self.assertEqual(evt.wait(), value)
+
+        # now try it again, and we should get the same exact value,
+        # and we shouldn't be allowed to resend without resetting
+        value2 = 'second stuff'
+        self.assertRaises(AssertionError, evt.send, value2)
+        self.assertEqual(evt.wait(), value)
+
+        # reset and everything should be happy
+        evt.reset()
+        def send_to_event2():
+            evt.send(value2)
+        eventlet.spawn_n(send_to_event2)
+        self.assertEqual(evt.wait(), value2)
+
+    def test_double_exception(self):
+        evt = greenthread.Event()
+        # send an exception through the event
+        evt.send(exc=RuntimeError('from test_double_exception'))
+        self.assertRaises(RuntimeError, evt.wait)
+        evt.reset()
+        # shouldn't see the RuntimeError again
+        eventlet.exc_after(0.001, eventlet.TimeoutError('from test_double_exception'))
+        self.assertRaises(eventlet.TimeoutError, evt.wait)
+
