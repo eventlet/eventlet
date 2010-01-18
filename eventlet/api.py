@@ -46,6 +46,9 @@ def tcp_listener(address, backlog=50):
     socket object on which one should call ``accept()`` to accept a connection
     on the newly bound socket.
     """
+    warnings.warn("""eventlet.api.tcp_listener is deprecated.  Please use eventlet.green.socket instead.  See examples/echoserver.py for an example.""",
+        DeprecationWarning, stacklevel=2)
+
     from eventlet import greenio, util
     socket = greenio.GreenSocket(util.tcp_socket())
     util.socket_bind_and_listen(socket, address, backlog=backlog)
@@ -71,6 +74,9 @@ def connect_tcp(address, localaddr=None):
     Create a TCP connection to address ``(host, port)`` and return the socket.
     Optionally, bind to localaddr ``(host, port)`` first.
     """
+    warnings.warn("""eventlet.api.connect_tcp is deprecated.  Please use eventlet.green.socket instead.  See examples/connect.py for an example.""",
+        DeprecationWarning, stacklevel=2)
+        
     from eventlet import greenio, util
     desc = greenio.GreenSocket(util.tcp_socket())
     if localaddr is not None:
