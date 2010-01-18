@@ -1,13 +1,12 @@
 from tests import LimitedTestCase, skip_with_pyevent, main
-from eventlet import api
 from eventlet import greenio
 from eventlet import debug
+from eventlet.green import socket
 from eventlet.green.socket import GreenSSLObject
 import errno
 
 import eventlet
 import os
-import socket
 import sys
 
 def bufsized(sock, size=1):
@@ -75,19 +74,26 @@ class TestGreenIo(LimitedTestCase):
                 listener.close()
                 
         def did_it_work(server):
-            client = api.connect_tcp(('127.0.0.1', server.getsockname()[1]))
+            client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            client.connect(('127.0.0.1', server.getsockname()[1]))
             fd = client.makefile()
             client.close()
             assert fd.readline() == 'hello\n'    
             assert fd.read() == ''
             fd.close()
             
-        server = api.tcp_listener(('0.0.0.0', 0))
+        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR, 1)
+        server.bind(('0.0.0.0', 0))
+        server.listen(50)
         killer = eventlet.spawn(accept_close_early, server)
         did_it_work(server)
         killer.wait()
         
-        server = api.tcp_listener(('0.0.0.0', 0))
+        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR, 1)
+        server.bind(('0.0.0.0', 0))
+        server.listen(50)
         killer = eventlet.spawn(accept_close_late, server)
         did_it_work(server)
         killer.wait()
@@ -106,9 +112,13 @@ class TestGreenIo(LimitedTestCase):
                 self.assertRaises(Exception, conn.flush)
             finally:
                 listener.close()
-        server = api.tcp_listener(('0.0.0.0', 0))
+        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR, 1)
+        server.bind(('127.0.0.1', 0))
+        server.listen(50)
         killer = eventlet.spawn(accept_once, server)
-        client = api.connect_tcp(('127.0.0.1', server.getsockname()[1]))
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client.connect(('127.0.0.1', server.getsockname()[1]))
         fd = client.makefile()
         client.close()
         assert fd.read() == 'hello\n'    
@@ -118,7 +128,11 @@ class TestGreenIo(LimitedTestCase):
      
     def test_full_duplex(self):
         large_data = '*' * 10 * min_buf_size()
-        listener = bufsized(api.tcp_listener(('127.0.0.1', 0)))
+        listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        listener.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR, 1)
+        listener.bind(('127.0.0.1', 0))
+        listener.listen(50)
+        bufsized(listener)
 
         def send_large(sock):
             sock.sendall(large_data)
@@ -143,8 +157,9 @@ class TestGreenIo(LimitedTestCase):
             send_large_coro.wait()
                 
         server_evt = eventlet.spawn(server)
-        client = bufsized(api.connect_tcp(('127.0.0.1', 
-                                           listener.getsockname()[1])))
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client.connect(('127.0.0.1', listener.getsockname()[1]))
+        bufsized(client)
         large_evt = eventlet.spawn(read_large, client)
         eventlet.sleep(0)
         client.sendall('hello world')
@@ -165,11 +180,14 @@ class TestGreenIo(LimitedTestCase):
                 sock.sendall('x'*many_bytes)
                 sock.sendall('y'*second_bytes)
             
-            listener = api.tcp_listener(("", 0))
+            listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            listener.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR, 1)
+            listener.bind(("", 0))
+            listener.listen(50)
             sender_coro = eventlet.spawn(sender, listener)
-            client = bufsized(api.connect_tcp(('localhost', 
-                                               listener.getsockname()[1])),
-                              size=bufsize)
+            client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            client.connect(('127.0.0.1', listener.getsockname()[1]))
+            bufsized(client, size=bufsize)
             total = 0
             while total < many_bytes:
                 data = client.recv(min(many_bytes - total, many_bytes/10))
@@ -196,7 +214,10 @@ class TestGreenIo(LimitedTestCase):
         except ImportError:
             pass  # pre-2.6
         else:
-            sock = api.tcp_listener(('127.0.0.1', 0))
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR, 1)
+            sock.bind(('127.0.0.1', 0))
+            sock.listen(50)
             ssl_sock = ssl.wrap_socket(sock)
 
 
@@ -218,7 +239,10 @@ class TestGreenIoLong(LimitedTestCase):
             
         results1 = []
         results2 = []
-        listener = api.tcp_listener(('127.0.0.1', 0))
+        listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        listener.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR, 1)
+        listener.bind(('127.0.0.1', 0))
+        listener.listen(50)
         def server():
             (sock, addr) = listener.accept()
             sock = bufsized(sock)
@@ -233,8 +257,9 @@ class TestGreenIoLong(LimitedTestCase):
                 sock.close()
 
         server_coro = eventlet.spawn(server)
-        client = bufsized(api.connect_tcp(('127.0.0.1', 
-                                           listener.getsockname()[1])))
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client.connect(('127.0.0.1', listener.getsockname()[1]))
+        bufsized(client)
         client.sendall('*' * sendsize)
         client.close()
         server_coro.wait()
