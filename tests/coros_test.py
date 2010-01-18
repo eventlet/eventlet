@@ -113,8 +113,6 @@ class TestActor(LimitedTestCase):
 
         evt1.wait()
         self.assertEqual(total[0], 2)
-        # both coroutines should have been used
-        self.assertEqual(self.actor._pool.current_size, 2)
         eventlet.sleep(0)
         self.assertEqual(self.actor._pool.free(), 1)
         evt.wait()

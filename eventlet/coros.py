@@ -320,7 +320,8 @@ class Actor(object):
         self._mailbox = collections.deque()
         self._event = _event.Event()
         self._killer = api.spawn(self.run_forever)
-        self._pool = CoroutinePool(min_size=0, max_size=concurrency)
+        from eventlet import greenpool
+        self._pool = greenpool.GreenPool(concurrency)
 
     def run_forever(self):
         """ Loops forever, continually checking the mailbox. """
@@ -332,7 +333,7 @@ class Actor(object):
                 # leave the message in the mailbox until after it's
                 # been processed so the event doesn't get triggered
                 # while in the received method
-                self._pool.execute_async(
+                self._pool.spawn_n(
                     self.received, self._mailbox[0])
                 self._mailbox.popleft()
 
