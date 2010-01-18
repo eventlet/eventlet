@@ -2,7 +2,7 @@
 __thread = __import__('thread')
 from eventlet.support import greenlets as greenlet
 from eventlet.api import spawn
-from eventlet.coros import Semaphore as LockType
+from eventlet.semaphore import Semaphore as LockType
 
 error = __thread.error
 

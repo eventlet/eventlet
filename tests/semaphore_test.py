@@ -1,28 +1,30 @@
 import unittest
-from eventlet import api, coros
+import eventlet
+from eventlet import semaphore
 from tests import LimitedTestCase
 
 class TestSemaphore(LimitedTestCase):
-
     def test_bounded(self):
-        # this was originally semaphore's doctest
-        sem = coros.BoundedSemaphore(2, limit=3)
+        sem = semaphore.BoundedSemaphore(2, limit=3)
         self.assertEqual(sem.acquire(), True)
         self.assertEqual(sem.acquire(), True)
-        api.spawn(sem.release)
+        gt1 = eventlet.spawn(sem.release)
         self.assertEqual(sem.acquire(), True)
         self.assertEqual(-3, sem.balance)
         sem.release()
         sem.release()
         sem.release()
-        api.spawn(sem.acquire)
+        gt2 = eventlet.spawn(sem.acquire)
         sem.release()
         self.assertEqual(3, sem.balance)
+        gt1.wait()
+        gt2.wait()
    
     def test_bounded_with_zero_limit(self):
-        sem = coros.semaphore(0, 0)
-        api.spawn(sem.acquire)
+        sem = semaphore.BoundedSemaphore(0, 0)
+        gt = eventlet.spawn(sem.acquire)
         sem.release()
+        gt.wait()
 
 
 if __name__=='__main__':

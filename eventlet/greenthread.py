@@ -13,8 +13,9 @@ def kill(g, *throw_args):
     By default, this exception is GreenletExit, but a specific exception
     may be specified in the *throw_args*.
     """
-    get_hub_().schedule_call_global(0, g.throw, *throw_args)
-    if getcurrent() is not get_hub_().greenlet:
+    hub = hubs.get_hub()
+    hub.schedule_call_global(0, g.throw, *throw_args)
+    if getcurrent() is not hub.greenlet:
         sleep(0)
 
 def sleep(seconds=0):

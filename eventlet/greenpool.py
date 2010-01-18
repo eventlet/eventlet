@@ -1,7 +1,8 @@
 import itertools
 
-from eventlet import greenthread
 from eventlet import coros
+from eventlet import greenthread
+from eventlet import semaphore
 
 __all__ = ['GreenPool', 'GreenPile']
                 
@@ -20,7 +21,7 @@ class GreenPool(object):
     def __init__(self, size):
         self.size = size
         self.coroutines_running = set()
-        self.sem = coros.Semaphore(size)
+        self.sem = semaphore.Semaphore(size)
         self.no_coros_running = greenthread.Event()
             
     def resize(self, new_size):
