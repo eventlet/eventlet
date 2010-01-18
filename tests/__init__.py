@@ -106,6 +106,15 @@ class LimitedTestCase(unittest.TestCase):
         self.timer.cancel()
 
 
+def verify_hub_empty():
+    from eventlet import hubs
+    hub = hubs.get_hub()
+    num_readers = len(hub.get_readers())
+    num_writers = len(hub.get_writers())
+    num_timers = len(hub.get_timers_count())
+    assert num_readers == 0 and num_writers == 0, "Readers: %s Writers: %s" % (num_readers, num_writers)
+
+
 def find_command(command):
     for dir in os.getenv('PATH', '/usr/bin:/usr/sbin').split(os.pathsep):
         p = os.path.join(dir, command)

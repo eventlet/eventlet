@@ -19,7 +19,6 @@ import sys
 
 from Queue import Empty, Queue
 
-from eventlet import api
 from eventlet import event
 from eventlet import greenio
 from eventlet import greenthread
@@ -234,8 +233,8 @@ def killall():
     for thr in _threads.values():
         thr.join()
     _threads.clear()
-    if _coro:
-        api.kill(_coro)
+    if _coro is not None:
+        greenthread.kill(_coro)
     _rfile.close()
     _wfile.close()
     _rfile = None
