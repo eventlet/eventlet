@@ -1,7 +1,8 @@
 from eventlet import api, saranwrap
-from eventlet.pool import Pool
+from eventlet import greenpool
 
 import os
+import eventlet
 import sys
 import tempfile
 import time
@@ -22,7 +23,7 @@ class CoroutineCallingClass(object):
         self._my_dict = {}
 
     def run_coroutine(self):
-        api.spawn(self._add_random_key)
+        eventlet.spawn_n(self._add_random_key)
 
     def _add_random_key(self):
         self._my_dict['random'] = 'yes, random'
@@ -282,13 +283,11 @@ sys_path = sys.path""")
         from tests import saranwrap_test
         prox = saranwrap.wrap(saranwrap_test)
 
-        pool = Pool(max_size=4)
-        waiters = []
-        waiters.append(pool.execute(lambda: self.assertEquals(prox.one, 1)))
-        waiters.append(pool.execute(lambda: self.assertEquals(prox.two, 2)))
-        waiters.append(pool.execute(lambda: self.assertEquals(prox.three, 3)))
-        for waiter in waiters:
-            waiter.wait()
+        pool = greenpool.GreenPool(4)
+        pool.spawn_n(lambda: self.assertEquals(prox.one, 1))
+        pool.spawn_n(lambda: self.assertEquals(prox.two, 2))
+        pool.spawn_n(lambda: self.assertEquals(prox.three, 3))
+        pool.waitall()
 
     @skip_on_windows
     def test_copy(self):
