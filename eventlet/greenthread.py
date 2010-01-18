@@ -18,6 +18,7 @@ def kill(g, *throw_args):
     if getcurrent() is not hub.greenlet:
         sleep(0)
 
+
 def sleep(seconds=0):
     """Yield control to another eligible coroutine until at least *seconds* have
     elapsed.
@@ -60,6 +61,7 @@ def spawn_n(func, *args, **kwargs):
     fastest if there are no keyword arguments."""
     return _spawn_n(0, func, args, kwargs)[1]
 
+
 def call_after_global(seconds, func, *args, **kwargs):
     """Schedule *function* to be called after *seconds* have elapsed.
     The function will be scheduled even if the current greenlet has exited.
@@ -72,6 +74,7 @@ def call_after_global(seconds, func, *args, **kwargs):
     Its return value is discarded. Any uncaught exception will be logged."""
     return _spawn_n(seconds, func, args, kwargs)[0]
     
+
 def call_after_local(seconds, function, *args, **kwargs):
     """Schedule *function* to be called after *seconds* have elapsed.
     The function will NOT be called if the current greenlet has exited.
@@ -214,6 +217,9 @@ class GreenThread(greenlet.greenlet):
             self._exit_event.send(result)
             for f, ca, ckw in getattr(self, '_exit_funcs', []):
                 f(result, *ca, **ckw)
+                
+    def kill(self):
+        return kill(self)
       
 
 

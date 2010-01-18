@@ -1,16 +1,13 @@
-from tests import skipped, LimitedTestCase, skip_with_pyevent, TestIsTakingTooLong
-from unittest import main
-from eventlet import api, util, coros, proc, greenio, hubs
+from tests import LimitedTestCase, skip_with_pyevent, main
+from eventlet import api
+from eventlet import greenio
+from eventlet import debug
 from eventlet.green.socket import GreenSSLObject
 import errno
+import eventlet
 import os
 import socket
 import sys
-
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from StringIO import StringIO
 
 def bufsized(sock, size=1):
     """ Resize both send and receive buffers on a socket.
@@ -85,12 +82,12 @@ class TestGreenIo(LimitedTestCase):
             fd.close()
             
         server = api.tcp_listener(('0.0.0.0', 0))
-        killer = coros.execute(accept_close_early, server)
+        killer = eventlet.spawn(accept_close_early, server)
         did_it_work(server)
         killer.wait()
         
         server = api.tcp_listener(('0.0.0.0', 0))
-        killer = coros.execute(accept_close_late, server)
+        killer = eventlet.spawn(accept_close_late, server)
         did_it_work(server)
         killer.wait()
     
@@ -109,7 +106,7 @@ class TestGreenIo(LimitedTestCase):
             finally:
                 listener.close()
         server = api.tcp_listener(('0.0.0.0', 0))
-        killer = coros.execute(accept_once, server)
+        killer = eventlet.spawn(accept_once, server)
         client = api.connect_tcp(('127.0.0.1', server.getsockname()[1]))
         fd = client.makefile()
         client.close()
@@ -135,7 +132,7 @@ class TestGreenIo(LimitedTestCase):
         def server():
             (sock, addr) = listener.accept()
             sock = bufsized(sock)
-            send_large_coro = coros.execute(send_large, sock)
+            send_large_coro = eventlet.spawn(send_large, sock)
             api.sleep(0)
             result = sock.recv(10)
             expected = 'hello world'
@@ -144,10 +141,10 @@ class TestGreenIo(LimitedTestCase):
             self.assertEquals(result, expected)
             send_large_coro.wait()
                 
-        server_evt = coros.execute(server)
+        server_evt = eventlet.spawn(server)
         client = bufsized(api.connect_tcp(('127.0.0.1', 
                                            listener.getsockname()[1])))
-        large_evt = coros.execute(read_large, client)
+        large_evt = eventlet.spawn(read_large, client)
         api.sleep(0)
         client.sendall('hello world')
         server_evt.wait()
@@ -168,7 +165,7 @@ class TestGreenIo(LimitedTestCase):
                 sock.sendall('y'*second_bytes)
             
             listener = api.tcp_listener(("", 0))
-            sender_coro = proc.spawn(sender, listener)
+            sender_coro = eventlet.spawn(sender, listener)
             client = bufsized(api.connect_tcp(('localhost', 
                                                listener.getsockname()[1])),
                               size=bufsize)
@@ -192,16 +189,22 @@ class TestGreenIo(LimitedTestCase):
         for bytes in (1000, 10000, 100000, 1000000):
             test_sendall_impl(bytes)
         
+    def test_wrap_socket(self):
+        try:
+            import ssl
+        except ImportError:
+            pass  # pre-2.6
+        else:
+            sock = api.tcp_listener(('127.0.0.1', 0))
+            ssl_sock = ssl.wrap_socket(sock)
+
+
+class TestGreenIoLong(LimitedTestCase):
+    TEST_TIMEOUT=10  # the test here might take a while depending on the OS
     @skip_with_pyevent
     def test_multiple_readers(self):
         recvsize = 2 * min_buf_size()
-        sendsize = 10 * recvsize
-        if recvsize > 100:
-            # reset the timer because we're going to be taking
-            # longer to send all this extra data
-            self.timer.cancel()
-            self.timer = api.exc_after(10, TestIsTakingTooLong(10))
-        
+        sendsize = 10 * recvsize        
         # test that we can have multiple coroutines reading
         # from the same fd.  We make no guarantees about which one gets which
         # bytes, but they should both get at least some
@@ -219,8 +222,8 @@ class TestGreenIo(LimitedTestCase):
             (sock, addr) = listener.accept()
             sock = bufsized(sock)
             try:
-                c1 = proc.spawn(reader, sock, results1)
-                c2 = proc.spawn(reader, sock, results2)
+                c1 = eventlet.spawn(reader, sock, results1)
+                c2 = eventlet.spawn(reader, sock, results2)
                 c1.wait()
                 c2.wait()
             finally:
@@ -228,7 +231,7 @@ class TestGreenIo(LimitedTestCase):
                 c2.kill()
                 sock.close()
 
-        server_coro = proc.spawn(server)
+        server_coro = eventlet.spawn(server)
         client = bufsized(api.connect_tcp(('127.0.0.1', 
                                            listener.getsockname()[1])))
         client.sendall('*' * sendsize)
@@ -238,38 +241,6 @@ class TestGreenIo(LimitedTestCase):
         self.assert_(len(results1) > 0)
         self.assert_(len(results2) > 0)
         
-    def test_wrap_socket(self):
-        try:
-            import ssl
-        except ImportError:
-            pass  # pre-2.6
-        else:
-            sock = api.tcp_listener(('127.0.0.1', 0))
-            ssl_sock = ssl.wrap_socket(sock)
-            
-    def test_exception_squelching(self):
-        return  # exception squelching disabled for now (greenthread doesn't 
-        # re-raise exceptions to the hub)
-        server = api.tcp_listener(('0.0.0.0', 0))
-        client = api.connect_tcp(('127.0.0.1', server.getsockname()[1]))
-        client_2, addr = server.accept()
-        
-        def hurl(s):
-            s.recv(1)
-            {}[1]  # keyerror
-
-        fake = StringIO()
-        orig = sys.stderr
-        sys.stderr = fake
-        try:
-            api.spawn(hurl, client_2)            
-            api.sleep(0)
-            client.send(' ')
-            api.sleep(0)
-        finally:
-            sys.stderr = orig
-        self.assert_('Traceback' in fake.getvalue(), 
-            "Traceback not in:\n" + fake.getvalue())
                         
 if __name__ == '__main__':
     main()
