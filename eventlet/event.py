@@ -13,20 +13,22 @@ class Event(object):
     """An abstraction where an arbitrary number of coroutines
     can wait for one event from another.
 
-    Events differ from channels in two ways:
+    Events are similar to a Queue that can only hold one item, but differ
+    in two important ways:
 
-    1. calling :meth:`send` does not unschedule the current coroutine
+    1. calling :meth:`send` never unschedules the current greenthread
     2. :meth:`send` can only be called once; use :meth:`reset` to prepare the
        event for another :meth:`send`
     
-    They are ideal for communicating return values between coroutines.
+    They are good for communicating results between coroutines.
 
-    >>> from eventlet import coros, api
-    >>> evt = coros.Event()
+    >>> from eventlet import event
+    >>> import eventlet
+    >>> evt = event.Event()
     >>> def baz(b):
     ...     evt.send(b + 1)
     ...
-    >>> _ = api.spawn(baz, 3)
+    >>> _ = eventlet.spawn_n(baz, 3)
     >>> evt.wait()
     4
     """
@@ -43,8 +45,8 @@ class Event(object):
         """ Reset this event so it can be used to send again.
         Can only be called after :meth:`send` has been called.
 
-        >>> from eventlet import coros
-        >>> evt = coros.Event()
+        >>> from eventlet import event
+        >>> evt = event.Event()
         >>> evt.send(1)
         >>> evt.reset()
         >>> evt.send(2)
@@ -103,14 +105,15 @@ class Event(object):
         Returns the value the other coroutine passed to
         :meth:`send`.
 
-        >>> from eventlet import coros, api
-        >>> evt = coros.Event()
+        >>> from eventlet import event
+        >>> import eventlet
+        >>> evt = event.Event()
         >>> def wait_on():
         ...    retval = evt.wait()
         ...    print "waited for", retval
-        >>> _ = api.spawn(wait_on)
+        >>> _ = eventlet.spawn(wait_on)
         >>> evt.send('result')
-        >>> api.sleep(0)
+        >>> eventlet.sleep(0)
         waited for result
 
         Returns immediately if the event has already
@@ -134,17 +137,18 @@ class Event(object):
         """Makes arrangements for the waiters to be woken with the
         result and then returns immediately to the parent.
 
-        >>> from eventlet import coros, api
-        >>> evt = coros.Event()
+        >>> from eventlet import event
+        >>> import eventlet
+        >>> evt = event.Event()
         >>> def waiter():
         ...     print 'about to wait'
         ...     result = evt.wait()
         ...     print 'waited for', result
-        >>> _ = api.spawn(waiter)
-        >>> api.sleep(0)
+        >>> _ = eventlet.spawn(waiter)
+        >>> eventlet.sleep(0)
         about to wait
         >>> evt.send('a')
-        >>> api.sleep(0)
+        >>> eventlet.sleep(0)
         waited for a
 
         It is an error to call :meth:`send` multiple times on the same event.
@@ -175,5 +179,6 @@ class Event(object):
                     waiter.throw(*exc)
 
     def send_exception(self, *args):
+        """Same as :meth:`send`, but sends an exception to waiters."""
         # the arguments and the same as for greenlet.throw
         return self.send(None, args)                

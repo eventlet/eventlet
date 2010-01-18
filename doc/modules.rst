@@ -7,13 +7,16 @@ Module Reference
    modules/api
    modules/backdoor
    modules/corolocal
-   modules/coros
+   modules/debug
    modules/db_pool
+   modules/event
    modules/greenio
    modules/greenpool
+   modules/greenthread
    modules/pools
    modules/processes
-   modules/proc
+   modules/queue
    modules/saranwrap
+   modules/semaphore
    modules/util
    modules/wsgi

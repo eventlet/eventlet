@@ -18,7 +18,6 @@ The objects so wrapped behave as if they are resident in the current process spa
 
 .. automodule:: eventlet.saranwrap
 	:members:
-	:undoc-members:
 
 
 Underlying Protocol

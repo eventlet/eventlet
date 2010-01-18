@@ -27,12 +27,12 @@ class GreenPool(object):
         self.no_coros_running = event.Event()
             
     def resize(self, new_size):
-        """ Change the max number of coroutines doing work at any given time.
+        """ Change the max number of greenthreads doing work at any given time.
     
-        If resize is called when there are more than *new_size*
-        coroutines already working on tasks, they will be allowed to complete 
-        but no new tasks will be allowed to get launched until enough coroutines 
-        finish their tasks to drop the overall quantity below *new_size*.  Until 
+        If resize is called when there are more than *new_size* greenthreads 
+        already working on tasks, they will be allowed to complete but no new 
+        tasks will be allowed to get launched until enough greenthreads finish 
+        their tasks to drop the overall quantity below *new_size*.  Until 
         then, the return value of free() will be negative.
         """
         size_delta = new_size - self.size 
@@ -40,15 +40,15 @@ class GreenPool(object):
         self.size = new_size
     
     def running(self):
-        """ Returns the number of coroutines that are currently executing
+        """ Returns the number of greenthreads that are currently executing
         functions in the Parallel's pool."""
         return len(self.coroutines_running)
 
     def free(self):
-        """ Returns the number of coroutines available for use.
+        """ Returns the number of greenthreads available for use.
         
-        If zero or less, the next call to :meth:`spawn` will block the calling
-        coroutine until a slot becomes available."""
+        If zero or less, the next call to :meth:`spawn` or :meth:`spawn_n` will 
+        block the calling greenthread until a slot becomes available."""
         return self.sem.counter
 
     def spawn(self, function, *args, **kwargs):
@@ -89,8 +89,8 @@ class GreenPool(object):
                 self._spawn_done(coro)
     
     def spawn_n(self, func, *args, **kwargs):
-        """ Create a coroutine to run the *function*.  Returns None; the results
-        of the function are not retrievable.
+        """ Create a greenthread to run the *function*.  Returns None; the 
+        results of the function are not retrievable.
         """
         # if reentering an empty pool, don't try to wait on a coroutine freeing
         # itself -- instead, just execute in the current coroutine
@@ -99,13 +99,14 @@ class GreenPool(object):
             self._spawn_n_impl(func, args, kwargs)
         else:
             self.sem.acquire()
-            g = greenthread.spawn_n(self._spawn_n_impl, func, args, kwargs, coro=True)
+            g = greenthread.spawn_n(self._spawn_n_impl, 
+                func, args, kwargs, coro=True)
             if not self.coroutines_running:
                 self.no_coros_running = event.Event()
             self.coroutines_running.add(g)
 
     def waitall(self):
-        """Waits until all coroutines in the pool are finished working."""
+        """Waits until all greenthreads in the pool are finished working."""
         self.no_coros_running.wait()
     
     def _spawn_done(self, coro):
@@ -118,7 +119,7 @@ class GreenPool(object):
             self.no_coros_running.send(None)
             
     def waiting(self):
-        """Return the number of coroutines waiting to spawn.
+        """Return the number of greenthreads waiting to spawn.
         """
         if self.sem.balance < 0:
             return -self.sem.balance
@@ -194,7 +195,7 @@ class GreenPile(object):
         return self
     
     def next(self):
-        """Wait for the next result, suspending the current coroutine until it
+        """Wait for the next result, suspending the current greenthread until it
         is available.  Raises StopIteration when there are no more results."""
         if self.counter == 0 and self.used:
             raise StopIteration()

@@ -18,6 +18,7 @@ class TestDebug(LimitedTestCase):
         debug.tpool_exceptions(False)
         debug.hub_listener_stacks(True)
         debug.hub_listener_stacks(False)
+        debug.format_hub_listeners()
 
     def test_hub_exceptions(self):
         debug.hub_exceptions(True)

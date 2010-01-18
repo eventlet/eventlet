@@ -30,8 +30,14 @@ def sleep(seconds=0):
         
 
 def spawn(func, *args, **kwargs):
-    """Create a green thread to run func(*args, **kwargs).  Returns a 
-    GreenThread object which you can use to get the results of the call.
+    """Create a greenthread to run ``func(*args, **kwargs)``.  Returns a 
+    :class:`GreenThread` object which you can use to get the results of the 
+    call.
+    
+    Execution control returns immediately to the caller; the created greenthread
+    is merely scheduled to be run at the next available opportunity.  
+    Use :func:`call_after_global` to  arrange for greenthreads to be spawned 
+    after a finite delay.
     """
     hub = hubs.get_hub()
     g = GreenThread(hub.greenlet)
@@ -46,9 +52,10 @@ def _main_wrapper(func, args, kwargs):
 
 
 def spawn_n(func, *args, **kwargs):
-    """Same as spawn, but returns a greenlet object from which it is not 
-    possible to retrieve the results.  This is slightly faster than spawn; it is
-    fastest if there are no keyword arguments."""
+    """Same as :func:`spawn`, but returns a ``greenlet`` object from which it is 
+    not possible to retrieve the results.  This is slightly faster 
+    than :func:`spawn` in all cases; it is fastest if there are no keyword 
+    arguments."""
     return _spawn_n(0, func, args, kwargs)[1]
 
 
@@ -58,23 +65,21 @@ def call_after_global(seconds, func, *args, **kwargs):
 
     *seconds* may be specified as an integer, or a float if fractional seconds
     are desired. The *function* will be called with the given *args* and
-    keyword arguments *kwargs*, and will be executed within the main loop's
-    coroutine.
-
-    Its return value is discarded. Any uncaught exception will be logged."""
+    keyword arguments *kwargs*, and will be executed within its own greenthread.
+    
+    Its return value is discarded."""
     return _spawn_n(seconds, func, args, kwargs)[0]
     
 
 def call_after_local(seconds, function, *args, **kwargs):
     """Schedule *function* to be called after *seconds* have elapsed.
-    The function will NOT be called if the current greenlet has exited.
+    The function will NOT be called if the current greenthread has exited.
 
     *seconds* may be specified as an integer, or a float if fractional seconds
     are desired. The *function* will be called with the given *args* and
-    keyword arguments *kwargs*, and will be executed within the main loop's
-    coroutine.
+    keyword arguments *kwargs*, and will be executed within its own greenthread.
 
-    Its return value is discarded. Any uncaught exception will be logged.
+    Its return value is discarded.
     """
     hub = hubs.get_hub()
     g = greenlet.greenlet(_main_wrapper, parent=hub.greenlet)
@@ -180,7 +185,7 @@ def _spawn_n(seconds, func, args, kwargs):
 class GreenThread(greenlet.greenlet):
     """The GreenThread class is a type of Greenlet which has the additional
     property of having a retrievable result.  Do not construct GreenThread
-    objects directly; call :func:greenthread.spawn to get one.
+    objects directly; call :func:`spawn` to get one.
     """
     def __init__(self, parent):
         greenlet.greenlet.__init__(self, self.main, parent)
@@ -188,20 +193,28 @@ class GreenThread(greenlet.greenlet):
 
     def wait(self):
         """ Returns the result of the main function of this GreenThread.  If the   
-        result is a normal return value, wait() returns it.  If it raised
-        an exception, wait() will also raise an exception."""
+        result is a normal return value, :meth:`wait` returns it.  If it raised
+        an exception, :meth:`wait` will raise the same exception (though the 
+        stack trace will unavoidably contain some frames from within the
+        greenthread module)."""
         return self._exit_event.wait()
         
     def link(self, func, *curried_args, **curried_kwargs):
         """ Set up a function to be called with the results of the GreenThread.
         
         The function must have the following signature::
-          def func(gt, [curried args/kwargs]):
+        
+            def func(gt, [curried args/kwargs]):
           
         When the GreenThread finishes its run, it calls *func* with itself
         and with the arguments supplied at link-time.  If the function wants
         to retrieve the result of the GreenThread, it should call wait()
         on its first argument.
+        
+        Note that *func* is called within execution context of 
+        the GreenThread, so it is possible to interfere with other linked 
+        functions by doing things like switching explicitly to another 
+        greenthread.
         """
         self._exit_funcs = getattr(self, '_exit_funcs', [])
         self._exit_funcs.append((func, curried_args, curried_kwargs))

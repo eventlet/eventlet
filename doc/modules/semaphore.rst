@@ -1,6 +1,6 @@
-:mod:`coros` -- Coroutine communication patterns
+:mod:`semaphore` -- Semaphore classes
 ==================================================
 
-.. automodule:: eventlet.coros
+.. automodule:: eventlet.semaphore
 	:members:
 	:undoc-members:

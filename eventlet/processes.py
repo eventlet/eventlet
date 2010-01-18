@@ -47,6 +47,7 @@ def cooperative_wait(pobj, check_interval=0.01):
 
 
 class Process(object):
+    """Construct Process objects, then call read, and write on them."""
     process_number = 0
     def __init__(self, command, args, dead_callback=lambda:None):
         self.process_number = self.process_number + 1

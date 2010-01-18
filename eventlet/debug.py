@@ -1,9 +1,10 @@
 """The debug module contains utilities and functions for better 
 debugging Eventlet-powered applications."""
 
-__all__ = ['spew', 'unspew', 'hub_listener_stacks', 
-'hub_exceptions', 'tpool_exceptions']
+import os
 
+__all__ = ['spew', 'unspew', 'format_hub_listeners', 'hub_listener_stacks', 
+'hub_exceptions', 'tpool_exceptions']
 
 class Spew(object):
     """
@@ -60,15 +61,27 @@ def unspew():
     sys.settrace(None)
     
     
+def format_hub_listeners():
+    """ Returns a formatted string of the current listeners on the current
+    hub.  This can be useful in determining what's going on in the event system,
+    especially when used in conjunction with :func:`hub_listener_stacks`.
+    """
+    from eventlet import hubs
+    hub = hubs.get_hub()
+    result = ['READERS:']
+    for l in hub.get_readers():
+        result.append(repr(l))
+    result.append('WRITERS:')
+    for l in hub.get_writers():
+        result.append(repr(l))
+    return os.linesep.join(result)
+    
 def hub_listener_stacks(state):
     """Toggles whether or not the hub records the stack when clients register 
     listeners on file descriptors.  This can be useful when trying to figure 
     out what the hub is up to at any given moment.  To inspect the stacks
-    of the current listeners, you have to iterate over them::
-    
-    from eventlet import hubs
-    for reader in hubs.get_hub().get_readers():
-        print reader
+    of the current listeners, call :func:`format_hub_listeners` at critical
+    junctures in the application logic.
     """
     from eventlet import hubs
     hubs.get_hub().set_debug_listeners(state)

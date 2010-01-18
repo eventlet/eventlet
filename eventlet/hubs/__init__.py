@@ -3,7 +3,7 @@ import sys
 import threading
 _threadlocal = threading.local()
 
-__all__ = ["use_hub"]
+__all__ = ["use_hub", "get_hub", "get_default_hub"]
 
 def get_default_hub():
     """Select the default hub implementation based on what multiplexing
@@ -56,6 +56,7 @@ def use_hub(mod=None):
     if hasattr(_threadlocal, 'hub'):
         del _threadlocal.hub
     if isinstance(mod, str):
+        assert mod.strip(), "Need to specify a hub"
         mod = __import__('eventlet.hubs.' + mod, globals(), locals(), ['Hub'])
     if hasattr(mod, 'Hub'):
         _threadlocal.Hub = mod.Hub
