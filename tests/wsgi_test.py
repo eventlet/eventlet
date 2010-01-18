@@ -1,4 +1,6 @@
 import cgi
+from eventlet import greenthread
+import eventlet
 import errno
 import os
 import socket
@@ -133,7 +135,7 @@ class TestHttpd(LimitedTestCase):
         
     def tearDown(self):
         super(TestHttpd, self).tearDown()
-        api.kill(self.killer)
+        greenthread.kill(self.killer)
         api.sleep(0)
 
     def spawn_server(self, **kwargs):
@@ -143,7 +145,7 @@ class TestHttpd(LimitedTestCase):
         
         Kills any previously-running server."""
         if self.killer:
-            api.kill(self.killer)
+            greenthread.kill(self.killer)
             
         new_kwargs = dict(max_size=128, 
                           log=self.logfile,
@@ -154,7 +156,7 @@ class TestHttpd(LimitedTestCase):
             new_kwargs['sock'] = api.tcp_listener(('localhost', 0))
             
         self.port = new_kwargs['sock'].getsockname()[1]
-        self.killer = api.spawn(
+        self.killer = eventlet.spawn_n(
             wsgi.server,
             **new_kwargs)
 
@@ -461,8 +463,7 @@ class TestHttpd(LimitedTestCase):
 
         sock = api.ssl_listener(('localhost', 0), certificate_file, private_key_file)
 
-        from eventlet import coros
-        server_coro = coros.execute(server, sock, wsgi_app, self.logfile)
+        server_coro = eventlet.spawn(server, sock, wsgi_app, self.logfile)
 
         client = api.connect_tcp(('localhost', sock.getsockname()[1]))
         client = util.wrap_ssl(client)
@@ -535,7 +536,7 @@ class TestHttpd(LimitedTestCase):
         self.assert_('127.0.0.1' in self.logfile.getvalue())
 
     def test_socket_remains_open(self):
-        api.kill(self.killer)
+        greenthread.kill(self.killer)
         server_sock = api.tcp_listener(('localhost', 0))
         server_sock_2 = server_sock.dup()
         self.spawn_server(sock=server_sock_2)
@@ -551,7 +552,7 @@ class TestHttpd(LimitedTestCase):
 
         # shut down the server and verify the server_socket fd is still open,
         # but the actual socketobject passed in to wsgi.server is closed
-        api.kill(self.killer)
+        greenthread.kill(self.killer)
         api.sleep(0.001) # make the kill go through
         try:
             server_sock_2.accept()
