@@ -1,6 +1,18 @@
 0.9.3
 =====
 
+* New debug module, used for enabling verbosity within Eventlet that can help debug applications or Eventlet itself.
+* Bugfixes in tpool, green.select
+* Moved primary api module to __init__ from api.  It shouldn't be necessary to import eventlet.api anymore; import eventlet should do the same job.
+* Proc module deprecated in favor of greenthread
+* New module greenthread, with new class GreenThread.
+* New GreenPool class that replaces pool.Pool.
+* Deprecated coros.execute
+* Deprecated coros.semaphore
+* Moved coros.BoundedSemaphore to semaphore.BoundedSemaphore
+* Moved coros.Semaphore to semaphore.Semaphore
+* Moved coros.event to event.Event
+* Deprecated api.tcp_listener, api.connect_tcp, api.ssl_listener
 * Moved get_hub, use_hub, get_default_hub to eventlet.hubs
 * Renamed libevent hub to pyevent.
 * Renamed coros.event to coros.Event

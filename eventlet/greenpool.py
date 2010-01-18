@@ -125,24 +125,29 @@ class GreenPool(object):
         else:
             return 0           
             
-    def _do_imap(self, func, it, gi):
+    def _do_map(self, func, it, gi):
         for args in it:
             gi.spawn(func, *args)
         gi.spawn(raise_stop_iteration)
-
-    def imap(self, function, *iterables):
-        """This is the same as itertools.imap, except that *func* is 
-        executed in separate green threads, with the concurrency controlled by
-        the pool. In operation, imap consumes a constant amount of memory,
-        proportional to the size of the pool, and is thus suited for iterating
-        over extremely long input lists.
+        
+    def starmap(self, function, iterable):
+        """This is the same as :func:`itertools.starmap`, except that *func* is 
+        executed in a separate green thread for each item, with the concurrency 
+        limited by the pool's size. In operation, starmap consumes a constant 
+        amount of memory, proportional to the size of the pool, and is thus 
+        suited for iterating over extremely long input lists.
         """
         if function is None:
             function = lambda *a: a
-        it = itertools.izip(*iterables)
-        gi = GreenImap(self.size)
-        greenthread.spawn_n(self._do_imap, function, it, gi)
+        gi = GreenMap(self.size)
+        greenthread.spawn_n(self._do_map, function, iterable, gi)
         return gi
+
+    def imap(self, function, *iterables):
+        """This is the same as :func:`itertools.imap`, and has the same
+        concurrency and memory behavior as :meth:`starmap`.
+        """
+        return self.starmap(function, itertools.izip(*iterables))
 
                                         
 def raise_stop_iteration():
@@ -158,7 +163,11 @@ class GreenPile(object):
     
     A GreenPile can also be constructed standalone, not associated with any 
     GreenPool.  To do this, construct it with an integer size parameter instead 
-    of a GreenPool
+    of a GreenPool.
+    
+    It is not advisable to iterate over a GreenPile in a different greenthread
+    than the one which is calling spawn.  The iterator will exit early in that
+    situation.
     """
     def __init__(self, size_or_pool=1000):
         if isinstance(size_or_pool, GreenPool):
@@ -195,8 +204,15 @@ class GreenPile(object):
             self.counter -= 1
             
 # this is identical to GreenPile but it blocks on spawn if the results 
-# aren't consumed
-class GreenImap(GreenPile):
+# aren't consumed, and it doesn't generate its own StopIteration exception,
+# instead relying on the spawning process to send one in when it's done
+class GreenMap(GreenPile):
     def __init__(self, size_or_pool):
-        super(GreenImap, self).__init__(size_or_pool)
+        super(GreenMap, self).__init__(size_or_pool)
         self.waiters = coros.Channel(max_size=self.pool.size)
+        
+    def next(self):
+        try:
+            return self.waiters.wait().wait()
+        finally:
+            self.counter -= 1

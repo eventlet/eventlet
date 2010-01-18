@@ -275,6 +275,10 @@ class GreenPool(tests.LimitedTestCase):
                 break
         self.assertEquals(results, [0,'r',2,3,4,5,6,'r',8,9])
         
+    def test_starmap(self):
+        p = greenpool.GreenPool(4)
+        result_list = list(p.starmap(passthru, [(x,) for x in xrange(10)]))
+        self.assertEquals(result_list, range(10))
             
 class GreenPile(tests.LimitedTestCase):
     def test_pile(self):
