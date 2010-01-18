@@ -8,6 +8,15 @@ __all__ = ['getcurrent', 'sleep', 'spawn', 'spawn_n', 'call_after_global', 'call
 
 getcurrent = greenlet.getcurrent
 
+def kill(g, *throw_args):
+    """Terminates the target greenthread by raising an exception into it.
+    By default, this exception is GreenletExit, but a specific exception
+    may be specified in the *throw_args*.
+    """
+    get_hub_().schedule_call_global(0, g.throw, *throw_args)
+    if getcurrent() is not get_hub_().greenlet:
+        sleep(0)
+
 def sleep(seconds=0):
     """Yield control to another eligible coroutine until at least *seconds* have
     elapsed.

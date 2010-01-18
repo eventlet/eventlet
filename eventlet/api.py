@@ -121,11 +121,7 @@ spawn = greenthread.spawn
 spawn_n = greenthread.spawn_n
 
 
-def kill(g, *throw_args):
-    get_hub_().schedule_call_global(0, g.throw, *throw_args)
-    if getcurrent() is not get_hub_().greenlet:
-        sleep(0)
-
+kill = greenthread.kill
 
 call_after = greenthread.call_after
 call_after_local = greenthread.call_after_local
