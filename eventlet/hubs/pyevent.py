@@ -3,7 +3,7 @@ import time
 import traceback
 import event
 
-from eventlet import api
+from eventlet.support import greenlets as greenlet
 from eventlet.hubs.hub import BaseHub, FdListener, READ, WRITE
 
 
@@ -47,7 +47,7 @@ class Hub(BaseHub):
         pass
 
     def switch(self):
-        cur = api.getcurrent()
+        cur = greenlet.getcurrent()
         assert cur is not self.greenlet, 'Cannot switch to MAINLOOP from MAINLOOP'
         switch_out = getattr(cur, 'switch_out', None)
         if switch_out is not None:
@@ -56,9 +56,9 @@ class Hub(BaseHub):
             except:
                 traceback.print_exception(*sys.exc_info())
         if self.greenlet.dead:
-            self.greenlet = api.Greenlet(self.run)
+            self.greenlet = greenlet.greenlet(self.run)
         try:
-            api.getcurrent().parent = self.greenlet
+            greenlet.getcurrent().parent = self.greenlet
         except ValueError:
             pass
         return self.greenlet.switch()
@@ -87,19 +87,19 @@ class Hub(BaseHub):
         while True:
             try:
                 self.dispatch()
-            except api.GreenletExit:
+            except greenlet.GreenletExit:
                 break
             except self.SYSTEM_EXCEPTIONS:
                 raise
             except:
                 if self.signal_exc_info is not None:
-                    self.schedule_call_global(0, api.getcurrent().parent.throw, *self.signal_exc_info)
+                    self.schedule_call_global(0, greenlet.getcurrent().parent.throw, *self.signal_exc_info)
                     self.signal_exc_info = None
                 else:
                     self.squelch_timer_exception(None, sys.exc_info())
 
     def abort(self):
-        self.schedule_call_global(0, self.greenlet.throw, api.GreenletExit)
+        self.schedule_call_global(0, self.greenlet.throw, greenlet.GreenletExit)
 
     def _getrunning(self):
         return bool(self.greenlet)
@@ -143,7 +143,7 @@ class Hub(BaseHub):
                     traceback.print_exc()
                     
     def schedule_call_local(self, seconds, cb, *args, **kwargs):
-        current = api.getcurrent()
+        current = greenlet.getcurrent()
         if current is self.greenlet:
             return self.schedule_call_global(seconds, cb, *args, **kwargs)
         event_impl = event.event(_scheduled_call_local, (cb, args, kwargs, current))

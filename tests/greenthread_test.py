@@ -69,3 +69,4 @@ class Spawn(LimitedTestCase):
         self.assertEquals(gt.wait(), ((5,), {}))
         gt.link(link_func, 4, b=5)
         self.assertEquals(results, [gt, (4,), {'b':5}])
+        
