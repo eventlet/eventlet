@@ -31,7 +31,6 @@ def noop():
 
 class TestTpool(LimitedTestCase):
     def setUp(self):
-        tpool.setup()
         debug.hub_exceptions(True)
         super(TestTpool, self).setUp()
 

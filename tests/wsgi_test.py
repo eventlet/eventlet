@@ -125,14 +125,13 @@ def read_http(sock):
     return response_line, headers, body
 
 class TestHttpd(LimitedTestCase):
-    mode = 'static'
     def setUp(self):
         super(TestHttpd, self).setUp()
         self.logfile = StringIO()
         self.site = Site()
         self.killer = None
         self.spawn_server()
-        
+
     def tearDown(self):
         super(TestHttpd, self).tearDown()
         greenthread.kill(self.killer)
