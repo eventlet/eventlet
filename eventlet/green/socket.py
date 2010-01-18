@@ -6,6 +6,7 @@ _fileobject = __socket._fileobject
 from eventlet.hubs import get_hub
 from eventlet.greenio import GreenSocket as socket
 from eventlet.greenio import SSL as _SSL  # for exceptions
+import os
 import sys
 import warnings
 
@@ -17,9 +18,11 @@ def socketpair(*args):
     return socket(one), socket(two)
 
 def gethostbyname(name):
+    can_use_tpool = os.environ.get("EVENTLET_TPOOL_GETHOSTBYNAME",
+                                   '').lower() == "yes"
     if getattr(get_hub(), 'uses_twisted_reactor', None):
         globals()['gethostbyname'] = _gethostbyname_twisted
-    elif sys.platform.startswith('darwin'):
+    elif sys.platform.startswith('darwin') or not can_use_tpool:
         # the thread primitives on Darwin have some bugs that make
         # it undesirable to use tpool for hostname lookups
         globals()['gethostbyname'] = __socket.gethostbyname
