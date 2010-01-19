@@ -1,3 +1,4 @@
+import warnings
 warnings.warn("The proc module is deprecated!  Please use the greenthread " 
               "module, or any of the many other Eventlet cross-coroutine "
               "primitives, instead.",
