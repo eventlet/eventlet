@@ -53,8 +53,15 @@ class GreenPool(object):
 
     def spawn(self, function, *args, **kwargs):
         """Run the *function* with its arguments in its own green thread.
-        Returns the GreenThread object that is running the function, which can
-        be used to retrieve the results.
+        Returns the :class:`GreenThread <eventlet.greenthread.GreenThread>` 
+        object that is running the function, which can be used to retrieve the
+        results.
+        
+        If the pool is currently at capacity, ``spawn`` will block until one of
+        the running greenthreads completes its task and frees up a slot.
+        
+        This function is reentrant; *function* can call ``spawn`` on the same
+        pool without risk of deadlocking the whole thing.
         """
         # if reentering an empty pool, don't try to wait on a coroutine freeing
         # itself -- instead, just execute in the current coroutine
@@ -88,19 +95,20 @@ class GreenPool(object):
                 coro = greenthread.getcurrent()
                 self._spawn_done(coro)
     
-    def spawn_n(self, func, *args, **kwargs):
-        """ Create a greenthread to run the *function*.  Returns None; the 
-        results of the function are not retrievable.
+    def spawn_n(self, function, *args, **kwargs):
+        """ Create a greenthread to run the *function*, the same as 
+        :meth:`spawn`.  The difference is that :meth:`spawn_n` returns 
+        None; the results of *function* are not retrievable.
         """
         # if reentering an empty pool, don't try to wait on a coroutine freeing
         # itself -- instead, just execute in the current coroutine
         current = greenthread.getcurrent()
         if self.sem.locked() and current in self.coroutines_running:
-            self._spawn_n_impl(func, args, kwargs)
+            self._spawn_n_impl(function, args, kwargs)
         else:
             self.sem.acquire()
             g = greenthread.spawn_n(self._spawn_n_impl, 
-                func, args, kwargs, coro=True)
+                function, args, kwargs, coro=True)
             if not self.coroutines_running:
                 self.no_coros_running = event.Event()
             self.coroutines_running.add(g)

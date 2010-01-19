@@ -14,7 +14,7 @@ Eventlet has multiple hub implementations, and when you start using it, it tries
 **pyevent**
     This is a libevent-based backend and is thus the fastest.  It's disabled by default, because it does not support native threads, but you can enable it yourself if your use case doesn't require them.
 
-There is one function that is of interest as regards hubs.
+If the selected hub is not idea for the application, another can be selected.
 
 .. function:: eventlet.hubs.use_hub(hub=None)
 
@@ -35,5 +35,14 @@ There is one function that is of interest as regards hubs.
     Supplying None as the argument to :func:`eventlet.hubs.use_hub` causes it to select the default hub.
 
 
+
 .. autofunction:: eventlet.hubs.get_hub
 .. autofunction:: eventlet.hubs.get_default_hub
+
+How the Hubs Work
+-----------------
+
+The hub has a main greenlet, MAINLOOP.  When one of the running coroutines needs
+to do some I/O, it registers a listener with the hub (so that the hub knows when to wake it up again), and then switches to MAINLOOP (via ``get_hub().switch()``).  If there are other coroutines that are ready to run, MAINLOOP switches to them, and when they complete or need to do more I/O, they switch back to the MAINLOOP.  In this manner, MAINLOOP ensures that every coroutine gets scheduled when it has some work to do.
+
+MAINLOOP is launched only when the first I/O operation happens, and it is not the same greenlet that __main__ is running in.  This lazy launching is why it's not necessary to explicitly call a dispatch() method like other frameworks, which in turn means that code can start using Eventlet without needing to be substantially restructured.

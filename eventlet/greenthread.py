@@ -207,7 +207,7 @@ class GreenThread(greenlet.greenlet):
             def func(gt, [curried args/kwargs]):
           
         When the GreenThread finishes its run, it calls *func* with itself
-        and with the arguments supplied at link-time.  If the function wants
+        and with the `curried arguments <http://en.wikipedia.org/wiki/Currying>`_ supplied at link-time.  If the function wants
         to retrieve the result of the GreenThread, it should call wait()
         on its first argument.
         
