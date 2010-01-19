@@ -8,6 +8,7 @@
 * Deprecated proc module (use greenthread module instead)
 * tpooled gethostbyname is configurable via environment variable EVENTLET_TPOOL_GETHOSTBYNAME
 * Removed greenio.Green_fileobject and refactored the code therein to be more efficient.  Only call makefile() on sockets now; makeGreenFile() is deprecated.  The main loss here is that of the readuntil method.  Also, Green_fileobjects used to be auto-flushing; flush() must be called explicitly now.
+* Added epoll support
 * Improved documentation across the board.
 * New queue module, API-compatible with stdlib Queue
 * New debug module, used for enabling verbosity within Eventlet that can help debug applications or Eventlet itself.
