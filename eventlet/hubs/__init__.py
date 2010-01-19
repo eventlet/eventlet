@@ -8,6 +8,7 @@ __all__ = ["use_hub", "get_hub", "get_default_hub"]
 def get_default_hub():
     """Select the default hub implementation based on what multiplexing
     libraries are installed.  The order that the hubs are tried is:
+    
     * twistedr
     * epoll
     * poll

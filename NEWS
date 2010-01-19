@@ -1,16 +1,17 @@
 0.9.3
 =====
 
-* tpooled gethostbyname is configurable via environment variable EVENTLET_TPOOL_GETHOSTBYNAME
-* Removed greenio.Green_fileobject and refactored the code therein to be more efficient.  Only call makefile() on sockets now; makeGreenFile() is deprecated.  The main loss here is that of the readuntil method.  Also, Green_fileobjects used to be auto-flushing; flush() must be called explicitly now.
-* Improved documentation across the board.
-* New debug module, used for enabling verbosity within Eventlet that can help debug applications or Eventlet itself.
-* Bugfixes in tpool, green.select, patcher
 * Moved primary api module to __init__ from api.  It shouldn't be necessary to import eventlet.api anymore; import eventlet should do the same job.
 * Proc module deprecated in favor of greenthread
 * New module greenthread, with new class GreenThread.
 * New GreenPool class that replaces pool.Pool.
-* Deprecated Proc module (use greenthread module instead)
+* Deprecated proc module (use greenthread module instead)
+* tpooled gethostbyname is configurable via environment variable EVENTLET_TPOOL_GETHOSTBYNAME
+* Removed greenio.Green_fileobject and refactored the code therein to be more efficient.  Only call makefile() on sockets now; makeGreenFile() is deprecated.  The main loss here is that of the readuntil method.  Also, Green_fileobjects used to be auto-flushing; flush() must be called explicitly now.
+* Improved documentation across the board.
+* New queue module, API-compatible with stdlib Queue
+* New debug module, used for enabling verbosity within Eventlet that can help debug applications or Eventlet itself.
+* Bugfixes in tpool, green.select, patcher
 * Deprecated coros.execute (use eventlet.spawn instead)
 * Deprecated coros.semaphore (use semaphore.Semaphore or semaphore.BoundedSemaphore instead)
 * Moved coros.BoundedSemaphore to semaphore.BoundedSemaphore

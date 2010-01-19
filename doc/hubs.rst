@@ -33,3 +33,7 @@ There is one function that is of interest as regards hubs.
          hubs.use_hub(myhub)
     
     Supplying None as the argument to :func:`eventlet.hubs.use_hub` causes it to select the default hub.
+
+
+.. autofunction:: eventlet.hubs.get_hub
+.. autofunction:: eventlet.hubs.get_default_hub
