@@ -1,3 +1,8 @@
+warnings.warn("The proc module is deprecated!  Please use the greenthread " 
+              "module, or any of the many other Eventlet cross-coroutine "
+              "primitives, instead.",
+               DeprecationWarning, stacklevel=2)
+
 """
 This module provides means to spawn, kill and link coroutines. Linking means
 subscribing to the coroutine's result, either in form of return value or
