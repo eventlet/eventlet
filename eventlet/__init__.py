@@ -1,4 +1,4 @@
-version_info = (0, 9, '3pre')
+version_info = (0, 9, 3)
 __version__ = '%s.%s.%s' % version_info
 
 from eventlet import greenthread
