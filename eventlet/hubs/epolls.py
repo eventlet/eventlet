@@ -8,6 +8,7 @@ except ImportError, e:
 import time
 from eventlet.hubs.hub import BaseHub
 from eventlet.hubs import poll
+from eventlet.hubs.poll import READ, WRITE
 
 # NOTE: we rely on the fact that the epoll flag constants
 # are identical in value to the poll constants
@@ -22,3 +23,12 @@ class Hub(poll.Hub):
             self.modify = self.poll.modify
         except AttributeError:
             self.modify = self.poll.register
+
+    def add(self, evtype, fileno, cb):
+        oldlisteners = bool(self.listeners[READ].get(fileno) or
+                            self.listeners[WRITE].get(fileno))
+        listener = BaseHub.add(self,evtype, fileno, cb)
+        if not oldlisteners:
+            # Means we've added a new listener
+            self.register(fileno, new=True)
+        return listener
