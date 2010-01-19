@@ -87,7 +87,7 @@ Coverage.py is an awesome tool for evaluating how much code was exercised by uni
 
 .. code-block:: sh
 
- nosetests --with-coverage
+ nosetests --with-coverage --cover-package=eventlet
  
 After running the tests to completion, this will emit a huge wodge of module names and line numbers.  For some reason, the ``--cover-inclusive`` option breaks everything rather than serving its purpose of limiting the coverage to the local files, so don't use that.
 
@@ -95,6 +95,6 @@ The annotate option is quite useful because it generates annotated source files 
 
 .. code-block:: sh
 
- coverage annotate -d annotated --omit tempmod
+ coverage annotate -d annotated --omit='tempmod,<console>'
  
-(``tempmod`` is omitted because it gets thrown away at the completion of its unit test and coverage.py isn't smart enough to detect this)
+(``tempmod`` and ``console`` are omitted because they gets thrown away at the completion of their unit tests and coverage.py isn't smart enough to detect this)

@@ -317,6 +317,13 @@ class Actor(object):
         to process concurrently.  If it is 1, the actor will process messages
         serially.
         """
+        warnings.warn("We're phasing out the Actor class, so as to get rid of" 
+                   "the coros module.  If you use Actor, please speak up on "
+                   "eventletdev@lists.secondlife.com, and we'll come up with a "
+                   "transition plan.  If no one speaks up, we'll remove Actor "
+                   "in a future release of Eventlet.",
+                   DeprecationWarning, stacklevel=2)
+
         self._mailbox = collections.deque()
         self._event = _event.Event()
         self._killer = api.spawn(self.run_forever)

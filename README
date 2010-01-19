@@ -1,14 +1,22 @@
 Getting Started
 ===============
 
+There's some good documentation up at: http://eventlet.net/doc/
+
+Here's something you can try right on the command line:
+
 % python
->>> from eventlet import api
->>> help(api)
+>>> import eventlet 
+>>> from eventlet.green import urllib2
+>>> gt = eventlet.spawn(urllib2.urlopen, 'http://eventlet.net')
+>>> gt2 = eventlet.spawn(urllib2.urlopen, 'http://secondlife.com')
+>>> gt2.wait()
+>>> gt.wait()
 
 Also, look at the examples in the examples directory.
 
-Building the Docs
-=================
+Building the Docs Locally
+=========================
 
 To build a complete set of HTML documentation, you must have Sphinx, which can be found at http://sphinx.pocoo.org/
 
