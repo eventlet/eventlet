@@ -1,21 +1,24 @@
 0.9.3
 =====
 
+* tpooled gethostbyname is configurable via environment variable EVENTLET_TPOOL_GETHOSTBYNAME
+* Removed greenio.Green_fileobject and refactored the code therein to be more efficient.  Only call makefile() on sockets now; makeGreenFile() is deprecated.  The main loss here is that of the readuntil method.  Also, Green_fileobjects used to be auto-flushing; flush() must be called explicitly now.
+* Improved documentation across the board.
 * New debug module, used for enabling verbosity within Eventlet that can help debug applications or Eventlet itself.
-* Bugfixes in tpool, green.select
+* Bugfixes in tpool, green.select, patcher
 * Moved primary api module to __init__ from api.  It shouldn't be necessary to import eventlet.api anymore; import eventlet should do the same job.
 * Proc module deprecated in favor of greenthread
 * New module greenthread, with new class GreenThread.
 * New GreenPool class that replaces pool.Pool.
-* Deprecated coros.execute
-* Deprecated coros.semaphore
+* Deprecated Proc module (use greenthread module instead)
+* Deprecated coros.execute (use eventlet.spawn instead)
+* Deprecated coros.semaphore (use semaphore.Semaphore or semaphore.BoundedSemaphore instead)
 * Moved coros.BoundedSemaphore to semaphore.BoundedSemaphore
 * Moved coros.Semaphore to semaphore.Semaphore
 * Moved coros.event to event.Event
 * Deprecated api.tcp_listener, api.connect_tcp, api.ssl_listener
-* Moved get_hub, use_hub, get_default_hub to eventlet.hubs
+* Moved get_hub, use_hub, get_default_hub from eventlet.api to eventlet.hubs
 * Renamed libevent hub to pyevent.
-* Renamed coros.event to coros.Event
 * Removed previously-deprecated features tcp_server, GreenSSL, erpc, and trap_errors.
 * Removed saranwrap as an option for making db connections nonblocking in db_pool.
 

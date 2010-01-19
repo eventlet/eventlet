@@ -9,7 +9,7 @@ from twisted.python import failure
 from eventlet import proc
 from eventlet.api import getcurrent
 from eventlet.coros import Queue
-from eventlet.event import Event
+from eventlet.event import Event as BaseEvent
 
 
 class ValueQueue(Queue):
@@ -37,17 +37,17 @@ class ValueQueue(Queue):
         return self.items and self.items[-1][1] is not None
 
 
-class Event(Event):
+class Event(BaseEvent):
 
     def send(self, value, exc=None):
         if self.ready():
             self.reset()
-        return Event.send(self, value, exc)
+        return BaseEvent.send(self, value, exc)
 
     def send_exception(self, *throw_args):
         if self.ready():
             self.reset()
-        return Event.send_exception(self, *throw_args)
+        return BaseEvent.send_exception(self, *throw_args)
 
 class Producer2Event(object):
 
