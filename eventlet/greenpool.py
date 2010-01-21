@@ -8,6 +8,8 @@ from eventlet import semaphore
 from eventlet.support import greenlets as greenlet
 
 __all__ = ['GreenPool', 'GreenPile']
+
+DEBUG = False
                 
 try:
     next
@@ -88,9 +90,8 @@ class GreenPool(object):
             except (KeyboardInterrupt, SystemExit, greenlet.GreenletExit):
                 raise
             except:
-                # TODO control this with debug module
-                #traceback.print_exc()
-                pass
+                if DEBUG:
+                    traceback.print_exc()
         finally:
             if coro is None:
                 return
