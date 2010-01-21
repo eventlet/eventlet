@@ -721,16 +721,16 @@ class TestHttpd(LimitedTestCase):
         fd = sock.makefile()
         fd.write('PUT /a HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\n\r\n10\r\n0123456789abcdef\r\n0\r\n\r\n')
         fd.flush()
-        print 'x', read_http(sock)
+        read_http(sock)
         fd.write('PUT /b HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\n\r\n10\r\n0123456789abcdef\r\n0\r\n\r\n')
         fd.flush()
-        print 'x', read_http(sock)
+        read_http(sock)
         fd.write('PUT /c HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\n\r\n10\r\n0123456789abcdef\r\n0\r\n\r\n')
         fd.flush()
-        print 'x', read_http(sock)
+        read_http(sock)
         fd.write('PUT /a HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\n\r\n10\r\n0123456789abcdef\r\n0\r\n\r\n')
         fd.flush()
-        print 'x', read_http(sock)
+        read_http(sock)
 
 
 if __name__ == '__main__':
