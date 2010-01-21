@@ -114,6 +114,8 @@ class Input(object):
                     else:
                         self.chunk_length = int(rfile.readline(), 16)
                         self.position = 0
+                        if not self.chunk_length:
+                            rfile.readline()
         except greenio.SSL.ZeroReturnError:
             pass
         return ''.join(response)

@@ -715,6 +715,23 @@ class TestHttpd(LimitedTestCase):
         response_line, headers, body = read_http(sock)
         self.assertEqual(headers['connection'], 'close')
 
+    def test_027_keepalive_chunked(self):
+        self.site.application = chunked_post
+        sock = api.connect_tcp(('localhost', self.port))
+        fd = sock.makefile()
+        fd.write('PUT /a HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\n\r\n10\r\n0123456789abcdef\r\n0\r\n\r\n')
+        fd.flush()
+        print 'x', read_http(sock)
+        fd.write('PUT /b HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\n\r\n10\r\n0123456789abcdef\r\n0\r\n\r\n')
+        fd.flush()
+        print 'x', read_http(sock)
+        fd.write('PUT /c HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\n\r\n10\r\n0123456789abcdef\r\n0\r\n\r\n')
+        fd.flush()
+        print 'x', read_http(sock)
+        fd.write('PUT /a HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\n\r\n10\r\n0123456789abcdef\r\n0\r\n\r\n')
+        fd.flush()
+        print 'x', read_http(sock)
+
 
 if __name__ == '__main__':
     main()
