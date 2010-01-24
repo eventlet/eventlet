@@ -92,6 +92,8 @@ def hub_exceptions(state):
     """
     from eventlet import hubs
     hubs.get_hub().set_timer_exceptions(state)
+    from eventlet import greenpool
+    greenpool.DEBUG = state
     
 def tpool_exceptions(state):
     """Toggles whether tpool itself prints exceptions that are raised from 

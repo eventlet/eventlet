@@ -5,8 +5,11 @@ from eventlet import coros
 from eventlet import event
 from eventlet import greenthread
 from eventlet import semaphore
+from eventlet.support import greenlets as greenlet
 
 __all__ = ['GreenPool', 'GreenPile']
+
+DEBUG = False
                 
 try:
     next
@@ -84,10 +87,11 @@ class GreenPool(object):
         try:
             try:
                 func(*args, **kwargs)
-            except (KeyboardInterrupt, SystemExit, GreenletExit):
+            except (KeyboardInterrupt, SystemExit, greenlet.GreenletExit):
                 raise
             except:
-                traceback.print_exc()
+                if DEBUG:
+                    traceback.print_exc()
         finally:
             if coro is None:
                 return

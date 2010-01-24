@@ -4,8 +4,9 @@ import os
 import random 
 
 import eventlet
-from eventlet import api
+from eventlet import debug
 from eventlet import hubs, greenpool, coros, event
+from eventlet.support import greenlets as greenlet
 import tests
 
 def passthru(a):
@@ -16,6 +17,9 @@ def passthru2(a, b):
     eventlet.sleep(0.01)
     return a,b
         
+def raiser(exc):
+    raise exc
+
 class GreenPool(tests.LimitedTestCase):
     def test_spawn(self):
         p = greenpool.GreenPool(4)
@@ -113,9 +117,10 @@ class GreenPool(tests.LimitedTestCase):
         self.assertEquals('done', evt.wait())
         
     def assert_pool_has_free(self, pool, num_free):
+        self.assertEquals(pool.free(), num_free)
         def wait_long_time(e):
             e.wait()
-        timer = api.exc_after(1, api.TimeoutError)
+        timer = eventlet.exc_after(1, eventlet.TimeoutError)
         try:
             evt = event.Event()
             for x in xrange(num_free):
@@ -127,7 +132,7 @@ class GreenPool(tests.LimitedTestCase):
 
         # if the runtime error is not raised it means the pool had
         # some unexpected free items
-        timer = api.exc_after(0, RuntimeError)
+        timer = eventlet.exc_after(0, RuntimeError())
         try:
             self.assertRaises(RuntimeError, pool.spawn, wait_long_time, evt)
         finally:
@@ -177,7 +182,7 @@ class GreenPool(tests.LimitedTestCase):
         tp = pools.TokenPool(max_size=1)
         token = tp.get()  # empty out the pool
         def do_receive(tp):
-            timer = api.exc_after(0, RuntimeError())
+            timer = eventlet.exc_after(0, RuntimeError())
             try:
                 t = tp.get()
                 self.fail("Shouldn't have recieved anything from the pool")
@@ -233,6 +238,19 @@ class GreenPool(tests.LimitedTestCase):
         self.assertEqual(set(r), set([1,2,3]))
         eventlet.sleep(0)
         self.assertEqual(set(r), set([1,2,3,4]))
+        
+    def test_exceptions(self):
+        p = greenpool.GreenPool(2)
+        for m in (p.spawn, p.spawn_n):
+            self.assert_pool_has_free(p, 2)
+            m(raiser, RuntimeError())
+            self.assert_pool_has_free(p, 1)
+            p.waitall()
+            self.assert_pool_has_free(p, 2)
+            m(raiser, greenlet.GreenletExit)
+            self.assert_pool_has_free(p, 1)
+            p.waitall()
+            self.assert_pool_has_free(p, 2)
 
     def test_imap(self):
         p = greenpool.GreenPool(4)
@@ -293,8 +311,8 @@ class GreenPile(tests.LimitedTestCase):
         for i in xrange(4):
             p.spawn(passthru, i)
         # now it should be full and this should time out
-        api.exc_after(0, api.TimeoutError)
-        self.assertRaises(api.TimeoutError, p.spawn, passthru, "time out")
+        eventlet.exc_after(0, eventlet.TimeoutError)
+        self.assertRaises(eventlet.TimeoutError, p.spawn, passthru, "time out")
         # verify that the spawn breakage didn't interrupt the sequence
         # and terminates properly
         for i in xrange(4,10):
@@ -361,7 +379,7 @@ class Stress(tests.LimitedTestCase):
                 break
             received += 1                
             if received % 5 == 0:
-                api.sleep(0.0001)
+                eventlet.sleep(0.0001)
             unique, order = i
             self.assert_(latest[unique] < order)
             latest[unique] = order
@@ -395,7 +413,7 @@ class Stress(tests.LimitedTestCase):
             self.assert_(i > latest)
             latest = i
             if latest % 5 == 0:
-                api.sleep(0.001)
+                eventlet.sleep(0.001)
             if latest % 10 == 0:
                 gc.collect()
                 objs_created = len(gc.get_objects()) - initial_obj_count

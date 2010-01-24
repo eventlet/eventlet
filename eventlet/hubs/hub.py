@@ -125,11 +125,13 @@ class BaseHub(object):
 
     def squelch_exception(self, fileno, exc_info):
         traceback.print_exception(*exc_info)
-        print >>sys.stderr, "Removing descriptor: %r" % (fileno,)
+        sys.stderr.write("Removing descriptor: %r\n" % (fileno,))
+        sys.stderr.flush()
         try:
             self.remove_descriptor(fileno)
         except Exception, e:
-            print >>sys.stderr, "Exception while removing descriptor! %r" % (e,)
+            sys.stderr.write("Exception while removing descriptor! %r\n" % (e,))
+            sys.stderr.flush()
 
     def wait(self, seconds=None):
         raise NotImplementedError("Implement this in a subclass")
@@ -211,7 +213,8 @@ class BaseHub(object):
 
     def squelch_observer_exception(self, observer, exc_info):
         traceback.print_exception(*exc_info)
-        print >>sys.stderr, "Removing observer: %r" % (observer,)
+        sys.stderr.write("Removing observer: %r\n" % (observer,))
+        sys.stderr.flush()
         self.remove_observer(observer)
 
     def fire_observers(self, activity):
@@ -228,7 +231,8 @@ class BaseHub(object):
         
     def _debug_squelch_timer_exception(self, timer, exc_info):
         traceback.print_exception(*exc_info)
-        print >>sys.stderr, "Timer raised: %r" % (timer,)
+        sys.stderr.write("Timer raised: %r\n" % (timer,))
+        sys.stderr.flush()
         
     squelch_timer_exception = _silent_squelch_timer_exception
 
@@ -305,7 +309,7 @@ class BaseHub(object):
         return self.listeners[WRITE].values()
 
     def get_timers_count(hub):
-        return max(len(x) for x in [hub.timers, hub.next_timers])
+        return max(len(hub.timers), len(hub.next_timers))
         
     def set_debug_listeners(self, value):
         if value:
