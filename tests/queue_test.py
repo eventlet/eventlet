@@ -218,7 +218,7 @@ class TestQueue(LimitedTestCase):
 
     def test_task_done(self):
         from eventlet import queue, debug
-        channel = queue.JoinableQueue(0)
+        channel = queue.Queue(0)
         X = object()
         gt = eventlet.spawn(channel.put, X)
         result = channel.get()
