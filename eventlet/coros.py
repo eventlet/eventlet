@@ -135,6 +135,9 @@ def CoroutinePool(*args, **kwargs):
 class Queue(object):
 
     def __init__(self):
+        warnings.warn("coros.Queue is deprecated.  Please use "
+            "eventlet.queue.Queue instead.", 
+            DeprecationWarning, stacklevel=2)
         self.items = collections.deque()
         self._waiters = set()
 
@@ -203,6 +206,9 @@ class Queue(object):
 class Channel(object):
 
     def __init__(self, max_size=0):
+        warnings.warn("coros.Channel is deprecated.  Please use "
+            "eventlet.queue.Queue(0) instead.", 
+            DeprecationWarning, stacklevel=2)
         self.max_size = max_size
         self.items = collections.deque()
         self._waiters = set()
