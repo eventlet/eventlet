@@ -7,7 +7,7 @@ import inspect
 import warnings
 
 from eventlet.support import greenlets as greenlet
-from eventlet.hubs import get_hub as get_hub_, get_default_hub as get_default_hub_, use_hub as use_hub_
+from eventlet import hubs
 from eventlet import greenthread
 from eventlet import debug
 
@@ -20,16 +20,16 @@ __all__ = [
 def get_hub(*a, **kw):
     warnings.warn("eventlet.api.get_hub has moved to eventlet.hubs.get_hub",
         DeprecationWarning, stacklevel=2)
-    return get_hub_(*a, **kw)    
+    return hubs.get_hub(*a, **kw)    
 def get_default_hub(*a, **kw):
     warnings.warn("eventlet.api.get_default_hub has moved to"
         " eventlet.hubs.get_default_hub",
         DeprecationWarning, stacklevel=2)
-    return get_default_hub_(*a, **kw)
+    return hubs.get_default_hub(*a, **kw)
 def use_hub(*a, **kw):
     warnings.warn("eventlet.api.use_hub has moved to eventlet.hubs.use_hub",
         DeprecationWarning, stacklevel=2)
-    return use_hub_(*a, **kw)
+    return hubs.use_hub(*a, **kw)
     
 
 def switch(coro, result=None, exc=None):
@@ -86,42 +86,7 @@ def connect_tcp(address, localaddr=None):
 
 TimeoutError = greenthread.TimeoutError
 
-def trampoline(fd, read=None, write=None, timeout=None, timeout_exc=TimeoutError):
-    """Suspend the current coroutine until the given socket object or file
-    descriptor is ready to *read*, ready to *write*, or the specified
-    *timeout* elapses, depending on arguments specified.
-
-    To wait for *fd* to be ready to read, pass *read* ``=True``; ready to
-    write, pass *write* ``=True``. To specify a timeout, pass the *timeout*
-    argument in seconds.
-
-    If the specified *timeout* elapses before the socket is ready to read or
-    write, *timeout_exc* will be raised instead of ``trampoline()``
-    returning normally.
-    """
-    t = None
-    hub = get_hub_()
-    current = greenlet.getcurrent()
-    assert hub.greenlet is not current, 'do not call blocking functions from the mainloop'
-    assert not (read and write), 'not allowed to trampoline for reading and writing'
-    fileno = getattr(fd, 'fileno', lambda: fd)()
-    def cb(d):
-        current.switch()
-    if timeout is not None:
-        t = hub.schedule_call_global(timeout, current.throw, timeout_exc)
-    try:
-        if read:
-            listener = hub.add(hub.READ, fileno, cb)
-        if write:
-            listener = hub.add(hub.WRITE, fileno, cb)
-        try:
-            return hub.switch()
-        finally:
-            hub.remove(listener)
-    finally:
-        if t is not None:
-            t.cancel()
-
+trampoline = hubs.trampoline
 
 spawn = greenthread.spawn
 spawn_n = greenthread.spawn_n

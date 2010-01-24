@@ -8,6 +8,7 @@ from eventlet.support import greenlets as greenlet
 __all__ = ['getcurrent', 'sleep', 'spawn', 'spawn_n', 'call_after_global', 'call_after_local', 'GreenThread'] 
 
 getcurrent = greenlet.getcurrent
+TimeoutError = hubs.TimeoutError
 
 def sleep(seconds=0):
     """Yield control to another eligible coroutine until at least *seconds* have
@@ -89,9 +90,6 @@ def call_after_local(seconds, function, *args, **kwargs):
 
 call_after = call_after_local
 
-class TimeoutError(Exception):
-    """Exception raised if an asynchronous operation times out"""
-    pass
 
 def exc_after(seconds, *throw_args):
     """Schedule an exception to be raised into the current coroutine

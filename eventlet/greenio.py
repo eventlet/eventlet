@@ -1,4 +1,4 @@
-from eventlet.api import trampoline
+from eventlet.hubs import trampoline
 from eventlet.hubs import get_hub
 
 BUFFER_SIZE = 4096

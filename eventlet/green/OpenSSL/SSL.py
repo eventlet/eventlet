@@ -1,7 +1,7 @@
 from OpenSSL import SSL as orig_SSL
 from OpenSSL.SSL import *
 from eventlet import greenio
-from eventlet.api import trampoline
+from eventlet.hubs import trampoline
 import socket
 
 class GreenConnection(greenio.GreenSocket):

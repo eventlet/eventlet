@@ -128,9 +128,9 @@ def wrap_pipes_with_coroutine_pipes():
     def new_fdopen(*args, **kw):
         return greenio.GreenPipe(__original_fdopen__(*args, **kw))
     def new_read(fd, *args, **kw):
-        from eventlet import api
+        from eventlet import hubs
         try:
-            api.trampoline(fd, read=True)
+            hubs.trampoline(fd, read=True)
         except socket.error, e:
             if e[0] == errno.EPIPE:
                 return ''
@@ -138,8 +138,8 @@ def wrap_pipes_with_coroutine_pipes():
                 raise
         return __original_read__(fd, *args, **kw)
     def new_write(fd, *args, **kw):
-        from eventlet import api
-        api.trampoline(fd, write=True)
+        from eventlet import hubs
+        hubs.trampoline(fd, write=True)
         return __original_write__(fd, *args, **kw)
     def new_fork(*args, **kwargs):
         pid = __original_fork__()

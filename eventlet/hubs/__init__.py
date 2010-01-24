@@ -1,9 +1,10 @@
 import select
 import sys
 import threading
+from eventlet.support import greenlets as greenlet
 _threadlocal = threading.local()
 
-__all__ = ["use_hub", "get_hub", "get_default_hub"]
+__all__ = ["use_hub", "get_hub", "get_default_hub", "trampoline"]
 
 def get_default_hub():
     """Select the default hub implementation based on what multiplexing
@@ -76,3 +77,44 @@ def get_hub():
             use_hub()
         hub = _threadlocal.hub = _threadlocal.Hub()
     return hub
+
+class TimeoutError(Exception):
+    """Exception raised if an asynchronous operation times out"""
+    pass
+
+def trampoline(fd, read=None, write=None, timeout=None, 
+               timeout_exc=TimeoutError):
+    """Suspend the current coroutine until the given socket object or file
+    descriptor is ready to *read*, ready to *write*, or the specified
+    *timeout* elapses, depending on arguments specified.
+
+    To wait for *fd* to be ready to read, pass *read* ``=True``; ready to
+    write, pass *write* ``=True``. To specify a timeout, pass the *timeout*
+    argument in seconds.
+
+    If the specified *timeout* elapses before the socket is ready to read or
+    write, *timeout_exc* will be raised instead of ``trampoline()``
+    returning normally.
+    """
+    t = None
+    hub = get_hub()
+    current = greenlet.getcurrent()
+    assert hub.greenlet is not current, 'do not call blocking functions from the mainloop'
+    assert not (read and write), 'not allowed to trampoline for reading and writing'
+    fileno = getattr(fd, 'fileno', lambda: fd)()
+    def cb(d):
+        current.switch()
+    if timeout is not None:
+        t = hub.schedule_call_global(timeout, current.throw, timeout_exc)
+    try:
+        if read:
+            listener = hub.add(hub.READ, fileno, cb)
+        if write:
+            listener = hub.add(hub.WRITE, fileno, cb)
+        try:
+            return hub.switch()
+        finally:
+            hub.remove(listener)
+    finally:
+        if t is not None:
+            t.cancel()
