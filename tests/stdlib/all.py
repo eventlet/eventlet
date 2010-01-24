@@ -41,6 +41,7 @@ import_main('test_ftplib')
 import_main('test_httplib')
 if have_network_access:
     import_main('test_httpservers')
+import_main('test_queue')
 if have_network_access:
     import_main('test_socket')
 import_main('test_socket_ssl')
