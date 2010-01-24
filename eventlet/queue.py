@@ -1,13 +1,22 @@
 # Copyright (c) 2009 Denis Bilenko. See LICENSE for details.
 """Synchronized queues.
 
-The :mod:`eventlet.queue` module implements multi-producer, multi-consumer queues that work across greenlets, with the API similar to the classes found in the standard :mod:`Queue` and :class:`multiprocessing <multiprocessing.Queue>` modules.
+The :mod:`eventlet.queue` module implements multi-producer, multi-consumer 
+queues that work across greenlets, with the API similar to the classes found in 
+the standard :mod:`Queue` and :class:`multiprocessing <multiprocessing.Queue>` 
+modules.
 
 A major difference is that queues in this module operate as channels when
 initialized with *maxsize* of zero. In such case, both :meth:`Queue.empty`
-and :meth:`Queue.full` return ``True`` and :meth:`Queue.put` always blocks until a call to :meth:`Queue.get` retrieves the item.
+and :meth:`Queue.full` return ``True`` and :meth:`Queue.put` always blocks until 
+a call to :meth:`Queue.get` retrieves the item.
 
-Another interesting difference is that :meth:`Queue.qsize`, :meth:`Queue.empty`, and :meth:`Queue.full` *can* be used as indicators of whether the subsequent :meth:`Queue.get` or :meth:`Queue.put` will not block.
+An interesting difference, made possible because of greenthreads, is 
+that :meth:`Queue.qsize`, :meth:`Queue.empty`, and :meth:`Queue.full` *can* be 
+used as indicators of whether the subsequent :meth:`Queue.get` 
+or :meth:`Queue.put` will not block.  The new methods :meth:`Queue.getting` 
+and :meth:`Queue.putting` report on the number of greenthreads blocking 
+in :meth:`put <Queue.put>` or :meth:`get <Queue.get>` respectively.
 """
 
 import sys
@@ -149,6 +158,16 @@ class LightQueue(object):
     def qsize(self):
         """Return the size of the queue."""
         return len(self.queue)
+        
+    def putting(self):
+        """Returns the number of greenthreads that are blocked waiting to put
+        items into the queue."""
+        return len(self.putters)
+        
+    def getting(self):
+        """Returns the number of greenthreads that are blocked waiting on an 
+        empty queue."""
+        return len(self.getters)
 
     def empty(self):
         """Return ``True`` if the queue is empty, ``False`` otherwise."""

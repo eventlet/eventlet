@@ -1,7 +1,7 @@
 import collections
 
 from eventlet import api
-from eventlet import coros
+from eventlet import queue
 
 __all__ = ['Pool', 'TokenPool']
 
@@ -74,7 +74,7 @@ class Pool(object):
         self.max_size = max_size
         self.order_as_stack = order_as_stack
         self.current_size = 0
-        self.channel = coros.queue(0)
+        self.channel = queue.LightQueue(0)
         self.free_items = collections.deque()
         for x in xrange(min_size):
             self.current_size += 1
@@ -89,7 +89,7 @@ class Pool(object):
             created = self.create()
             self.current_size += 1
             return created
-        return self.channel.wait()
+        return self.channel.get()
 
     if item_impl is not None:
         item = item_impl
@@ -102,7 +102,7 @@ class Pool(object):
             return
 
         if self.waiting():
-            self.channel.send(item)
+            self.channel.put(item)
         else:
             if self.order_as_stack:
                 self.free_items.appendleft(item)
@@ -122,7 +122,7 @@ class Pool(object):
     def waiting(self):
         """Return the number of routines waiting for a pool item.
         """
-        return self.channel.waiting()
+        return max(0, self.channel.getting() - self.channel.putting())
   
     def create(self):
         """Generate a new pool item

@@ -138,16 +138,15 @@ class TestQueue(LimitedTestCase):
         self.assertEquals(q.get(), 'sent')
                 
     def test_waiting(self):
-        return # TODO add this to the new queue
         q = eventlet.Queue()
         gt1 = eventlet.spawn(q.get)
         eventlet.sleep(0)
-        self.assertEquals(1, q.waiting())
+        self.assertEquals(1, q.getting())
         q.put('hi')
         eventlet.sleep(0)
-        self.assertEquals(0, q.waiting())
+        self.assertEquals(0, q.getting())
         self.assertEquals('hi', gt1.wait())
-        self.assertEquals(0, q.waiting())
+        self.assertEquals(0, q.getting())
 
     def test_channel_send(self):
         channel = eventlet.Queue(0)
@@ -194,18 +193,15 @@ class TestQueue(LimitedTestCase):
         w2 = eventlet.spawn(c.get)
         w3 = eventlet.spawn(c.get)
         eventlet.sleep(0)
-        # TODO add waiting method to queue
-        #self.assertEquals(c.waiting(), 3)
+        self.assertEquals(c.getting(), 3)
         s1 = eventlet.spawn(c.put, 1)
         s2 = eventlet.spawn(c.put, 2)
         s3 = eventlet.spawn(c.put, 3)
-        eventlet.sleep(0)  # this gets all the sends into a waiting state
-        # TODO add waiting method to queue
-        #self.assertEquals(c.waiting(), 0)
 
         s1.wait()
         s2.wait()
         s3.wait()
+        self.assertEquals(c.getting(), 0)
         # NOTE: we don't guarantee that waiters are served in order
         results = sorted([w1.wait(), w2.wait(), w3.wait()])
         self.assertEquals(results, [1,2,3])
