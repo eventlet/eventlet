@@ -1,9 +1,9 @@
 import itertools
 import traceback
 
-from eventlet import coros
 from eventlet import event
 from eventlet import greenthread
+from eventlet import queue
 from eventlet import semaphore
 from eventlet.support import greenlets as greenlet
 
@@ -187,7 +187,7 @@ class GreenPile(object):
             self.pool = size_or_pool
         else:
             self.pool = GreenPool(size_or_pool)
-        self.waiters = coros.Queue()
+        self.waiters = queue.LightQueue()
         self.used = False
         self.counter = 0
             
@@ -198,7 +198,7 @@ class GreenPile(object):
         self.counter += 1
         try:
             gt = self.pool.spawn(func, *args, **kw)
-            self.waiters.send(gt)
+            self.waiters.put(gt)
         except:
             self.counter -= 1
             raise
@@ -212,7 +212,7 @@ class GreenPile(object):
         if self.counter == 0 and self.used:
             raise StopIteration()
         try:
-            return self.waiters.wait().wait()
+            return self.waiters.get().wait()
         finally:
             self.counter -= 1
             
@@ -222,10 +222,10 @@ class GreenPile(object):
 class GreenMap(GreenPile):
     def __init__(self, size_or_pool):
         super(GreenMap, self).__init__(size_or_pool)
-        self.waiters = coros.Channel(max_size=self.pool.size)
+        self.waiters = queue.LightQueue(maxsize=self.pool.size)
         
     def next(self):
         try:
-            return self.waiters.wait().wait()
+            return self.waiters.get().wait()
         finally:
             self.counter -= 1
