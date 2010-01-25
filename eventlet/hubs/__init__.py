@@ -15,8 +15,11 @@ def get_default_hub():
     * poll
     * select
     
-    It won't ever automatically select the pyevent hub, because it's not 
+    It won't automatically select the pyevent hub, because it's not 
     python-thread-safe.
+    
+    .. include:: ../../doc/common.txt
+    .. note :: |internal|
     """    
     
     # pyevent hub disabled for now because it is not thread-safe
@@ -67,6 +70,8 @@ def use_hub(mod=None):
 
 def get_hub():
     """Get the current event hub singleton object.
+    
+    .. note :: |internal|
     """
     try:
         hub = _threadlocal.hub
@@ -95,6 +100,8 @@ def trampoline(fd, read=None, write=None, timeout=None,
     If the specified *timeout* elapses before the socket is ready to read or
     write, *timeout_exc* will be raised instead of ``trampoline()``
     returning normally.
+    
+    .. note :: |internal|
     """
     t = None
     hub = get_hub()

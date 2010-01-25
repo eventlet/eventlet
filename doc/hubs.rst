@@ -35,10 +35,6 @@ If the selected hub is not idea for the application, another can be selected.
     Supplying None as the argument to :func:`eventlet.hubs.use_hub` causes it to select the default hub.
 
 
-
-.. autofunction:: eventlet.hubs.get_hub
-.. autofunction:: eventlet.hubs.get_default_hub
-
 How the Hubs Work
 -----------------
 
@@ -46,3 +42,11 @@ The hub has a main greenlet, MAINLOOP.  When one of the running coroutines needs
 to do some I/O, it registers a listener with the hub (so that the hub knows when to wake it up again), and then switches to MAINLOOP (via ``get_hub().switch()``).  If there are other coroutines that are ready to run, MAINLOOP switches to them, and when they complete or need to do more I/O, they switch back to the MAINLOOP.  In this manner, MAINLOOP ensures that every coroutine gets scheduled when it has some work to do.
 
 MAINLOOP is launched only when the first I/O operation happens, and it is not the same greenlet that __main__ is running in.  This lazy launching is why it's not necessary to explicitly call a dispatch() method like other frameworks, which in turn means that code can start using Eventlet without needing to be substantially restructured.
+
+More Hub-Related Functions
+---------------------------
+
+.. autofunction:: eventlet.hubs.get_hub
+.. autofunction:: eventlet.hubs.get_default_hub
+.. autofunction:: eventlet.hubs.trampoline
+
