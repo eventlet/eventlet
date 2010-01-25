@@ -5,9 +5,10 @@ Original Authors
 
 Contributors
 ------------
+* R. Tyler Ballance
 * Denis Bilenko, AG Projects
 * Mike Barton
-* R. Tyler Ballance
+* Gregory Holt
 * Chet Murthy
 * radix
 
@@ -25,7 +26,6 @@ Linden Lab Contributors
 Thanks To
 ---------
 * AdamKG, giving the hint that invalid argument errors were introduced post-0.9.0
-* gholt, wsgi patches for accepting a custom pool,  and returning 400 if content-length is invalid
 * Luke Tucker, bug report regarding wsgi + webob
 * Chuck Thier, reporting a bug in processes.py
 * Brantley Harris, reporting bug #4
