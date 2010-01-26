@@ -32,7 +32,7 @@ Contents
    :maxdepth: 2
 
    basic_usage
-   chat_server_example
+   examples
    ssl
    threading
    hubs

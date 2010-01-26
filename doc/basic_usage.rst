@@ -28,7 +28,7 @@ The canonical client-side example is a web crawler.  This use case is given a li
   for body in pool.imap(fetch, urls):
       print "got body", len(body)
 
-There is a slightly more complex version of this in the file ``examples/webcrawler.py`` in the source distribution.  Here's a tour of the interesting lines in this crawler. 
+There is a slightly more complex version of this in the :ref:`web crawler example <web_crawler_example>`.  Here's a tour of the interesting lines in this crawler. 
 
 ``from eventlet.green import urllib2`` is how you import a cooperatively-yielding version of urllib2.  It is the same in all respects to the standard version, except that it uses green sockets for its communication.
 
@@ -59,7 +59,7 @@ Here's a simple server-side example, a simple echo server::
         new_sock, address = server.accept()
         pool.spawn_n(handle, new_sock)
 
-The file ``examples/echoserver.py`` contains a somewhat more robust and complex version of this example.
+The file :ref:`echo server example <echo_server_example>` contains a somewhat more robust and complex version of this example.
 
 ``from eventlet.green import socket`` imports eventlet's socket module, which is just like the regular socket module, but cooperatively yielding.
 
