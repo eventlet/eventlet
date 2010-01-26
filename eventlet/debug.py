@@ -2,6 +2,8 @@
 debugging Eventlet-powered applications."""
 
 import os
+import sys
+import linecache
 
 __all__ = ['spew', 'unspew', 'format_hub_listeners', 'hub_listener_stacks', 
 'hub_exceptions', 'tpool_exceptions']
