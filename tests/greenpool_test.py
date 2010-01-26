@@ -297,6 +297,11 @@ class GreenPool(tests.LimitedTestCase):
         p = greenpool.GreenPool(4)
         result_list = list(p.starmap(passthru, [(x,) for x in xrange(10)]))
         self.assertEquals(result_list, range(10))
+
+    def test_waitall_on_nothing(self):
+        p = greenpool.GreenPool()
+        p.waitall()
+
             
 class GreenPile(tests.LimitedTestCase):
     def test_pile(self):

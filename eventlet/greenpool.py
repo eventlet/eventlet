@@ -119,7 +119,8 @@ class GreenPool(object):
 
     def waitall(self):
         """Waits until all greenthreads in the pool are finished working."""
-        self.no_coros_running.wait()
+        if self.running():
+            self.no_coros_running.wait()
     
     def _spawn_done(self, coro):
         self.sem.release()
