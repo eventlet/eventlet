@@ -25,28 +25,38 @@ class Spawn(LimitedTestCase):
         self.assert_(gt.dead)
         self.assertEquals(_g_results, [((2,),{'b':3})])
     
+    def assert_dead(self, gt):
+        if hasattr(gt, 'wait'):
+            self.assertRaises(greenlet.GreenletExit, gt.wait)    
+        self.assert_(gt.dead)
+        self.assert_(not gt)
+    
     def test_kill(self):
         gt = greenthread.spawn(passthru, 6)
         greenthread.kill(gt)
-        self.assertRaises(greenlet.GreenletExit, gt.wait)
+        self.assert_dead(gt)
         greenthread.sleep(0.001)
         self.assertEquals(_g_results, [])
         greenthread.kill(gt)
-
+        self.assert_dead(gt)
+        
     def test_kill_meth(self):
         gt = greenthread.spawn(passthru, 6)
         gt.kill()
-        self.assertRaises(greenlet.GreenletExit, gt.wait)
+        self.assert_dead(gt)
         greenthread.sleep(0.001)
         self.assertEquals(_g_results, [])
         gt.kill()
+        self.assert_dead(gt)
         
     def test_kill_n(self):
         gt = greenthread.spawn_n(passthru, 7)
         greenthread.kill(gt)
+        self.assert_dead(gt)
         greenthread.sleep(0.001)
         self.assertEquals(_g_results, [])
         greenthread.kill(gt)
+        self.assert_dead(gt)
     
     def test_link(self):
         results = []
