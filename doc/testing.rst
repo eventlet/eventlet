@@ -91,10 +91,10 @@ Coverage.py is an awesome tool for evaluating how much code was exercised by uni
  
 After running the tests to completion, this will emit a huge wodge of module names and line numbers.  For some reason, the ``--cover-inclusive`` option breaks everything rather than serving its purpose of limiting the coverage to the local files, so don't use that.
 
-The annotate option is quite useful because it generates annotated source files that are much easier to read than line-number soup.  Here's a command that runs the annotation, dumping the annotated files into a directory called "annotated":
+The html option is quite useful because it generates nicely-formatted HTML that are much easier to read than line-number soup.  Here's a command that generates the annotation, dumping the html files into a directory called "cover":
 
 .. code-block:: sh
 
- coverage annotate -d annotated --omit='tempmod,<console>'
+  coverage html -d cover --omit='tempmod,<console>,tests'
  
-(``tempmod`` and ``console`` are omitted because they gets thrown away at the completion of their unit tests and coverage.py isn't smart enough to detect this)
+(``tempmod`` and ``console`` are omitted because they gets thrown away at the completion of their unit tests and coverage.py isn't smart enough to detect this.)

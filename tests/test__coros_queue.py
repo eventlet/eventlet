@@ -73,34 +73,20 @@ class TestQueue(LimitedTestCase):
         # tests that multiple waiters get their results back
         q = coros.queue()
 
-        def waiter(q, evt):
-            evt.send(q.wait())
-
         sendings = ['1', '2', '3', '4']
-        evts = [coros.Event() for x in sendings]
-        for i, x in enumerate(sendings):
-            api.spawn(waiter, q, evts[i])
+        gts = [eventlet.spawn(q.wait)
+                for x in sendings]
+                
+        eventlet.sleep(0.01) # get 'em all waiting
 
-        api.sleep(0.01) # get 'em all waiting
-
-        results = set()
-        def collect_pending_results():
-            for i, e in enumerate(evts):
-                timer = api.exc_after(0.001, api.TimeoutError)
-                try:
-                    x = e.wait()
-                    results.add(x)
-                    timer.cancel()
-                except api.TimeoutError:
-                    pass  # no pending result at that event
-            return len(results)
         q.send(sendings[0])
-        self.assertEquals(collect_pending_results(), 1)
         q.send(sendings[1])
-        self.assertEquals(collect_pending_results(), 2)
         q.send(sendings[2])
         q.send(sendings[3])
-        self.assertEquals(collect_pending_results(), 4)
+        results = set()
+        for i, gt in enumerate(gts):
+            results.add(gt.wait())
+        self.assertEquals(results, set(sendings))
 
     def test_waiters_that_cancel(self):
         q = coros.queue()

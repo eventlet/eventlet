@@ -72,33 +72,20 @@ class TestQueue(LimitedTestCase):
         # tests that multiple waiters get their results back
         q = eventlet.Queue()
 
-        def waiter(q):
-            return q.get()
-
         sendings = ['1', '2', '3', '4']
-        gts = [eventlet.spawn(waiter, q)
+        gts = [eventlet.spawn(q.get)
                 for x in sendings]
                 
         eventlet.sleep(0.01) # get 'em all waiting
 
-        results = set()
-        def collect_pending_results():
-            for i, gt in enumerate(gts):
-                timer = eventlet.exc_after(0.001, eventlet.TimeoutError)
-                try:
-                    x = gt.wait()
-                    results.add(x)
-                    timer.cancel()
-                except eventlet.TimeoutError:
-                    pass  # no pending result at that event
-            return len(results)
         q.put(sendings[0])
-        self.assertEquals(collect_pending_results(), 1)
         q.put(sendings[1])
-        self.assertEquals(collect_pending_results(), 2)
         q.put(sendings[2])
         q.put(sendings[3])
-        self.assertEquals(collect_pending_results(), 4)
+        results = set()
+        for i, gt in enumerate(gts):
+            results.add(gt.wait())
+        self.assertEquals(results, set(sendings))
 
     def test_waiters_that_cancel(self):
         q = eventlet.Queue()
