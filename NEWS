@@ -1,3 +1,11 @@
+0.9.4
+=====
+* Deprecated coros.Queue and coros.Channel (use queue.Queue instead)
+* Added putting and getting methods to queue.Queue.
+* Added eventlet.green.Queue which is a greened clone of stdlib Queue, along with stdlib tests.
+* Changed __init__.py so that the version number is readable even if greenlet's not installed.
+* Bugfixes in wsgi, greenpool
+
 0.9.3
 =====
 

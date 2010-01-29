@@ -1,4 +1,4 @@
-version_info = (0, 9, 3)
+version_info = (0, 9, 4)
 __version__ = '%s.%s.%s' % version_info
 
 try:
