@@ -358,10 +358,8 @@ class GreenPipe(object):
     def fileno(self):
         return self.fd.fileno()
 
-    def read(self, buflen, flags=0):
+    def _recv(self, buflen):
         fd = self.fd
-        if buflen is None:
-            buflen = BUFFER_SIZE
         buf = self.recvbuffer
         if buf:
             chunk, self.recvbuffer = buf[:buflen], buf[buflen:]
@@ -378,7 +376,23 @@ class GreenPipe(object):
                 raise
             trampoline(fd, read=True)
 
-    def write(self, data, flags=0):
+
+    def read(self, size=None):
+        """read at most size bytes, returned as a string."""
+        accum = ''
+        while True:
+            if size is None:
+                recv_size = BUFFER_SIZE
+            else:
+                recv_size = size - len(accum)
+            chunk =  self._recv(recv_size)
+            accum += chunk
+            if chunk == '':
+                return accum
+            if size is not None and len(accum) >= size:
+                return accum
+
+    def write(self, data):
         fd = self.fd
         tail = 0
         len_data = len(data)
