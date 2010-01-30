@@ -42,26 +42,9 @@ class Event(object):
         return '<%s at %s result=%r _exc=%r _waiters[%d]>' % params
 
     def reset(self):
-        """ Reset this event so it can be used to send again.
-        Can only be called after :meth:`send` has been called.
-
-        >>> from eventlet import event
-        >>> evt = event.Event()
-        >>> evt.send(1)
-        >>> evt.reset()
-        >>> evt.send(2)
-        >>> evt.wait()
-        2
-
-        Calling reset multiple times in a row is an error.
-
-        >>> evt.reset()
-        >>> evt.reset()
-        Traceback (most recent call last):
-        ...
-        AssertionError: Trying to re-reset() a fresh event.
-
-        """
+        # this is kind of a misfeature and doesn't work perfectly well,
+        # it's better to create a new event rather than reset an old one
+        # removing documentation so that we don't get new use cases for it
         assert self._result is not NOT_USED, 'Trying to re-reset() a fresh event.'
         self._result = NOT_USED
         self._exc = None
