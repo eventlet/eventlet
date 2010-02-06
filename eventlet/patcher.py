@@ -5,6 +5,14 @@ __exclude = set(('__builtins__', '__file__', '__name__'))
 
 
 def inject(module_name, new_globals, *additional_modules):
+    if not additional_modules:
+        # supply some defaults
+        additional_modules = (
+            _green_os_modules() +
+            _green_select_modules() +
+            _green_socket_modules() +
+            _green_thread_modules())
+        
     ## Put the specified modules in sys.modules for the duration of the import
     saved = {}
     for name, mod in additional_modules:
@@ -47,6 +55,7 @@ def import_patched(module_name, *additional_modules, **kw_additional_modules):
     	None,
     	*additional_modules + tuple(kw_additional_modules.items()))
 
+
 def patch_function(func, *additional_modules):
     """Huge hack here -- patches the specified modules for the 
     duration of the function call."""
@@ -66,3 +75,38 @@ def patch_function(func, *additional_modules):
                     del sys.modules[name]
     return patched
         
+
+def monkey_patch(os=True, select=True, socket=True, thread=True):
+    modules_to_patch = []
+    if os:
+        modules_to_patch += _green_os_modules()
+    if select:
+        modules_to_patch += _green_select_modules()
+    if socket:
+        modules_to_patch += _green_socket_modules()
+    if thread:
+        modules_to_patch += _green_thread_modules()
+    for name, mod in modules_to_patch:
+        sys.modules[name] = mod
+
+def _green_os_modules():
+    from eventlet.green import os
+    return [('os', os)]
+
+def _green_select_modules():
+    from eventlet.green import select
+    return [('select', select)]
+
+def _green_socket_modules():
+    from eventlet.green import socket
+    try:
+        from eventlet.green import ssl
+        return [('socket', socket), ('ssl', ssl)]
+    except ImportError:
+        return [('socket', socket)]
+
+def _green_thread_modules():
+    from eventlet.green import Queue
+    from eventlet.green import thread
+    return [('Queue', Queue), ('thread', thread)]
+    
