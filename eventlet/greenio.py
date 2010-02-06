@@ -394,20 +394,16 @@ class GreenPipe(object):
 
     def write(self, data):
         fd = self.fd
-        tail = 0
-        len_data = len(data)
-        while tail < len_data:
-            tosend = data[tail:]
+        while True:
             try:
-                fd.write(tosend)
+                fd.write(data)
                 fd.flush()
-                tail += len(tosend)
-                if tail == len_data:
-                    return len_data
+                return len(data)
             except IOError, e:
                 if e[0] != EAGAIN:
                     raise
             except ValueError, e:
+                # what's this for?
                 pass
             except socket.error, e:
                 if e[0] != errno.EPIPE:

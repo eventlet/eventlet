@@ -1,15 +1,14 @@
 import errno
 import new
-import os
 
 import eventlet
 from eventlet import greenio
 from eventlet import patcher
+from eventlet.green import os
 from eventlet.green import select
 
-subprocess_orig = __import__("subprocess")
-# TODO: eventlet.green.os
 patcher.inject('subprocess', globals(), ('select', select))
+subprocess_orig = __import__("subprocess")
 
 # This is the meat of this module, the green version of Popen.
 class Popen(subprocess_orig.Popen):
@@ -49,17 +48,16 @@ class Popen(subprocess_orig.Popen):
         except OSError, e:
             if e.errno == errno.ECHILD:
                 # no child process, this happens if the child process
-                # already died and has been cleaned up, or if you just
-                # called with a random pid value
+                # already died and has been cleaned up
                 return -1
             else:
                 raise
     wait.__doc__ = subprocess_orig.Popen.wait.__doc__
 
     if not subprocess_orig.mswindows:
-        # We don't want to copy/paste all the logic of the original
-        # _communicate() method, we just want a version that uses
-        # eventlet.green.select.select() instead of select.select().
+        # don't want to rewrite the original _communicate() method, we
+        # just want a version that uses eventlet.green.select.select() 
+        # instead of select.select().
         _communicate = new.function(subprocess_orig.Popen._communicate.im_func.func_code,
                                     globals())
 

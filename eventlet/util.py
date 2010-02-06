@@ -121,49 +121,14 @@ __original_waitpid__ = os.waitpid
 
 pipes_already_wrapped = False
 def wrap_pipes_with_coroutine_pipes():
-    from eventlet import processes ## Make sure the signal handler is installed
     global pipes_already_wrapped
     if pipes_already_wrapped:
         return
-    def new_fdopen(*args, **kw):
-        return greenio.GreenPipe(__original_fdopen__(*args, **kw))
-    def new_read(fd, *args, **kw):
-        from eventlet import hubs
-        try:
-            hubs.trampoline(fd, read=True)
-        except socket.error, e:
-            if e[0] == errno.EPIPE:
-                return ''
-            else:
-                raise
-        return __original_read__(fd, *args, **kw)
-    def new_write(fd, *args, **kw):
-        from eventlet import hubs
-        hubs.trampoline(fd, write=True)
-        return __original_write__(fd, *args, **kw)
-    def new_fork(*args, **kwargs):
-        pid = __original_fork__()
-        if pid:
-            processes._add_child_pid(pid)
-        return pid
-    def new_waitpid(pid, options):
-        from eventlet import processes
-        evt = processes.CHILD_EVENTS.get(pid)
-        if not evt:
-            return 0, 0
-        if options == os.WNOHANG:
-            if evt.ready():
-                return pid, evt.wait()
-            return 0, 0
-        elif options:
-            return __original_waitpid__(pid, options)
-        return pid, evt.wait()
-    os.fdopen = new_fdopen
-    os.read = new_read
-    os.write = new_write
-    if __original_fork__ is not None:
-        os.fork = new_fork
-    os.waitpid = new_waitpid
+    from eventlet.green import greenos
+    os.fdopen = greenos.fdopen
+    os.read = greenos.read
+    os.write = greenos.write
+    os.waitpid = greenos.waitpid
 
 __original_select__ = select.select
 

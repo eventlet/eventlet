@@ -41,11 +41,13 @@ import_main('test_ftplib')
 import_main('test_httplib')
 if have_network_access:
     import_main('test_httpservers')
+import_main('test_os')
 import_main('test_queue')
 if have_network_access:
     import_main('test_socket')
 import_main('test_socket_ssl')
 #import_main('test_socketserver')
+#import_main('test_subprocess')
 if have_network_access:
     import_main('test_ssl')
 import_main('test_thread')
