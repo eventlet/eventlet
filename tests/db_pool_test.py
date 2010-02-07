@@ -97,7 +97,7 @@ class DBConnectionPool(DBTester):
         conn2 = self.pool.get()
         self.assert_(conn2 is not None)
         self.assert_(conn2.cursor)
-        del conn2
+        self.pool.put(conn2)
 
     def test_close_does_a_put(self):
         self.assert_(self.pool.free() == 0)
@@ -117,6 +117,7 @@ class DBConnectionPool(DBTester):
         self.pool.put(self.connection)
         conn = self.pool.get()
         self.assert_(not isinstance(conn._base, db_pool.PooledConnectionWrapper))
+        self.pool.put(conn)
 
     def test_bool(self):
         self.assert_(self.connection)
@@ -149,6 +150,7 @@ class DBConnectionPool(DBTester):
         self.assertEqual([1], results)
         evt.wait()
         self.assertEqual([1, 2], results)
+        self.pool.put(conn)
 
     def test_connection_is_clean_after_put(self):
         self.pool = self.create_pool()
@@ -168,6 +170,7 @@ class DBConnectionPool(DBTester):
         curs2.execute("select * from test_table")
         # we should have only inserted them once
         self.assertEqual(10, curs2.rowcount)
+        self.pool.put(conn2)
 
     def test_visibility_from_other_connections(self):
         self.pool = self.create_pool(3)
@@ -256,6 +259,7 @@ class DBConnectionPool(DBTester):
         x = Mock()
         x._base = 'hi'
         self.assertEquals('hi', self.pool._unwrap_connection(x))
+        conn.close()
         
     def test_safe_close(self):
         self.pool._safe_close(self.connection, quiet=True)
@@ -278,12 +282,16 @@ class DBConnectionPool(DBTester):
         self.pool._safe_close(x, quiet=False)
         
     def test_zero_max_idle(self):
+        self.pool.put(self.connection)
+        self.pool.clear()
         self.pool = self.create_pool(max_size=2, max_idle=0)
         self.connection = self.pool.get()
         self.connection.close()
         self.assertEquals(len(self.pool.free_items), 0)
 
     def test_zero_max_age(self):
+        self.pool.put(self.connection)
+        self.pool.clear()
         self.pool = self.create_pool(max_size=2, max_age=0)
         self.connection = self.pool.get()
         self.connection.close()
@@ -355,9 +363,11 @@ class DBConnectionPool(DBTester):
         # verify that when there's someone waiting on an empty pool
         # and someone puts an immediately-closed connection back in
         # the pool that the waiter gets woken
+        self.pool.put(self.connection)
+        self.pool.clear()
         self.pool = self.create_pool(max_size=1, max_age=0)
         
-        conn = self.pool.get()
+        self.connection = self.pool.get()
         self.assertEquals(self.pool.free(), 0)
         self.assertEquals(self.pool.waiting(), 0)
         e = event.Event()
@@ -369,12 +379,13 @@ class DBConnectionPool(DBTester):
         api.sleep(0) # coroutine until it's waiting in get()
         self.assertEquals(self.pool.free(), 0)
         self.assertEquals(self.pool.waiting(), 1)
-        self.pool.put(conn)
+        self.pool.put(self.connection)
         timer = api.exc_after(1, api.TimeoutError)
         conn = e.wait()
         timer.cancel()
         self.assertEquals(self.pool.free(), 0)
         self.assertEquals(self.pool.waiting(), 0)
+        self.pool.put(conn)
 
     @skipped
     def test_0_straight_benchmark(self):
@@ -464,8 +475,8 @@ def get_auth():
                          for modname, connectargs in auth_utf8.items()])
         except (IOError, ImportError), e:
             pass
-    return {'MySQLdb':{'host': 'localhost','user': 'root','passwd': '','db': 'persist0'},
-            'psycopg2':{'database':'test', 'user':'test'}}
+    return {'MySQLdb':{'host': 'localhost','user': 'root','passwd': ''},
+            'psycopg2':{'user':'test'}}
 
 
 def mysql_requirement(_f):
@@ -473,7 +484,6 @@ def mysql_requirement(_f):
         import MySQLdb
         try:
             auth = get_auth()['MySQLdb'].copy()
-            auth.pop('db')
             MySQLdb.connect(**auth)
             return True
         except MySQLdb.OperationalError:
@@ -515,10 +525,11 @@ class MysqlConnectionPool(object):
             self.drop_db()
         except Exception:
             pass
-        dbname = auth.pop('db')
+        dbname = 'test%s' % os.getpid()
         db = self._dbmodule.connect(**auth).cursor()
         db.execute("create database "+dbname)
         db.close()
+        self._auth['db'] = dbname
         del db
 
     def drop_db(self):
@@ -539,7 +550,6 @@ def postgres_requirement(_f):
         import psycopg2
         try:
             auth = get_auth()['psycopg2'].copy()
-            auth.pop('database')
             psycopg2.connect(**auth)
             return True
         except psycopg2.OperationalError:
@@ -579,10 +589,11 @@ class Psycopg2ConnectionPool(object):
         except Exception:
             pass
         auth = self._auth.copy()
-        dbname = auth.pop('database')
         conn = self._dbmodule.connect(**auth)
         conn.set_isolation_level(0)
         db = conn.cursor()
+        dbname = 'test%s' % os.getpid()
+        self._auth['database'] = dbname
         db.execute("create database "+dbname)
         db.close()
         del db
