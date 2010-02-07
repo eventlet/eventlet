@@ -57,7 +57,7 @@ class BaseConnectionPool(Pool):
         possible expiration.
 
         If this function is called when a timer is already scheduled, it does
-        nothing.
+       nothing.
 
         If max_age or max_idle is 0, _schedule_expiration likewise does nothing.
         """
@@ -251,13 +251,8 @@ class TpooledConnectionPool(BaseConnectionPool):
         timeout = api.exc_after(connect_timeout, ConnectTimeout())
         try:
             from eventlet import tpool
-            try:
-                # *FIX: this is a huge hack that will probably only work for MySQLdb
-                autowrap = (db_module.cursors.DictCursor,)
-            except:
-                autowrap = ()
             conn = tpool.execute(db_module.connect, *args, **kw)
-            return tpool.Proxy(conn, autowrap=autowrap)
+            return tpool.Proxy(conn, autowrap_names=('cursor',))
         finally:
             timeout.cancel()
 

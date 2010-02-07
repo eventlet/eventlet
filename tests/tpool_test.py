@@ -25,6 +25,7 @@ import eventlet
 one = 1
 two = 2
 three = 3
+none = None
 
 def noop():
     pass
@@ -164,6 +165,34 @@ class TestTpool(LimitedTestCase):
         tpool.killall()
         tpool.setup()
 
+    @skip_with_pyevent
+    def test_autowrap(self):
+        x = tpool.Proxy({'a':1, 'b':2}, autowrap=(int,))
+        self.assert_(isinstance(x.get('a'), tpool.Proxy))
+        self.assert_(not isinstance(x.items(), tpool.Proxy))
+        # attributes as well as callables
+        from tests import tpool_test
+        x = tpool.Proxy(tpool_test, autowrap=(int,))
+        self.assert_(isinstance(x.one, tpool.Proxy))
+        self.assert_(not isinstance(x.none, tpool.Proxy))
+
+    @skip_with_pyevent
+    def test_autowrap_names(self):
+        x = tpool.Proxy({'a':1, 'b':2}, autowrap_names=('get',))
+        self.assert_(isinstance(x.get('a'), tpool.Proxy))
+        self.assert_(not isinstance(x.items(), tpool.Proxy))
+        from tests import tpool_test
+        x = tpool.Proxy(tpool_test, autowrap_names=('one',))
+        self.assert_(isinstance(x.one, tpool.Proxy))
+        self.assert_(not isinstance(x.two, tpool.Proxy))
+
+    @skip_with_pyevent
+    def test_autowrap_both(self):
+        from tests import tpool_test
+        x = tpool.Proxy(tpool_test, autowrap=(int,), autowrap_names=('one',))
+        self.assert_(isinstance(x.one, tpool.Proxy))
+        # violating the abstraction to check that we didn't double-wrap
+        self.assert_(not isinstance(x._obj, tpool.Proxy))
 
 class TpoolLongTests(LimitedTestCase):
     TEST_TIMEOUT=60

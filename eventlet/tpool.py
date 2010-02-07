@@ -132,28 +132,42 @@ def proxy_call(autowrap, f, *args, **kwargs):
 
 class Proxy(object):
     """
-    A simple proxy-wrapper of any object, in order to forward every method
-    invocation onto a thread in the native-thread pool.  A key restriction is
-    that the object's methods cannot use Eventlet primitives without great care,
-    since the Eventlet dispatcher runs on a different native thread.
-    
-    Construct the Proxy with the instance that you want proxied.  The optional 
-    parameter *autowrap* is used when methods are called on the proxied object.  
-    If a method on the proxied object returns something whose type is in 
-    *autowrap*, then that object gets a Proxy wrapped around it, too.  An 
-    example use case for this is ensuring that DB-API connection objects 
-    return cursor objects that are also Proxy-wrapped.
+    a simple proxy-wrapper of any object that comes with a
+    methods-only interface, in order to forward every method
+    invocation onto a thread in the native-thread pool.  A key
+    restriction is that the object's methods should not switch
+    greenlets or use Eventlet primitives, since they are in a
+    different thread from the main hub, and therefore might behave
+    unexpectedly.  This is for running native-threaded code
+    only.
+
+    It's common to want to have some of the attributes or return
+    values also wrapped in Proxy objects (for example, database
+    connection objects produce cursor objects which also should be
+    wrapped in Proxy objects to remain nonblocking).  *autowrap*, if
+    supplied, is a collection of types; if an attribute or return
+    value matches one of those types (via isinstance), it will be
+    wrapped in a Proxy.  *autowrap_names* is a collection
+    of strings, which represent the names of attributes that should be
+    wrapped in Proxy objects when accessed.
     """
-    def __init__(self, obj,autowrap=()):
+    def __init__(self, obj,autowrap=(), autowrap_names=()):
         self._obj = obj
         self._autowrap = autowrap
+        self._autowrap_names = autowrap_names
 
     def __getattr__(self,attr_name):
         f = getattr(self._obj,attr_name)
         if not callable(f):
+            if (isinstance(f, self._autowrap) or
+                attr_name in self._autowrap_names):
+                return Proxy(f, self._autowrap)
             return f
         def doit(*args, **kwargs):
-            return proxy_call(self._autowrap, f, *args, **kwargs)
+            result = proxy_call(self._autowrap, f, *args, **kwargs)
+            if attr_name in self._autowrap_names and not isinstance(result, Proxy):
+                return Proxy(result)
+            return result
         return doit
 
     # the following are a buncha methods that the python interpeter
