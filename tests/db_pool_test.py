@@ -1,6 +1,6 @@
 "Test cases for db_pool"
 
-from tests import skipped, skip_unless
+from tests import skipped, skip_unless, skip_with_pyevent
 from unittest import TestCase, main
 from eventlet import api
 from eventlet import event
@@ -422,17 +422,16 @@ class TpoolConnectionPool(DBConnectionPool):
             connect_timeout = connect_timeout,
             **self._auth)
             
-            
+
+    @skip_with_pyevent
     def setUp(self):
-        from eventlet import tpool
-        tpool.QUIET = True
         super(TpoolConnectionPool, self).setUp()
         
     def tearDown(self):
-        from eventlet import tpool
-        tpool.QUIET = False
-        tpool.killall()
         super(TpoolConnectionPool, self).tearDown()
+        from eventlet import tpool
+        tpool.killall()
+
 
 
 class RawConnectionPool(DBConnectionPool):
