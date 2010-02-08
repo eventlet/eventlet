@@ -6,6 +6,8 @@ from eventlet import greenio
 from eventlet import greenthread
 from eventlet import hubs
 
+__patched__ = ['fdopen', 'read', 'write', 'wait', 'waitpid']
+
 for var in dir(os_orig):
     exec "%s = os_orig.%s" % (var, var)
 

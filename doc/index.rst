@@ -8,7 +8,7 @@ Eventlet is different from other event-based frameworks out there because it doe
 Simple Example
 -------------------
 
-This is a simple web crawler that fetches a bunch of urls concurrently.
+This is a simple web crawler that fetches a bunch of urls concurrently::
 
     urls = ["http://www.google.com/intl/en_ALL/images/logo.gif",
          "https://wiki.secondlife.com/w/images/secondlife.jpg",
@@ -23,7 +23,7 @@ This is a simple web crawler that fetches a bunch of urls concurrently.
     pool = eventlet.GreenPool()
     for body in pool.imap(fetch, urls):
       print "got body", len(body)
-      
+
 
 Contents
 =========
@@ -32,6 +32,7 @@ Contents
    :maxdepth: 2
 
    basic_usage
+   patching
    examples
    ssl
    threading

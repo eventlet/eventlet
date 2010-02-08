@@ -1,17 +1,33 @@
 import sys
 
 
+__all__ = ['inject', 'import_patched', 'monkey_patch']
+
 __exclude = set(('__builtins__', '__file__', '__name__'))
 
-
 def inject(module_name, new_globals, *additional_modules):
+    """Base method for "injecting" greened modules into an imported module.  It
+    imports the module specified in *module_name*, arranging things so 
+    that the already-imported modules in *additional_modules* are used when 
+    *module_name* makes its imports.
+    
+    *new_globals* is either None or a globals dictionary that gets populated 
+    with the contents of the *module_name* module.  This is useful when creating
+    a "green" version of some other module.
+    
+    *additional_modules* should be a collection of two-element tuples, of the
+    form (<name>, <module>).  If it's not specified, a default selection of 
+    name/module pairs is used, which should cover all use cases but may be 
+    slower because there are inevitably redundant or unnecessary imports.
+    """
     if not additional_modules:
         # supply some defaults
         additional_modules = (
             _green_os_modules() +
             _green_select_modules() +
             _green_socket_modules() +
-            _green_thread_modules())
+            _green_thread_modules() + 
+            _green_time_modules())
         
     ## Put the specified modules in sys.modules for the duration of the import
     saved = {}
@@ -50,6 +66,12 @@ def inject(module_name, new_globals, *additional_modules):
 
 
 def import_patched(module_name, *additional_modules, **kw_additional_modules):
+    """Imports a module in a way that ensures that the module uses "green" 
+    versions of the standard library modules, so that everything works 
+    nonblockingly.
+    
+    The only required argument is the name of the module to be imported.
+    """
     return inject(
     	module_name,
     	None,
@@ -76,7 +98,14 @@ def patch_function(func, *additional_modules):
     return patched
         
 
-def monkey_patch(os=True, select=True, socket=True, thread=True):
+def monkey_patch(os=True, select=True, socket=True, thread=True, time=True):
+    """Globally patches certain system modules to be greenthread-friendly.
+    
+    The keyword arguments afford some control over which modules are patched.
+    For almost all of them, they patch the single module of the same name.  The
+    exceptions are socket, which also patches the ssl module if present; and 
+    thread, which patches thread and Queue.
+    """
     modules_to_patch = []
     if os:
         modules_to_patch += _green_os_modules()
@@ -86,13 +115,18 @@ def monkey_patch(os=True, select=True, socket=True, thread=True):
         modules_to_patch += _green_socket_modules()
     if thread:
         modules_to_patch += _green_thread_modules()
+    if time:
+        modules_to_patch += _green_time_modules()
     for name, mod in modules_to_patch:
-        sys.modules[name] = mod
+        for attr in mod.__patched__:
+            patched_attr = getattr(mod, attr, None)
+            if patched_attr is not None:
+                setattr(sys.modules[name], attr, patched_attr)
 
 def _green_os_modules():
     from eventlet.green import os
     return [('os', os)]
-
+    
 def _green_select_modules():
     from eventlet.green import select
     return [('select', select)]
@@ -110,3 +144,6 @@ def _green_thread_modules():
     from eventlet.green import thread
     return [('Queue', Queue), ('thread', thread)]
     
+def _green_time_modules():
+    from eventlet.green import time
+    return [('time', time)]

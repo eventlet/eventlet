@@ -71,7 +71,7 @@ The file :ref:`echo server example <echo_server_example>` contains a somewhat mo
 Primary API
 ===========
 
-The design goal for Eventlet's API is simplicity and readability.  You should be able to read its code and understand what it's doing.  Fewer lines of code are preferred over excessively clever implementations.  Like Python itself, there should be only one right way to do something with Eventlet!
+The design goal for Eventlet's API is simplicity and readability.  You should be able to read its code and understand what it's doing.  Fewer lines of code are preferred over excessively clever implementations.  `Like Python itself <http://www.python.org/dev/peps/pep-0020/>`_, there should be one, and only one obvious way to do it in Eventlet!
 
 Though Eventlet has many modules, much of the most-used stuff is accessible simply by doing ``import eventlet``
 
@@ -100,39 +100,3 @@ Though Eventlet has many modules, much of the most-used stuff is accessible simp
     Queues are a fundamental construct for communicating data between execution units.  Eventlet's Queue class is used to communicate between greenthreads, and provides a bunch of useful features for doing that.  See :class:`queue.Queue` for more details.
     
 These are the basic primitives of Eventlet; there are a lot more out there in the other Eventlet modules; check out the :doc:`modules`.
-
-
-Green Libraries
-----------------
-
-The package ``eventlet.green`` contains libraries that have the same interfaces as common standard ones, but they are modified to behave well with green threads.  This can be preferable than monkeypatching in many circumstances, because it may be necessary to interoperate with some module that needs the standard libraries unmolested, or simply because it's good engineering practice to be able to understand how a file behaves based simply on its contents.
-
-To use green libraries, simply import the desired module from ``eventlet.green``::
-
-  from eventlet.green import socket
-  from eventlet.green import threading
-  from eventlet.green import asyncore
-  
-That's all there is to it!
-
-
-Monkeypatching the Standard Library
-----------------------------------------
-
-.. automethod:: eventlet.util::wrap_socket_with_coroutine_socket
-
-Eventlet's socket object, whose implementation can be found in the
-:mod:`eventlet.greenio` module, is designed to match the interface of the
-standard library :mod:`socket` object. However, it is often useful to be able to
-use existing code which uses :mod:`socket` directly without modifying it to use the eventlet apis. To do this, one must call :func:`~eventlet.util.wrap_socket_with_coroutine_socket`. It is only necessary
-to do this once, at the beginning of the program, and it should be done before
-any socket objects which will be used are created.
-
-.. automethod:: eventlet.util::wrap_select_with_coroutine_select
-
-Some code which is written in a multithreaded style may perform some tricks,
-such as calling :mod:`select` with only one file descriptor and a timeout to
-prevent the operation from being unbounded. For this specific situation there
-is :func:`~eventlet.util.wrap_select_with_coroutine_select`; however it's
-always a good idea when trying any new library with eventlet to perform some
-tests to ensure eventlet is properly able to multiplex the operations.

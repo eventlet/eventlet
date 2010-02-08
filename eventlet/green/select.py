@@ -5,6 +5,8 @@ error = __select.error
 from eventlet.api import getcurrent
 from eventlet.hubs import get_hub
 
+__patched__ = ['select']
+
 def get_fileno(obj):
     # The purpose of this function is to exactly replicate
     # the behavior of the select module when confronted with

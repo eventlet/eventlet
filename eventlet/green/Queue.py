@@ -2,6 +2,8 @@ from eventlet import queue
 
 __all__ = ['Empty', 'Full', 'LifoQueue', 'PriorityQueue', 'Queue']
 
+__patched__ = ['LifoQueue', 'PriorityQueue', 'Queue']
+
 # these classes exist to paper over the major operational difference between
 # eventlet.queue.Queue and the stdlib equivalents
 class Queue(queue.Queue):

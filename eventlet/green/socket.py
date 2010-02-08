@@ -10,6 +10,9 @@ import os
 import sys
 import warnings
 
+__patched__ = ['fromfd', 'socketpair', 'gethostbyname', 'create_connection', 
+               'ssl', 'socket']
+
 def fromfd(*args):
     return socket(__socket.fromfd(*args))    
     

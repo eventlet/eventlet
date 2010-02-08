@@ -4,6 +4,9 @@ from eventlet.support import greenlets as greenlet
 from eventlet.api import spawn
 from eventlet.semaphore import Semaphore as LockType
 
+__patched__ = ['get_ident', 'start_new_thread', 'start_new', 'allocate_lock',
+    'allocate', 'exit', 'interrupt_main', 'stack_size', '_local']
+
 error = __thread.error
 
 def get_ident(gr=None):

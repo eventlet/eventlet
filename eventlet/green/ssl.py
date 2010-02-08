@@ -13,6 +13,7 @@ orig_socket = __import__('socket')
 socket = orig_socket.socket
 timeout_exc = orig_socket.timeout
 
+__patched__ = ['SSLSocket', 'wrap_socket', 'sslwrap_simple']
 
 class GreenSSLSocket(__ssl.SSLSocket):
     """ This is a green version of the SSLSocket class from the ssl module added 

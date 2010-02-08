@@ -92,7 +92,7 @@ from eventlet import patcher
 patcher.monkey_patch()
 import socket
 import urllib
-print "newmod", socket, urllib.socket.socket
+print "newmod", socket.socket, urllib.socket.socket
 """
         self.write_to_tempfile("newmod", new_mod)
         python_path = os.pathsep.join(sys.path + [self.tempdir])
@@ -104,5 +104,4 @@ print "newmod", socket, urllib.socket.socket
         output = p.communicate()
         lines = output[0].split("\n")
         self.assert_(lines[0].startswith('newmod'))
-        self.assert_('eventlet.green.socket' in lines[0])
-        self.assert_('GreenSocket' in lines[0])
+        self.assertEqual(lines[0].count('GreenSocket'), 2)
