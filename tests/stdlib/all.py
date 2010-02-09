@@ -4,7 +4,7 @@ Many of these tests make connections to external servers, and all.py tries to sk
 """
 
 
-def import_main(name):
+def assimilate_patched(name):
     try:
         modobj = __import__(name, globals(), locals(), ['test_main'])
     except ImportError:
@@ -18,44 +18,7 @@ def import_main(name):
         except AttributeError:
             print "No test_main for %s, assuming it tests on import" % name
             
-    
-# quick and dirty way of testing whether we can access
-# remote hosts; any tests that try internet connections
-# will fail if we cannot
-import socket
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-try:
-    s.settimeout(0.5)
-    s.connect(('eventlet.net', 80))
-    s.close()
-    have_network_access = True
-except socket.error, e:
-    print "Skipping network tests"
-    have_network_access = False
-    
-import_main('test_select')
-import_main('test_SimpleHTTPServer')
-import_main('test_asynchat')
-import_main('test_asyncore')
-import_main('test_ftplib')
-import_main('test_httplib')
-if have_network_access:
-    import_main('test_httpservers')
-import_main('test_os')
-import_main('test_queue')
-if have_network_access:
-    import_main('test_socket')
-import_main('test_socket_ssl')
-#import_main('test_socketserver')
-#import_main('test_subprocess')
-if have_network_access:
-    import_main('test_ssl')
-import_main('test_thread')
-#import_main('test_threading')
-import_main('test_threading_local')
-if have_network_access:
-    import_main('test_timeout')
-import_main('test_urllib')
-if have_network_access:
-    import_main('test_urllib2')
-import_main('test_urllib2_localnet')
+import all_modules
+
+for m in all_modules.get_modules():
+    assimilate_patched(m)

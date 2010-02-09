@@ -22,6 +22,7 @@ in :meth:`put <Queue.put>` or :meth:`get <Queue.get>` respectively.
 import sys
 import heapq
 import collections
+import traceback
 from Queue import Full, Empty
 
 

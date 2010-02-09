@@ -142,7 +142,8 @@ def _green_socket_modules():
 def _green_thread_modules():
     from eventlet.green import Queue
     from eventlet.green import thread
-    return [('Queue', Queue), ('thread', thread)]
+    from eventlet.green import threading
+    return [('Queue', Queue), ('thread', thread), ('threading', threading)]
     
 def _green_time_modules():
     from eventlet.green import time

@@ -13,13 +13,16 @@ import warnings
 __patched__ = ['fromfd', 'socketpair', 'gethostbyname', 'create_connection', 
                'ssl', 'socket']
 
+__original_fromfd__ = __socket.fromfd
 def fromfd(*args):
-    return socket(__socket.fromfd(*args))    
+    return socket(__original_fromfd__(*args))    
     
+__original_socketpair__ = __socket.socketpair
 def socketpair(*args):
-    one, two = __socket.socketpair(*args)
+    one, two = __original_socketpair__(*args)
     return socket(one), socket(two)
 
+__original_gethostbyname__ = __socket.gethostbyname
 def gethostbyname(name):
     can_use_tpool = os.environ.get("EVENTLET_TPOOL_GETHOSTBYNAME",
                                    '').lower() == "yes"
@@ -28,7 +31,7 @@ def gethostbyname(name):
     elif sys.platform.startswith('darwin') or not can_use_tpool:
         # the thread primitives on Darwin have some bugs that make
         # it undesirable to use tpool for hostname lookups
-        globals()['gethostbyname'] = __socket.gethostbyname
+        globals()['gethostbyname'] = __original_gethostbyname__
     else:
         globals()['gethostbyname'] = _gethostbyname_tpool
     
@@ -42,7 +45,7 @@ def _gethostbyname_twisted(name):
 def _gethostbyname_tpool(name):
     from eventlet import tpool
     return tpool.execute(
-        __socket.gethostbyname, name)
+        __original_gethostbyname__, name)
 
 #     def getaddrinfo(*args, **kw):
 #         return tpool.execute(

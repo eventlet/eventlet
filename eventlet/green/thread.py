@@ -1,11 +1,11 @@
 """implements standard module 'thread' with greenlets"""
 __thread = __import__('thread')
 from eventlet.support import greenlets as greenlet
-from eventlet.api import spawn
+from eventlet import greenthread
 from eventlet.semaphore import Semaphore as LockType
 
 __patched__ = ['get_ident', 'start_new_thread', 'start_new', 'allocate_lock',
-    'allocate', 'exit', 'interrupt_main', 'stack_size', '_local']
+    'allocate', 'exit', 'interrupt_main', 'stack_size', '_local', 'LockType']
 
 error = __thread.error
 
@@ -16,7 +16,7 @@ def get_ident(gr=None):
         return id(gr)
 
 def start_new_thread(function, args=(), kwargs={}):
-    g = spawn(function, *args, **kwargs)
+    g = greenthread.spawn(function, *args, **kwargs)
     return get_ident(g)
     
 start_new = start_new_thread
@@ -38,12 +38,13 @@ def interrupt_main():
     else:
         raise KeyboardInterrupt()
 
+__original_stack_size__ = __thread.stack_size
 if hasattr(__thread, 'stack_size'):
     def stack_size(size=None):
         if size is None:
-            return __thread.stack_size()
-        if size > __thread.stack_size():
-            return __thread.stack_size(size)
+            return __original_stack_size__()
+        if size > __original_stack_size__():
+            return __original_stack_size__(size)
         else:
             pass
             # not going to decrease stack_size, because otherwise other greenlets in this thread will suffer
