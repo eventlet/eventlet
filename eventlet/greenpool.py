@@ -142,7 +142,7 @@ class GreenPool(object):
     def _do_map(self, func, it, gi):
         for args in it:
             gi.spawn(func, *args)
-        gi.spawn(raise_stop_iteration)
+        gi.spawn(return_stop_iteration)
         
     def starmap(self, function, iterable):
         """This is the same as :func:`itertools.starmap`, except that *func* is 
@@ -164,8 +164,8 @@ class GreenPool(object):
         return self.starmap(function, itertools.izip(*iterables))
 
                                         
-def raise_stop_iteration():
-    raise StopIteration()
+def return_stop_iteration():
+    return StopIteration()
 
         
 class GreenPile(object):
@@ -227,6 +227,10 @@ class GreenMap(GreenPile):
         
     def next(self):
         try:
-            return self.waiters.get().wait()
+            val = self.waiters.get().wait()
+            if isinstance(val, StopIteration):
+                raise val
+            else:
+                return val
         finally:
             self.counter -= 1
