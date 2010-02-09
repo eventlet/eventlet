@@ -2,10 +2,13 @@ import os
 import select
 import socket
 import errno
+import warnings
 
 from eventlet import greenio
 
 def g_log(*args):
+    warnings.warn("eventlet.util.g_log is deprecated because we're pretty sure no one uses it.  Send mail to eventletdev@lists.secondlife.com if you are actually using it.",
+        DeprecationWarning, stacklevel=2)
     import sys
     from eventlet.support import greenlets as greenlet
     g_id = id(greenlet.getcurrent())
@@ -23,17 +26,11 @@ def g_log(*args):
 
 
 __original_socket__ = socket.socket
-__original_gethostbyname__ = socket.gethostbyname
-__original_getaddrinfo__ = socket.getaddrinfo
-try:
-    __original_fromfd__ = socket.fromfd
-    __original_fork__ = os.fork
-except AttributeError:
-    # Windows
-    __original_fromfd__ = None
-    __original_fork__ = None
-
 def tcp_socket():
+    warnings.warn("eventlet.util.tcp_sockt is deprecated."
+        "Please use the standard socket technique for this instead:"
+        "sock = socket.socket()",
+        DeprecationWarning, stacklevel=2)
     s = __original_socket__(socket.AF_INET, socket.SOCK_STREAM)
     return s
 
@@ -68,81 +65,27 @@ except ImportError:
             connection.set_connect_state()
         return connection
 
-socket_already_wrapped = False
 def wrap_socket_with_coroutine_socket(use_thread_pool=None):
-    global socket_already_wrapped
-    if socket_already_wrapped:
-        return
+    warnings.warn("eventlet.util.wrap_socket_with_coroutine_socket() is now " 
+        "eventlet.patcher.monkey_patch(all=False, socket=True)",
+        DeprecationWarning, stacklevel=2)
+    from eventlet import patcher
+    patcher.monkey_patch(all=False, socket=True)
+    
 
-    import eventlet.green.socket
-    socket.socket = eventlet.green.socket.socket
-    socket.ssl = eventlet.green.socket.ssl
-    try:
-        import ssl as _ssl
-        from eventlet.green import ssl
-        _ssl.wrap_socket = ssl.wrap_socket
-    except ImportError:
-        pass
-
-    if use_thread_pool is None:
-        # if caller doesn't specify, use the environment variable
-        # to decide whether to use tpool or not
-        use_thread_pool = os.environ.get("EVENTLET_TPOOL_GETHOSTBYNAME",
-                                         '').lower() == "yes"
-    if use_thread_pool:
-        try:
-            from eventlet import tpool
-            def new_gethostbyname(*args, **kw):
-                return tpool.execute(
-                    __original_gethostbyname__, *args, **kw)
-            socket.gethostbyname = new_gethostbyname
-
-            def new_getaddrinfo(*args, **kw):
-                return tpool.execute(
-                    __original_getaddrinfo__, *args, **kw)
-            socket.getaddrinfo = new_getaddrinfo
-        except ImportError:
-            pass # Windows
-
-    if __original_fromfd__ is not None:
-        def new_fromfd(*args, **kw):
-            return greenio.GreenSocket(__original_fromfd__(*args, **kw))
-        socket.fromfd = new_fromfd
-
-    socket_already_wrapped = True
-
-
-__original_fdopen__ = os.fdopen
-__original_read__ = os.read
-__original_write__ = os.write
-__original_waitpid__ = os.waitpid
-## TODO wrappings for popen functions? not really needed since Process object exists?
-
-
-pipes_already_wrapped = False
 def wrap_pipes_with_coroutine_pipes():
-    global pipes_already_wrapped
-    if pipes_already_wrapped:
-        return
-    from eventlet.green import greenos
-    os.fdopen = greenos.fdopen
-    os.read = greenos.read
-    os.write = greenos.write
-    os.waitpid = greenos.waitpid
-
-__original_select__ = select.select
+    warnings.warn("eventlet.util.wrap_pipes_with_coroutine_pipes() is now " 
+        "eventlet.patcher.monkey_patch(all=False, os=True)",
+        DeprecationWarning, stacklevel=2)
+    from eventlet import patcher
+    patcher.monkey_patch(all=False, os=True)
 
 def wrap_select_with_coroutine_select():
-    from eventlet.green import select as greenselect
-    select.select = greenselect.select
-
-
-try:
-    import threading
-    __original_threadlocal__ = threading.local
-except ImportError:
-    pass
-
+    warnings.warn("eventlet.util.wrap_select_with_coroutine_select() is now " 
+        "eventlet.patcher.monkey_patch(all=False, select=True)",
+        DeprecationWarning, stacklevel=2)
+    from eventlet import patcher
+    patcher.monkey_patch(all=False, select=True)
 
 def wrap_threading_local_with_coro_local():
     """
@@ -150,12 +93,22 @@ def wrap_threading_local_with_coro_local():
     Since greenlets cannot cross threads, so this should be semantically
     identical to ``threadlocal.local``
     """
-    from eventlet import api
-    from eventlet.corolocal import local
-    threading.local = local
+    warnings.warn("eventlet.util.wrap_threading_local_with_coro_local() is now " 
+        "eventlet.patcher.monkey_patch(all=False, thread=True) -- though"
+        "note that more than just _local is patched now.",
+        DeprecationWarning, stacklevel=2)
+
+    from eventlet import patcher
+    patcher.monkey_patch(all=False, thread=True)
 
 
 def socket_bind_and_listen(descriptor, addr=('', 0), backlog=50):
+    warnings.warn("eventlet.util.socket_bind_and_listen is deprecated."
+        "Please use the standard socket methodology for this instead:"
+        "sock.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR, 1)"
+        "sock.bind(addr)"
+        "sock.listen(backlog)",
+        DeprecationWarning, stacklevel=2)
     set_reuse_addr(descriptor)
     descriptor.bind(addr)
     descriptor.listen(backlog)
@@ -163,6 +116,10 @@ def socket_bind_and_listen(descriptor, addr=('', 0), backlog=50):
 
 
 def set_reuse_addr(descriptor):
+    warnings.warn("eventlet.util.set_reuse_addr is deprecated."
+        "Please use the standard socket methodology for this instead:"
+        "sock.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR, 1)",
+        DeprecationWarning, stacklevel=2)
     try:
         descriptor.setsockopt(
             socket.SOL_SOCKET,

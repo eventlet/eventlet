@@ -97,26 +97,38 @@ def patch_function(func, *additional_modules):
                     del sys.modules[name]
     return patched
         
-
-def monkey_patch(os=True, select=True, socket=True, thread=True, time=True):
+already_patched = {}
+def monkey_patch(all=True, os=False, select=False, 
+                           socket=False, thread=False, time=False):
     """Globally patches certain system modules to be greenthread-friendly.
     
     The keyword arguments afford some control over which modules are patched.
-    For almost all of them, they patch the single module of the same name.  The
-    exceptions are socket, which also patches the ssl module if present; and 
-    thread, which patches thread and Queue.
+    If *all* is True, then all modules are patched regardless of the other 
+    arguments. If it's False, then the rest of the keyword arguments control
+    patching of specific subsections of the standard library.
+    Most patch the single module of the same name (os, time,
+    select).  The exceptions are socket, which also patches the ssl module if
+    present; and thread, which patches thread, threading, and Queue.
+    
+    It's safe to call monkey_patch multiple times.
     """
     modules_to_patch = []
-    if os:
+    if all or os and not already_patched.get('os'):
         modules_to_patch += _green_os_modules()
-    if select:
+        already_patched['os'] = True
+    if all or select and not already_patched.get('select'):
         modules_to_patch += _green_select_modules()
-    if socket:
-        modules_to_patch += _green_socket_modules()
-    if thread:
+        already_patched['select'] = True
+    if all or socket and not already_patched.get('socket'):
+        modules_to_patch += _green_socket_modules()        
+        already_patched['socket'] = True
+    if all or thread and not already_patched.get('thread'):
         modules_to_patch += _green_thread_modules()
-    if time:
+        already_patched['thread'] = True
+    if all or time and not already_patched.get('time'):
         modules_to_patch += _green_time_modules()
+        already_patched['time'] = True
+        
     for name, mod in modules_to_patch:
         for attr in mod.__patched__:
             patched_attr = getattr(mod, attr, None)
