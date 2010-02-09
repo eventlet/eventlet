@@ -234,7 +234,7 @@ class BaseHub(object):
         sys.stderr.write("Timer raised: %r\n" % (timer,))
         sys.stderr.flush()
         
-    squelch_timer_exception = _silent_squelch_timer_exception
+    squelch_timer_exception = _debug_squelch_timer_exception
 
     def _add_absolute_timer(self, when, info):
         # the 0 placeholder makes it easy to bisect_right using (now, 1)
