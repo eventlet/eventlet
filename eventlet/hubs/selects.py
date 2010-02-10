@@ -6,16 +6,16 @@ import time
 from eventlet.hubs.hub import BaseHub, READ, WRITE
 
 try:
-    BAD_SOCK = (errno.EBADF, errno.WSAENOTSOCK)
+    BAD_SOCK = set((errno.EBADF, errno.WSAENOTSOCK))
 except AttributeError:
-    BAD_SOCK = (errno.EBADF,)
+    BAD_SOCK = set((errno.EBADF,))
 
 class Hub(BaseHub):
-    def _remove_closed_fds(self):
-        """ Iterate through fds that have had their socket objects recently closed,
-        removing the ones that are actually closed per the operating system.
+    def _remove_bad_fds(self):
+        """ Iterate through fds, removing the ones that are bad per the
+        operating system.
         """
-        for fd in self.closed_fds:
+        for fd in self.readers.keys() + self.writers.keys():
             try:
                 select.select([fd], [], [], 0)
             except select.error, e:
@@ -31,13 +31,11 @@ class Hub(BaseHub):
             return
         try:
             r, w, er = select.select(readers.keys(), writers.keys(), readers.keys() + writers.keys(), seconds)
-            self.closed_fds = []
         except select.error, e:
             if e.args[0] == errno.EINTR:
                 return
             elif e.args[0] in BAD_SOCK:
-                self._remove_closed_fds()
-                self.closed_fds = []
+                self._remove_bad_fds()
                 return
             else:
                 raise

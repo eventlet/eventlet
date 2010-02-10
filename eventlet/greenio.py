@@ -166,11 +166,7 @@ class GreenSocket(object):
         if self.closed:
             return
         self.closed = True
-        fileno = self.fileno()
-        try:
-            res = self.fd.close()
-        finally:
-            get_hub().closed(fileno)
+        res = self.fd.close()
         return res
 
     def connect(self, address):

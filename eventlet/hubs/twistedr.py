@@ -169,9 +169,6 @@ class BaseTwistedHub(object):
     def get_timers_count(self):
         from twisted.internet import reactor
         return len(reactor.getDelayedCalls())
-        
-    def closed(self, fileno):
-        pass
 
 
 class TwistedHub(BaseTwistedHub):

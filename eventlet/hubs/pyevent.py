@@ -43,9 +43,6 @@ class Hub(BaseHub):
         self.signal(2, lambda signalnum, frame: self.greenlet.parent.throw(KeyboardInterrupt))
         self.events_to_add = []
         
-    def closed(self, fd):
-        pass
-
     def switch(self):
         cur = greenlet.getcurrent()
         assert cur is not self.greenlet, 'Cannot switch to MAINLOOP from MAINLOOP'

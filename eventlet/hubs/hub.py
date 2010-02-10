@@ -48,7 +48,6 @@ class BaseHub(object):
 
     def __init__(self, clock=time.time):
         self.listeners = {READ:{}, WRITE:{}}
-        self.closed_fds = []
 
         self.clock = clock
         self.greenlet = greenlet.greenlet(self.run)
@@ -89,12 +88,6 @@ class BaseHub(object):
             pass
         if listener_list:
             self.listeners[listener.evtype][listener.fileno] = listener_list
-        
-    def closed(self, fileno):
-        """ Clean up any references so that we don't try and
-        do I/O on a closed fd.
-        """
-        self.closed_fds.append(fileno)
         
     def remove_descriptor(self, fileno):
         """ Completely remove all listeners for this fileno.  For internal use 
