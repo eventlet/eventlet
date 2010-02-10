@@ -15,7 +15,7 @@ class Hub(BaseHub):
         """ Iterate through fds, removing the ones that are bad per the
         operating system.
         """
-        for fd in self.readers.keys() + self.writers.keys():
+        for fd in self.listeners[READ].keys() + self.listeners[WRITE].keys():
             try:
                 select.select([fd], [], [], 0)
             except select.error, e:
