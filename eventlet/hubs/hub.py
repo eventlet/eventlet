@@ -65,6 +65,7 @@ class BaseHub(object):
             'exit': [],
         }
         self.lclass = FdListener
+        self.debug_exceptions = True
         
     def add(self, evtype, fileno, cb):
         """ Signals an intent to or write a particular file descriptor.
@@ -226,15 +227,15 @@ class BaseHub(object):
             except:
                 self.squelch_observer_exception(observer, sys.exc_info())
 
-    def _silent_squelch_timer_exception(self, timer, exc_info):
-        pass
-        
-    def _debug_squelch_timer_exception(self, timer, exc_info):
-        traceback.print_exception(*exc_info)
-        sys.stderr.write("Timer raised: %r\n" % (timer,))
-        sys.stderr.flush()
-        
-    squelch_timer_exception = _debug_squelch_timer_exception
+    def squelch_generic_exception(self, exc_info):
+        if self.debug_exceptions:
+            traceback.print_exception(*exc_info)
+            sys.stderr.flush()
+
+    def squelch_timer_exception(self, timer, exc_info):
+        if self.debug_exceptions:
+            traceback.print_exception(*exc_info)
+            sys.stderr.flush()
 
     def _add_absolute_timer(self, when, info):
         # the 0 placeholder makes it easy to bisect_right using (now, 1)
@@ -318,7 +319,4 @@ class BaseHub(object):
             self.lclass = FdListener
             
     def set_timer_exceptions(self, value):
-        if value:
-            self.squelch_timer_exception = self._debug_squelch_timer_exception
-        else:
-            self.squelch_timer_exception = self._silent_squelch_timer_exception
+        self.debug_exceptions = value

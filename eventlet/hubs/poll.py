@@ -50,6 +50,10 @@ class Hub(BaseHub):
                 self.poll.unregister(fileno)
             except KeyError:
                 pass
+            except (IOError, OSError):
+                # raised if we try to remove a fileno that was
+                # already removed/invalid
+                self.squelch_generic_exception(sys.exc_info())
 
     def remove_descriptor(self, fileno):
         super(Hub, self).remove_descriptor(fileno)
@@ -57,6 +61,8 @@ class Hub(BaseHub):
             self.poll.unregister(fileno)
         except (KeyError, ValueError):
             pass
+        except (IOError, OSError):
+            self.squelch_generic_exception(sys.exc_info())
 
     def wait(self, seconds=None):
         readers = self.listeners[READ]
