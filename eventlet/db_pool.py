@@ -82,7 +82,7 @@ class BaseConnectionPool(Pool):
             age_delay = (oldest - now) + self.max_age
 
             next_delay = min(idle_delay, age_delay)
-        except IndexError, ValueError:
+        except (IndexError, ValueError):
             # no free items, unschedule ourselves
             self._expiration_timer = None
             return
