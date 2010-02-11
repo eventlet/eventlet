@@ -1,11 +1,13 @@
 import collections
 import errno
 from eventlet import wsgi
+from eventlet import pools
 import eventlet
 
-class WebSocketApp(object):
-    def __init__(self, handler):
+class WebSocketWSGI(object):
+    def __init__(self, handler, origin):
         self.handler = handler
+        self.origin = origin
     
     def verify_client(self, ws):
         pass
@@ -14,7 +16,6 @@ class WebSocketApp(object):
         if not (environ['HTTP_CONNECTION'] == 'Upgrade' and
             environ['HTTP_UPGRADE'] == 'WebSocket'):
             # need to check a few more things here for true compliance
-            print 'Invalid websocket handshake'
             start_response('400 Bad Request', [('Connection','close')])
             return []
                     
@@ -29,7 +30,7 @@ class WebSocketApp(object):
                    "Connection: Upgrade\r\n"
                    "WebSocket-Origin: %s\r\n"
                    "WebSocket-Location: ws://%s%s\r\n\r\n" % (
-                        ws.origin, 
+                        self.origin, 
                         environ.get('HTTP_HOST'), 
                         ws.path))                                       
         sock.sendall(handshake_reply)
@@ -79,10 +80,17 @@ class WebSocket(object):
         self.path = path
         self._buf = ""
         self._msgs = collections.deque()
+        self._sendlock = pools.TokenPool(1)
     
     def send(self, message):
         packed = format_message(message)
-        self.sock.sendall(packed)
+        # if two greenthreads are trying to send at the same time
+        # on the same socket, sendlock prevents interleaving and corruption
+        t = self._sendlock.get()
+        try:
+            self.sock.sendall(packed)
+        finally:
+            self._sendlock.put(t)
             
     def wait(self):
         while not self._msgs:
@@ -95,38 +103,40 @@ class WebSocket(object):
             self._msgs.extend(msgs)
         return self._msgs.popleft()
         
+
+# demo app
+import os
+import random
+def handle(ws):
+    """  This is the websocket handler function.  Note that we 
+    can dispatch based on path in here, too."""
+    if ws.path == '/echo':
+        while True:
+            m = ws.wait()
+            if m == '':
+                break
+            ws.send(m)
+            
+    elif ws.path == '/data':
+        for i in xrange(10000):
+            ws.send("0 %s %s\n" % (i, random.random()))
+            eventlet.sleep(0.1)
+                            
+wsapp = WebSocketWSGI(handle, 'http://localhost:7000')
+def dispatch(environ, start_response):
+    """ This resolves to the web page or the websocket depending on
+    the path."""
+    if environ['PATH_INFO'] == '/':
+        start_response('200 OK', [('content-type', 'text/html')])
+        return [open(os.path.join(
+                     os.path.dirname(__file__), 
+                     'websocket.html')).read()]
+    else:
+        return wsapp(environ, start_response)
+
         
 if __name__ == "__main__":
-    # run an example app from the command line
-    import os
-    import random
-    def handle(ws):
-        """  This is the websocket handler function.  Note that we 
-        can dispatch based on path in here, too."""
-        if ws.path == '/echo':
-            while True:
-                m = ws.wait()
-                if m == '':
-                    break
-                ws.send(m)
-                
-        elif ws.path == '/data':
-            for i in xrange(10000):
-                ws.send("0 %s %s\n" % (i, random.random()))
-                eventlet.sleep(0.1)
-                
-    wsapp = WebSocketApp(handle)  # the wsgi shim for websockets
-    def dispatch(environ, start_response):
-        """ This resolves to the web page or the websocket depending on
-        the path."""
-        if environ['PATH_INFO'] == '/':
-            start_response('200 OK', [('content-type', 'text/html')])
-            return [open(os.path.join(
-                         os.path.dirname(__file__), 
-                         'websocket.html')).read()]
-        else:
-            return wsapp(environ, start_response)
-            
+    # run an example app from the command line            
     from eventlet.green import socket
     listener = socket.socket()
     listener.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR, 1)
