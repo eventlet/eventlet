@@ -1,5 +1,7 @@
 import collections
+import errno
 from eventlet import wsgi
+import eventlet
 
 class WebSocketApp(object):
     def __init__(self, handler):
@@ -25,9 +27,17 @@ class WebSocketApp(object):
         handshake_reply = ("HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
                    "Upgrade: WebSocket\r\n"
                    "Connection: Upgrade\r\n"
-                   "WebSocket-Origin: %s\r\n\r\n" % ws.origin)
+                   "WebSocket-Origin: %s\r\n"
+                   "WebSocket-Location: ws://%s%s\r\n\r\n" % (
+                        ws.origin, 
+                        environ.get('HTTP_HOST'), 
+                        ws.path))                                       
         sock.sendall(handshake_reply)
-        self.handler(ws)
+        try:
+            self.handler(ws)
+        except socket.error, e:
+            if wsgi.get_errno(e) != errno.EPIPE:
+                raise
         # use this undocumented feature of eventlet.wsgi to ensure that it
         # doesn't barf on the fact that we didn't call start_response
         return wsgi.ALREADY_HANDLED
@@ -87,18 +97,39 @@ class WebSocket(object):
         
         
 if __name__ == "__main__":
-    def echo(ws):
-        while True:
-            m = ws.wait()
-            if m == '':
-                break
-            print "echoing", m
-            ws.send(m)
-        
-    app = WebSocketApp(echo)
+    # run an example app from the command line
+    import os
+    import random
+    def handle(ws):
+        """  This is the websocket handler function.  Note that we 
+        can dispatch based on path in here, too."""
+        if ws.path == '/echo':
+            while True:
+                m = ws.wait()
+                if m == '':
+                    break
+                ws.send(m)
+                
+        elif ws.path == '/data':
+            for i in xrange(10000):
+                ws.send("0 %s %s\n" % (i, random.random()))
+                eventlet.sleep(0.1)
+                
+    wsapp = WebSocketApp(handle)  # the wsgi shim for websockets
+    def dispatch(environ, start_response):
+        """ This resolves to the web page or the websocket depending on
+        the path."""
+        if environ['PATH_INFO'] == '/':
+            start_response('200 OK', [('content-type', 'text/html')])
+            return [open(os.path.join(
+                         os.path.dirname(__file__), 
+                         'websocket.html')).read()]
+        else:
+            return wsapp(environ, start_response)
+            
     from eventlet.green import socket
     listener = socket.socket()
     listener.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR, 1)
     listener.bind(('localhost', 7000))
     listener.listen(500)
-    wsgi.server(listener, app)
+    wsgi.server(listener, dispatch)
