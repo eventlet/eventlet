@@ -17,6 +17,9 @@ from eventlet import processes
 
 from tests import find_command
 
+certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
+private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
+
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -732,6 +735,25 @@ class TestHttpd(LimitedTestCase):
         fd.flush()
         read_http(sock)
 
+    def test_028_ssl_handshake_errors(self):
+        errored = [False]
+        def server(sock):
+            try:
+                wsgi.server(sock=sock, site=hello_world, log=self.logfile)
+                errored[0] = 'SSL handshake error caused wsgi.server to exit.'
+            except Exception, e:
+                errored[0] = 'SSL handshake error raised exception %s.' % e
+        srv_sock = api.ssl_listener(('localhost', 0), certificate_file, private_key_file)
+        port = srv_sock.getsockname()[1]
+        for data in ('', 'GET /non-ssl-request HTTP/1.0\r\n\r\n'):
+            g = eventlet.spawn(server, srv_sock)
+            sock = api.connect_tcp(('localhost', port))
+            if data: # send non-ssl request
+                sock.sendall(data) 
+            else: # close sock prematurely
+                sock.close()
+            api.sleep(0) # let context switch back to server
+            self.assert_(not errored[0], errored[0])
 
 if __name__ == '__main__':
     main()
