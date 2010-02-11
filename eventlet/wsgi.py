@@ -471,7 +471,14 @@ class Server(BaseHTTPServer.HTTPServer):
     def log_message(self, message):
         self.log.write(message + '\n')
 
-ACCEPT_SOCK = set((errno.EPIPE, errno.EBADF))
+try:
+    import ssl
+    ACCEPT_EXCEPTIONS = (socket.error, ssl.SSLError)
+    ACCEPT_ERRNO = set((errno.EPIPE, errno.EBADF, 
+                        ssl.SSL_ERROR_EOF, ssl.SSL_ERROR_SSL))
+except ImportError:
+    ACCEPT_EXCEPTIONS = (socket.error,)
+    ACCEPT_ERRNO = set((errno.EPIPE, errno.EBADF))
 
 def server(sock, site, 
            log=None, 
@@ -536,19 +543,18 @@ def server(sock, site,
         serv.log.write("(%s) wsgi starting up on %s://%s%s/\n" % (os.getpid(), scheme, host, port))
         while True:
             try:
+                client_socket = sock.accept()
                 try:
-                    client_socket = sock.accept()
-                except socket.error, e:
-                    if get_errno(e) not in ACCEPT_SOCK:
-                        raise
-                try:
-                    pool.spawn_n(serv.process_request, client_socket)
+                    pool.spawn_n(serv.process_request, client_socket)                    
                 except AttributeError:
                     warnings.warn("wsgi's pool should be an instance of " \
                         "eventlet.greenpool.GreenPool, is %s. Please convert your"\
                         " call site to use GreenPool instead" % type(pool),
                         DeprecationWarning, stacklevel=2)
                     pool.execute_async(serv.process_request, client_socket)
+            except ACCEPT_EXCEPTIONS, e:
+                if get_errno(e) not in ACCEPT_ERRNO:
+                    raise
             except (KeyboardInterrupt, SystemExit):
                 serv.log.write("wsgi exiting\n")
                 break

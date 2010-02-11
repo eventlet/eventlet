@@ -741,19 +741,32 @@ class TestHttpd(LimitedTestCase):
             try:
                 wsgi.server(sock=sock, site=hello_world, log=self.logfile)
                 errored[0] = 'SSL handshake error caused wsgi.server to exit.'
+            except greenthread.greenlet.GreenletExit:
+                pass
             except Exception, e:
                 errored[0] = 'SSL handshake error raised exception %s.' % e
-        srv_sock = api.ssl_listener(('localhost', 0), certificate_file, private_key_file)
-        port = srv_sock.getsockname()[1]
         for data in ('', 'GET /non-ssl-request HTTP/1.0\r\n\r\n'):
-            g = eventlet.spawn(server, srv_sock)
-            sock = api.connect_tcp(('localhost', port))
+            srv_sock = api.ssl_listener(('localhost', 0), certificate_file, private_key_file)
+            port = srv_sock.getsockname()[1]
+            g = eventlet.spawn_n(server, srv_sock)
+            client = api.connect_tcp(('localhost', port))
             if data: # send non-ssl request
-                sock.sendall(data) 
+                client.sendall(data) 
             else: # close sock prematurely
-                sock.close()
+                client.close()
             api.sleep(0) # let context switch back to server
             self.assert_(not errored[0], errored[0])
+            # make another request to ensure the server's still alive
+            try:
+                from eventlet.green import ssl
+                client = ssl.wrap_socket(api.connect_tcp(('localhost', port)))
+                client.write('GET / HTTP/1.0\r\nHost: localhost\r\n\r\n')
+                result = client.read()
+                self.assert_(result.startswith('HTTP'), result)
+                self.assert_(result.endswith('hello world'))
+            except ImportError:
+                pass # TODO: should test with OpenSSL
+            greenthread.kill(g)
 
 if __name__ == '__main__':
     main()
