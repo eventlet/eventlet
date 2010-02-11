@@ -37,6 +37,9 @@ def format_date_time(timestamp):
 BAD_SOCK = set((errno.EBADF, 10053))
 BROKEN_SOCK = set((errno.EPIPE, errno.ECONNRESET))
 
+# special flag return value for apps
+ALREADY_HANDLED = object()
+
 def get_errno(err):
     """ Simple method to get the error code out of socket.error objects.  It 
     compensates for some cases where the code is not in the expected 
@@ -133,6 +136,9 @@ class Input(object):
 
     def __iter__(self):
         return iter(self.read())
+        
+    def get_socket(self):
+        return self.rfile._sock.dup()
 
 
 class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
@@ -301,6 +307,9 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         try:
             try:
                 result = self.application(self.environ, start_response)
+                if result is ALREADY_HANDLED:
+                    self.close_connection = 1
+                    return
                 if not headers_sent and hasattr(result, '__len__') and \
                         'Content-Length' not in [h for h, v in headers_set[1]]:
                     headers_set[1].append(('Content-Length', str(sum(map(len, result)))))
