@@ -13,14 +13,14 @@ and then 'quit')
 import eventlet
 from eventlet.green import socket
 
-def handle(reader, writer):
+def handle(fd):
     print "client connected"
     while True:
         # pass through every non-eof line
-        x = reader.readline()
+        x = fd.readline()
         if not x: break
-        writer.write(x)
-        writer.flush()
+        fd.write(x)
+        fd.flush()
         print "echoed", x,
     print "client disconnected"
 
@@ -34,6 +34,6 @@ while True:
     try:
         new_sock, address = server.accept()
         print "accepted", address
-        pool.spawn_n(handle, new_sock.makefile('r'), new_sock.makefile('w'))
+        pool.spawn_n(handle, new_sock.makefile('rw'))
     except (SystemExit, KeyboardInterrupt):
         break
