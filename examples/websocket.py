@@ -97,7 +97,7 @@ class WebSocket(object):
             # no parsed messages, must mean buf needs more data
             delta = self.sock.recv(1024)
             if delta == '':
-                return ''
+                return None
             self._buf += delta
             msgs, self._buf = parse_messages(self._buf)
             self._msgs.extend(msgs)
@@ -113,7 +113,7 @@ def handle(ws):
     if ws.path == '/echo':
         while True:
             m = ws.wait()
-            if m == '':
+            if m is None:
                 break
             ws.send(m)
             
