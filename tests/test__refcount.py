@@ -1,7 +1,7 @@
 """This test checks that socket instances (not GreenSockets but underlying sockets)
 are not leaked by the hub.
 """
-#import sys
+import sys
 import unittest
 from pprint import pformat
 from eventlet.green import socket
@@ -61,6 +61,7 @@ def run_interaction(run_client):
 
 def run_and_check(run_client):
     w = run_interaction(run_client=run_client)
+    sys.exc_clear()
     if w():
         print pformat(gc.get_referrers(w()))
         for x in gc.get_referrers(w()):
@@ -69,15 +70,14 @@ def run_and_check(run_client):
                 print '-', pformat(y)
         raise AssertionError('server should be dead by now')
 
-class test(unittest.TestCase):
 
-    def test_clean_exit(self):
-        run_and_check(True)
-        run_and_check(True)
+def test_clean_exit():
+    run_and_check(True)
+    run_and_check(True)
 
-    def test_timeout_exit(self):
-        run_and_check(False)
-        run_and_check(False)
+def test_timeout_exit():
+    run_and_check(False)
+    run_and_check(False)
 
 if __name__=='__main__':
     unittest.main()
