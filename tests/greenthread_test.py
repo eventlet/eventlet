@@ -7,7 +7,19 @@ def passthru(*args, **kw):
     _g_results.append((args, kw))
     return args, kw
 
-class Spawn(LimitedTestCase):
+def waiter(a):
+    greenthread.sleep(0.1)
+    return a
+
+
+class Asserts(object):
+    def assert_dead(self, gt):
+        if hasattr(gt, 'wait'):
+            self.assertRaises(greenlet.GreenletExit, gt.wait)    
+        self.assert_(gt.dead)
+        self.assert_(not gt)
+
+class Spawn(LimitedTestCase, Asserts):
     def tearDown(self):
         global _g_results
         super(Spawn, self).tearDown()
@@ -24,13 +36,7 @@ class Spawn(LimitedTestCase):
         greenthread.sleep(0)
         self.assert_(gt.dead)
         self.assertEquals(_g_results, [((2,),{'b':3})])
-    
-    def assert_dead(self, gt):
-        if hasattr(gt, 'wait'):
-            self.assertRaises(greenlet.GreenletExit, gt.wait)    
-        self.assert_(gt.dead)
-        self.assert_(not gt)
-    
+        
     def test_kill(self):
         gt = greenthread.spawn(passthru, 6)
         greenthread.kill(gt)
@@ -79,4 +85,25 @@ class Spawn(LimitedTestCase):
         self.assertEquals(gt.wait(), ((5,), {}))
         gt.link(link_func, 4, b=5)
         self.assertEquals(results, [gt, (4,), {'b':5}])
+
+class SpawnAfter(LimitedTestCase, Asserts):
+    def test_basic(self):
+        gt = greenthread.spawn_after(0.1, passthru, 20)
+        self.assertEquals(gt.wait(), ((20,), {}))
         
+    def test_cancel(self):
+        gt = greenthread.spawn_after(0.1, passthru, 21)
+        gt.cancel()
+        self.assert_dead(gt)
+
+    def test_cancel_already_started(self):
+        gt = greenthread.spawn_after(0, waiter, 22)
+        greenthread.sleep(0)
+        gt.cancel()
+        self.assertEquals(gt.wait(), 22)
+        
+    def test_kill_already_started(self):
+        gt = greenthread.spawn_after(0, waiter, 22)
+        greenthread.sleep(0)
+        gt.kill()
+        self.assert_dead(gt)

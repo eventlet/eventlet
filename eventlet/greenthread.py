@@ -58,6 +58,29 @@ def spawn_n(func, *args, **kwargs):
     than :func:`spawn` in all cases; it is fastest if there are no keyword 
     arguments."""
     return _spawn_n(0, func, args, kwargs)[1]
+    
+    
+def spawn_after(seconds, func, *args, **kwargs):
+    """Spawns *func* after *seconds* have elapsed.  It runs as scheduled even if 
+    the current greenthread has completed.
+
+    *seconds* may be specified as an integer, or a float if fractional seconds
+    are desired. The *func* will be called with the given *args* and
+    keyword arguments *kwargs*, and will be executed within its own greenthread.
+    
+    The return value of :func:`spawn_after` is a :class:`GreenThread` object,
+    which can be used to retrieve the results of the call.
+    
+    To cancel the spawn and prevent *func* from being called, 
+    call :meth:`GreenThread.cancel` on the return value of :func:`spawn_after`.  
+    This will not abort the function if it's already started running.  If
+    terminating *func* regardless of whether it's started or not is the desired
+    behavior, call :meth:`GreenThread.kill`.
+    """
+    hub = hubs.get_hub()
+    g = GreenThread(hub.greenlet)
+    hub.schedule_call_global(seconds, g.switch, func, args, kwargs)
+    return g
 
 
 def call_after_global(seconds, func, *args, **kwargs):
@@ -168,7 +191,6 @@ def with_timeout(seconds, func, *args, **kwds):
     finally:
         timeout.cancel()
 
-
 def _spawn_n(seconds, func, args, kwargs):
     hub = hubs.get_hub()
     if kwargs:
@@ -236,9 +258,25 @@ class GreenThread(greenlet.greenlet):
             f(self, *ca, **ckw)
         self._exit_funcs = [] # so they don't get called again
     
-    def kill(self):
-        return kill(self)
+    def kill(self, *throw_args):
+        """Kills the greenthread using :func:`kill`.  After being killed
+        all calls to :meth:`wait` will raise *throw_args* (which default 
+        to :class:`greenlet.GreenletExit`)."""
+        return kill(self, *throw_args)
+        
+    def cancel(self, *throw_args):
+        """Kills the greenthread using :func:`kill`, but only if it hasn't 
+        already started running.  After being canceled,
+        all calls to :meth:`wait` will raise *throw_args* (which default 
+        to :class:`greenlet.GreenletExit`)."""
+        return cancel(self, *throw_args)
 
+def cancel(g, *throw_args):
+    """Like :func:`kill`, but only terminates the greenthread if it hasn't
+    already started execution.  If the grenthread has already started 
+    execution, :func:`cancel` has no effect."""
+    if not g:
+        kill(g, *throw_args)
 
 def kill(g, *throw_args):
     """Terminates the target greenthread by raising an exception into it.
@@ -255,12 +293,14 @@ def kill(g, *throw_args):
         # method never got called
         def just_raise(*a, **kw):
             raise throw_args or greenlet.GreenletExit
-        if hasattr(g, '_exit_event'):
+        if isinstance(g, GreenThread):
             # it's a GreenThread object, so we want to call its main
             # method to take advantage of the notification
-            def raise_main(*a, **kw):
+            g.run = just_raise
+            try:
                 g.main(just_raise, (), {})
-            g.run = raise_main
+            except:
+                pass
         else:
             # regular greenlet; just want to replace its run method so
             # that whatever it was going to run, doesn't

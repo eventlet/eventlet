@@ -77,6 +77,18 @@ def format_hub_listeners():
     for l in hub.get_writers():
         result.append(repr(l))
     return os.linesep.join(result)
+
+def format_hub_timers():
+    """ Returns a formatted string of the current timers on the current
+    hub.  This can be useful in determining what's going on in the event system,
+    especially when used in conjunction with :func:`hub_timer_stacks`.
+    """
+    from eventlet import hubs
+    hub = hubs.get_hub()
+    result = ['TIMERS:']
+    for l in hub.timers:
+        result.append(repr(l))
+    return os.linesep.join(result)
     
 def hub_listener_stacks(state):
     """Toggles whether or not the hub records the stack when clients register 
@@ -87,6 +99,14 @@ def hub_listener_stacks(state):
     """
     from eventlet import hubs
     hubs.get_hub().set_debug_listeners(state)
+    
+def hub_timer_stacks(state):
+    """Toggles whether or not the hub records the stack when timers are set.  
+    To inspect the stacks of the current timers, call :func:`format_hub_timers` 
+    at critical junctures in the application logic.
+    """
+    from eventlet import timer
+    timer._g_debug = state
     
 def hub_exceptions(state):
     """Toggles whether the hub prints exceptions that are raised from its

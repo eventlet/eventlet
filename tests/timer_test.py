@@ -10,17 +10,6 @@ class TestTimer(TestCase):
         assert t.tpl == t2.tpl
         assert t.called == t2.called
 
-##     def test_cancel(self):
-##         r = runloop.RunLoop()
-##         called = []
-##         t = timer.Timer(0, lambda: called.append(True))
-##         t.cancel()
-##         r.add_timer(t)
-##         r.add_observer(lambda r, activity: r.abort(), 'after_waiting')
-##         r.run()
-##         assert not called
-##         assert not r.running
-
     def test_schedule(self):
         hub = hubs.get_hub()
         # clean up the runloop, preventing side effects from previous tests
