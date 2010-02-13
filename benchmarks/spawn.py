@@ -3,6 +3,23 @@
 import eventlet
 import benchmarks
 
+def cleanup():
+    eventlet.sleep(0.2)
+
+iters = 10000
+best = benchmarks.measure_best(5, iters,
+    'pass',
+    cleanup,
+    eventlet.sleep)
+print "eventlet.sleep (main)", best[eventlet.sleep]
+
+gt = eventlet.spawn(benchmarks.measure_best,5, iters,
+    'pass',
+    cleanup,
+    eventlet.sleep)
+best = gt.wait()
+print "eventlet.sleep (gt)", best[eventlet.sleep]
+
 def dummy(i=None):
     return i
 
@@ -15,10 +32,7 @@ def run_spawn_n():
 def run_spawn_n_kw():
     eventlet.spawn_n(dummy, i=1)
 
-def cleanup():
-    eventlet.sleep(0.2)
 
-iters = 10000
 best = benchmarks.measure_best(5, iters,
     'pass',
     cleanup,

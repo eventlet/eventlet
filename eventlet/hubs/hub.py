@@ -112,9 +112,11 @@ class BaseHub(object):
         if self.greenlet.dead:
             self.greenlet = greenlet.greenlet(self.run)
         try:
-            greenlet.getcurrent().parent = self.greenlet
+            current = greenlet.getcurrent()
+            if self.greenlet.parent is not current: 
+                current.parent = self.greenlet
         except ValueError:
-            pass
+            pass  # gets raised if there is a greenlet parent cycle
         return self.greenlet.switch()
 
     def squelch_exception(self, fileno, exc_info):
