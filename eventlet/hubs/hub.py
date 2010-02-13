@@ -55,14 +55,6 @@ class BaseHub(object):
         self.running = False
         self.timers = []
         self.next_timers = []
-        self.observers = {}
-        self.observer_modes = {
-            'entry': [],
-            'before_timers': [],
-            'before_waiting': [],
-            'after_waiting': [],
-            'exit': [],
-        }
         self.lclass = FdListener
         self.debug_exceptions = True
         
@@ -149,10 +141,8 @@ class BaseHub(object):
         try:
             self.running = True
             self.stopping = False
-            self.fire_observers('entry')
             while not self.stopping:
                 self.prepare_timers()
-                self.fire_observers('before_timers')
                 self.fire_timers(self.clock())
                 self.prepare_timers()
                 wakeup_when = self.sleep_until()
@@ -161,15 +151,12 @@ class BaseHub(object):
                 else:
                     sleep_time = wakeup_when - self.clock()
                 if sleep_time > 0:
-                    self.fire_observers('before_waiting')
                     self.wait(sleep_time)
-                    self.fire_observers('after_waiting')
                 else:
                     self.wait(0)
             else:
                 del self.timers[:]
                 del self.next_timers[:]
-            self.fire_observers('exit')
         finally:
             self.running = False
             self.stopping = False
@@ -180,47 +167,6 @@ class BaseHub(object):
         """
         if self.running:
             self.stopping = True
-
-    def add_observer(self, observer, *modes):
-        """Add an event observer to this runloop with the given modes.
-        Valid modes are:
-            entry: The runloop is being entered.
-            before_timers: Before the expired timers for this iteration are executed.
-            before_waiting: Before waiting for the calculated wait_time
-                where nothing will happen.
-            after_waiting: After waiting, immediately before starting the top of the
-                runloop again.
-            exit: The runloop is exiting.
-
-        If no mode is passed or mode is all, the observer will be fired for every
-        event type.
-        """
-        if not modes or modes == ('all',):
-            modes = tuple(self.observer_modes)
-        self.observers[observer] = modes
-        for mode in modes:
-            self.observer_modes[mode].append(observer)
-
-    def remove_observer(self, observer):
-        """Remove a previously registered observer from all event types.
-        """
-        for mode in self.observers.pop(observer, ()):
-            self.observer_modes[mode].remove(observer)
-
-    def squelch_observer_exception(self, observer, exc_info):
-        traceback.print_exception(*exc_info)
-        sys.stderr.write("Removing observer: %r\n" % (observer,))
-        sys.stderr.flush()
-        self.remove_observer(observer)
-
-    def fire_observers(self, activity):
-        for observer in self.observer_modes[activity]:
-            try:
-                observer(self, activity)
-            except self.SYSTEM_EXCEPTIONS:
-                raise
-            except:
-                self.squelch_observer_exception(observer, sys.exc_info())
 
     def squelch_generic_exception(self, exc_info):
         if self.debug_exceptions:
