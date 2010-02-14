@@ -105,7 +105,7 @@ def hub_timer_stacks(state):
     To inspect the stacks of the current timers, call :func:`format_hub_timers` 
     at critical junctures in the application logic.
     """
-    from eventlet import timer
+    from eventlet.hubs import timer
     timer._g_debug = state
     
 def hub_exceptions(state):

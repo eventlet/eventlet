@@ -4,7 +4,7 @@ import traceback
 import time
 
 from eventlet.support import greenlets as greenlet
-from eventlet.timer import Timer, LocalTimer
+from eventlet.hubs import timer
 
 READ="read"
 WRITE="write"
@@ -208,7 +208,7 @@ class BaseHub(object):
             *args: Arguments to pass to the callable when called.
             **kw: Keyword arguments to pass to the callable when called.
         """
-        t = LocalTimer(seconds, cb, *args, **kw)
+        t = timer.LocalTimer(seconds, cb, *args, **kw)
         self.add_timer(t)
         return t
 
@@ -221,7 +221,7 @@ class BaseHub(object):
             *args: Arguments to pass to the callable when called.
             **kw: Keyword arguments to pass to the callable when called.
         """
-        t = Timer(seconds, cb, *args, **kw)
+        t = timer.Timer(seconds, cb, *args, **kw)
         self.add_timer(t)
         return t
 

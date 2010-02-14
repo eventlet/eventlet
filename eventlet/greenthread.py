@@ -2,7 +2,7 @@ import sys
 
 from eventlet import event
 from eventlet import hubs
-from eventlet import timer
+from eventlet.hubs import timer
 from eventlet.support import greenlets as greenlet
 
 __all__ = ['getcurrent', 'sleep', 'spawn', 'spawn_n', 'call_after_global', 'call_after_local', 'GreenThread'] 
@@ -292,19 +292,18 @@ def kill(g, *throw_args):
         # on its own; semantically we want it to be as though the main
         # method never got called
         def just_raise(*a, **kw):
-            raise throw_args or greenlet.GreenletExit
+            if throw_args:
+                raise throw_args[0], throw_args[1], throw_args[2]
+            else:
+                raise greenlet.GreenletExit()
+        g.run = just_raise
         if isinstance(g, GreenThread):
             # it's a GreenThread object, so we want to call its main
             # method to take advantage of the notification
-            g.run = just_raise
             try:
                 g.main(just_raise, (), {})
             except:
                 pass
-        else:
-            # regular greenlet; just want to replace its run method so
-            # that whatever it was going to run, doesn't
-            g.run = just_raise
     hub.schedule_call_global(0, g.throw, *throw_args)
     if getcurrent() is not hub.greenlet:
         sleep(0)
