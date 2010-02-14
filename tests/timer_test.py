@@ -31,6 +31,7 @@ class TestTimer(TestCase):
         hub.switch()
         assert called
         assert not hub.running
+        
 
 if __name__ == '__main__':
     main()

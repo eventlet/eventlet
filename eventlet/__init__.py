@@ -10,6 +10,7 @@ try:
     
     spawn = greenthread.spawn
     spawn_n = greenthread.spawn_n
+    spawn_after = greenthread.spawn_after
     call_after_global = greenthread.call_after_global
     TimeoutError = greenthread.TimeoutError
     exc_after = greenthread.exc_after

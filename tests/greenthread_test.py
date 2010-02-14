@@ -107,3 +107,35 @@ class SpawnAfter(LimitedTestCase, Asserts):
         greenthread.sleep(0)
         gt.kill()
         self.assert_dead(gt)
+
+class SpawnAfterLocal(LimitedTestCase, Asserts):
+    def setUp(self):
+        super(SpawnAfterLocal, self).setUp()
+        self.lst = [1]
+
+    def test_timer_fired(self):
+        def func():
+            greenthread.spawn_after_local(0.1, self.lst.pop)
+            greenthread.sleep(0.2)
+
+        greenthread.spawn(func)
+        assert self.lst == [1], self.lst
+        greenthread.sleep(0.3)
+        assert self.lst == [], self.lst
+
+    def test_timer_cancelled_upon_greenlet_exit(self):
+        def func():
+            greenthread.spawn_after_local(0.1, self.lst.pop)
+
+        greenthread.spawn(func)
+        assert self.lst == [1], self.lst
+        greenthread.sleep(0.2)
+        assert self.lst == [1], self.lst
+
+    def test_spawn_is_not_cancelled(self):
+        def func():
+            greenthread.spawn(self.lst.pop)
+            # exiting immediatelly, but self.lst.pop must be called
+        greenthread.spawn(func)
+        greenthread.sleep(0.1)
+        assert self.lst == [], self.lst
