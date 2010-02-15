@@ -10,7 +10,7 @@ if parent_dir not in sys.path:
 
 # hacky hacks: skip test__api_timeout when under 2.4 because otherwise it SyntaxErrors
 if sys.version_info < (2,5):
-    argv = sys.argv + ["--exclude=.*test__api_timeout.*"]
+    argv = sys.argv + ["--exclude=.*timeout_test_with_statement.*"]
 else:
     argv = sys.argv
     
