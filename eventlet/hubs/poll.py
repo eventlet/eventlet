@@ -23,11 +23,8 @@ class Hub(BaseHub):
             self.modify = self.poll.register
 
     def add(self, evtype, fileno, cb):
-        oldlisteners = bool(self.listeners[evtype].get(fileno))
         listener = super(Hub, self).add(evtype, fileno, cb)
-        if not oldlisteners:
-            # Means we've added a new listener
-            self.register(fileno, new=True)
+        self.register(fileno, new=True)
         return listener
     
     def remove(self, listener):
@@ -37,14 +34,17 @@ class Hub(BaseHub):
     def register(self, fileno, new=False):
         mask = 0
         if self.listeners[READ].get(fileno):
-            mask |= READ_MASK
+            mask |= READ_MASK | EXC_MASK
         if self.listeners[WRITE].get(fileno):
-            mask |= WRITE_MASK
+            mask |= WRITE_MASK | EXC_MASK
         if mask:
             if new:
                 self.poll.register(fileno, mask)
             else:
-                self.modify(fileno, mask)
+                try:
+                    self.modify(fileno, mask)
+                except (IOError, OSError):
+                    self.poll.register(fileno, mask)
         else: 
             try:
                 self.poll.unregister(fileno)
@@ -53,7 +53,7 @@ class Hub(BaseHub):
             except (IOError, OSError):
                 # raised if we try to remove a fileno that was
                 # already removed/invalid
-                self.squelch_generic_exception(sys.exc_info())
+                pass
 
     def remove_descriptor(self, fileno):
         super(Hub, self).remove_descriptor(fileno)
@@ -62,7 +62,9 @@ class Hub(BaseHub):
         except (KeyError, ValueError):
             pass
         except (IOError, OSError):
-            self.squelch_generic_exception(sys.exc_info())
+            # raised if we try to remove a fileno that was
+            # already removed/invalid
+            pass
 
     def wait(self, seconds=None):
         readers = self.listeners[READ]
