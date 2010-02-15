@@ -100,7 +100,7 @@ class BaseHub(object):
             try:
                 switch_out()
             except:
-                traceback.print_exception(*sys.exc_info())
+                self.squelch_generic_exception(sys.exc_info())
         if self.greenlet.dead:
             self.greenlet = greenlet.greenlet(self.run)
         try:
@@ -109,6 +109,7 @@ class BaseHub(object):
                 current.parent = self.greenlet
         except ValueError:
             pass  # gets raised if there is a greenlet parent cycle
+        sys.exc_clear()
         return self.greenlet.switch()
 
     def squelch_exception(self, fileno, exc_info):
