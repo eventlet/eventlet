@@ -4,16 +4,28 @@ Many of these tests make connections to external servers, and all.py tries to sk
 """
 
 
+def restart_hub():
+    from eventlet import hubs
+    hub = hubs.get_hub()
+    hub.abort()
+    hub_shortname = hub.__module__.split('.')[-1]
+    hubs.use_hub(hub_shortname)
+
 def assimilate_patched(name):
     try:
         modobj = __import__(name, globals(), locals(), ['test_main'])
+        restart_hub()
     except ImportError:
         print "Not importing %s, it doesn't exist in this installation/version of Python" % name
         return
     else:
         method_name = name + "_test_main"
         try:
-            globals()[method_name] = modobj.test_main
+            test_method = modobj.test_main
+            def test_main():
+                test_method()
+                restart_hub()
+            globals()[method_name] = test_main
             modobj.test_main.__name__ = name + '.test_main'
         except AttributeError:
             print "No test_main for %s, assuming it tests on import" % name

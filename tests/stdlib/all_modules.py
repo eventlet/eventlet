@@ -9,10 +9,10 @@ def get_modules():
         'test_os',
         'test_queue',
         'test_socket_ssl',
-#       'test_socketserver',
+        'test_socketserver',
 #       'test_subprocess',
         'test_thread',
-#       'test_threading',
+        'test_threading',
         'test_threading_local',
         'test_urllib',
         'test_urllib2_localnet']
