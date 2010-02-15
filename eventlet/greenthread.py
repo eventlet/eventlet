@@ -2,6 +2,7 @@ import sys
 
 from eventlet import event
 from eventlet import hubs
+from eventlet import timeout
 from eventlet.hubs import timer
 from eventlet.support import greenlets as greenlet
 import warnings
@@ -9,7 +10,6 @@ import warnings
 __all__ = ['getcurrent', 'sleep', 'spawn', 'spawn_n', 'call_after_global', 'call_after_local', 'GreenThread'] 
 
 getcurrent = greenlet.getcurrent
-TimeoutError = hubs.TimeoutError
 
 def sleep(seconds=0):
     """Yield control to another eligible coroutine until at least *seconds* have
@@ -170,57 +170,17 @@ def exc_after(seconds, *throw_args):
             else:
                 timer.cancel()
     """
+    warnings.warn("Instead of exc_after, which is deprecated, use "
+                  "Timeout(seconds, exception)",
+                  DeprecationWarning, stacklevel=2)
     if seconds is None:  # dummy argument, do nothing
         return timer.Timer(seconds, lambda: None)
     hub = hubs.get_hub()
     return hub.schedule_call_local(seconds, getcurrent().throw, *throw_args)
 
-
-def with_timeout(seconds, func, *args, **kwds):
-    """Wrap a call to some (yielding) function with a timeout; if the called
-    function fails to return before the timeout, cancel it and return a flag
-    value.
-
-    :param seconds: seconds before timeout occurs
-    :type seconds: int or float
-    :param func: the callable to execute with a timeout; must be one of the
-      functions that implicitly or explicitly yields
-    :param \*args: positional arguments to pass to *func*
-    :param \*\*kwds: keyword arguments to pass to *func*
-    :param timeout_value: value to return if timeout occurs (default raise
-      :class:`~eventlet.api.TimeoutError`)
-
-    :rtype: Value returned by *func* if *func* returns before *seconds*, else
-      *timeout_value* if provided, else raise ``TimeoutError``
-
-    :exception TimeoutError: if *func* times out and no ``timeout_value`` has
-      been provided.
-    :exception *any*: Any exception raised by *func*
-
-    **Example**::
-
-      data = with_timeout(30, httpc.get, 'http://www.google.com/', timeout_value="")
-
-    Here *data* is either the result of the ``get()`` call, or the empty string if
-    it took too long to return. Any exception raised by the ``get()`` call is
-    passed through to the caller.
-    """
-    # Recognize a specific keyword argument, while also allowing pass-through
-    # of any other keyword arguments accepted by func. Use pop() so we don't
-    # pass timeout_value through to func().
-    has_timeout_value = "timeout_value" in kwds
-    timeout_value = kwds.pop("timeout_value", None)
-    error = TimeoutError()
-    timeout = exc_after(seconds, error)
-    try:
-        try:
-            return func(*args, **kwds)
-        except TimeoutError, ex:
-            if ex is error and has_timeout_value:
-                return timeout_value
-            raise
-    finally:
-        timeout.cancel()
+# deprecate, remove
+TimeoutError = timeout.Timeout
+with_timeout = timeout.with_timeout
 
 def _spawn_n(seconds, func, args, kwargs):
     hub = hubs.get_hub()

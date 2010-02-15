@@ -98,9 +98,9 @@ class LimitedTestCase(unittest.TestCase):
     
     TEST_TIMEOUT = 1
     def setUp(self):
-        from eventlet import api
-        self.timer = api.exc_after(self.TEST_TIMEOUT, 
-                                   TestIsTakingTooLong(self.TEST_TIMEOUT))
+        import eventlet
+        self.timer = eventlet.Timeout(self.TEST_TIMEOUT, 
+                                      TestIsTakingTooLong(self.TEST_TIMEOUT))
 
     def tearDown(self):
         self.timer.cancel()

@@ -29,7 +29,10 @@ class event_wrapper(object):
         if self.impl is not None:
             self.impl.delete()
             self.impl = None
-
+    
+    @property
+    def pending(self):
+        return bool(self.impl and self.impl.pending())
 
 class Hub(BaseHub):
 

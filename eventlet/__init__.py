@@ -5,21 +5,25 @@ try:
     from eventlet import greenthread
     from eventlet import greenpool
     from eventlet import queue
+    from eventlet import timeout
 
     sleep = greenthread.sleep
-    
     spawn = greenthread.spawn
     spawn_n = greenthread.spawn_n
     spawn_after = greenthread.spawn_after
-    call_after_global = greenthread.call_after_global
-    TimeoutError = greenthread.TimeoutError
-    exc_after = greenthread.exc_after
-    with_timeout = greenthread.with_timeout
+    
+    Timeout = timeout.Timeout
+    with_timeout = timeout.with_timeout
     
     GreenPool = greenpool.GreenPool
     GreenPile = greenpool.GreenPile
     
     Queue = queue.Queue
+    
+    # deprecated    
+    TimeoutError = timeout.Timeout
+    exc_after = greenthread.exc_after
+    call_after_global = greenthread.call_after_global
 except ImportError:
     # this is to make Debian packaging easier
     import traceback

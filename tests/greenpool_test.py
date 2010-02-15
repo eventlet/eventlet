@@ -120,7 +120,7 @@ class GreenPool(tests.LimitedTestCase):
         self.assertEquals(pool.free(), num_free)
         def wait_long_time(e):
             e.wait()
-        timer = eventlet.exc_after(1, eventlet.TimeoutError)
+        timer = eventlet.Timeout(1)
         try:
             evt = event.Event()
             for x in xrange(num_free):
@@ -132,7 +132,7 @@ class GreenPool(tests.LimitedTestCase):
 
         # if the runtime error is not raised it means the pool had
         # some unexpected free items
-        timer = eventlet.exc_after(0, RuntimeError())
+        timer = eventlet.Timeout(0, RuntimeError)
         try:
             self.assertRaises(RuntimeError, pool.spawn, wait_long_time, evt)
         finally:
@@ -182,7 +182,7 @@ class GreenPool(tests.LimitedTestCase):
         tp = pools.TokenPool(max_size=1)
         token = tp.get()  # empty out the pool
         def do_receive(tp):
-            timer = eventlet.exc_after(0, RuntimeError())
+            timer = eventlet.Timeout(0, RuntimeError())
             try:
                 t = tp.get()
                 self.fail("Shouldn't have recieved anything from the pool")
@@ -316,8 +316,8 @@ class GreenPile(tests.LimitedTestCase):
         for i in xrange(4):
             p.spawn(passthru, i)
         # now it should be full and this should time out
-        eventlet.exc_after(0, eventlet.TimeoutError)
-        self.assertRaises(eventlet.TimeoutError, p.spawn, passthru, "time out")
+        eventlet.Timeout(0)
+        self.assertRaises(eventlet.Timeout, p.spawn, passthru, "time out")
         # verify that the spawn breakage didn't interrupt the sequence
         # and terminates properly
         for i in xrange(4,10):

@@ -83,12 +83,9 @@ def get_hub():
         hub = _threadlocal.hub = _threadlocal.Hub()
     return hub
 
-class TimeoutError(Exception):
-    """Exception raised if an asynchronous operation times out"""
-    pass
-
+from eventlet import timeout
 def trampoline(fd, read=None, write=None, timeout=None, 
-               timeout_exc=TimeoutError):
+               timeout_exc=timeout.Timeout):
     """Suspend the current coroutine until the given socket object or file
     descriptor is ready to *read*, ready to *write*, or the specified
     *timeout* elapses, depending on arguments specified.
