@@ -20,7 +20,10 @@ patcher.inject('test.test_socketserver',
     ('threading', threading))
 
 # only a problem with pyevent
-SocketServerTest.test_ForkingUDPServer = lambda *a, **kw: None
+try:
+    SocketServerTest.test_ForkingUDPServer = lambda *a, **kw: None
+except (NameError, AttributeError):
+    pass
 
 if __name__ == "__main__":
     test_main()
