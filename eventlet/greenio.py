@@ -110,24 +110,19 @@ class GreenSocket(object):
             fd = family_or_realsock
             assert not args, args
             assert not kwargs, kwargs
+
+        # import timeout from other socket, if it was there
         try:
-            orig_timeout = fd.gettimeout()
+            self.timeout = fd.gettimeout() or socket.getdefaulttimeout()
         except AttributeError:
-            orig_timeout = None
+            self.timeout = socket.getdefaulttimeout()
         
         set_nonblocking(fd)
         self.fd = fd
-        self._fileno = fd.fileno()
         self.closed = False
-        self.timeout = socket.getdefaulttimeout()
-
         # when client calls setblocking(0) or settimeout(0) the socket must
         # act non-blocking
         self.act_non_blocking = False
-        
-        # import timeout from the other fd if it's distinct
-        if orig_timeout and orig_timeout is not self.timeout:
-            self.settimeout(orig_timeout)
         
     @property
     def _sock(self):
@@ -258,7 +253,7 @@ class GreenSocket(object):
                     raise
             trampoline(fd, 
                 read=True, 
-                timeout=self.gettimeout(), 
+                timeout=self.timeout, 
                 timeout_exc=socket.timeout)
 
     def recvfrom(self, *args):
@@ -290,10 +285,11 @@ class GreenSocket(object):
     def sendall(self, data, flags=0):
         fd = self.fd
         tail = self.send(data, flags)
-        while tail < len(data):
+        len_data = len(data)
+        while tail < len_data:
             trampoline(fd, 
                 write=True, 
-                timeout=self.gettimeout(), 
+                timeout=self.timeout, 
                 timeout_exc=socket.timeout)
             tail += self.send(data[tail:], flags)
 
