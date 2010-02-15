@@ -23,6 +23,7 @@ def assimilate_patched(name):
         try:
             test_method = modobj.test_main
             def test_main():
+                restart_hub()
                 test_method()
                 restart_hub()
             globals()[method_name] = test_main
