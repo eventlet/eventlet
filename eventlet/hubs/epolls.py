@@ -31,4 +31,6 @@ class Hub(poll.Hub):
         if not oldlisteners:
             # Means we've added a new listener
             self.register(fileno, new=True)
+        else:
+            self.register(fileno, new=False)
         return listener
