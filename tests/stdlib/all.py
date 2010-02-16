@@ -26,7 +26,7 @@ def assimilate_patched(name):
                 test_method()
                 restart_hub()
             globals()[method_name] = test_main
-            modobj.test_main.__name__ = name + '.test_main'
+            test_main.__name__ = name + '.test_main'
         except AttributeError:
             print "No test_main for %s, assuming it tests on import" % name
             
