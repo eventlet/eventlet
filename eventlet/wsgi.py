@@ -274,7 +274,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     towrite.append("%x\r\n%s\r\n" % (len(data), data))
                 else:
                     # last-chunk format
-                    towrite.append("0\r\n")
+                    towrite.append("0\r\n\r\n")
             else:
                 towrite.append(data)
             try:
