@@ -331,6 +331,9 @@ class TestHttpd(LimitedTestCase):
             fd.readline()  # CRLF
             chunklen = int(fd.readline(), 16)
         self.assert_(chunks > 1)
+        response = fd.read()
+        # Require a CRLF to close the message body
+        self.assertEqual(response, '\r\n')
 
     def test_012_ssl_server(self):
         def wsgi_app(environ, start_response):
@@ -788,8 +791,9 @@ class TestHttpd(LimitedTestCase):
             if h == '':
                 break
         self.assert_('Transfer-Encoding: chunked' in ''.join(headers))
-        # should only be one chunk of zero size
-        self.assertEqual(response, ['0', ''])
+        # should only be one chunk of zero size with two blank lines
+        # (one terminates the chunk, one terminates the body)
+        self.assertEqual(response, ['0', '', ''])
         
 
 if __name__ == '__main__':
