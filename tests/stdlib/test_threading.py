@@ -15,7 +15,10 @@ patcher.inject('test.test_threading',
 # "PyThreadState_SetAsyncExc() is a CPython-only gimmick, not (currently)
 # exposed at the Python level.  This test relies on ctypes to get at it."
 # Therefore it's also disabled when testing eventlet, as it's not emulated.
-ThreadTests.test_PyThreadState_SetAsyncExc = lambda s: None
+try:
+    ThreadTests.test_PyThreadState_SetAsyncExc = lambda s: None
+except (AttributeError, NameError):
+    pass
 
 
 if __name__ == "__main__":

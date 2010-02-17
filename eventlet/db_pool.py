@@ -249,13 +249,13 @@ class TpooledConnectionPool(BaseConnectionPool):
 
     @classmethod
     def connect(cls, db_module, connect_timeout, *args, **kw):
-        timeout = timeout.Timeout(connect_timeout, ConnectTimeout())
+        t = timeout.Timeout(connect_timeout, ConnectTimeout())
         try:
             from eventlet import tpool
             conn = tpool.execute(db_module.connect, *args, **kw)
             return tpool.Proxy(conn, autowrap_names=('cursor',))
         finally:
-            timeout.cancel()
+            t.cancel()
 
 
 class RawConnectionPool(BaseConnectionPool):
@@ -269,11 +269,11 @@ class RawConnectionPool(BaseConnectionPool):
 
     @classmethod
     def connect(cls, db_module, connect_timeout, *args, **kw):
-        timeout = timeout.Timeout(connect_timeout, ConnectTimeout())
+        t = timeout.Timeout(connect_timeout, ConnectTimeout())
         try:
             return db_module.connect(*args, **kw)
         finally:
-            timeout.cancel()
+            t.cancel()
 
 
 # default connection pool is the tpool one
