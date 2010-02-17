@@ -4,7 +4,8 @@ import time
 
 from eventlet.pools import Pool
 from eventlet.processes import DeadProcess
-from eventlet import api
+from eventlet import timeout
+from eventlet import greenthread
 
 
 class ConnectTimeout(Exception):
@@ -89,7 +90,7 @@ class BaseConnectionPool(Pool):
 
         if next_delay > 0:
             # set up a continuous self-calling loop
-            self._expiration_timer = api.call_after(next_delay,
+            self._expiration_timer = greenthread.spawn_after(next_delay,
                                                     self._schedule_expiration)
 
     def _expire_old_connections(self, now):
@@ -248,7 +249,7 @@ class TpooledConnectionPool(BaseConnectionPool):
 
     @classmethod
     def connect(cls, db_module, connect_timeout, *args, **kw):
-        timeout = api.exc_after(connect_timeout, ConnectTimeout())
+        timeout = timeout.Timeout(connect_timeout, ConnectTimeout())
         try:
             from eventlet import tpool
             conn = tpool.execute(db_module.connect, *args, **kw)
@@ -268,7 +269,7 @@ class RawConnectionPool(BaseConnectionPool):
 
     @classmethod
     def connect(cls, db_module, connect_timeout, *args, **kw):
-        timeout = api.exc_after(connect_timeout, ConnectTimeout())
+        timeout = timeout.Timeout(connect_timeout, ConnectTimeout())
         try:
             return db_module.connect(*args, **kw)
         finally:

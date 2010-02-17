@@ -246,7 +246,7 @@ class TestGreenIo(LimitedTestCase):
         try:
             # try and get some data off of this pipe
             # but bail before any is sent
-            eventlet.exc_after(0.01, eventlet.TimeoutError)
+            eventlet.Timeout(0.01)
             client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             client.connect(('127.0.0.1', bound_port))
             wrap_rfile = client.makefile()

@@ -64,6 +64,6 @@ class TestEvent(LimitedTestCase):
         self.assertRaises(RuntimeError, evt.wait)
         evt.reset()
         # shouldn't see the RuntimeError again
-        eventlet.exc_after(0.001, eventlet.TimeoutError('from test_double_exception'))
-        self.assertRaises(eventlet.TimeoutError, evt.wait)
+        eventlet.Timeout(0.001)
+        self.assertRaises(eventlet.Timeout, evt.wait)
 

@@ -3,7 +3,7 @@ import eventlet
 from eventlet import event
 
 def do_bail(q):
-    eventlet.exc_after(0, RuntimeError())
+    eventlet.Timeout(0, RuntimeError())
     try:
         result = q.get()
         return result

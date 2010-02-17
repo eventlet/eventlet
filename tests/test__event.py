@@ -1,6 +1,7 @@
 import unittest
-from eventlet.coros import Event
-from eventlet.api import spawn, sleep, exc_after, with_timeout
+from eventlet.event import Event
+from eventlet.api import spawn, sleep, with_timeout
+import eventlet
 from tests import LimitedTestCase
 
 DELAY= 0.01
@@ -30,7 +31,7 @@ class TestEvent(LimitedTestCase):
         event2 = Event()
 
         spawn(event1.send, 'hello event1')
-        exc_after(0, ValueError('interrupted'))
+        eventlet.Timeout(0, ValueError('interrupted'))
         try:
             result = event1.wait()
         except ValueError:

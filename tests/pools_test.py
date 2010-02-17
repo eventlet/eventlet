@@ -1,5 +1,6 @@
 from unittest import TestCase, main
 
+import eventlet
 from eventlet import api
 from eventlet import coros
 from eventlet import pools
@@ -11,7 +12,6 @@ class IntPool(pools.Pool):
 
 
 class TestIntPool(TestCase):
-    mode = 'static'
     def setUp(self):
         self.pool = IntPool(min_size=0, max_size=4)
 
@@ -103,7 +103,7 @@ class TestIntPool(TestCase):
         self.assertEquals(self.pool.get(), two)
 
     def test_putting_to_queue(self):
-        timer = api.exc_after(0.1, api.TimeoutError)
+        timer = eventlet.Timeout(0.1)
         try:
             size = 2
             self.pool = IntPool(min_size=0, max_size=size)

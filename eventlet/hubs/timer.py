@@ -29,6 +29,10 @@ class Timer(object):
     @property
     def cancelled(self):
         return self._cancelled
+        
+    @property
+    def pending(self):
+        return not (self._cancelled or self.called)
 
     def __repr__(self):
         secs = getattr(self, 'seconds', None)

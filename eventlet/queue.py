@@ -28,8 +28,9 @@ from Queue import Full, Empty
 
 _NONE = object()
 from eventlet.hubs import get_hub
-from eventlet.greenthread import getcurrent, exc_after
+from eventlet.greenthread import getcurrent
 from eventlet.event import Event
+from eventlet.timeout import Timeout
 
 __all__ = ['Queue', 'PriorityQueue', 'LifoQueue', 'LightQueue', 'Full', 'Empty']
 
@@ -211,7 +212,7 @@ class LightQueue(object):
         elif block:
             waiter = ItemWaiter(item)
             self.putters.add(waiter)
-            timeout = exc_after(timeout, Full)
+            timeout = Timeout(timeout, Full)
             try:
                 if self.getters:
                     self._schedule_unlock()
@@ -259,7 +260,7 @@ class LightQueue(object):
             raise Empty
         elif block:
             waiter = Waiter()
-            timeout = exc_after(timeout, Empty)
+            timeout = Timeout(timeout, Empty)
             try:
                 self.getters.add(waiter)
                 if self.putters:

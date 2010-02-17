@@ -19,7 +19,7 @@ class TestQueue(LimitedTestCase):
     def test_send_last(self):
         q = coros.queue()
         def waiter(q):
-            timer = api.exc_after(0.1, api.TimeoutError)
+            timer = eventlet.Timeout(0.1)
             self.assertEquals(q.wait(), 'hi2')
             timer.cancel()
 
@@ -92,7 +92,7 @@ class TestQueue(LimitedTestCase):
         q = coros.queue()
 
         def do_receive(q, evt):
-            api.exc_after(0, RuntimeError())
+            eventlet.Timeout(0, RuntimeError())
             try:
                 result = q.wait()
                 evt.send(result)
@@ -120,7 +120,7 @@ class TestQueue(LimitedTestCase):
         def waiter(q, evt):
             evt.send(q.wait())
         def do_receive(q, evt):
-            api.exc_after(0, RuntimeError())
+            eventlet.Timeout(0, RuntimeError())
             try:
                 result = q.wait()
                 evt.send(result)
@@ -139,7 +139,7 @@ class TestQueue(LimitedTestCase):
 
     def test_two_bogus_waiters(self):
         def do_receive(q, evt):
-            api.exc_after(0, RuntimeError())
+            eventlet.Timeout(0, RuntimeError())
             try:
                 result = q.wait()
                 evt.send(result)

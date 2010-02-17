@@ -1,4 +1,4 @@
-from eventlet import pool, coros, api, hubs
+from eventlet import pool, coros, api, hubs, timeout
 from tests import LimitedTestCase
 from unittest import main
 
@@ -171,7 +171,7 @@ class TestCoroutinePool(LimitedTestCase):
             api.sleep(0)
             self.assertEqual(pool.free(), 1)
             # shouldn't block when trying to get
-            t = api.exc_after(0.1, api.TimeoutError)
+            t = timeout.Timeout(0.1)
             try:
                 pool.execute(api.sleep, 1)
             finally:
