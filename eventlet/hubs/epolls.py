@@ -1,11 +1,16 @@
+from eventlet import patcher
+time = patcher.original('time')
 try:
     # shoot for epoll module first
     from epoll import poll as epoll
 except ImportError, e:
     # if we can't import that, hope we're on 2.6
-    from select import epoll
+    select = patcher.original('select')
+    try:
+        epoll = select.epoll
+    except AttributeError:
+        raise ImportError("No epoll on select module")
 
-import time
 from eventlet.hubs.hub import BaseHub
 from eventlet.hubs import poll
 from eventlet.hubs.poll import READ, WRITE

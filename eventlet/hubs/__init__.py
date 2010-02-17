@@ -1,10 +1,11 @@
-import select
 import sys
-import threading
 from eventlet.support import greenlets as greenlet
-_threadlocal = threading.local()
+from eventlet import patcher
 
 __all__ = ["use_hub", "get_hub", "get_default_hub", "trampoline"]
+
+threading = patcher.original('threading')
+_threadlocal = threading.local()
 
 def get_default_hub():
     """Select the default hub implementation based on what multiplexing
@@ -33,6 +34,7 @@ def get_default_hub():
         from eventlet.hubs import twistedr
         return twistedr
 
+    select = patcher.original('select')
     try:
         import eventlet.hubs.epolls
         return eventlet.hubs.epolls

@@ -1,10 +1,11 @@
 import bisect
 import sys
 import traceback
-import time
 
 from eventlet.support import greenlets as greenlet
 from eventlet.hubs import timer
+from eventlet import patcher
+time = patcher.original('time')
 
 READ="read"
 WRITE="write"

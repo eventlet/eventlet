@@ -1,8 +1,9 @@
 import sys
-import select
 import errno
-from time import sleep
-import time
+from eventlet import patcher
+select = patcher.original('select')
+time = patcher.original('time')
+sleep = time.sleep
 
 from eventlet.hubs.hub import BaseHub, READ, WRITE
 

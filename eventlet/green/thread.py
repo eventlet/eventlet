@@ -16,7 +16,7 @@ def get_ident(gr=None):
         return id(gr)
 
 def start_new_thread(function, args=(), kwargs={}):
-    g = greenthread.spawn(function, *args, **kwargs)
+    g = greenthread.spawn_n(function, *args, **kwargs)
     return get_ident(g)
     
 start_new = start_new_thread

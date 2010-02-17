@@ -6,6 +6,7 @@ _fileobject = __socket._fileobject
 from eventlet.hubs import get_hub
 from eventlet.greenio import GreenSocket as socket
 from eventlet.greenio import SSL as _SSL  # for exceptions
+from eventlet.greenio import _GLOBAL_DEFAULT_TIMEOUT
 import os
 import sys
 import warnings
@@ -53,9 +54,6 @@ def _gethostbyname_tpool(name):
 # 
 # XXX there're few more blocking functions in socket
 # XXX having a hub-independent way to access thread pool would be nice
-
-
-_GLOBAL_DEFAULT_TIMEOUT = object()
 
 def create_connection(address, timeout=_GLOBAL_DEFAULT_TIMEOUT):
     """Connect to *address* and return the socket object.

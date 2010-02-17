@@ -1,5 +1,4 @@
 import os
-import select
 import socket
 import errno
 import warnings

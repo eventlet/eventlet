@@ -14,7 +14,6 @@
 # limitations under the License.
 
 import os
-import threading
 import sys
 
 from Queue import Empty, Queue
@@ -22,6 +21,8 @@ from Queue import Empty, Queue
 from eventlet import event
 from eventlet import greenio
 from eventlet import greenthread
+from eventlet import patcher
+threading = patcher.original('threading')
 
 __all__ = ['execute', 'Proxy', 'killall']
 

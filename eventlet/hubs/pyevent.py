@@ -1,5 +1,4 @@
 import sys
-import time
 import traceback
 import event
 
@@ -38,8 +37,8 @@ class Hub(BaseHub):
 
     SYSTEM_EXCEPTIONS = (KeyboardInterrupt, SystemExit)
 
-    def __init__(self, clock=time.time):
-        super(Hub,self).__init__(clock)
+    def __init__(self):
+        super(Hub,self).__init__()
         event.init()
         
         self.signal_exc_info = None
