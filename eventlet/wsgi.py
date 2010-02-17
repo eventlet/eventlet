@@ -270,11 +270,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
             if use_chunked[0]:
                 ## Write the chunked encoding
-                if data:
-                    towrite.append("%x\r\n%s\r\n" % (len(data), data))
-                else:
-                    # last-chunk format
-                    towrite.append("0\r\n\r\n")
+                towrite.append("%x\r\n%s\r\n" % (len(data), data))
             else:
                 towrite.append(data)
             try:
