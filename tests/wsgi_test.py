@@ -328,9 +328,12 @@ class TestHttpd(LimitedTestCase):
         while chunklen:
             chunks += 1
             chunk = fd.read(chunklen)
-            fd.readline()
+            fd.readline()  # CRLF
             chunklen = int(fd.readline(), 16)
         self.assert_(chunks > 1)
+        response = fd.read()
+        # Require a CRLF to close the message body
+        self.assertEqual(response, '\r\n')
 
     def test_012_ssl_server(self):
         def wsgi_app(environ, start_response):
@@ -767,6 +770,31 @@ class TestHttpd(LimitedTestCase):
             except ImportError:
                 pass # TODO: should test with OpenSSL
             greenthread.kill(g)
+
+    def test_zero_length_chunked_response(self):
+        def zero_chunked_app(env, start_response):
+            start_response('200 OK', [('Content-type', 'text/plain')])
+            yield ""
+
+        self.site.application = zero_chunked_app
+        sock = api.connect_tcp(
+            ('localhost', self.port))
+
+        fd = sock.makefile()
+        fd.write('GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
+        fd.flush()
+        response = fd.read().split('\r\n')
+        headers = []
+        while True:
+            h = response.pop(0)
+            headers.append(h)
+            if h == '':
+                break
+        self.assert_('Transfer-Encoding: chunked' in ''.join(headers))
+        # should only be one chunk of zero size with two blank lines
+        # (one terminates the chunk, one terminates the body)
+        self.assertEqual(response, ['0', '', ''])
+        
 
 if __name__ == '__main__':
     main()
