@@ -32,6 +32,7 @@ Contents
    :maxdepth: 2
 
    basic_usage
+   design_patterns
    patching
    examples
    ssl

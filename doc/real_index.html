@@ -20,7 +20,9 @@
   <div class="section" id="eventlet">
 <h1>Eventlet</h1>
 
-<p>Eventlet is a better way to write high-performance network applications.  It achieves high scalability by using <a class="reference external" href="http://en.wikipedia.org/wiki/Asynchronous_I/O#Select.28.2Fpoll.29_loops">non-blocking io</a> while at the same time retaining high programmer usability by using <a class="reference external" href="http://en.wikipedia.org/wiki/Coroutine">coroutines</a> to make the non-blocking io operations appear blocking at the source code level.</p>
+<p>Eventlet is a better way to write high-performance network applications.  It uses epoll or libevent as an event engine to implement <a class="reference external" href="http://en.wikipedia.org/wiki/Asynchronous_I/O#Select.28.2Fpoll.29_loops">non-blocking I/O</a>, and layers <a class="reference external" href="http://en.wikipedia.org/wiki/Coroutine">scheduled coroutines ("green threads")</a> on top.  The result is highly-scalable network operations that do not require applications to be written in an "inversion of control" style.</p>
+
+<p>It's easy to get started using Eventlet, and easy to convert existing applications to start using it.  Start off by looking at <a href="doc/examples.html">examples</a>, <a href="doc/design_patterns.html">common design patterns</a>, and the list of the <a href="doc/basic_usage.html">basic API primitives</a>.</p>
 
 <h3><a href="doc/">API Documentation</a></h3>
 

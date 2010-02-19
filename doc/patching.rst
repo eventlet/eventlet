@@ -5,6 +5,8 @@ One of the challenges of writing a library like Eventlet is that the built-in ne
 
 Therefore, the application using Eventlet must explicitly green the world for itself, using one or both of the convenient methods provided.
 
+.. _import-green:
+
 Import Green
 --------------
 
