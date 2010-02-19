@@ -14,4 +14,5 @@ Module Reference
    modules/pools
    modules/queue
    modules/semaphore
+   modules/timeout
    modules/wsgi

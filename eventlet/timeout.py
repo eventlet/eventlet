@@ -51,14 +51,18 @@ class Timeout(BaseException):
 
     @property
     def pending(self):
-        """Return True if the timeout is scheduled to be raised."""
+        """True if the timeout is scheduled to be raised."""
         if self.timer is not None:
             return self.timer.pending
         else:
             return False
 
     def cancel(self):
-        """If the timeout is pending, cancel it. Otherwise, do nothing."""
+        """If the timeout is pending, cancel it.  If not using Timeouts in 
+        ``with`` statements, always call cancel() in a ``finally`` after the 
+        block of code that is getting timed out.  If not cancelled, the timeout 
+        will be raised later on, in some unexpected section of the 
+        application."""
         if self.timer is not None:
             self.timer.cancel()
             self.timer = None
