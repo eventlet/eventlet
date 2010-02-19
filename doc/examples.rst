@@ -7,6 +7,7 @@ Here are a bunch of small example programs that use Eventlet.  All of these exam
 
 Web Crawler
 ------------
+``examples/webcrawler.py``
 
 .. literalinclude:: ../examples/webcrawler.py
 
@@ -14,6 +15,7 @@ Web Crawler
 
 WSGI Server
 ------------
+``examples/wsgi.py``
 
 .. literalinclude:: ../examples/wsgi.py
 
@@ -21,6 +23,7 @@ WSGI Server
 
 Echo Server
 -----------
+``examples/echoserver.py``
 
 .. literalinclude:: ../examples/echoserver.py
 
@@ -28,6 +31,7 @@ Echo Server
 
 Socket Connect
 --------------
+``examples/connect.py``
 
 .. literalinclude:: ../examples/connect.py
 
@@ -35,8 +39,19 @@ Socket Connect
 
 Multi-User Chat Server
 -----------------------
+``examples/chat_server.py``
 
 This is a little different from the echo server, in that it broadcasts the 
 messages to all participants, not just the sender.
         
 .. literalinclude:: ../examples/chat_server.py
+
+.. _feed_scraper_example:
+
+Feed Scraper
+-----------------------
+``examples/feedscraper.py``
+
+This example requires `Feedparser <http://www.feedparser.org/>`_ to be installed or on the PYTHONPATH.
+
+.. literalinclude:: ../examples/feedscraper.py

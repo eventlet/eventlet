@@ -20,9 +20,15 @@
   <div class="section" id="eventlet">
 <h1>Eventlet</h1>
 
-<p>Eventlet is a better way to write high-performance network applications.  It uses epoll or libevent as an event engine to implement <a class="reference external" href="http://en.wikipedia.org/wiki/Asynchronous_I/O#Select.28.2Fpoll.29_loops">non-blocking I/O</a>, and layers <a class="reference external" href="http://en.wikipedia.org/wiki/Coroutine">scheduled coroutines ("green threads")</a> on top.  The result is highly-scalable network operations that do not require applications to be written in an "inversion of control" style.</p>
+<p>Eventlet is a concurrent networking library for Python that allows you to change how you run your code, not how you write it.</p>
 
-<p>It's easy to get started using Eventlet, and easy to convert existing applications to start using it.  Start off by looking at <a href="doc/examples.html">examples</a>, <a href="doc/design_patterns.html">common design patterns</a>, and the list of the <a href="doc/basic_usage.html">basic API primitives</a>.</p>
+<ul>
+<li>It uses epoll or libevent for <a class="reference external" href="http://en.wikipedia.org/wiki/Asynchronous_I/O#Select.28.2Fpoll.29_loops">highly scalable non-blocking I/O</a>.</li>
+<li><a class="reference external" href="http://en.wikipedia.org/wiki/Coroutine">Coroutines</a> ensure that the developer uses a blocking style of programming that is similar to threading, but provide the benefits of non-blocking I/O.</li>
+<li>The event dispatch is implicit, which means you can easily use Eventlet from the Python interpreter, or as a small part of a larger application.</li>
+</ul>
+
+<p>It's easy to get started using Eventlet, and easy to convert existing applications to use it.  Start off by looking at <a href="doc/examples.html">examples</a>, <a href="doc/design_patterns.html">common design patterns</a>, and the list of the <a href="doc/basic_usage.html">basic API primitives</a>.</p>
 
 <h3><a href="doc/">API Documentation</a></h3>
 
