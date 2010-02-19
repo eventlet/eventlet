@@ -59,14 +59,14 @@ class Patcher(LimitedTestCase):
         p = self.launch_subprocess('importing.py')
         output = p.communicate()
         lines = output[0].split("\n")
-        self.assert_(lines[0].startswith('patcher'))
-        self.assert_(lines[1].startswith('base'))
-        self.assert_(lines[2].startswith('importing'))
-        self.assert_('eventlet.green.socket' in lines[1])
-        self.assert_('eventlet.green.urllib' in lines[1])
-        self.assert_('eventlet.green.socket' in lines[2])
-        self.assert_('eventlet.green.urllib' in lines[2])
-        self.assert_('eventlet.green.httplib' not in lines[2])
+        self.assert_(lines[0].startswith('patcher'), repr(output[0]))
+        self.assert_(lines[1].startswith('base'), repr(output[0]))
+        self.assert_(lines[2].startswith('importing'), repr(output[0]))
+        self.assert_('eventlet.green.socket' in lines[1], repr(output[0]))
+        self.assert_('eventlet.green.urllib' in lines[1], repr(output[0]))
+        self.assert_('eventlet.green.socket' in lines[2], repr(output[0]))
+        self.assert_('eventlet.green.urllib' in lines[2], repr(output[0]))
+        self.assert_('eventlet.green.httplib' not in lines[2], repr(output[0]))
         
     def test_import_patched_defaults(self):
         self.write_to_tempfile("base", base_module_contents)
@@ -79,10 +79,10 @@ print "newmod", base, base.socket, base.urllib.socket.socket
         p = self.launch_subprocess('newmod.py')
         output = p.communicate()
         lines = output[0].split("\n")
-        self.assert_(lines[0].startswith('base'))
-        self.assert_(lines[1].startswith('newmod'))
-        self.assert_('eventlet.green.socket' in lines[1])
-        self.assert_('GreenSocket' in lines[1])
+        self.assert_(lines[0].startswith('base'), repr(output[0]))
+        self.assert_(lines[1].startswith('newmod'), repr(output[0]))
+        self.assert_('eventlet.green.socket' in lines[1], repr(output[0]))
+        self.assert_('GreenSocket' in lines[1], repr(output[0]))
         
     def test_monkey_patch(self):
         new_mod = """
@@ -95,10 +95,9 @@ print "newmod", socket.socket, urllib.socket.socket
         self.write_to_tempfile("newmod", new_mod)
         p = self.launch_subprocess('newmod.py')
         output = p.communicate()
-        print output[0]
         lines = output[0].split("\n")
-        self.assert_(lines[0].startswith('newmod'))
-        self.assertEqual(lines[0].count('GreenSocket'), 2)
+        self.assert_(lines[0].startswith('newmod'), repr(output[0]))
+        self.assertEqual(lines[0].count('GreenSocket'), 2, repr(output[0]))
         
     def test_early_patching(self):
         new_mod = """
@@ -111,10 +110,9 @@ print "newmod"
         self.write_to_tempfile("newmod", new_mod)
         p = self.launch_subprocess('newmod.py')
         output = p.communicate()
-        print output[0]
         lines = output[0].split("\n")
-        self.assertEqual(len(lines), 2)
-        self.assert_(lines[0].startswith('newmod'))
+        self.assertEqual(len(lines), 2, repr(output[0]))
+        self.assert_(lines[0].startswith('newmod'), repr(output[0]))
 
     def test_late_patching(self):
         new_mod = """
@@ -128,10 +126,9 @@ print "newmod"
         self.write_to_tempfile("newmod", new_mod)
         p = self.launch_subprocess('newmod.py')
         output = p.communicate()
-        print output[0]
         lines = output[0].split("\n")
-        self.assertEqual(len(lines), 2)
-        self.assert_(lines[0].startswith('newmod'))
+        self.assertEqual(len(lines), 2, repr(output[0]))
+        self.assert_(lines[0].startswith('newmod'), repr(output[0]))
         
     def test_tpool(self):
         new_mod = """
@@ -145,10 +142,9 @@ print "newmod", tpool.execute(len, "hi2")
         self.write_to_tempfile("newmod", new_mod)
         p = self.launch_subprocess('newmod.py')
         output = p.communicate()
-        print output[0]
         lines = output[0].split("\n")
-        self.assertEqual(len(lines), 3)
-        self.assert_(lines[0].startswith('newmod'))
-        self.assert_('2' in lines[0])
-        self.assert_('3' in lines[1])
+        self.assertEqual(len(lines), 3, repr(output[0]))
+        self.assert_(lines[0].startswith('newmod'), repr(output[0]))
+        self.assert_('2' in lines[0], repr(output[0]))
+        self.assert_('3' in lines[1], repr(output[0]))
         
