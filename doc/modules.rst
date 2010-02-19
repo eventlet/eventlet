@@ -12,9 +12,6 @@ Module Reference
    modules/greenpool
    modules/greenthread
    modules/pools
-   modules/processes
    modules/queue
-   modules/saranwrap
    modules/semaphore
-   modules/util
    modules/wsgi

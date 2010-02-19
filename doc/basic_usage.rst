@@ -73,33 +73,38 @@ Primary API
 
 The design goal for Eventlet's API is simplicity and readability.  You should be able to read its code and understand what it's doing.  Fewer lines of code are preferred over excessively clever implementations.  `Like Python itself <http://www.python.org/dev/peps/pep-0020/>`_, there should be one, and only one obvious way to do it in Eventlet!
 
-Though Eventlet has many modules, much of the most-used stuff is accessible simply by doing ``import eventlet``
+Though Eventlet has many modules, much of the most-used stuff is accessible simply by doing ``import eventlet``.  Here's a quick summary of the functionality available in the ``eventlet`` module, with links to more verbose documentation on each.
 
 .. function:: eventlet.spawn(func, *args, **kw)
    
-   This launches a greenthread to call *func*.  Spawning off multiple greenthreads gets work done in parallel.  The return value from ``spawn`` is a :class:`greenthread.GreenThread` object, which can be used to retrieve the return value of *func*.  See :func:`greenthread.spawn` for more details.
+   This launches a greenthread to call *func*.  Spawning off multiple greenthreads gets work done in parallel.  The return value from ``spawn`` is a :class:`greenthread.GreenThread` object, which can be used to retrieve the return value of *func*.  See :func:`spawn <eventlet.greenthread.spawn>` for more details.
    
 .. function:: eventlet.spawn_n(func, *args, **kw)
    
-   The same as :func:`spawn`, but it's not possible to retrieve the return value.  This makes execution faster.  See :func:`greenthread.spawn_n` for more details.
+   The same as :func:`spawn`, but it's not possible to retrieve the return value.  This makes execution faster.  See :func:`spawn_n <eventlet.greenthread.spawn_n>` for more details.
 
-.. function:: eventlet.sleep(seconds)
+.. function:: eventlet.spawn_after(seconds, func, *args, **kw)
+   
+    Spawns *func* after *seconds* have elapsed; a delayed version of :func:`spawn`.   To abort the spawn and prevent *func* from being called, call :meth:`GreenThread.cancel` on the return value of :func:`spawn_after`.  See :func:`spawn_after <eventlet.greenthread.spawn_after>` for more details.
 
-    Suspends the current greenthread and allows others a chance to process.  See :func:`greenthread.sleep` for more details.
+.. function:: eventlet.sleep(seconds=0)
+
+    Suspends the current greenthread and allows others a chance to process.  See :func:`sleep <eventlet.greenthread.sleep>` for more details.
 
 .. class:: eventlet.GreenPool
 
-   Pools control concurrency.  It's very common in applications to want to consume only a finite amount of memory, or to restrict the amount of connections that one part of the code holds open so as to leave more for the rest, or to behave consistently in the face of unpredictable input data.  GreenPools provide this control.  See :class:`greenpool.GreenPool` for more on how to use these.
+   Pools control concurrency.  It's very common in applications to want to consume only a finite amount of memory, or to restrict the amount of connections that one part of the code holds open so as to leave more for the rest, or to behave consistently in the face of unpredictable input data.  GreenPools provide this control.  See :class:`GreenPool <eventlet.greenpool.GreenPool>` for more on how to use these.
 
 .. class:: eventlet.GreenPile
 
-    Sister class to the GreenPool, GreenPile objects represent chunks of work.  In essence a GreenPile is an iterator that can be stuffed with work, and the results read out later. See :class:`greenpool.GreenPile` for more details.
+    GreenPile objects represent chunks of work.  In essence a GreenPile is an iterator that can be stuffed with work, and the results read out later. See :class:`GreenPile <eventlet.greenpool.GreenPile>` for more details.
     
 .. class:: eventlet.Queue
 
-    Queues are a fundamental construct for communicating data between execution units.  Eventlet's Queue class is used to communicate between greenthreads, and provides a bunch of useful features for doing that.  See :class:`queue.Queue` for more details.
+    Queues are a fundamental construct for communicating data between execution units.  Eventlet's Queue class is used to communicate between greenthreads, and provides a bunch of useful features for doing that.  See :class:`Queue <eventlet.queue.Queue>` for more details.
     
 .. class:: eventlet.Timeout
+
     Raises *exception* in the current greenthread after *timeout* seconds::
 
         timeout = Timeout(seconds, exception)

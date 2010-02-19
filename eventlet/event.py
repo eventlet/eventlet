@@ -17,10 +17,10 @@ class Event(object):
     in two important ways:
 
     1. calling :meth:`send` never unschedules the current greenthread
-    2. :meth:`send` can only be called once; use :meth:`reset` to prepare the
-       event for another :meth:`send`
-    
-    They are good for communicating results between coroutines.
+    2. :meth:`send` can only be called once; create a new event to send again.
+        
+    They are good for communicating results between coroutines, and are the 
+    basis for how :meth:`GreenThread.wait() <eventlet.greenthread.GreenThread.wait>` is implemented.
 
     >>> from eventlet import event
     >>> import eventlet

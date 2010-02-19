@@ -72,6 +72,10 @@ def backdoor_server(sock, locals=None):
     """ Blocking function that runs a backdoor server on the socket *sock*, 
     accepting connections and running backdoor consoles for each client that
     connects.
+    
+    The *locals* argument is a dictionary that will be included in the locals()
+    of the interpreters.  It can be convenient to stick important application 
+    variables in here.
     """
     print "backdoor server listening on %s:%s" % sock.getsockname()
     try:

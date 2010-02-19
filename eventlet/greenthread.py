@@ -38,7 +38,7 @@ def spawn(func, *args, **kwargs):
     
     Execution control returns immediately to the caller; the created greenthread
     is merely scheduled to be run at the next available opportunity.  
-    Use :func:`call_after_global` to  arrange for greenthreads to be spawned 
+    Use :func:`spawn_after` to  arrange for greenthreads to be spawned 
     after a finite delay.
     """
     hub = hubs.get_hub()
@@ -55,9 +55,8 @@ def _main_wrapper(func, args, kwargs):
 
 def spawn_n(func, *args, **kwargs):
     """Same as :func:`spawn`, but returns a ``greenlet`` object from which it is 
-    not possible to retrieve the results.  This is slightly faster 
-    than :func:`spawn` in all cases; it is fastest if there are no keyword 
-    arguments."""
+    not possible to retrieve the results.  This is faster than :func:`spawn`;
+    it is fastest if there are no keyword arguments."""
     return _spawn_n(0, func, args, kwargs)[1]
     
     
@@ -195,8 +194,8 @@ def _spawn_n(seconds, func, args, kwargs):
 
 class GreenThread(greenlet.greenlet):
     """The GreenThread class is a type of Greenlet which has the additional
-    property of having a retrievable result.  Do not construct GreenThread
-    objects directly; call :func:`spawn` to get one.
+    property of being able to retrieve the return value of the main function.  
+    Do not construct GreenThread objects directly; call :func:`spawn` to get one.
     """
     def __init__(self, parent):
         greenlet.greenlet.__init__(self, self.main, parent)

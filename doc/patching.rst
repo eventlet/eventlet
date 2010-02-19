@@ -42,7 +42,8 @@ Monkeypatching the Standard Library
 The other way of greening an application is simply to monkeypatch the standard
 library.  This has the disadvantage of appearing quite magical, but the advantage of avoiding the late-binding problem.
 
-.. function:: eventlet.patcher.monkey_patch(all=True, os=False, select=False, socket=False, thread=False, time=False):
+.. function:: eventlet.patcher.monkey_patch(all=True, os=False, select=False, socket=False, thread=False, time=False)
+
     By default, this function monkeypatches the key system modules by replacing their key elements with green equivalents.  The keyword arguments afford some control over which modules are patched, in case that's important.  If *all* is True, then all modules are patched regardless of the other arguments. If it's False, then the rest of the keyword arguments control patching of specific subsections of the standard library.  Most patch the single module of the same name (e.g. time=True means that the time module is patched [time.sleep is patched by eventlet.sleep]).  The exceptions to this rule are *socket*, which also patches the :mod:`ssl` module if present; and *thread*, which patches :mod:`thread`, :mod:`threading`, and :mod:`Queue`.
     
     Here's an example of using monkey_patch to patch only a few modules::

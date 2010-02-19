@@ -38,11 +38,11 @@ Contents
    threading
    hubs
    testing
-   history
 
    modules
    
    authors
+   history
 
 License
 ---------
