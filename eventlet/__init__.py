@@ -1,5 +1,5 @@
-version_info = (0, 9, 4)
-__version__ = '%s.%s.%s' % version_info
+version_info = (0, 9, 5, "dev1")
+__version__ = ".".join(map(str, version_info))
 
 try:
     from eventlet import greenthread
