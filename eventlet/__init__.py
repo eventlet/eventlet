@@ -6,6 +6,7 @@ try:
     from eventlet import greenpool
     from eventlet import queue
     from eventlet import timeout
+    from eventlet import patcher
 
     sleep = greenthread.sleep
     spawn = greenthread.spawn
@@ -19,6 +20,9 @@ try:
     GreenPile = greenpool.GreenPile
     
     Queue = queue.Queue
+    
+    import_patched = patcher.import_patched
+    monkey_patch = patcher.monkey_patch
     
     # deprecated    
     TimeoutError = timeout.Timeout
