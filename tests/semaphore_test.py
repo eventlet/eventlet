@@ -5,7 +5,7 @@ from tests import LimitedTestCase
 
 class TestSemaphore(LimitedTestCase):
     def test_bounded(self):
-        sem = semaphore.BoundedSemaphore(2, limit=3)
+        sem = semaphore.CappedSemaphore(2, limit=3)
         self.assertEqual(sem.acquire(), True)
         self.assertEqual(sem.acquire(), True)
         gt1 = eventlet.spawn(sem.release)
@@ -21,7 +21,7 @@ class TestSemaphore(LimitedTestCase):
         gt2.wait()
    
     def test_bounded_with_zero_limit(self):
-        sem = semaphore.BoundedSemaphore(0, 0)
+        sem = semaphore.CappedSemaphore(0, 0)
         gt = eventlet.spawn(sem.acquire)
         sem.release()
         gt.wait()

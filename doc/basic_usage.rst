@@ -50,4 +50,13 @@ Though Eventlet has many modules, much of the most-used stuff is accessible simp
     Timeout objects are context managers, and so can be used in with statements.
     See :class:`Timeout <eventlet.timeout.Timeout>` for more details.
     
+.. function:: eventlet.import_patched(modulename, *additional_modules, **kw_additional_modules)
+
+    Imports a module in a way that ensures that the module uses "green" versions of the standard library modules, so that everything works nonblockingly.  The only required argument is the name of the module to be imported.  For more information see :ref:`import-green`.
+
+.. function:: eventlet.monkey_patch(all=True, os=False, select=False, socket=False, thread=False, time=False)
+
+    Globally patches certain system modules to be greenthread-friendly. The keyword arguments afford some control over which modules are patched. If *all* is True, then all modules are patched regardless of the other arguments. If it's False, then the rest of the keyword arguments control patching of specific subsections of the standard library.  Most patch the single module of the same name (os, time, select).  The exceptions are socket, which also patches the ssl module if present; and thread, which patches thread, threading, and Queue.  It's safe to call monkey_patch multiple times.  For more information see :ref:`monkey-patch`.
+
+    
 These are the basic primitives of Eventlet; there are a lot more out there in the other Eventlet modules; check out the :doc:`modules`.

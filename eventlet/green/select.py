@@ -1,8 +1,6 @@
-
-
 __select = __import__('select')
 error = __select.error
-from eventlet.api import getcurrent
+from eventlet.greenthread import getcurrent
 from eventlet.hubs import get_hub
 
 __patched__ = ['select']

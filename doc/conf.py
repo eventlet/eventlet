@@ -43,7 +43,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Eventlet'
-copyright = u'2009, Eventlet Contributors'
+copyright = u'2005-2010, Eventlet Contributors'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

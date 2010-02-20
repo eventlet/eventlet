@@ -16,14 +16,14 @@ The first way of greening an application is to import networking-related librari
   from eventlet.green import threading
   from eventlet.green import asyncore
   
-This works best if every library can be imported green in this manner.  If ``eventlet.green`` lacks a module (for example, non-python-standard modules), then the :mod:`eventlet.patcher` module can come to the rescue.  It provides a function, :func:`eventlet.patcher.import_patched`, that greens any module on import.
+This works best if every library can be imported green in this manner.  If ``eventlet.green`` lacks a module (for example, non-python-standard modules), then :func:`~eventlet.patcher.import_patched` function can come to the rescue.  It is a replacement for the builtin import statement that greens any module on import.
 
 .. function:: eventlet.patcher.import_patched(module_name, *additional_modules, **kw_additional_modules)
 
     Imports a module in a greened manner, so that the module's use of networking libraries like socket will use Eventlet's green versions instead.  The only required argument is the name of the module to be imported::
     
-        from eventlet import patcher
-        httplib2 = patcher.import_patched('httplib2')
+        import eventlet
+        httplib2 = eventlet.import_patched('httplib2')
         
     Under the hood, it works by temporarily swapping out the "normal" versions of the libraries in sys.modules for an eventlet.green equivalent.  When the import of the to-be-patched module completes, the state of sys.modules is restored.  Therefore, if the patched module contains the statement 'import socket', import_patched will have it reference eventlet.green.socket.  One weakness of this approach is that it doesn't work for late binding (i.e. imports that happen during runtime).  Late binding of imports is fortunately rarely done (it's slow and against `PEP-8 <http://www.python.org/dev/peps/pep-0008/>`_), so in most cases import_patched will work just fine.
     
@@ -31,12 +31,13 @@ This works best if every library can be imported green in this manner.  If ``eve
     
         from eventlet.green import socket
         from eventlet.green import SocketServer        
-        BaseHTTPServer = patcher.import_patched('BaseHTTPServer',
+        BaseHTTPServer = eventlet.import_patched('BaseHTTPServer',
                                 ('socket', socket),
                                 ('SocketServer', SocketServer))
-        BaseHTTPServer = patcher.import_patched('BaseHTTPServer',
+        BaseHTTPServer = eventlet.import_patched('BaseHTTPServer',
                                 socket=socket, SocketServer=SocketServer)
 
+.. _monkey-patch:
 
 Monkeypatching the Standard Library
 ----------------------------------------
@@ -50,7 +51,7 @@ library.  This has the disadvantage of appearing quite magical, but the advantag
     
     Here's an example of using monkey_patch to patch only a few modules::
     
-        from eventlet import patcher
-        patcher.monkey_patch(all=False, socket=True, select=True)
+        import eventlet
+        eventlet.monkey_patch(all=False, socket=True, select=True)
     
-    It is important to call :func:`eventlet.patcher.monkey_patch` as early in the lifetime of the application as possible.  Try to do it as one of the first lines in the main module.  The reason for this is that sometimes there is a class that inherits from a class that needs to be greened -- e.g. a class that inherits from socket.socket -- and inheritance is done at import time, so therefore the monkeypatching should happen before the derived class is defined.      It's safe to call monkey_patch multiple times.
+    It is important to call :func:`~eventlet.patcher.monkey_patch` as early in the lifetime of the application as possible.  Try to do it as one of the first lines in the main module.  The reason for this is that sometimes there is a class that inherits from a class that needs to be greened -- e.g. a class that inherits from socket.socket -- and inheritance is done at import time, so therefore the monkeypatching should happen before the derived class is defined.      It's safe to call monkey_patch multiple times.
