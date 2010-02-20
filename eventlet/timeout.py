@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.from eventlet.support import greenlets as greenlet
 
+from eventlet.support import greenlets as greenlet
 from eventlet.hubs import get_hub
 
 __all__ = ['Timeout',
