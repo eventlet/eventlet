@@ -76,8 +76,7 @@ One common use case that Linden Lab runs into all the time is a "dispatch" desig
 Here's a somewhat contrived example: a server that receives POSTs from clients that contain a list of urls of RSS feeds.  The server fetches all the feeds concurrently and responds with a list of their titles to the client.  It's easy to imagine it doing something more complex than this, and this could be easily modified to become a Reader-style application::
 
     import eventlet
-    from eventlet import patcher
-    feedparser = patcher.import_patched('feedparser')
+    feedparser = eventlet.import_patched('feedparser')
     
     pool = eventlet.GreenPool()
     

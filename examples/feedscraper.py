@@ -2,8 +2,7 @@
 and returns the titles of those feeds.
 """
 import eventlet
-from eventlet import patcher
-feedparser = patcher.import_patched('feedparser')
+feedparser = eventlet.import_patched('feedparser')
 
 # the pool provides a safety limit on our concurrency
 pool = eventlet.GreenPool()
