@@ -4,7 +4,7 @@ import struct
 import sys
 
 from eventlet.processes import Process, DeadProcess
-from eventlet import api, pools
+from eventlet import pools
 
 import warnings
 warnings.warn("eventlet.saranwrap is deprecated due to underuse.  If you love "
@@ -36,9 +36,9 @@ def wrap(obj, dead_callback = None):
         return wrap_module(obj.__name__, dead_callback)
     pythonpath_sync()
     if _g_debug_mode:
-        p = Process(sys.executable, [__file__, '--child', '--logfile', os.path.join(tempfile.gettempdir(), 'saranwrap.log')], dead_callback)
+        p = Process(sys.executable, ["-W", "ignore", __file__, '--child', '--logfile', os.path.join(tempfile.gettempdir(), 'saranwrap.log')], dead_callback)
     else:
-        p = Process(sys.executable, [__file__, '--child'], dead_callback)
+        p = Process(sys.executable, ["-W", "ignore", __file__, '--child'], dead_callback)
     prox = Proxy(ChildProcess(p, p))
     prox.obj = obj
     return prox.obj
@@ -53,9 +53,9 @@ def wrap_module(fqname, dead_callback = None):
     pythonpath_sync()
     global _g_debug_mode
     if _g_debug_mode:
-        p = Process(sys.executable, [__file__, '--module', fqname, '--logfile', os.path.join(tempfile.gettempdir(), 'saranwrap.log')], dead_callback)
+        p = Process(sys.executable, ["-W", "ignore", __file__, '--module', fqname, '--logfile', os.path.join(tempfile.gettempdir(), 'saranwrap.log')], dead_callback)
     else:
-        p = Process(sys.executable, [__file__, '--module', fqname,], dead_callback)
+        p = Process(sys.executable, ["-W", "ignore", __file__, '--module', fqname,], dead_callback)
     prox = Proxy(ChildProcess(p,p))
     return prox
 
@@ -598,6 +598,41 @@ def print_string(str):
 def err_string(str):
     print >>sys.stderr, str
 
+def named(name):
+    """Return an object given its name.
+
+    The name uses a module-like syntax, eg::
+
+      os.path.join
+
+    or::
+
+      mulib.mu.Resource
+    """
+    toimport = name
+    obj = None
+    import_err_strings = []
+    while toimport:
+        try:
+            obj = __import__(toimport)
+            break
+        except ImportError, err:
+            # print 'Import error on %s: %s' % (toimport, err)  # debugging spam
+            import_err_strings.append(err.__str__())
+            toimport = '.'.join(toimport.split('.')[:-1])
+    if obj is None:
+        raise ImportError('%s could not be imported.  Import errors: %r' % (name, import_err_strings))
+    for seg in name.split('.')[1:]:
+        try:
+            obj = getattr(obj, seg)
+        except AttributeError:
+            dirobj = dir(obj)
+            dirobj.sort()
+            raise AttributeError('attribute %r missing from %r (%r) %r.  Import errors: %r' % (
+                seg, obj, dirobj, name, import_err_strings))
+    return obj
+
+
 def main():
     import optparse
     parser = optparse.OptionParser(
@@ -622,7 +657,7 @@ def main():
     if options.module:
         def get_module():
             if base_obj[0] is None:
-                base_obj[0] = api.named(options.module)
+                base_obj[0] = named(options.module)
             return base_obj[0]
         server = Server(tpool.Proxy(sys.stdin),
                         tpool.Proxy(sys.stdout),
