@@ -7,7 +7,7 @@ from eventlet.hubs import timer
 from eventlet.support import greenlets as greenlet
 import warnings
 
-__all__ = ['getcurrent', 'sleep', 'spawn', 'spawn_n', 'call_after_global', 'call_after_local', 'GreenThread'] 
+__all__ = ['getcurrent', 'sleep', 'spawn', 'spawn_n', 'spawn_after', 'spawn_after_local', 'GreenThread'] 
 
 getcurrent = greenlet.getcurrent
 
@@ -16,7 +16,7 @@ def sleep(seconds=0):
     elapsed.
 
     *seconds* may be specified as an integer, or a float if fractional seconds
-    are desired. Calling :func:`~eventlet.api.sleep` with *seconds* of 0 is the
+    are desired. Calling :func:`~greenthread.sleep` with *seconds* of 0 is the
     canonical way of expressing a cooperative yield. For example, if one is
     looping over a large list performing an expensive calculation without
     calling any socket methods, it's a good idea to call ``sleep(0)``
@@ -73,9 +73,9 @@ def spawn_after(seconds, func, *args, **kwargs):
     
     To cancel the spawn and prevent *func* from being called, 
     call :meth:`GreenThread.cancel` on the return value of :func:`spawn_after`.  
-    This will not abort the function if it's already started running.  If
-    terminating *func* regardless of whether it's started or not is the desired
-    behavior, call :meth:`GreenThread.kill`.
+    This will not abort the function if it's already started running, which is 
+    generally the desired behavior.  If terminating *func* regardless of whether 
+    it's started or not is the desired behavior, call :meth:`GreenThread.kill`.
     """
     hub = hubs.get_hub()
     g = GreenThread(hub.greenlet)
@@ -107,14 +107,6 @@ def spawn_after_local(seconds, func, *args, **kwargs):
     
 
 def call_after_global(seconds, func, *args, **kwargs):
-    """Schedule *function* to be called after *seconds* have elapsed.
-    The function will be scheduled even if the current greenlet has exited.
-
-    *seconds* may be specified as an integer, or a float if fractional seconds
-    are desired. The *function* will be called with the given *args* and
-    keyword arguments *kwargs*, and will be executed within its own greenthread.
-    
-    Its return value is discarded."""
     warnings.warn("call_after_global is renamed to spawn_after, which"
         "has the same signature and semantics (plus a bit extra).  Please do a"
         " quick search-and-replace on your codebase, thanks!",
@@ -123,15 +115,6 @@ def call_after_global(seconds, func, *args, **kwargs):
     
 
 def call_after_local(seconds, function, *args, **kwargs):
-    """Schedule *function* to be called after *seconds* have elapsed.
-    The function will NOT be called if the current greenthread has exited.
-
-    *seconds* may be specified as an integer, or a float if fractional seconds
-    are desired. The *function* will be called with the given *args* and
-    keyword arguments *kwargs*, and will be executed within its own greenthread.
-
-    Its return value is discarded.
-    """
     warnings.warn("call_after_local is renamed to spawn_after_local, which"
         "has the same signature and semantics (plus a bit extra).",
         DeprecationWarning, stacklevel=2)
@@ -145,30 +128,6 @@ call_after = call_after_local
 
 
 def exc_after(seconds, *throw_args):
-    """Schedule an exception to be raised into the current coroutine
-    after *seconds* have elapsed.
-
-    This only works if the current coroutine is yielding, and is generally
-    used to set timeouts after which a network operation or series of
-    operations will be canceled.
-
-    Returns a :class:`~eventlet.timer.Timer` object with a
-    :meth:`~eventlet.timer.Timer.cancel` method which should be used to
-    prevent the exception if the operation completes successfully.
-
-    See also :func:`~eventlet.api.with_timeout` that encapsulates the idiom below.
-
-    Example::
-
-        def read_with_timeout():
-            timer = api.exc_after(30, RuntimeError())
-            try:
-                httpc.get('http://www.google.com/')
-            except RuntimeError:
-                print "Timed out!"
-            else:
-                timer.cancel()
-    """
     warnings.warn("Instead of exc_after, which is deprecated, use "
                   "Timeout(seconds, exception)",
                   DeprecationWarning, stacklevel=2)
@@ -270,9 +229,14 @@ def cancel(g, *throw_args):
 
 def kill(g, *throw_args):
     """Terminates the target greenthread by raising an exception into it.
+    Whatever that greenthread might be doing; be it waiting for I/O or another
+    primitive, it sees an exception right away.
+    
     By default, this exception is GreenletExit, but a specific exception
     may be specified.  *throw_args* should be the same as the arguments to 
     raise; either an exception instance or an exc_info tuple.
+    
+    Calling :func:`kill` causes the calling greenthread to cooperatively yield.
     """
     if g.dead:
         return
