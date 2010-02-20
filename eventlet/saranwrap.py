@@ -6,6 +6,11 @@ import sys
 from eventlet.processes import Process, DeadProcess
 from eventlet import api, pools
 
+import warnings
+warnings.warn("eventlet.saranwrap is deprecated due to underuse.  If you love "
+        "it, let us know by emailing eventletdev@lists.secondlife.com",
+        DeprecationWarning, stacklevel=2)
+
 # debugging hooks
 _g_debug_mode = False
 if _g_debug_mode:
