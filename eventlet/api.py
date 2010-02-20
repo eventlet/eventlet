@@ -17,6 +17,9 @@ __all__ = [
     'ssl_listener', 'tcp_listener', 'trampoline',
     'unspew', 'use_hub', 'with_timeout', 'timeout']
 
+warnings.warn("eventlet.api is deprecated!  Nearly everything in it has moved "
+    "to the eventlet module.", DeprecationWarning, stacklevel=2)
+
 def get_hub(*a, **kw):
     warnings.warn("eventlet.api.get_hub has moved to eventlet.hubs.get_hub",
         DeprecationWarning, stacklevel=2)

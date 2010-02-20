@@ -1,6 +1,5 @@
 import collections
 
-from eventlet import api
 from eventlet import queue
 
 __all__ = ['Pool', 'TokenPool']
