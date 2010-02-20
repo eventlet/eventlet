@@ -1,6 +1,11 @@
 :mod:`semaphore` -- Semaphore classes
 ==================================================
 
-.. automodule:: eventlet.semaphore
+.. autoclass:: eventlet.semaphore.Semaphore
 	:members:
-	:undoc-members:
+
+.. autoclass:: eventlet.semaphore.BoundedSemaphore
+	:members:
+	
+.. autoclass:: eventlet.semaphore.CappedSemaphore
+	:members:

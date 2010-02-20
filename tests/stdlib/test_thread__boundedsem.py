@@ -8,7 +8,7 @@ def allocate_lock():
 original_allocate_lock = thread.allocate_lock
 thread.allocate_lock = allocate_lock
 original_LockType = thread.LockType
-thread.LockType = coros.BoundedSemaphore
+thread.LockType = coros.CappedSemaphore
 
 try:
     import os.path
