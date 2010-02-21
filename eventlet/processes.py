@@ -1,9 +1,9 @@
-# disable popen2-related warnings until we complete eventlet.green.subprocess
-# because they break saranwrap
 import warnings
-warnings.filterwarnings(action = 'ignore',
-                        message='.*popen2.*',
-                        category=DeprecationWarning)
+warnings.warn("eventlet.processes is deprecated in favor of " 
+ "eventlet.green.subprocess, which is API-compatible with the standard "
+ " library subprocess module.",
+    DeprecationWarning, stacklevel=2)
+
 
 import errno
 import os
