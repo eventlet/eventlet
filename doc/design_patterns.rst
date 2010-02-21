@@ -42,7 +42,6 @@ Server Pattern
 Here's a simple server-side example, a simple echo server::
     
     import eventlet
-    from eventlet.green import socket
     
     def handle(client):
         while True:
@@ -50,9 +49,7 @@ Here's a simple server-side example, a simple echo server::
             if not c: break
             client.sendall(c)
     
-    server = socket.socket()
-    server.bind(('0.0.0.0', 6000))
-    server.listen(50)
+    server = eventlet.listen(('0.0.0.0', 6000))
     pool = eventlet.GreenPool(10000)
     while True:
         new_sock, address = server.accept()
@@ -60,7 +57,7 @@ Here's a simple server-side example, a simple echo server::
 
 The file :ref:`echo server example <echo_server_example>` contains a somewhat more robust and complex version of this example.
 
-``from eventlet.green import socket`` imports eventlet's socket module, which is just like the regular socket module, but cooperatively yielding.
+``server = eventlet.listen(('0.0.0.0', 6000))`` uses a convenience function to create a listening socket.
 
 ``pool = eventlet.GreenPool(10000)`` creates a pool of green threads that could handle ten thousand clients.  
 
