@@ -19,7 +19,7 @@ Lastly, you can just use nose directly if you want:
 
   $ nosetests
 
-That's it!  The output from running nose is the same as unittest's output, if the entire directory was one big test file.  It tends to emit a lot of tracebacks from a few noisy tests, but they still pass.
+That's it!  The output from running nose is the same as unittest's output, if the entire directory was one big test file.
 
 Many tests are skipped based on environmental factors; for example, it makes no sense to test Twisted-specific functionality when Twisted is not installed.  These are printed as S's during execution, and in the summary printed after the tests run it will tell you how many were skipped.
 
@@ -51,22 +51,14 @@ That will run all the tests, though the output will be a little weird because it
 Testing Eventlet Hubs
 ---------------------
 
-When you run the tests, Eventlet will use the most appropriate hub for the current platform to do its dispatch.  It's sometimes useful when making changes to Eventlet to test those changes on hubs other than the default.  You can do this with the eventlethub nose plugin.  The plugin is not installed in your system, so in order to get Nose to see it, we have to call a wrapper script instead of Nose:
+When you run the tests, Eventlet will use the most appropriate hub for the current platform to do its dispatch.  It's sometimes useful when making changes to Eventlet to test those changes on hubs other than the default.  You can do this with the ``EVENTLET_HUB`` environment variable.
 
 .. code-block:: sh
 
- $ python tests/nosewrapper.py --with-eventlethub --hub=selects
- 
-``nosewrapper.py`` takes exactly the same arguments as nosetests, and behaves exactly the same way.  Here's what the two arguments mean:
+ $ EVENTLET_HUB=epolls nosetests
 
-* ``--with-eventlethub`` enables the eventlethub plugin.
-* ``--hub=HUB`` specifies which Eventlet hub to use during the tests.
+See :ref:`understanding_hubs` for the full list of hubs.
 
-If you wish to run tests against a particular Twisted reactor, use ``--reactor=REACTOR`` instead of ``--hub``.  The full list of eventlet hubs is currently:
-
-* poll
-* selects
-* pyevent  (requires pyevent installed on your system)
 
 Writing Tests
 -------------
@@ -77,8 +69,8 @@ The filename convention when writing a test for module `foo` is to name the test
 
 If you are writing a test that involves a client connecting to a spawned server, it is best to not use a hardcoded port because that makes it harder to parallelize tests.  Instead bind the server to 0, and then look up its port when connecting the client, like this::
 
-  server_sock = api.tcp_listener(('127.0.0.1', 0))
-  client_sock = api.connect_tcp(('localhost', server_sock.getsockname()[1]))
+  server_sock = eventlet.listener(('127.0.0.1', 0))
+  client_sock = eventlet.connect(('localhost', server_sock.getsockname()[1]))
   
 Coverage
 --------

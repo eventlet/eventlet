@@ -1,4 +1,5 @@
 import sys
+import os
 from eventlet.support import greenlets as greenlet
 from eventlet import patcher
 
@@ -58,6 +59,8 @@ def use_hub(mod=None):
     initialization,  because it resets the hub's state and any existing 
     timers or listeners will never be resumed.
     """
+    if mod is None:
+        mod = os.environ.get('EVENTLET_HUB', None)
     if mod is None:
         mod = get_default_hub()
     if hasattr(_threadlocal, 'hub'):

@@ -24,7 +24,6 @@ def check_hub():
 
 
 class TestApi(TestCase):
-    mode = 'static'
 
     certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
     private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')

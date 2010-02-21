@@ -22,5 +22,4 @@ if zero_status in argv:
 else:
     launch = nose.main
 
-from tests import eventlethub
-launch(addplugins=[eventlethub.EventletHub()], argv=argv)
+launch(argv=argv)

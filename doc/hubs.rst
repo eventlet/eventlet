@@ -1,3 +1,5 @@
+.. _understanding_hubs:
+
 Understanding Eventlet Hubs
 ===========================
 
