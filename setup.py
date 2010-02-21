@@ -15,7 +15,7 @@ for flag, req in [('--without-greenlet','greenlet >= 0.2')]:
 setup(
     name='eventlet',
     version=__version__,
-    description='Coroutine-based networking library',
+    description='Highly concurrent networking library',
     author='Linden Lab',
     author_email='eventletdev@lists.secondlife.com',
     url='http://eventlet.net',
