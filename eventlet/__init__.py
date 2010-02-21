@@ -7,6 +7,7 @@ try:
     from eventlet import queue
     from eventlet import timeout
     from eventlet import patcher
+    from eventlet import greenio
 
     sleep = greenthread.sleep
     spawn = greenthread.spawn
@@ -23,6 +24,9 @@ try:
     
     import_patched = patcher.import_patched
     monkey_patch = patcher.monkey_patch
+    
+    connect = greenio.connect
+    listen = greenio.listen
     
     # deprecated    
     TimeoutError = timeout.Timeout

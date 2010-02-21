@@ -506,12 +506,10 @@ def shutdown_safe(sock):
 def connect(addr, family=socket.AF_INET, bind=None):
     """Convenience function for opening client sockets.
     
-    :param addr: Address of the server to connect to.  For TCP sockets, 
-    this is a (host, port) tuple.
-    :param family: Socket family, optional.  See :mod:`socket` 
-    documentation for available families.
+    :param addr: Address of the server to connect to.  For TCP sockets, this is a (host, port) tuple.
+    :param family: Socket family, optional.  See :mod:`socket` documentation for available families.
     :param bind: Local address to bind to, optional.
-    :return The connected green socket object.
+    :return: The connected green socket object.
     """
     sock = GreenSocket(family, socket.SOCK_STREAM)
     if bind is not None:
@@ -522,18 +520,14 @@ def connect(addr, family=socket.AF_INET, bind=None):
     
 def listen(addr, family=socket.AF_INET, backlog=50):
     """Convenience function for opening server sockets.  This
-    socket can be used as the argument to :func:`serve`, or
-    directly by setting up an ``accept()`` loop.
+    socket can be used in an ``accept()`` loop.
 
     Sets SO_REUSEADDR on the socket to save on annoyance.
     
-    :param addr: Address to listen on.  For TCP sockets, this is a 
-    (host, port)  tuple.
-    :param family: Socket family, optional.  See :mod:`socket` 
-    documentation for available families.
-    :param backlog: The maximum number of queued connections. Should be 
-    at least 1; the maximum value is system-dependent.
-    :return The listening green socket object.
+    :param addr: Address to listen on.  For TCP sockets, this is a (host, port)  tuple.
+    :param family: Socket family, optional.  See :mod:`socket` documentation for available families.
+    :param backlog: The maximum number of queued connections. Should be at least 1; the maximum value is system-dependent.
+    :return: The listening green socket object.
     """
     sock = GreenSocket(family, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
