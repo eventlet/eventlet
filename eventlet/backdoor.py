@@ -3,7 +3,8 @@ import sys
 import errno
 from code import InteractiveConsole
 
-from eventlet import api, hubs
+import eventlet
+from eventlet import hubs
 from eventlet.support import greenlets
 
 try:
@@ -106,5 +107,5 @@ def backdoor((conn, addr), locals=None):
 
 
 if __name__ == '__main__':
-    backdoor_server(api.tcp_listener(('127.0.0.1', 9000)), {})
+    backdoor_server(eventlet.listen(('127.0.0.1', 9000)), {})
 

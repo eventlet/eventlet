@@ -3,7 +3,7 @@
 
 The db_pool module is useful for managing database connections.  It provides three primary benefits: cooperative yielding during database operations, concurrency limiting to a database host, and connection reuse.  db_pool is intended to be database-agnostic, compatible with any DB-API 2.0 database module.
 
-*Caveat: however, it has currently only been tested and used with MySQLdb.*
+*It has currently been tested and used with both MySQLdb and psycopg2.*
 
 A ConnectionPool object represents a pool of connections open to a particular database.  The arguments to the constructor include the database-software-specific module, the host name, and the credentials required for authentication.  After construction, the ConnectionPool object decides when to create and sever connections with the target database.
 

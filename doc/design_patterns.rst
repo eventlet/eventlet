@@ -91,7 +91,7 @@ Here's a somewhat contrived example: a server that receives POSTs from clients t
 
 The full version of this example is in the :ref:`feed_scraper_example`, which includes code to start the WSGI server on a particular port.
 
-This example uses a global (gasp) :class:`GreenPool <eventlet.greenpool.GreenPool>` to control concurrency.  If we didn't have a global limit on the number of outgoing requests, then a client could cause the server to open tens of thousands of concurrent connections to external servers, thereby getting feedparser's IP banned, or various other accidental-or-on-purpose bad behavior.  The pool isn't a complete DoS protection, but it's the bare minimum.
+This example uses a global (gasp) :class:`GreenPool <eventlet.greenpool.GreenPool>` to control concurrency.  If we didn't have a global limit on the number of outgoing requests, then a client could cause the server to open tens of thousands of concurrent connections to external servers, thereby getting feedscraper's IP banned, or various other accidental-or-on-purpose bad behavior.  The pool isn't a complete DoS protection, but it's the bare minimum.
 
 .. highlight:: python
     :linenothreshold: 1
