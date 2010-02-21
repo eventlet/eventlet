@@ -1,5 +1,4 @@
 import eventlet
-from eventlet.green import socket
 
 participants = []
 
@@ -17,9 +16,7 @@ def read_chat_forever(writer, reader):
 
 try:
     print "ChatServer starting up on port 3000"
-    server = socket.socket()
-    server.bind(('0.0.0.0', 3000))
-    server.listen(50)
+    server = eventlet.listen(('0.0.0.0', 3000))
     while True:
         new_connection, address = server.accept()
         print "Participant joined chat."

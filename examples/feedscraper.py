@@ -32,9 +32,4 @@ def app(environ, start_response):
 
 if __name__ == '__main__':
     from eventlet import wsgi
-    from eventlet.green import socket
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR, 1)
-    sock.bind(('localhost', 9010))
-    sock.listen(50)
-    wsgi.server(sock, app)
+    wsgi.server(eventlet.listen(('localhost', 9010)), app)

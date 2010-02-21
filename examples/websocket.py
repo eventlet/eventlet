@@ -137,9 +137,5 @@ def dispatch(environ, start_response):
         
 if __name__ == "__main__":
     # run an example app from the command line            
-    from eventlet.green import socket
-    listener = socket.socket()
-    listener.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR, 1)
-    listener.bind(('localhost', 7000))
-    listener.listen(500)
+    listener = eventlet.listen(('localhost', 7000))
     wsgi.server(listener, dispatch)

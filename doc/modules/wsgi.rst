@@ -9,17 +9,13 @@ server package.  One such package is `Spawning <http://pypi.python.org/pypi/Spaw
 To launch a wsgi server, simply create a socket and call :func:`eventlet.wsgi.server` with it::
 
     from eventlet import wsgi
-    from eventlet.green import socket
+    import eventlet
     
     def hello_world(env, start_response):
         start_response('200 OK', [('Content-Type', 'text/plain')])
         return ['Hello, World!\r\n']
     
-    sock = socket.socket()
-    sock.bind(('', 8090))
-    sock.listen(500)
-    
-    wsgi.server(sock, hello_world)
+    wsgi.server(eventlet.listen(('', 8090)), hello_world)
 
 
 You can find a slightly more elaborate version of this code in the file
