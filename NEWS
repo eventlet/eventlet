@@ -1,3 +1,27 @@
+0.9.5
+=====
+* support psycopg in db_pool
+* smart patcher that does the right patching when importing without needing to understand plumbing of patched module
+* patcher.monkey_patch() method replacing util.wrap_*
+* monkeypatch threading support
+* removed api.named
+* move api_tests into greenthread_tests and hub_tests, or wherever's appropriate
+* imported timeout module from gevent, replace exc_after and with_timeout()
+* replace call_after with spawn_after; this is so that users don't see the Timer class
+* added cancel() method to GreenThread to support the semantic of "abort if not already in the middle of something"
+* eventlet.green.os with patched read() and write(), etc
+* moved stuff from wrap_pipes_with_coroutine_pipe into green.os
+* eventlet.green.subprocess instead of eventlet.processes
+* improve patching docs, explaining more about patcher and why you'd use eventlet.green
+* better documentation on greenpiles
+* deprecate api.py completely
+* deprecate util.py completely (possibly, leave it as a "utility module" containing named and, uh, some other stuff)
+* deprecate saranwrap
+* performance improvements in the hubs
+* much better documentation overall
+* new convenience functions: eventlet.connect and eventlet.listen.  Thanks, Sergey!
+
+
 0.9.4
 =====
 * Deprecated coros.Queue and coros.Channel (use queue.Queue instead)
