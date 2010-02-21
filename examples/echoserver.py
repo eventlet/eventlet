@@ -11,7 +11,6 @@ and then 'quit')
 """
 
 import eventlet
-from eventlet.green import socket
 
 def handle(fd):
     print "client connected"
@@ -25,10 +24,7 @@ def handle(fd):
     print "client disconnected"
 
 print "server socket listening on port 6000"
-server = socket.socket()
-server.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR, 1)
-server.bind(('0.0.0.0', 6000))
-server.listen(50)
+server = eventlet.listen(('0.0.0.0', 6000))
 pool = eventlet.GreenPool()
 while True:
     try:

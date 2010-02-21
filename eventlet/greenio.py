@@ -501,4 +501,77 @@ def shutdown_safe(sock):
         # this will often be the case in an http server context
         if e[0] != errno.ENOTCONN:
             raise
+            
+            
+def connect(addr, family=socket.AF_INET, bind=None):
+    """Convenience function for opening client sockets.
+    
+    :param addr: Address of the server to connect to.  For TCP sockets, this is a (host, port) tuple.
+    :param family: Socket family, optional.  See :mod:`socket` documentation for available families.
+    :param bind: Local address to bind to, optional.
+    :return: The connected green socket object.
+    """
+    sock = GreenSocket(family, socket.SOCK_STREAM)
+    if bind is not None:
+        sock.bind(bind)
+    sock.connect(addr)
+    return sock
+    
+    
+def listen(addr, family=socket.AF_INET, backlog=50):
+    """Convenience function for opening server sockets.  This
+    socket can be used in an ``accept()`` loop.
 
+    Sets SO_REUSEADDR on the socket to save on annoyance.
+    
+    :param addr: Address to listen on.  For TCP sockets, this is a (host, port)  tuple.
+    :param family: Socket family, optional.  See :mod:`socket` documentation for available families.
+    :param backlog: The maximum number of queued connections. Should be at least 1; the maximum value is system-dependent.
+    :return: The listening green socket object.
+    """
+    sock = GreenSocket(family, socket.SOCK_STREAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind(addr)
+    sock.listen(backlog)
+    return sock
+
+
+def wrap_ssl(sock, keyfile=None, certfile=None, server_side=False,
+    cert_reqs=None, ssl_version=None, ca_certs=None, 
+    do_handshake_on_connect=True, suppress_ragged_eofs=True):
+    """Convenience function for converting a regular socket into an SSL 
+    socket.  Has the same interface as :func:`ssl.wrap_socket`, but 
+    works on 2.5 or earlier, using PyOpenSSL.
+
+    The preferred idiom is to call wrap_ssl directly on the creation
+    method, e.g., ``wrap_ssl(connect(addr))`` or 
+    ``wrap_ssl(listen(addr), server_side=True)``. This way there is
+    no "naked" socket sitting around to accidentally corrupt the SSL
+    session.
+    
+    :return Green SSL object.
+    """
+    pass
+
+
+def serve(sock, handle, concurrency=1000):
+    """Runs a server on the supplied socket.  Calls the function 
+    *handle* in a separate greenthread for every incoming request. 
+    This function blocks the calling greenthread; it won't return until 
+    the server completes.  If you desire an immediate return,
+    spawn a new greenthread for :func:`serve`.
+    
+    The *handle* function must raise an EndServerException to 
+    gracefully terminate the server -- that's the only way to get the 
+    server() function to return.  Any other uncaught exceptions raised
+    in *handle* are raised as exceptions from :func:`serve`, so be 
+    sure to do a good job catching exceptions that your application 
+    raises.  The return value of *handle* is ignored.
+
+    The value in *concurrency* controls the maximum number of 
+    greenthreads that will be open at any time handling requests.  When 
+    the server hits the concurrency limit, it stops accepting new 
+    connections until the existing ones complete.
+    """
+    pass
+    
