@@ -24,7 +24,7 @@ The simplest thing to do with :mod:`~eventlet.tpool` is to :func:`~eventlet.tpoo
  >>> tpool.execute(my_func, thread.get_ident())
  running in new thread: True
 
-My default there are 20 threads in the pool, but you can configure this by setting the environment variable ``EVENTLET_THREADPOOL_SIZE`` to the desired pool size before importing tpool.
+By default there are 20 threads in the pool, but you can configure this by setting the environment variable ``EVENTLET_THREADPOOL_SIZE`` to the desired pool size before importing tpool.
 
 .. automodule:: eventlet.tpool
 	:members:
