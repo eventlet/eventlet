@@ -21,6 +21,7 @@ setup(
     url='http://eventlet.net',
     packages=find_packages(exclude=['tests']),
     install_requires=requirements,
+    zip_safe=False,
     long_description="""
     Eventlet is a networking library written in Python. It achieves
     high scalability by using non-blocking io while at the same time
