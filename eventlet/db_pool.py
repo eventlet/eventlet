@@ -3,7 +3,6 @@ import sys
 import time
 
 from eventlet.pools import Pool
-from eventlet.processes import DeadProcess
 from eventlet import timeout
 from eventlet import greenthread
 
