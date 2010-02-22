@@ -34,35 +34,41 @@ except ImportError:
 
 class Pool(object):
     """
-    Pool is a base class that is meant to be subclassed.  When subclassing,
-    define the :meth:`create` method to implement the desired resource.
+    Pool is a base class that implements resource limitation and construction.
+    It is meant to be subclassed.  When subclassing, define only 
+    the :meth:`create` method to implement the desired resource::
     
-    When using the pool, if you do a get, you should **always** do a
-    :meth:`put`.
+        class MyPool(pools.Pool):
+            def create(self):
+                return MyObject()
+            
+    If using 2.5 or greater, the :meth:`item` method acts as a context manager;
+    that's the best way to use it::
+        
+        with mypool.item() as thing:
+            thing.dostuff()
+            
+    If stuck on 2.4, the :meth:`get` and :meth:`put` methods are the preferred 
+    nomenclature.  Use a ``finally`` to ensure that nothing is leaked::
 
-    The pattern is::
+        thing = self.pool.get()
+        try:
+            thing.dostuff()
+        finally:
+            self.pool.put(thing)
 
-     thing = self.pool.get()
-     try:
-         thing.method()
-     finally:
-         self.pool.put(thing)
-
-    The maximum size of the pool can be modified at runtime via the
-    :attr:`max_size` attribute.  Adjusting this number does not affect existing
-    items checked out of the pool, nor on any waiters who are waiting for an
-    item to free up.  Some indeterminate number of :meth:`get`/:meth:`put`
-    cycles will be necessary before the new maximum size truly matches the
-    actual operation of the pool.
+    The maximum size of the pool can be modified at runtime via
+    the :meth:`resize` method.
+    
+    Specifying a non-zero *min-size* argument pre-populates the pool with 
+    *min_size* items.  *max-size* sets a hard limit to the size of the pool -- 
+    it cannot contain any more items than *max_size*, and if there are already 
+    *max_size* items 'checked out' of the pool, the pool will cause any 
+    greenthread calling :meth:`get` to cooperatively yield until an item 
+    is :meth:`put` in.
     """
     def __init__(self, min_size=0, max_size=4, order_as_stack=False):
-        """ Pre-populates the pool with *min_size* items.  Sets a hard limit to
-        the size of the pool -- it cannot contain any more items than
-        *max_size*, and if there are already *max_size* items 'checked out' of
-        the pool, the pool will cause any getter to cooperatively yield until an
-        item is put in.
-
-        *order_as_stack* governs the ordering of the items in the free pool.
+        """*order_as_stack* governs the ordering of the items in the free pool.
         If ``False`` (the default), the free items collection (of items that
         were created and were put back in the pool) acts as a round-robin,
         giving each item approximately equal utilization.  If ``True``, the
@@ -80,7 +86,8 @@ class Pool(object):
             self.free_items.append(self.create())
 
     def get(self):
-        """Return an item from the pool, when one is available
+        """Return an item from the pool, when one is available.  This may
+        cause the calling greenthread to block.
         """
         if self.free_items:
             return self.free_items.popleft()
@@ -89,12 +96,13 @@ class Pool(object):
             self.current_size += 1
             return created
         return self.channel.get()
-
+        
     if item_impl is not None:
         item = item_impl
 
     def put(self, item):
-        """Put an item back into the pool, when done
+        """Put an item back into the pool, when done.  This may
+        cause the putting greenthread to block.
         """
         if self.current_size > self.max_size:
             self.current_size -= 1
@@ -109,12 +117,19 @@ class Pool(object):
                 self.free_items.append(item)
 
     def resize(self, new_size):
-        """Resize the pool
+        """Resize the pool to *new_size*.
+        
+        Adjusting this number does not affect existing items checked out of 
+        the pool, nor on any greenthreads who are waiting for an item to free 
+        up.  Some indeterminate number of :meth:`get`/:meth:`put`
+        cycles will be necessary before the new maximum size truly matches 
+        the actual operation of the pool.
         """
         self.max_size = new_size
 
     def free(self):
-        """Return the number of free items in the pool.
+        """Return the number of free items in the pool.  This corresponds
+        to the number of :meth:`get` calls needed to empty the pool.
         """
         return len(self.free_items) + self.max_size - self.current_size
 
@@ -124,7 +139,17 @@ class Pool(object):
         return max(0, self.channel.getting() - self.channel.putting())
   
     def create(self):
-        """Generate a new pool item
+        """Generate a new pool item.  This method must be overridden in order
+        for the pool to function.  It accepts no arguments and returns a single
+        instance of whatever thing the pool is supposed to contain.
+        
+        In general, :meth:`create` is called whenever the pool exceeds its 
+        previous high-water mark of concurrently-checked-out-items.  In other 
+        words, in a new pool with *min_size* of 0, the very first call 
+        to :meth:`get` will result in a call to :meth:`create`.  If the first 
+        caller calls :meth:`put` before some other caller calls :meth:`get`, 
+        then the first item will be returned, and :meth:`create` will not be 
+        called a second time.
         """
         raise NotImplementedError("Implement in subclass")
 
