@@ -6,7 +6,7 @@ import eventlet
 import sys
 import tempfile
 import time
-from tests import LimitedTestCase, main, skip_on_windows
+from tests import LimitedTestCase, main, skip_on_windows, skip_with_pyevent
 import re
 import StringIO
 
@@ -40,6 +40,7 @@ class TestSaranwrap(LimitedTestCase):
         self.assertEqual(0, prox.foo)
 
     @skip_on_windows
+    @skip_with_pyevent
     def test_wrap_tuple(self):
         my_tuple = (1, 2)
         prox = saranwrap.wrap(my_tuple)
@@ -48,6 +49,7 @@ class TestSaranwrap(LimitedTestCase):
         self.assertEqual(len(my_tuple), 2)
 
     @skip_on_windows
+    @skip_with_pyevent
     def test_wrap_string(self):
         my_object = "whatever"
         prox = saranwrap.wrap(my_object)
@@ -56,6 +58,7 @@ class TestSaranwrap(LimitedTestCase):
         self.assertEqual(my_object.join(['a', 'b']), prox.join(['a', 'b']))
 
     @skip_on_windows
+    @skip_with_pyevent
     def test_wrap_uniterable(self):
         # here we're treating the exception as just a normal class
         prox = saranwrap.wrap(FloatingPointError())
@@ -68,6 +71,7 @@ class TestSaranwrap(LimitedTestCase):
         self.assertRaises(TypeError, key)
 
     @skip_on_windows
+    @skip_with_pyevent
     def test_wrap_dict(self):
         my_object = {'a':1}
         prox = saranwrap.wrap(my_object)
@@ -78,6 +82,7 @@ class TestSaranwrap(LimitedTestCase):
         self.assertEqual('saran:' + `my_object`, `prox`)
 
     @skip_on_windows
+    @skip_with_pyevent
     def test_wrap_module_class(self):
         prox = saranwrap.wrap(re)
         self.assertEqual(saranwrap.Proxy, type(prox))
@@ -86,6 +91,7 @@ class TestSaranwrap(LimitedTestCase):
         self.assert_(repr(prox.compile))
 
     @skip_on_windows
+    @skip_with_pyevent
     def test_wrap_eq(self):
         prox = saranwrap.wrap(re)
         exp1 = prox.compile('.')
@@ -95,6 +101,7 @@ class TestSaranwrap(LimitedTestCase):
         self.assert_(exp1 != exp3)
 
     @skip_on_windows
+    @skip_with_pyevent
     def test_wrap_nonzero(self):
         prox = saranwrap.wrap(re)
         exp1 = prox.compile('.')
@@ -103,6 +110,7 @@ class TestSaranwrap(LimitedTestCase):
         self.assert_(bool(prox2))
 
     @skip_on_windows
+    @skip_with_pyevent
     def test_multiple_wraps(self):
         prox1 = saranwrap.wrap(re)
         prox2 = saranwrap.wrap(re)
@@ -112,6 +120,7 @@ class TestSaranwrap(LimitedTestCase):
         x3 = prox2.compile('.')
 
     @skip_on_windows
+    @skip_with_pyevent
     def test_dict_passthru(self):
         prox = saranwrap.wrap(StringIO)
         x = prox.StringIO('a')
@@ -120,22 +129,26 @@ class TestSaranwrap(LimitedTestCase):
         self.assertEqual(type(saranwrap.wrap(StringIO).StringIO('a').__dict__), saranwrap.ObjectProxy)
 
     @skip_on_windows
+    @skip_with_pyevent
     def test_is_value(self):
         server = saranwrap.Server(None, None, None)
         self.assert_(server.is_value(None))
 
     @skip_on_windows
+    @skip_with_pyevent
     def test_wrap_getitem(self):
         prox = saranwrap.wrap([0,1,2])
         self.assertEqual(prox[0], 0)
 
     @skip_on_windows
+    @skip_with_pyevent
     def test_wrap_setitem(self):
         prox = saranwrap.wrap([0,1,2])
         prox[1] = 2
         self.assertEqual(prox[1], 2)
 
     @skip_on_windows
+    @skip_with_pyevent
     def test_raising_exceptions(self):
         prox = saranwrap.wrap(re)
         def nofunc():
@@ -143,6 +156,7 @@ class TestSaranwrap(LimitedTestCase):
         self.assertRaises(AttributeError, nofunc)
 
     @skip_on_windows
+    @skip_with_pyevent
     def test_unpicklable_server_exception(self):
         prox = saranwrap.wrap(saranwrap)
         def unpickle():
@@ -154,6 +168,7 @@ class TestSaranwrap(LimitedTestCase):
         #self.assert_server_exists(prox)
 
     @skip_on_windows
+    @skip_with_pyevent
     def test_pickleable_server_exception(self):
         prox = saranwrap.wrap(saranwrap)
         def fperror():
@@ -163,12 +178,14 @@ class TestSaranwrap(LimitedTestCase):
         self.assert_server_exists(prox)
 
     @skip_on_windows
+    @skip_with_pyevent
     def test_print_does_not_break_wrapper(self):
         prox = saranwrap.wrap(saranwrap)
         prox.print_string('hello')
         self.assert_server_exists(prox)
 
     @skip_on_windows
+    @skip_with_pyevent
     def test_stderr_does_not_break_wrapper(self):
         prox = saranwrap.wrap(saranwrap)
         prox.err_string('goodbye')
@@ -178,6 +195,7 @@ class TestSaranwrap(LimitedTestCase):
         self.assert_(a < b, "%s is not less than %s" % (a, b))
 
     @skip_on_windows
+    @skip_with_pyevent
     def test_status(self):
         prox = saranwrap.wrap(time)
         a = prox.gmtime(0)
@@ -197,6 +215,7 @@ class TestSaranwrap(LimitedTestCase):
         self.assert_(status['pid'] != saranwrap.status(prox2)['pid'])
 
     @skip_on_windows
+    @skip_with_pyevent
     def test_del(self):
         prox = saranwrap.wrap(time)
         delme = prox.gmtime(0)
@@ -211,12 +230,14 @@ class TestSaranwrap(LimitedTestCase):
         self.assertLessThan(status_after['object_count'], status_before['object_count'])
 
     @skip_on_windows
+    @skip_with_pyevent
     def test_contains(self):
         prox = saranwrap.wrap({'a':'b'})
         self.assert_('a' in prox)
         self.assert_('x' not in prox)
 
     @skip_on_windows
+    @skip_with_pyevent
     def test_variable_and_keyword_arguments_with_function_calls(self):
         import optparse
         prox = saranwrap.wrap(optparse)
@@ -226,6 +247,7 @@ class TestSaranwrap(LimitedTestCase):
         self.assertEqual(opts.n, 'foo')
 
     @skip_on_windows
+    @skip_with_pyevent
     def test_original_proxy_going_out_of_scope(self):
         def make_re():
             prox = saranwrap.wrap(re)
@@ -249,6 +271,7 @@ class TestSaranwrap(LimitedTestCase):
             pass
 
     @skip_on_windows
+    @skip_with_pyevent
     def test_not_inheriting_pythonpath(self):
         # construct a fake module in the temp directory
         temp_dir = tempfile.mkdtemp("saranwrap_test")
@@ -279,6 +302,7 @@ sys_path = sys.path""")
             sys.path.remove(temp_dir)
 
     @skip_on_windows
+    @skip_with_pyevent
     def test_contention(self):
         from tests import saranwrap_test
         prox = saranwrap.wrap(saranwrap_test)
@@ -290,6 +314,7 @@ sys_path = sys.path""")
         pool.waitall()
 
     @skip_on_windows
+    @skip_with_pyevent
     def test_copy(self):
         import copy
         compound_object = {'a':[1,2,3]}
@@ -304,6 +329,7 @@ sys_path = sys.path""")
         make_assertions(copy.deepcopy(prox))
 
     @skip_on_windows
+    @skip_with_pyevent
     def test_list_of_functions(self):
         return # this test is known to fail, we can implement it sometime in the future if we wish
         from tests import saranwrap_test
@@ -311,6 +337,7 @@ sys_path = sys.path""")
         self.assertEquals(list_maker(), prox[0]())
 
     @skip_on_windows
+    @skip_with_pyevent
     def test_under_the_hood_coroutines(self):
         # so, we want to write a class which uses a coroutine to call
         # a function.  Then we want to saranwrap that class, have
@@ -330,6 +357,7 @@ sys_path = sys.path""")
             'Coroutine in saranwrapped object did not run')
 
     @skip_on_windows
+    @skip_with_pyevent
     def test_child_process_death(self):
         prox = saranwrap.wrap({})
         pid = saranwrap.getpid(prox)
@@ -339,16 +367,19 @@ sys_path = sys.path""")
         self.assertRaises(OSError, os.kill, pid, 0)  # raises OSError if pid doesn't exist
 
     @skip_on_windows
+    @skip_with_pyevent
     def test_detection_of_server_crash(self):
         # make the server crash here
         pass
 
     @skip_on_windows
+    @skip_with_pyevent
     def test_equality_with_local_object(self):
         # we'll implement this if there's a use case for it
         pass
 
     @skip_on_windows
+    @skip_with_pyevent
     def test_non_blocking(self):
         # here we test whether it's nonblocking
         pass

@@ -4,6 +4,7 @@ try:
     GreenletExit = greenlet.GreenletExit
     greenlet = greenlet.greenlet
 except ImportError, e:
+    raise
     try:
         from py.magic import greenlet
         getcurrent = greenlet.getcurrent
