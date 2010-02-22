@@ -416,7 +416,7 @@ class GreenPipe(object):
                     chunk, self.recvbuffer = buf[:found], buf[found:]
                     return chunk
                 checked = max(0, len(buf) - (len(terminator) - 1))
-                d = self.fd.read(BUFFER_SIZE)
+                d = self.read(BUFFER_SIZE)
                 if not d:
                     break
                 buf += d
@@ -428,7 +428,7 @@ class GreenPipe(object):
                 chunk, self.recvbuffer = buf[:found], buf[found:]
                 return chunk
             checked = len(buf)
-            d = self.fd.read(BUFFER_SIZE)
+            d = self.read(BUFFER_SIZE)
             if not d:
                 break
             buf += d
