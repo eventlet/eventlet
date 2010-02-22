@@ -5,14 +5,18 @@ Original Authors
 
 Contributors
 ------------
+* AG Projects
+* Chris Atlee
 * R\. Tyler Ballance
 * Denis Bilenko
-* AG Projects
 * Mike Barton
+* Patrick Carlisle
+* Brantley Harris
 * Gregory Holt
 * Chet Murthy
+* Eugene Oden
 * radix
-* Patrick Carlisle
+* Sergey Shepelev
 
 Linden Lab Contributors
 -----------------------
@@ -30,9 +34,8 @@ Thanks To
 * AdamKG, giving the hint that invalid argument errors were introduced post-0.9.0
 * Luke Tucker, bug report regarding wsgi + webob
 * Chuck Thier, reporting a bug in processes.py
-* Brantley Harris, reporting bug #4
 * Taso Du Val, reproing an exception squelching bug, saving children's lives  ;-)
-* Sergey Shepelev, PEP 8 police  :-), reporting bug #5, design and implementations of convenience functions listen and connect  
+* , PEP 8 police  :-), reporting bug #5, design and implementations of convenience functions listen and connect  
 * Luci Stanescu, for reporting twisted hub bug
 * Marcus Cavanaugh, for test case code that has been incredibly useful in tracking down bugs
 * Brian Brunswick, for many helpful questions and suggestions on the mailing list
