@@ -111,15 +111,13 @@ def trampoline(fd, read=None, write=None, timeout=None,
     assert hub.greenlet is not current, 'do not call blocking functions from the mainloop'
     assert not (read and write), 'not allowed to trampoline for reading and writing'
     fileno = getattr(fd, 'fileno', lambda: fd)()
-    def cb(d):
-        current.switch()
     if timeout is not None:
         t = hub.schedule_call_global(timeout, current.throw, timeout_exc)
     try:
         if read:
-            listener = hub.add(hub.READ, fileno, cb)
-        if write:
-            listener = hub.add(hub.WRITE, fileno, cb)
+            listener = hub.add(hub.READ, fileno, current.switch)
+        elif write:
+            listener = hub.add(hub.WRITE, fileno, current.switch)
         try:
             return hub.switch()
         finally:
