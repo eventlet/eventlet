@@ -336,7 +336,7 @@ class GreenSocket(object):
 class GreenPipe(object):
     """ GreenPipe is a cooperatively-yielding wrapper around OS pipes.
     """
-    newlines = '\r\n'
+    newlines = '\n'
     def __init__(self, fd):
         set_nonblocking(fd)
         self.fd = fd
@@ -416,7 +416,7 @@ class GreenPipe(object):
                     chunk, self.recvbuffer = buf[:found], buf[found:]
                     return chunk
                 checked = max(0, len(buf) - (len(terminator) - 1))
-                d = self.read(BUFFER_SIZE)
+                d = self._recv(BUFFER_SIZE)
                 if not d:
                     break
                 buf += d
@@ -428,7 +428,7 @@ class GreenPipe(object):
                 chunk, self.recvbuffer = buf[:found], buf[found:]
                 return chunk
             checked = len(buf)
-            d = self.read(BUFFER_SIZE)
+            d = self._recv(BUFFER_SIZE)
             if not d:
                 break
             buf += d
