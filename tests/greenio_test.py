@@ -259,7 +259,39 @@ class TestGreenIo(LimitedTestCase):
         self.assertEquals(result, 'sent via event')
         server.close()
         client.close()
-        
+
+    def test_pipe_read(self):
+        # ensure that 'readline' works properly on GreenPipes when data is not
+        # immediately available (fd is nonblocking, was raising EAGAIN)
+        # also ensures that readline() terminates on '\n' and '\r\n'
+        r, w = os.pipe()
+
+        r = os.fdopen(r)
+        w = os.fdopen(w, 'w')
+
+        r = greenio.GreenPipe(r)
+        w = greenio.GreenPipe(w)
+
+        def writer():
+            eventlet.sleep(.1)
+
+            w.write('line\n')
+            w.flush()
+
+            w.write('line\r\n')
+            w.flush()
+
+        gt = eventlet.spawn(writer)
+
+        eventlet.sleep(0)
+
+        line = r.readline()
+        self.assertEquals(line, 'line\n')
+
+        line = r.readline()
+        self.assertEquals(line, 'line\r\n')
+
+        gt.wait()
 
 class TestGreenIoLong(LimitedTestCase):
     TEST_TIMEOUT=10  # the test here might take a while depending on the OS
