@@ -1,4 +1,6 @@
+import eventlet
 from eventlet import pool, coros, api, hubs, timeout
+from eventlet import event as _event
 from tests import LimitedTestCase
 from unittest import main
 
@@ -6,7 +8,7 @@ class TestCoroutinePool(LimitedTestCase):
     klass = pool.Pool
 
     def test_execute_async(self):
-        done = coros.Event()
+        done = _event.Event()
         def some_work():
             done.send()
         pool = self.klass(0, 2)
@@ -23,7 +25,7 @@ class TestCoroutinePool(LimitedTestCase):
         
     def test_waiting(self):
         pool = self.klass(0,1)
-        done = coros.Event()
+        done = _event.Event()
         def consume():
             done.wait()
         def waiter(pool):
@@ -31,13 +33,13 @@ class TestCoroutinePool(LimitedTestCase):
             evt.wait()
         
         waiters = []
-        waiters.append(coros.execute(waiter, pool))
+        waiters.append(eventlet.spawn(waiter, pool))
         api.sleep(0)
         self.assertEqual(pool.waiting(), 0)
-        waiters.append(coros.execute(waiter, pool))
+        waiters.append(eventlet.spawn(waiter, pool))
         api.sleep(0)
         self.assertEqual(pool.waiting(), 1)
-        waiters.append(coros.execute(waiter, pool))
+        waiters.append(eventlet.spawn(waiter, pool))
         api.sleep(0)
         self.assertEqual(pool.waiting(), 2)
         done.send(None)
@@ -46,7 +48,7 @@ class TestCoroutinePool(LimitedTestCase):
         self.assertEqual(pool.waiting(), 0)
 
     def test_multiple_coros(self):
-        evt = coros.Event()
+        evt = _event.Event()
         results = []
         def producer():
             results.append('prod')
@@ -86,7 +88,7 @@ class TestCoroutinePool(LimitedTestCase):
         outer_waiter = pool.execute(reenter)
         outer_waiter.wait()
 
-        evt = coros.Event()
+        evt = _event.Event()
         def reenter_async():
             pool.execute_async(lambda a: a, 'reenter')
             evt.send('done')
@@ -97,9 +99,9 @@ class TestCoroutinePool(LimitedTestCase):
     def assert_pool_has_free(self, pool, num_free):
         def wait_long_time(e):
             e.wait()
-        timer = api.exc_after(1, api.TimeoutError)
+        timer = timeout.Timeout(1, api.TimeoutError)
         try:
-            evt = coros.Event()
+            evt = _event.Event()
             for x in xrange(num_free):
                 pool.execute(wait_long_time, evt)
                 # if the pool has fewer free than we expect,
@@ -109,7 +111,7 @@ class TestCoroutinePool(LimitedTestCase):
 
         # if the runtime error is not raised it means the pool had
         # some unexpected free items
-        timer = api.exc_after(0, RuntimeError)
+        timer = timeout.Timeout(0, RuntimeError)
         self.assertRaises(RuntimeError, pool.execute, wait_long_time, evt)
 
         # clean up by causing all the wait_long_time functions to return
@@ -119,7 +121,7 @@ class TestCoroutinePool(LimitedTestCase):
 
     def test_resize(self):
         pool = self.klass(max_size=2)
-        evt = coros.Event()
+        evt = _event.Event()
         def wait_long_time(e):
             e.wait()
         pool.execute(wait_long_time, evt)
@@ -203,7 +205,7 @@ class TestCoroutinePool(LimitedTestCase):
         tp = pools.TokenPool(max_size=1)
         token = tp.get()  # empty pool
         def do_receive(tp):
-            api.exc_after(0, RuntimeError())
+            timeout.Timeout(0, RuntimeError())
             try:
                 t = tp.get()
                 self.fail("Shouldn't have recieved anything from the pool")

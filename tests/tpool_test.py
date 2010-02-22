@@ -19,7 +19,7 @@ import time
 import re
 from tests import skipped, skip_with_pyevent, LimitedTestCase, main
 
-from eventlet import api, tpool, debug
+from eventlet import tpool, debug
 import eventlet
 
 one = 1
@@ -156,8 +156,8 @@ class TestTpool(LimitedTestCase):
     @skip_with_pyevent
     def test_timeout(self):
         import time
-        api.exc_after(0.1, api.TimeoutError())
-        self.assertRaises(api.TimeoutError,
+        eventlet.Timeout(0.1, eventlet.TimeoutError())
+        self.assertRaises(eventlet.TimeoutError,
                           tpool.execute, time.sleep, 0.3)
 
     @skip_with_pyevent
@@ -209,12 +209,12 @@ class TpoolLongTests(LimitedTestCase):
             obj = tpool.Proxy(Dummy())
             count = 100
             for n in xrange(count):
-                api.sleep(random.random()/200.0)
+                eventlet.sleep(random.random()/200.0)
                 now = time.time()
                 token = loopnum * count + n
                 rv = obj.foo(now,token=token)
                 self.assertEquals(token, rv)
-                api.sleep(random.random()/200.0)
+                eventlet.sleep(random.random()/200.0)
 
         pile = eventlet.GreenPile(10)
         for i in xrange(10):

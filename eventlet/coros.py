@@ -3,7 +3,7 @@ import time
 import traceback
 import warnings
 
-from eventlet import api
+import eventlet
 from eventlet import event as _event
 from eventlet import hubs
 from eventlet import greenthread
@@ -62,8 +62,8 @@ class metaphore(object):
     ...     print "%s decrementing" % id
     ...     count.dec()
     ...
-    >>> _ = api.spawn(decrementer, count, 'A')
-    >>> _ = api.spawn(decrementer, count, 'B')
+    >>> _ = eventlet.spawn(decrementer, count, 'A')
+    >>> _ = eventlet.spawn(decrementer, count, 'B')
     >>> count.inc(2)
     >>> count.wait()
     A decrementing
@@ -174,17 +174,17 @@ class Queue(object):
             if exc is None:
                 return result
             else:
-                api.getcurrent().throw(*exc)
+                eventlet.getcurrent().throw(*exc)
         else:
-            self._waiters.add(api.getcurrent())
+            self._waiters.add(eventlet.getcurrent())
             try:
                 result, exc = hubs.get_hub().switch()
                 if exc is None:
                     return result
                 else:
-                    api.getcurrent().throw(*exc)
+                    eventlet.getcurrent().throw(*exc)
             finally:
-                self._waiters.discard(api.getcurrent())
+                self._waiters.discard(eventlet.getcurrent())
 
     def ready(self):
         return len(self.items) > 0
@@ -227,7 +227,7 @@ class Channel(object):
     def send(self, result=None, exc=None):
         if exc is not None and not isinstance(exc, tuple):
             exc = (exc, )
-        if api.getcurrent() is hubs.get_hub().greenlet:
+        if eventlet.getcurrent() is hubs.get_hub().greenlet:
             self.items.append((result, exc))
             if self._waiters:
                 hubs.get_hub().schedule_call_global(0, self._do_switch)
@@ -238,11 +238,11 @@ class Channel(object):
             if self._waiters:
                 hubs.get_hub().schedule_call_global(0, self._do_switch)
             if len(self.items) > self.max_size:
-                self._senders.add(api.getcurrent())
+                self._senders.add(eventlet.getcurrent())
                 try:
                     hubs.get_hub().switch()
                 finally:
-                    self._senders.discard(api.getcurrent())
+                    self._senders.discard(eventlet.getcurrent())
 
     def send_exception(self, *args):
         # the arguments are the same as for greenlet.throw
@@ -274,19 +274,19 @@ class Channel(object):
             if exc is None:
                 return result
             else:
-                api.getcurrent().throw(*exc)
+                eventlet.getcurrent().throw(*exc)
         else:
             if self._senders:
                 hubs.get_hub().schedule_call_global(0, self._do_switch)
-            self._waiters.add(api.getcurrent())
+            self._waiters.add(eventlet.getcurrent())
             try:
                 result, exc = hubs.get_hub().switch()
                 if exc is None:
                     return result
                 else:
-                    api.getcurrent().throw(*exc)
+                    eventlet.getcurrent().throw(*exc)
             finally:
-                self._waiters.discard(api.getcurrent())
+                self._waiters.discard(eventlet.getcurrent())
 
     def ready(self):
         return len(self.items) > 0
@@ -332,7 +332,7 @@ class Actor(object):
 
         self._mailbox = collections.deque()
         self._event = _event.Event()
-        self._killer = api.spawn(self.run_forever)
+        self._killer = eventlet.spawn(self.run_forever)
         from eventlet import greenpool
         self._pool = greenpool.GreenPool(concurrency)
 
@@ -394,7 +394,7 @@ class Actor(object):
         received message 2
         received message 3
 
-        >>> api.kill(a._killer)   # test cleanup
+        >>> eventlet.kill(a._killer)   # test cleanup
         """
         raise NotImplementedError()
 

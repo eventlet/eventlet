@@ -26,7 +26,7 @@ def g_log(*args):
 
 __original_socket__ = socket.socket
 def tcp_socket():
-    warnings.warn("eventlet.util.tcp_sockt is deprecated."
+    warnings.warn("eventlet.util.tcp_socket is deprecated."
         "Please use the standard socket technique for this instead:"
         "sock = socket.socket()",
         DeprecationWarning, stacklevel=2)

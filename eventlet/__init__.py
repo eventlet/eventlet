@@ -8,11 +8,13 @@ try:
     from eventlet import timeout
     from eventlet import patcher
     from eventlet import greenio
+    import greenlet
 
     sleep = greenthread.sleep
     spawn = greenthread.spawn
     spawn_n = greenthread.spawn_n
     spawn_after = greenthread.spawn_after
+    kill = greenthread.kill
     
     Timeout = timeout.Timeout
     with_timeout = timeout.with_timeout
@@ -27,6 +29,8 @@ try:
     
     connect = greenio.connect
     listen = greenio.listen
+
+    getcurrent = greenlet.getcurrent
     
     # deprecated    
     TimeoutError = timeout.Timeout

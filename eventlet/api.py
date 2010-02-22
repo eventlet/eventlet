@@ -10,6 +10,7 @@ from eventlet.support import greenlets as greenlet
 from eventlet import hubs
 from eventlet import greenthread
 from eventlet import debug
+from eventlet import Timeout
 
 __all__ = [
     'call_after', 'exc_after', 'getcurrent', 'get_default_hub', 'get_hub',
@@ -68,8 +69,11 @@ def ssl_listener(address, certificate, private_key):
     accept a connection on the newly bound socket.
     """
     from eventlet import util
-    socket = util.wrap_ssl(util.tcp_socket(), certificate, private_key, True)
-    util.socket_bind_and_listen(socket, address)
+    import socket
+
+    socket = util.wrap_ssl(socket.socket(), certificate, private_key, True)
+    socket.bind(address)
+    socket.listen(50)
     return socket
 
 def connect_tcp(address, localaddr=None):

@@ -2,7 +2,6 @@ import sys
 
 import eventlet
 from eventlet import debug
-from eventlet import api
 from tests import LimitedTestCase, main
 from unittest import TestCase
 
@@ -103,8 +102,8 @@ class TestDebug(LimitedTestCase):
 
     def test_hub_exceptions(self):
         debug.hub_exceptions(True)
-        server = api.tcp_listener(('0.0.0.0', 0))
-        client = api.connect_tcp(('127.0.0.1', server.getsockname()[1]))
+        server = eventlet.listen(('0.0.0.0', 0))
+        client = eventlet.connect(('127.0.0.1', server.getsockname()[1]))
         client_2, addr = server.accept()
         
         def hurl(s):
