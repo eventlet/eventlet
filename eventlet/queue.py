@@ -181,6 +181,15 @@ class LightQueue(object):
     def qsize(self):
         """Return the size of the queue."""
         return len(self.queue)
+
+    def resize(self, size):
+        """Resizes the queue's maximum size.
+
+        If the size is increased, and there are putters waiting, they may be woken up."""
+        if size > self.maxsize:
+            # Maybe wake some stuff up
+            self._schedule_unlock()
+        self.maxsize = size
         
     def putting(self):
         """Returns the number of greenthreads that are blocked waiting to put

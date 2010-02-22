@@ -68,6 +68,33 @@ class TestQueue(LimitedTestCase):
         self.assertEquals(evt.wait(),'done')
         gt.wait()
 
+    def test_resize_up(self):
+        q = eventlet.Queue(0)
+        def sender(evt, q):
+            q.put('hi')
+            evt.send('done')
+
+        evt = event.Event()
+        gt = eventlet.spawn(sender, evt, q)
+        eventlet.sleep(0)
+        self.assert_(not evt.ready())
+        q.resize(1)
+        eventlet.sleep(0)
+        self.assert_(evt.ready())
+        gt.wait()
+
+    def test_resize_down(self):
+        size = 5
+        q = eventlet.Queue(5)
+
+        for i in range(5):
+            q.put(i)
+
+        self.assertEquals(list(q.queue), range(5))
+        q.resize(1)
+        eventlet.sleep(0)
+        self.assertEquals(list(q.queue), range(5))
+
     def test_multiple_waiters(self):
         # tests that multiple waiters get their results back
         q = eventlet.Queue()
