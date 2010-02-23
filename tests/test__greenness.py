@@ -14,8 +14,10 @@ def start_http_server():
     #print "Serving HTTP on", sa[0], "port", sa[1], "..."
     httpd.request_count = 0
     def serve():
-        httpd.handle_request()
+        # increment the request_count before handling the request because
+        # the send() for the response blocks (or at least appeared to be)
         httpd.request_count += 1
+        httpd.handle_request()
     return spawn(serve), httpd, sa[1]
 
 class TestGreenness(unittest.TestCase):
