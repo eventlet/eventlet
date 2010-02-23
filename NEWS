@@ -15,7 +15,7 @@
 * improve patching docs, explaining more about patcher and why you'd use eventlet.green
 * better documentation on greenpiles
 * deprecate api.py completely
-* deprecate util.py completely (possibly, leave it as a "utility module" containing named and, uh, some other stuff)
+* deprecate util.py completely
 * deprecate saranwrap
 * performance improvements in the hubs
 * much better documentation overall
