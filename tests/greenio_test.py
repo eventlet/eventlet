@@ -8,6 +8,7 @@ import errno
 import eventlet
 import os
 import sys
+import array
 
 def bufsized(sock, size=1):
     """ Resize both send and receive buffers on a socket.
@@ -32,11 +33,189 @@ class TestGreenIo(LimitedTestCase):
         s.settimeout(0.1)
         gs = greenio.GreenSocket(s)
         try:
-            self.assertRaises(socket.timeout, gs.connect, ('192.0.2.1', 80))
+            gs.connect(('192.0.2.1', 80))
+            self.fail("socket.timeout not raised")
+        except socket.timeout, e:
+            self.assert_(hasattr(e, 'args'))
+            self.assertEqual(e.args[0], 'timed out')
         except socket.error, e:
             # unreachable is also a valid outcome
             if e[0] != errno.EHOSTUNREACH:
                 raise
+
+    def test_accept_timeout(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind(('', 0))
+        s.listen(50)
+
+        s.settimeout(0.1)
+        gs = greenio.GreenSocket(s)
+        try:
+            gs.accept()
+            self.fail("socket.timeout not raised")
+        except socket.timeout, e:
+            self.assert_(hasattr(e, 'args'))
+            self.assertEqual(e.args[0], 'timed out')
+
+    def test_connect_ex_timeout(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(0.1)
+        gs = greenio.GreenSocket(s)
+        e = gs.connect_ex(('192.0.2.1', 80))
+        self.assertEquals(e, errno.EAGAIN)
+
+    def test_recv_timeout(self):
+        listener = greenio.GreenSocket(socket.socket())
+        listener.bind(('', 0))
+        listener.listen(50)
+
+        def server():
+            # accept the connection in another greenlet
+            sock, addr = listener.accept()
+
+            eventlet.sleep(.2)
+
+        gt = eventlet.spawn(server)
+
+        addr = listener.getsockname()
+
+        client = greenio.GreenSocket(socket.socket())
+        client.settimeout(0.1)
+
+        client.connect(addr)
+
+        try:
+            r = client.recv(8192)
+            self.fail("socket.timeout not raised")
+        except socket.timeout, e:
+            self.assert_(hasattr(e, 'args'))
+            self.assertEqual(e.args[0], 'timed out')
+
+        gt.wait()
+
+    def test_recvfrom_timeout(self):
+        gs = greenio.GreenSocket(
+            socket.socket(socket.AF_INET, socket.SOCK_DGRAM))
+        gs.settimeout(.1)
+        gs.bind(('', 0))
+
+        try:
+            gs.recvfrom(8192)
+            self.fail("socket.timeout not raised")
+        except socket.timeout, e:
+            self.assert_(hasattr(e, 'args'))
+            self.assertEqual(e.args[0], 'timed out')
+
+    def test_recvfrom_into_timeout(self):
+        buf = buffer(array.array('B'))
+
+        gs = greenio.GreenSocket(
+            socket.socket(socket.AF_INET, socket.SOCK_DGRAM))
+        gs.settimeout(.1)
+        gs.bind(('', 0))
+
+        try:
+            gs.recvfrom_into(buf)
+            self.fail("socket.timeout not raised")
+        except socket.timeout, e:
+            self.assert_(hasattr(e, 'args'))
+            self.assertEqual(e.args[0], 'timed out')
+
+    def test_recv_into_timeout(self):
+        buf = buffer(array.array('B'))
+
+        listener = greenio.GreenSocket(socket.socket())
+        listener.bind(('', 0))
+        listener.listen(50)
+
+        def server():
+            # accept the connection in another greenlet
+            sock, addr = listener.accept()
+
+            eventlet.sleep(.2)
+
+        gt = eventlet.spawn(server)
+
+        addr = listener.getsockname()
+
+        client = greenio.GreenSocket(socket.socket())
+        client.settimeout(0.1)
+
+        client.connect(addr)
+
+        try:
+            r = client.recv_into(buf)
+            self.fail("socket.timeout not raised")
+        except socket.timeout, e:
+            self.assert_(hasattr(e, 'args'))
+            self.assertEqual(e.args[0], 'timed out')
+
+        gt.wait()
+
+    def test_send_timeout(self):
+        listener = greenio.GreenSocket(socket.socket())
+        listener.bind(('', 0))
+        listener.listen(50)
+
+        def server():
+            # accept the connection in another greenlet
+            sock, addr = listener.accept()
+
+            eventlet.sleep(.5)
+
+        gt = eventlet.spawn(server)
+
+        addr = listener.getsockname()
+
+        client = greenio.GreenSocket(socket.socket())
+        client.settimeout(0.1)
+
+        client.connect(addr)
+
+        try:
+            msg = "A"*(8*1024*1024)
+
+            # want to exceed the size of the OS buffer so it'll block
+            for x in range(10):
+                client.send(msg)
+            self.fail("socket.timeout not raised")
+        except socket.timeout, e:
+            self.assert_(hasattr(e, 'args'))
+            self.assertEqual(e.args[0], 'timed out')
+
+        gt.wait()
+
+    def test_sendall_timeout(self):
+        listener = greenio.GreenSocket(socket.socket())
+        listener.bind(('', 0))
+        listener.listen(50)
+
+        def server():
+            # accept the connection in another greenlet
+            sock, addr = listener.accept()
+
+            eventlet.sleep(.5)
+
+        gt = eventlet.spawn(server)
+
+        addr = listener.getsockname()
+
+        client = greenio.GreenSocket(socket.socket())
+        client.settimeout(0.1)
+
+        client.connect(addr)
+
+        try:
+            msg = "A"*(8*1024*1024)
+
+            # want to exceed the size of the OS buffer so it'll block
+            client.sendall(msg)
+            self.fail("socket.timeout not raised")
+        except socket.timeout, e:
+            self.assert_(hasattr(e, 'args'))
+            self.assertEqual(e.args[0], 'timed out')
+
+        gt.wait()
 
     def test_close_with_makefile(self):
         def accept_close_early(listener):

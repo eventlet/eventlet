@@ -118,11 +118,15 @@ class TestDebug(LimitedTestCase):
             eventlet.sleep(0)
             client.send(' ')
             eventlet.sleep(0)
+            # allow the "hurl" greenlet to trigger the KeyError
+            # not sure why the extra context switch is needed
+            eventlet.sleep(0)
         finally:
             sys.stderr = orig
             self.assertRaises(KeyError, gt.wait)
             debug.hub_exceptions(False)
-        self.assert_('Traceback' in fake.getvalue(), 
+        # look for the KeyError exception in the traceback
+        self.assert_('KeyError: 1' in fake.getvalue(), 
             "Traceback not in:\n" + fake.getvalue())
         
 if __name__ == "__main__":
