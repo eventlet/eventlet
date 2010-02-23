@@ -104,8 +104,12 @@ def execute(meth,*args, **kwargs):
     cooperate with green threads by sticking them in native threads, at the cost
     of some overhead.
     """
+    global _threads
     setup()
-    e = esend(meth,*args,**kwargs)
+    my_thread = threading.currentThread()
+    if my_thread in _threads:
+        return meth(*args, **kwargs)
+    e = esend(meth, *args, **kwargs)
     rv = erecv(e)
     return rv
 
@@ -199,7 +203,7 @@ class Proxy(object):
 
 
 _nthreads = int(os.environ.get('EVENTLET_THREADPOOL_SIZE', 20))
-_threads = {}
+_threads = set()
 _coro = None
 _setup_already = False
 def setup():
@@ -232,9 +236,10 @@ def setup():
     _reqq = Queue(maxsize=-1)
     _rspq = Queue(maxsize=-1)
     for i in range(0,_nthreads):
-        _threads[i] = threading.Thread(target=tworker)
-        _threads[i].setDaemon(True)
-        _threads[i].start()
+        t = threading.Thread(target=tworker)
+        t.setDaemon(True)
+        t.start()
+        _threads.add(t)
 
     _coro = greenthread.spawn_n(tpool_trampoline)
     
@@ -245,7 +250,7 @@ def killall():
         return
     for i in _threads:
         _reqq.put(None)
-    for thr in _threads.values():
+    for thr in _threads:
         thr.join()
     _threads.clear()
     if _coro is not None:
