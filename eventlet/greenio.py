@@ -1,3 +1,4 @@
+import eventlet
 from eventlet.hubs import trampoline
 from eventlet.hubs import get_hub
 
@@ -151,7 +152,7 @@ class GreenSocket(object):
                 set_nonblocking(client)
                 return type(self)(client), addr
             trampoline(fd, read=True, timeout=self.gettimeout(),
-                           timeout_exc=socket.timeout)
+                           timeout_exc=socket.timeout("timed out"))
 
     def bind(self, *args, **kw):
         fn = self.bind = self.fd.bind
@@ -170,15 +171,17 @@ class GreenSocket(object):
         fd = self.fd
         if self.gettimeout() is None:
             while not socket_connect(fd, address):
-                trampoline(fd, write=True, timeout_exc=socket.timeout)
+                trampoline(fd, write=True,
+                    timeout_exc=socket.timeout("timed out"))
         else:
             end = time.time() + self.gettimeout()
             while True:
                 if socket_connect(fd, address):
                     return
                 if time.time() >= end:
-                    raise socket.timeout
-                trampoline(fd, write=True, timeout=end-time.time(), timeout_exc=socket.timeout)
+                    raise socket.timeout("timed out")
+                trampoline(fd, write=True, timeout=end-time.time(),
+                        timeout_exc=socket.timeout("timed out"))
 
     def connect_ex(self, address):
         if self.act_non_blocking:
@@ -187,7 +190,8 @@ class GreenSocket(object):
         if self.gettimeout() is None:
             while not socket_connect(fd, address):
                 try:
-                    trampoline(fd, write=True, timeout_exc=socket.timeout)
+                    trampoline(fd, write=True,
+                                timeout_exc=socket.timeout(errno.EAGAIN))
                 except socket.error, ex:
                     return ex[0]
         else:
@@ -196,9 +200,10 @@ class GreenSocket(object):
                 if socket_connect(fd, address):
                     return 0
                 if time.time() >= end:
-                    raise socket.timeout
+                    raise socket.timeout(errno.EAGAIN)
                 try:
-                    trampoline(fd, write=True, timeout=end-time.time(), timeout_exc=socket.timeout)
+                    trampoline(fd, write=True, timeout=end-time.time(),
+                            timeout_exc=socket.timeout(errno.EAGAIN))
                 except socket.error, ex:
                     return ex[0]
 
@@ -254,21 +259,24 @@ class GreenSocket(object):
             trampoline(fd, 
                 read=True, 
                 timeout=self.timeout, 
-                timeout_exc=socket.timeout)
+                timeout_exc=socket.timeout("timed out"))
 
     def recvfrom(self, *args):
         if not self.act_non_blocking:
-            trampoline(self.fd, read=True, timeout=self.gettimeout(), timeout_exc=socket.timeout)
+            trampoline(self.fd, read=True, timeout=self.gettimeout(),
+                    timeout_exc=socket.timeout("timed out"))
         return self.fd.recvfrom(*args)
 
     def recvfrom_into(self, *args):
         if not self.act_non_blocking:
-            trampoline(self.fd, read=True, timeout=self.gettimeout(), timeout_exc=socket.timeout)
+            trampoline(self.fd, read=True, timeout=self.gettimeout(),
+                    timeout_exc=socket.timeout("timed out"))
         return self.fd.recvfrom_into(*args)
 
     def recv_into(self, *args):
         if not self.act_non_blocking:
-            trampoline(self.fd, read=True, timeout=self.gettimeout(), timeout_exc=socket.timeout)
+            trampoline(self.fd, read=True, timeout=self.gettimeout(),
+                    timeout_exc=socket.timeout("timed out"))
         return self.fd.recv_into(*args)
 
     def send(self, data, flags=0):
@@ -276,6 +284,8 @@ class GreenSocket(object):
         if self.act_non_blocking:
             return fd.send(data, flags)
         try:
+            trampoline(self.fd, write=True, timeout=self.gettimeout(),
+                    timeout_exc=socket.timeout("timed out"))
             return fd.send(data, flags)
         except socket.error, e:
             if e[0] in SOCKET_BLOCKING:
@@ -290,11 +300,11 @@ class GreenSocket(object):
             trampoline(fd, 
                 write=True, 
                 timeout=self.timeout, 
-                timeout_exc=socket.timeout)
+                timeout_exc=socket.timeout("timed out"))
             tail += self.send(data[tail:], flags)
 
     def sendto(self, *args):
-        trampoline(self.fd, write=True, timeout_exc=socket.timeout)
+        trampoline(self.fd, write=True, timeout_exc=socket.timeout("timed out"))
         return self.fd.sendto(*args)
 
     def setblocking(self, flag):
