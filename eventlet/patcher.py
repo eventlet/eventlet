@@ -186,3 +186,9 @@ def _green_thread_modules():
 def _green_time_modules():
     from eventlet.green import time
     return [('time', time)]
+
+if __name__ == "__main__":
+    import sys
+    sys.argv.pop(0)
+    monkey_patch()
+    execfile(sys.argv[0])
