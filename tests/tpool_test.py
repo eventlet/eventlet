@@ -32,13 +32,11 @@ def noop():
 
 class TestTpool(LimitedTestCase):
     def setUp(self):
-        debug.hub_exceptions(True)
         super(TestTpool, self).setUp()
 
     def tearDown(self):
-        super(TestTpool, self).tearDown()
         tpool.killall()
-        debug.hub_exceptions(False)
+        super(TestTpool, self).tearDown()
 
     @skip_with_pyevent
     def test_wrap_tuple(self):
