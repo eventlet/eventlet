@@ -160,6 +160,7 @@ class TestGreenIo(LimitedTestCase):
         def server():
             # accept the connection in another greenlet
             sock, addr = listener.accept()
+            bufsized(sock, 1)
 
             eventlet.sleep(.5)
 
@@ -171,9 +172,10 @@ class TestGreenIo(LimitedTestCase):
         client.settimeout(0.1)
 
         client.connect(addr)
+        bufsized(client, 1)
 
         try:
-            msg = "A"*(8*1024*1024)
+            msg = "A"*min_buf_size()
 
             # want to exceed the size of the OS buffer so it'll block
             for x in range(10):
