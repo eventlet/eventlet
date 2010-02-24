@@ -68,7 +68,7 @@ class Popen(subprocess_orig.Popen):
 
 # Borrow subprocess.call() and check_call(), but patch them so they reference
 # OUR Popen class rather than subprocess.Popen.
-call       = new.function(subprocess_orig.call.func_code,       globals())
+call = new.function(subprocess_orig.call.func_code, globals())
 try:
     check_call = new.function(subprocess_orig.check_call.func_code, globals())
 except AttributeError:

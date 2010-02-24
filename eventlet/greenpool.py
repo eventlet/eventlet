@@ -83,7 +83,7 @@ class GreenPool(object):
             gt.link(self._spawn_done)
         return gt
     
-    def _spawn_n_impl(self, func, args, kwargs, coro=None):
+    def _spawn_n_impl(self, func, args, kwargs, coro):
         try:
             try:
                 func(*args, **kwargs)
@@ -108,11 +108,11 @@ class GreenPool(object):
         # itself -- instead, just execute in the current coroutine
         current = greenthread.getcurrent()
         if self.sem.locked() and current in self.coroutines_running:
-            self._spawn_n_impl(function, args, kwargs)
+            self._spawn_n_impl(function, args, kwargs, None)
         else:
             self.sem.acquire()
             g = greenthread.spawn_n(self._spawn_n_impl, 
-                function, args, kwargs, coro=True)
+                function, args, kwargs, True)
             if not self.coroutines_running:
                 self.no_coros_running = event.Event()
             self.coroutines_running.add(g)
