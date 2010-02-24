@@ -173,11 +173,12 @@ class TestGreenIo(LimitedTestCase):
         client.connect(addr)
 
         try:
-            msg = "A"*(8*1024*1024)
+            msg = "A"*8192*1024
 
+            total_sent = 0
             # want to exceed the size of the OS buffer so it'll block
             for x in range(10):
-                client.send(msg)
+                total_sent += client.send(msg)
             self.fail("socket.timeout not raised")
         except socket.timeout, e:
             self.assert_(hasattr(e, 'args'))
