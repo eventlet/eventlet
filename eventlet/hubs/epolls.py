@@ -1,15 +1,27 @@
 from eventlet import patcher
 time = patcher.original('time')
-try:
-    # shoot for epoll module first
-    from epoll import poll as epoll
-except ImportError, e:
-    # if we can't import that, hope we're on 2.6
-    select = patcher.original('select')
+select = patcher.original("select")
+if hasattr(select, 'epoll'):
+    epoll = select.epoll
+else:
     try:
-        epoll = select.epoll
-    except AttributeError:
-        raise ImportError("No epoll on select module")
+        # http://pypi.python.org/pypi/select26/
+        from select26 import epoll
+    except ImportError:
+        try:
+            import epoll as _epoll_mod
+        except ImportError:
+            raise ImportError(
+                "No epoll implementation found in select module or PYTHONPATH")
+        else:
+            if hasattr(_epoll_mod, 'poll'):
+                epoll = _epoll_mod.poll
+            else:
+                raise ImportError(
+                    "You have an old, buggy epoll module in PYTHONPATH."
+                    " Install http://pypi.python.org/pypi/python-epoll/"
+                    " NOT http://pypi.python.org/pypi/pyepoll/. "
+                    " easy_install pyepoll installs the wrong version.")
 
 from eventlet.hubs.hub import BaseHub
 from eventlet.hubs import poll
@@ -32,7 +44,7 @@ class Hub(poll.Hub):
     def add(self, evtype, fileno, cb):
         oldlisteners = bool(self.listeners[READ].get(fileno) or
                             self.listeners[WRITE].get(fileno))
-        listener = BaseHub.add(self,evtype, fileno, cb)
+        listener = BaseHub.add(self, evtype, fileno, cb)
         if not oldlisteners:
             # Means we've added a new listener
             self.register(fileno, new=True)
