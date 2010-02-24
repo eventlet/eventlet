@@ -283,24 +283,36 @@ class GreenSocket(object):
         fd = self.fd
         if self.act_non_blocking:
             return fd.send(data, flags)
-        try:
+
+        # XXX: need to deal with the exceptions that could be raised if the
+        # buffer is full (specifically the try/except below)
+
+        # need to test all of the conditions
+
+        # blocking socket behavior - sends all, blocks if the buffer is full
+        total_sent = 0
+        len_data = len(data)
+
+        while 1:
+            try:
+                total_sent += fd.send(data[total_sent:], flags)
+            except socket.error, e:
+                if e[0] not in SOCKET_BLOCKING:
+                    raise
+
+            if total_sent == len_data:
+                break
+
             trampoline(self.fd, write=True, timeout=self.gettimeout(),
                     timeout_exc=socket.timeout("timed out"))
-            return fd.send(data, flags)
-        except socket.error, e:
-            if e[0] in SOCKET_BLOCKING:
-                return 0
-            raise
+
+        return total_sent
 
     def sendall(self, data, flags=0):
         fd = self.fd
         tail = self.send(data, flags)
         len_data = len(data)
         while tail < len_data:
-            trampoline(fd, 
-                write=True, 
-                timeout=self.timeout, 
-                timeout_exc=socket.timeout("timed out"))
             tail += self.send(data[tail:], flags)
 
     def sendto(self, *args):
