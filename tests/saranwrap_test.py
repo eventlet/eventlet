@@ -1,5 +1,8 @@
-from eventlet import api, saranwrap
-from eventlet import greenpool
+import warnings
+warnings.simplefilter('ignore', DeprecationWarning)
+from eventlet import saranwrap
+warnings.simplefilter('default', DeprecationWarning)
+from eventlet import greenpool, sleep
 
 import os
 import eventlet
@@ -350,7 +353,7 @@ sys_path = sys.path""")
 
         # sleep for a bit to make sure out coroutine ran by the time
         # we check the assert below
-        api.sleep(0.1)
+        sleep(0.1)
 
         self.assert_(
             'random' in obj_proxy.get_dict(),
@@ -363,7 +366,7 @@ sys_path = sys.path""")
         pid = saranwrap.getpid(prox)
         self.assertEqual(os.kill(pid, 0), None)   # assert that the process is running
         del prox  # removing all references to the proxy should kill the child process
-        api.sleep(0.1)  # need to let the signal handler run
+        sleep(0.1)  # need to let the signal handler run
         self.assertRaises(OSError, os.kill, pid, 0)  # raises OSError if pid doesn't exist
 
     @skip_on_windows

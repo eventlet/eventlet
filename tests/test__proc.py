@@ -1,9 +1,13 @@
 import sys
 import unittest
-from eventlet.api import sleep, with_timeout
-from eventlet import api, proc, coros
+import warnings
+warnings.simplefilter('ignore', DeprecationWarning)
+from eventlet import proc
+warnings.simplefilter('default', DeprecationWarning)
+from eventlet import coros
 from eventlet import event as _event
-from tests import LimitedTestCase, skipped
+from eventlet import Timeout, sleep, getcurrent, with_timeout
+from tests import LimitedTestCase, skipped, silence_warnings
 
 DELAY = 0.01
 
@@ -12,37 +16,39 @@ class ExpectedError(Exception):
 
 class TestLink_Signal(LimitedTestCase):
 
+    @silence_warnings
     def test_send(self):
         s = proc.Source()
         q1, q2, q3 = coros.queue(), coros.queue(), coros.queue()
         s.link_value(q1)
-        self.assertRaises(api.TimeoutError, s.wait, 0)
+        self.assertRaises(Timeout, s.wait, 0)
         assert s.wait(0, None) is None
         assert s.wait(0.001, None) is None
-        self.assertRaises(api.TimeoutError, s.wait, 0.001)
+        self.assertRaises(Timeout, s.wait, 0.001)
         s.send(1)
         assert not q1.ready()
         assert s.wait()==1
-        api.sleep(0)
+        sleep(0)
         assert q1.ready()
         s.link_exception(q2)
         s.link(q3)
         assert not q2.ready()
-        api.sleep(0)
+        sleep(0)
         assert q3.ready()
         assert s.wait()==1
 
+    @silence_warnings
     def test_send_exception(self):
         s = proc.Source()
         q1, q2, q3 = coros.queue(), coros.queue(), coros.queue()
         s.link_exception(q1)
         s.send_exception(OSError('hello'))
-        api.sleep(0)
+        sleep(0)
         assert q1.ready()
         s.link_value(q2)
         s.link(q3)
         assert not q2.ready()
-        api.sleep(0)
+        sleep(0)
         assert q3.ready()
         self.assertRaises(OSError, q1.wait)
         self.assertRaises(OSError, q3.wait)
@@ -53,10 +59,10 @@ class TestProc(LimitedTestCase):
 
     def test_proc(self):
         p = proc.spawn(lambda : 100)
-        receiver = proc.spawn(api.sleep, 1)
+        receiver = proc.spawn(sleep, 1)
         p.link(receiver)
         self.assertRaises(proc.LinkedCompleted, receiver.wait)
-        receiver2 = proc.spawn(api.sleep, 1)
+        receiver2 = proc.spawn(sleep, 1)
         p.link(receiver2)
         self.assertRaises(proc.LinkedCompleted, receiver2.wait)
 
@@ -210,8 +216,9 @@ class TestRaise_link(TestCase):
 
         self.check_timed_out(*xxxxx)
 
+    @silence_warnings
     def test_raise(self):
-        p = self.p = proc.spawn(lambda : api.getcurrent().throw(ExpectedError('test_raise')))
+        p = self.p = proc.spawn(lambda : getcurrent().throw(ExpectedError('test_raise')))
         self._test_raise(p, True, proc.LinkedFailed)
         # repeating the same with dead process
         for _ in xrange(3):
@@ -242,6 +249,7 @@ class TestRaise_link(TestCase):
 
         self.check_timed_out(*xxxxx)
 
+    @silence_warnings
     def test_kill(self):
         p = self.p = proc.spawn(sleep, DELAY)
         self._test_kill(p, True, proc.LinkedKilled)
@@ -277,7 +285,7 @@ class TestStuff(LimitedTestCase):
             return 1
         x = proc.spawn(x)
         z = proc.spawn(lambda : 3)
-        y = proc.spawn(lambda : api.getcurrent().throw(ExpectedError('test_wait_error')))
+        y = proc.spawn(lambda : getcurrent().throw(ExpectedError('test_wait_error')))
         y.link(x)
         x.link(y)
         y.link(z)
@@ -293,12 +301,12 @@ class TestStuff(LimitedTestCase):
             sleep(0.1)
             raise ExpectedError('first')
         a = proc.spawn(first)
-        b = proc.spawn(lambda : api.getcurrent().throw(ExpectedError('second')))
+        b = proc.spawn(lambda : getcurrent().throw(ExpectedError('second')))
         try:
             proc.waitall([a, b])
         except ExpectedError, ex:
             assert 'second' in str(ex), repr(str(ex))
-        api.sleep(0.2)   # sleep to ensure that the other timer is raised
+        sleep(0.2)   # sleep to ensure that the other timer is raised
 
     def test_multiple_listeners_error(self):
         # if there was an error while calling a callback
@@ -321,7 +329,7 @@ class TestStuff(LimitedTestCase):
         sleep(DELAY*10)
         assert results in [[10, 20], [20, 10]], results
 
-        p = proc.spawn(lambda : api.getcurrent().throw(ExpectedError('test_multiple_listeners_error')))
+        p = proc.spawn(lambda : getcurrent().throw(ExpectedError('test_multiple_listeners_error')))
         results = []
         p.link(listener1)
         p.link(listener2)

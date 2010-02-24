@@ -1,5 +1,5 @@
-from eventlet.api import spawn, getcurrent
 from eventlet.hubs import get_hub
+from eventlet import spawn, getcurrent
 
 def block_on(deferred):
     cur = [getcurrent()]

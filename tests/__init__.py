@@ -3,6 +3,7 @@ import sys
 import os
 import errno
 import unittest
+import warnings
 
 # convenience for importers
 main = unittest.main
@@ -123,3 +124,12 @@ def find_command(command):
             return p
     raise IOError(errno.ENOENT, 'Command not found: %r' % command)
 
+def silence_warnings(func):
+    def wrapper(*args, **kw):
+        warnings.simplefilter('ignore', DeprecationWarning)
+        try:
+            return func(*args, **kw)
+        finally:
+            warnings.simplefilter('default', DeprecationWarning)
+    wrapper.__name__ = func.__name__
+    return wrapper

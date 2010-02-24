@@ -1,9 +1,8 @@
 import sys
 import threading
 from twisted.internet.base import DelayedCall as TwistedDelayedCall
-from eventlet import api
+from eventlet import getcurrent, greenlet
 from eventlet.hubs.hub import FdListener, READ, WRITE
-
 
 class DelayedCall(TwistedDelayedCall):
     "fix DelayedCall to behave like eventlet's Timer in some respects"
@@ -17,7 +16,7 @@ class DelayedCall(TwistedDelayedCall):
 class LocalDelayedCall(DelayedCall):
 
     def __init__(self, *args, **kwargs):
-        self.greenlet = api.getcurrent()
+        self.greenlet = getcurrent()
         DelayedCall.__init__(self, *args, **kwargs)
 
     def _get_cancelled(self):
@@ -77,7 +76,7 @@ class socket_rwdescriptor(FdListener):
         # (it has no idea it was switched away). So, we restart the mainloop.
         # XXX this is not enough, pollreactor prints the traceback for this and epollreactor
         # times out. see test__hub.TestCloseSocketWhilePolling
-        raise api.GreenletExit
+        raise greenlet.GreenletExit
 
     logstr = "twistedr"
 

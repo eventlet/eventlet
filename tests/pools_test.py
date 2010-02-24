@@ -1,8 +1,7 @@
 from unittest import TestCase, main
 
 import eventlet
-from eventlet import api
-from eventlet import coros
+from eventlet import Queue
 from eventlet import pools
 
 class IntPool(pools.Pool):
@@ -40,31 +39,31 @@ class TestIntPool(TestCase):
         self.assertEquals(self.pool.free(), 4)
 
     def test_exhaustion(self):
-        waiter = coros.queue(0)
+        waiter = Queue(0)
         def consumer():
             gotten = None
             try:
                 gotten = self.pool.get()
             finally:
-                waiter.send(gotten)
+                waiter.put(gotten)
 
-        api.spawn(consumer)
+        eventlet.spawn(consumer)
 
         one, two, three, four = (
             self.pool.get(), self.pool.get(), self.pool.get(), self.pool.get())
         self.assertEquals(self.pool.free(), 0)
 
         # Let consumer run; nothing will be in the pool, so he will wait
-        api.sleep(0)
+        eventlet.sleep(0)
 
         # Wake consumer
         self.pool.put(one)
 
         # wait for the consumer
-        self.assertEquals(waiter.wait(), one)
+        self.assertEquals(waiter.get(), one)
 
     def test_blocks_on_pool(self):
-        waiter = coros.queue(0)
+        waiter = Queue(0)
         def greedy():
             self.pool.get()
             self.pool.get()
@@ -74,24 +73,24 @@ class TestIntPool(TestCase):
             self.assertEquals(self.pool.waiting(), 0)
             # The call to the next get will unschedule this routine.
             self.pool.get()
-            # So this send should never be called.
-            waiter.send('Failed!')
+            # So this put should never be called.
+            waiter.put('Failed!')
 
-        killable = api.spawn(greedy)
+        killable = eventlet.spawn(greedy)
 
         # no one should be waiting yet.
         self.assertEquals(self.pool.waiting(), 0)
 
         ## Wait for greedy
-        api.sleep(0)
+        eventlet.sleep(0)
 
         ## Greedy should be blocking on the last get
         self.assertEquals(self.pool.waiting(), 1)
 
         ## Send will never be called, so balance should be 0.
-        self.assertFalse(waiter.ready())
+        self.assertFalse(not waiter.full())
 
-        api.kill(killable)
+        eventlet.kill(killable)
 
     def test_ordering(self):
         # normal case is that items come back out in the
@@ -107,17 +106,17 @@ class TestIntPool(TestCase):
         try:
             size = 2
             self.pool = IntPool(min_size=0, max_size=size)
-            queue = coros.queue()
+            queue = Queue()
             results = []
             def just_put(pool_item, index):
                 self.pool.put(pool_item)
-                queue.send(index)
+                queue.put(index)
             for index in xrange(size + 1):
                 pool_item = self.pool.get()
-                api.spawn(just_put, pool_item, index)
+                eventlet.spawn(just_put, pool_item, index)
 
             for _ in range(size+1):
-                x = queue.wait()
+                x = queue.get()
                 results.append(x)
             self.assertEqual(sorted(results), range(size + 1))
         finally:

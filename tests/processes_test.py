@@ -1,7 +1,10 @@
 import sys
+import warnings
 from tests import LimitedTestCase, main, skip_on_windows
 
+warnings.simplefilter('ignore', DeprecationWarning)
 from eventlet import processes, api
+warnings.simplefilter('default', DeprecationWarning)
 
 class TestEchoPool(LimitedTestCase):
     def setUp(self):
