@@ -1,4 +1,5 @@
 from eventlet import coros, proc, api
+from eventlet.semaphore import Semaphore
 
 import warnings
 warnings.warn("The pool module is deprecated.  Please use the "
@@ -10,7 +11,7 @@ class Pool(object):
         if min_size > max_size:
             raise ValueError('min_size cannot be bigger than max_size')
         self.max_size = max_size
-        self.sem = coros.Semaphore(max_size)
+        self.sem = Semaphore(max_size)
         self.procs = proc.RunningProcSet()
         if track_events:
             self.results = coros.queue()

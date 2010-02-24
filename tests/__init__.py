@@ -3,6 +3,9 @@ import sys
 import os
 import errno
 import unittest
+import warnings
+
+from eventlet import debug, hubs
 
 # convenience for importers
 main = unittest.main
@@ -105,6 +108,15 @@ class LimitedTestCase(unittest.TestCase):
 
     def tearDown(self):
         self.timer.cancel()
+        try:
+            hub = hubs.get_hub()
+            num_readers = len(hub.get_readers())
+            num_writers = len(hub.get_writers())
+            assert num_readers == num_writers == 0
+        except AssertionError, e:
+            print "ERROR: Hub not empty"
+            print debug.format_hub_timers()
+            print debug.format_hub_listeners()
 
 
 def verify_hub_empty():
@@ -112,7 +124,7 @@ def verify_hub_empty():
     hub = hubs.get_hub()
     num_readers = len(hub.get_readers())
     num_writers = len(hub.get_writers())
-    num_timers = len(hub.get_timers_count())
+    num_timers = hub.get_timers_count()
     assert num_readers == 0 and num_writers == 0, "Readers: %s Writers: %s" % (num_readers, num_writers)
 
 
@@ -123,3 +135,12 @@ def find_command(command):
             return p
     raise IOError(errno.ENOENT, 'Command not found: %r' % command)
 
+def silence_warnings(func):
+    def wrapper(*args, **kw):
+        warnings.simplefilter('ignore', DeprecationWarning)
+        try:
+            return func(*args, **kw)
+        finally:
+            warnings.simplefilter('default', DeprecationWarning)
+    wrapper.__name__ = func.__name__
+    return wrapper

@@ -4,12 +4,16 @@ If either operation blocked the whole script would block and timeout.
 """
 import unittest
 from eventlet.green import urllib2, BaseHTTPServer
-from eventlet.api import spawn, kill
+from eventlet import spawn, kill
+
+class QuietHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+    protocol_version = "HTTP/1.0"
+    def log_message(self, *args, **kw):
+        pass
 
 def start_http_server():
     server_address = ('localhost', 0)
-    BaseHTTPServer.BaseHTTPRequestHandler.protocol_version = "HTTP/1.0"
-    httpd = BaseHTTPServer.HTTPServer(server_address, BaseHTTPServer.BaseHTTPRequestHandler)
+    httpd = BaseHTTPServer.HTTPServer(server_address, QuietHandler)
     sa = httpd.socket.getsockname()
     #print "Serving HTTP on", sa[0], "port", sa[1], "..."
     httpd.request_count = 0

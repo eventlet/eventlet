@@ -1,21 +1,25 @@
-from tests import LimitedTestCase
+from tests import LimitedTestCase, silence_warnings
 from unittest import main
 import eventlet
-from eventlet import api, coros, proc
+from eventlet import coros, spawn, sleep
+from eventlet.event import Event
 
 
 class TestQueue(LimitedTestCase):
 
+    @silence_warnings
     def test_send_first(self):
         q = coros.queue()
         q.send('hi')
         self.assertEquals(q.wait(), 'hi')
 
+    @silence_warnings
     def test_send_exception_first(self):
         q = coros.queue()
         q.send(exc=RuntimeError())
         self.assertRaises(RuntimeError, q.wait)
 
+    @silence_warnings
     def test_send_last(self):
         q = coros.queue()
         def waiter(q):
@@ -23,11 +27,12 @@ class TestQueue(LimitedTestCase):
             self.assertEquals(q.wait(), 'hi2')
             timer.cancel()
 
-        api.spawn(waiter, q)
-        api.sleep(0)
-        api.sleep(0)
+        spawn(waiter, q)
+        sleep(0)
+        sleep(0)
         q.send('hi2')
 
+    @silence_warnings
     def test_max_size(self):
         q = coros.queue(2)
         results = []
@@ -40,15 +45,16 @@ class TestQueue(LimitedTestCase):
             q.send('c')
             results.append('c')
 
-        api.spawn(putter, q)
-        api.sleep(0)
+        spawn(putter, q)
+        sleep(0)
         self.assertEquals(results, ['a', 'b'])
         self.assertEquals(q.wait(), 'a')
-        api.sleep(0)
+        sleep(0)
         self.assertEquals(results, ['a', 'b', 'c'])
         self.assertEquals(q.wait(), 'b')
         self.assertEquals(q.wait(), 'c')
 
+    @silence_warnings
     def test_zero_max_size(self):
         q = coros.queue(0)
         def sender(evt, q):
@@ -59,16 +65,17 @@ class TestQueue(LimitedTestCase):
             x = q.wait()
             evt.send(x)
 
-        e1 = coros.Event()
-        e2 = coros.Event()
+        e1 = Event()
+        e2 = Event()
 
-        api.spawn(sender, e1, q)
-        api.sleep(0)
+        spawn(sender, e1, q)
+        sleep(0)
         self.assert_(not e1.ready())
-        api.spawn(receiver, e2, q)
+        spawn(receiver, e2, q)
         self.assertEquals(e2.wait(),'hi')
         self.assertEquals(e1.wait(),'done')
 
+    @silence_warnings
     def test_multiple_waiters(self):
         # tests that multiple waiters get their results back
         q = coros.queue()
@@ -88,6 +95,7 @@ class TestQueue(LimitedTestCase):
             results.add(gt.wait())
         self.assertEquals(results, set(sendings))
 
+    @silence_warnings
     def test_waiters_that_cancel(self):
         q = coros.queue()
 
@@ -100,22 +108,24 @@ class TestQueue(LimitedTestCase):
                 evt.send('timed out')
 
 
-        evt = coros.Event()
-        api.spawn(do_receive, q, evt)
+        evt = Event()
+        spawn(do_receive, q, evt)
         self.assertEquals(evt.wait(), 'timed out')
 
         q.send('hi')
         self.assertEquals(q.wait(), 'hi')
 
+    @silence_warnings
     def test_senders_that_die(self):
         q = coros.queue()
 
         def do_send(q):
             q.send('sent')
 
-        api.spawn(do_send, q)
+        spawn(do_send, q)
         self.assertEquals(q.wait(), 'sent')
 
+    @silence_warnings
     def test_two_waiters_one_dies(self):
         def waiter(q, evt):
             evt.send(q.wait())
@@ -128,15 +138,16 @@ class TestQueue(LimitedTestCase):
                 evt.send('timed out')
 
         q = coros.queue()
-        dying_evt = coros.Event()
-        waiting_evt = coros.Event()
-        api.spawn(do_receive, q, dying_evt)
-        api.spawn(waiter, q, waiting_evt)
-        api.sleep(0)
+        dying_evt = Event()
+        waiting_evt = Event()
+        spawn(do_receive, q, dying_evt)
+        spawn(waiter, q, waiting_evt)
+        sleep(0)
         q.send('hi')
         self.assertEquals(dying_evt.wait(), 'timed out')
         self.assertEquals(waiting_evt.wait(), 'hi')
 
+    @silence_warnings
     def test_two_bogus_waiters(self):
         def do_receive(q, evt):
             eventlet.Timeout(0, RuntimeError())
@@ -147,28 +158,29 @@ class TestQueue(LimitedTestCase):
                 evt.send('timed out')
 
         q = coros.queue()
-        e1 = coros.Event()
-        e2 = coros.Event()
-        api.spawn(do_receive, q, e1)
-        api.spawn(do_receive, q, e2)
-        api.sleep(0)
+        e1 = Event()
+        e2 = Event()
+        spawn(do_receive, q, e1)
+        spawn(do_receive, q, e2)
+        sleep(0)
         q.send('sent')
         self.assertEquals(e1.wait(), 'timed out')
         self.assertEquals(e2.wait(), 'timed out')
         self.assertEquals(q.wait(), 'sent')
                 
+    @silence_warnings
     def test_waiting(self):
         def do_wait(q, evt):
             result = q.wait()
             evt.send(result)
 
         q = coros.queue()
-        e1 = coros.Event()
-        api.spawn(do_wait, q, e1)
-        api.sleep(0)
+        e1 = Event()
+        spawn(do_wait, q, e1)
+        sleep(0)
         self.assertEquals(1, q.waiting())
         q.send('hi')
-        api.sleep(0)
+        sleep(0)
         self.assertEquals(0, q.waiting())
         self.assertEquals('hi', e1.wait())
         self.assertEquals(0, q.waiting())
@@ -176,8 +188,9 @@ class TestQueue(LimitedTestCase):
 
 class TestChannel(LimitedTestCase):
 
+    @silence_warnings
     def test_send(self):
-        api.sleep(0.1)
+        sleep(0.1)
         channel = coros.queue(0)
 
         events = []
@@ -186,7 +199,7 @@ class TestChannel(LimitedTestCase):
             events.append(channel.wait())
             events.append(channel.wait())
 
-        proc.spawn(another_greenlet)
+        spawn(another_greenlet)
 
         events.append('sending')
         channel.send('hello')
@@ -197,8 +210,9 @@ class TestChannel(LimitedTestCase):
         self.assertEqual(['sending', 'hello', 'sent hello', 'world', 'sent world'], events)
 
 
+    @silence_warnings
     def test_wait(self):
-        api.sleep(0.1)
+        sleep(0.1)
         channel = coros.queue(0)
         events = []
 
@@ -209,27 +223,28 @@ class TestChannel(LimitedTestCase):
             channel.send('world')
             events.append('sent world')
 
-        proc.spawn(another_greenlet)
+        spawn(another_greenlet)
 
         events.append('waiting')
         events.append(channel.wait())
         events.append(channel.wait())
 
         self.assertEqual(['waiting', 'sending hello', 'hello', 'sending world', 'world'], events)
-        api.sleep(0)
+        sleep(0)
         self.assertEqual(['waiting', 'sending hello', 'hello', 'sending world', 'world', 'sent world'], events)
 
+    @silence_warnings
     def test_waiters(self):
         c = coros.Channel()
         w1 = eventlet.spawn(c.wait)
         w2 = eventlet.spawn(c.wait)
         w3 = eventlet.spawn(c.wait)
-        api.sleep(0)
+        sleep(0)
         self.assertEquals(c.waiting(), 3)
         s1 = eventlet.spawn(c.send, 1)
         s2 = eventlet.spawn(c.send, 2)
         s3 = eventlet.spawn(c.send, 3)
-        api.sleep(0)  # this gets all the sends into a waiting state
+        sleep(0)  # this gets all the sends into a waiting state
         self.assertEquals(c.waiting(), 0)
 
         s1.wait()

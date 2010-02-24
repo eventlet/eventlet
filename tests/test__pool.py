@@ -1,5 +1,8 @@
 import eventlet
+import warnings
+warnings.simplefilter('ignore', DeprecationWarning)
 from eventlet import pool, coros, api, hubs, timeout
+warnings.simplefilter('default', DeprecationWarning)
 from eventlet import event as _event
 from tests import LimitedTestCase
 from unittest import main
