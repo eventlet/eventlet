@@ -282,11 +282,6 @@ class GreenSocket(object):
         if self.act_non_blocking:
             return fd.send(data, flags)
 
-        # XXX: need to deal with the exceptions that could be raised if the
-        # buffer is full (specifically the try/except below)
-
-        # need to test all of the conditions
-
         # blocking socket behavior - sends all, blocks if the buffer is full
         total_sent = 0
         len_data = len(data)
