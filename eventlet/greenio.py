@@ -171,8 +171,7 @@ class GreenSocket(object):
         fd = self.fd
         if self.gettimeout() is None:
             while not socket_connect(fd, address):
-                trampoline(fd, write=True,
-                    timeout_exc=socket.timeout("timed out"))
+                trampoline(fd, write=True)
         else:
             end = time.time() + self.gettimeout()
             while True:
@@ -190,8 +189,7 @@ class GreenSocket(object):
         if self.gettimeout() is None:
             while not socket_connect(fd, address):
                 try:
-                    trampoline(fd, write=True,
-                                timeout_exc=socket.timeout(errno.EAGAIN))
+                    trampoline(fd, write=True)
                 except socket.error, ex:
                     return ex[0]
         else:
@@ -304,7 +302,7 @@ class GreenSocket(object):
             tail += self.send(data[tail:], flags)
 
     def sendto(self, *args):
-        trampoline(self.fd, write=True, timeout_exc=socket.timeout("timed out"))
+        trampoline(self.fd, write=True)
         return self.fd.sendto(*args)
 
     def setblocking(self, flag):

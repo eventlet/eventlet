@@ -6,8 +6,8 @@ from twisted.internet.protocol import Factory, ClientFactory
 from twisted.internet import main
 from twisted.python import failure
 
-from eventlet import proc
-from eventlet.api import getcurrent
+from eventlet import greenthread
+from eventlet import getcurrent
 from eventlet.coros import Queue
 from eventlet.event import Event as BaseEvent
 
@@ -381,7 +381,7 @@ class SimpleSpawnFactory(Factory):
         return protocol
 
     def _do_spawn(self, gtransport, protocol):
-        proc.spawn_greenlet(self._run_handler, gtransport, protocol)
+        greenthread.spawn(self._run_handler, gtransport, protocol)
 
     def _run_handler(self, gtransport, protocol):
         try:
@@ -402,10 +402,13 @@ class SpawnFactory(SimpleSpawnFactory):
         SimpleSpawnFactory.__init__(self, handler, gtransport_class, *args, **kwargs)
 
     def _do_spawn(self, gtransport, protocol):
-        g = proc.spawn(self._run_handler, gtransport, protocol)
+        g = greenthread.spawn(self._run_handler, gtransport, protocol)
         self.greenlets.add(g)
         g.link(lambda *_: self.greenlets.remove(g))
 
     def waitall(self):
-        return proc.waitall(self.greenlets)
+        results = []
+        for g in self.greenlets:
+            results.append(g.wait())
+        return results
 

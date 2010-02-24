@@ -17,7 +17,7 @@ except ImportError:
     class reactor(object):
         pass
     
-from eventlet.api import spawn, sleep, with_timeout, call_after
+from eventlet import spawn, sleep, with_timeout, spawn_after
 from eventlet.coros import Event
 
 try:
@@ -144,7 +144,7 @@ class TestGreenTransport(TestUnbufferedTransport):
     @requires_twisted
     def test_pauseresume_producing(self):
         self.conn.pauseProducing()
-        call_after(DELAY*5, self.conn.resumeProducing)
+        spawn_after(DELAY*5, self.conn.resumeProducing)
         self.conn.write('hi\r\n')
         result = with_timeout(DELAY*10, self.conn.read, timeout_value='timed out')
         self.assertEqual('you said hi. BYE', result)

@@ -98,21 +98,19 @@ def patch_function(func, *additional_modules):
     return patched
         
 _originals = {}
-class DummyModule(object):
-    pass
-def make_original(modname):
-    orig_mod = __import__(modname)
-    dummy_mod = DummyModule()
-    for attr in dir(orig_mod):
-        setattr(dummy_mod, attr, getattr(orig_mod, attr))
-    _originals[modname] = dummy_mod
-
 def original(modname):
     mod = _originals.get(modname)
     if mod is None:
-        make_original(modname)    
-        mod = _originals.get(modname)
-    return mod
+        # re-import the "pure" module and store it in the global _originals
+        # dict; be sure to restore whatever module had that name already
+        current_mod = sys.modules.pop(modname, None)
+        try:
+            real_mod = __import__(modname, {}, {}, modname.split('.')[:-1])
+            _originals[modname] = real_mod
+        finally:
+            if current_mod is not None:
+                sys.modules[modname] = current_mod
+    return _originals.get(modname)
 
 already_patched = {}
 def monkey_patch(all=True, os=False, select=False, 
@@ -134,14 +132,12 @@ def monkey_patch(all=True, os=False, select=False,
         modules_to_patch += _green_os_modules()
         already_patched['os'] = True
     if all or select and not already_patched.get('select'):
-        make_original('select')
         modules_to_patch += _green_select_modules()
         already_patched['select'] = True
     if all or socket and not already_patched.get('socket'):
         modules_to_patch += _green_socket_modules()        
         already_patched['socket'] = True
     if all or thread and not already_patched.get('thread'):
-        make_original('threading')
         # hacks ahead
         threading = original('threading')
         import eventlet.green.threading as greenthreading
@@ -149,7 +145,6 @@ def monkey_patch(all=True, os=False, select=False,
         modules_to_patch += _green_thread_modules()
         already_patched['thread'] = True
     if all or time and not already_patched.get('time'):
-        make_original('time')
         modules_to_patch += _green_time_modules()
         already_patched['time'] = True
         
@@ -186,3 +181,9 @@ def _green_thread_modules():
 def _green_time_modules():
     from eventlet.green import time
     return [('time', time)]
+
+if __name__ == "__main__":
+    import sys
+    sys.argv.pop(0)
+    monkey_patch()
+    execfile(sys.argv[0])
