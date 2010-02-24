@@ -1,6 +1,7 @@
 import sys
 import traceback
 import event
+import types
 
 from eventlet.support import greenlets as greenlet
 from eventlet.hubs.hub import BaseHub, FdListener, READ, WRITE
@@ -107,7 +108,15 @@ class Hub(BaseHub):
         pass  # exists for compatibility with BaseHub
     running = property(_getrunning, _setrunning)
 
-    def add(self, evtype, fileno, cb):
+    def add(self, evtype, fileno, real_cb):
+        # this is stupid: pyevent won't call a callback unless it's a function, 
+        # so we have to force it to be one here
+        if isinstance(real_cb, types.BuiltinMethodType):
+            def cb(_d):
+                real_cb(_d)
+        else:
+            cb = real_cb
+    
         if evtype is READ:
             evt = event.read(fileno, cb, fileno)
         elif evtype is WRITE:
