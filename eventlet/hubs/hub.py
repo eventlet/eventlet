@@ -102,6 +102,7 @@ class BaseHub(object):
                 switch_out()
             except:
                 self.squelch_generic_exception(sys.exc_info())
+                sys.exc_clear()
         if self.greenlet.dead:
             self.greenlet = greenlet.greenlet(self.run)
         try:
@@ -251,6 +252,7 @@ class BaseHub(object):
                     raise
                 except:
                     self.squelch_timer_exception(timer, sys.exc_info())
+                    sys.exc_clear()
             finally:
                 self.timer_finished(timer)
 
