@@ -3,3 +3,4 @@ for var in dir(__time):
     exec "%s = __time.%s" % (var, var)
 __patched__ = ['sleep']
 from eventlet.greenthread import sleep
+sleep # silence pyflakes

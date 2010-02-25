@@ -1,5 +1,5 @@
 import warnings
-warnings.warn("eventlet.processes is deprecated in favor of " 
+warnings.warn("eventlet.processes is deprecated in favor of "
  "eventlet.green.subprocess, which is API-compatible with the standard "
  " library subprocess module.",
     DeprecationWarning, stacklevel=2)
@@ -11,7 +11,6 @@ import popen2
 import signal
 
 from eventlet import api
-from eventlet import coros
 from eventlet import pools
 from eventlet import greenio
 
@@ -69,7 +68,9 @@ class Process(object):
         greenio.set_nonblocking(child_stdout_stderr)
         greenio.set_nonblocking(child_stdin)
         self.child_stdout_stderr = greenio.GreenPipe(child_stdout_stderr)
-        self.child_stdout_stderr.newlines = '\n'  # the default is \r\n, which aren't sent over pipes
+        self.child_stdout_stderr.newlines = '\n'  # the default is
+                                        # \r\n, which aren't sent over
+                                        # pipes
         self.child_stdin = greenio.GreenPipe(child_stdin)
         self.child_stdin.newlines = '\n'
 

@@ -1,11 +1,14 @@
 "Test cases for db_pool"
+import sys
+import os
+import traceback
+from unittest import TestCase, main
 
 from tests import skipped, skip_unless, skip_with_pyevent
-from unittest import TestCase, main
 from eventlet import event
 from eventlet import db_pool
 import eventlet
-import os
+
 
 class DBTester(object):
     __test__ = False  # so that nose doesn't try to execute this directly
@@ -14,19 +17,19 @@ class DBTester(object):
         self.connection = None
         connection = self._dbmodule.connect(**self._auth)
         cursor = connection.cursor()
-        cursor.execute("""CREATE  TABLE gargleblatz 
+        cursor.execute("""CREATE  TABLE gargleblatz
         (
         a INTEGER
         );""")
         connection.commit()
         cursor.close()
-        
+
     def tearDown(self):
         if self.connection:
             self.connection.close()
         self.drop_db()
 
-    def set_up_dummy_table(self, connection = None):
+    def set_up_dummy_table(self, connection=None):
         close_connection = False
         if connection is None:
             close_connection = True
@@ -53,7 +56,7 @@ class DBConnectionPool(DBTester):
         super(DBConnectionPool, self).setUp()
         self.pool = self.create_pool()
         self.connection = self.pool.get()
-    
+
     def tearDown(self):
         if self.connection:
             self.pool.put(self.connection)
@@ -84,7 +87,7 @@ class DBConnectionPool(DBTester):
             self.assert_(False)
         except AssertionError:
             raise
-        except Exception, e:
+        except Exception:
             pass
         cursor.close()
 
@@ -107,7 +110,7 @@ class DBConnectionPool(DBTester):
 
     @skipped
     def test_deletion_does_a_put(self):
-        # doing a put on del causes some issues if __del__ is called in the 
+        # doing a put on del causes some issues if __del__ is called in the
         # main coroutine, so, not doing that for now
         self.assert_(self.pool.free() == 0)
         self.connection = None
@@ -144,7 +147,6 @@ class DBConnectionPool(DBTester):
             curs.execute(SHORT_QUERY)
             results.append(2)
             evt.send()
-        evt2 = event.Event()
         eventlet.spawn(a_query)
         results.append(1)
         self.assertEqual([1], results)
@@ -201,10 +203,10 @@ class DBConnectionPool(DBTester):
             curs.execute("delete from gargleblatz where a=314159")
             conn.commit()
             self.pool.put(conn)
-        
+
     @skipped
     def test_two_simultaneous_connections(self):
-        # timing-sensitive test, disabled until we come up with a better 
+        # timing-sensitive test, disabled until we come up with a better
         # way to do this
         self.pool = self.create_pool(2)
         conn = self.pool.get()
@@ -238,36 +240,36 @@ class DBConnectionPool(DBTester):
         evt2.wait()
         results.sort()
         self.assertEqual([1, 2], results)
-        
+
     def test_clear(self):
         self.pool = self.create_pool()
         self.pool.put(self.connection)
         self.pool.clear()
         self.assertEqual(len(self.pool.free_items), 0)
-        
+
     def test_unwrap_connection(self):
         self.assert_(isinstance(self.connection,
                                 db_pool.GenericConnectionWrapper))
         conn = self.pool._unwrap_connection(self.connection)
         self.assert_(not isinstance(conn, db_pool.GenericConnectionWrapper))
-        
+
         self.assertEquals(None, self.pool._unwrap_connection(None))
         self.assertEquals(None, self.pool._unwrap_connection(1))
-        
-        # testing duck typing here -- as long as the connection has a 
+
+        # testing duck typing here -- as long as the connection has a
         # _base attribute, it should be unwrappable
         x = Mock()
         x._base = 'hi'
         self.assertEquals('hi', self.pool._unwrap_connection(x))
         conn.close()
-        
+
     def test_safe_close(self):
         self.pool._safe_close(self.connection, quiet=True)
         self.assertEquals(len(self.pool.free_items), 1)
-        
+
         self.pool._safe_close(None)
         self.pool._safe_close(1)
-        
+
         # now we're really going for 100% coverage
         x = Mock()
         def fail():
@@ -280,7 +282,7 @@ class DBConnectionPool(DBTester):
             raise RuntimeError("if this line has been printed, the test succeeded")
         x.close = fail2
         self.pool._safe_close(x, quiet=False)
-        
+
     def test_zero_max_idle(self):
         self.pool.put(self.connection)
         self.pool.clear()
@@ -296,10 +298,13 @@ class DBConnectionPool(DBTester):
         self.connection = self.pool.get()
         self.connection.close()
         self.assertEquals(len(self.pool.free_items), 0)
-        
+
     @skipped
     def test_max_idle(self):
-        # This test is timing-sensitive.  Rename the function without the "dont" to run it, but beware that it could fail or take a while.
+        # This test is timing-sensitive.  Rename the function without
+        # the "dont" to run it, but beware that it could fail or take
+        # a while.
+
         self.pool = self.create_pool(max_size=2, max_idle=0.02)
         self.connection = self.pool.get()
         self.connection.close()
@@ -319,7 +324,10 @@ class DBConnectionPool(DBTester):
 
     @skipped
     def test_max_idle_many(self):
-        # This test is timing-sensitive.  Rename the function without the "dont" to run it, but beware that it could fail or take a while.
+        # This test is timing-sensitive.  Rename the function without
+        # the "dont" to run it, but beware that it could fail or take
+        # a while.
+
         self.pool = self.create_pool(max_size=2, max_idle=0.02)
         self.connection, conn2 = self.pool.get(), self.pool.get()
         self.connection.close()
@@ -332,7 +340,10 @@ class DBConnectionPool(DBTester):
 
     @skipped
     def test_max_age(self):
-        # This test is timing-sensitive.  Rename the function without the "dont" to run it, but beware that it could fail or take a while.
+        # This test is timing-sensitive.  Rename the function without
+        # the "dont" to run it, but beware that it could fail or take
+        # a while.
+
         self.pool = self.create_pool(max_size=2, max_age=0.05)
         self.connection = self.pool.get()
         self.connection.close()
@@ -347,7 +358,10 @@ class DBConnectionPool(DBTester):
 
     @skipped
     def test_max_age_many(self):
-        # This test is timing-sensitive.  Rename the function without the "dont" to run it, but beware that it could fail or take a while.
+        # This test is timing-sensitive.  Rename the function without
+        # the "dont" to run it, but beware that it could fail or take
+        # a while.
+
         self.pool = self.create_pool(max_size=2, max_age=0.15)
         self.connection, conn2 = self.pool.get(), self.pool.get()
         self.connection.close()
@@ -366,7 +380,7 @@ class DBConnectionPool(DBTester):
         self.pool.put(self.connection)
         self.pool.clear()
         self.pool = self.create_pool(max_size=1, max_age=0)
-        
+
         self.connection = self.pool.get()
         self.assertEquals(self.pool.free(), 0)
         self.assertEquals(self.pool.waiting(), 0)
@@ -397,7 +411,7 @@ class DBConnectionPool(DBTester):
         def bench(c):
             for i in xrange(iterations):
                 c.execute('select 1')
-                
+
         bench(c)  # warm-up
         results = []
         for i in xrange(3):
@@ -405,7 +419,7 @@ class DBConnectionPool(DBTester):
             bench(c)
             end = time.time()
             results.append(end-start)
-            
+
         print "\n%u iterations took an average of %f seconds, (%s) in %s\n" % (
             iterations, sum(results)/len(results), results, type(self))
 
@@ -415,29 +429,30 @@ class DBConnectionPool(DBTester):
         self.pool = self.create_pool(max_size=1, module=RaisingDBModule())
         self.assertRaises(RuntimeError, self.pool.get)
         self.assertEquals(self.pool.free(), 1)
-                        
+
 
 class RaisingDBModule(object):
     def connect(self, *args, **kw):
         raise RuntimeError()
-    
+
 
 class TpoolConnectionPool(DBConnectionPool):
     __test__ = False  # so that nose doesn't try to execute this directly
-    def create_pool(self, max_size = 1, max_idle = 10, max_age = 10, connect_timeout=0.5, module=None):
+    def create_pool(self, max_size=1, max_idle=10, max_age=10,
+                    connect_timeout=0.5, module=None):
         if module is None:
             module = self._dbmodule
-        return db_pool.TpooledConnectionPool(module, 
-            min_size=0, max_size=max_size, 
+        return db_pool.TpooledConnectionPool(module,
+            min_size=0, max_size=max_size,
             max_idle=max_idle, max_age=max_age,
             connect_timeout = connect_timeout,
             **self._auth)
-            
+
 
     @skip_with_pyevent
     def setUp(self):
         super(TpoolConnectionPool, self).setUp()
-        
+
     def tearDown(self):
         super(TpoolConnectionPool, self).tearDown()
         from eventlet import tpool
@@ -447,19 +462,21 @@ class TpoolConnectionPool(DBConnectionPool):
 
 class RawConnectionPool(DBConnectionPool):
     __test__ = False  # so that nose doesn't try to execute this directly
-    def create_pool(self, max_size = 1, max_idle = 10, max_age = 10, connect_timeout= 0.5, module=None):
+    def create_pool(self, max_size=1, max_idle=10, max_age=10,
+                    connect_timeout=0.5, module=None):
         if module is None:
             module = self._dbmodule
         return db_pool.RawConnectionPool(module,
-            min_size=0, max_size=max_size, 
+            min_size=0, max_size=max_size,
             max_idle=max_idle, max_age=max_age,
             connect_timeout=connect_timeout,
             **self._auth)
 
 
 def get_auth():
-    """Looks in the local directory and in the user's home directory for a file named ".test_dbauth",
-    which contains a json map of parameters to the connect function.
+    """Looks in the local directory and in the user's home directory
+    for a file named ".test_dbauth", which contains a json map of
+    parameters to the connect function.
     """
     files = [os.path.join(os.path.dirname(__file__), '.test_dbauth'),
              os.path.join(os.path.expanduser('~'), '.test_dbauth')]
@@ -473,13 +490,14 @@ def get_auth():
             return dict([(str(modname), dict([(str(k), str(v))
                                        for k, v in connectargs.items()]))
                          for modname, connectargs in auth_utf8.items()])
-        except (IOError, ImportError), e:
+        except (IOError, ImportError):
             pass
     return {'MySQLdb':{'host': 'localhost','user': 'root','passwd': ''},
             'psycopg2':{'user':'test'}}
 
 
 def mysql_requirement(_f):
+    verbose = os.environ.get('eventlet_test_mysql_verbose')
     try:
         import MySQLdb
         try:
@@ -487,26 +505,27 @@ def mysql_requirement(_f):
             MySQLdb.connect(**auth)
             return True
         except MySQLdb.OperationalError:
-            print "Skipping mysql tests, error when connecting"
-            import traceback
-            traceback.print_exc()
+            if verbose:
+                print >> sys.stderr, ">> Skipping mysql tests, error when connecting:"
+                traceback.print_exc()
             return False
     except ImportError:
-        print "Skipping mysql tests, MySQLdb not importable"
+        if verbose:
+            print >> sys.stderr, ">> Skipping mysql tests, MySQLdb not importable"
         return False
 
 class MysqlConnectionPool(object):
-    dummy_table_sql = """CREATE TEMPORARY TABLE test_table 
+    dummy_table_sql = """CREATE TEMPORARY TABLE test_table
         (
         row_id INTEGER PRIMARY KEY AUTO_INCREMENT,
-        value_int INTEGER, 
-        value_float FLOAT, 
-        value_string VARCHAR(200), 
-        value_uuid CHAR(36), 
-        value_binary BLOB, 
-        value_binary_string VARCHAR(200) BINARY, 
-        value_enum ENUM('Y','N'), 
-        created TIMESTAMP 
+        value_int INTEGER,
+        value_float FLOAT,
+        value_string VARCHAR(200),
+        value_uuid CHAR(36),
+        value_binary BLOB,
+        value_binary_string VARCHAR(200) BINARY,
+        value_enum ENUM('Y','N'),
+        created TIMESTAMP
         ) ENGINE=InnoDB;"""
 
     @skip_unless(mysql_requirement)
@@ -515,7 +534,7 @@ class MysqlConnectionPool(object):
         self._dbmodule = MySQLdb
         self._auth = get_auth()['MySQLdb']
         super(MysqlConnectionPool, self).setUp()
-        
+
     def tearDown(self):
         super(MysqlConnectionPool, self).tearDown()
 
@@ -561,16 +580,16 @@ def postgres_requirement(_f):
 
 
 class Psycopg2ConnectionPool(object):
-    dummy_table_sql = """CREATE TEMPORARY TABLE test_table 
+    dummy_table_sql = """CREATE TEMPORARY TABLE test_table
         (
         row_id SERIAL PRIMARY KEY,
-        value_int INTEGER, 
-        value_float FLOAT, 
-        value_string VARCHAR(200), 
-        value_uuid CHAR(36), 
-        value_binary BYTEA, 
+        value_int INTEGER,
+        value_float FLOAT,
+        value_string VARCHAR(200),
+        value_uuid CHAR(36),
+        value_binary BYTEA,
         value_binary_string BYTEA,
-        created TIMESTAMP 
+        created TIMESTAMP
         );"""
 
     @skip_unless(postgres_requirement)
@@ -600,7 +619,6 @@ class Psycopg2ConnectionPool(object):
 
     def drop_db(self):
         auth = self._auth.copy()
-        dbname = auth.pop('database')
         conn = self._dbmodule.connect(**auth)
         conn.set_isolation_level(0)
         db = conn.cursor()

@@ -17,5 +17,6 @@ except ImportError, e:
         except ImportError:
             try:
                 from support.stacklesss import greenlet, getcurrent, GreenletExit
+                (greenlet, getcurrent, GreenletExit) # silence pyflakes
             except ImportError, e:
                 raise ImportError("Unable to find an implementation of greenlet.")

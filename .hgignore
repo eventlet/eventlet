@@ -13,3 +13,6 @@ cover
 nosetests*.xml
 .coverage
 *,cover
+
+syntax: re
+^.ropeproject/.*$

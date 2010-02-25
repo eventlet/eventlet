@@ -21,8 +21,8 @@ class FdListener(object):
     def __repr__(self):
         return "%s(%r, %r, %r)" % (type(self).__name__, self.evtype, self.fileno, self.cb)
     __str__ = __repr__
-    
-    
+
+
 # in debug mode, track the call site that created the listener
 class DebugListener(FdListener):
     def __init__(self, evtype, fileno, cb):
@@ -30,20 +30,21 @@ class DebugListener(FdListener):
         self.greenlet = greenlet.getcurrent()
         super(DebugListener, self).__init__(evtype, fileno, cb)
     def __repr__(self):
-        return "DebugListener(%r, %r, %r, %r)\n%sEndDebugFdListener" % (self.evtype,
-                                                                        self.fileno,
-                                                                        self.cb,
-                                                                        self.greenlet,
-                                                                        ''.join(self.where_called))
+        return "DebugListener(%r, %r, %r, %r)\n%sEndDebugFdListener" % (
+            self.evtype,
+            self.fileno,
+            self.cb,
+            self.greenlet,
+            ''.join(self.where_called))
     __str__ = __repr__
-    
+
 
 class BaseHub(object):
     """ Base hub class for easing the implementation of subclasses that are
     specific to a particular underlying event architecture. """
 
     SYSTEM_EXCEPTIONS = (KeyboardInterrupt, SystemExit)
-    
+
     READ = READ
     WRITE = WRITE
 
@@ -58,7 +59,7 @@ class BaseHub(object):
         self.next_timers = []
         self.lclass = FdListener
         self.debug_exceptions = True
-        
+
     def add(self, evtype, fileno, cb):
         """ Signals an intent to or write a particular file descriptor.
 
@@ -81,9 +82,9 @@ class BaseHub(object):
             pass
         if listener_list:
             self.listeners[listener.evtype][listener.fileno] = listener_list
-        
+
     def remove_descriptor(self, fileno):
-        """ Completely remove all listeners for this fileno.  For internal use 
+        """ Completely remove all listeners for this fileno.  For internal use
         only."""
         self.listeners[READ].pop(fileno, None)
         self.listeners[WRITE].pop(fileno, None)
@@ -106,7 +107,7 @@ class BaseHub(object):
         if self.greenlet.dead:
             self.greenlet = greenlet.greenlet(self.run)
         try:
-            if self.greenlet.parent is not cur: 
+            if self.greenlet.parent is not cur:
                 cur.parent = self.greenlet
         except ValueError:
             pass  # gets raised if there is a greenlet parent cycle
@@ -231,8 +232,6 @@ class BaseHub(object):
         t = self.timers
         heappop = heapq.heappop
 
-        i = 0
-
         while t:
             next = t[0]
 
@@ -265,12 +264,12 @@ class BaseHub(object):
 
     def get_timers_count(hub):
         return max(len(hub.timers), len(hub.next_timers))
-        
+
     def set_debug_listeners(self, value):
         if value:
             self.lclass = DebugListener
         else:
             self.lclass = FdListener
-            
+
     def set_timer_exceptions(self, value):
         self.debug_exceptions = value

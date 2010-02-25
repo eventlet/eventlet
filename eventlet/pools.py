@@ -10,7 +10,7 @@ try:
     exec('''
 @contextmanager
 def item_impl(self):
-    """ Get an object out of the pool, for use with with statement. 
+    """ Get an object out of the pool, for use with with statement.
 
     >>> from eventlet import pools
     >>> pool = pools.TokenPool(max_size=4)
@@ -35,20 +35,20 @@ except ImportError:
 class Pool(object):
     """
     Pool is a base class that implements resource limitation and construction.
-    It is meant to be subclassed.  When subclassing, define only 
+    It is meant to be subclassed.  When subclassing, define only
     the :meth:`create` method to implement the desired resource::
-    
+
         class MyPool(pools.Pool):
             def create(self):
                 return MyObject()
-            
+
     If using 2.5 or greater, the :meth:`item` method acts as a context manager;
     that's the best way to use it::
-        
+
         with mypool.item() as thing:
             thing.dostuff()
-            
-    If stuck on 2.4, the :meth:`get` and :meth:`put` methods are the preferred 
+
+    If stuck on 2.4, the :meth:`get` and :meth:`put` methods are the preferred
     nomenclature.  Use a ``finally`` to ensure that nothing is leaked::
 
         thing = self.pool.get()
@@ -59,12 +59,12 @@ class Pool(object):
 
     The maximum size of the pool can be modified at runtime via
     the :meth:`resize` method.
-    
-    Specifying a non-zero *min-size* argument pre-populates the pool with 
-    *min_size* items.  *max-size* sets a hard limit to the size of the pool -- 
-    it cannot contain any more items than *max_size*, and if there are already 
-    *max_size* items 'checked out' of the pool, the pool will cause any 
-    greenthread calling :meth:`get` to cooperatively yield until an item 
+
+    Specifying a non-zero *min-size* argument pre-populates the pool with
+    *min_size* items.  *max-size* sets a hard limit to the size of the pool --
+    it cannot contain any more items than *max_size*, and if there are already
+    *max_size* items 'checked out' of the pool, the pool will cause any
+    greenthread calling :meth:`get` to cooperatively yield until an item
     is :meth:`put` in.
     """
     def __init__(self, min_size=0, max_size=4, order_as_stack=False):
@@ -96,7 +96,7 @@ class Pool(object):
             self.current_size += 1
             return created
         return self.channel.get()
-        
+
     if item_impl is not None:
         item = item_impl
 
@@ -118,11 +118,11 @@ class Pool(object):
 
     def resize(self, new_size):
         """Resize the pool to *new_size*.
-        
-        Adjusting this number does not affect existing items checked out of 
-        the pool, nor on any greenthreads who are waiting for an item to free 
+
+        Adjusting this number does not affect existing items checked out of
+        the pool, nor on any greenthreads who are waiting for an item to free
         up.  Some indeterminate number of :meth:`get`/:meth:`put`
-        cycles will be necessary before the new maximum size truly matches 
+        cycles will be necessary before the new maximum size truly matches
         the actual operation of the pool.
         """
         self.max_size = new_size
@@ -137,18 +137,18 @@ class Pool(object):
         """Return the number of routines waiting for a pool item.
         """
         return max(0, self.channel.getting() - self.channel.putting())
-  
+
     def create(self):
         """Generate a new pool item.  This method must be overridden in order
         for the pool to function.  It accepts no arguments and returns a single
         instance of whatever thing the pool is supposed to contain.
-        
-        In general, :meth:`create` is called whenever the pool exceeds its 
-        previous high-water mark of concurrently-checked-out-items.  In other 
-        words, in a new pool with *min_size* of 0, the very first call 
-        to :meth:`get` will result in a call to :meth:`create`.  If the first 
-        caller calls :meth:`put` before some other caller calls :meth:`get`, 
-        then the first item will be returned, and :meth:`create` will not be 
+
+        In general, :meth:`create` is called whenever the pool exceeds its
+        previous high-water mark of concurrently-checked-out-items.  In other
+        words, in a new pool with *min_size* of 0, the very first call
+        to :meth:`get` will result in a call to :meth:`create`.  If the first
+        caller calls :meth:`put` before some other caller calls :meth:`get`,
+        then the first item will be returned, and :meth:`create` will not be
         called a second time.
         """
         raise NotImplementedError("Implement in subclass")
@@ -165,5 +165,3 @@ class TokenPool(Pool):
     """
     def create(self):
         return Token()
-        
-

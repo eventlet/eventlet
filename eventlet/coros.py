@@ -1,5 +1,4 @@
 import collections
-import time
 import traceback
 import warnings
 
@@ -16,34 +15,34 @@ class NOT_USED:
 NOT_USED = NOT_USED()
 
 def Event(*a, **kw):
-    warnings.warn("The Event class has been moved to the event module! " 
-                   "Please construct event.Event objects instead.", 
+    warnings.warn("The Event class has been moved to the event module! "
+                   "Please construct event.Event objects instead.",
                    DeprecationWarning, stacklevel=2)
     return _event.Event(*a, **kw)
 
 
 def event(*a, **kw):
     warnings.warn("The event class has been capitalized and moved!  Please "
-        "construct event.Event objects instead.", 
+        "construct event.Event objects instead.",
         DeprecationWarning, stacklevel=2)
     return _event.Event(*a, **kw)
 
 
 def Semaphore(count):
     warnings.warn("The Semaphore class has moved!  Please "
-        "use semaphore.Semaphore instead.", 
+        "use semaphore.Semaphore instead.",
         DeprecationWarning, stacklevel=2)
     return semaphoremod.Semaphore(count)
 
 def BoundedSemaphore(count):
     warnings.warn("The BoundedSemaphore class has moved!  Please "
-        "use semaphore.BoundedSemaphore instead.", 
+        "use semaphore.BoundedSemaphore instead.",
         DeprecationWarning, stacklevel=2)
     return semaphoremod.BoundedSemaphore(count)
 
 def semaphore(count=0, limit=None):
     warnings.warn("coros.semaphore is deprecated.  Please use either "
-        "semaphore.Semaphore or semaphore.BoundedSemaphore instead.", 
+        "semaphore.Semaphore or semaphore.BoundedSemaphore instead.",
         DeprecationWarning, stacklevel=2)
     if limit is None:
         return Semaphore(count)
@@ -136,7 +135,7 @@ class Queue(object):
 
     def __init__(self):
         warnings.warn("coros.Queue is deprecated.  Please use "
-            "eventlet.queue.Queue instead.", 
+            "eventlet.queue.Queue instead.",
             DeprecationWarning, stacklevel=2)
         self.items = collections.deque()
         self._waiters = set()
@@ -148,7 +147,8 @@ class Queue(object):
         return len(self.items)
 
     def __repr__(self):
-        params = (self.__class__.__name__, hex(id(self)), len(self.items), len(self._waiters))
+        params = (self.__class__.__name__, hex(id(self)),
+                  len(self.items), len(self._waiters))
         return '<%s at %s items[%d] _waiters[%s]>' % params
 
     def send(self, result=None, exc=None):
@@ -195,10 +195,10 @@ class Queue(object):
 
     def waiting(self):
         return len(self._waiters)
-        
+
     def __iter__(self):
         return self
-    
+
     def next(self):
         return self.wait()
 
@@ -207,7 +207,7 @@ class Channel(object):
 
     def __init__(self, max_size=0):
         warnings.warn("coros.Channel is deprecated.  Please use "
-            "eventlet.queue.Queue(0) instead.", 
+            "eventlet.queue.Queue(0) instead.",
             DeprecationWarning, stacklevel=2)
         self.max_size = max_size
         self.items = collections.deque()
@@ -221,7 +221,9 @@ class Channel(object):
         return len(self.items)
 
     def __repr__(self):
-        params = (self.__class__.__name__, hex(id(self)), self.max_size, len(self.items), len(self._waiters), len(self._senders))
+        params = (self.__class__.__name__, hex(id(self)),
+                  self.max_size, len(self.items),
+                  len(self._waiters), len(self._senders))
         return '<%s at %s max=%s items[%d] _w[%s] _s[%s]>' % params
 
     def send(self, result=None, exc=None):
@@ -323,7 +325,7 @@ class Actor(object):
         to process concurrently.  If it is 1, the actor will process messages
         serially.
         """
-        warnings.warn("We're phasing out the Actor class, so as to get rid of" 
+        warnings.warn("We're phasing out the Actor class, so as to get rid of"
                    "the coros module.  If you use Actor, please speak up on "
                    "eventletdev@lists.secondlife.com, and we'll come up with a "
                    "transition plan.  If no one speaks up, we'll remove Actor "
@@ -397,4 +399,3 @@ class Actor(object):
         >>> eventlet.kill(a._killer)   # test cleanup
         """
         raise NotImplementedError()
-

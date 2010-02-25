@@ -49,7 +49,7 @@ class socket_rwdescriptor(FdListener):
         super(socket_rwdescriptor, self).__init__(evtype, fileno, cb)
         if not isinstance(fileno, (int,long)):
             raise TypeError("Expected int or long, got %s" % type(fileno))
-        # Twisted expects fileno to be a callable, not an attribute            
+        # Twisted expects fileno to be a callable, not an attribute
         def _fileno():
             return fileno
         self.fileno = _fileno
@@ -74,8 +74,8 @@ class socket_rwdescriptor(FdListener):
         # to the mainloop occurs, twisted will not re-evaluate the delayed calls
         # because it assumes that none were scheduled since no client code was executed
         # (it has no idea it was switched away). So, we restart the mainloop.
-        # XXX this is not enough, pollreactor prints the traceback for this and epollreactor
-        # times out. see test__hub.TestCloseSocketWhilePolling
+        # XXX this is not enough, pollreactor prints the traceback for
+        # this and epollreactor times out. see test__hub.TestCloseSocketWhilePolling
         raise greenlet.GreenletExit
 
     logstr = "twistedr"
@@ -95,7 +95,7 @@ class BaseTwistedHub(object):
     # XXX: remove me from here. make functions that depend on reactor
     # XXX: hub's methods
     uses_twisted_reactor = True
-    
+
     WRITE = WRITE
     READ = READ
 
@@ -103,9 +103,10 @@ class BaseTwistedHub(object):
         self.greenlet = mainloop_greenlet
 
     def switch(self):
-        assert api.getcurrent() is not self.greenlet, "Cannot switch from MAINLOOP to MAINLOOP"
+        assert getcurrent() is not self.greenlet, \
+               "Cannot switch from MAINLOOP to MAINLOOP"
         try:
-           api.getcurrent().parent = self.greenlet
+           getcurrent().parent = self.greenlet
         except ValueError:
            pass
         return self.greenlet.switch()
@@ -127,14 +128,15 @@ class BaseTwistedHub(object):
         from twisted.internet import reactor
         reactor.removeReader(descriptor)
         reactor.removeWriter(descriptor)
-        
+
     def schedule_call_local(self, seconds, func, *args, **kwargs):
         from twisted.internet import reactor
         def call_if_greenlet_alive(*args1, **kwargs1):
             if timer.greenlet.dead:
                 return
             return func(*args1, **kwargs1)
-        timer = callLater(LocalDelayedCall, reactor, seconds, call_if_greenlet_alive, *args, **kwargs)
+        timer = callLater(LocalDelayedCall, reactor, seconds,
+                          call_if_greenlet_alive, *args, **kwargs)
         return timer
 
     schedule_call = schedule_call_local
@@ -189,18 +191,22 @@ class TwistedHub(BaseTwistedHub):
     installSignalHandlers = False
 
     def __init__(self):
-        assert Hub.state==0, ('%s hub can only be instantiated once' % type(self).__name__, Hub.state)
+        assert Hub.state==0, ('%s hub can only be instantiated once'%type(self).__name__,
+                              Hub.state)
         Hub.state = 1
-        make_twisted_threadpool_daemonic() # otherwise the program would hang after the main greenlet exited
-        g = api.Greenlet(self.run)
+        make_twisted_threadpool_daemonic() # otherwise the program
+                                        # would hang after the main
+                                        # greenlet exited
+        g = greenlet.greenlet(self.run)
         BaseTwistedHub.__init__(self, g)
 
     def switch(self):
-        assert api.getcurrent() is not self.greenlet, "Cannot switch from MAINLOOP to MAINLOOP"
+        assert getcurrent() is not self.greenlet, \
+               "Cannot switch from MAINLOOP to MAINLOOP"
         if self.greenlet.dead:
-            self.greenlet = api.Greenlet(self.run)
+            self.greenlet = greenlet.greenlet(self.run)
         try:
-            api.getcurrent().parent = self.greenlet
+            getcurrent().parent = self.greenlet
         except ValueError:
             pass
         return self.greenlet.switch()
@@ -255,5 +261,3 @@ def make_twisted_threadpool_daemonic():
     from twisted.python.threadpool import ThreadPool
     if ThreadPool.threadFactory != DaemonicThread:
         ThreadPool.threadFactory = DaemonicThread
-
-

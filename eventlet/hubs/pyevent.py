@@ -29,7 +29,7 @@ class event_wrapper(object):
         if self.impl is not None:
             self.impl.delete()
             self.impl = None
-    
+
     @property
     def pending(self):
         return bool(self.impl and self.impl.pending())
@@ -41,9 +41,11 @@ class Hub(BaseHub):
     def __init__(self):
         super(Hub,self).__init__()
         event.init()
-        
+
         self.signal_exc_info = None
-        self.signal(2, lambda signalnum, frame: self.greenlet.parent.throw(KeyboardInterrupt))
+        self.signal(
+            2,
+            lambda signalnum, frame: self.greenlet.parent.throw(KeyboardInterrupt))
         self.events_to_add = []
 
     def dispatch(self):
@@ -76,7 +78,8 @@ class Hub(BaseHub):
                 raise
             except:
                 if self.signal_exc_info is not None:
-                    self.schedule_call_global(0, greenlet.getcurrent().parent.throw, *self.signal_exc_info)
+                    self.schedule_call_global(
+                        0, greenlet.getcurrent().parent.throw, *self.signal_exc_info)
                     self.signal_exc_info = None
                 else:
                     self.squelch_timer_exception(None, sys.exc_info())
@@ -86,25 +89,25 @@ class Hub(BaseHub):
 
     def _getrunning(self):
         return bool(self.greenlet)
-    
+
     def _setrunning(self, value):
         pass  # exists for compatibility with BaseHub
     running = property(_getrunning, _setrunning)
 
     def add(self, evtype, fileno, real_cb):
-        # this is stupid: pyevent won't call a callback unless it's a function, 
+        # this is stupid: pyevent won't call a callback unless it's a function,
         # so we have to force it to be one here
         if isinstance(real_cb, types.BuiltinMethodType):
             def cb(_d):
                 real_cb(_d)
         else:
             cb = real_cb
-    
+
         if evtype is READ:
             evt = event.read(fileno, cb, fileno)
         elif evtype is WRITE:
             evt = event.write(fileno, cb, fileno)
-            
+
         listener = FdListener(evtype, fileno, evt)
         self.listeners[evtype].setdefault(fileno, []).append(listener)
         return listener
@@ -117,22 +120,22 @@ class Hub(BaseHub):
                 self.signal_exc_info = sys.exc_info()
                 event.abort()
         return event_wrapper(event.signal(signalnum, wrapper))
-    
+
     def remove(self, listener):
         super(Hub, self).remove(listener)
         listener.cb.delete()
-      
+
     def remove_descriptor(self, fileno):
         for lcontainer in self.listeners.itervalues():
             l_list = lcontainer.pop(fileno, None)
             for listener in l_list:
                 try:
                     listener.cb.delete()
-                except SYSTEM_EXCEPTIONS:
+                except self.SYSTEM_EXCEPTIONS:
                     raise
                 except:
                     traceback.print_exc()
-                    
+
     def schedule_call_local(self, seconds, cb, *args, **kwargs):
         current = greenlet.getcurrent()
         if current is self.greenlet:
@@ -149,7 +152,7 @@ class Hub(BaseHub):
         wrapper = event_wrapper(event_impl, seconds=seconds)
         self.events_to_add.append(wrapper)
         return wrapper
-        
+
     def _version_info(self):
         baseversion = event.__version__
         return baseversion
@@ -169,4 +172,3 @@ def _scheduled_call_local(event_impl, handle, evtype, arg):
             cb(*args, **kwargs)
     finally:
         event_impl.delete()
-

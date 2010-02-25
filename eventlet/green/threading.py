@@ -2,7 +2,7 @@ from eventlet import patcher
 from eventlet.green import thread
 from eventlet.green import time
 
-__patched__ = ['_start_new_thread', '_allocate_lock', '_get_ident', '_sleep', 
+__patched__ = ['_start_new_thread', '_allocate_lock', '_get_ident', '_sleep',
                'local', 'stack_size']
 
 patcher.inject('threading',
@@ -21,6 +21,3 @@ def _patch_main_thread(mod):
     curthread = mod._active.pop(mod._get_ident(), None)
     if curthread:
         mod._active[thread.get_ident()] = curthread
-
-if __name__ == '__main__':
-    _test()
