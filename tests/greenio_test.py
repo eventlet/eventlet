@@ -524,5 +524,58 @@ class TestGreenIoLong(LimitedTestCase):
         self.assert_(len(results2) > 0)
 
 
+class TestServe(LimitedTestCase):
+    def setUp(self):
+        super(TestServe, self).setUp()
+        from eventlet import debug
+        debug.hub_exceptions(False)
+        
+    def tearDown(self):
+        super(TestServe, self).tearDown()
+        from eventlet import debug
+        debug.hub_exceptions(True)
+        
+    def test_exiting_server(self):
+        # tests that the server closes the client sock on handle() exit
+        def closer(sock,addr):
+            pass
+            
+        l = eventlet.listen(('localhost', 0))
+        gt = eventlet.spawn(greenio.serve, l, closer)
+        client = eventlet.connect(('localhost', l.getsockname()[1]))
+        client.sendall('a')
+        self.assertEqual('', client.recv(100))
+        gt.kill()
+
+
+    def test_excepting_server(self):
+        # tests that the server closes the client sock on handle() exception
+        def crasher(sock,addr):
+            x = sock.recv(1024)
+            0/0
+            
+        l = eventlet.listen(('localhost', 0))
+        gt = eventlet.spawn(greenio.serve, l, crasher)
+        client = eventlet.connect(('localhost', l.getsockname()[1]))
+        client.sendall('a')
+        self.assertRaises(ZeroDivisionError, gt.wait)
+        self.assertEqual('', client.recv(100))
+
+    def test_excepting_server_already_closed(self):
+        # tests that the server closes the client sock on handle() exception
+        def crasher(sock,addr):
+            x = sock.recv(1024)
+            sock.close()
+            0/0
+            
+        l = eventlet.listen(('localhost', 0))
+        gt = eventlet.spawn(greenio.serve, l, crasher)
+        client = eventlet.connect(('localhost', l.getsockname()[1]))
+        client.sendall('a')
+        self.assertRaises(ZeroDivisionError, gt.wait)
+        self.assertEqual('', client.recv(100))
+
+
+
 if __name__ == '__main__':
     main()
