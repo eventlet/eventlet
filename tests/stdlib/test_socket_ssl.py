@@ -17,5 +17,11 @@ patcher.inject('test.test_socket_ssl',
     ('urllib', urllib),
     ('threading', threading))
 
+test_basic = patcher.patch_function(test_basic, 
+    ('urllib', urllib))    
+test_rude_shutdown = patcher.patch_function(test_rude_shutdown, 
+    ('threading', threading))
+
+
 if __name__ == "__main__":
     test_main()
