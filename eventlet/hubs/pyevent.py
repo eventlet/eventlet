@@ -45,23 +45,6 @@ class Hub(BaseHub):
         self.signal_exc_info = None
         self.signal(2, lambda signalnum, frame: self.greenlet.parent.throw(KeyboardInterrupt))
         self.events_to_add = []
-        
-    def switch(self):
-        cur = greenlet.getcurrent()
-        assert cur is not self.greenlet, 'Cannot switch to MAINLOOP from MAINLOOP'
-        switch_out = getattr(cur, 'switch_out', None)
-        if switch_out is not None:
-            try:
-                switch_out()
-            except:
-                traceback.print_exception(*sys.exc_info())
-        if self.greenlet.dead:
-            self.greenlet = greenlet.greenlet(self.run)
-        try:
-            greenlet.getcurrent().parent = self.greenlet
-        except ValueError:
-            pass
-        return self.greenlet.switch()
 
     def dispatch(self):
         loop = event.loop

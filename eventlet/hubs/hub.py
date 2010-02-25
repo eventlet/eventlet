@@ -1,4 +1,4 @@
-import bisect
+import heapq
 import sys
 import traceback
 
@@ -102,12 +102,12 @@ class BaseHub(object):
                 switch_out()
             except:
                 self.squelch_generic_exception(sys.exc_info())
+                sys.exc_clear()
         if self.greenlet.dead:
             self.greenlet = greenlet.greenlet(self.run)
         try:
-            current = greenlet.getcurrent()
-            if self.greenlet.parent is not current: 
-                current.parent = self.greenlet
+            if self.greenlet.parent is not cur: 
+                cur.parent = self.greenlet
         except ValueError:
             pass  # gets raised if there is a greenlet parent cycle
         sys.exc_clear()
@@ -196,10 +196,10 @@ class BaseHub(object):
         self.timer_finished(timer)
 
     def prepare_timers(self):
-        ins = bisect.insort_right
+        heappush = heapq.heappush
         t = self.timers
         for item in self.next_timers:
-            ins(t, item)
+            heappush(t, item)
         del self.next_timers[:]
 
     def schedule_call_local(self, seconds, cb, *args, **kw):
@@ -229,10 +229,21 @@ class BaseHub(object):
 
     def fire_timers(self, when):
         t = self.timers
-        last = bisect.bisect_right(t, (when, 1))
+        heappop = heapq.heappop
+
         i = 0
-        for i in xrange(last):
-            timer = t[i][2]
+
+        while t:
+            next = t[0]
+
+            exp = next[0]
+            timer = next[2]
+
+            if when < exp:
+                break
+
+            heappop(t)
+
             try:
                 try:
                     timer()
@@ -240,9 +251,9 @@ class BaseHub(object):
                     raise
                 except:
                     self.squelch_timer_exception(timer, sys.exc_info())
+                    sys.exc_clear()
             finally:
                 self.timer_finished(timer)
-        del t[:last]
 
     # for debugging:
 

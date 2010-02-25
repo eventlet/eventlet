@@ -153,31 +153,29 @@ class TestGreenIo(LimitedTestCase):
         gt.wait()
 
     def test_send_timeout(self):
-        listener = greenio.GreenSocket(socket.socket())
-        listener.bind(('', 0))
-        listener.listen(50)
+        listener = bufsized(eventlet.listen(('', 0)))
 
         def server():
             # accept the connection in another greenlet
             sock, addr = listener.accept()
-
+            sock = bufsized(sock)
             eventlet.sleep(.5)
 
         gt = eventlet.spawn(server)
 
         addr = listener.getsockname()
 
-        client = greenio.GreenSocket(socket.socket())
-        client.settimeout(0.1)
-
+        client = bufsized(greenio.GreenSocket(socket.socket()))
         client.connect(addr)
-
         try:
-            msg = "A"*(8*1024*1024)
+            client.settimeout(0.00001)
+            msg = "A"*(100000)  # large enough number to overwhelm most buffers
 
-            # want to exceed the size of the OS buffer so it'll block
+            total_sent = 0
+            # want to exceed the size of the OS buffer so it'll block in a
+            # single send
             for x in range(10):
-                client.send(msg)
+                total_sent += client.send(msg)
             self.fail("socket.timeout not raised")
         except socket.timeout, e:
             self.assert_(hasattr(e, 'args'))
@@ -471,6 +469,7 @@ class TestGreenIo(LimitedTestCase):
         self.assertEquals(line, 'line\r\n')
 
         gt.wait()
+
 
 class TestGreenIoLong(LimitedTestCase):
     TEST_TIMEOUT=10  # the test here might take a while depending on the OS
