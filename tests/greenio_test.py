@@ -1,4 +1,5 @@
 from tests import LimitedTestCase, skip_with_pyevent, main
+from eventlet import event
 from eventlet import greenio
 from eventlet import debug
 from eventlet.green import socket
@@ -69,12 +70,12 @@ class TestGreenIo(LimitedTestCase):
         listener = greenio.GreenSocket(socket.socket())
         listener.bind(('', 0))
         listener.listen(50)
-
+        
+        evt = event.Event()
         def server():
             # accept the connection in another greenlet
             sock, addr = listener.accept()
-
-            eventlet.sleep(.2)
+            evt.wait()
 
         gt = eventlet.spawn(server)
 
@@ -92,6 +93,7 @@ class TestGreenIo(LimitedTestCase):
             self.assert_(hasattr(e, 'args'))
             self.assertEqual(e.args[0], 'timed out')
 
+        evt.send()
         gt.wait()
 
     def test_recvfrom_timeout(self):
@@ -129,11 +131,11 @@ class TestGreenIo(LimitedTestCase):
         listener.bind(('', 0))
         listener.listen(50)
 
+        evt = event.Event()
         def server():
             # accept the connection in another greenlet
             sock, addr = listener.accept()
-
-            eventlet.sleep(.2)
+            evt.wait()
 
         gt = eventlet.spawn(server)
 
@@ -151,16 +153,18 @@ class TestGreenIo(LimitedTestCase):
             self.assert_(hasattr(e, 'args'))
             self.assertEqual(e.args[0], 'timed out')
 
+        evt.send()
         gt.wait()
 
     def test_send_timeout(self):
         listener = bufsized(eventlet.listen(('', 0)))
 
+        evt = event.Event()
         def server():
             # accept the connection in another greenlet
             sock, addr = listener.accept()
             sock = bufsized(sock)
-            eventlet.sleep(.5)
+            evt.wait()
 
         gt = eventlet.spawn(server)
 
@@ -182,6 +186,7 @@ class TestGreenIo(LimitedTestCase):
             self.assert_(hasattr(e, 'args'))
             self.assertEqual(e.args[0], 'timed out')
 
+        evt.send()
         gt.wait()
 
     def test_sendall_timeout(self):
@@ -189,11 +194,11 @@ class TestGreenIo(LimitedTestCase):
         listener.bind(('', 0))
         listener.listen(50)
 
+        evt = event.Event()
         def server():
             # accept the connection in another greenlet
             sock, addr = listener.accept()
-
-            eventlet.sleep(.5)
+            evt.wait()
 
         gt = eventlet.spawn(server)
 
@@ -201,7 +206,6 @@ class TestGreenIo(LimitedTestCase):
 
         client = greenio.GreenSocket(socket.socket())
         client.settimeout(0.1)
-
         client.connect(addr)
 
         try:
@@ -214,6 +218,7 @@ class TestGreenIo(LimitedTestCase):
             self.assert_(hasattr(e, 'args'))
             self.assertEqual(e.args[0], 'timed out')
 
+        evt.send()
         gt.wait()
 
     def test_close_with_makefile(self):
