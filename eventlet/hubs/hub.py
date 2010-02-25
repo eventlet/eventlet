@@ -106,9 +106,8 @@ class BaseHub(object):
         if self.greenlet.dead:
             self.greenlet = greenlet.greenlet(self.run)
         try:
-            current = greenlet.getcurrent()
-            if self.greenlet.parent is not current: 
-                current.parent = self.greenlet
+            if self.greenlet.parent is not cur: 
+                cur.parent = self.greenlet
         except ValueError:
             pass  # gets raised if there is a greenlet parent cycle
         sys.exc_clear()
