@@ -33,7 +33,7 @@ _rfile = _wfile = None
 def _signal_t2e():
     _wfile.write(' ')
     _wfile.flush()
-    
+
 _reqq = None
 _rspq = None
 
@@ -74,9 +74,13 @@ def tworker():
             rv = meth(*args,**kwargs)
         except SYS_EXCS:
             raise
-        except Exception,exn:
+        except Exception:
             rv = sys.exc_info()
-        _rspq.put((e,rv))
+        _rspq.put((e,rv))               # @@tavis: not supposed to
+                                        # keep references to
+                                        # sys.exc_info() so it would
+                                        # be worthwhile testing
+                                        # if this leads to memory leaks
         meth = args = kwargs = e = rv = None
         _signal_t2e()
 
@@ -118,10 +122,10 @@ def proxy_call(autowrap, f, *args, **kwargs):
     """
     Call a function *f* and returns the value.  If the type of the return value
     is in the *autowrap* collection, then it is wrapped in a :class:`Proxy`
-    object before return.  
-    
+    object before return.
+
     Normally *f* will be called in the threadpool with :func:`execute`; if the
-    keyword argument "nonblocking" is set to ``True``, it will simply be 
+    keyword argument "nonblocking" is set to ``True``, it will simply be
     executed directly.  This is useful if you have an object which has methods
     that don't need to be called in a separate thread, but which return objects
     that should be Proxy wrapped.
@@ -242,7 +246,7 @@ def setup():
         _threads.add(t)
 
     _coro = greenthread.spawn_n(tpool_trampoline)
-    
+
 
 def killall():
     global _setup_already, _reqq, _rspq, _rfile, _wfile
