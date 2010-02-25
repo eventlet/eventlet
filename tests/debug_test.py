@@ -39,7 +39,7 @@ class TestSpew(TestCase):
         s(f, "line", None)
         lineno = f.f_lineno - 1 # -1 here since we called with frame f in the line above
         output = sys.stdout.getvalue()
-        self.failUnless("debug_test:%i" % lineno in output, "Didn't find line %i in %s" % (lineno, output))
+        self.failUnless("%s:%i" % (__name__, lineno) in output, "Didn't find line %i in %s" % (lineno, output))
         self.failUnless("f=<frame object at" in output)
 
     def test_line_nofile(self):
@@ -48,13 +48,10 @@ class TestSpew(TestCase):
         g = globals().copy()
         del g['__file__']
         f = eval("sys._getframe()", g)
+        lineno = f.f_lineno
         s(f, "line", None)
         output = sys.stdout.getvalue()
-        # version-dependent output here
-        if sys.version_info >= (2,5):
-            self.failUnless("[unknown]:1" in output, "Didn't find [unknown]:1 in %s" % (output))
-        else:
-            self.failUnless("[unknown]:0" in output, "Didn't find [unknown]:0 in %s" % (output))
+        self.failUnless("[unknown]:%i" % lineno in output, "Didn't find [unknown]:%i in %s" % (lineno, output))
         self.failUnless("VM instruction #" in output, output)
 
     def test_line_global(self):
@@ -65,7 +62,7 @@ class TestSpew(TestCase):
         GLOBAL_VAR(f, "line", None)
         lineno = f.f_lineno - 1 # -1 here since we called with frame f in the line above
         output = sys.stdout.getvalue()
-        self.failUnless("debug_test:%i" % lineno in output, "Didn't find line %i in %s" % (lineno, output))
+        self.failUnless("%s:%i" % (__name__, lineno) in output, "Didn't find line %i in %s" % (lineno, output))
         self.failUnless("f=<frame object at" in output)
         self.failUnless("GLOBAL_VAR" in f.f_globals)
         self.failUnless("GLOBAL_VAR=<eventlet.debug.Spew object at" in output)
@@ -78,7 +75,7 @@ class TestSpew(TestCase):
         s(f, "line", None)
         lineno = f.f_lineno - 1 # -1 here since we called with frame f in the line above
         output = sys.stdout.getvalue()
-        self.failUnless("debug_test:%i" % lineno in output, "Didn't find line %i in %s" % (lineno, output))
+        self.failUnless("%s:%i" % (__name__, lineno) in output, "Didn't find line %i in %s" % (lineno, output))
         self.failIf("f=<frame object at" in output)
 
     def test_line_nooutput(self):
