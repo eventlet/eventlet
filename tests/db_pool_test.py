@@ -1,6 +1,7 @@
 "Test cases for db_pool"
 import sys
 import os
+import traceback
 from unittest import TestCase, main
 
 from tests import skipped, skip_unless, skip_with_pyevent
@@ -496,6 +497,7 @@ def get_auth():
 
 
 def mysql_requirement(_f):
+    verbose = os.environ.get('eventlet_test_mysql_verbose')
     try:
         import MySQLdb
         try:
@@ -503,12 +505,13 @@ def mysql_requirement(_f):
             MySQLdb.connect(**auth)
             return True
         except MySQLdb.OperationalError:
-            print >> sys.stderr, ">> Skipping mysql tests, error when connecting:"
-            import traceback
-            traceback.print_exc()
+            if verbose:
+                print >> sys.stderr, ">> Skipping mysql tests, error when connecting:"
+                traceback.print_exc()
             return False
     except ImportError:
-        print >> sys.stderr, ">> Skipping mysql tests, MySQLdb not importable"
+        if verbose:
+            print >> sys.stderr, ">> Skipping mysql tests, MySQLdb not importable"
         return False
 
 class MysqlConnectionPool(object):
