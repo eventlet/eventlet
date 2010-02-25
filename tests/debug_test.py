@@ -50,7 +50,11 @@ class TestSpew(TestCase):
         f = eval("sys._getframe()", g)
         s(f, "line", None)
         output = sys.stdout.getvalue()
-        self.failUnless("[unknown]:1" in output, "Didn't find [unknown]:1 in %s" % (output))
+        # version-dependent output here
+        if sys.version_info >= (2,5):
+            self.failUnless("[unknown]:1" in output, "Didn't find [unknown]:1 in %s" % (output))
+        else:
+            self.failUnless("[unknown]:0" in output, "Didn't find [unknown]:0 in %s" % (output))
         self.failUnless("VM instruction #" in output, output)
 
     def test_line_global(self):
