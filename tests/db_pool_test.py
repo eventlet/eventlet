@@ -619,6 +619,7 @@ class Psycopg2ConnectionPool(object):
 
     def drop_db(self):
         auth = self._auth.copy()
+        auth.pop('database')  # can't drop database we connected to
         conn = self._dbmodule.connect(**auth)
         conn.set_isolation_level(0)
         db = conn.cursor()
