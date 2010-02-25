@@ -1,5 +1,3 @@
-from eventlet import api
-api.sleep(0)  # initialize the hub
 from eventlet import patcher
 from eventlet.green import select
 
