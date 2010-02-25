@@ -36,7 +36,10 @@ def wrap(obj, dead_callback = None):
         return wrap_module(obj.__name__, dead_callback)
     pythonpath_sync()
     if _g_debug_mode:
-        p = Process(sys.executable, ["-W", "ignore", __file__, '--child', '--logfile', os.path.join(tempfile.gettempdir(), 'saranwrap.log')], dead_callback)
+        p = Process(sys.executable,
+                    ["-W", "ignore", __file__, '--child',
+                     '--logfile', os.path.join(tempfile.gettempdir(), 'saranwrap.log')],
+                    dead_callback)
     else:
         p = Process(sys.executable, ["-W", "ignore", __file__, '--child'], dead_callback)
     prox = Proxy(ChildProcess(p, p))
@@ -53,9 +56,13 @@ def wrap_module(fqname, dead_callback = None):
     pythonpath_sync()
     global _g_debug_mode
     if _g_debug_mode:
-        p = Process(sys.executable, ["-W", "ignore", __file__, '--module', fqname, '--logfile', os.path.join(tempfile.gettempdir(), 'saranwrap.log')], dead_callback)
+        p = Process(sys.executable,
+                    ["-W", "ignore", __file__, '--module', fqname,
+                     '--logfile', os.path.join(tempfile.gettempdir(), 'saranwrap.log')],
+                    dead_callback)
     else:
-        p = Process(sys.executable, ["-W", "ignore", __file__, '--module', fqname,], dead_callback)
+        p = Process(sys.executable,
+                    ["-W", "ignore", __file__, '--module', fqname,], dead_callback)
     prox = Proxy(ChildProcess(p,p))
     return prox
 
@@ -140,7 +147,8 @@ def _write_request(param, output):
 
 def _is_local(attribute):
     "Return ``True`` if the attribute should be handled locally"
-#    return attribute in ('_in', '_out', '_id', '__getattribute__', '__setattr__', '__dict__')
+#    return attribute in ('_in', '_out', '_id', '__getattribute__',
+#    '__setattr__', '__dict__')
     # good enough for now. :)
     if '__local_dict' in attribute:
         return True
@@ -266,7 +274,8 @@ class Proxy(object):
             my_cp = self.__local_dict['_cp']
             my_id = self.__local_dict['_id']
             # Pass the set attribute across
-            request = Request('setattr', {'id':my_id, 'attribute':attribute, 'value':value})
+            request = Request('setattr',
+                              {'id':my_id, 'attribute':attribute, 'value':value})
             return my_cp.make_request(request, attribute=attribute)
 
 class ObjectProxy(Proxy):
@@ -324,7 +333,8 @@ class ObjectProxy(Proxy):
         return self.__str__()
 
     def __nonzero__(self):
-        # bool(obj) is another method that skips __getattribute__.  There's no good way to just pass
+        # bool(obj) is another method that skips __getattribute__.
+        # There's no good way to just pass
         # the method on, so we use a special message.
         my_cp = self.__local_dict['_cp']
         my_id = self.__local_dict['_id']
@@ -395,7 +405,9 @@ class CallableProxy(object):
         # having already checked if the method starts with '_' so we
         # can safely pass this one to the remote object.
         #_prnt("calling %s %s" % (self._object_id, self._name)
-        request = Request('call', {'id':self._object_id, 'name':self._name, 'args':args, 'kwargs':kwargs})
+        request = Request('call', {'id':self._object_id,
+                                   'name':self._name,
+                                   'args':args, 'kwargs':kwargs})
         return self._cp.make_request(request, attribute=self._name)
 
 class Server(object):
@@ -444,14 +456,15 @@ class Server(object):
 
     def handle_setitem(self, obj, req):
         obj[req['key']] = req['value']
-        return None  # *TODO figure out what the actual return value of __setitem__ should be
+        return None  # *TODO figure out what the actual return value
+                     # of __setitem__ should be
 
     def handle_eq(self, obj, req):
         #_log("__eq__ %s %s" % (obj, req))
         rhs = None
         try:
             rhs = self._objects[req['rhs']]
-        except KeyError, e:
+        except KeyError:
             return False
         return (obj == rhs)
 
@@ -565,7 +578,7 @@ class Server(object):
         #_log("objects: %s" % self._objects)
         s = Pickle.dumps(body)
         _log(`s`)
-        str_ = _write_lp_hunk(self._out, s)
+        _write_lp_hunk(self._out, s)
 
     def write_exception(self, e):
         """Helper method to respond with an exception."""
@@ -621,14 +634,16 @@ def named(name):
             import_err_strings.append(err.__str__())
             toimport = '.'.join(toimport.split('.')[:-1])
     if obj is None:
-        raise ImportError('%s could not be imported.  Import errors: %r' % (name, import_err_strings))
+        raise ImportError(
+            '%s could not be imported.  Import errors: %r' % (name, import_err_strings))
     for seg in name.split('.')[1:]:
         try:
             obj = getattr(obj, seg)
         except AttributeError:
             dirobj = dir(obj)
             dirobj.sort()
-            raise AttributeError('attribute %r missing from %r (%r) %r.  Import errors: %r' % (
+            raise AttributeError(
+                'attribute %r missing from %r (%r) %r.  Import errors: %r' % (
                 seg, obj, dirobj, name, import_err_strings))
     return obj
 

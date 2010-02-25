@@ -1,7 +1,4 @@
-import eventlet
 from eventlet.hubs import trampoline
-from eventlet.hubs import get_hub
-
 BUFFER_SIZE = 4096
 
 import errno
@@ -11,10 +8,6 @@ from socket import socket as _original_socket
 import sys
 import time
 import warnings
-
-
-from errno import EWOULDBLOCK, EAGAIN
-
 
 __all__ = ['GreenSocket', 'GreenPipe', 'shutdown_safe']
 
@@ -302,7 +295,6 @@ class GreenSocket(object):
         return total_sent
 
     def sendall(self, data, flags=0):
-        fd = self.fd
         tail = self.send(data, flags)
         len_data = len(data)
         while tail < len_data:
@@ -375,7 +367,7 @@ class GreenPipe(object):
             try:
                 return fd.read(buflen)
             except IOError, e:
-                if e[0] != EAGAIN:
+                if e[0] != errno.EAGAIN:
                     return ''
             except socket.error, e:
                 if e[0] == errno.EPIPE:
@@ -407,7 +399,7 @@ class GreenPipe(object):
                 fd.flush()
                 return len(data)
             except IOError, e:
-                if e[0] != EAGAIN:
+                if e[0] != errno.EAGAIN:
                     raise
             except ValueError, e:
                 # what's this for?

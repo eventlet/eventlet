@@ -11,13 +11,13 @@ import os
 import sys
 import warnings
 
-__patched__ = ['fromfd', 'socketpair', 'gethostbyname', 'create_connection', 
+__patched__ = ['fromfd', 'socketpair', 'gethostbyname', 'create_connection',
                'ssl', 'socket']
 
 __original_fromfd__ = __socket.fromfd
 def fromfd(*args):
-    return socket(__original_fromfd__(*args))    
-    
+    return socket(__original_fromfd__(*args))
+
 __original_socketpair__ = __socket.socketpair
 def socketpair(*args):
     one, two = __original_socketpair__(*args)
@@ -35,7 +35,7 @@ def gethostbyname(name):
         globals()['gethostbyname'] = __original_gethostbyname__
     else:
         globals()['gethostbyname'] = _gethostbyname_tpool
-    
+
     return globals()['gethostbyname'](name)
 
 def _gethostbyname_twisted(name):
@@ -51,7 +51,7 @@ def _gethostbyname_tpool(name):
 #     def getaddrinfo(*args, **kw):
 #         return tpool.execute(
 #             __socket.getaddrinfo, *args, **kw)
-# 
+#
 # XXX there're few more blocking functions in socket
 # XXX having a hub-independent way to access thread pool would be nice
 
@@ -88,10 +88,10 @@ def create_connection(address, timeout=_GLOBAL_DEFAULT_TIMEOUT):
 def _convert_to_sslerror(ex):
     """ Transliterates SSL.SysCallErrors to socket.sslerrors"""
     return sslerror((ex[0], ex[1]))
-    
-        
+
+
 class GreenSSLObject(object):
-    """ Wrapper object around the SSLObjects returned by socket.ssl, which have a 
+    """ Wrapper object around the SSLObjects returned by socket.ssl, which have a
     slightly different interface from SSL.Connection objects. """
     def __init__(self, green_ssl_obj):
         """ Should only be called by a 'green' socket.ssl """
@@ -106,7 +106,7 @@ class GreenSSLObject(object):
                 self.connection.do_handshake()
             except _SSL.SysCallError, e:
                 raise _convert_to_sslerror(e)
-        
+
     def read(self, n=1024):
         """If n is provided, read n bytes from the SSL connection, otherwise read
         until EOF. The return value is a string of the bytes read."""
@@ -116,9 +116,9 @@ class GreenSSLObject(object):
             return ''
         except _SSL.SysCallError, e:
             raise _convert_to_sslerror(e)
-            
+
     def write(self, s):
-        """Writes the string s to the on the object's SSL connection. 
+        """Writes the string s to the on the object's SSL connection.
         The return value is the number of bytes written. """
         try:
             return self.connection.write(s)
@@ -130,13 +130,13 @@ class GreenSSLObject(object):
         purposes; do not parse the content of this string because its format can't be
         parsed unambiguously. """
         return str(self.connection.get_peer_certificate().get_subject())
-        
+
     def issuer(self):
         """Returns a string describing the issuer of the server's certificate. Useful
-        for debugging purposes; do not parse the content of this string because its 
+        for debugging purposes; do not parse the content of this string because its
         format can't be parsed unambiguously."""
         return str(self.connection.get_peer_certificate().get_issuer())
-        
+
 
 try:
     try:
