@@ -81,6 +81,15 @@ def import_patched(module_name, *additional_modules, **kw_additional_modules):
 def patch_function(func, *additional_modules):
     """Huge hack here -- patches the specified modules for the 
     duration of the function call."""
+    if not additional_modules:
+        # supply some defaults
+        additional_modules = (
+            _green_os_modules() +
+            _green_select_modules() +
+            _green_socket_modules() +
+            _green_thread_modules() + 
+            _green_time_modules())
+
     def patched(*args, **kw):
         saved = {}
         for name, mod in additional_modules:

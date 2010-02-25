@@ -2,8 +2,6 @@
 
 from eventlet import patcher
 from eventlet.green import socket
-from eventlet.green import urllib
-from eventlet.green import threading
 
 # enable network resource
 import test.test_support
@@ -21,16 +19,10 @@ try:
 except AttributeError:
     raise ImportError("Socket module doesn't support ssl")
 
-patcher.inject('test.test_socket_ssl',
-    globals(),
-    ('socket', socket),
-    ('urllib', urllib),
-    ('threading', threading))
+patcher.inject('test.test_socket_ssl', globals())
 
-test_basic = patcher.patch_function(test_basic, 
-    ('urllib', urllib))    
-test_rude_shutdown = patcher.patch_function(test_rude_shutdown, 
-    ('threading', threading))
+test_basic = patcher.patch_function(test_basic)
+test_rude_shutdown = patcher.patch_function(test_rude_shutdown)
 
 def test_main():
     if not hasattr(socket, "ssl"):
