@@ -226,7 +226,7 @@ def setup():
         csock = util.__original_socket__(socket.AF_INET, socket.SOCK_STREAM)
         csock.connect(('localhost', sock.getsockname()[1]))
         nsock, addr = sock.accept()
-        _rfile = greenio.Green_fileobject(greenio.GreenSocket(csock))
+        _rfile = greenio.GreenSocket(csock).makefile()
         _wfile = nsock.makefile()
 
     _reqq = Queue(maxsize=-1)

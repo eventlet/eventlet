@@ -4,10 +4,9 @@ for attr in dir(__ssl):
     exec "%s = __ssl.%s" % (attr, attr)
 
 import errno
-import time
+time = __import__('time')
 
 from eventlet.hubs import trampoline
-from thread import get_ident
 from eventlet.greenio import set_nonblocking, GreenSocket, SOCKET_CLOSED, CONNECT_ERR, CONNECT_SUCCESS
 orig_socket = __import__('socket')
 socket = orig_socket.socket
@@ -36,7 +35,7 @@ class GreenSSLSocket(__ssl.SSLSocket):
             sock = GreenSocket(sock)
 
         self.act_non_blocking = sock.act_non_blocking
-        self.timeout = sock.timeout
+        self._timeout = sock.gettimeout()
         super(GreenSSLSocket, self).__init__(sock.fd, *args, **kw)
         del sock
         
@@ -49,18 +48,18 @@ class GreenSSLSocket(__ssl.SSLSocket):
         self.recvfrom_into = lambda buffer, nbytes=None, flags=0: GreenSSLSocket.recvfrom_into(self, buffer, nbytes, flags)
         
     def settimeout(self, timeout):
-        self.timeout = timeout
+        self._timeout = timeout
         
     def gettimeout(self):
-        return self.timeout
+        return self._timeout
     
     def setblocking(self, flag):
         if flag:
             self.act_non_blocking = False
-            self.timeout = None
+            self._timeout = None
         else:
             self.act_non_blocking = True
-            self.timeout = 0.0
+            self._timeout = 0.0
 
     def _call_trampolining(self, func, *a, **kw):
         if self.act_non_blocking:

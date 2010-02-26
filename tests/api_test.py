@@ -39,7 +39,7 @@ class TestApi(TestCase):
         def accept_once(listenfd):
             try:
                 conn, addr = listenfd.accept()
-                fd = conn.makefile()
+                fd = conn.makefile(mode='w')
                 conn.close()
                 fd.write('hello\n')
                 fd.close()

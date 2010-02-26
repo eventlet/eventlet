@@ -20,6 +20,27 @@ __all__ = ['GreenSocket', 'GreenPipe', 'shutdown_safe']
 CONNECT_ERR = set((errno.EINPROGRESS, errno.EALREADY, errno.EWOULDBLOCK))
 CONNECT_SUCCESS = set((0, errno.EISCONN))
 
+# Emulate _fileobject class in 3.x implementation
+# Eventually this internal socket structure could be replaced with makefile calls.
+try:
+    _fileobject = socket._fileobject
+except AttributeError:
+   def _fileobject(sock, *args, **kwargs):
+        return _original_socket.makefile(sock, *args, **kwargs)
+
+def get_errno(exc):
+    """ Get the error code out of socket.error objects. 
+    socket.error in <2.5 does not have errno attribute
+    socket.error in 3.x does not allow indexing access 
+    """
+    try:
+        return exc.errno
+    except AttributeError:
+        try:
+            return exc[0]
+        except (TypeError,IndexError):
+            return None
+
 def socket_connect(descriptor, address):
     """
     Attempts to connect to the address, returns the descriptor if it succeeds,
@@ -42,7 +63,7 @@ def socket_accept(descriptor):
     try:
         return descriptor.accept()
     except socket.error, e:
-        if e[0] == errno.EWOULDBLOCK:
+        if get_errno(e) == errno.EWOULDBLOCK:
             return None
         raise
         
@@ -102,7 +123,6 @@ class GreenSocket(object):
     Green version of socket.socket class, that is intended to be 100%
     API-compatible.
     """
-    timeout = None
     def __init__(self, family_or_realsock=socket.AF_INET, *args, **kwargs):
         if isinstance(family_or_realsock, (int, long)):
             fd = _original_socket(family_or_realsock, *args, **kwargs)
@@ -113,9 +133,9 @@ class GreenSocket(object):
 
         # import timeout from other socket, if it was there
         try:
-            self.timeout = fd.gettimeout() or socket.getdefaulttimeout()
+            self._timeout = fd.gettimeout() or socket.getdefaulttimeout()
         except AttributeError:
-            self.timeout = socket.getdefaulttimeout()
+            self._timeout = socket.getdefaulttimeout()
         
         set_nonblocking(fd)
         self.fd = fd
@@ -139,6 +159,11 @@ class GreenSocket(object):
     @property
     def proto(self):
         return self.fd.proto
+
+    #forward unknown requests to fd
+    #i.e _io_refs and _decref_socketios in 3.x
+    def __getattr__(self, value):
+        return getattr(self.fd, value)
 
     def accept(self):
         if self.act_non_blocking:
@@ -206,7 +231,7 @@ class GreenSocket(object):
         sock = self.fd.dup(*args, **kw)
         set_nonblocking(sock)
         newsock = type(self)(sock)
-        newsock.settimeout(self.timeout)
+        newsock.settimeout(self.gettimeout())
         return newsock
 
     def fileno(self, *args, **kw):
@@ -229,8 +254,8 @@ class GreenSocket(object):
         fn = self.listen = self.fd.listen
         return fn(*args, **kw)
 
-    def makefile(self, mode='r', bufsize=-1):
-        return socket._fileobject(self.dup(), mode, bufsize)
+    def makefile(self, *args, **kw):
+        return _fileobject(self.dup(), *args, **kw)
 
     def makeGreenFile(self, mode='r', bufsize=-1):
         warnings.warn("makeGreenFile has been deprecated, please use "
@@ -253,7 +278,7 @@ class GreenSocket(object):
                     raise
             trampoline(fd, 
                 read=True, 
-                timeout=self.timeout, 
+                timeout=self.gettimeout(), 
                 timeout_exc=socket.timeout)
 
     def recvfrom(self, *args):
@@ -289,7 +314,7 @@ class GreenSocket(object):
         while tail < len_data:
             trampoline(fd, 
                 write=True, 
-                timeout=self.timeout, 
+                timeout=self.gettimeout(), 
                 timeout_exc=socket.timeout)
             tail += self.send(data[tail:], flags)
 
@@ -300,10 +325,10 @@ class GreenSocket(object):
     def setblocking(self, flag):
         if flag:
             self.act_non_blocking = False
-            self.timeout = None
+            self._timeout = None
         else:
             self.act_non_blocking = True
-            self.timeout = 0.0
+            self._timeout = 0.0
 
     def setsockopt(self, *args, **kw):
         fn = self.setsockopt = self.fd.setsockopt
@@ -327,10 +352,10 @@ class GreenSocket(object):
         if howlong == 0.0:
             self.setblocking(howlong)
         else:
-            self.timeout = howlong
+            self._timeout = howlong
 
     def gettimeout(self):
-        return self.timeout
+        return self._timeout
 
 
 class GreenPipe(object):

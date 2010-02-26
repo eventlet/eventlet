@@ -1,13 +1,14 @@
 __socket = __import__('socket')
 for var in __socket.__all__:
     exec "%s = __socket.%s" % (var, var)
-_fileobject = __socket._fileobject
 
 from eventlet.hubs import get_hub
 from eventlet.greenio import GreenSocket as socket
 from eventlet.greenio import SSL as _SSL  # for exceptions
 from eventlet.greenio import _GLOBAL_DEFAULT_TIMEOUT
-import os
+from eventlet.greenio import _fileobject
+
+os = __import__('os')
 import sys
 import warnings
 

@@ -10,6 +10,7 @@ from eventlet.green import socket
 from eventlet.green import BaseHTTPServer
 from eventlet import greenpool
 from eventlet import greenio
+from eventlet.greenio import get_errno
 
 DEFAULT_MAX_SIMULTANEOUS_REQUESTS = 1024
 DEFAULT_MAX_HTTP_VERSION = 'HTTP/1.1'
@@ -39,15 +40,6 @@ BROKEN_SOCK = set((errno.EPIPE, errno.ECONNRESET))
 
 # special flag return value for apps
 ALREADY_HANDLED = object()
-
-def get_errno(err):
-    """ Simple method to get the error code out of socket.error objects.  It 
-    compensates for some cases where the code is not in the expected 
-    location."""
-    try:
-        return err[0]
-    except IndexError:
-        return None
 
 class Input(object):
     def __init__(self, 

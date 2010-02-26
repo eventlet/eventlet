@@ -1,6 +1,6 @@
 os_orig = __import__("os")
 import errno
-import socket
+socket = __import__("socket")
 
 from eventlet import greenio
 from eventlet import greenthread
