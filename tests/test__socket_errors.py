@@ -40,12 +40,13 @@ class TestSocketErrors(unittest.TestCase):
         cs, addr = server.accept()
         cs.settimeout(1)
         try:
-            cs.recv(1024)
-            self.fail("Should have timed out")
-        except socket.timeout, ex:
-            assert hasattr(ex, 'args')
-            assert len(ex.args) == 1
-            assert ex.args[0] == 'timed out'
+            try:
+                cs.recv(1024)
+                self.fail("Should have timed out")
+            except socket.timeout, ex:
+                assert hasattr(ex, 'args')
+                assert len(ex.args) == 1
+                assert ex.args[0] == 'timed out'
         finally:
             s.close()
             cs.close()
