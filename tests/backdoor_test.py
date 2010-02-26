@@ -22,6 +22,11 @@ class BackdoorTest(LimitedTestCase):
         f.flush()
         self.assertEquals('hi\n', f.readline())
         self.assertEquals('>>> ', f.read(4))
+        f.close()
+        client.close()
+        serv.kill()
+        # wait for the console to discover that it's dead
+        eventlet.sleep(0.1)
         
         
 

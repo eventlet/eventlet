@@ -33,7 +33,7 @@ _rfile = _wfile = None
 def _signal_t2e():
     _wfile.write(' ')
     _wfile.flush()
-    
+
 _reqq = None
 _rspq = None
 
@@ -74,9 +74,13 @@ def tworker():
             rv = meth(*args,**kwargs)
         except SYS_EXCS:
             raise
-        except Exception,exn:
+        except Exception:
             rv = sys.exc_info()
-        _rspq.put((e,rv))
+        _rspq.put((e,rv))               # @@tavis: not supposed to
+                                        # keep references to
+                                        # sys.exc_info() so it would
+                                        # be worthwhile testing
+                                        # if this leads to memory leaks
         meth = args = kwargs = e = rv = None
         _signal_t2e()
 
@@ -104,8 +108,12 @@ def execute(meth,*args, **kwargs):
     cooperate with green threads by sticking them in native threads, at the cost
     of some overhead.
     """
+    global _threads
     setup()
-    e = esend(meth,*args,**kwargs)
+    my_thread = threading.currentThread()
+    if my_thread in _threads:
+        return meth(*args, **kwargs)
+    e = esend(meth, *args, **kwargs)
     rv = erecv(e)
     return rv
 
@@ -114,10 +122,10 @@ def proxy_call(autowrap, f, *args, **kwargs):
     """
     Call a function *f* and returns the value.  If the type of the return value
     is in the *autowrap* collection, then it is wrapped in a :class:`Proxy`
-    object before return.  
-    
+    object before return.
+
     Normally *f* will be called in the threadpool with :func:`execute`; if the
-    keyword argument "nonblocking" is set to ``True``, it will simply be 
+    keyword argument "nonblocking" is set to ``True``, it will simply be
     executed directly.  This is useful if you have an object which has methods
     that don't need to be called in a separate thread, but which return objects
     that should be Proxy wrapped.
@@ -199,7 +207,7 @@ class Proxy(object):
 
 
 _nthreads = int(os.environ.get('EVENTLET_THREADPOOL_SIZE', 20))
-_threads = {}
+_threads = set()
 _coro = None
 _setup_already = False
 def setup():
@@ -232,12 +240,13 @@ def setup():
     _reqq = Queue(maxsize=-1)
     _rspq = Queue(maxsize=-1)
     for i in range(0,_nthreads):
-        _threads[i] = threading.Thread(target=tworker)
-        _threads[i].setDaemon(True)
-        _threads[i].start()
+        t = threading.Thread(target=tworker)
+        t.setDaemon(True)
+        t.start()
+        _threads.add(t)
 
     _coro = greenthread.spawn_n(tpool_trampoline)
-    
+
 
 def killall():
     global _setup_already, _reqq, _rspq, _rfile, _wfile
@@ -245,7 +254,7 @@ def killall():
         return
     for i in _threads:
         _reqq.put(None)
-    for thr in _threads.values():
+    for thr in _threads:
         thr.join()
     _threads.clear()
     if _coro is not None:

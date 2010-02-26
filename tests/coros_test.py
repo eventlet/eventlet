@@ -1,5 +1,5 @@
 from unittest import main, TestCase
-from tests import LimitedTestCase
+from tests import LimitedTestCase, silence_warnings
 import eventlet
 from eventlet import coros
 from eventlet import event
@@ -13,6 +13,8 @@ class IncrActor(coros.Actor):
 
 class TestActor(LimitedTestCase):
     mode = 'static'
+
+    @silence_warnings
     def setUp(self):
         super(TestActor, self).setUp()
         self.actor = IncrActor()
@@ -93,6 +95,7 @@ class TestActor(LimitedTestCase):
         evt.wait()
         self.assertEqual(['should_appear'], msgs)
 
+    @silence_warnings
     def test_multiple(self):
         self.actor = IncrActor(concurrency=2)
         total = [0]

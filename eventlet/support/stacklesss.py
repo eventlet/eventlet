@@ -30,7 +30,7 @@ class FirstSwitch(object):
         gr.t = t
         tasklet_to_greenlet[t] = gr
         t.setup(*args, **kw)
-        result = t.run()
+        t.run()
 
 
 class greenlet(object):
@@ -75,10 +75,10 @@ def emulate():
     module.getcurrent = getcurrent
     module.GreenletExit = GreenletExit
 
-    caller = t = stackless.getcurrent()
-    tasklet_to_greenlet[t] = None
+    caller = stackless.getcurrent()
+    tasklet_to_greenlet[caller] = None
     main_coro = greenlet()
-    tasklet_to_greenlet[t] = main_coro
-    main_coro.t = t
+    tasklet_to_greenlet[caller] = main_coro
+    main_coro.t = caller
     del main_coro.switch  ## It's already running
     coro_args[main_coro] = None

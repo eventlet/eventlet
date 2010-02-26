@@ -5,7 +5,6 @@
 * patcher.monkey_patch() method replacing util.wrap_*
 * monkeypatch threading support
 * removed api.named
-* move api_tests into greenthread_tests and hub_tests, or wherever's appropriate
 * imported timeout module from gevent, replace exc_after and with_timeout()
 * replace call_after with spawn_after; this is so that users don't see the Timer class
 * added cancel() method to GreenThread to support the semantic of "abort if not already in the middle of something"

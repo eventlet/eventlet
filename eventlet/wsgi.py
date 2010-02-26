@@ -16,7 +16,8 @@ DEFAULT_MAX_SIMULTANEOUS_REQUESTS = 1024
 DEFAULT_MAX_HTTP_VERSION = 'HTTP/1.1'
 MAX_REQUEST_LINE = 8192
 MINIMUM_CHUNK_SIZE = 4096
-DEFAULT_LOG_FORMAT='%(client_ip)s - - [%(date_time)s] "%(request_line)s" %(status_code)s %(body_length)s %(wall_seconds).6f'
+DEFAULT_LOG_FORMAT= ('%(client_ip)s - - [%(date_time)s] "%(request_line)s"'
+                     ' %(status_code)s %(body_length)s %(wall_seconds).6f')
 
 __all__ = ['server', 'format_date_time']
 
@@ -33,7 +34,7 @@ def format_date_time(timestamp):
         _weekdayname[wd], day, _monthname[month], year, hh, mm, ss
     )
 
-# Collections of error codes to compare against.  Not all attributes are set 
+# Collections of error codes to compare against.  Not all attributes are set
 # on errno module on all platforms, so some are literals :(
 BAD_SOCK = set((errno.EBADF, 10053))
 BROKEN_SOCK = set((errno.EPIPE, errno.ECONNRESET))
@@ -42,13 +43,13 @@ BROKEN_SOCK = set((errno.EPIPE, errno.ECONNRESET))
 ALREADY_HANDLED = object()
 
 class Input(object):
-    def __init__(self, 
-                 rfile, 
-                 content_length, 
-                 wfile=None, 
+    def __init__(self,
+                 rfile,
+                 content_length,
+                 wfile=None,
                  wfile_line=None,
                  chunked_input=False):
-                 
+
         self.rfile = rfile
         if content_length is not None:
             content_length = int(content_length)
@@ -128,7 +129,7 @@ class Input(object):
 
     def __iter__(self):
         return iter(self.read())
-        
+
     def get_socket(self):
         return self.rfile._sock.dup()
 
@@ -136,7 +137,7 @@ class Input(object):
 class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
     protocol_version = 'HTTP/1.1'
     minimum_chunk_size = MINIMUM_CHUNK_SIZE
-    
+
     def setup(self):
         # overriding SocketServer.setup to correctly handle SSL.Connection objects
         conn = self.connection = self.request
@@ -165,7 +166,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             self.raw_requestline = self.rfile.readline(MAX_REQUEST_LINE)
             if len(self.raw_requestline) == MAX_REQUEST_LINE:
                 self.wfile.write(
-                    "HTTP/1.0 414 Request URI Too Long\r\nConnection: close\r\nContent-length: 0\r\n\r\n")
+                    "HTTP/1.0 414 Request URI Too Long\r\n"
+                    "Connection: close\r\nContent-length: 0\r\n\r\n")
                 self.close_connection = 1
                 return
         except greenio.SSL.ZeroReturnError:
@@ -256,7 +258,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 if self.close_connection:
                     towrite.append('Connection: close\r\n')
                 elif send_keep_alive:
-                    towrite.append('Connection: keep-alive\r\n') 
+                    towrite.append('Connection: keep-alive\r\n')
                 towrite.append('\r\n')
                 # end of header writing
 
@@ -269,7 +271,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 _writelines(towrite)
                 length[0] = length[0] + sum(map(len, towrite))
             except UnicodeEncodeError:
-                print "Encountered unicode while attempting to write wsgi response: ", [x for x in towrite if isinstance(x, unicode)]
+                print "Encountered unicode while attempting to write wsgi response: ", \
+                      [x for x in towrite if isinstance(x, unicode)]
                 traceback.print_exc()
                 _writelines(
                     ["HTTP/1.0 500 Internal Server Error\r\n",
@@ -277,7 +280,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     "Content-type: text/plain\r\n",
                     "Content-length: 98\r\n",
                     "\r\n",
-                    "Internal Server Error: wsgi application passed a unicode object to the server instead of a string."])
+                    ("Internal Server Error: wsgi application passed "
+                     "a unicode object to the server instead of a string.")])
 
         def start_response(status, response_headers, exc_info=None):
             status_code[0] = status.split()[0]
@@ -290,7 +294,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     # Avoid dangling circular ref
                     exc_info = None
 
-            capitalized_headers = [('-'.join([x.capitalize() for x in key.split('-')]), value)
+            capitalized_headers = [('-'.join([x.capitalize()
+                                              for x in key.split('-')]), value)
                                    for key, value in response_headers]
 
             headers_set[:] = [status, capitalized_headers]
@@ -321,17 +326,19 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     write(''.join(towrite))
                 if not headers_sent or (use_chunked[0] and just_written_size):
                     write('')
-            except Exception, e:
+            except Exception:
                 self.close_connection = 1
                 exc = traceback.format_exc()
                 print exc
                 if not headers_set:
-                    start_response("500 Internal Server Error", [('Content-type', 'text/plain')])
+                    start_response("500 Internal Server Error",
+                                   [('Content-type', 'text/plain')])
                     write(exc)
         finally:
             if hasattr(result, 'close'):
                 result.close()
-            if self.environ['eventlet.input'].position < self.environ.get('CONTENT_LENGTH', 0):
+            if (self.environ['eventlet.input'].position
+                < self.environ.get('CONTENT_LENGTH', 0)):
                 ## Read and discard body if there was no pending 100-continue
                 if not self.environ['eventlet.input'].wfile:
                     while self.environ['eventlet.input'].read(MINIMUM_CHUNK_SIZE):
@@ -345,7 +352,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 status_code=status_code[0],
                 body_length=length[0],
                 wall_seconds=finish - start))
-                
+
     def get_client_ip(self):
         client_ip = self.client_address[0]
         if self.server.log_x_forwarded_for:
@@ -414,19 +421,19 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
 
 class Server(BaseHTTPServer.HTTPServer):
-    def __init__(self, 
-                 socket, 
-                 address, 
-                 app, 
-                 log=None, 
-                 environ=None, 
-                 max_http_version=None, 
-                 protocol=HttpProtocol, 
+    def __init__(self,
+                 socket,
+                 address,
+                 app,
+                 log=None,
+                 environ=None,
+                 max_http_version=None,
+                 protocol=HttpProtocol,
                  minimum_chunk_size=None,
                  log_x_forwarded_for=True,
                  keepalive=True,
                  log_format=DEFAULT_LOG_FORMAT):
-        
+
         self.outstanding_requests = 0
         self.socket = socket
         self.address = address
@@ -446,7 +453,6 @@ class Server(BaseHTTPServer.HTTPServer):
         self.log_format = log_format
 
     def get_environ(self):
-        socket = self.socket
         d = {
             'wsgi.errors': sys.stderr,
             'wsgi.version': (1, 0),
@@ -469,29 +475,29 @@ class Server(BaseHTTPServer.HTTPServer):
 try:
     import ssl
     ACCEPT_EXCEPTIONS = (socket.error, ssl.SSLError)
-    ACCEPT_ERRNO = set((errno.EPIPE, errno.EBADF, 
+    ACCEPT_ERRNO = set((errno.EPIPE, errno.EBADF,
                         ssl.SSL_ERROR_EOF, ssl.SSL_ERROR_SSL))
 except ImportError:
     ACCEPT_EXCEPTIONS = (socket.error,)
     ACCEPT_ERRNO = set((errno.EPIPE, errno.EBADF))
 
-def server(sock, site, 
-           log=None, 
-           environ=None, 
+def server(sock, site,
+           log=None,
+           environ=None,
            max_size=None,
-           max_http_version=DEFAULT_MAX_HTTP_VERSION, 
+           max_http_version=DEFAULT_MAX_HTTP_VERSION,
            protocol=HttpProtocol,
-           server_event=None, 
+           server_event=None,
            minimum_chunk_size=None,
            log_x_forwarded_for=True,
            custom_pool=None,
            keepalive=True,
            log_format=DEFAULT_LOG_FORMAT):
-    """  Start up a wsgi server handling requests from the supplied server 
+    """  Start up a wsgi server handling requests from the supplied server
     socket.  This function loops forever.  The *sock* object will be closed after server exits,
     but the underlying file descriptor will remain open, so if you have a dup() of *sock*,
     it will remain usable.
-    
+
     :param sock: Server socket, must be already bound to a port and listening.
     :param site: WSGI application function.
     :param log: File-like object that logs should be written to.  If not specified, sys.stderr is used.
@@ -506,11 +512,11 @@ def server(sock, site,
     :param keepalive: If set to False, disables keepalives on the server; all connections will be closed after serving one request.
     :param log_format: A python format string that is used as the template to generate log lines.  The following values can be formatted into it: client_ip, date_time, request_line, status_code, body_length, wall_seconds.  Look the default for an example of how to use this.
     """
-    serv = Server(sock, sock.getsockname(), 
-                  site, log, 
-                  environ=None, 
-                  max_http_version=max_http_version, 
-                  protocol=protocol, 
+    serv = Server(sock, sock.getsockname(),
+                  site, log,
+                  environ=None,
+                  max_http_version=max_http_version,
+                  protocol=protocol,
                   minimum_chunk_size=minimum_chunk_size,
                   log_x_forwarded_for=log_x_forwarded_for,
                   keepalive=keepalive,
@@ -535,12 +541,13 @@ def server(sock, site,
             if port == ':80':
                 port = ''
 
-        serv.log.write("(%s) wsgi starting up on %s://%s%s/\n" % (os.getpid(), scheme, host, port))
+        serv.log.write("(%s) wsgi starting up on %s://%s%s/\n" % (
+            os.getpid(), scheme, host, port))
         while True:
             try:
                 client_socket = sock.accept()
                 try:
-                    pool.spawn_n(serv.process_request, client_socket)                    
+                    pool.spawn_n(serv.process_request, client_socket)
                 except AttributeError:
                     warnings.warn("wsgi's pool should be an instance of " \
                         "eventlet.greenpool.GreenPool, is %s. Please convert your"\
@@ -564,4 +571,3 @@ def server(sock, site,
         except socket.error, e:
             if get_errno(e) not in BROKEN_SOCK:
                 traceback.print_exc()
-

@@ -1,4 +1,4 @@
-import bisect
+import heapq
 import sys
 import traceback
 
@@ -28,8 +28,8 @@ class FdListener(object):
     def __repr__(self):
         return "%s(%r, %r, %r)" % (type(self).__name__, self.evtype, self.fileno, self.cb)
     __str__ = __repr__
-    
-    
+
+
 # in debug mode, track the call site that created the listener
 class DebugListener(FdListener):
     def __init__(self, evtype, fileno, cb):
@@ -37,20 +37,21 @@ class DebugListener(FdListener):
         self.greenlet = greenlet.getcurrent()
         super(DebugListener, self).__init__(evtype, fileno, cb)
     def __repr__(self):
-        return "DebugListener(%r, %r, %r, %r)\n%sEndDebugFdListener" % (self.evtype,
-                                                                        self.fileno,
-                                                                        self.cb,
-                                                                        self.greenlet,
-                                                                        ''.join(self.where_called))
+        return "DebugListener(%r, %r, %r, %r)\n%sEndDebugFdListener" % (
+            self.evtype,
+            self.fileno,
+            self.cb,
+            self.greenlet,
+            ''.join(self.where_called))
     __str__ = __repr__
-    
+
 
 class BaseHub(object):
     """ Base hub class for easing the implementation of subclasses that are
     specific to a particular underlying event architecture. """
 
     SYSTEM_EXCEPTIONS = (KeyboardInterrupt, SystemExit)
-    
+
     READ = READ
     WRITE = WRITE
 
@@ -65,7 +66,7 @@ class BaseHub(object):
         self.next_timers = []
         self.lclass = FdListener
         self.debug_exceptions = True
-        
+
     def add(self, evtype, fileno, cb):
         """ Signals an intent to or write a particular file descriptor.
 
@@ -88,9 +89,9 @@ class BaseHub(object):
             pass
         if listener_list:
             self.listeners[listener.evtype][listener.fileno] = listener_list
-        
+
     def remove_descriptor(self, fileno):
-        """ Completely remove all listeners for this fileno.  For internal use 
+        """ Completely remove all listeners for this fileno.  For internal use
         only."""
         self.listeners[READ].pop(fileno, None)
         self.listeners[WRITE].pop(fileno, None)
@@ -109,12 +110,12 @@ class BaseHub(object):
                 switch_out()
             except:
                 self.squelch_generic_exception(sys.exc_info())
+                sys.exc_clear()
         if self.greenlet.dead:
             self.greenlet = greenlet.greenlet(self.run)
         try:
-            current = greenlet.getcurrent()
-            if self.greenlet.parent is not current: 
-                current.parent = self.greenlet
+            if self.greenlet.parent is not cur:
+                cur.parent = self.greenlet
         except ValueError:
             pass  # gets raised if there is a greenlet parent cycle
         sys_exc_clear()
@@ -203,10 +204,10 @@ class BaseHub(object):
         self.timer_finished(timer)
 
     def prepare_timers(self):
-        ins = bisect.insort_right
+        heappush = heapq.heappush
         t = self.timers
         for item in self.next_timers:
-            ins(t, item)
+            heappush(t, item)
         del self.next_timers[:]
 
     def schedule_call_local(self, seconds, cb, *args, **kw):
@@ -236,10 +237,19 @@ class BaseHub(object):
 
     def fire_timers(self, when):
         t = self.timers
-        last = bisect.bisect_right(t, (when, 1))
-        i = 0
-        for i in xrange(last):
-            timer = t[i][2]
+        heappop = heapq.heappop
+
+        while t:
+            next = t[0]
+
+            exp = next[0]
+            timer = next[2]
+
+            if when < exp:
+                break
+
+            heappop(t)
+
             try:
                 try:
                     timer()
@@ -247,9 +257,9 @@ class BaseHub(object):
                     raise
                 except:
                     self.squelch_timer_exception(timer, sys.exc_info())
+                    sys.exc_clear()
             finally:
                 self.timer_finished(timer)
-        del t[:last]
 
     # for debugging:
 
@@ -261,12 +271,12 @@ class BaseHub(object):
 
     def get_timers_count(hub):
         return max(len(hub.timers), len(hub.next_timers))
-        
+
     def set_debug_listeners(self, value):
         if value:
             self.lclass = DebugListener
         else:
             self.lclass = FdListener
-            
+
     def set_timer_exceptions(self, value):
         self.debug_exceptions = value

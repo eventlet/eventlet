@@ -57,3 +57,4 @@ class Hub(BaseHub):
                     raise
                 except:
                     self.squelch_exception(fileno, sys.exc_info())
+                    sys.exc_clear()

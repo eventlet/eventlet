@@ -32,13 +32,11 @@ def noop():
 
 class TestTpool(LimitedTestCase):
     def setUp(self):
-        debug.hub_exceptions(True)
         super(TestTpool, self).setUp()
 
     def tearDown(self):
-        super(TestTpool, self).tearDown()
         tpool.killall()
-        debug.hub_exceptions(False)
+        super(TestTpool, self).tearDown()
 
     @skip_with_pyevent
     def test_wrap_tuple(self):
@@ -221,6 +219,7 @@ class TpoolLongTests(LimitedTestCase):
             pile.spawn(sender_loop,i)
         results = list(pile)
         self.assertEquals(len(results), 10)
+        tpool.killall()
         
     @skipped
     def test_benchmark(self):
@@ -242,7 +241,7 @@ from eventlet.tpool import execute
         tpool_overhead = (best_tpool-best_normal)/iterations
         print "%s iterations\nTpool overhead is %s seconds per call.  Normal: %s; Tpool: %s" % (
             iterations, tpool_overhead, best_normal, best_tpool)
-
+        tpool.killall()
 
 if __name__ == '__main__':
     main()

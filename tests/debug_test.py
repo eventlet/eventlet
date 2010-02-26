@@ -39,7 +39,7 @@ class TestSpew(TestCase):
         s(f, "line", None)
         lineno = f.f_lineno - 1 # -1 here since we called with frame f in the line above
         output = sys.stdout.getvalue()
-        self.failUnless("debug_test:%i" % lineno in output, "Didn't find line %i in %s" % (lineno, output))
+        self.failUnless("%s:%i" % (__name__, lineno) in output, "Didn't find line %i in %s" % (lineno, output))
         self.failUnless("f=<frame object at" in output)
 
     def test_line_nofile(self):
@@ -48,9 +48,10 @@ class TestSpew(TestCase):
         g = globals().copy()
         del g['__file__']
         f = eval("sys._getframe()", g)
+        lineno = f.f_lineno
         s(f, "line", None)
         output = sys.stdout.getvalue()
-        self.failUnless("[unknown]:1" in output, "Didn't find [unknown]:1 in %s" % (output))
+        self.failUnless("[unknown]:%i" % lineno in output, "Didn't find [unknown]:%i in %s" % (lineno, output))
         self.failUnless("VM instruction #" in output, output)
 
     def test_line_global(self):
@@ -61,7 +62,7 @@ class TestSpew(TestCase):
         GLOBAL_VAR(f, "line", None)
         lineno = f.f_lineno - 1 # -1 here since we called with frame f in the line above
         output = sys.stdout.getvalue()
-        self.failUnless("debug_test:%i" % lineno in output, "Didn't find line %i in %s" % (lineno, output))
+        self.failUnless("%s:%i" % (__name__, lineno) in output, "Didn't find line %i in %s" % (lineno, output))
         self.failUnless("f=<frame object at" in output)
         self.failUnless("GLOBAL_VAR" in f.f_globals)
         self.failUnless("GLOBAL_VAR=<eventlet.debug.Spew object at" in output)
@@ -74,7 +75,7 @@ class TestSpew(TestCase):
         s(f, "line", None)
         lineno = f.f_lineno - 1 # -1 here since we called with frame f in the line above
         output = sys.stdout.getvalue()
-        self.failUnless("debug_test:%i" % lineno in output, "Didn't find line %i in %s" % (lineno, output))
+        self.failUnless("%s:%i" % (__name__, lineno) in output, "Didn't find line %i in %s" % (lineno, output))
         self.failIf("f=<frame object at" in output)
 
     def test_line_nooutput(self):
@@ -118,11 +119,15 @@ class TestDebug(LimitedTestCase):
             eventlet.sleep(0)
             client.send(' ')
             eventlet.sleep(0)
+            # allow the "hurl" greenlet to trigger the KeyError
+            # not sure why the extra context switch is needed
+            eventlet.sleep(0)
         finally:
             sys.stderr = orig
             self.assertRaises(KeyError, gt.wait)
             debug.hub_exceptions(False)
-        self.assert_('Traceback' in fake.getvalue(), 
+        # look for the KeyError exception in the traceback
+        self.assert_('KeyError: 1' in fake.getvalue(), 
             "Traceback not in:\n" + fake.getvalue())
         
 if __name__ == "__main__":
