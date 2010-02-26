@@ -1,8 +1,10 @@
+import socket as _orig_sock
 from tests import LimitedTestCase, skip_with_pyevent, main
 from eventlet import event
 from eventlet import greenio
 from eventlet import debug
 from eventlet.green import socket
+from eventlet.green import time
 from eventlet.green.socket import GreenSSLObject
 import errno
 
@@ -480,7 +482,7 @@ class TestGreenIo(LimitedTestCase):
 class TestGreenIoLong(LimitedTestCase):
     TEST_TIMEOUT=10  # the test here might take a while depending on the OS
     @skip_with_pyevent
-    def test_multiple_readers(self):
+    def test_multiple_readers(self, clibufsize=False):
         recvsize = 2 * min_buf_size()
         sendsize = 10 * recvsize
         # test that we can have multiple coroutines reading
@@ -505,17 +507,22 @@ class TestGreenIoLong(LimitedTestCase):
             try:
                 c1 = eventlet.spawn(reader, sock, results1)
                 c2 = eventlet.spawn(reader, sock, results2)
-                c1.wait()
-                c2.wait()
+                try:
+                    c1.wait()
+                    c2.wait()
+                finally:
+                    c1.kill()
+                    c2.kill()
             finally:
-                c1.kill()
-                c2.kill()
                 sock.close()
 
         server_coro = eventlet.spawn(server)
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client.connect(('127.0.0.1', listener.getsockname()[1]))
-        bufsized(client)
+        if clibufsize:
+            bufsized(client, size=sendsize)
+        else:
+            bufsized(client)
         client.sendall('*' * sendsize)
         client.close()
         server_coro.wait()
@@ -523,6 +530,102 @@ class TestGreenIoLong(LimitedTestCase):
         self.assert_(len(results1) > 0)
         self.assert_(len(results2) > 0)
 
+    @skip_with_pyevent
+    def test_multiple_readers2(self):
+        self.test_multiple_readers(clibufsize=True)
+
+class TestGreenIoStarvation(LimitedTestCase):    
+    # fixme: this doesn't fail, because of eventlet's predetermined
+    # ordering.  two processes, one with server, one with client eventlets
+    # might be more reliable?
+    
+    TEST_TIMEOUT=300  # the test here might take a while depending on the OS
+    @skip_with_pyevent
+    def test_server_starvation(self, sendloops=15):
+        recvsize = 2 * min_buf_size()
+        sendsize = 10000 * recvsize
+        
+        results = [[] for i in xrange(5)]
+        
+        listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        listener.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR, 1)
+        listener.bind(('127.0.0.1', 0))
+        port = listener.getsockname()[1]
+        listener.listen(50)
+        
+        base_time = time.time()
+        
+        def server(my_results):
+            (sock, addr) = listener.accept()
+            
+            datasize = 0
+            
+            t1 = None
+            t2 = None
+            try:
+                while True:
+                    data = sock.recv(recvsize)
+                    if not t1:
+                        t1 = time.time() - base_time
+                    if data == '':
+                        t2 = time.time() - base_time
+                        my_results.append(datasize)
+                        my_results.append((t1,t2))
+                        break
+                    datasize += len(data)
+            finally:
+                sock.close()
+
+        def client():
+            pid = os.fork()
+            if pid:
+                return pid
+    
+            client = _orig_sock.socket(socket.AF_INET, socket.SOCK_STREAM)
+            client.connect(('127.0.0.1', port))
+
+            bufsized(client, size=sendsize)
+
+            for i in range(sendloops):
+                client.sendall('*' * sendsize)
+            client.close()
+            os._exit(0)
+
+        clients = []
+        servers = []
+        for r in results:
+            servers.append(eventlet.spawn(server, r))
+        for r in results:
+            clients.append(client())
+
+        for s in servers:
+            s.wait()
+        for c in clients:
+            os.waitpid(c, 0)
+
+        listener.close()
+
+        # now test that all of the server receive intervals overlap, and
+        # that there were no errors.
+        for r in results:
+            assert len(r) == 2, "length is %d not 2!: %s\n%s" % (len(r), r, results)
+            assert r[0] == sendsize * sendloops
+            assert len(r[1]) == 2
+            assert r[1][0] is not None
+            assert r[1][1] is not None
+
+        starttimes = sorted(r[1][0] for r in results)
+        endtimes = sorted(r[1][1] for r in results)
+        runlengths = sorted(r[1][1] - r[1][0] for r in results)
+
+        # assert that the last task started before the first task ended
+        # (our no-starvation condition)
+        assert starttimes[-1] < endtimes[0], "Not overlapping: starts %s ends %s" % (starttimes, endtimes)
+
+        maxstartdiff = starttimes[-1] - starttimes[0]
+
+        assert maxstartdiff * 2 < runlengths[0], "Largest difference in starting times more than twice the shortest running time!"
+        assert runlengths[0] * 2 > runlengths[-1], "Longest runtime more than twice as long as shortest!"
 
 if __name__ == '__main__':
     main()
