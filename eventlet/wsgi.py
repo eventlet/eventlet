@@ -28,7 +28,7 @@ _monthname = [None, # Dummy so we can use 1-based month numbers
 
 def format_date_time(timestamp):
     """Formats a unix timestamp into an HTTP standard string."""
-    year, month, day, hh, mm, ss, wd, y, z = time.gmtime(timestamp)
+    year, month, day, hh, mm, ss, wd, _y, _z = time.gmtime(timestamp)
     return "%s, %02d %3s %4d %02d:%02d:%02d GMT" % (
         _weekdayname[wd], day, _monthname[month], year, hh, mm, ss
     )
@@ -316,7 +316,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     self.close_connection = 1
                     return
                 if not headers_sent and hasattr(result, '__len__') and \
-                        'Content-Length' not in [h for h, v in headers_set[1]]:
+                        'Content-Length' not in [h for h, _v in headers_set[1]]:
                     headers_set[1].append(('Content-Length', str(sum(map(len, result)))))
                 towrite = []
                 towrite_size = 0
@@ -522,7 +522,7 @@ def server(sock, site,
     """
     serv = Server(sock, sock.getsockname(),
                   site, log,
-                  environ=None,
+                  environ=environ,
                   max_http_version=max_http_version,
                   protocol=protocol,
                   minimum_chunk_size=minimum_chunk_size,
