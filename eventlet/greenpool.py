@@ -1,5 +1,12 @@
 import itertools
 import traceback
+import __builtin__
+if not hasattr(__builtin__, 'next'):
+    def next(it):
+        try:
+            return it.next()
+        except AttributeError:
+            raise TypeError("%s object is not an iterator" % type(it))
 
 from eventlet import event
 from eventlet import greenthread
@@ -11,17 +18,8 @@ __all__ = ['GreenPool', 'GreenPile']
 
 DEBUG = False
 
-try:
-    next
-except NameError:
-    def next(it):
-        try:
-            return it.next()
-        except AttributeError:
-            raise TypeError("%s object is not an iterator" % type(it))
-
 class GreenPool(object):
-    """ The GreenPool class is a pool of green threads.
+    """The GreenPool class is a pool of green threads.
     """
     def __init__(self, size=1000):
         self.size = size
@@ -43,7 +41,7 @@ class GreenPool(object):
         self.size = new_size
 
     def running(self):
-        """ Returns the number of greenthreads that are currently executing
+        """Returns the number of greenthreads that are currently executing
         functions in the Parallel's pool."""
         return len(self.coroutines_running)
 
@@ -100,7 +98,7 @@ class GreenPool(object):
                 self._spawn_done(coro)
 
     def spawn_n(self, function, *args, **kwargs):
-        """ Create a greenthread to run the *function*, the same as
+        """Create a greenthread to run the *function*, the same as
         :meth:`spawn`.  The difference is that :meth:`spawn_n` returns
         None; the results of *function* are not retrievable.
         """
