@@ -8,7 +8,7 @@ class NOT_USED:
         return 'NOT_USED'
 
 NOT_USED = NOT_USED()
-                
+
 class Event(object):
     """An abstraction where an arbitrary number of coroutines
     can wait for one event from another.
@@ -18,9 +18,11 @@ class Event(object):
 
     1. calling :meth:`send` never unschedules the current greenthread
     2. :meth:`send` can only be called once; create a new event to send again.
-        
-    They are good for communicating results between coroutines, and are the 
-    basis for how :meth:`GreenThread.wait() <eventlet.greenthread.GreenThread.wait>` is implemented.
+
+    They are good for communicating results between coroutines, and
+    are the basis for how
+    :meth:`GreenThread.wait() <eventlet.greenthread.GreenThread.wait>`
+    is implemented.
 
     >>> from eventlet import event
     >>> import eventlet
@@ -33,12 +35,14 @@ class Event(object):
     4
     """
     _result = None
+    _exc = None
     def __init__(self):
         self._waiters = set()
         self.reset()
 
     def __str__(self):
-        params = (self.__class__.__name__, hex(id(self)), self._result, self._exc, len(self._waiters))
+        params = (self.__class__.__name__, hex(id(self)),
+                  self._result, self._exc, len(self._waiters))
         return '<%s at %s result=%r _exc=%r _waiters[%d]>' % params
 
     def reset(self):
@@ -150,7 +154,8 @@ class Event(object):
         self._exc = exc
         hub = hubs.get_hub()
         if self._waiters:
-            hub.schedule_call_global(0, self._do_send, self._result, self._exc, self._waiters.copy())
+            hub.schedule_call_global(
+                0, self._do_send, self._result, self._exc, self._waiters.copy())
 
     def _do_send(self, result, exc, waiters):
         while waiters:
@@ -164,4 +169,4 @@ class Event(object):
     def send_exception(self, *args):
         """Same as :meth:`send`, but sends an exception to waiters."""
         # the arguments and the same as for greenlet.throw
-        return self.send(None, args)                
+        return self.send(None, args)
