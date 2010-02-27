@@ -1,4 +1,4 @@
-from unittest import main, TestCase
+from unittest import main
 from tests import LimitedTestCase, silence_warnings
 import eventlet
 from eventlet import coros
