@@ -1,3 +1,22 @@
+0.9.6
+=====
+* new EVENTLET_HUB environment variable allows you to select a hub without code
+* improved GreenSocket and GreenPipe compatibility with stdlib
+* bugfixes on GreenSocket and GreenPipe objects
+* code coverage increased across the board
+* Queue resizing
+* internal DeprecationWarnings largely eliminated
+* tpool is now reentrant (i.e., can call tpool.execute(tpool.execute(foo)))
+* more reliable access to unpatched modules reduces some race conditions when monkeypatching
+* completely threading-compatible corolocal implementation, plus tests and enthusiastic adoption
+* tests stomp on each others' toes less
+* performance improvements in timers, hubs, greenpool
+* Greenlet-aware profile module courtesy of CCP
+* support for select26 module's epoll
+* better PEP-8 compliance and import cleanup
+* new eventlet.serve convenience function for easy TCP servers
+
+
 0.9.5
 =====
 * support psycopg in db_pool

@@ -7,7 +7,7 @@ try:
     from eventlet import queue
     from eventlet import timeout
     from eventlet import patcher
-    from eventlet import greenio
+    from eventlet import convenience
     import greenlet
 
     sleep = greenthread.sleep
@@ -27,8 +27,10 @@ try:
     import_patched = patcher.import_patched
     monkey_patch = patcher.monkey_patch
     
-    connect = greenio.connect
-    listen = greenio.listen
+    connect = convenience.connect
+    listen = convenience.listen
+    serve = convenience.serve
+    StopServe = convenience.StopServe
 
     getcurrent = greenlet.getcurrent
     

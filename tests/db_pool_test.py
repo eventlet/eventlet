@@ -603,16 +603,17 @@ class Psycopg2ConnectionPool(object):
         super(Psycopg2ConnectionPool, self).tearDown()
 
     def create_db(self):
+        dbname = 'test%s' % os.getpid()
+        self._auth['database'] = dbname
         try:
             self.drop_db()
         except Exception:
             pass
         auth = self._auth.copy()
+        auth.pop('database')  # can't create if you're connecting to it
         conn = self._dbmodule.connect(**auth)
         conn.set_isolation_level(0)
         db = conn.cursor()
-        dbname = 'test%s' % os.getpid()
-        self._auth['database'] = dbname
         db.execute("create database "+dbname)
         db.close()
         del db
