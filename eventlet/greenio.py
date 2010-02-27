@@ -28,11 +28,11 @@ def get_errno(exc):
     socket.error in 3.x does not allow indexing access 
     """
     try:
-        return exc.errno
-    except AttributeError:
+        return exc.args[0]
+    except (TypeError,IndexError):
         try:
-            return exc[0]
-        except (TypeError,IndexError):
+            return exc.errno
+        except AttributeError:
             return None
 
 def socket_connect(descriptor, address):
@@ -209,7 +209,7 @@ class GreenSocket(object):
                 try:
                     trampoline(fd, write=True)
                 except socket.error, ex:
-                    return ex[0]
+                    return get_errno(ex)
         else:
             end = time.time() + self.gettimeout()
             while True:
@@ -221,7 +221,7 @@ class GreenSocket(object):
                     trampoline(fd, write=True, timeout=end-time.time(),
                             timeout_exc=socket.timeout(errno.EAGAIN))
                 except socket.error, ex:
-                    return ex[0]
+                    return get_errno(ex)
 
     def dup(self, *args, **kw):
         sock = self.fd.dup(*args, **kw)
@@ -266,9 +266,9 @@ class GreenSocket(object):
             try:
                 return fd.recv(buflen, flags)
             except socket.error, e:
-                if e[0] in SOCKET_BLOCKING:
+                if get_errno(e) in SOCKET_BLOCKING:
                     pass
-                elif e[0] in SOCKET_CLOSED:
+                elif get_errno(e) in SOCKET_CLOSED:
                     return ''
                 else:
                     raise
@@ -308,7 +308,7 @@ class GreenSocket(object):
             try:
                 total_sent += fd.send(data[total_sent:], flags)
             except socket.error, e:
-                if e[0] not in SOCKET_BLOCKING:
+                if get_errno(e) not in SOCKET_BLOCKING:
                     raise
 
             if total_sent == len_data:
@@ -392,10 +392,10 @@ class GreenPipe(object):
             try:
                 return fd.read(buflen)
             except IOError, e:
-                if e[0] != errno.EAGAIN:
+                if get_errno(e) != errno.EAGAIN:
                     return ''
             except socket.error, e:
-                if e[0] == errno.EPIPE:
+                if get_errno(e) == errno.EPIPE:
                     return ''
                 raise
             trampoline(fd, read=True)
@@ -424,13 +424,13 @@ class GreenPipe(object):
                 fd.flush()
                 return len(data)
             except IOError, e:
-                if e[0] != errno.EAGAIN:
+                if get_errno(e) != errno.EAGAIN:
                     raise
             except ValueError, e:
                 # what's this for?
                 pass
             except socket.error, e:
-                if e[0] != errno.EPIPE:
+                if get_errno(e) != errno.EPIPE:
                     raise
             trampoline(fd, write=True)
 
@@ -531,7 +531,7 @@ def shutdown_safe(sock):
     except socket.error, e:
         # we don't care if the socket is already closed;
         # this will often be the case in an http server context
-        if e[0] != errno.ENOTCONN:
+        if get_errno(e) != errno.ENOTCONN:
             raise
 
 

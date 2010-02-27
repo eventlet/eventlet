@@ -25,6 +25,7 @@
 
 """This module is API-equivalent to the standard library :mod:`profile` module but it is greenthread-aware as well as thread-aware.  Use this module
 to profile Eventlet-based applications in preference to either :mod:`profile` or :mod:`cProfile`.
+FIXME: No testcases for this module. 
 """
 
 profile_orig = __import__('profile')
@@ -34,9 +35,8 @@ for var in profile_orig.__all__:
 
 import new
 import sys
-import time
 import traceback
-import thread
+thread = __import__('thread') # Original module needed. 2to3 translated import thread as from . import thread
 import functools
 
 from eventlet import greenthread

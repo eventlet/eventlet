@@ -7,7 +7,7 @@ import errno
 time = __import__('time')
 
 from eventlet.hubs import trampoline
-from eventlet.greenio import set_nonblocking, GreenSocket, SOCKET_CLOSED, CONNECT_ERR, CONNECT_SUCCESS
+from eventlet.greenio import set_nonblocking, GreenSocket, SOCKET_CLOSED, CONNECT_ERR, CONNECT_SUCCESS, get_errno
 orig_socket = __import__('socket')
 socket = orig_socket.socket
 timeout_exc = orig_socket.timeout
@@ -69,12 +69,12 @@ class GreenSSLSocket(__ssl.SSLSocket):
                 try:
                     return func(*a, **kw)
                 except SSLError, exc:
-                    if exc[0] == SSL_ERROR_WANT_READ:
+                    if get_errno(exc) == SSL_ERROR_WANT_READ:
                         trampoline(self.fileno(), 
                                    read=True, 
                                    timeout=self.gettimeout(), 
                                    timeout_exc=timeout_exc('timed out'))
-                    elif exc[0] == SSL_ERROR_WANT_WRITE:
+                    elif get_errno(exc) == SSL_ERROR_WANT_WRITE:
                         trampoline(self.fileno(), 
                                    write=True, 
                                    timeout=self.gettimeout(), 
@@ -106,9 +106,9 @@ class GreenSSLSocket(__ssl.SSLSocket):
                 try:
                     v = self._sslobj.write(data)
                 except SSLError, x:
-                    if x.args[0] == SSL_ERROR_WANT_READ:
+                    if get_errno(x) == SSL_ERROR_WANT_READ:
                         return 0
-                    elif x.args[0] == SSL_ERROR_WANT_WRITE:
+                    elif get_errno(x) == SSL_ERROR_WANT_WRITE:
                         return 0
                     else:
                         raise
@@ -121,8 +121,8 @@ class GreenSSLSocket(__ssl.SSLSocket):
                 except orig_socket.error, e:
                     if self.act_non_blocking:
                         raise
-                    if e[0] == errno.EWOULDBLOCK or \
-                       e[0] == errno.ENOTCONN:
+                    if get_errno(e) == errno.EWOULDBLOCK or \
+                       get_errno(e) == errno.ENOTCONN:
                         return 0
                     raise
 
@@ -155,10 +155,10 @@ class GreenSSLSocket(__ssl.SSLSocket):
                 except orig_socket.error, e:
                     if self.act_non_blocking:
                         raise
-                    if e[0] == errno.EWOULDBLOCK:
+                    if ge_errno(e) == errno.EWOULDBLOCK:
                         trampoline(self.fileno(), write=True, 
                                    timeout=self.gettimeout(), timeout_exc=timeout_exc('timed out'))
-                    if e[0] in SOCKET_CLOSED:
+                    if get_errno(e) in SOCKET_CLOSED:
                         return ''
                     raise
 
@@ -178,10 +178,10 @@ class GreenSSLSocket(__ssl.SSLSocket):
                 except orig_socket.error, e:
                     if self.act_non_blocking:
                         raise
-                    if e[0] == errno.EWOULDBLOCK:
+                    if get_errno(e) == errno.EWOULDBLOCK:
                         trampoline(self.fileno(), read=True, 
                                    timeout=self.gettimeout(), timeout_exc=timeout_exc('timed out'))
-                    if e[0] in SOCKET_CLOSED:
+                    if get_errno(e) in SOCKET_CLOSED:
                         return ''
                     raise
 
@@ -221,9 +221,9 @@ class GreenSSLSocket(__ssl.SSLSocket):
                     try:
                         return real_connect(self, addr)
                     except orig_socket.error, exc:
-                        if exc[0] in CONNECT_ERR:
+                        if get_errno(exc) in CONNECT_ERR:
                             trampoline(self.fileno(), write=True)
-                        elif exc[0] in CONNECT_SUCCESS:
+                        elif get_errno(exc) in CONNECT_SUCCESS:
                             return
                         else:
                             raise
@@ -233,10 +233,10 @@ class GreenSSLSocket(__ssl.SSLSocket):
                     try:
                         real_connect(self, addr)
                     except orig_socket.error, exc:
-                        if exc[0] in CONNECT_ERR:
+                        if get_errno(exc) in CONNECT_ERR:
                             trampoline(self.fileno(), write=True, 
                                        timeout=end-time.time(), timeout_exc=timeout_exc('timed out'))
-                        elif exc[0] in CONNECT_SUCCESS:
+                        elif get_errno(exc) in CONNECT_SUCCESS:
                             return
                         else:
                             raise
@@ -272,7 +272,7 @@ class GreenSSLSocket(__ssl.SSLSocket):
                     set_nonblocking(newsock)
                     break
                 except orig_socket.error, e:
-                    if e[0] != errno.EWOULDBLOCK:
+                    if get_errno(e) != errno.EWOULDBLOCK:
                         raise
                     trampoline(self.fileno(), read=True, timeout=self.gettimeout(),
                                    timeout_exc=timeout_exc('timed out'))
