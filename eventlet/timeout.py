@@ -1,17 +1,17 @@
 # Copyright (c) 2009-2010 Denis Bilenko, denis.bilenko at gmail com
 # Copyright (c) 2010 Eventlet Contributors (see AUTHORS)
 # and licensed under the MIT license:
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -19,6 +19,13 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.from eventlet.support import greenlets as greenlet
+
+import __builtin__
+if not hasattr(__builtin__, 'BaseException'): # Python < 2.5
+    class BaseException:                      # pylint: disable-msg=W0622
+        # not subclassing from object() intentionally, because in
+        # that case "raise Timeout" fails with TypeError.
+        pass
 
 from eventlet.support import greenlets as greenlet
 from eventlet.hubs import get_hub
@@ -28,26 +35,18 @@ __all__ = ['Timeout',
 
 _NONE = object()
 
-try:
-    BaseException
-except NameError: # Python < 2.5
-    class BaseException:
-        # not subclassing from object() intentionally, because in
-        # that case "raise Timeout" fails with TypeError.
-        pass
-
 # deriving from BaseException so that "except Exception, e" doesn't catch
 # Timeout exceptions.
 class Timeout(BaseException):
     """Raises *exception* in the current greenthread after *timeout* seconds.
 
-    When *exception* is omitted or ``None``, the :class:`Timeout` instance 
+    When *exception* is omitted or ``None``, the :class:`Timeout` instance
     itself is raised. If *seconds* is None, the timer is not scheduled, and is
     only useful if you're planning to raise it directly.
-    
+
     Timeout objects are context managers, and so can be used in with statements.
     When used in a with statement, if *exception* is ``False``, the timeout is
-    still raised, but the context manager suppresses it, so the code outside the 
+    still raised, but the context manager suppresses it, so the code outside the
     with-block won't see it.
     """
 
@@ -59,15 +58,18 @@ class Timeout(BaseException):
 
     def start(self):
         """Schedule the timeout.  This is called on construction, so
-        it should not be called explicitly, unless the timer has been 
+        it should not be called explicitly, unless the timer has been
         cancelled."""
-        assert not self.pending, '%r is already started; to restart it, cancel it first' % self
+        assert not self.pending, \
+               '%r is already started; to restart it, cancel it first' % self
         if self.seconds is None: # "fake" timeout (never expires)
             self.timer = None
         elif self.exception is None or self.exception is False: # timeout that raises self
-            self.timer = get_hub().schedule_call_global(self.seconds, greenlet.getcurrent().throw, self)
+            self.timer = get_hub().schedule_call_global(
+                self.seconds, greenlet.getcurrent().throw, self)
         else: # regular timeout with user-provided exception
-            self.timer = get_hub().schedule_call_global(self.seconds, greenlet.getcurrent().throw, self.exception)
+            self.timer = get_hub().schedule_call_global(
+                self.seconds, greenlet.getcurrent().throw, self.exception)
         return self
 
     @property
@@ -79,11 +81,11 @@ class Timeout(BaseException):
             return False
 
     def cancel(self):
-        """If the timeout is pending, cancel it.  If not using Timeouts in 
-        ``with`` statements, always call cancel() in a ``finally`` after the 
-        block of code that is getting timed out.  If not cancelled, the timeout 
-        will be raised later on, in some unexpected section of the 
-        application."""
+        """If the timeout is pending, cancel it.  If not using
+        Timeouts in ``with`` statements, always call cancel() in a
+        ``finally`` after the block of code that is getting timed out.
+        If not cancelled, the timeout will be raised later on, in some
+        unexpected section of the application."""
         if self.timer is not None:
             self.timer.cancel()
             self.timer = None
@@ -101,7 +103,8 @@ class Timeout(BaseException):
             exception = ''
         else:
             exception = ' exception=%r' % self.exception
-        return '<%s at %s seconds=%s%s%s>' % (classname, hex(id(self)), self.seconds, exception, pending)
+        return '<%s at %s seconds=%s%s%s>' % (
+            classname, hex(id(self)), self.seconds, exception, pending)
 
     def __str__(self):
         """
@@ -150,4 +153,3 @@ def with_timeout(seconds, function, *args, **kwds):
             raise
     finally:
         timeout.cancel()
-
