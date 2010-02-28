@@ -264,7 +264,7 @@ class BaseHub(object):
         return self.listeners[WRITE].values()
 
     def get_timers_count(hub):
-        return max(len(hub.timers), len(hub.next_timers))
+        return len(hub.timers) + len(hub.next_timers)
 
     def set_debug_listeners(self, value):
         if value:
