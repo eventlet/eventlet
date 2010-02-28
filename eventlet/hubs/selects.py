@@ -1,7 +1,7 @@
 import sys
 import errno
 from eventlet import patcher
-from eventlet.common import get_errno
+from eventlet.common import get_errno, clear_sys_exc_info
 select = patcher.original('select')
 time = patcher.original('time')
 
@@ -58,4 +58,4 @@ class Hub(BaseHub):
                     raise
                 except:
                     self.squelch_exception(fileno, sys.exc_info())
-                    sys.exc_clear()
+                    clear_sys_exc_info()

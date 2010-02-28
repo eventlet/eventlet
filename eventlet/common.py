@@ -1,3 +1,4 @@
+import sys
 def get_errno(exc):
     """ Get the error code out of socket.error objects.
     socket.error in <2.5 does not have errno attribute
@@ -17,3 +18,11 @@ def get_errno(exc):
     except IndexError:
         return None
 
+if sys.version_info[0]<3:
+    clear_sys_exc_info = sys.exc_clear
+else:
+    def clear_sys_exc_info():
+        """No-op In py3k. 
+        Exception information is not visible outside of except statements.
+        sys.exc_clear became obsolete and removed."""
+        pass

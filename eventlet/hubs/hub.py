@@ -2,17 +2,11 @@ import heapq
 import sys
 import traceback
 
+from eventlet.common import clear_sys_exc_info
 from eventlet.support import greenlets as greenlet
 from eventlet.hubs import timer
 from eventlet import patcher
 time = patcher.original('time')
-
-# In py3k exception information is not visible outside of except statements
-# so sys.exc_clear become obsolete and removed.
-try:
-   sys_exc_clear = sys.exc_clear
-except AttributeError:
-   sys_exc_clear = lambda: None
 
 READ="read"
 WRITE="write"
@@ -110,7 +104,7 @@ class BaseHub(object):
                 switch_out()
             except:
                 self.squelch_generic_exception(sys.exc_info())
-                sys.exc_clear()
+                clear_sys_exc_info()
         if self.greenlet.dead:
             self.greenlet = greenlet.greenlet(self.run)
         try:
@@ -118,7 +112,7 @@ class BaseHub(object):
                 cur.parent = self.greenlet
         except ValueError:
             pass  # gets raised if there is a greenlet parent cycle
-        sys_exc_clear()
+        clear_sys_exc_info()
         return self.greenlet.switch()
 
     def squelch_exception(self, fileno, exc_info):
@@ -257,7 +251,7 @@ class BaseHub(object):
                     raise
                 except:
                     self.squelch_timer_exception(timer, sys.exc_info())
-                    sys.exc_clear()
+                    clear_sys_exc_info()
             finally:
                 self.timer_finished(timer)
 

@@ -4,6 +4,7 @@ are not leaked by the hub.
 import sys
 import unittest
 from pprint import pformat
+from eventlet.common import clear_sys_exc_info
 from eventlet.green import socket
 from eventlet.green.thread import start_new_thread
 from eventlet.green.time import sleep
@@ -61,7 +62,7 @@ def run_interaction(run_client):
 
 def run_and_check(run_client):
     w = run_interaction(run_client=run_client)
-    sys.exc_clear()
+    clear_sys_exc_info()
     if w():
         print pformat(gc.get_referrers(w()))
         for x in gc.get_referrers(w()):
