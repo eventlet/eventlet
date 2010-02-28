@@ -36,10 +36,11 @@ for var in profile_orig.__all__:
 import new
 import sys
 import traceback
-thread = __import__('thread') # Original module needed. 2to3 translated import thread as from . import thread
 import functools
 
 from eventlet import greenthread
+from eventlet import patcher
+thread = patcher.original('thread')  # non-monkeypatched module needed
 
 #This class provides the start() and stop() functions
 class Profile(profile_orig.Profile):
