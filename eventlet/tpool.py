@@ -235,7 +235,7 @@ def setup():
         csock.connect(('localhost', sock.getsockname()[1]))
         nsock, addr = sock.accept()
         _rfile = greenio.GreenSocket(csock).makefile()
-        _wfile = nsock.makefile()
+        _wfile = nsock.makefile('w')
 
     _reqq = Queue(maxsize=-1)
     _rspq = Queue(maxsize=-1)

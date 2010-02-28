@@ -241,10 +241,10 @@ class GreenSocket(object):
     def makefile(self, *args, **kw):
         return _fileobject(self.dup(), *args, **kw)
 
-    def makeGreenFile(self, mode='r', bufsize=-1):
+    def makeGreenFile(self, *args, **kw):
         warnings.warn("makeGreenFile has been deprecated, please use "
             "makefile instead", DeprecationWarning, stacklevel=2)
-        return self.makefile(mode, bufsize)
+        return self.makefile(*args, **kw)
 
     def recv(self, buflen, flags=0):
         fd = self.fd

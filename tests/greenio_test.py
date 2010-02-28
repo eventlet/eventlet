@@ -32,6 +32,17 @@ def min_buf_size():
     return test_sock.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
 
 class TestGreenIo(LimitedTestCase):
+    def assertWriteToClosedFileRaises(self, fd):
+        if sys.version_info[0]<3:
+            # 2.x socket._fileobjects are odd: writes don't check
+            # whether the socket is closed or not, and you get an
+            # AttributeError during flush if it is closed
+            fd.write('a')
+            self.assertRaises(Exception, fd.flush)
+        else:
+            # 3.x io write to closed file-like pbject raises ValueError
+            self.assertRaises(ValueError, fd.write, 'a')
+
     def test_connect_timeout(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(0.1)
@@ -230,15 +241,11 @@ class TestGreenIo(LimitedTestCase):
             # by closing the socket prior to using the made file
             try:
                 conn, addr = listener.accept()
-                fd = conn.makefile()
+                fd = conn.makefile('w')
                 conn.close()
                 fd.write('hello\n')
                 fd.close()
-                # socket._fileobjects are odd: writes don't check
-                # whether the socket is closed or not, and you get an
-                # AttributeError during flush if it is closed
-                fd.write('a')
-                self.assertRaises(Exception, fd.flush)
+                self.assertWriteToClosedFileRaises(fd)
                 self.assertRaises(socket.error, conn.send, 'b')
             finally:
                 listener.close()
@@ -248,13 +255,12 @@ class TestGreenIo(LimitedTestCase):
             # by closing the made file and then sending a character
             try:
                 conn, addr = listener.accept()
-                fd = conn.makefile()
+                fd = conn.makefile('w')
                 fd.write('hello')
                 fd.close()
                 conn.send('\n')
                 conn.close()
-                fd.write('a')
-                self.assertRaises(Exception, fd.flush)
+                self.assertWriteToClosedFileRaises(fd)
                 self.assertRaises(socket.error, conn.send, 'b')
             finally:
                 listener.close()
@@ -291,11 +297,10 @@ class TestGreenIo(LimitedTestCase):
             # closing the file object should close everything
             try:
                 conn, addr = listener.accept()
-                conn = conn.makefile()
+                conn = conn.makefile('w')
                 conn.write('hello\n')
                 conn.close()
-                conn.write('a')
-                self.assertRaises(Exception, conn.flush)
+                self.assertWriteToClosedFileRaises(conn)
             finally:
                 listener.close()
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -417,7 +422,7 @@ class TestGreenIo(LimitedTestCase):
 
         def sender(evt):
             s2, addr = server.accept()
-            wrap_wfile = s2.makefile()
+            wrap_wfile = s2.makefile('w')
 
             eventlet.sleep(0.02)
             wrap_wfile.write('hi')
