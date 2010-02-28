@@ -43,7 +43,7 @@ class TestGreenIo(LimitedTestCase):
             self.assertEqual(e.args[0], 'timed out')
         except socket.error, e:
             # unreachable is also a valid outcome
-            if not e[0] in (errno.EHOSTUNREACH, errno.ENETUNREACH):
+            if not get_errno(e) in (errno.EHOSTUNREACH, errno.ENETUNREACH):
                 raise
 
     def test_accept_timeout(self):

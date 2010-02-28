@@ -1,27 +1,34 @@
 __socket = __import__('socket')
 for var in __socket.__all__:
     exec "%s = __socket.%s" % (var, var)
-_fileobject = __socket._fileobject
 
 from eventlet.hubs import get_hub
 from eventlet.greenio import GreenSocket as socket
 from eventlet.greenio import SSL as _SSL  # for exceptions
 from eventlet.greenio import _GLOBAL_DEFAULT_TIMEOUT
-import os
+from eventlet.greenio import _fileobject
+
+os = __import__('os')
 import sys
 import warnings
 
 __patched__ = ['fromfd', 'socketpair', 'gethostbyname', 'create_connection',
                'ssl', 'socket']
 
-__original_fromfd__ = __socket.fromfd
-def fromfd(*args):
-    return socket(__original_fromfd__(*args))
+try:
+    __original_fromfd__ = __socket.fromfd
+    def fromfd(*args):
+        return socket(__original_fromfd__(*args))
+except AttributeError:
+    pass
 
-__original_socketpair__ = __socket.socketpair
-def socketpair(*args):
-    one, two = __original_socketpair__(*args)
-    return socket(one), socket(two)
+try:
+    __original_socketpair__ = __socket.socketpair
+    def socketpair(*args):
+        one, two = __original_socketpair__(*args)
+        return socket(one), socket(two)
+except AttributeError:
+    pass
 
 __original_gethostbyname__ = __socket.gethostbyname
 def gethostbyname(name):

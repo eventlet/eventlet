@@ -7,6 +7,13 @@ from eventlet.hubs import timer
 from eventlet import patcher
 time = patcher.original('time')
 
+# In py3k exception information is not visible outside of except statements
+# so sys.exc_clear become obsolete and removed.
+try:
+   sys_exc_clear = sys.exc_clear
+except AttributeError:
+   sys_exc_clear = lambda: None
+
 READ="read"
 WRITE="write"
 
@@ -111,7 +118,7 @@ class BaseHub(object):
                 cur.parent = self.greenlet
         except ValueError:
             pass  # gets raised if there is a greenlet parent cycle
-        sys.exc_clear()
+        sys_exc_clear()
         return self.greenlet.switch()
 
     def squelch_exception(self, fileno, exc_info):

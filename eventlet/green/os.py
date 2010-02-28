@@ -1,8 +1,9 @@
 os_orig = __import__("os")
 import errno
-import socket
+socket = __import__("socket")
 
 from eventlet import greenio
+from eventlet.greenio import get_errno
 from eventlet import greenthread
 from eventlet import hubs
 
@@ -27,10 +28,10 @@ def read(fd, n):
         try:
             return __original_read__(fd, n)
         except (OSError, IOError), e:
-            if e[0] != errno.EAGAIN:
+            if get_errno(e) != errno.EAGAIN:
                 raise
         except socket.error, e:
-            if e[0] == errno.EPIPE:
+            if get_errno(e) == errno.EPIPE:
                 return ''
             raise
         hubs.trampoline(fd, read=True)
@@ -45,10 +46,10 @@ def write(fd, st):
         try:
             return __original_write__(fd, st)
         except (OSError, IOError), e:
-            if e[0] != errno.EAGAIN:
+            if get_errno(e) != errno.EAGAIN:
                 raise
         except socket.error, e:
-            if e[0] != errno.EPIPE:
+            if get_errno(e) != errno.EPIPE:
                 raise
         hubs.trampoline(fd, write=True)
     

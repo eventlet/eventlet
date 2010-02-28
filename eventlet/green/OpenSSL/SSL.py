@@ -32,12 +32,12 @@ class GreenConnection(greenio.GreenSocket):
             except WantReadError:
                 trampoline(self.fd.fileno(), 
                            read=True, 
-                           timeout=self.timeout, 
+                           timeout=self.gettimeout(), 
                            timeout_exc=socket.timeout)
             except WantWriteError:
                 trampoline(self.fd.fileno(), 
                            write=True, 
-                           timeout=self.timeout, 
+                           timeout=self.gettimeout(), 
                            timeout_exc=socket.timeout)
                            
     def dup(self):
@@ -81,12 +81,12 @@ class GreenConnection(greenio.GreenSocket):
             except WantReadError:
                 trampoline(self.fd.fileno(), 
                            read=True, 
-                           timeout=self.timeout, 
+                           timeout=self.gettimeout(), 
                            timeout_exc=socket.timeout)
             except WantWriteError:
                 trampoline(self.fd.fileno(), 
                            write=True, 
-                           timeout=self.timeout, 
+                           timeout=self.gettimeout(), 
                            timeout_exc=socket.timeout)
             except SysCallError, e:
                 if e[0] == -1 or e[0] > 0:
@@ -111,12 +111,12 @@ class GreenConnection(greenio.GreenSocket):
             except WantReadError:
                 trampoline(self.fd.fileno(), 
                            read=True, 
-                           timeout=self.timeout, 
+                           timeout=self.gettimeout(), 
                            timeout_exc=socket.timeout)
             except WantWriteError:
                 trampoline(self.fd.fileno(), 
                            write=True, 
-                           timeout=self.timeout, 
+                           timeout=self.gettimeout(), 
                            timeout_exc=socket.timeout)
                            
     send = write
@@ -148,12 +148,12 @@ class GreenConnection(greenio.GreenSocket):
             except WantReadError:
                 trampoline(self.fd.fileno(), 
                            read=True, 
-                           timeout=self.timeout, 
+                           timeout=self.gettimeout(), 
                            timeout_exc=socket.timeout)
             except WantWriteError:
                 trampoline(self.fd.fileno(), 
                            write=True, 
-                           timeout=self.timeout, 
+                           timeout=self.gettimeout(), 
                            timeout_exc=socket.timeout)
 
 
