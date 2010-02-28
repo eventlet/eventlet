@@ -5,6 +5,7 @@ select = patcher.original('select')
 time = patcher.original('time')
 sleep = time.sleep
 
+from eventlet.common import get_errno
 from eventlet.hubs.hub import BaseHub, READ, WRITE
 
 EXC_MASK = select.POLLERR | select.POLLHUP
@@ -78,7 +79,7 @@ class Hub(BaseHub):
         try:
             presult = self.poll.poll(seconds * self.WAIT_MULTIPLIER)
         except select.error, e:
-            if e.args[0] == errno.EINTR:
+            if get_errno(e) == errno.EINTR:
                 return
             raise
         SYSTEM_EXCEPTIONS = self.SYSTEM_EXCEPTIONS
