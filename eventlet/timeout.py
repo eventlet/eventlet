@@ -20,13 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.from eventlet.support import greenlets as greenlet
 
-import __builtin__
-if not hasattr(__builtin__, 'BaseException'): # Python < 2.5
-    class BaseException:                      # pylint: disable-msg=W0622
-        # not subclassing from object() intentionally, because in
-        # that case "raise Timeout" fails with TypeError.
-        pass
-
+from eventlet.common import BaseException
 from eventlet.support import greenlets as greenlet
 from eventlet.hubs import get_hub
 

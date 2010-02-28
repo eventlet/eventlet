@@ -1,12 +1,5 @@
 import itertools
 import traceback
-import __builtin__
-if not hasattr(__builtin__, 'next'):
-    def next(it):
-        try:
-            return it.next()
-        except AttributeError:
-            raise TypeError("%s object is not an iterator" % type(it))
 
 from eventlet import event
 from eventlet import greenthread
