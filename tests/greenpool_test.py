@@ -379,7 +379,7 @@ class Stress(tests.LimitedTestCase):
             try:
                 i = it.next()
             except StressException, exc:
-                i = exc[0]
+                i = exc.args[0]
             except StopIteration:
                 break
             received += 1                

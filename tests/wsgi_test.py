@@ -14,6 +14,7 @@ from eventlet import greenio
 from eventlet.green import socket as greensocket
 from eventlet import wsgi
 from eventlet import processes
+from eventlet.common import get_errno
 
 from tests import find_command
 
@@ -95,7 +96,7 @@ def read_http(sock):
     try:
         response_line = fd.readline()
     except socket.error, exc:
-        if exc[0] == 10053:
+        if get_errno(exc) == 10053:
             raise ConnectionClosed
         raise
     if not response_line:
@@ -563,7 +564,7 @@ class TestHttpd(LimitedTestCase):
             server_sock_2.accept()
             # shouldn't be able to use this one anymore
         except socket.error, exc:
-            self.assertEqual(exc[0], errno.EBADF)
+            self.assertEqual(get_errno(exc), errno.EBADF)
         self.spawn_server(sock=server_sock)
         sock = eventlet.connect(('localhost', self.port))
         fd = sock.makefile()
@@ -680,7 +681,7 @@ class TestHttpd(LimitedTestCase):
                 eventlet.connect(('localhost', self.port))
                 self.fail("Didn't expect to connect")
             except socket.error, exc:
-                self.assertEquals(exc[0], errno.ECONNREFUSED)
+                self.assertEquals(get_errno(exc), errno.ECONNREFUSED)
 
             self.assert_('Invalid argument' in self.logfile.getvalue(),
                 self.logfile.getvalue())

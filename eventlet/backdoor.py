@@ -5,7 +5,9 @@ from code import InteractiveConsole
 
 import eventlet
 from eventlet import hubs
+from eventlet.common import get_errno
 from eventlet.support import greenlets
+#FIXME no testcases for bckdor module
 
 try:
     sys.ps1
@@ -87,7 +89,7 @@ def backdoor_server(sock, locals=None):
                 backdoor(socketpair, locals)
         except socket.error, e:
             # Broken pipe means it was shutdown
-            if e[0] != errno.EPIPE:
+            if get_errno(e) != errno.EPIPE:
                 raise
     finally:
         sock.close()

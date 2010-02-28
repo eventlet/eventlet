@@ -1,5 +1,6 @@
 from OpenSSL import SSL as orig_SSL
 from OpenSSL.SSL import *
+from eventlet.common import get_errno
 from eventlet import greenio
 from eventlet.hubs import trampoline
 import socket
@@ -89,7 +90,7 @@ class GreenConnection(greenio.GreenSocket):
                            timeout=self.gettimeout(), 
                            timeout_exc=socket.timeout)
             except SysCallError, e:
-                if e[0] == -1 or e[0] > 0:
+                if get_errno(e) == -1 or get_errno(e) > 0:
                     return ''
             
     recv = read

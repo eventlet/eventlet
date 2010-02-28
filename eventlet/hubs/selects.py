@@ -1,6 +1,7 @@
 import sys
 import errno
 from eventlet import patcher
+from eventlet.common import get_errno
 select = patcher.original('select')
 time = patcher.original('time')
 
@@ -20,7 +21,7 @@ class Hub(BaseHub):
             try:
                 select.select([fd], [], [], 0)
             except select.error, e:
-                if e.args[0] == errno.EBADF:
+                if get_errno(e) == errno.EBADF:
                     self.remove_descriptor(fd)
 
     def wait(self, seconds=None):
@@ -33,9 +34,9 @@ class Hub(BaseHub):
         try:
             r, w, er = select.select(readers.keys(), writers.keys(), readers.keys() + writers.keys(), seconds)
         except select.error, e:
-            if e.args[0] == errno.EINTR:
+            if get_errno(e) == errno.EINTR:
                 return
-            elif e.args[0] in BAD_SOCK:
+            elif get_errno(e) in BAD_SOCK:
                 self._remove_bad_fds()
                 return
             else:

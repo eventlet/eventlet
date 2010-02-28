@@ -6,8 +6,9 @@ for attr in dir(__ssl):
 import errno
 time = __import__('time')
 
+from eventlet.common import get_errno
 from eventlet.hubs import trampoline
-from eventlet.greenio import set_nonblocking, GreenSocket, SOCKET_CLOSED, CONNECT_ERR, CONNECT_SUCCESS, get_errno
+from eventlet.greenio import set_nonblocking, GreenSocket, SOCKET_CLOSED, CONNECT_ERR, CONNECT_SUCCESS
 orig_socket = __import__('socket')
 socket = orig_socket.socket
 timeout_exc = orig_socket.timeout
@@ -105,10 +106,10 @@ class GreenSSLSocket(__ssl.SSLSocket):
             while True:
                 try:
                     v = self._sslobj.write(data)
-                except SSLError, x:
-                    if get_errno(x) == SSL_ERROR_WANT_READ:
+                except SSLError, e:
+                    if get_errno(e) == SSL_ERROR_WANT_READ:
                         return 0
-                    elif get_errno(x) == SSL_ERROR_WANT_WRITE:
+                    elif get_errno(e) == SSL_ERROR_WANT_WRITE:
                         return 0
                     else:
                         raise
@@ -155,7 +156,7 @@ class GreenSSLSocket(__ssl.SSLSocket):
                 except orig_socket.error, e:
                     if self.act_non_blocking:
                         raise
-                    if ge_errno(e) == errno.EWOULDBLOCK:
+                    if get_errno(e) == errno.EWOULDBLOCK:
                         trampoline(self.fileno(), write=True, 
                                    timeout=self.gettimeout(), timeout_exc=timeout_exc('timed out'))
                     if get_errno(e) in SOCKET_CLOSED:

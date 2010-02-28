@@ -3,6 +3,7 @@ import errno
 from eventlet import wsgi
 from eventlet import pools
 import eventlet
+from eventlet.common import get_errno
 
 class WebSocketWSGI(object):
     def __init__(self, handler, origin):
@@ -37,7 +38,7 @@ class WebSocketWSGI(object):
         try:
             self.handler(ws)
         except socket.error, e:
-            if wsgi.get_errno(e) != errno.EPIPE:
+            if get_errno(e) != errno.EPIPE:
                 raise
         # use this undocumented feature of eventlet.wsgi to ensure that it
         # doesn't barf on the fact that we didn't call start_response

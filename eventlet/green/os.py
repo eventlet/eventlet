@@ -3,7 +3,7 @@ import errno
 socket = __import__("socket")
 
 from eventlet import greenio
-from eventlet.greenio import get_errno
+from eventlet.common import get_errno
 from eventlet import greenthread
 from eventlet import hubs
 

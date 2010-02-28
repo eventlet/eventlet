@@ -94,7 +94,7 @@ def create_connection(address, timeout=_GLOBAL_DEFAULT_TIMEOUT):
 
 def _convert_to_sslerror(ex):
     """ Transliterates SSL.SysCallErrors to socket.sslerrors"""
-    return sslerror((ex[0], ex[1]))
+    return sslerror((ex.args[0], ex.args[1]))
 
 
 class GreenSSLObject(object):
