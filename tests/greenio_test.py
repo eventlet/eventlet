@@ -380,7 +380,7 @@ class TestGreenIo(LimitedTestCase):
             bufsized(client, size=bufsize)
             total = 0
             while total < many_bytes:
-                data = client.recv(min(many_bytes - total, many_bytes//10)))
+                data = client.recv(min(many_bytes - total, many_bytes//10))
                 if not data:
                     break
                 total += len(data)
