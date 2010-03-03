@@ -65,7 +65,7 @@ def waitpid(pid, options):
     waitpid(pid, options) -> (pid, status)
     
     Wait for completion of a given child process."""
-    if options & os.WNOHANG != 0:
+    if options & os_orig.WNOHANG != 0:
         return __original_waitpid__(pid, options)
     else:
         new_options = options | os.WNOHANG
