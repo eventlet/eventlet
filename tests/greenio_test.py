@@ -1,5 +1,5 @@
 import socket as _orig_sock
-from tests import LimitedTestCase, skip_with_pyevent, main, skipped
+from tests import LimitedTestCase, skip_with_pyevent, main, skipped, s2b
 from eventlet import event
 from eventlet import greenio
 from eventlet import debug
@@ -101,7 +101,7 @@ class TestGreenIo(LimitedTestCase):
         client.connect(addr)
 
         try:
-            r = client.recv(8192)
+            client.recv(8192)
             self.fail("socket.timeout not raised")
         except socket.timeout, e:
             self.assert_(hasattr(e, 'args'))
@@ -161,7 +161,7 @@ class TestGreenIo(LimitedTestCase):
         client.connect(addr)
 
         try:
-            r = client.recv_into(buf)
+            client.recv_into(buf)
             self.fail("socket.timeout not raised")
         except socket.timeout, e:
             self.assert_(hasattr(e, 'args'))
@@ -188,7 +188,7 @@ class TestGreenIo(LimitedTestCase):
         client.connect(addr)
         try:
             client.settimeout(0.00001)
-            msg = "A"*(100000)  # large enough number to overwhelm most buffers
+            msg = s2b("A")*(100000)  # large enough number to overwhelm most buffers
 
             total_sent = 0
             # want to exceed the size of the OS buffer so it'll block in a
@@ -223,7 +223,7 @@ class TestGreenIo(LimitedTestCase):
         client.connect(addr)
 
         try:
-            msg = "A"*(8*1024*1024)
+            msg = s2b("A")*(8*1024*1024)
 
             # want to exceed the size of the OS buffer so it'll block
             client.sendall(msg)
@@ -246,7 +246,7 @@ class TestGreenIo(LimitedTestCase):
                 fd.write('hello\n')
                 fd.close()
                 self.assertWriteToClosedFileRaises(fd)
-                self.assertRaises(socket.error, conn.send, 'b')
+                self.assertRaises(socket.error, conn.send, s2b('b'))
             finally:
                 listener.close()
 
@@ -258,10 +258,10 @@ class TestGreenIo(LimitedTestCase):
                 fd = conn.makefile('w')
                 fd.write('hello')
                 fd.close()
-                conn.send('\n')
+                conn.send(s2b('\n'))
                 conn.close()
                 self.assertWriteToClosedFileRaises(fd)
-                self.assertRaises(socket.error, conn.send, 'b')
+                self.assertRaises(socket.error, conn.send, s2b('b'))
             finally:
                 listener.close()
 
@@ -318,7 +318,7 @@ class TestGreenIo(LimitedTestCase):
         killer.wait()
 
     def test_full_duplex(self):
-        large_data = '*' * 10 * min_buf_size()
+        large_data = s2b('*') * 10 * min_buf_size()
         listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         listener.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR, 1)
         listener.bind(('127.0.0.1', 0))
@@ -330,7 +330,6 @@ class TestGreenIo(LimitedTestCase):
 
         def read_large(sock):
             result = sock.recv(len(large_data))
-            expected = 'hello world'
             while len(result) < len(large_data):
                 result += sock.recv(len(large_data))
             self.assertEquals(result, large_data)
@@ -341,7 +340,7 @@ class TestGreenIo(LimitedTestCase):
             send_large_coro = eventlet.spawn(send_large, sock)
             eventlet.sleep(0)
             result = sock.recv(10)
-            expected = 'hello world'
+            expected = s2b('hello world')
             while len(result) < len(expected):
                 result += sock.recv(10)
             self.assertEquals(result, expected)
@@ -353,7 +352,7 @@ class TestGreenIo(LimitedTestCase):
         bufsized(client)
         large_evt = eventlet.spawn(read_large, client)
         eventlet.sleep(0)
-        client.sendall('hello world')
+        client.sendall(s2b('hello world'))
         server_evt.wait()
         large_evt.wait()
         client.close()
@@ -364,12 +363,12 @@ class TestGreenIo(LimitedTestCase):
         self.timer.cancel()
         second_bytes = 10
         def test_sendall_impl(many_bytes):
-            bufsize = max(many_bytes/15, 2)
+            bufsize = max(many_bytes//15, 2)
             def sender(listener):
                 (sock, addr) = listener.accept()
                 sock = bufsized(sock, size=bufsize)
-                sock.sendall('x'*many_bytes)
-                sock.sendall('y'*second_bytes)
+                sock.sendall(s2b('x')*many_bytes)
+                sock.sendall(s2b('y')*second_bytes)
 
             listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             listener.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR, 1)
@@ -381,23 +380,23 @@ class TestGreenIo(LimitedTestCase):
             bufsized(client, size=bufsize)
             total = 0
             while total < many_bytes:
-                data = client.recv(min(many_bytes - total, many_bytes/10))
-                if data == '':
+                data = client.recv(min(many_bytes - total, many_bytes//10))
+                if not data:
                     break
                 total += len(data)
 
             total2 = 0
             while total < second_bytes:
                 data = client.recv(second_bytes)
-                if data == '':
+                if not data:
                     break
                 total2 += len(data)
 
             sender_coro.wait()
             client.close()
 
-        for bytes in (1000, 10000, 100000, 1000000):
-            test_sendall_impl(bytes)
+        for how_many in (1000, 10000, 100000, 1000000):
+            test_sendall_impl(how_many)
 
     def test_wrap_socket(self):
         try:
@@ -497,7 +496,7 @@ class TestGreenIoLong(LimitedTestCase):
         def reader(sock, results):
             while True:
                 data = sock.recv(recvsize)
-                if data == '':
+                if not data:
                     break
                 results.append(data)
 
@@ -529,7 +528,7 @@ class TestGreenIoLong(LimitedTestCase):
             bufsized(client, size=sendsize)
         else:
             bufsized(client)
-        client.sendall('*' * sendsize)
+        client.sendall(s2b('*') * sendsize)
         client.close()
         server_coro.wait()
         listener.close()
@@ -575,7 +574,7 @@ class TestGreenIoStarvation(LimitedTestCase):
                     data = sock.recv(recvsize)
                     if not t1:
                         t1 = time.time() - base_time
-                    if data == '':
+                    if not data:
                         t2 = time.time() - base_time
                         my_results.append(datasize)
                         my_results.append((t1,t2))
@@ -595,7 +594,7 @@ class TestGreenIoStarvation(LimitedTestCase):
             bufsized(client, size=sendsize)
 
             for i in range(sendloops):
-                client.sendall('*' * sendsize)
+                client.sendall(s2b('*') * sendsize)
             client.close()
             os._exit(0)
 
