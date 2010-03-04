@@ -483,26 +483,6 @@ class TestGreenIo(LimitedTestCase):
 
         gt.wait()
 
-    def test_pipe_context(self):
-        # ensure using a pipe as a context actually closes it.
-        r, w = os.pipe()
-
-        r = os.fdopen(r)
-        w = os.fdopen(w, 'w')
-
-        r = greenio.GreenPipe(r)
-        w = greenio.GreenPipe(w)
-
-        with r:
-            pass
-
-        assert r.closed and not w.closed
-
-        with w as f:
-            assert f == w
-
-        assert r.closed and w.closed
-
 
 class TestGreenIoLong(LimitedTestCase):
     TEST_TIMEOUT=10  # the test here might take a while depending on the OS
