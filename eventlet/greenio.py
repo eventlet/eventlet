@@ -461,6 +461,12 @@ class GreenPipe(object):
     def __iter__(self):
         return self.xreadlines()
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc_info):
+        self.close()
+
     def xreadlines(self, size=None):
         if size is None:
             while True:
