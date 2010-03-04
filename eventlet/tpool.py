@@ -182,8 +182,10 @@ class Proxy(object):
     # the following are a buncha methods that the python interpeter
     # doesn't use getattr to retrieve and therefore have to be defined
     # explicitly
+    def __iter__(self):
+        return proxy_call(self._autowrap, self._obj.__iter__)
     def __getitem__(self, key):
-        return proxy_call(self._autowrap, self._obj.__getitem__, key)
+        return proxy_call(self._autowrap, self._obj.__getitem__, key)    
     def __setitem__(self, key, value):
         return proxy_call(self._autowrap, self._obj.__setitem__, key, value)
     def __deepcopy__(self, memo=None):
