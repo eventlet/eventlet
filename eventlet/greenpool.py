@@ -34,8 +34,8 @@ class GreenPool(object):
         self.size = new_size
 
     def running(self):
-        """Returns the number of greenthreads that are currently executing
-        functions in the Parallel's pool."""
+        """ Returns the number of greenthreads that are currently executing
+        functions in the GreenPool."""
         return len(self.coroutines_running)
 
     def free(self):

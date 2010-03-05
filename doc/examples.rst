@@ -60,4 +60,12 @@ Port Forwarder
 -----------------------
 ``examples/forwarder.py``
 
-.. literalinclude:: ../examples/forwarder.py
+.. _producer_consumer_example:
+
+Producer Consumer/Recursive Web Crawler
+-----------------------------------------
+``examples/producer_consumer.py``
+
+This is an example implementation of the producer/consumer pattern as well as a functional recursive web crawler.
+
+.. literalinclude:: ../examples/producer_consumer.py

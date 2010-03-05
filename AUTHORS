@@ -17,6 +17,7 @@ Contributors
 * Chet Murthy
 * Eugene Oden
 * radix
+* Scott Robinson
 * Tavis Rudd
 * Sergey Shepelev
 * Chuck Thier
@@ -43,3 +44,4 @@ Thanks To
 * Cesar Alaniz, for uncovering bugs of great import
 * the grugq, for contributing patches, suggestions, and use cases
 * Ralf Schmitt, for wsgi/webob incompatibility bug report and suggested fix
+* Benoit Chesneau, bug report on green.os and patch to fix it

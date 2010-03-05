@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import itertools
 import random
 from sys import stdout
 import time
@@ -120,6 +121,14 @@ class TestTpool(LimitedTestCase):
         prox = tpool.Proxy([0,1,2])
         prox[1] = 2
         self.assertEqual(prox[1], 2)
+
+    @skip_with_pyevent
+    def test_wrap_iterator(self):
+        prox = tpool.Proxy(xrange(10))
+        result = []
+        for i in prox:
+            result.append(i)
+        self.assertEquals(range(10), result)
 
     @skip_with_pyevent
     def test_raising_exceptions(self):
