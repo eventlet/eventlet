@@ -10,15 +10,9 @@ from eventlet import debug, hubs
 # convenience for importers
 main = unittest.main
 
-
-if sys.version_info[0]<3:
-    def s2b(string):
-        return string
-else:
-    def s2b(string):
-        return bytes(string, 'latin1')
-
-s2b.__doc__ = """string to bytes. On 2.x no-op on 3.x encodes string in latin1"""
+def s2b(s):
+    """portable way to convert string to bytes. In 3.x socket.send and recv require bytes"""
+    return s.encode()
 
 def skipped(func):
     """ Decorator that marks a function as skipped.  Uses nose's SkipTest exception
