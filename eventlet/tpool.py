@@ -30,8 +30,10 @@ QUIET=True
 
 _rfile = _wfile = None
 
+_bytetosend = ' '.encode()
+
 def _signal_t2e():
-    _wfile.write(' ')
+    _wfile.write(_bytetosend)
     _wfile.flush()
 
 _reqq = None
@@ -42,7 +44,7 @@ def tpool_trampoline():
     while(True):
         try:
             _c = _rfile.read(1)
-            assert _c != ""
+            assert _c
         except ValueError:
             break  # will be raised when pipe is closed
         while not _rspq.empty():
@@ -218,8 +220,8 @@ def setup():
         _setup_already = True
     try:
         _rpipe, _wpipe = os.pipe()
-        _wfile = os.fdopen(_wpipe,"w",0)
-        _rfile = os.fdopen(_rpipe,"r",0)
+        _wfile = os.fdopen(_wpipe,"wb",0)
+        _rfile = os.fdopen(_rpipe,"rb",0)
         ## Work whether or not wrap_pipe_with_coroutine_pipe was called
         if not isinstance(_rfile, greenio.GreenPipe):
             _rfile = greenio.GreenPipe(_rfile)
@@ -234,8 +236,8 @@ def setup():
         csock = util.__original_socket__(socket.AF_INET, socket.SOCK_STREAM)
         csock.connect(('localhost', sock.getsockname()[1]))
         nsock, addr = sock.accept()
-        _rfile = greenio.GreenSocket(csock).makefile()
-        _wfile = nsock.makefile('w')
+        _rfile = greenio.GreenSocket(csock).makefile('rb', 0)
+        _wfile = nsock.makefile('wb',0)
 
     _reqq = Queue(maxsize=-1)
     _rspq = Queue(maxsize=-1)

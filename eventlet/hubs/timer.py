@@ -75,6 +75,11 @@ class Timer(object):
         except AttributeError:
             pass
 
+    # No default ordering in 3.x. heapq uses <
+    # FIXME should full set be added?
+    def __lt__(self, other): 
+        return id(self)<id(other)
+
 class LocalTimer(Timer):
 
     def __init__(self, *args, **kwargs):

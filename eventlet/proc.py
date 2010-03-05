@@ -389,7 +389,7 @@ class Source(object):
             return LinkToGreenlet(listener)
         if hasattr(listener, 'send'):
             return LinkToEvent(listener)
-        elif callable(listener):
+        elif hasattr(listener, '__call__'):
             return LinkToCallable(listener)
         else:
             raise TypeError("Don't know how to link to %r" % (listener, ))
