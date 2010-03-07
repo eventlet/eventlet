@@ -2,7 +2,7 @@ import sys
 
 import eventlet
 from eventlet import debug
-from tests import LimitedTestCase, main
+from tests import LimitedTestCase, main, s2b
 from unittest import TestCase
 
 try:
@@ -117,7 +117,7 @@ class TestDebug(LimitedTestCase):
         try:
             gt = eventlet.spawn(hurl, client_2)            
             eventlet.sleep(0)
-            client.send(' ')
+            client.send(s2b(' '))
             eventlet.sleep(0)
             # allow the "hurl" greenlet to trigger the KeyError
             # not sure why the extra context switch is needed

@@ -12,13 +12,13 @@ class BackdoorTest(LimitedTestCase):
         serv = eventlet.spawn(backdoor.backdoor_server, listener)
         client = socket.socket()
         client.connect(('localhost', listener.getsockname()[1]))
-        f = client.makefile()
+        f = client.makefile('rw')
         self.assert_('Python' in f.readline())
         f.readline()  # build info
         f.readline()  # help info
         self.assert_('InteractiveConsole' in f.readline())
         self.assertEquals('>>> ', f.read(4))
-        f.write('print "hi"\n')
+        f.write('print("hi")\n')
         f.flush()
         self.assertEquals('hi\n', f.readline())
         self.assertEquals('>>> ', f.read(4))

@@ -57,8 +57,7 @@ class TestTpool(LimitedTestCase):
 
     @skip_with_pyevent
     def test_wrap_uniterable(self):
-        # here we're treating the exception as just a normal class
-        prox = tpool.Proxy(FloatingPointError())
+        prox = tpool.Proxy([])
         def index():
             prox[0]
         def key():
@@ -81,8 +80,8 @@ class TestTpool(LimitedTestCase):
     def test_wrap_module_class(self):
         prox = tpool.Proxy(re)
         self.assertEqual(tpool.Proxy, type(prox))
-        exp = prox.compile('.')
-        self.assertEqual(exp.flags, 0)
+        exp = prox.compile('(.)(.)(.)')
+        self.assertEqual(exp.groups, 3)
         self.assert_(repr(prox.compile))
 
     @skip_with_pyevent
