@@ -6,6 +6,7 @@ import linecache
 import inspect
 import warnings
 
+from eventlet.common import BaseException
 from eventlet.support import greenlets as greenlet
 from eventlet import hubs
 from eventlet import greenthread
@@ -106,7 +107,7 @@ call_after_local = greenthread.call_after_local
 call_after_global = greenthread.call_after_global
 
 
-class _SilentException:
+class _SilentException(BaseException):
     pass
 
 class FakeTimer(object):

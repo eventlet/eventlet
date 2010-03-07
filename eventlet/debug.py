@@ -4,11 +4,13 @@ debugging Eventlet-powered applications."""
 import os
 import sys
 import linecache
-import string
+import re
 import inspect
 
 __all__ = ['spew', 'unspew', 'format_hub_listeners', 'hub_listener_stacks', 
 'hub_exceptions', 'tpool_exceptions']
+
+_token_spliter = re.compile('\W+')
 
 class Spew(object):
     """
@@ -39,16 +41,15 @@ class Spew(object):
                 print '%s:%s: %s' % (name, lineno, line.rstrip())
                 if not self.show_values:
                     return self
-                details = '\t'
-                tokens = line.translate(
-                    string.maketrans(' ,.()', '\0' * 5)).split('\0')
+                details = []
+                tokens = _token_spliter.split(line)
                 for tok in tokens:
                     if tok in frame.f_globals:
-                        details += '%s=%r ' % (tok, frame.f_globals[tok])
+                        details.append('%s=%r' % (tok, frame.f_globals[tok]))
                     if tok in frame.f_locals:
-                        details += '%s=%r ' % (tok, frame.f_locals[tok])
-                if details.strip():
-                    print details
+                        details.append('%s=%r' % (tok, frame.f_locals[tok]))
+                if details:
+                    print "\t%s" % ' '.join(details)
         return self
 
 
