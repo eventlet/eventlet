@@ -140,7 +140,7 @@ class LightQueue(object):
     """
 
     def __init__(self, maxsize=None):
-        if maxsize < 0:
+        if maxsize is None or maxsize < 0: #None is not comparable in 3.x
             self.maxsize = None
         else:
             self.maxsize = maxsize
@@ -186,7 +186,7 @@ class LightQueue(object):
         """Resizes the queue's maximum size.
 
         If the size is increased, and there are putters waiting, they may be woken up."""
-        if size > self.maxsize:
+        if self.maxsize is not None and (size is None or size > self.maxsize): # None is not comparable in 3.x
             # Maybe wake some stuff up
             self._schedule_unlock()
         self.maxsize = size
@@ -210,7 +210,7 @@ class LightQueue(object):
 
         ``Queue(None)`` is never full.
         """
-        return self.qsize() >= self.maxsize
+        return self.maxsize is not None and self.qsize() >= self.maxsize # None is not comparable in 3.x
 
     def put(self, item, block=True, timeout=None):
         """Put an item into the queue.
@@ -335,7 +335,7 @@ class LightQueue(object):
                             putter.switch(putter)
                         else:
                             self.putters.add(putter)
-                elif self.putters and (self.getters or self.qsize() < self.maxsize):
+                elif self.putters and (self.getters or self.maxsize is None or self.qsize() < self.maxsize):
                     putter = self.putters.pop()
                     putter.switch(putter)
                 else:
