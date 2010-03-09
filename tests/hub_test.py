@@ -51,7 +51,7 @@ class TestExceptionInMainloop(LimitedTestCase):
         assert delay >= DELAY*0.9, 'sleep returned after %s seconds (was scheduled for %s)' % (delay, DELAY)
 
         def fail():
-            1/0
+            1//0
 
         hubs.get_hub().schedule_call_global(0, fail)
 

@@ -51,7 +51,7 @@ class Test(LimitedTestCase):
             pass
 
         try:
-            1/0
+            1//0
         except:
             try:
                 with Timeout(DELAY, sys.exc_info()[0]):

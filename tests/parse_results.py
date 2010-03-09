@@ -46,7 +46,7 @@ def parse_unittest_output(s):
         fail = int(fail or '0')
         error = int(error or '0')
     else:
-        assert ok_match, `s`
+        assert ok_match, repr(s)
     timeout_match = re.search('^===disabled because of timeout: (\d+)$', s, re.M)
     if timeout_match:
         timeout = int(timeout_match.group(1))

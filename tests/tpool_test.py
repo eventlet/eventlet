@@ -74,7 +74,6 @@ class TestTpool(LimitedTestCase):
         self.assertEqual(1, prox['a'])
         self.assertEqual(str(my_object), str(prox))
         self.assertEqual(repr(my_object), repr(prox))
-        self.assertEqual(`my_object`, `prox`)
 
     @skip_with_pyevent
     def test_wrap_module_class(self):
@@ -93,6 +92,17 @@ class TestTpool(LimitedTestCase):
         exp3 = prox.compile('/')
         self.assert_(exp1 != exp3)
 
+    @skip_with_pyevent
+    def test_wrap_hash(self):
+        prox1 = tpool.Proxy(''+'A')
+        prox2 = tpool.Proxy('A'+'')
+        self.assert_(prox1=='A')
+        self.assert_('A'==prox2)
+        #self.assert_(prox1==prox2) FIXME - could __eq__ unwrap rhs if it is other proxy?
+        self.assertEqual(hash(prox1), hash(prox2))
+        proxList = tpool.Proxy([])
+        self.assertRaises(TypeError, hash, proxList)
+ 
     @skip_with_pyevent
     def test_wrap_nonzero(self):
         prox = tpool.Proxy(re)

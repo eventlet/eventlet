@@ -82,7 +82,6 @@ class TestSaranwrap(LimitedTestCase):
         self.assertEqual(1, prox['a'])
         self.assertEqual(str(my_object), str(prox))
         self.assertEqual('saran:' + repr(my_object), repr(prox))
-        self.assertEqual('saran:' + `my_object`, `prox`)
 
     @skip_on_windows
     @skip_with_pyevent
