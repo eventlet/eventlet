@@ -14,7 +14,7 @@ from eventlet import greenio
 from eventlet.green import socket as greensocket
 from eventlet import wsgi
 from eventlet import processes
-from eventlet.common import get_errno
+from eventlet.support import get_errno
 
 from tests import find_command
 

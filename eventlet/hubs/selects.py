@@ -1,7 +1,7 @@
 import sys
 import errno
 from eventlet import patcher
-from eventlet.common import get_errno, clear_sys_exc_info
+from eventlet.support import get_errno, clear_sys_exc_info
 select = patcher.original('select')
 time = patcher.original('time')
 

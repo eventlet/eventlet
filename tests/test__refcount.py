@@ -4,7 +4,7 @@ are not leaked by the hub.
 import sys
 import unittest
 from pprint import pformat
-from eventlet.common import clear_sys_exc_info
+from eventlet.support import clear_sys_exc_info
 from eventlet.green import socket
 from eventlet.green.thread import start_new_thread
 from eventlet.green.time import sleep

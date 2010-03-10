@@ -5,7 +5,7 @@ select = patcher.original('select')
 time = patcher.original('time')
 sleep = time.sleep
 
-from eventlet.common import get_errno, clear_sys_exc_info
+from eventlet.support import get_errno, clear_sys_exc_info
 from eventlet.hubs.hub import BaseHub, READ, WRITE
 
 EXC_MASK = select.POLLERR | select.POLLHUP

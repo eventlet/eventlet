@@ -2,8 +2,7 @@ import heapq
 import sys
 import traceback
 
-from eventlet.common import clear_sys_exc_info
-from eventlet.support import greenlets as greenlet
+from eventlet.support import greenlets as greenlet, clear_sys_exc_info
 from eventlet.hubs import timer
 from eventlet import patcher
 time = patcher.original('time')

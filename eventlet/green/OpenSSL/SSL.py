@@ -1,6 +1,6 @@
 from OpenSSL import SSL as orig_SSL
 from OpenSSL.SSL import *
-from eventlet.common import get_errno
+from eventlet.support import get_errno
 from eventlet import greenio
 from eventlet.hubs import trampoline
 import socket

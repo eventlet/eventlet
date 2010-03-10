@@ -5,8 +5,7 @@ from code import InteractiveConsole
 
 import eventlet
 from eventlet import hubs
-from eventlet.common import get_errno
-from eventlet.support import greenlets
+from eventlet.support import greenlets, get_errno
 #FIXME no testcases for bckdor module
 
 try:
