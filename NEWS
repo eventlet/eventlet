@@ -1,3 +1,12 @@
+0.9.7
+=====
+* GreenPipe is now a context manager
+* tpool.Proxy supports iterators properly
+* bug fixes in eventlet.green.os
+* a few more example apps
+* multitudinous improvements in Py3k compatibility from amajorek
+
+
 0.9.6
 =====
 * new EVENTLET_HUB environment variable allows you to select a hub without code
