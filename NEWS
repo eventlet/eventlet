@@ -1,8 +1,9 @@
 0.9.7
 =====
-* GreenPipe is now a context manager
+* GreenPipe is now a context manager (thanks, quad)
 * tpool.Proxy supports iterators properly
-* bug fixes in eventlet.green.os
+* bug fixes in eventlet.green.os (thanks, Benoit)
+* much code cleanup from Tavis
 * a few more example apps
 * multitudinous improvements in Py3k compatibility from amajorek
 
