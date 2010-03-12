@@ -137,9 +137,9 @@ class TestHttpd(LimitedTestCase):
         self.spawn_server()
 
     def tearDown(self):
-        super(TestHttpd, self).tearDown()
         greenthread.kill(self.killer)
         eventlet.sleep(0)
+        super(TestHttpd, self).tearDown()
 
     def spawn_server(self, **kwargs):
         """Spawns a new wsgi server with the given arguments.
@@ -147,8 +147,10 @@ class TestHttpd(LimitedTestCase):
         running it.
         
         Kills any previously-running server."""
+        eventlet.sleep(0) # give previous server a chance to start
         if self.killer:
             greenthread.kill(self.killer)
+            eventlet.sleep(0) # give killer a chance to kill
             
         new_kwargs = dict(max_size=128, 
                           log=self.logfile,
@@ -252,6 +254,7 @@ class TestHttpd(LimitedTestCase):
             a = cgi.parse_qs(body).get('a', [1])[0]
             start_response('200 OK', [('Content-type', 'text/plain')])
             return ['a is %s, body is %s' % (a, body)]
+
         self.site.application = new_app
         sock = eventlet.connect(
             ('localhost', self.port))
@@ -559,7 +562,7 @@ class TestHttpd(LimitedTestCase):
         # shut down the server and verify the server_socket fd is still open,
         # but the actual socketobject passed in to wsgi.server is closed
         greenthread.kill(self.killer)
-        api.sleep(0.001) # make the kill go through
+        eventlet.sleep(0) # make the kill go through
         try:
             server_sock_2.accept()
             # shouldn't be able to use this one anymore
@@ -676,7 +679,7 @@ class TestHttpd(LimitedTestCase):
         old_stderr = sys.stderr
         try:
             sys.stderr = self.logfile
-            api.sleep(0) # need to enter server loop
+            eventlet.sleep(0) # need to enter server loop
             try:
                 eventlet.connect(('localhost', self.port))
                 self.fail("Didn't expect to connect")
@@ -758,7 +761,7 @@ class TestHttpd(LimitedTestCase):
                 client.sendall(data) 
             else: # close sock prematurely
                 client.close()
-            api.sleep(0) # let context switch back to server
+            eventlet.sleep(0) # let context switch back to server
             self.assert_(not errored[0], errored[0])
             # make another request to ensure the server's still alive
             try:
