@@ -34,9 +34,28 @@ except ImportError:
 
 class Pool(object):
     """
-    Pool is a base class that implements resource limitation and construction.
-    It is meant to be subclassed.  When subclassing, define only
-    the :meth:`create` method to implement the desired resource::
+    Pool class implements resource limitation and construction.
+
+    There are two ways of using Pool: passing a `create` argument or
+    subclassing. In either case you must provide a way to create
+    the resource.
+
+    When using `create` argument, pass a function with no arguments::
+
+        http_pool = pools.Pool(create=httplib2.Http)
+
+    If you need to pass arguments, build a nullary function with either
+    `lambda` expression::
+
+        http_pool = pools.Pool(create=lambda: httplib2.Http(timeout=90))
+
+    or `functools.partial`::
+
+        from functools import partial
+        http_pool = pools.Pool(create=partial(httplib2.Http, timeout=90))
+
+    When subclassing, define only the :meth:`create` method
+    to implement the desired resource::
 
         class MyPool(pools.Pool):
             def create(self):
@@ -67,7 +86,7 @@ class Pool(object):
     greenthread calling :meth:`get` to cooperatively yield until an item
     is :meth:`put` in.
     """
-    def __init__(self, min_size=0, max_size=4, order_as_stack=False):
+    def __init__(self, min_size=0, max_size=4, order_as_stack=False, create=None):
         """*order_as_stack* governs the ordering of the items in the free pool.
         If ``False`` (the default), the free items collection (of items that
         were created and were put back in the pool) acts as a round-robin,
@@ -81,6 +100,9 @@ class Pool(object):
         self.current_size = 0
         self.channel = queue.LightQueue(0)
         self.free_items = collections.deque()
+        if create is not None:
+            self.create = create
+
         for x in xrange(min_size):
             self.current_size += 1
             self.free_items.append(self.create())
@@ -139,9 +161,11 @@ class Pool(object):
         return max(0, self.channel.getting() - self.channel.putting())
 
     def create(self):
-        """Generate a new pool item.  This method must be overridden in order
-        for the pool to function.  It accepts no arguments and returns a single
-        instance of whatever thing the pool is supposed to contain.
+        """Generate a new pool item.  In order for the pool to function,
+        either this method must be overriden in a subclass or pool must be
+        created with `create`=callable argument.  It accepts no arguments
+        and returns a single instance of whatever thing the pool is supposed
+        to contain.
 
         In general, :meth:`create` is called whenever the pool exceeds its
         previous high-water mark of concurrently-checked-out-items.  In other
