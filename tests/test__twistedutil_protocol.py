@@ -160,7 +160,7 @@ class TestGreenTransport_bufsize1(TestGreenTransport):
 #         self.conn.write('hello\r\n')
 #         sleep(DELAY*1.5) # make sure the rest of data arrives
 #         try:
-#             1/0
+#             1//0
 #         except:
 #             #self.conn.loseConnection(failure.Failure()) # does not work, why?
 #             spawn(self.conn._queue.send_exception, *sys.exc_info())
@@ -176,7 +176,7 @@ class TestGreenTransport_bufsize1(TestGreenTransport):
 #         self.assertEqual('you said hello. ', self.conn.recv())
 #         sleep(DELAY*1.5) # make sure the rest of data arrives
 #         try:
-#             1/0
+#             1//0
 #         except:
 #             #self.conn.loseConnection(failure.Failure()) # does not work, why?
 #             spawn(self.conn._queue.send_exception, *sys.exc_info())

@@ -6,8 +6,7 @@ import linecache
 import inspect
 import warnings
 
-from eventlet.common import BaseException
-from eventlet.support import greenlets as greenlet
+from eventlet.support import greenlets as greenlet, BaseException
 from eventlet import hubs
 from eventlet import greenthread
 from eventlet import debug

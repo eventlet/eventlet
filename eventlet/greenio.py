@@ -1,4 +1,4 @@
-from eventlet.common import get_errno
+from eventlet.support import get_errno
 from eventlet.hubs import trampoline
 BUFFER_SIZE = 4096
 

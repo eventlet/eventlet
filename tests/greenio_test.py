@@ -3,7 +3,7 @@ from tests import LimitedTestCase, skip_with_pyevent, main, skipped, s2b
 from eventlet import event
 from eventlet import greenio
 from eventlet import debug
-from eventlet.common import get_errno
+from eventlet.support import get_errno
 from eventlet.green import socket
 from eventlet.green import time
 from eventlet.green.socket import GreenSSLObject

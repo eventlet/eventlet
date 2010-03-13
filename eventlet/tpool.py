@@ -169,7 +169,7 @@ class Proxy(object):
 
     def __getattr__(self,attr_name):
         f = getattr(self._obj,attr_name)
-        if not callable(f):
+        if not hasattr(f, '__call__'):
             if (isinstance(f, self._autowrap) or
                 attr_name in self._autowrap_names):
                 return Proxy(f, self._autowrap)
@@ -199,6 +199,8 @@ class Proxy(object):
     # wrapped object in such a way that they would block
     def __eq__(self, rhs):
         return self._obj.__eq__(rhs)
+    def __hash__(self):
+        return self._obj.__hash__()
     def __repr__(self):
         return self._obj.__repr__()
     def __str__(self):

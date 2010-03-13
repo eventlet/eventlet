@@ -4,7 +4,7 @@ are not leaked by the hub.
 import sys
 import unittest
 from pprint import pformat
-from eventlet.common import clear_sys_exc_info
+from eventlet.support import clear_sys_exc_info
 from eventlet.green import socket
 from eventlet.green.thread import start_new_thread
 from eventlet.green.time import sleep
@@ -31,7 +31,7 @@ def handle_request(s, raise_on_timeout):
             return
     #print 'handle_request - accepted'
     res = conn.recv(100)
-    assert res == 'hello', `res`
+    assert res == 'hello', repr(res)
     #print 'handle_request - recvd %r' % res
     res = conn.send('bye')
     #print 'handle_request - sent %r' % res
@@ -46,7 +46,7 @@ def make_request(port):
     res = s.send('hello')
     #print 'make_request - sent %s' % res
     res = s.recv(100)
-    assert res == 'bye', `res`
+    assert res == 'bye', repr(res)
     #print 'make_request - recvd %r' % res
     #s.close()
 

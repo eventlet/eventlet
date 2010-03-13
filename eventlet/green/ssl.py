@@ -6,7 +6,7 @@ for attr in dir(__ssl):
 import errno
 time = __import__('time')
 
-from eventlet.common import get_errno
+from eventlet.support import get_errno
 from eventlet.hubs import trampoline
 from eventlet.greenio import set_nonblocking, GreenSocket, SOCKET_CLOSED, CONNECT_ERR, CONNECT_SUCCESS
 orig_socket = __import__('socket')

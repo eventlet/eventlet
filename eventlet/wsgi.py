@@ -10,7 +10,7 @@ from eventlet.green import socket
 from eventlet.green import BaseHTTPServer
 from eventlet import greenpool
 from eventlet import greenio
-from eventlet.common import get_errno
+from eventlet.support import get_errno
 
 DEFAULT_MAX_SIMULTANEOUS_REQUESTS = 1024
 DEFAULT_MAX_HTTP_VERSION = 'HTTP/1.1'
