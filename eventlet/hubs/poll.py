@@ -77,7 +77,7 @@ class Hub(BaseHub):
                 sleep(seconds)
             return
         try:
-            presult = self.poll.poll(seconds * self.WAIT_MULTIPLIER)
+            presult = self.poll.poll(int(seconds * self.WAIT_MULTIPLIER))
         except select.error, e:
             if get_errno(e) == errno.EINTR:
                 return

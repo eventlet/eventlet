@@ -1,7 +1,7 @@
 try:
     import greenlet
-    getcurrent = greenlet.getcurrent
-    GreenletExit = greenlet.GreenletExit
+    getcurrent = greenlet.greenlet.getcurrent
+    GreenletExit = greenlet.greenlet.GreenletExit
     greenlet = greenlet.greenlet
 except ImportError, e:
     raise

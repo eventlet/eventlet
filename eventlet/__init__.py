@@ -32,7 +32,7 @@ try:
     serve = convenience.serve
     StopServe = convenience.StopServe
 
-    getcurrent = greenlet.getcurrent
+    getcurrent = greenlet.greenlet.getcurrent
     
     # deprecated    
     TimeoutError = timeout.Timeout
