@@ -109,7 +109,10 @@ class Hub(BaseHub):
             evt = event.write(fileno, cb, fileno)
 
         listener = FdListener(evtype, fileno, evt)
-        self.listeners[evtype].setdefault(fileno, []).append(listener)
+        bucket = self.listeners[evtype]
+        if fileno in bucket:
+            raise RuntimeError("Multiple %s for fileno %s" % (evtype, fileno))
+        bucket[fileno] = listener
         return listener
 
     def signal(self, signalnum, handler):
@@ -127,8 +130,8 @@ class Hub(BaseHub):
 
     def remove_descriptor(self, fileno):
         for lcontainer in self.listeners.itervalues():
-            l_list = lcontainer.pop(fileno, None)
-            for listener in l_list:
+            listener = lcontainer.pop(fileno, None)
+            if listener:
                 try:
                     listener.cb.delete()
                 except self.SYSTEM_EXCEPTIONS:

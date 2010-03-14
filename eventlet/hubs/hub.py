@@ -71,17 +71,14 @@ class BaseHub(object):
         is ready for reading/writing.
         """
         listener = self.lclass(evtype, fileno, cb)
-        self.listeners[evtype].setdefault(fileno, []).append(listener)
+        bucket = self.listeners[evtype]
+        if fileno in bucket:
+            raise RuntimeError("Multiple %s for fileno %s" % (evtype, fileno))
+        bucket[fileno] = listener
         return listener
 
     def remove(self, listener):
-        listener_list = self.listeners[listener.evtype].pop(listener.fileno, [])
-        try:
-            listener_list.remove(listener)
-        except ValueError:
-            pass
-        if listener_list:
-            self.listeners[listener.evtype][listener.fileno] = listener_list
+        self.listeners[listener.evtype].pop(listener.fileno, None)
 
     def remove_descriptor(self, fileno):
         """ Completely remove all listeners for this fileno.  For internal use

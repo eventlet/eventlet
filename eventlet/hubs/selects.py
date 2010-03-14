@@ -12,6 +12,8 @@ try:
 except AttributeError:
     BAD_SOCK = set((errno.EBADF,))
 
+noop = lambda x: None
+
 class Hub(BaseHub):
     def _remove_bad_fds(self):
         """ Iterate through fds, removing the ones that are bad per the
@@ -43,17 +45,13 @@ class Hub(BaseHub):
                 raise
 
         for fileno in er:
-            for reader in readers.get(fileno, ()):
-                reader(fileno)
-            for writer in writers.get(fileno, ()):
-                writer(fileno)
+            readers.get(fileno, noop)(fileno)
+            writers.get(fileno, noop)(fileno)
             
         for listeners, events in ((readers, r), (writers, w)):
             for fileno in events:
                 try:
-                    l_list = listeners[fileno]
-                    if l_list:
-                        l_list[0](fileno)
+                    listeners.get(fileno, noop)(fileno)
                 except self.SYSTEM_EXCEPTIONS:
                     raise
                 except:

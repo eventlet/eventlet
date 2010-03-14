@@ -12,6 +12,8 @@ EXC_MASK = select.POLLERR | select.POLLHUP
 READ_MASK = select.POLLIN | select.POLLPRI
 WRITE_MASK = select.POLLOUT
 
+noop = lambda x: None
+
 class Hub(BaseHub):
     WAIT_MULTIPLIER=1000.0 # poll.poll's timeout is measured in milliseconds
 
@@ -86,25 +88,16 @@ class Hub(BaseHub):
 
         for fileno, event in presult:
             try:
-                listener = None
-                try:
-                    if event & READ_MASK:
-                        listener = readers[fileno][0]
-                    if event & WRITE_MASK:
-                        listener = writers[fileno][0]
-                except KeyError:
-                    pass
-                else:
-                    if listener:
-                        listener(fileno)
+                if event & READ_MASK:
+                    readers.get(fileno, noop)(fileno)
+                if event & WRITE_MASK:
+                    writers.get(fileno, noop)(fileno)
                 if event & select.POLLNVAL:
                     self.remove_descriptor(fileno)
                     continue
                 if event & EXC_MASK:
-                    for listeners in (readers.get(fileno, []), 
-                                      writers.get(fileno, [])):
-                        for listener in listeners:
-                            listener(fileno)
+                    readers.get(fileno, noop)(fileno)
+                    writers.get(fileno, noop)(fileno)
             except SYSTEM_EXCEPTIONS:
                 raise
             except:
