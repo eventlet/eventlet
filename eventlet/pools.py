@@ -49,7 +49,7 @@ class Pool(object):
 
         http_pool = pools.Pool(create=lambda: httplib2.Http(timeout=90))
 
-    or `functools.partial`::
+    or :func:`functools.partial`::
 
         from functools import partial
         http_pool = pools.Pool(create=partial(httplib2.Http, timeout=90))
