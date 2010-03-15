@@ -50,6 +50,7 @@ class BaseHub(object):
 
     def __init__(self, clock=time.time):
         self.listeners = {READ:{}, WRITE:{}}
+        self.secondaries = {READ:{}, WRITE:{}}
 
         self.clock = clock
         self.greenlet = greenlet.greenlet(self.run)
@@ -73,18 +74,32 @@ class BaseHub(object):
         listener = self.lclass(evtype, fileno, cb)
         bucket = self.listeners[evtype]
         if fileno in bucket:
-            raise RuntimeError("Multiple %s for fileno %s" % (evtype, fileno))
-        bucket[fileno] = listener
+            # store off the second listener in another structure
+            self.secondaries[evtype].setdefault(fileno, []).append(listener)
+        else:
+            bucket[fileno] = listener
         return listener
 
     def remove(self, listener):
-        self.listeners[listener.evtype].pop(listener.fileno, None)
+        fileno = listener.fileno
+        evtype = listener.evtype
+        self.listeners[evtype].pop(fileno, None)
+        # migrate a secondary listener to be the primary listener
+        if fileno in self.secondaries[evtype]:
+            sec = self.secondaries[evtype].get(fileno, ())
+            if not sec:
+                return
+            self.listeners[evtype][fileno] = sec.pop(0)
+            if not sec:
+                del self.secondaries[evtype][fileno]
 
     def remove_descriptor(self, fileno):
         """ Completely remove all listeners for this fileno.  For internal use
         only."""
         self.listeners[READ].pop(fileno, None)
         self.listeners[WRITE].pop(fileno, None)
+        self.secondaries[READ].pop(fileno, None)
+        self.secondaries[WRITE].pop(fileno, None)
 
     def stop(self):
         self.abort()

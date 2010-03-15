@@ -108,12 +108,7 @@ class Hub(BaseHub):
         elif evtype is WRITE:
             evt = event.write(fileno, cb, fileno)
 
-        listener = FdListener(evtype, fileno, evt)
-        bucket = self.listeners[evtype]
-        if fileno in bucket:
-            raise RuntimeError("Multiple %s for fileno %s" % (evtype, fileno))
-        bucket[fileno] = listener
-        return listener
+        return super(Hub,self).add(evtype, fileno, evt)
 
     def signal(self, signalnum, handler):
         def wrapper():
