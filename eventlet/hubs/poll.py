@@ -6,13 +6,11 @@ time = patcher.original('time')
 sleep = time.sleep
 
 from eventlet.support import get_errno, clear_sys_exc_info
-from eventlet.hubs.hub import BaseHub, READ, WRITE
+from eventlet.hubs.hub import BaseHub, READ, WRITE, noop
 
 EXC_MASK = select.POLLERR | select.POLLHUP
 READ_MASK = select.POLLIN | select.POLLPRI
 WRITE_MASK = select.POLLOUT
-
-noop = lambda x: None
 
 class Hub(BaseHub):
     WAIT_MULTIPLIER=1000.0 # poll.poll's timeout is measured in milliseconds
@@ -52,9 +50,7 @@ class Hub(BaseHub):
         else: 
             try:
                 self.poll.unregister(fileno)
-            except KeyError:
-                pass
-            except (IOError, OSError):
+            except (KeyError, IOError, OSError):
                 # raised if we try to remove a fileno that was
                 # already removed/invalid
                 pass
@@ -63,9 +59,7 @@ class Hub(BaseHub):
         super(Hub, self).remove_descriptor(fileno)
         try:
             self.poll.unregister(fileno)
-        except (KeyError, ValueError):
-            pass
-        except (IOError, OSError):
+        except (KeyError, ValueError, IOError, OSError):
             # raised if we try to remove a fileno that was
             # already removed/invalid
             pass
@@ -89,15 +83,15 @@ class Hub(BaseHub):
         for fileno, event in presult:
             try:
                 if event & READ_MASK:
-                    readers.get(fileno, noop)(fileno)
+                    readers.get(fileno, noop).cb(fileno)
                 if event & WRITE_MASK:
-                    writers.get(fileno, noop)(fileno)
+                    writers.get(fileno, noop).cb(fileno)
                 if event & select.POLLNVAL:
                     self.remove_descriptor(fileno)
                     continue
                 if event & EXC_MASK:
-                    readers.get(fileno, noop)(fileno)
-                    writers.get(fileno, noop)(fileno)
+                    readers.get(fileno, noop).cb(fileno)
+                    writers.get(fileno, noop).cb(fileno)
             except SYSTEM_EXCEPTIONS:
                 raise
             except:

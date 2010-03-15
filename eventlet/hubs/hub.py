@@ -16,12 +16,12 @@ class FdListener(object):
         self.evtype = evtype
         self.fileno = fileno
         self.cb = cb
-    def __call__(self, *args, **kw):
-        return self.cb(*args, **kw)
     def __repr__(self):
         return "%s(%r, %r, %r)" % (type(self).__name__, self.evtype, self.fileno, self.cb)
     __str__ = __repr__
 
+
+noop = FdListener(READ, 0, lambda x: None)
 
 # in debug mode, track the call site that created the listener
 class DebugListener(FdListener):

@@ -5,14 +5,12 @@ from eventlet.support import get_errno, clear_sys_exc_info
 select = patcher.original('select')
 time = patcher.original('time')
 
-from eventlet.hubs.hub import BaseHub, READ, WRITE
+from eventlet.hubs.hub import BaseHub, READ, WRITE, noop
 
 try:
     BAD_SOCK = set((errno.EBADF, errno.WSAENOTSOCK))
 except AttributeError:
     BAD_SOCK = set((errno.EBADF,))
-
-noop = lambda x: None
 
 class Hub(BaseHub):
     def _remove_bad_fds(self):
@@ -45,13 +43,13 @@ class Hub(BaseHub):
                 raise
 
         for fileno in er:
-            readers.get(fileno, noop)(fileno)
-            writers.get(fileno, noop)(fileno)
+            readers.get(fileno, noop).cb(fileno)
+            writers.get(fileno, noop).cb(fileno)
             
         for listeners, events in ((readers, r), (writers, w)):
             for fileno in events:
                 try:
-                    listeners.get(fileno, noop)(fileno)
+                    listeners.get(fileno, noop).cb(fileno)
                 except self.SYSTEM_EXCEPTIONS:
                     raise
                 except:
