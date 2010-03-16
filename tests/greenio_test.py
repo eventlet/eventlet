@@ -483,11 +483,34 @@ class TestGreenIo(LimitedTestCase):
 
         gt.wait()
 
+    @skip_with_pyevent
+    def test_raised_multiple_readers(self):
+        debug.hub_prevent_multiple_readers(True)
+
+        def handle(sock, addr):
+            sock.recv(1)
+            sock.sendall("a")
+            raise eventlet.StopServe()
+        listener = eventlet.listen(('127.0.0.1', 0))
+        server = eventlet.spawn(eventlet.serve, 
+                                listener,
+                                handle)
+        def reader(s):
+            s.recv(1)
+
+        s = eventlet.connect(('127.0.0.1', listener.getsockname()[1]))
+        a = eventlet.spawn(reader, s)
+        eventlet.sleep(0)
+        self.assertRaises(RuntimeError, s.recv, 1)
+        s.sendall('b')
+        a.wait()
+        
 
 class TestGreenIoLong(LimitedTestCase):
     TEST_TIMEOUT=10  # the test here might take a while depending on the OS
     @skip_with_pyevent
     def test_multiple_readers(self, clibufsize=False):
+        debug.hub_prevent_multiple_readers(False)
         recvsize = 2 * min_buf_size()
         sendsize = 10 * recvsize
         # test that we can have multiple coroutines reading
@@ -534,6 +557,7 @@ class TestGreenIoLong(LimitedTestCase):
         listener.close()
         self.assert_(len(results1) > 0)
         self.assert_(len(results2) > 0)
+        debug.hub_prevent_multiple_readers()
 
     @skipped  # by rdw because it fails but it's not clear how to make it pass
     @skip_with_pyevent

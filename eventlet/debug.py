@@ -93,7 +93,7 @@ def format_hub_timers():
         result.append(repr(l))
     return os.linesep.join(result)
     
-def hub_listener_stacks(state):
+def hub_listener_stacks(state = False):
     """Toggles whether or not the hub records the stack when clients register 
     listeners on file descriptors.  This can be useful when trying to figure 
     out what the hub is up to at any given moment.  To inspect the stacks
@@ -103,15 +103,19 @@ def hub_listener_stacks(state):
     from eventlet import hubs
     hubs.get_hub().set_debug_listeners(state)
     
-def hub_timer_stacks(state):
+def hub_timer_stacks(state = False):
     """Toggles whether or not the hub records the stack when timers are set.  
     To inspect the stacks of the current timers, call :func:`format_hub_timers` 
     at critical junctures in the application logic.
     """
     from eventlet.hubs import timer
     timer._g_debug = state
+
+def hub_prevent_multiple_readers(state = True):
+    from eventlet.hubs import hub
+    hub.g_prevent_multiple_readers = state
     
-def hub_exceptions(state):
+def hub_exceptions(state = True):
     """Toggles whether the hub prints exceptions that are raised from its
     timers.  This can be useful to see how greenthreads are terminating.
     """
@@ -120,7 +124,7 @@ def hub_exceptions(state):
     from eventlet import greenpool
     greenpool.DEBUG = state
     
-def tpool_exceptions(state):
+def tpool_exceptions(state = False):
     """Toggles whether tpool itself prints exceptions that are raised from 
     functions that are executed in it, in addition to raising them like
     it normally does."""

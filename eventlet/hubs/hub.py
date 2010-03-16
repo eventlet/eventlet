@@ -1,11 +1,14 @@
 import heapq
 import sys
 import traceback
+import warnings
 
 from eventlet.support import greenlets as greenlet, clear_sys_exc_info
 from eventlet.hubs import timer
 from eventlet import patcher
 time = patcher.original('time')
+
+g_prevent_multiple_readers = True
 
 READ="read"
 WRITE="write"
@@ -74,6 +77,15 @@ class BaseHub(object):
         listener = self.lclass(evtype, fileno, cb)
         bucket = self.listeners[evtype]
         if fileno in bucket:
+            if g_prevent_multiple_readers:
+               raise RuntimeError("Second simultaneous %s on fileno %s "\
+                     "detected.  Unless you really know what you're doing, "\
+                     "make sure that only one greenthread can %s any "\
+                     "particular socket.  Consider using a pools.Pool. "\
+                     "If you do know what you're doing and want to disable "\
+                     "this error, call "\
+                     "eventlet.debug.hub_multiple_reader_prevention(False)" % (
+                     evtype, fileno, evtype))
             # store off the second listener in another structure
             self.secondaries[evtype].setdefault(fileno, []).append(listener)
         else:

@@ -3,6 +3,8 @@
 Many of these tests make connections to external servers, and all.py tries to skip these tests rather than failing them, so you can get some work done on a plane.
 """
 
+from eventlet import debug
+debug.hub_prevent_multiple_readers(False)
 
 def restart_hub():
     from eventlet import hubs
