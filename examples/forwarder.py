@@ -1,4 +1,6 @@
-""" This is an incredibly simple port forwarder from port 7000 to 22 on localhost.  It calls a callback function when the socket is closed, to demonstrate one way that you could start to do interesting things by
+""" This is an incredibly simple port forwarder from port 7000 to 22 on 
+localhost.  It calls a callback function when the socket is closed, to 
+demonstrate one way that you could start to do interesting things by
 starting from a simple framework like this.
 """
 

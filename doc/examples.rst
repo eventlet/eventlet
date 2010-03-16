@@ -56,9 +56,13 @@ This example requires `Feedparser <http://www.feedparser.org/>`_ to be installed
 
 .. literalinclude:: ../examples/feedscraper.py
 
+.. _forwarder_example:
+
 Port Forwarder
 -----------------------
 ``examples/forwarder.py``
+
+.. literalinclude:: ../examples/forwarder.py
 
 .. _producer_consumer_example:
 
