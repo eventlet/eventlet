@@ -3,6 +3,7 @@
 
 from setuptools import find_packages, setup
 from eventlet import __version__
+from os import path
 import sys
 
 requirements = []
@@ -22,12 +23,12 @@ setup(
     packages=find_packages(exclude=['tests']),
     install_requires=requirements,
     zip_safe=False,
-    long_description="""
-    Eventlet is a networking library written in Python. It achieves
-    high scalability by using non-blocking io while at the same time
-    retaining high programmer usability by using coroutines to make
-    the non-blocking io operations appear blocking at the source code
-    level.""",
+    long_description=open(
+        path.join(
+            path.dirname(__file__),
+            'README'
+        )
+    ).read(),
     test_suite = 'nose.collector',
     classifiers=[
     "License :: OSI Approved :: MIT License",
