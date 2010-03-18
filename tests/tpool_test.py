@@ -138,6 +138,30 @@ class TestTpool(LimitedTestCase):
         for i in prox:
             result.append(i)
         self.assertEquals(range(10), result)
+        
+    @skip_with_pyevent
+    def test_wrap_iterator2(self):
+        def foo():
+            import time
+            for x in xrange(10):
+                yield x
+                time.sleep(0.01)
+                
+        counter = [0]
+        def tick():
+            for i in xrange(100):
+                counter[0]+=1
+                eventlet.sleep(0.001)
+                
+        gt = eventlet.spawn(tick)
+        previtem = 0
+        for item in tpool.Proxy(foo()):
+            self.assert_(item >= previtem)
+        # make sure the tick happened at least a few times so that we know
+        # that our iterations in foo() were actually tpooled
+        self.assert_(counter[0] > 10)
+        gt.wait()
+
 
     @skip_with_pyevent
     def test_raising_exceptions(self):

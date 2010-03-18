@@ -45,3 +45,5 @@ Thanks To
 * the grugq, for contributing patches, suggestions, and use cases
 * Ralf Schmitt, for wsgi/webob incompatibility bug report and suggested fix
 * Benoit Chesneau, bug report on green.os and patch to fix it
+* Slant, better iterator implementation in tpool
+* Ambroff, nice pygtk hub

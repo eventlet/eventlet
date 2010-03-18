@@ -184,8 +184,6 @@ class Proxy(object):
     # the following are a buncha methods that the python interpeter
     # doesn't use getattr to retrieve and therefore have to be defined
     # explicitly
-    def __iter__(self):
-        return proxy_call(self._autowrap, self._obj.__iter__)
     def __getitem__(self, key):
         return proxy_call(self._autowrap, self._obj.__getitem__, key)    
     def __setitem__(self, key, value):
@@ -209,6 +207,13 @@ class Proxy(object):
         return len(self._obj)
     def __nonzero__(self):
         return bool(self._obj)
+    def __iter__(self):
+        if iter(self._obj) == self._obj:
+            return self
+        else:
+            return Proxy(iter(self._obj))
+    def next(self):
+        return proxy_call(self._autowrap, self._obj.next)
 
 
 
