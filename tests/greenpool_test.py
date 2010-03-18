@@ -301,6 +301,11 @@ class GreenPool(tests.LimitedTestCase):
     def test_waitall_on_nothing(self):
         p = greenpool.GreenPool()
         p.waitall()
+        
+    def test_recursive_waitall(self):
+        p = greenpool.GreenPool()
+        gt = p.spawn(p.waitall)
+        self.assertRaises(AssertionError, gt.wait)
 
             
 class GreenPile(tests.LimitedTestCase):
