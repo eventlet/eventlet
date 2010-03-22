@@ -1,9 +1,9 @@
 import collections
 import errno
+import eventlet
 from eventlet import wsgi
 from eventlet import pools
-import eventlet
-from eventlet.common import get_errno
+from eventlet.support import get_errno
 
 class WebSocketWSGI(object):
     def __init__(self, handler, origin):
