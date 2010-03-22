@@ -47,6 +47,8 @@ There's a convenience module called all.py designed to handle the impedance mism
   
 That will run all the tests, though the output will be a little weird because it will look like Nose is running about 20 tests, each of which consists of a bunch of sub-tests.  Not all test modules are present in all versions of Python, so there will be an occasional printout of "Not importing %s, it doesn't exist in this installation/version of Python".
 
+If you see "Ran 0 tests in 0.001s", it means that your Python installation lacks its own tests.  This is usually the case for Linux distributions.  One way to get the missing tests is to download a source tarball (of the same version you have installed on your system!) and copy its Lib/test directory into the correct place on your PYTHONPATH.
+
 
 Testing Eventlet Hubs
 ---------------------
