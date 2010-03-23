@@ -6,7 +6,6 @@ from code import InteractiveConsole
 import eventlet
 from eventlet import hubs
 from eventlet.support import greenlets, get_errno
-#FIXME no testcases for bckdor module
 
 try:
     sys.ps1
@@ -21,23 +20,23 @@ except AttributeError:
 class FileProxy(object):
     def __init__(self, f):
         self.f = f
-        def writeflush(*a, **kw):
-            f.write(*a, **kw)
-            f.flush()
-        self.fixups = {
-            'softspace': 0,
-            'isatty': lambda: True,
-            'flush': lambda: None,
-            'write': writeflush,
-            'readline': lambda *a: f.readline(*a).replace('\r\n', '\n'),
-        }
+
+    def isatty(self): 
+        return True
+
+    def flush(self): 
+        pass
+
+    def write(self, *a, **kw):
+        self.f.write(*a, **kw)
+        self.f.flush()
+
+    def readline(self, *a):
+        return self.f.readline(*a).replace('\r\n', '\n')
 
     def __getattr__(self, attr):
-        fixups = object.__getattribute__(self, 'fixups')
-        if attr in fixups:
-            return fixups[attr]
-        f = object.__getattribute__(self, 'f')
-        return getattr(f, attr)
+        return getattr(self.f, attr)
+
 
 # @@tavis: the `locals` args below mask the built-in function.  Should
 # be renamed.
