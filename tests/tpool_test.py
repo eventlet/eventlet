@@ -141,17 +141,18 @@ class TestTpool(LimitedTestCase):
         
     @skip_with_pyevent
     def test_wrap_iterator2(self):
+        self.reset_timeout(5)  # might take a while due to imprecise sleeping
         def foo():
             import time
-            for x in xrange(10):
+            for x in xrange(2):
                 yield x
-                time.sleep(0.01)
+                time.sleep(0.001)
                 
         counter = [0]
         def tick():
-            for i in xrange(100):
+            for i in xrange(20):
                 counter[0]+=1
-                eventlet.sleep(0.001)
+                eventlet.sleep(0.0001)
                 
         gt = eventlet.spawn(tick)
         previtem = 0

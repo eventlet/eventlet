@@ -110,6 +110,13 @@ class LimitedTestCase(unittest.TestCase):
         self.timer = eventlet.Timeout(self.TEST_TIMEOUT, 
                                       TestIsTakingTooLong(self.TEST_TIMEOUT))
 
+    def reset_timeout(self, new_timeout):
+        """Changes the timeout duration; only has effect during one test case"""
+        import eventlet
+        self.timer.cancel()
+        self.timer = eventlet.Timeout(new_timeout, 
+                                      TestIsTakingTooLong(new_timeout))
+
     def tearDown(self):
         self.timer.cancel()
         try:
