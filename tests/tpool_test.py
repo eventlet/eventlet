@@ -150,9 +150,9 @@ class TestTpool(LimitedTestCase):
                 
         counter = [0]
         def tick():
-            for i in xrange(20):
+            for i in xrange(20000):
                 counter[0]+=1
-                eventlet.sleep(0.0001)
+                eventlet.sleep()
                 
         gt = eventlet.spawn(tick)
         previtem = 0
@@ -160,7 +160,7 @@ class TestTpool(LimitedTestCase):
             self.assert_(item >= previtem)
         # make sure the tick happened at least a few times so that we know
         # that our iterations in foo() were actually tpooled
-        self.assert_(counter[0] > 10)
+        self.assert_(counter[0] > 10, counter[0])
         gt.wait()
 
 
