@@ -123,46 +123,54 @@ def original(modname):
     return _originals.get(modname)
 
 already_patched = {}
-def monkey_patch(all=True, os=False, select=False,
-                           socket=False, thread=False, time=False):
+def monkey_patch(**on):
     """Globally patches certain system modules to be greenthread-friendly.
 
     The keyword arguments afford some control over which modules are patched.
-    If *all* is True, then all modules are patched regardless of the other
-    arguments. If it's False, then the rest of the keyword arguments control
-    patching of specific subsections of the standard library.
-    Most patch the single module of the same name (os, time,
-    select).  The exceptions are socket, which also patches the ssl module if
-    present; and thread, which patches thread, threading, and Queue.
+    If no keyword arguments are supplied, all possible modules are patched.
+    If keywords are set to True, only the specified modules are patched.  E.g.,
+    ``monkey_patch(socket=True, select=True)`` patches only the select and 
+    socket modules.  Most arguments patch the single module of the same name 
+    (os, time, select).  The exceptions are socket, which also patches the ssl 
+    module if present; and thread, which patches thread, threading, and Queue.
 
     It's safe to call monkey_patch multiple times.
     """
+    accepted_args = set(('os', 'select', 'socket', 'thread', 'time'))
+    default_on = on.pop("all",None)
+    for k in on.iterkeys():
+        if k not in accepted_args:
+            raise TypeError("monkey_patch() got an unexpected "\
+                                "keyword argument %r" % k)
+    if default_on is None:
+        default_on = not (True in on.values())
+    for modname in accepted_args:
+        on.setdefault(modname, default_on)
+        
     modules_to_patch = []
-    if all or os and not already_patched.get('os'):
+    if on['os'] and not already_patched.get('os'):
         modules_to_patch += _green_os_modules()
         already_patched['os'] = True
-    if all or select and not already_patched.get('select'):
+    if on['select'] and not already_patched.get('select'):
         modules_to_patch += _green_select_modules()
         already_patched['select'] = True
-    if all or socket and not already_patched.get('socket'):
+    if on['socket'] and not already_patched.get('socket'):
         modules_to_patch += _green_socket_modules()
         already_patched['socket'] = True
-    if all or thread and not already_patched.get('thread'):
+    if on['thread'] and not already_patched.get('thread'):
         # hacks ahead
         threading = original('threading')
         import eventlet.green.threading as greenthreading
         greenthreading._patch_main_thread(threading)
         modules_to_patch += _green_thread_modules()
         already_patched['thread'] = True
-    if all or time and not already_patched.get('time'):
+    if on['time'] and not already_patched.get('time'):
         modules_to_patch += _green_time_modules()
         already_patched['time'] = True
 
     for name, mod in modules_to_patch:
         orig_mod = sys.modules.get(name)
         for attr_name in mod.__patched__:
-            #orig_attr = getattr(orig_mod, attr_name, None)
-            # @@tavis: line above wasn't used, not sure what author intended
             patched_attr = getattr(mod, attr_name, None)
             if patched_attr is not None:
                 setattr(orig_mod, attr_name, patched_attr)

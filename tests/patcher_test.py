@@ -50,23 +50,25 @@ class Patcher(LimitedTestCase):
         p = subprocess.Popen([sys.executable, 
                               os.path.join(self.tempdir, filename)],
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=new_env)
-        return p
+        output, _ = p.communicate()
+        lines = output.split("\n")
+        return output, lines
 
+
+class ImportPatched(Patcher):
     def test_patch_a_module(self):
         self.write_to_tempfile("base", base_module_contents)
         self.write_to_tempfile("patching", patching_module_contents)
         self.write_to_tempfile("importing", import_module_contents)
-        p = self.launch_subprocess('importing.py')
-        output = p.communicate()
-        lines = output[0].split("\n")
-        self.assert_(lines[0].startswith('patcher'), repr(output[0]))
-        self.assert_(lines[1].startswith('base'), repr(output[0]))
-        self.assert_(lines[2].startswith('importing'), repr(output[0]))
-        self.assert_('eventlet.green.socket' in lines[1], repr(output[0]))
-        self.assert_('eventlet.green.urllib' in lines[1], repr(output[0]))
-        self.assert_('eventlet.green.socket' in lines[2], repr(output[0]))
-        self.assert_('eventlet.green.urllib' in lines[2], repr(output[0]))
-        self.assert_('eventlet.green.httplib' not in lines[2], repr(output[0]))
+        output, lines = self.launch_subprocess('importing.py')
+        self.assert_(lines[0].startswith('patcher'), repr(output))
+        self.assert_(lines[1].startswith('base'), repr(output))
+        self.assert_(lines[2].startswith('importing'), repr(output))
+        self.assert_('eventlet.green.socket' in lines[1], repr(output))
+        self.assert_('eventlet.green.urllib' in lines[1], repr(output))
+        self.assert_('eventlet.green.socket' in lines[2], repr(output))
+        self.assert_('eventlet.green.urllib' in lines[2], repr(output))
+        self.assert_('eventlet.green.httplib' not in lines[2], repr(output))
         
     def test_import_patched_defaults(self):
         self.write_to_tempfile("base", base_module_contents)
@@ -76,15 +78,15 @@ base = patcher.import_patched('base')
 print "newmod", base, base.socket, base.urllib.socket.socket
 """
         self.write_to_tempfile("newmod", new_mod)
-        p = self.launch_subprocess('newmod.py')
-        output = p.communicate()
-        lines = output[0].split("\n")
-        self.assert_(lines[0].startswith('base'), repr(output[0]))
-        self.assert_(lines[1].startswith('newmod'), repr(output[0]))
-        self.assert_('eventlet.green.socket' in lines[1], repr(output[0]))
-        self.assert_('GreenSocket' in lines[1], repr(output[0]))
-        
-    def test_monkey_patch(self):
+        output, lines = self.launch_subprocess('newmod.py')
+        self.assert_(lines[0].startswith('base'), repr(output))
+        self.assert_(lines[1].startswith('newmod'), repr(output))
+        self.assert_('eventlet.green.socket' in lines[1], repr(output))
+        self.assert_('GreenSocket' in lines[1], repr(output))
+
+
+class MonkeyPatch(Patcher):        
+    def test_patched_modules(self):
         new_mod = """
 from eventlet import patcher
 patcher.monkey_patch()
@@ -93,11 +95,9 @@ import urllib
 print "newmod", socket.socket, urllib.socket.socket
 """
         self.write_to_tempfile("newmod", new_mod)
-        p = self.launch_subprocess('newmod.py')
-        output = p.communicate()
-        lines = output[0].split("\n")
-        self.assert_(lines[0].startswith('newmod'), repr(output[0]))
-        self.assertEqual(lines[0].count('GreenSocket'), 2, repr(output[0]))
+        output, lines = self.launch_subprocess('newmod.py')
+        self.assert_(lines[0].startswith('newmod'), repr(output))
+        self.assertEqual(lines[0].count('GreenSocket'), 2, repr(output))
         
     def test_early_patching(self):
         new_mod = """
@@ -108,11 +108,9 @@ eventlet.sleep(0.01)
 print "newmod"
 """
         self.write_to_tempfile("newmod", new_mod)
-        p = self.launch_subprocess('newmod.py')
-        output = p.communicate()
-        lines = output[0].split("\n")
-        self.assertEqual(len(lines), 2, repr(output[0]))
-        self.assert_(lines[0].startswith('newmod'), repr(output[0]))
+        output, lines = self.launch_subprocess('newmod.py')
+        self.assertEqual(len(lines), 2, repr(output))
+        self.assert_(lines[0].startswith('newmod'), repr(output))
 
     def test_late_patching(self):
         new_mod = """
@@ -124,11 +122,9 @@ eventlet.sleep(0.01)
 print "newmod"
 """
         self.write_to_tempfile("newmod", new_mod)
-        p = self.launch_subprocess('newmod.py')
-        output = p.communicate()
-        lines = output[0].split("\n")
-        self.assertEqual(len(lines), 2, repr(output[0]))
-        self.assert_(lines[0].startswith('newmod'), repr(output[0]))
+        output, lines = self.launch_subprocess('newmod.py')
+        self.assertEqual(len(lines), 2, repr(output))
+        self.assert_(lines[0].startswith('newmod'), repr(output))
         
     def test_tpool(self):
         new_mod = """
@@ -140,11 +136,75 @@ print "newmod", tpool.execute(len, "hi")
 print "newmod", tpool.execute(len, "hi2")
 """
         self.write_to_tempfile("newmod", new_mod)
-        p = self.launch_subprocess('newmod.py')
-        output = p.communicate()
-        lines = output[0].split("\n")
-        self.assertEqual(len(lines), 3, repr(output[0]))
-        self.assert_(lines[0].startswith('newmod'), repr(output[0]))
-        self.assert_('2' in lines[0], repr(output[0]))
-        self.assert_('3' in lines[1], repr(output[0]))
+        output, lines = self.launch_subprocess('newmod.py')
+        self.assertEqual(len(lines), 3, repr(output))
+        self.assert_(lines[0].startswith('newmod'), repr(output))
+        self.assert_('2' in lines[0], repr(output))
+        self.assert_('3' in lines[1], repr(output))
         
+
+    def test_typeerror(self):
+        new_mod = """
+from eventlet import patcher
+patcher.monkey_patch(finagle=True)
+"""
+        self.write_to_tempfile("newmod", new_mod)
+        output, lines = self.launch_subprocess('newmod.py')
+        self.assert_(lines[-2].startswith('TypeError'), repr(output))
+        self.assert_('finagle' in lines[-2], repr(output))
+        
+
+    def assert_boolean_logic(self, call, expected):
+        new_mod = """
+from eventlet import patcher
+%s
+print "already_patched", ",".join(sorted(patcher.already_patched.keys()))
+""" % call
+        self.write_to_tempfile("newmod", new_mod)
+        output, lines = self.launch_subprocess('newmod.py')
+        ap = 'already_patched'
+        self.assert_(lines[0].startswith(ap), repr(output))
+        patched_modules = lines[0][len(ap):].strip() 
+        self.assertEqual(patched_modules, expected,
+                         "Logic:%s\nExpected: %s != %s" %(call, expected,
+                                                          patched_modules))
+
+    def test_boolean(self):
+        self.assert_boolean_logic("patcher.monkey_patch()",
+                                         'os,select,socket,thread,time')
+
+    def test_boolean_all(self):
+        self.assert_boolean_logic("patcher.monkey_patch(all=True)",
+                                         'os,select,socket,thread,time')
+
+    def test_boolean_all_single(self):
+        self.assert_boolean_logic("patcher.monkey_patch(all=True, socket=True)",
+                                         'os,select,socket,thread,time')
+
+    def test_boolean_all_negative(self):
+        self.assert_boolean_logic("patcher.monkey_patch(all=False, "\
+                                      "socket=False, select=True)",
+                                         'select')
+
+    def test_boolean_single(self):
+        self.assert_boolean_logic("patcher.monkey_patch(socket=True)",
+                                         'socket')
+
+    def test_boolean_double(self):
+        self.assert_boolean_logic("patcher.monkey_patch(socket=True,"\
+                                      " select=True)",
+                                         'select,socket')
+
+    def test_boolean_negative(self):
+        self.assert_boolean_logic("patcher.monkey_patch(socket=False)",
+                                         'os,select,thread,time')
+
+    def test_boolean_negative2(self):
+        self.assert_boolean_logic("patcher.monkey_patch(socket=False,"\
+                                      "time=False)",
+                                         'os,select,thread')
+
+    def test_conflicting_specifications(self):
+        self.assert_boolean_logic("patcher.monkey_patch(socket=False, "\
+                                      "select=True)",
+                                         'select')
