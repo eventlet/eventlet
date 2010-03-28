@@ -9,7 +9,7 @@ from eventlet.support import greenlets as greenlet
 
 __all__ = ['GreenPool', 'GreenPile']
 
-DEBUG = False
+DEBUG = True
 
 class GreenPool(object):
     """The GreenPool class is a pool of green threads.
