@@ -121,7 +121,6 @@ class GreenSocket(object):
         
         set_nonblocking(fd)
         self.fd = fd
-        self.closed = False
         # when client calls setblocking(0) or settimeout(0) the socket must
         # act non-blocking
         self.act_non_blocking = False
@@ -130,22 +129,16 @@ class GreenSocket(object):
     def _sock(self):
         return self
 
-    @property
-    def family(self):
-        return self.fd.family
-
-    @property
-    def type(self):
-        return self.fd.type
-
-    @property
-    def proto(self):
-        return self.fd.proto
-
-    #forward unknown requests to fd
-    #i.e _io_refs and _decref_socketios in 3.x
-    def __getattr__(self, value):
-        return getattr(self.fd, value)
+    #forward unknown attibutes to fd
+    # cache the value for future use.
+    # I do not see any simple attribute which could be changed
+    # so caching everything in self is fine,
+    # If we find such attributes - only attributes having __get__ might be cahed.
+    # For now - I do not want to complicate it.
+    def __getattr__(self, name):
+        attr = getattr(self.fd, name)
+        setattr(self, name, attr)
+        return attr
 
     def accept(self):
         if self.act_non_blocking:
@@ -159,17 +152,6 @@ class GreenSocket(object):
                 return type(self)(client), addr
             trampoline(fd, read=True, timeout=self.gettimeout(),
                            timeout_exc=socket.timeout("timed out"))
-
-    def bind(self, *args, **kw):
-        fn = self.bind = self.fd.bind
-        return fn(*args, **kw)
-
-    def close(self, *args, **kw):
-        if self.closed:
-            return
-        self.closed = True
-        res = self.fd.close()
-        return res
 
     def connect(self, address):
         if self.act_non_blocking:
@@ -217,26 +199,6 @@ class GreenSocket(object):
         newsock = type(self)(sock)
         newsock.settimeout(self.gettimeout())
         return newsock
-
-    def fileno(self, *args, **kw):
-        fn = self.fileno = self.fd.fileno
-        return fn(*args, **kw)
-
-    def getpeername(self, *args, **kw):
-        fn = self.getpeername = self.fd.getpeername
-        return fn(*args, **kw)
-
-    def getsockname(self, *args, **kw):
-        fn = self.getsockname = self.fd.getsockname
-        return fn(*args, **kw)
-
-    def getsockopt(self, *args, **kw):
-        fn = self.getsockopt = self.fd.getsockopt
-        return fn(*args, **kw)
-
-    def listen(self, *args, **kw):
-        fn = self.listen = self.fd.listen
-        return fn(*args, **kw)
 
     def makefile(self, *args, **kw):
         return _fileobject(self.dup(), *args, **kw)
@@ -324,14 +286,6 @@ class GreenSocket(object):
         else:
             self.act_non_blocking = True
             self._timeout = 0.0
-
-    def setsockopt(self, *args, **kw):
-        fn = self.setsockopt = self.fd.setsockopt
-        return fn(*args, **kw)
-
-    def shutdown(self, *args, **kw):
-        fn = self.shutdown = self.fd.shutdown
-        return fn(*args, **kw)
 
     def settimeout(self, howlong):
         if howlong is None or howlong == _GLOBAL_DEFAULT_TIMEOUT:
