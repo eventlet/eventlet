@@ -38,16 +38,11 @@ class GreenSSLSocket(__ssl.SSLSocket):
         self.act_non_blocking = sock.act_non_blocking
         self._timeout = sock.gettimeout()
         super(GreenSSLSocket, self).__init__(sock.fd, *args, **kw)
-        del sock
-        
-        # the superclass initializer trashes the methods so...
-        self.send = lambda data, flags=0: GreenSSLSocket.send(self, data, flags)
-        self.sendto = lambda data, addr, flags=0: GreenSSLSocket.sendto(self, data, addr, flags)
-        self.recv = lambda buflen=1024, flags=0: GreenSSLSocket.recv(self, buflen, flags)
-        self.recvfrom = lambda addr, buflen=1024, flags=0: GreenSSLSocket.recvfrom(self, addr, buflen, flags)
-        self.recv_into = lambda buffer, nbytes=None, flags=0: GreenSSLSocket.recv_into(self, buffer, nbytes, flags)
-        self.recvfrom_into = lambda buffer, nbytes=None, flags=0: GreenSSLSocket.recvfrom_into(self, buffer, nbytes, flags)
-        
+       
+        # the superclass initializer trashes the methods so... 
+        for fn in orig_socket._delegate_methods:
+            delattr(self, fn)
+       
     def settimeout(self, timeout):
         self._timeout = timeout
         
