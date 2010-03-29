@@ -483,6 +483,31 @@ class TestGreenIo(LimitedTestCase):
 
         gt.wait()
 
+    def test_pipe_writes_large_messages(self):
+        r, w = os.pipe()
+
+        r = os.fdopen(r)
+        w = os.fdopen(w, 'w', 0)
+
+        r = greenio.GreenPipe(r)
+        w = greenio.GreenPipe(w)
+
+        large_message = "".join([1024*chr(i) for i in xrange(65)])
+        def writer():
+            w.write(large_message)
+            w.close()
+
+        gt = eventlet.spawn(writer)
+
+        for i in xrange(65):
+            buf = r.read(1024)
+            expected = 1024*chr(i) 
+            self.assertEquals(buf, expected, 
+                "expected=%r..%r, found=%r..%r iter=%d" 
+                % (expected[:4], expected[-4:], buf[:4], buf[-4:], i))
+        gt.wait()
+
+
     @skip_with_pyevent
     def test_raised_multiple_readers(self):
         debug.hub_prevent_multiple_readers(True)
