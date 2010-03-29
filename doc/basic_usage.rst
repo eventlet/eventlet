@@ -24,7 +24,7 @@ Greenthread Spawn
    
 .. function:: eventlet.spawn_n(func, *args, **kw)
    
-   The same as :func:`spawn`, but it's not possible to retrieve the return value.  This makes execution faster.  See :func:`spawn_n <eventlet.greenthread.spawn_n>` for more details.
+   The same as :func:`spawn`, but it's not possible to know how the function terminated (i.e. no return value or exceptions).  This makes execution faster.  See :func:`spawn_n <eventlet.greenthread.spawn_n>` for more details.
 
 .. function:: eventlet.spawn_after(seconds, func, *args, **kw)
    
