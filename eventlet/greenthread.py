@@ -264,6 +264,7 @@ def kill(g, *throw_args):
                 g.main(just_raise, (), {})
             except:
                 pass
-    hub.schedule_call_global(0, g.throw, *throw_args)
     if getcurrent() is not hub.greenlet:
-        sleep(0)
+        # arrange to wake the caller back up immediately
+        hub.schedule_call_global(0,getcurrent().switch)
+    g.throw(*throw_args)
