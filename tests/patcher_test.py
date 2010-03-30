@@ -4,7 +4,7 @@ import subprocess
 import sys
 import tempfile
 
-from tests import LimitedTestCase
+from tests import LimitedTestCase, main
 
 base_module_contents = """
 import socket
@@ -208,3 +208,6 @@ print "already_patched", ",".join(sorted(patcher.already_patched.keys()))
         self.assert_boolean_logic("patcher.monkey_patch(socket=False, "\
                                       "select=True)",
                                          'select')
+
+if __name__ == '__main__':
+    main()
