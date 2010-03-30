@@ -456,11 +456,8 @@ class TestGreenIo(LimitedTestCase):
         # also ensures that readline() terminates on '\n' and '\r\n'
         r, w = os.pipe()
 
-        r = os.fdopen(r)
-        w = os.fdopen(w, 'w')
-
         r = greenio.GreenPipe(r)
-        w = greenio.GreenPipe(w)
+        w = greenio.GreenPipe(w, 'w')
 
         def writer():
             eventlet.sleep(.1)
@@ -486,11 +483,8 @@ class TestGreenIo(LimitedTestCase):
     def test_pipe_writes_large_messages(self):
         r, w = os.pipe()
 
-        r = os.fdopen(r)
-        w = os.fdopen(w, 'w', 0)
-
         r = greenio.GreenPipe(r)
-        w = greenio.GreenPipe(w)
+        w = greenio.GreenPipe(w, 'w')
 
         large_message = "".join([1024*chr(i) for i in xrange(65)])
         def writer():

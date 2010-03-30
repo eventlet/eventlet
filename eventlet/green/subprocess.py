@@ -20,19 +20,15 @@ class Popen(subprocess_orig.Popen):
     # this __init__() override is to wrap the pipes for eventlet-friendly
     # non-blocking I/O, don't even bother overriding it on Windows.
     if not subprocess_orig.mswindows:
-        def __init__(self, *args, **kwds):
+        def __init__(self, args, bufsize=0, *argss, **kwds):
             # Forward the call to base-class constructor
-            subprocess_orig.Popen.__init__(self, *args, **kwds)
+            subprocess_orig.Popen.__init__(self, args, 0, *argss, **kwds)
             # Now wrap the pipes, if any. This logic is loosely borrowed from 
             # eventlet.processes.Process.run() method.
             for attr in "stdin", "stdout", "stderr":
                 pipe = getattr(self, attr)
                 if pipe is not None:
-                    greenio.set_nonblocking(pipe)
-                    wrapped_pipe = greenio.GreenPipe(pipe)
-                    # The default 'newlines' attribute is '\r\n', which aren't
-                    # sent over pipes.
-                    wrapped_pipe.newlines = '\n'
+                    wrapped_pipe = greenio.GreenPipe(pipe, pipe.mode, bufsize)
                     setattr(self, attr, wrapped_pipe)
         __init__.__doc__ = subprocess_orig.Popen.__init__.__doc__
 

@@ -229,11 +229,8 @@ def setup():
         _setup_already = True
     try:
         _rpipe, _wpipe = os.pipe()
-        _wfile = os.fdopen(_wpipe,"wb",0)
-        _rfile = os.fdopen(_rpipe,"rb",0)
-        ## Work whether or not wrap_pipe_with_coroutine_pipe was called
-        if not isinstance(_rfile, greenio.GreenPipe):
-            _rfile = greenio.GreenPipe(_rfile)
+        _wfile = greenio.GreenPipe(_wpipe, 'wb', 0)
+        _rfile = greenio.GreenPipe(_rpipe, 'rb', 0)
     except ImportError:
         # This is Windows compatibility -- use a socket instead of a pipe because
         # pipes don't really exist on Windows.

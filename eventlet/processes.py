@@ -65,14 +65,8 @@ class Process(object):
         self.popen4 = popen2.Popen4([self.command] + self.args)
         child_stdout_stderr = self.popen4.fromchild
         child_stdin = self.popen4.tochild
-        greenio.set_nonblocking(child_stdout_stderr)
-        greenio.set_nonblocking(child_stdin)
-        self.child_stdout_stderr = greenio.GreenPipe(child_stdout_stderr)
-        self.child_stdout_stderr.newlines = '\n'  # the default is
-                                        # \r\n, which aren't sent over
-                                        # pipes
-        self.child_stdin = greenio.GreenPipe(child_stdin)
-        self.child_stdin.newlines = '\n'
+        self.child_stdout_stderr = greenio.GreenPipe(child_stdout_stderr, child_stdout_stderr.mode, 0)
+        self.child_stdin = greenio.GreenPipe(child_stdin, child_stdin.mode, 0)
 
         self.sendall = self.child_stdin.write
         self.send = self.child_stdin.write

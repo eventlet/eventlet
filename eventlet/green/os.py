@@ -12,12 +12,13 @@ __patched__ = ['fdopen', 'read', 'write', 'wait', 'waitpid']
 for var in dir(os_orig):
     exec "%s = os_orig.%s" % (var, var)
 
-__original_fdopen__ = os_orig.fdopen
-def fdopen(*args, **kw):
+def fdopen(fd, *args, **kw):
     """fdopen(fd [, mode='r' [, bufsize]]) -> file_object
     
     Return an open file object connected to a file descriptor."""
-    return greenio.GreenPipe(__original_fdopen__(*args, **kw))
+    if not isinstance(fd, int):
+        raise TypeError('fd should be int, not %r' % fd)
+    return greenio.GreenPipe(fd, *args, **kw)
 
 __original_read__ = os_orig.read
 def read(fd, n):
