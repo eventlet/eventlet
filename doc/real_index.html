@@ -68,29 +68,22 @@ easy_install eventlet
 <div class="section" id="web-crawler-example">
 <h2>Web Crawler Example<a class="headerlink" href="#web-crawler-example" title="Permalink to this headline">¶</a></h2>
 <p>This is a simple web &#8220;crawler&#8221; that fetches a bunch of urls using a coroutine pool.  It has as much concurrency (i.e. pages being fetched simultaneously) as coroutines in the pool.</p>
+
 <div class="highlight-python"><div class="highlight"><pre><span class="n">urls</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;http://www.google.com/intl/en_ALL/images/logo.gif&quot;</span><span class="p">,</span>
-       <span class="s">&quot;http://wiki.secondlife.com/w/images/secondlife.jpg&quot;</span><span class="p">,</span>
-       <span class="s">&quot;http://us.i1.yimg.com/us.yimg.com/i/ww/beta/y3.gif&quot;</span><span class="p">]</span>
+     <span class="s">&quot;https://wiki.secondlife.com/w/images/secondlife.jpg&quot;</span><span class="p">,</span>
+     <span class="s">&quot;http://us.i1.yimg.com/us.yimg.com/i/ww/beta/y3.gif&quot;</span><span class="p">]</span>
 
-<span class="kn">import</span> <span class="nn">time</span>
-<span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">coros</span>
-
-<span class="c"># this imports a special version of the urllib2 module that uses non-blocking IO</span>
+<span class="kn">import</span> <span class="nn">eventlet</span>
 <span class="kn">from</span> <span class="nn">eventlet.green</span> <span class="kn">import</span> <span class="n">urllib2</span>
 
 <span class="k">def</span> <span class="nf">fetch</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
-    <span class="k">print</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s"> fetching </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">asctime</span><span class="p">(),</span> <span class="n">url</span><span class="p">)</span>
-    <span class="n">data</span> <span class="o">=</span> <span class="n">urllib2</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
-    <span class="k">print</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s"> fetched </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">asctime</span><span class="p">(),</span> <span class="n">data</span><span class="p">)</span>
 
-<span class="n">pool</span> <span class="o">=</span> <span class="n">coros</span><span class="o">.</span><span class="n">CoroutinePool</span><span class="p">(</span><span class="n">max_size</span><span class="o">=</span><span class="mf">4</span><span class="p">)</span>
-<span class="n">waiters</span> <span class="o">=</span> <span class="p">[]</span>
-<span class="k">for</span> <span class="n">url</span> <span class="ow">in</span> <span class="n">urls</span><span class="p">:</span>
-    <span class="n">waiters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pool</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">fetch</span><span class="p">,</span> <span class="n">url</span><span class="p">))</span>
+  <span class="k">return</span> <span class="n">urllib2</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 
-<span class="c"># wait for all the coroutines to come back before exiting the process</span>
-<span class="k">for</span> <span class="n">waiter</span> <span class="ow">in</span> <span class="n">waiters</span><span class="p">:</span>
-    <span class="n">waiter</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+<span class="n">pool</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">GreenPool</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">body</span> <span class="ow">in</span> <span class="n">pool</span><span class="o">.</span><span class="n">imap</span><span class="p">(</span><span class="n">fetch</span><span class="p">,</span> <span class="n">urls</span><span class="p">):</span>
+  <span class="k">print</span> <span class="s">&quot;got body&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
 </pre></div>
 
 <h3>Stats</h3>
