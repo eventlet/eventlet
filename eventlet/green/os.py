@@ -18,7 +18,10 @@ def fdopen(fd, *args, **kw):
     Return an open file object connected to a file descriptor."""
     if not isinstance(fd, int):
         raise TypeError('fd should be int, not %r' % fd)
-    return greenio.GreenPipe(fd, *args, **kw)
+    try:
+        return greenio.GreenPipe(fd, *args, **kw)
+    except IOError, e:
+        raise OSError(*e.args)
 
 __original_read__ = os_orig.read
 def read(fd, n):

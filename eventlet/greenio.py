@@ -347,7 +347,11 @@ class _SocketDuckForFd(object):
                     raise IOError(*e.args)
 
     def __del__(self):
-        os.close(self._fileno)
+        try:
+            os.close(self._fileno)
+        except:
+            # os.close may fail if __init__ didn't complete (i.e file dscriptor passed to popen was invalid
+            pass
 
     def __repr__(self):  
         return "%s:%d" % (self.__class__.__name__, self._fileno)
