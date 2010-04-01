@@ -11,11 +11,8 @@ class TestGreenPipeWithStatement(LimitedTestCase):
         # ensure using a pipe as a context actually closes it.
         r, w = os.pipe()
 
-        r = os.fdopen(r)
-        w = os.fdopen(w, 'w')
-
         r = greenio.GreenPipe(r)
-        w = greenio.GreenPipe(w)
+        w = greenio.GreenPipe(w, 'w')
 
         with r:
             pass
