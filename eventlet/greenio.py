@@ -376,7 +376,7 @@ class GreenPipe(_fileobject):
             raise TypeError('f(ile) should be int, str, unicode or file, not %r' % f)
 
         if isinstance(f, basestring):
-            f = open(f, mode, bufsize=0)
+            f = open(f, mode, 0)
  
         if isinstance(f, int):
             fileno = f

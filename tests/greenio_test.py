@@ -13,6 +13,7 @@ import eventlet
 import os
 import sys
 import array
+import tempfile, shutil
 
 def bufsized(sock, size=1):
     """ Resize both send and receive buffers on a socket.
@@ -31,7 +32,7 @@ def min_buf_size():
     test_sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 1)
     return test_sock.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
 
-class TestGreenIo(LimitedTestCase):
+class TestGreenSocket(LimitedTestCase):
     def assertWriteToClosedFileRaises(self, fd):
         if sys.version_info[0]<3:
             # 2.x socket._fileobjects are odd: writes don't check
@@ -450,6 +451,56 @@ class TestGreenIo(LimitedTestCase):
         server.close()
         client.close()
 
+    @skip_with_pyevent
+    def test_raised_multiple_readers(self):
+        debug.hub_prevent_multiple_readers(True)
+
+        def handle(sock, addr):
+            sock.recv(1)
+            sock.sendall("a")
+            raise eventlet.StopServe()
+        listener = eventlet.listen(('127.0.0.1', 0))
+        server = eventlet.spawn(eventlet.serve, 
+                                listener,
+                                handle)
+        def reader(s):
+            s.recv(1)
+
+        s = eventlet.connect(('127.0.0.1', listener.getsockname()[1]))
+        a = eventlet.spawn(reader, s)
+        eventlet.sleep(0)
+        self.assertRaises(RuntimeError, s.recv, 1)
+        s.sendall('b')
+        a.wait()
+
+        
+class TestGreenPipe(LimitedTestCase):
+    def setUp(self):
+        super(self.__class__, self).setUp()
+        self.tempdir = tempfile.mkdtemp('_green_pipe_test')
+
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
+        super(self.__class__, self).tearDown()
+
+    def test_pipe(self):
+        r,w = os.pipe()
+        rf = greenio.GreenPipe(r, 'r');
+        wf = greenio.GreenPipe(w, 'w', 0);
+        def sender(f, content):
+            for ch in content:
+                eventlet.sleep(0.0001)
+                f.write(ch)
+            f.close()
+
+        one_line = "12345\n";
+        eventlet.spawn(sender, wf, one_line*5)
+        for i in xrange(5):
+            line = rf.readline()
+            eventlet.sleep(0.01)
+            self.assertEquals(line, one_line)
+        self.assertEquals(rf.readline(), '')
+
     def test_pipe_read(self):
         # ensure that 'readline' works properly on GreenPipes when data is not
         # immediately available (fd is nonblocking, was raising EAGAIN)
@@ -501,29 +552,34 @@ class TestGreenIo(LimitedTestCase):
                 % (expected[:4], expected[-4:], buf[:4], buf[-4:], i))
         gt.wait()
 
+    def test_seek_on_buffered_pipe(self):
+        f = greenio.GreenPipe(self.tempdir+"/TestFile", 'w+', 1024)
+        self.assertEquals(f.tell(),0)
+        f.seek(0,2)
+        self.assertEquals(f.tell(),0)
+        f.write('1234567890')
+        f.seek(0,2)
+        self.assertEquals(f.tell(),10)
+        f.seek(0)
+        value = f.read(1)
+        self.assertEqual(value, '1')
+        self.assertEquals(f.tell(),1)
+        value = f.read(1)
+        self.assertEqual(value, '2')
+        self.assertEquals(f.tell(),2)
+        f.seek(0, 1)
+        self.assertEqual(f.readline(), '34567890')
+        f.seek(0)
+        self.assertEqual(f.readline(), '1234567890')
+        f.seek(0, 2)
+        self.assertEqual(f.readline(), '')
 
-    @skip_with_pyevent
-    def test_raised_multiple_readers(self):
-        debug.hub_prevent_multiple_readers(True)
+    def test_truncate(self):
+        f = greenio.GreenPipe(self.tempdir+"/TestFile", 'w+', 1024)
+        f.write('1234567890')
+        f.truncate(9)
+        self.assertEquals(f.tell(), 9)
 
-        def handle(sock, addr):
-            sock.recv(1)
-            sock.sendall("a")
-            raise eventlet.StopServe()
-        listener = eventlet.listen(('127.0.0.1', 0))
-        server = eventlet.spawn(eventlet.serve, 
-                                listener,
-                                handle)
-        def reader(s):
-            s.recv(1)
-
-        s = eventlet.connect(('127.0.0.1', listener.getsockname()[1]))
-        a = eventlet.spawn(reader, s)
-        eventlet.sleep(0)
-        self.assertRaises(RuntimeError, s.recv, 1)
-        s.sendall('b')
-        a.wait()
-        
 
 class TestGreenIoLong(LimitedTestCase):
     TEST_TIMEOUT=10  # the test here might take a while depending on the OS
