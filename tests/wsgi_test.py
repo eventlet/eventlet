@@ -5,6 +5,7 @@ import errno
 import os
 import socket
 import sys
+from nose.tools import eq_, ok_
 from tests import skipped, LimitedTestCase
 from unittest import main
 
@@ -17,6 +18,8 @@ from eventlet import processes
 from eventlet.support import get_errno
 
 from tests import find_command
+
+httplib = eventlet.import_patched('httplib')
 
 certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
 private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
@@ -68,12 +71,36 @@ def chunked_post(env, start_response):
     elif env['PATH_INFO'] == '/c':
         return [x for x in iter(lambda: env['wsgi.input'].read(1), '')]
 
+def already_handled(env, start_response):
+    start_response('200 OK', [('Content-type', 'text/plain')])
+    return wsgi.ALREADY_HANDLED
+
 class Site(object):
     def __init__(self):
         self.application = hello_world
 
     def __call__(self, env, start_response):
         return self.application(env, start_response)
+
+class IterableApp(object):
+
+    def __init__(self, send_start_response=False, return_val=wsgi.ALREADY_HANDLED):
+        self.send_start_response = send_start_response
+        self.return_val = return_val
+        self.env = {}
+
+    def __call__(self, env, start_response):
+        self.env = env
+        if self.send_start_response:
+            start_response('200 OK', [('Content-type', 'text/plain')])
+        return self.return_val
+
+class IterableSite(Site):
+
+    def __call__(self, env, start_response):
+        iter = self.application(env, start_response)
+        for i in iter:
+            yield i
 
 
 CONTENT_LENGTH = 'content-length'
@@ -128,42 +155,50 @@ def read_http(sock):
 
     return response_line, headers, body
 
-class TestHttpd(LimitedTestCase):
+class _TestBase(LimitedTestCase):
     def setUp(self):
-        super(TestHttpd, self).setUp()
+        super(_TestBase, self).setUp()
         self.logfile = StringIO()
         self.site = Site()
         self.killer = None
+        self.set_site()
         self.spawn_server()
 
     def tearDown(self):
         greenthread.kill(self.killer)
         eventlet.sleep(0)
-        super(TestHttpd, self).tearDown()
+        super(_TestBase, self).tearDown()
 
     def spawn_server(self, **kwargs):
         """Spawns a new wsgi server with the given arguments.
         Sets self.port to the port of the server, and self.killer is the greenlet
         running it.
-        
+
         Kills any previously-running server."""
         eventlet.sleep(0) # give previous server a chance to start
         if self.killer:
             greenthread.kill(self.killer)
             eventlet.sleep(0) # give killer a chance to kill
-            
-        new_kwargs = dict(max_size=128, 
+
+        new_kwargs = dict(max_size=128,
                           log=self.logfile,
                           site=self.site)
         new_kwargs.update(kwargs)
-            
+
         if 'sock' not in new_kwargs:
             new_kwargs['sock'] = eventlet.listen(('localhost', 0))
-            
+
         self.port = new_kwargs['sock'].getsockname()[1]
         self.killer = eventlet.spawn_n(
             wsgi.server,
             **new_kwargs)
+
+    def set_site(self):
+        raise NotImplementedError
+
+class TestHttpd(_TestBase):
+    def set_site(self):
+        self.site = Site()
 
     def test_001_server(self):
         sock = eventlet.connect(
@@ -798,6 +833,60 @@ class TestHttpd(LimitedTestCase):
         # should only be one chunk of zero size with two blank lines
         # (one terminates the chunk, one terminates the body)
         self.assertEqual(response, ['0', '', ''])
+
+def read_headers(sock):
+    fd = sock.makefile()
+    try:
+        response_line = fd.readline()
+    except socket.error, exc:
+        if get_errno(exc) == 10053:
+            raise ConnectionClosed
+        raise
+    if not response_line:
+        raise ConnectionClosed
+
+    header_lines = []
+    while True:
+        line = fd.readline()
+        if line == '\r\n':
+            break
+        else:
+            header_lines.append(line)
+    headers = dict()
+    for x in header_lines:
+        x = x.strip()
+        if not x:
+            continue
+        key, value = x.split(': ', 1)
+        assert key.lower() not in headers, "%s header duplicated" % key
+        headers[key.lower()] = value
+    return response_line, headers
+
+class IterableAlreadyHandledTest(_TestBase):
+
+    def set_site(self):
+        self.site = IterableSite()
+
+    def test_iterable_app_keeps_socket_open_unless_connection_close_sent(self):
+        self.site.application = IterableApp(True)
+        sock = eventlet.connect(
+            ('localhost', self.port))
+
+        fd = sock.makefile('rw')
+        fd.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+
+        fd.flush()
+        response_line, headers = read_headers(sock)
+        print headers
+        eq_(response_line, 'HTTP/1.1 200 OK\r\n')
+        ok_('connection' not in headers)
+        fd.write('GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
+        fd.flush()
+        response_line, headers, body = read_http(sock)
+        eq_(response_line, 'HTTP/1.1 200 OK\r\n')
+        eq_(headers.get('transfer-encoding'), 'chunked')
+        eq_(body, '0\r\n\r\n') # Still coming back chunked
+
         
 
 if __name__ == '__main__':

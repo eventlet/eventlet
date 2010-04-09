@@ -40,7 +40,15 @@ BAD_SOCK = set((errno.EBADF, 10053))
 BROKEN_SOCK = set((errno.EPIPE, errno.ECONNRESET))
 
 # special flag return value for apps
-ALREADY_HANDLED = object()
+class _AlreadyHandled(object):
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        raise StopIteration
+
+ALREADY_HANDLED = _AlreadyHandled()
 
 class Input(object):
     def __init__(self,
