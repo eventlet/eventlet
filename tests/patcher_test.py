@@ -171,15 +171,15 @@ print "already_patched", ",".join(sorted(patcher.already_patched.keys()))
 
     def test_boolean(self):
         self.assert_boolean_logic("patcher.monkey_patch()",
-                                         'os,select,socket,thread,time')
+                                         'os,psycopg,select,socket,thread,time')
 
     def test_boolean_all(self):
         self.assert_boolean_logic("patcher.monkey_patch(all=True)",
-                                         'os,select,socket,thread,time')
+                                         'os,psycopg,select,socket,thread,time')
 
     def test_boolean_all_single(self):
         self.assert_boolean_logic("patcher.monkey_patch(all=True, socket=True)",
-                                         'os,select,socket,thread,time')
+                                         'os,psycopg,select,socket,thread,time')
 
     def test_boolean_all_negative(self):
         self.assert_boolean_logic("patcher.monkey_patch(all=False, "\
@@ -197,12 +197,12 @@ print "already_patched", ",".join(sorted(patcher.already_patched.keys()))
 
     def test_boolean_negative(self):
         self.assert_boolean_logic("patcher.monkey_patch(socket=False)",
-                                         'os,select,thread,time')
+                                         'os,psycopg,select,thread,time')
 
     def test_boolean_negative2(self):
         self.assert_boolean_logic("patcher.monkey_patch(socket=False,"\
                                       "time=False)",
-                                         'os,select,thread')
+                                         'os,psycopg,select,thread')
 
     def test_conflicting_specifications(self):
         self.assert_boolean_logic("patcher.monkey_patch(socket=False, "\

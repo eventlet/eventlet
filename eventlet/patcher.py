@@ -136,7 +136,7 @@ def monkey_patch(**on):
 
     It's safe to call monkey_patch multiple times.
     """
-    accepted_args = set(('os', 'select', 'socket', 'thread', 'time'))
+    accepted_args = set(('os', 'select', 'socket', 'thread', 'time', 'psycopg'))
     default_on = on.pop("all",None)
     for k in on.iterkeys():
         if k not in accepted_args:
@@ -167,6 +167,13 @@ def monkey_patch(**on):
     if on['time'] and not already_patched.get('time'):
         modules_to_patch += _green_time_modules()
         already_patched['time'] = True
+    if on['psycopg'] and not already_patched.get('psycopg'):
+        try:
+            from eventlet.support import psycopg2_patcher
+            psycopg2_patcher.make_psycopg_green()
+        except ImportError:
+            pass
+        already_patched['psycopg'] = True
 
     for name, mod in modules_to_patch:
         orig_mod = sys.modules.get(name)
@@ -200,6 +207,7 @@ def _green_thread_modules():
 def _green_time_modules():
     from eventlet.green import time
     return [('time', time)]
+
 
 if __name__ == "__main__":
     import sys
