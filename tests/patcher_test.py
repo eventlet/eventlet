@@ -154,32 +154,40 @@ patcher.monkey_patch(finagle=True)
         self.assert_('finagle' in lines[-2], repr(output))
         
 
-    def assert_boolean_logic(self, call, expected):
+    def assert_boolean_logic(self, call, expected, not_expected=''):
+        expected_list = ", ".join(['"%s"' % x for x in expected.split(',') if len(x)])
+        not_expected_list = ", ".join(['"%s"' % x for x in not_expected.split(',') if len(x)])
         new_mod = """
 from eventlet import patcher
 %s
+for mod in [%s]:
+    assert patcher.is_monkey_patched(mod), mod
+for mod in [%s]:
+    assert not patcher.is_monkey_patched(mod), mod
 print "already_patched", ",".join(sorted(patcher.already_patched.keys()))
-""" % call
+""" % (call, expected_list, not_expected_list)
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod.py')
         ap = 'already_patched'
         self.assert_(lines[0].startswith(ap), repr(output))
-        patched_modules = lines[0][len(ap):].strip() 
+        patched_modules = lines[0][len(ap):].strip()
+        # psycopg might or might not be patched based on installed modules
+        patched_modules.replace("psycopg,", "")
         self.assertEqual(patched_modules, expected,
                          "Logic:%s\nExpected: %s != %s" %(call, expected,
                                                           patched_modules))
 
     def test_boolean(self):
         self.assert_boolean_logic("patcher.monkey_patch()",
-                                         'os,psycopg,select,socket,thread,time')
+                                         'os,select,socket,thread,time')
 
     def test_boolean_all(self):
         self.assert_boolean_logic("patcher.monkey_patch(all=True)",
-                                         'os,psycopg,select,socket,thread,time')
+                                         'os,select,socket,thread,time')
 
     def test_boolean_all_single(self):
         self.assert_boolean_logic("patcher.monkey_patch(all=True, socket=True)",
-                                         'os,psycopg,select,socket,thread,time')
+                                         'os,select,socket,thread,time')
 
     def test_boolean_all_negative(self):
         self.assert_boolean_logic("patcher.monkey_patch(all=False, "\
@@ -197,12 +205,12 @@ print "already_patched", ",".join(sorted(patcher.already_patched.keys()))
 
     def test_boolean_negative(self):
         self.assert_boolean_logic("patcher.monkey_patch(socket=False)",
-                                         'os,psycopg,select,thread,time')
+                                         'os,select,thread,time')
 
     def test_boolean_negative2(self):
         self.assert_boolean_logic("patcher.monkey_patch(socket=False,"\
                                       "time=False)",
-                                         'os,psycopg,select,thread')
+                                         'os,select,thread')
 
     def test_conflicting_specifications(self):
         self.assert_boolean_logic("patcher.monkey_patch(socket=False, "\

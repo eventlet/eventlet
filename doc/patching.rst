@@ -45,7 +45,7 @@ Monkeypatching the Standard Library
 The other way of greening an application is simply to monkeypatch the standard
 library.  This has the disadvantage of appearing quite magical, but the advantage of avoiding the late-binding problem.
 
-.. function:: eventlet.patcher.monkey_patch(os=None, select=None, socket=None, thread=None, time=None)
+.. function:: eventlet.patcher.monkey_patch(os=None, select=None, socket=None, thread=None, time=None, psycopg=None)
 
     This function monkeypatches the key system modules by replacing their key elements with green equivalents.  If no arguments are specified, everything is patched::
     
@@ -60,3 +60,11 @@ library.  This has the disadvantage of appearing quite magical, but the advantag
         eventlet.monkey_patch(socket=True, select=True)
          
     It is important to call :func:`~eventlet.patcher.monkey_patch` as early in the lifetime of the application as possible.  Try to do it as one of the first lines in the main module.  The reason for this is that sometimes there is a class that inherits from a class that needs to be greened -- e.g. a class that inherits from socket.socket -- and inheritance is done at import time, so therefore the monkeypatching should happen before the derived class is defined.      It's safe to call monkey_patch multiple times.
+
+    The psycopg monkeypatching relies on Daniele Varrazzo's green psycopg2 branch; see `the announcement <https://lists.secondlife.com/pipermail/eventletdev/2010-April/000800.html>`_ for more information.
+
+.. function:: eventlet.patcher.is_monkey_patched(module)
+
+   Returns whether or not the specified module is currently monkeypatched. *module* can either be the module itself or the module's name.
+
+    Based entirely off the name of the module, so if you import a module some other way than with the import keyword (including :func:`~eventlet.patcher.import_patched`), is_monkey_patched might not be correct about that particular module.

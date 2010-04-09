@@ -1,7 +1,7 @@
 import sys
 
 
-__all__ = ['inject', 'import_patched', 'monkey_patch']
+__all__ = ['inject', 'import_patched', 'monkey_patch', 'is_monkey_patched']
 
 __exclude = set(('__builtins__', '__file__', '__name__'))
 
@@ -171,9 +171,14 @@ def monkey_patch(**on):
         try:
             from eventlet.support import psycopg2_patcher
             psycopg2_patcher.make_psycopg_green()
+            already_patched['psycopg'] = True
         except ImportError:
+            # note that if we get an importerror from trying to
+            # monkeypatch psycopg, we will continually retry it
+            # whenever monkey_patch is called; this should not be a
+            # performance problem but it allows is_monkey_patched to
+            # tell us whether or not we succeeded
             pass
-        already_patched['psycopg'] = True
 
     for name, mod in modules_to_patch:
         orig_mod = sys.modules.get(name)
@@ -181,6 +186,17 @@ def monkey_patch(**on):
             patched_attr = getattr(mod, attr_name, None)
             if patched_attr is not None:
                 setattr(orig_mod, attr_name, patched_attr)
+
+def is_monkey_patched(module):
+    """Returns True if the given module is monkeypatched currently, False if
+    not.  *module* can be either the module itself or its name.
+
+    Based entirely off the name of the module, so if you import a
+    module some other way than with the import keyword (including
+    import_patched), this might not be correct about that particular
+    module."""
+    return module in already_patched or \
+           getattr(module, '__name__', None) in already_patched
 
 def _green_os_modules():
     from eventlet.green import os
