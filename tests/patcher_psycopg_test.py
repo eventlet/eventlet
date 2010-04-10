@@ -1,6 +1,9 @@
+import os
+
 from tests import patcher_test
 
 psycopg_test_file = """
+import os
 import sys
 import eventlet
 eventlet.monkey_patch()
@@ -15,9 +18,10 @@ def tick(totalseconds, persecond):
         count[0] += 1
         eventlet.sleep(1.0/persecond)
         
+dsn = os.environ['PSYCOPG_TEST_DSN']
 import psycopg2    
 def fetch(num, secs):
-    conn = psycopg2.connect()
+    conn = psycopg2.connect(dsn)
     cur = conn.cursor()
     for i in range(num):
         cur.execute("select pg_sleep(%s)", (secs,))
@@ -31,6 +35,8 @@ print "done"
 
 class PatchingPsycopg(patcher_test.Patcher):
     def test_psycopg_pached(self):
+        if 'PSYCOPG_TEST_DSN' not in os.environ:
+            os.environ['PSYCOPG_TEST_DSN'] = 'dbname=postgres'
         self.write_to_tempfile("psycopg_patcher", psycopg_test_file)
         output, lines = self.launch_subprocess('psycopg_patcher.py')
         if lines[0].startswith('Psycopg not monkeypatched'):
