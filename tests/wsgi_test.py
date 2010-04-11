@@ -14,7 +14,6 @@ from eventlet import util
 from eventlet import greenio
 from eventlet.green import socket as greensocket
 from eventlet import wsgi
-from eventlet import processes
 from eventlet.support import get_errno
 
 from tests import find_command
@@ -259,9 +258,10 @@ class TestHttpd(_TestBase):
     def test_005_run_apachebench(self):
         url = 'http://localhost:12346/'
         # ab is apachebench
-        out = processes.Process(find_command('ab'),
-                                ['-c','64','-n','1024', '-k', url])
-        print out.read()
+        from eventlet.green import subprocess
+        subprocess.call([find_command('ab'),
+                         '-c','64','-n','1024', '-k', url],
+                        stdout=subprocess.PIPE)
 
     def test_006_reject_long_urls(self):
         sock = eventlet.connect(
