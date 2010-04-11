@@ -5,7 +5,6 @@ import errno
 import os
 import socket
 import sys
-from nose.tools import eq_, ok_
 from tests import skipped, LimitedTestCase
 from unittest import main
 
@@ -878,14 +877,14 @@ class IterableAlreadyHandledTest(_TestBase):
         fd.flush()
         response_line, headers = read_headers(sock)
         print headers
-        eq_(response_line, 'HTTP/1.1 200 OK\r\n')
-        ok_('connection' not in headers)
+        self.assertEqual(response_line, 'HTTP/1.1 200 OK\r\n')
+        self.assert_('connection' not in headers)
         fd.write('GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
         fd.flush()
         response_line, headers, body = read_http(sock)
-        eq_(response_line, 'HTTP/1.1 200 OK\r\n')
-        eq_(headers.get('transfer-encoding'), 'chunked')
-        eq_(body, '0\r\n\r\n') # Still coming back chunked
+        self.assertEqual(response_line, 'HTTP/1.1 200 OK\r\n')
+        self.assertEqual(headers.get('transfer-encoding'), 'chunked')
+        self.assertEqual(body, '0\r\n\r\n') # Still coming back chunked
 
         
 
