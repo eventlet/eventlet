@@ -20,6 +20,12 @@ def inject(module_name, new_globals, *additional_modules):
     name/module pairs is used, which should cover all use cases but may be
     slower because there are inevitably redundant or unnecessary imports.
     """
+    patched_name = '__patched_module_' + module_name
+    if patched_name in sys.modules:
+        # returning already-patched module so as not to destroy existing
+        # references to patched modules
+        return sys.modules[patched_name]
+
     if not additional_modules:
         # supply some defaults
         additional_modules = (
@@ -48,7 +54,7 @@ def inject(module_name, new_globals, *additional_modules):
                     new_globals[name] = getattr(module, name)
 
         ## Keep a reference to the new module to prevent it from dying
-        sys.modules['__patched_module_' + module_name] = module
+        sys.modules[patched_name] = module
     finally:
         ## Put the original module back
         if old_module is not None:
