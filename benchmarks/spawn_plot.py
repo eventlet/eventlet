@@ -5,7 +5,6 @@
     This script will generate a number of "properties" files for the
     Hudson plot plugin
 '''
-from __future__ import with_statement
 
 import os
 import eventlet
@@ -17,8 +16,9 @@ if not os.path.exists(DATA_DIR):
     os.makedirs(DATA_DIR)
 
 def write_result(filename, best):
-    with open(os.path.join(DATA_DIR, filename), 'w') as fd:
-        fd.write('YVALUE=%s' % best)
+    fd = open(os.path.join(DATA_DIR, filename), 'w')
+    fd.write('YVALUE=%s' % best)
+    fd.close()
 
 def cleanup():
     eventlet.sleep(0.2)
