@@ -63,6 +63,7 @@ class BaseHub(object):
         self.next_timers = []
         self.lclass = FdListener
         self.debug_exceptions = True
+        self.timers_cancelled = 0
 
     def add(self, evtype, fileno, cb):
         """ Signals an intent to or write a particular file descriptor.
@@ -205,19 +206,21 @@ class BaseHub(object):
             traceback.print_exception(*exc_info)
             sys.stderr.flush()
 
-    def _add_absolute_timer(self, when, info):
-        # the 0 placeholder makes it easy to bisect_right using (now, 1)
-        self.next_timers.append((when, 0, info))
-
     def add_timer(self, timer):
         scheduled_time = self.clock() + timer.seconds
-        self._add_absolute_timer(scheduled_time, timer)
+        self.next_timers.append((scheduled_time, timer))
         return scheduled_time
 
     def timer_finished(self, timer):
         pass
 
     def timer_canceled(self, timer):
+        self.timers_cancelled += 1
+        len_timers = len(self.timers)
+        if len_timers > 1000 and len_timers/2 <= self.timers_cancelled:
+            self.timers_cancelled = 0
+            self.timers = [t for t in self.timers if not t[1].called]
+            heapq.heapify(self.timers)
         self.timer_finished(timer)
 
     def prepare_timers(self):
@@ -260,7 +263,7 @@ class BaseHub(object):
             next = t[0]
 
             exp = next[0]
-            timer = next[2]
+            timer = next[1]
 
             if when < exp:
                 break
@@ -269,7 +272,10 @@ class BaseHub(object):
 
             try:
                 try:
-                    timer()
+                    if timer.called:
+                        self.timers_cancelled -= 1
+                    else:
+                        timer()
                 except self.SYSTEM_EXCEPTIONS:
                     raise
                 except:
