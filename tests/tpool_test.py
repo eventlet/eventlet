@@ -31,6 +31,9 @@ none = None
 def noop():
     pass
 
+def raise_exception():
+    raise RuntimeError("hi")
+
 class TestTpool(LimitedTestCase):
     def setUp(self):
         super(TestTpool, self).setUp()
@@ -174,6 +177,10 @@ class TestTpool(LimitedTestCase):
         def nofunc():
             prox.never_name_a_function_like_this()
         self.assertRaises(AttributeError, nofunc)
+
+        from tests import tpool_test
+        prox = tpool.Proxy(tpool_test)
+        self.assertRaises(RuntimeError, prox.raise_exception)
 
     def assertLessThan(self, a, b):
         self.assert_(a < b, "%s is not less than %s" % (a, b))
