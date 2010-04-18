@@ -171,22 +171,28 @@ def get_database_auth():
     connect function.
     """
     import os
-    import simplejson
+    retval = {'MySQLdb':{'host': 'localhost','user': 'root','passwd': ''},
+              'psycopg2':{'user':'test'}}
+    try:
+        import simplejson
+    except ImportError:
+        return retval 
+
     if 'EVENTLET_DB_TEST_AUTH' in os.environ:
         return simplejson.loads(os.environ.get('EVENTLET_DB_TEST_AUTH'))
+
     files = [os.path.join(os.path.dirname(__file__), '.test_dbauth'),
              os.path.join(os.path.expanduser('~'), '.test_dbauth')]
     for f in files:
         try:
             auth_utf8 = simplejson.load(open(f))
-            # have to convert unicode objects to str objects because mysqldb is dum
-            # using a doubly-nested list comprehension because we know that the structure
-            # of the structure is a two-level dict
+            # Have to convert unicode objects to str objects because
+            # mysqldb is dum. Using a doubly-nested list comprehension
+            # because we know that the structure is a two-level dict.
             return dict([(str(modname), dict([(str(k), str(v))
                                        for k, v in connectargs.items()]))
                          for modname, connectargs in auth_utf8.items()])
-        except (IOError, ImportError):
+        except IOError:
             pass
-    return {'MySQLdb':{'host': 'localhost','user': 'root','passwd': ''},
-            'psycopg2':{'user':'test'}}
+    return retval
 
