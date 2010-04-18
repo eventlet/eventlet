@@ -1,6 +1,7 @@
 import os
 
 from tests import patcher_test
+from tests import get_database_auth
 
 psycopg_test_file = """
 import os
@@ -36,7 +37,13 @@ print "done"
 class PatchingPsycopg(patcher_test.Patcher):
     def test_psycopg_pached(self):
         if 'PSYCOPG_TEST_DSN' not in os.environ:
-            os.environ['PSYCOPG_TEST_DSN'] = 'dbname=postgres'
+            # construct a non-json dsn for the subprocess
+            psycopg_auth = get_database_auth()['psycopg2']
+            if isinstance(psycopg_auth,str):
+                dsn = psycopg_auth
+            else:
+                dsn = " ".join(["%s=%s" % (k,v) for k,v, in psycopg_auth.iteritems()])
+            os.environ['PSYCOPG_TEST_DSN'] = dsn
         self.write_to_tempfile("psycopg_patcher", psycopg_test_file)
         output, lines = self.launch_subprocess('psycopg_patcher.py')
         if lines[0].startswith('Psycopg not monkeypatched'):

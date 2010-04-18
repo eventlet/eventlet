@@ -155,3 +155,38 @@ def silence_warnings(func):
             warnings.simplefilter('default', DeprecationWarning)
     wrapper.__name__ = func.__name__
     return wrapper
+
+
+def get_database_auth():
+    """Retrieves a dict of connection parameters for connecting to test databases.
+
+    Authentication parameters are highly-machine specific, so
+    get_database_auth gets its information from either environment
+    variables or a config file.  The environment variable is
+    "EVENTLET_DB_TEST_AUTH" and it should contain a json object.  If
+    this environment variable is present, it's used and config files
+    are ignored.  If it's not present, it looks in the local directory
+    (tests) and in the user's home directory for a file named
+    ".test_dbauth", which contains a json map of parameters to the
+    connect function.
+    """
+    import os
+    import simplejson
+    if 'EVENTLET_DB_TEST_AUTH' in os.environ:
+        return simplejson.loads(os.environ.get('EVENTLET_DB_TEST_AUTH'))
+    files = [os.path.join(os.path.dirname(__file__), '.test_dbauth'),
+             os.path.join(os.path.expanduser('~'), '.test_dbauth')]
+    for f in files:
+        try:
+            auth_utf8 = simplejson.load(open(f))
+            # have to convert unicode objects to str objects because mysqldb is dum
+            # using a doubly-nested list comprehension because we know that the structure
+            # of the structure is a two-level dict
+            return dict([(str(modname), dict([(str(k), str(v))
+                                       for k, v in connectargs.items()]))
+                         for modname, connectargs in auth_utf8.items()])
+        except (IOError, ImportError):
+            pass
+    return {'MySQLdb':{'host': 'localhost','user': 'root','passwd': ''},
+            'psycopg2':{'user':'test'}}
+

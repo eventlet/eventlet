@@ -4,7 +4,7 @@ import os
 import traceback
 from unittest import TestCase, main
 
-from tests import skipped, skip_unless, skip_with_pyevent
+from tests import skipped, skip_unless, skip_with_pyevent, get_database_auth
 from eventlet import event
 from eventlet import db_pool
 import eventlet
@@ -472,29 +472,7 @@ class RawConnectionPool(DBConnectionPool):
             connect_timeout=connect_timeout,
             **self._auth)
 
-
-def get_auth():
-    """Looks in the local directory and in the user's home directory
-    for a file named ".test_dbauth", which contains a json map of
-    parameters to the connect function.
-    """
-    files = [os.path.join(os.path.dirname(__file__), '.test_dbauth'),
-             os.path.join(os.path.expanduser('~'), '.test_dbauth')]
-    for f in files:
-        try:
-            import simplejson
-            auth_utf8 = simplejson.load(open(f))
-            # have to convert unicode objects to str objects because mysqldb is dum
-            # using a doubly-nested list comprehension because we know that the structure
-            # of the structure is a two-level dict
-            return dict([(str(modname), dict([(str(k), str(v))
-                                       for k, v in connectargs.items()]))
-                         for modname, connectargs in auth_utf8.items()])
-        except (IOError, ImportError):
-            pass
-    return {'MySQLdb':{'host': 'localhost','user': 'root','passwd': ''},
-            'psycopg2':{'user':'test'}}
-
+get_auth = get_database_auth
 
 def mysql_requirement(_f):
     verbose = os.environ.get('eventlet_test_mysql_verbose')
