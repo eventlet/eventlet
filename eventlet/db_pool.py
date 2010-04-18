@@ -67,8 +67,7 @@ class BaseConnectionPool(Pool):
             return
 
         if ( self._expiration_timer is not None
-             and not getattr(self._expiration_timer, 'called', False)
-             and not getattr(self._expiration_timer, 'cancelled', False) ):
+             and not getattr(self._expiration_timer, 'called', False)):
             # the next timer is already scheduled
             return
 

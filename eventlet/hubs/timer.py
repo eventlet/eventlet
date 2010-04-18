@@ -17,7 +17,6 @@ class Timer(object):
         This timer will not be run unless it is scheduled in a runloop by
         calling timer.schedule() or runloop.add_timer(timer).
         """
-        self._cancelled = False
         self.seconds = seconds
         self.tpl = cb, args, kw
         self.called = False
@@ -27,12 +26,8 @@ class Timer(object):
             traceback.print_stack(file=self.traceback)
 
     @property
-    def cancelled(self):
-        return self._cancelled
-        
-    @property
     def pending(self):
-        return not (self._cancelled or self.called)
+        return not self.called
 
     def __repr__(self):
         secs = getattr(self, 'seconds', None)
@@ -62,18 +57,22 @@ class Timer(object):
                 cb(*args, **kw)
             finally:
                 get_hub().timer_finished(self)
+                try:
+                    del self.tpl
+                except AttributeError:
+                    pass
 
     def cancel(self):
         """Prevent this timer from being called. If the timer has already
-        been called, has no effect.
+        been called or cancelled, has no effect.
         """
-        self._cancelled = True
-        self.called = True
-        get_hub().timer_canceled(self)
-        try:
-            del self.tpl
-        except AttributeError:
-            pass
+        if not self.called:
+            self.called = True
+            get_hub().timer_canceled(self)
+            try:
+                del self.tpl
+            except AttributeError:
+                pass
 
     # No default ordering in 3.x. heapq uses <
     # FIXME should full set be added?
@@ -87,10 +86,10 @@ class LocalTimer(Timer):
         Timer.__init__(self, *args, **kwargs)
 
     @property
-    def cancelled(self):
+    def pending(self):
         if self.greenlet is None or self.greenlet.dead:
-            return True
-        return self._cancelled
+            return False
+        return not self.called
 
     def __call__(self, *args):
         if not self.called:
