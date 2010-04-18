@@ -13,6 +13,11 @@ cover
 nosetests*.xml
 .coverage
 *,cover
+lib*
+bin
+include
+.noseids
 
 syntax: re
 ^.ropeproject/.*$
+

@@ -20,7 +20,7 @@ setup(
     author='Linden Lab',
     author_email='eventletdev@lists.secondlife.com',
     url='http://eventlet.net',
-    packages=find_packages(exclude=['tests']),
+    packages=find_packages(exclude=['tests', 'benchmarks']),
     install_requires=requirements,
     zip_safe=False,
     long_description=open(
