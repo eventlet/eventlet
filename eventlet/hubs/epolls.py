@@ -31,7 +31,6 @@ from eventlet.hubs.poll import READ, WRITE
 # are identical in value to the poll constants
 
 class Hub(poll.Hub):
-    WAIT_MULTIPLIER = 1.0  # epoll.poll's timeout is measured in seconds
     def __init__(self, clock=time.time):
         BaseHub.__init__(self, clock)
         self.poll = epoll()
@@ -51,3 +50,6 @@ class Hub(poll.Hub):
         else:
             self.register(fileno, new=False)
         return listener
+
+    def do_poll(self, seconds):
+        return self.poll.poll(seconds)

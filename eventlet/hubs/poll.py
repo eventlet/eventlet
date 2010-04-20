@@ -13,8 +13,6 @@ READ_MASK = select.POLLIN | select.POLLPRI
 WRITE_MASK = select.POLLOUT
 
 class Hub(BaseHub):
-    WAIT_MULTIPLIER=1000.0 # poll.poll's timeout is measured in milliseconds
-
     def __init__(self, clock=time.time):
         super(Hub, self).__init__(clock)
         self.poll = select.poll()
@@ -64,6 +62,10 @@ class Hub(BaseHub):
             # already removed/invalid
             pass
 
+    def do_poll(self, seconds):
+        # poll.poll expects integral milliseconds
+        return self.poll.poll(int(seconds * 1000.0))
+
     def wait(self, seconds=None):
         readers = self.listeners[READ]
         writers = self.listeners[WRITE]
@@ -73,7 +75,7 @@ class Hub(BaseHub):
                 sleep(seconds)
             return
         try:
-            presult = self.poll.poll(int(seconds * self.WAIT_MULTIPLIER))
+            presult = self.do_poll(seconds)
         except select.error, e:
             if get_errno(e) == errno.EINTR:
                 return
