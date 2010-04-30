@@ -72,7 +72,7 @@ def waitpid(pid, options):
     if options & os_orig.WNOHANG != 0:
         return __original_waitpid__(pid, options)
     else:
-        new_options = options | os.WNOHANG
+        new_options = options | os_orig.WNOHANG
         while True:
             rpid, status = __original_waitpid__(pid, new_options)
             if status >= 0:
