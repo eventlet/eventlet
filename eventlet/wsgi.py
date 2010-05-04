@@ -483,11 +483,11 @@ class Server(BaseHTTPServer.HTTPServer):
 try:
     import ssl
     ACCEPT_EXCEPTIONS = (socket.error, ssl.SSLError)
-    ACCEPT_ERRNO = set((errno.EPIPE, errno.EBADF,
+    ACCEPT_ERRNO = set((errno.EPIPE, errno.EBADF, errno.ECONNRESET,
                         ssl.SSL_ERROR_EOF, ssl.SSL_ERROR_SSL))
 except ImportError:
     ACCEPT_EXCEPTIONS = (socket.error,)
-    ACCEPT_ERRNO = set((errno.EPIPE, errno.EBADF))
+    ACCEPT_ERRNO = set((errno.EPIPE, errno.EBADF, errno.ECONNRESET))
 
 def server(sock, site,
            log=None,
