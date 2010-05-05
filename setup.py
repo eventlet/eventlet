@@ -30,6 +30,7 @@ setup(
         )
     ).read(),
     test_suite = 'nose.collector',
+    tests_require = 'mock',
     classifiers=[
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python",
