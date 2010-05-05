@@ -312,7 +312,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         try:
             try:
                 result = self.application(self.environ, start_response)
-                if result is ALREADY_HANDLED:
+                if isinstance(result, _AlreadyHandled):
                     self.close_connection = 1
                     return
                 if not headers_sent and hasattr(result, '__len__') and \
