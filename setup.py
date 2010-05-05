@@ -30,7 +30,7 @@ setup(
         )
     ).read(),
     test_suite = 'nose.collector',
-    tests_require = 'mock',
+    tests_require = 'httplib2',
     classifiers=[
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python",

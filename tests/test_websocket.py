@@ -7,7 +7,7 @@ from StringIO import StringIO
 from unittest import TestCase
 from tests.wsgi_test import _TestBase
 import logging
-import mock
+from tests import mock
 import random
 
 httplib2 = patcher.import_patched('httplib2')
