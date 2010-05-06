@@ -103,11 +103,8 @@ class TestWebSocket(_TestBase):
         sock = eventlet.connect(
             ('localhost', self.port))
 
-        fd = sock.makefile('rw', close=True)
-        fd.write('\r\n'.join(connect) + '\r\n\r\n')
-        fd.flush()
+        sock.sendall('\r\n'.join(connect) + '\r\n\r\n')
         result = sock.recv(1024)
-        fd.close()
         ## The server responds the correct Websocket handshake
         self.assertEqual(result,
                          '\r\n'.join(['HTTP/1.1 101 Web Socket Protocol Handshake',
@@ -128,24 +125,17 @@ class TestWebSocket(_TestBase):
         sock = eventlet.connect(
             ('localhost', self.port))
 
-        fd = sock.makefile('rw', close=True)
-        fd.write('\r\n'.join(connect) + '\r\n\r\n')
-        fd.flush()
+        sock.sendall('\r\n'.join(connect) + '\r\n\r\n')
         first_resp = sock.recv(1024)
-        fd.write('\x00hello\xFF')
-        fd.flush()
+        sock.sendall('\x00hello\xFF')
         result = sock.recv(1024)
         self.assertEqual(result, '\x00hello\xff')
-        fd.write('\x00start')
-        fd.flush()
-        fd.write(' end\xff')
-        fd.flush()
+        sock.sendall('\x00start')
+        eventlet.sleep(0.001)
+        sock.sendall(' end\xff')
         result = sock.recv(1024)
         self.assertEqual(result, '\x00start end\xff')
-        fd.write('')
-        fd.flush()
-
-
+        sock.close()
 
     def test_getting_messages_from_websocket(self):
         connect = [
@@ -159,9 +149,7 @@ class TestWebSocket(_TestBase):
         sock = eventlet.connect(
             ('localhost', self.port))
 
-        fd = sock.makefile('rw', close=True)
-        fd.write('\r\n'.join(connect) + '\r\n\r\n')
-        fd.flush()
+        sock.sendall('\r\n'.join(connect) + '\r\n\r\n')
         resp = sock.recv(1024)
         headers, result = resp.split('\r\n\r\n')
         msgs = [result.strip('\x00\xff')]
