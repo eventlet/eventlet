@@ -63,7 +63,7 @@ class BaseHub(object):
         self.next_timers = []
         self.lclass = FdListener
         self.debug_exceptions = True
-        self.timers_cancelled = 0
+        self.timers_canceled = 0
 
     def add(self, evtype, fileno, cb):
         """ Signals an intent to or write a particular file descriptor.
@@ -183,18 +183,30 @@ class BaseHub(object):
                 else:
                     self.wait(0)
             else:
+                self.canceled_timers = 0
                 del self.timers[:]
                 del self.next_timers[:]
         finally:
             self.running = False
             self.stopping = False
 
-    def abort(self):
-        """Stop the runloop. If run is executing, it will exit after completing
-        the next runloop iteration.
+    def abort(self, wait=False):
+        """Stop the runloop. If run is executing, it will exit after
+        completing the next runloop iteration.
+
+        Set *wait* to True to cause abort to switch to the hub immediately and
+        wait until it's finished processing.  Waiting for the hub will only
+        work from the main greenthread; all other greenthreads will become
+        unreachable.
         """
         if self.running:
             self.stopping = True
+        if wait:
+            # schedule an immediate timer just so the hub doesn't sleep
+            self.schedule_call_global(0, lambda: None)
+            # switch to it; when done the hub will switch back to its parent,
+            # the main greenlet
+            self.switch()
 
     def squelch_generic_exception(self, exc_info):
         if self.debug_exceptions:
@@ -215,10 +227,10 @@ class BaseHub(object):
         pass
 
     def timer_canceled(self, timer):
-        self.timers_cancelled += 1
+        self.timers_canceled += 1
         len_timers = len(self.timers)
-        if len_timers > 1000 and len_timers/2 <= self.timers_cancelled:
-            self.timers_cancelled = 0
+        if len_timers > 1000 and len_timers/2 <= self.timers_canceled:
+            self.timers_canceled = 0
             self.timers = [t for t in self.timers if not t[1].called]
             heapq.heapify(self.timers)
         self.timer_finished(timer)
@@ -227,7 +239,10 @@ class BaseHub(object):
         heappush = heapq.heappush
         t = self.timers
         for item in self.next_timers:
-            heappush(t, item)
+            if item[1].called:
+                self.timers_canceled -= 1
+            else:
+                heappush(t, item)
         del self.next_timers[:]
 
     def schedule_call_local(self, seconds, cb, *args, **kw):
@@ -244,7 +259,7 @@ class BaseHub(object):
 
     def schedule_call_global(self, seconds, cb, *args, **kw):
         """Schedule a callable to be called after 'seconds' seconds have
-        elapsed. The timer will NOT be cancelled if the current greenlet has
+        elapsed. The timer will NOT be canceled if the current greenlet has
         exited before the timer fires.
             seconds: The number of seconds to wait.
             cb: The callable to call after the given time.
@@ -273,7 +288,7 @@ class BaseHub(object):
             try:
                 try:
                     if timer.called:
-                        self.timers_cancelled -= 1
+                        self.timers_canceled -= 1
                     else:
                         timer()
                 except self.SYSTEM_EXCEPTIONS:

@@ -129,6 +129,21 @@ class LimitedTestCase(unittest.TestCase):
             print debug.format_hub_timers()
             print debug.format_hub_listeners()
 
+    def assert_less_than(self, a,b,msg=None):
+        if msg:
+            self.assert_(a<b, msg)
+        else:
+            self.assert_(a<b, "%s not less than %s" % (a,b))
+
+    assertLessThan = assert_less_than
+
+    def assert_less_than_equal(self, a,b,msg=None):
+        if msg:
+            self.assert_(a<=b, msg)
+        else:
+            self.assert_(a<=b, "%s not less than or equal to %s" % (a,b))
+
+    assertLessThanEqual = assert_less_than_equal
 
 def verify_hub_empty():
     from eventlet import hubs
@@ -195,4 +210,3 @@ def get_database_auth():
         except IOError:
             pass
     return retval
-

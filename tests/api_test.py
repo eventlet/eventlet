@@ -20,9 +20,8 @@ def check_hub():
         assert not dct, "hub.%s not empty: %s" % (nm, dct)
     # Stop the runloop (unless it's twistedhub which does not support that)
     if not getattr(hub, 'uses_twisted_reactor', None):
-        hub.abort()
-        api.sleep(0)
-        ### ??? assert not hubs.get_hub().running
+        hub.abort(True)
+        assert not hub.running
 
 
 class TestApi(TestCase):

@@ -52,7 +52,7 @@ class Timeout(BaseException):
     def start(self):
         """Schedule the timeout.  This is called on construction, so
         it should not be called explicitly, unless the timer has been
-        cancelled."""
+        canceled."""
         assert not self.pending, \
                '%r is already started; to restart it, cancel it first' % self
         if self.seconds is None: # "fake" timeout (never expires)
@@ -77,7 +77,7 @@ class Timeout(BaseException):
         """If the timeout is pending, cancel it.  If not using
         Timeouts in ``with`` statements, always call cancel() in a
         ``finally`` after the block of code that is getting timed out.
-        If not cancelled, the timeout will be raised later on, in some
+        If not canceled, the timeout will be raised later on, in some
         unexpected section of the application."""
         if self.timer is not None:
             self.timer.cancel()

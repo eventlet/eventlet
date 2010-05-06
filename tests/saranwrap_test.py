@@ -193,9 +193,6 @@ class TestSaranwrap(LimitedTestCase):
         prox.err_string('goodbye')
         self.assert_server_exists(prox)
 
-    def assertLessThan(self, a, b):
-        self.assert_(a < b, "%s is not less than %s" % (a, b))
-
     @skip_on_windows
     @skip_with_pyevent
     def test_status(self):

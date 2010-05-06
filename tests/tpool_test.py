@@ -182,9 +182,6 @@ class TestTpool(LimitedTestCase):
         prox = tpool.Proxy(tpool_test)
         self.assertRaises(RuntimeError, prox.raise_exception)
 
-    def assertLessThan(self, a, b):
-        self.assert_(a < b, "%s is not less than %s" % (a, b))
-
     @skip_with_pyevent
     def test_variable_and_keyword_arguments_with_function_calls(self):
         import optparse

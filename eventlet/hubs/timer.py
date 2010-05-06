@@ -6,7 +6,6 @@ useful for debugging leaking timers, to find out where the timer was set up. """
 _g_debug = False
 
 class Timer(object):
-    #__slots__ = ['seconds', 'tpl', 'called', 'cancelled', 'scheduled_time', 'greenlet', 'traceback', 'impltimer']
     def __init__(self, seconds, cb, *args, **kw):
         """Create a timer.
             seconds: The minimum number of seconds to wait before calling
@@ -64,7 +63,7 @@ class Timer(object):
 
     def cancel(self):
         """Prevent this timer from being called. If the timer has already
-        been called or cancelled, has no effect.
+        been called or canceled, has no effect.
         """
         if not self.called:
             self.called = True

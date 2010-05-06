@@ -23,8 +23,9 @@ def sleep(seconds=0):
     occasionally; otherwise nothing else will run.
     """
     hub = hubs.get_hub()
-    assert hub.greenlet is not greenlet.getcurrent(), 'do not call blocking functions from the mainloop'
-    timer = hub.schedule_call_global(seconds, greenlet.getcurrent().switch)
+    current = greenlet.getcurrent()
+    assert hub.greenlet is not current, 'do not call blocking functions from the mainloop'
+    timer = hub.schedule_call_global(seconds, current.switch)
     try:
         hub.switch()
     finally:

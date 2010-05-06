@@ -8,45 +8,51 @@ DELAY = 0.001
 def noop():
     pass
 
-class TestTimerCleanup(LimitedTestCase):
+class TestTimerCleanup(LimitedTestCase):    
     def test_cancel_accumulated(self):
         hub = hubs.get_hub()
-        start_timers = len(hub.timers)
-        start_cancelled = hub.timers_cancelled
+        stimers = hub.get_timers_count()
+        scanceled = hub.timers_canceled
         for i in xrange(2000):
             t = hubs.get_hub().schedule_call_global(60, noop)
             eventlet.sleep()
-            self.assert_(hub.timers_cancelled < len(hub.timers))
+            self.assert_less_than_equal(hub.timers_canceled - scanceled,
+                                  hub.get_timers_count() - stimers)
             t.cancel()
-            self.assert_(hub.timers_cancelled < len(hub.timers))
-        # there should be fewer than 1000 new timers and cancelled
-        self.assert_(len(hub.timers) < start_timers + 1000)
-        self.assert_(hub.timers_cancelled < 1000)
+            self.assert_less_than_equal(hub.timers_canceled - scanceled,
+                                  hub.get_timers_count() - stimers)
+        # there should be fewer than 1000 new timers and canceled
+        self.assert_less_than_equal(hub.get_timers_count(), stimers + 1000)
+        self.assert_less_than_equal(hub.timers_canceled, 1000)
     
     def test_cancel_proportion(self):
-        # if fewer than half the pending timers are cancelled, it should
+        # if fewer than half the pending timers are canceled, it should
         # not clean them out
         hub = hubs.get_hub()
-        uncancelled_timers = []
-        start_timers = len(hub.timers)
-        start_cancelled = hub.timers_cancelled
+        uncanceled_timers = []
+        stimers = hub.get_timers_count()
+        scanceled = hub.timers_canceled
         for i in xrange(1000):
-            # 2/3rds of new timers are uncancelled
+            # 2/3rds of new timers are uncanceled
             t = hubs.get_hub().schedule_call_global(60, noop)
             t2 = hubs.get_hub().schedule_call_global(60, noop)
             t3 = hubs.get_hub().schedule_call_global(60, noop)
             eventlet.sleep()
-            self.assert_(hub.timers_cancelled < len(hub.timers))
+            self.assert_less_than_equal(hub.timers_canceled - scanceled,
+                                        hub.get_timers_count() - stimers)
             t.cancel()
-            self.assert_(hub.timers_cancelled < len(hub.timers))
-            uncancelled_timers.append(t2)
-            uncancelled_timers.append(t3)
-        # 3000 new timers, plus one new one from the sleeps
-        self.assertEqual(len(hub.timers), start_timers + 3001)
-        self.assertEqual(hub.timers_cancelled, start_cancelled + 1000)
-        for t in uncancelled_timers:
+            self.assert_less_than_equal(hub.timers_canceled - scanceled,
+                                        hub.get_timers_count() - stimers)
+            uncanceled_timers.append(t2)
+            uncanceled_timers.append(t3)
+        # 3000 new timers, plus a few extras
+        self.assert_less_than_equal(stimers + 3000,
+                                    hub.get_timers_count())
+        self.assertEqual(hub.timers_canceled, scanceled + 1000)
+        for t in uncanceled_timers:
             t.cancel()
-            self.assert_(hub.timers_cancelled < len(hub.timers))
+            self.assert_less_than_equal(hub.timers_canceled - scanceled,
+                                        hub.get_timers_count() - stimers)
         eventlet.sleep()
         
 
