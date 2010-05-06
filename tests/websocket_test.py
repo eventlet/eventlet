@@ -1,24 +1,17 @@
 import eventlet
-from eventlet import debug, hubs, Timeout, spawn_n, greenthread, wsgi, patcher
 from eventlet.green import urllib2
+from eventlet.green import httplib
 from eventlet.websocket import WebSocket
-from nose.tools import ok_, eq_, set_trace, raises
-from StringIO import StringIO
-from unittest import TestCase
+from eventlet import wsgi
+
+from tests import mock, LimitedTestCase
 from tests.wsgi_test import _TestBase
-import logging
-from tests import mock
-import random
-
-httplib2 = patcher.import_patched('httplib2')
-
 
 class WebSocketWSGI(object):
     def __init__(self, handler):
         self.handler = handler
 
     def __call__(self, environ, start_response):
-        print environ
         if not (environ.get('HTTP_CONNECTION') == 'Upgrade' and
                 environ.get('HTTP_UPGRADE') == 'WebSocket'):
             # need to check a few more things here for true compliance
@@ -46,8 +39,6 @@ class WebSocketWSGI(object):
         return wsgi.ALREADY_HANDLED
 
 # demo app
-import os
-import random
 def handle(ws):
     """  This is the websocket handler function.  Note that we
     can dispatch based on path in here, too."""
@@ -70,44 +61,35 @@ wsapp = WebSocketWSGI(handle)
 
 
 class TestWebSocket(_TestBase):
-
-#    def setUp(self):
-#        super(_TestBase, self).setUp()
-#        self.logfile = StringIO()
-#        self.site = Site()
-#        self.killer = None
-#        self.set_site()
-#        self.spawn_server()
-#        self.site.application = WebSocketWSGI(handle, 'http://localhost:%s' % self.port)
-
     TEST_TIMEOUT = 5
     
     def set_site(self):
         self.site = wsapp
-
-
-    @raises(urllib2.HTTPError)
+    
     def test_incorrect_headers(self):
-        try:
-            urllib2.urlopen("http://localhost:%s/echo" % self.port)
-        except urllib2.HTTPError, e:
-            eq_(e.code, 400)
-            raise
+        def raiser():
+            try:
+                urllib2.urlopen("http://localhost:%s/echo" % self.port)
+            except urllib2.HTTPError, e:
+                self.assertEqual(e.code, 400)
+                raise
+        self.assertRaises(urllib2.HTTPError, raiser)
 
     def test_incomplete_headers(self):
         headers = dict(kv.split(': ') for kv in [
                 "Upgrade: WebSocket",
-                #"Connection: Upgrade", Without this should trigger the HTTPServerError
+                # NOTE: intentionally no connection header
                 "Host: localhost:%s" % self.port,
                 "Origin: http://localhost:%s" % self.port,
                 "WebSocket-Protocol: ws",
                 ])
-        http = httplib2.Http()
-        resp, content = http.request("http://localhost:%s/echo" % self.port, headers=headers)
+        http = httplib.HTTPConnection('localhost', self.port)
+        http.request("GET", "/echo", headers=headers)
+        resp = http.getresponse()
 
-        self.assertEqual(resp['status'], '400')
-        self.assertEqual(resp['connection'], 'close')
-        self.assertEqual(content, '')
+        self.assertEqual(resp.status, 400)
+        self.assertEqual(resp.getheader('connection'), 'close')
+        self.assertEqual(resp.read(), '')
 
     def test_correct_upgrade_request(self):
         connect = [
@@ -191,7 +173,7 @@ class TestWebSocket(_TestBase):
         self.assertEqual(msgs[:-1], ['msg %d' % i for i in range(10)])
 
 
-class TestWebSocketObject(TestCase):
+class TestWebSocketObject(LimitedTestCase):
 
     def setUp(self):
         self.mock_socket = s = mock.Mock()
@@ -199,30 +181,28 @@ class TestWebSocketObject(TestCase):
                                   PATH_INFO='test')
 
         self.test_ws = WebSocket(s, env)
+        super(TestWebSocketObject, self).setUp()
 
     def test_recieve(self):
         ws = self.test_ws
         ws.socket.recv.return_value = '\x00hello\xFF'
-        eq_(ws.wait(), 'hello')
-        eq_(ws._buf, '')
-        eq_(len(ws._msgs), 0)
+        self.assertEqual(ws.wait(), 'hello')
+        self.assertEqual(ws._buf, '')
+        self.assertEqual(len(ws._msgs), 0)
         ws.socket.recv.return_value = ''
-        eq_(ws.wait(), None)
-        eq_(ws._buf, '')
-        eq_(len(ws._msgs), 0)
+        self.assertEqual(ws.wait(), None)
+        self.assertEqual(ws._buf, '')
+        self.assertEqual(len(ws._msgs), 0)
 
 
     def test_send_to_ws(self):
         ws = self.test_ws
         ws.send(u'hello')
-        ok_(ws.socket.sendall.called_with("\x00hello\xFF"))
+        self.assert_(ws.socket.sendall.called_with("\x00hello\xFF"))
         ws.send(10)
-        ok_(ws.socket.sendall.called_with("\x0010\xFF"))
+        self.assert_(ws.socket.sendall.called_with("\x0010\xFF"))
 
     def test_close_ws(self):
         ws = self.test_ws
         ws.close()
-        ok_(ws.socket.shutdown.called_with(True))
-
-
-
+        self.assert_(ws.socket.shutdown.called_with(True))
