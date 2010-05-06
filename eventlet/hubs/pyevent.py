@@ -84,8 +84,11 @@ class Hub(BaseHub):
                 else:
                     self.squelch_timer_exception(None, sys.exc_info())
 
-    def abort(self):
+    def abort(self, wait=True):
         self.schedule_call_global(0, self.greenlet.throw, greenlet.GreenletExit)
+        if wait:
+            assert self.greenlet is not greenlet.getcurrent(), "Can't abort with wait from inside the hub's greenlet."
+            self.switch()
 
     def _getrunning(self):
         return bool(self.greenlet)

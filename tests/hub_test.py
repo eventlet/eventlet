@@ -1,4 +1,4 @@
-from tests import LimitedTestCase, main
+from tests import LimitedTestCase, main, skip_with_pyevent
 import time
 import eventlet
 from eventlet import hubs
@@ -8,7 +8,8 @@ DELAY = 0.001
 def noop():
     pass
 
-class TestTimerCleanup(LimitedTestCase):    
+class TestTimerCleanup(LimitedTestCase):
+    @skip_with_pyevent
     def test_cancel_accumulated(self):
         hub = hubs.get_hub()
         stimers = hub.get_timers_count()
@@ -24,7 +25,8 @@ class TestTimerCleanup(LimitedTestCase):
         # there should be fewer than 1000 new timers and canceled
         self.assert_less_than_equal(hub.get_timers_count(), stimers + 1000)
         self.assert_less_than_equal(hub.timers_canceled, 1000)
-    
+
+    @skip_with_pyevent
     def test_cancel_proportion(self):
         # if fewer than half the pending timers are canceled, it should
         # not clean them out

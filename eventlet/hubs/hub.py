@@ -114,11 +114,6 @@ class BaseHub(object):
         self.secondaries[READ].pop(fileno, None)
         self.secondaries[WRITE].pop(fileno, None)
 
-    def stop(self):
-        self.abort()
-        if self.greenlet is not greenlet.getcurrent():
-            self.switch()
-
     def switch(self):
         cur = greenlet.getcurrent()
         assert cur is not self.greenlet, 'Cannot switch to MAINLOOP from MAINLOOP'
@@ -202,6 +197,7 @@ class BaseHub(object):
         if self.running:
             self.stopping = True
         if wait:
+            assert self.greenlet is not greenlet.getcurrent(), "Can't abort with wait from inside the hub's greenlet."
             # schedule an immediate timer just so the hub doesn't sleep
             self.schedule_call_global(0, lambda: None)
             # switch to it; when done the hub will switch back to its parent,
