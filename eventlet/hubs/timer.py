@@ -55,7 +55,6 @@ class Timer(object):
             try:
                 cb(*args, **kw)
             finally:
-                get_hub().timer_finished(self)
                 try:
                     del self.tpl
                 except AttributeError:
@@ -96,10 +95,7 @@ class LocalTimer(Timer):
             if self.greenlet is not None and self.greenlet.dead:
                 return
             cb, args, kw = self.tpl
-            try:
-                cb(*args, **kw)
-            finally:
-                get_hub().timer_finished(self)
+            cb(*args, **kw)
 
     def cancel(self):
         self.greenlet = None

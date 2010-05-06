@@ -219,9 +219,6 @@ class BaseHub(object):
         self.next_timers.append((scheduled_time, timer))
         return scheduled_time
 
-    def timer_finished(self, timer):
-        pass
-
     def timer_canceled(self, timer):
         self.timers_canceled += 1
         len_timers = len(self.timers)
@@ -229,7 +226,6 @@ class BaseHub(object):
             self.timers_canceled = 0
             self.timers = [t for t in self.timers if not t[1].called]
             heapq.heapify(self.timers)
-        self.timer_finished(timer)
 
     def prepare_timers(self):
         heappush = heapq.heappush
@@ -282,18 +278,15 @@ class BaseHub(object):
             heappop(t)
 
             try:
-                try:
-                    if timer.called:
-                        self.timers_canceled -= 1
-                    else:
-                        timer()
-                except self.SYSTEM_EXCEPTIONS:
-                    raise
-                except:
-                    self.squelch_timer_exception(timer, sys.exc_info())
-                    clear_sys_exc_info()
-            finally:
-                self.timer_finished(timer)
+                if timer.called:
+                    self.timers_canceled -= 1
+                else:
+                    timer()
+            except self.SYSTEM_EXCEPTIONS:
+                raise
+            except:
+                self.squelch_timer_exception(timer, sys.exc_info())
+                clear_sys_exc_info()
 
     # for debugging:
 
