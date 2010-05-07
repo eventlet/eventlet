@@ -2,6 +2,7 @@ import heapq
 import sys
 import traceback
 import warnings
+import signal
 
 from eventlet.support import greenlets as greenlet, clear_sys_exc_info
 from eventlet.hubs import timer
@@ -42,6 +43,11 @@ class DebugListener(FdListener):
     __str__ = __repr__
 
 
+def alarm_handler(signum, frame):
+    import inspect
+    raise RuntimeError("ALARMED at" + str(inspect.getframeinfo(frame)))
+
+
 class BaseHub(object):
     """ Base hub class for easing the implementation of subclasses that are
     specific to a particular underlying event architecture. """
@@ -62,8 +68,21 @@ class BaseHub(object):
         self.timers = []
         self.next_timers = []
         self.lclass = FdListener
-        self.debug_exceptions = True
         self.timers_canceled = 0
+        self.debug_exceptions = True
+        self.debug_blocking = False
+
+    def block_detect_pre(self):
+        # shortest alarm we can possibly raise is one second
+        tmp = signal.signal(signal.SIGALRM, alarm_handler)
+        if tmp != alarm_handler:
+            self._old_signal_handler = tmp
+        signal.alarm(1)
+    def block_detect_post(self):
+        if (hasattr(self, "_old_signal_handler") and
+            self._old_signal_handler):
+            signal.signal(signal.SIGALRM, self._old_signal_handler)
+        signal.alarm(0)
 
     def add(self, evtype, fileno, cb):
         """ Signals an intent to or write a particular file descriptor.
@@ -166,7 +185,11 @@ class BaseHub(object):
             self.stopping = False
             while not self.stopping:
                 self.prepare_timers()
+                if self.debug_blocking:
+                    self.block_detect_pre()
                 self.fire_timers(self.clock())
+                if self.debug_blocking:
+                    self.block_detect_post()
                 self.prepare_timers()
                 wakeup_when = self.sleep_until()
                 if wakeup_when is None:

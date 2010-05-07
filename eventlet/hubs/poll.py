@@ -1,12 +1,13 @@
 import sys
 import errno
+import signal
 from eventlet import patcher
 select = patcher.original('select')
 time = patcher.original('time')
 sleep = time.sleep
 
 from eventlet.support import get_errno, clear_sys_exc_info
-from eventlet.hubs.hub import BaseHub, READ, WRITE, noop
+from eventlet.hubs.hub import BaseHub, READ, WRITE, noop, alarm_handler
 
 EXC_MASK = select.POLLERR | select.POLLHUP
 READ_MASK = select.POLLIN | select.POLLPRI
@@ -82,6 +83,11 @@ class Hub(BaseHub):
             raise
         SYSTEM_EXCEPTIONS = self.SYSTEM_EXCEPTIONS
 
+        if self.debug_blocking:
+            # shortest alarm we can possibly set is one second
+            signal.signal(signal.SIGALRM, alarm_handler)
+            signal.alarm(1)
+
         for fileno, event in presult:
             try:
                 if event & READ_MASK:
@@ -99,3 +105,7 @@ class Hub(BaseHub):
             except:
                 self.squelch_exception(fileno, sys.exc_info())
                 clear_sys_exc_info()
+        
+        if self.debug_blocking:
+            signal.alarm(0)
+

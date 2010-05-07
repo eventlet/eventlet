@@ -142,6 +142,17 @@ class TestHubSelection(LimitedTestCase):
             hubs._threadlocal.hub = oldhub
 
 
+class TestHubBlockingDetector(LimitedTestCase):
+    TEST_TIMEOUT = 10
+    def test_block_detect(self):
+        def look_im_blocking():
+            import time
+            time.sleep(2)
+        from eventlet import debug
+        debug.hub_blocking_detection(True)
+        gt = eventlet.spawn(look_im_blocking)
+        self.assertRaises(RuntimeError, gt.wait)
+        debug.hub_blocking_detection(False)
 
 class Foo(object):
     pass
