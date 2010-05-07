@@ -1,64 +1,36 @@
+import socket
+import errno
+
 import eventlet
 from eventlet.green import urllib2
 from eventlet.green import httplib
-from eventlet.websocket import WebSocket
+from eventlet.websocket import WebSocket, WebSocketWSGI
 from eventlet import wsgi
+from eventlet import event
 
 from tests import mock, LimitedTestCase
 from tests.wsgi_test import _TestBase
 
-class WebSocketWSGI(object):
-    def __init__(self, handler):
-        self.handler = handler
-
-    def __call__(self, environ, start_response):
-        if not (environ.get('HTTP_CONNECTION') == 'Upgrade' and
-                environ.get('HTTP_UPGRADE') == 'WebSocket'):
-            # need to check a few more things here for true compliance
-            start_response('400 Bad Request', [('Connection','close')])
-            return []
-
-        sock = environ['eventlet.input'].get_socket()
-        ws = WebSocket(sock, environ)
-        handshake_reply = ("HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
-                           "Upgrade: WebSocket\r\n"
-                           "Connection: Upgrade\r\n"
-                           "WebSocket-Origin: %s\r\n"
-                           "WebSocket-Location: ws://%s%s\r\n\r\n" % (
-                                environ.get('HTTP_ORIGIN'),
-                                environ.get('HTTP_HOST'),
-                                environ.get('PATH_INFO')))
-        sock.sendall(handshake_reply)
-        try:
-            self.handler(ws)
-        except socket.error, e:
-            if get_errno(e) != errno.EPIPE:
-                raise
-        # use this undocumented feature of eventlet.wsgi to ensure that it
-        # doesn't barf on the fact that we didn't call start_response
-        return wsgi.ALREADY_HANDLED
 
 # demo app
 def handle(ws):
-    """  This is the websocket handler function.  Note that we
-    can dispatch based on path in here, too."""
     if ws.path == '/echo':
         while True:
             m = ws.wait()
             if m is None:
                 break
             ws.send(m)
-
     elif ws.path == '/range':
         for i in xrange(10):
             ws.send("msg %d" % i)
-            eventlet.sleep(0.1)
-
+            eventlet.sleep(0.01)
+    elif ws.path == '/error':
+        # some random socket error that we shouldn't normally get
+        raise socket.error(errno.ENOTSOCK)
     else:
         ws.close()
 
 wsapp = WebSocketWSGI(handle)
-
 
 class TestWebSocket(_TestBase):
     TEST_TIMEOUT = 5
@@ -135,7 +107,9 @@ class TestWebSocket(_TestBase):
         sock.sendall(' end\xff')
         result = sock.recv(1024)
         self.assertEqual(result, '\x00start end\xff')
+        sock.shutdown(socket.SHUT_RDWR)
         sock.close()
+        eventlet.sleep(0.01)
 
     def test_getting_messages_from_websocket(self):
         connect = [
@@ -159,6 +133,67 @@ class TestWebSocket(_TestBase):
             cnt -= 1
         # Last item in msgs is an empty string
         self.assertEqual(msgs[:-1], ['msg %d' % i for i in range(10)])
+
+    def test_breaking_the_connection(self):
+        error_detected = [False]
+        done_with_request = event.Event()
+        site = self.site
+        def error_detector(environ, start_response):
+            try:
+                try:
+                    return site(environ, start_response)
+                except:
+                    error_detected[0] = True
+                    raise
+            finally:
+                done_with_request.send(True)
+        self.site = error_detector
+        self.spawn_server()
+        connect = [
+                "GET /range HTTP/1.1",
+                "Upgrade: WebSocket",
+                "Connection: Upgrade",
+                "Host: localhost:%s" % self.port,
+                "Origin: http://localhost:%s" % self.port,
+                "WebSocket-Protocol: ws",
+                ]
+        sock = eventlet.connect(
+            ('localhost', self.port))
+        sock.sendall('\r\n'.join(connect) + '\r\n\r\n')
+        resp = sock.recv(1024)  # get the headers
+        sock.close()  # close while the app is running
+        done_with_request.wait()
+        self.assert_(not error_detected[0])
+
+    def test_app_socket_errors(self):
+        error_detected = [False]
+        done_with_request = event.Event()
+        site = self.site
+        def error_detector(environ, start_response):
+            try:
+                try:
+                    return site(environ, start_response)
+                except:
+                    error_detected[0] = True
+                    raise
+            finally:
+                done_with_request.send(True)
+        self.site = error_detector
+        self.spawn_server()
+        connect = [
+                "GET /error HTTP/1.1",
+                "Upgrade: WebSocket",
+                "Connection: Upgrade",
+                "Host: localhost:%s" % self.port,
+                "Origin: http://localhost:%s" % self.port,
+                "WebSocket-Protocol: ws",
+                ]
+        sock = eventlet.connect(
+            ('localhost', self.port))
+        sock.sendall('\r\n'.join(connect) + '\r\n\r\n')
+        resp = sock.recv(1024)
+        done_with_request.wait()
+        self.assert_(error_detected[0])
 
 
 class TestWebSocketObject(LimitedTestCase):
