@@ -111,8 +111,11 @@ class Input(object):
                     if self.chunk_length > self.position:
                         response.append(rfile.read(
                                 min(self.chunk_length - self.position, length)))
-                        length -= len(response[-1])
-                        self.position += len(response[-1])
+                        last_read = len(response[-1])
+                        if last_read == 0:
+                            break
+                        length -= last_read
+                        self.position += last_read
                         if self.chunk_length == self.position:
                             rfile.readline()
                     else:
