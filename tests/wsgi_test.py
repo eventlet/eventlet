@@ -11,6 +11,7 @@ from unittest import main
 from eventlet import api
 from eventlet import util
 from eventlet import greenio
+from eventlet import event
 from eventlet.green import socket as greensocket
 from eventlet import wsgi
 from eventlet.support import get_errno
@@ -832,6 +833,28 @@ class TestHttpd(_TestBase):
         # should only be one chunk of zero size with two blank lines
         # (one terminates the chunk, one terminates the body)
         self.assertEqual(response, ['0', '', ''])
+
+    def test_aborted_chunked_post(self):
+        read_content = event.Event()
+        def chunk_reader(env, start_response):
+            content = env['wsgi.input'].read(1024)
+            read_content.send(content)
+            start_response('200 OK', [('Content-Type', 'text/plain')])
+            return [content]
+        self.site.application = chunk_reader
+        expected_body = 'a bunch of stuff'
+        data = "\r\n".join(['PUT /somefile HTTP/1.0',
+                            'Transfer-Encoding: chunked',
+                            '',
+                            'def',
+                            expected_body])
+        # start PUT-ing some chunked data but close prematurely
+        sock = eventlet.connect(('127.0.0.1', self.port))
+        sock.sendall(data)
+        sock.close()
+        # the test passes if we successfully get here, and read all the data
+        # in spite of the early close
+        self.assertEqual(read_content.wait(), expected_body)
 
 def read_headers(sock):
     fd = sock.makefile()
