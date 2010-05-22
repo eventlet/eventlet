@@ -9,8 +9,22 @@ from eventlet.support import get_errno
 
 ACCEPTABLE_CLIENT_ERRORS = set((errno.ECONNRESET, errno.EPIPE))
 
+__all__ = ["WebSocketWSGI", "WebSocket"]
+
 class WebSocketWSGI(object):
-    """This is a WSGI application that serves up websocket connections.
+    """Wraps a websocket handler function in a WSGI application.
+
+    Use it like this::
+
+      @websocket.WebSocketWSGI
+      def my_handler(ws):
+          from_browser = ws.wait()
+          ws.send("from server")
+
+    The single argument to the function will be an instance of
+    :class:`WebSocket`.  To close the socket, simply return from the
+    function.  Note that the server will log the websocket request at
+    the time of closure.
     """
     def __init__(self, handler):
         self.handler = handler
@@ -29,9 +43,9 @@ class WebSocketWSGI(object):
                            "Connection: Upgrade\r\n"
                            "WebSocket-Origin: %s\r\n"
                            "WebSocket-Location: ws://%s%s\r\n\r\n" % (
-                                environ.get('HTTP_ORIGIN'),
-                                environ.get('HTTP_HOST'),
-                                environ.get('PATH_INFO')))
+                environ.get('HTTP_ORIGIN'),
+                environ.get('HTTP_HOST'),
+                environ.get('PATH_INFO')))
         sock.sendall(handshake_reply)
         try:
             self.handler(ws)
@@ -42,22 +56,24 @@ class WebSocketWSGI(object):
         # doesn't barf on the fact that we didn't call start_response
         return wsgi.ALREADY_HANDLED
 
-
 class WebSocket(object):
-    """The object representing the server side of a websocket.
+    """A websocket object that handles the details of
+    serialization/deserialization to the socket.
     
-    The primary way to interact with a WebSocket object is to call
-    :meth:`send` and :meth:`wait` in order to pass messages back and
-    forth with the client.  Also available are the following properties:
+    The primary way to interact with a :class:`WebSocket` object is to
+    call :meth:`send` and :meth:`wait` in order to pass messages back
+    and forth with the browser.  Also available are the following
+    properties:
     
     path
-        The path value of the request.  This is the same as the WSGI PATH_INFO variable.
+        The path value of the request.  This is the same as the WSGI PATH_INFO variable, but more convenient.
     protocol
         The value of the Websocket-Protocol header.
     origin
         The value of the 'Origin' header.
     environ
         The full WSGI environment for this request.
+
     """
     def __init__(self, sock, environ):
         """
@@ -75,7 +91,7 @@ class WebSocket(object):
         self._sendlock = semaphore.Semaphore()
 
     @staticmethod
-    def pack_message(message):
+    def _pack_message(message):
         """Pack the message inside ``00`` and ``FF``
 
         As per the dataframing section (5.3) for the websocket spec
@@ -87,11 +103,10 @@ class WebSocket(object):
         packed = "\x00%s\xFF" % message
         return packed
 
-    def parse_messages(self):
+    def _parse_messages(self):
         """ Parses for messages in the buffer *buf*.  It is assumed that
         the buffer contains the start character for a message, but that it
-        may contain only part of the rest of the message. NOTE: only understands
-        lengthless messages for now.
+        may contain only part of the rest of the message.
 
         Returns an array of messages, and the buffer remainder that
         didn't contain any full messages."""
@@ -109,10 +124,10 @@ class WebSocket(object):
         return msgs
     
     def send(self, message):
-        """Send a message to the client.  *message* should be
+        """Send a message to the browser.  *message* should be
         convertable to a string; unicode objects should be encodable
         as utf-8."""
-        packed = self.pack_message(message)
+        packed = self._pack_message(message)
         # if two greenthreads are trying to send at the same time
         # on the same socket, sendlock prevents interleaving and corruption
         self._sendlock.acquire()
@@ -130,7 +145,7 @@ class WebSocket(object):
             if delta == '':
                 return None
             self._buf += delta
-            msgs = self.parse_messages()
+            msgs = self._parse_messages()
             self._msgs.extend(msgs)
         return self._msgs.popleft()
 

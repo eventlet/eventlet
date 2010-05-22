@@ -73,3 +73,14 @@ Producer Consumer/Recursive Web Crawler
 This is an example implementation of the producer/consumer pattern as well as a functional recursive web crawler.
 
 .. literalinclude:: ../examples/producer_consumer.py
+
+.. _websocket_example:
+
+Websocket Server Example
+--------------------------
+``examples/websocket.py``
+
+This exercises some of the features of the websocket server
+implementation.
+
+.. literalinclude:: ../examples/websocket.py
