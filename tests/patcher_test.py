@@ -172,7 +172,7 @@ print "already_patched", ",".join(sorted(patcher.already_patched.keys()))
         self.assert_(lines[0].startswith(ap), repr(output))
         patched_modules = lines[0][len(ap):].strip()
         # psycopg might or might not be patched based on installed modules
-        patched_modules.replace("psycopg,", "")
+        patched_modules = patched_modules.replace("psycopg,", "")
         self.assertEqual(patched_modules, expected,
                          "Logic:%s\nExpected: %s != %s" %(call, expected,
                                                           patched_modules))
