@@ -231,7 +231,7 @@ def setup():
         _rpipe, _wpipe = os.pipe()
         _wfile = greenio.GreenPipe(_wpipe, 'wb', 0)
         _rfile = greenio.GreenPipe(_rpipe, 'rb', 0)
-    except ImportError:
+    except (ImportError, NotImplementedError):
         # This is Windows compatibility -- use a socket instead of a pipe because
         # pipes don't really exist on Windows.
         import socket
