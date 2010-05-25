@@ -30,7 +30,7 @@ def fetch(num, secs):
 f = eventlet.spawn(fetch, 2, 1)
 t = eventlet.spawn(tick, 2, 100)
 f.wait()
-assert count[0] > 150
+assert count[0] > 100, count[0]
 print "done"
 """
 
