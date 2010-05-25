@@ -50,5 +50,5 @@ class PatchingPsycopg(patcher_test.Patcher):
             print "Can't test psycopg2 patching; it's not installed."
             return
         # if there's anything wrong with the test program it'll have a stack trace
-        self.assert_(lines[0].startswith('done'), repr(output))
+        self.assert_(lines[0].startswith('done'), output)
 
