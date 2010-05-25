@@ -171,8 +171,8 @@ except eventlet.Timeout:
                               os.path.join(self.tempdir, filename)],
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=new_env)
         eventlet.sleep(0.4)  # wait for process to hit accept
-        p.send_signal(signal.SIGSTOP)  # suspend and resume to generate EINTR
-        p.send_signal(signal.SIGCONT)
+        os.kill(p.pid, signal.SIGSTOP) # suspend and resume to generate EINTR
+        os.kill(p.pid, signal.SIGCONT)
         output, _ = p.communicate()
         lines = [l for l in output.split("\n") if l]
         self.assert_("exited correctly" in lines[-1])
