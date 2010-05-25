@@ -68,6 +68,8 @@ def ssl_listener(address, certificate, private_key):
     Returns a socket object on which one should call ``accept()`` to
     accept a connection on the newly bound socket.
     """
+    warnings.warn("""eventlet.api.ssl_listener is deprecated.  Please use eventlet.wrap_ssl(eventlet.listen()) instead.""",
+        DeprecationWarning, stacklevel=2)
     from eventlet import util
     import socket
 

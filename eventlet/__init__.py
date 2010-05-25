@@ -31,6 +31,7 @@ try:
     listen = convenience.listen
     serve = convenience.serve
     StopServe = convenience.StopServe
+    wrap_ssl = convenience.wrap_ssl
 
     getcurrent = greenlet.greenlet.getcurrent
     

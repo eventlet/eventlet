@@ -8,8 +8,6 @@ import sys
 from tests import skipped, LimitedTestCase
 from unittest import main
 
-from eventlet import api
-from eventlet import util
 from eventlet import greenio
 from eventlet import event
 from eventlet.green import socket as greensocket
@@ -382,11 +380,14 @@ class TestHttpd(_TestBase):
         certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
         private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
 
-        server_sock = api.ssl_listener(('localhost', 0), certificate_file, private_key_file)
+        server_sock = eventlet.wrap_ssl(eventlet.listen(('localhost', 0)), 
+                                        certfile=certificate_file, 
+                                        keyfile=private_key_file,
+                                        server_side=True)
         self.spawn_server(sock=server_sock, site=wsgi_app)
     
         sock = eventlet.connect(('localhost', self.port))
-        sock = util.wrap_ssl(sock)
+        sock = eventlet.wrap_ssl(sock)
         sock.write('POST /foo HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\nContent-length:3\r\n\r\nabc')
         result = sock.read(8192)
         self.assertEquals(result[-3:], 'abc')
@@ -398,11 +399,14 @@ class TestHttpd(_TestBase):
 
         certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
         private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
-        server_sock = api.ssl_listener(('localhost', 0), certificate_file, private_key_file)
+        server_sock = eventlet.wrap_ssl(eventlet.listen(('localhost', 0)), 
+                                        certfile=certificate_file, 
+                                        keyfile=private_key_file,
+                                        server_side=True)
         self.spawn_server(sock=server_sock, site=wsgi_app)
 
         sock = eventlet.connect(('localhost', server_sock.getsockname()[1]))
-        sock = util.wrap_ssl(sock)
+        sock = eventlet.wrap_ssl(sock)
         sock.write('GET /foo HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
         result = sock.read(8192)
         self.assertEquals(result[-4:], '\r\n\r\n')
@@ -505,12 +509,14 @@ class TestHttpd(_TestBase):
         certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
         private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
 
-        sock = api.ssl_listener(('localhost', 0), certificate_file, private_key_file)
-
+        sock = eventlet.wrap_ssl(eventlet.listen(('localhost', 0)), 
+                                        certfile=certificate_file, 
+                                        keyfile=private_key_file,
+                                        server_side=True)
         server_coro = eventlet.spawn(server, sock, wsgi_app, self.logfile)
 
         client = eventlet.connect(('localhost', sock.getsockname()[1]))
-        client = util.wrap_ssl(client)
+        client = eventlet.wrap_ssl(client)
         client.write('X') # non-empty payload so that SSL handshake occurs
         greenio.shutdown_safe(client)
         client.close()
@@ -788,7 +794,10 @@ class TestHttpd(_TestBase):
             except Exception, e:
                 errored[0] = 'SSL handshake error raised exception %s.' % e
         for data in ('', 'GET /non-ssl-request HTTP/1.0\r\n\r\n'):
-            srv_sock = api.ssl_listener(('localhost', 0), certificate_file, private_key_file)
+            srv_sock = eventlet.wrap_ssl(eventlet.listen(('localhost', 0)), 
+                                        certfile=certificate_file, 
+                                        keyfile=private_key_file,
+                                        server_side=True)
             port = srv_sock.getsockname()[1]
             g = eventlet.spawn_n(server, srv_sock)
             client = eventlet.connect(('localhost', port))
