@@ -1,7 +1,7 @@
 0.9.8
 =====
 * Support for psycopg2's asynchronous mode, from Daniele Varrazzo
-* websocket module is now a core module with 100% unit test coverage thanks to Ben Ford.  See its documentation at http://eventlet.net/doc/modules/websocket.html
+* websocket module is now part of core Eventlet with 100% unit test coverage thanks to Ben Ford.  See its documentation at http://eventlet.net/doc/modules/websocket.html
 * Added wrap_ssl convenience method, meaning that we truly no longer need api or util modules.
 * Multiple-reader detection code protects against the common mistake of having multiple greenthreads read from the same socket at the same time, which can be overridden if you know what you're doing.
 * Cleaner monkey_patch API: the "all" keyword is no longer necessary.
