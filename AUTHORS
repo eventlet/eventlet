@@ -51,3 +51,4 @@ Thanks To
 * Ambroff, nice pygtk hub example
 * Michael Carter, and Marcin Bachry, nice repro of a bug and good diagnosis leading to the fix
 * David Ziegler, reporting issue #53
+* Favo Yang, twisted hub patch
