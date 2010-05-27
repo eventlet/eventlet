@@ -38,20 +38,15 @@ def make_psycopg_green():
 
     extensions.set_wait_callback(eventlet_wait_callback)
 
-def eventlet_wait_callback(conn, timeout=-1,
-        # access these objects with LOAD_FAST instead of LOAD_GLOBAL lookup
-        POLL_OK=extensions.POLL_OK,
-        POLL_READ=extensions.POLL_READ,
-        POLL_WRITE=extensions.POLL_WRITE,
-        trampoline=trampoline):
+def eventlet_wait_callback(conn, timeout=-1):
     """A wait callback useful to allow eventlet to work with Psycopg."""
     while 1:
         state = conn.poll()
-        if state == POLL_OK:
+        if state == extensions.POLL_OK:
             break
-        elif state == POLL_READ:
+        elif state == extensions.POLL_READ:
             trampoline(conn.fileno(), read=True)
-        elif state == POLL_WRITE:
+        elif state == extensions.POLL_WRITE:
             trampoline(conn.fileno(), write=True)
         else:
             raise psycopg2.OperationalError(
