@@ -1,3 +1,7 @@
+Maintainer (i.e., Who To Hassle If You Find Bugs)
+-------------------------------------------------
+Ryan Williams, rdw on Freenode, breath@alum.mit.edu
+
 Original Authors
 ----------------
 * Bob Ippolito
@@ -23,6 +27,7 @@ Contributors
 * Sergey Shepelev
 * Chuck Thier
 * Daniele Varrazzo
+* Ryan Williams
 
 Linden Lab Contributors
 -----------------------
@@ -52,3 +57,4 @@ Thanks To
 * Michael Carter, and Marcin Bachry, nice repro of a bug and good diagnosis leading to the fix
 * David Ziegler, reporting issue #53
 * Favo Yang, twisted hub patch
+* Schmir, patch that fixes readline method with chunked encoding in wsgi.py
