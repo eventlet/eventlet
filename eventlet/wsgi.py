@@ -90,39 +90,54 @@ class Input(object):
         self.position += len(read)
         return read
 
-    def _chunked_read(self, rfile, length=None):
+    def _chunked_read(self, rfile, length=None, use_readline=False):
         if self.wfile is not None:
             ## 100 Continue
             self.wfile.write(self.wfile_line)
             self.wfile = None
             self.wfile_line = None
-
-        response = []
         try:
-            if length is None:
-                if self.chunk_length > self.position:
-                    response.append(rfile.read(self.chunk_length - self.position))
-                while self.chunk_length != 0:
-                    self.chunk_length = int(rfile.readline(), 16)
-                    response.append(rfile.read(self.chunk_length))
-                    rfile.readline()
+            if length == 0:
+                return ""
+
+            if length < 0:
+                length = None
+
+            if use_readline:
+                reader = self.rfile.readline
             else:
-                while length > 0 and self.chunk_length != 0:
-                    if self.chunk_length > self.position:
-                        response.append(rfile.read(
-                                min(self.chunk_length - self.position, length)))
-                        last_read = len(response[-1])
-                        if last_read == 0:
+                reader = self.rfile.read
+
+            response = []
+            while self.chunk_length != 0:
+                maxreadlen = self.chunk_length - self.position
+                if length is not None and length < maxreadlen:
+                    maxreadlen = length
+
+                if maxreadlen > 0:
+                    data = reader(maxreadlen)
+                    if not data:
+                        self.chunk_length = 0
+                        raise IOError("unexpected end of file while parsing chunked data")
+
+                    datalen = len(data)
+                    response.append(data)
+
+                    self.position += datalen
+                    if self.chunk_length == self.position:
+                        rfile.readline()
+
+                    if length is not None:
+                        length -= datalen
+                        if length == 0:
                             break
-                        length -= last_read
-                        self.position += last_read
-                        if self.chunk_length == self.position:
-                            rfile.readline()
-                    else:
-                        self.chunk_length = int(rfile.readline(), 16)
-                        self.position = 0
-                        if not self.chunk_length:
-                            rfile.readline()
+                    if use_readline and data[-1] == "\n":
+                        break
+                else:
+                    self.chunk_length = int(rfile.readline().split(";", 1)[0], 16)
+                    self.position = 0
+                    if self.chunk_length == 0:
+                        rfile.readline()
         except greenio.SSL.ZeroReturnError:
             pass
         return ''.join(response)
@@ -133,7 +148,10 @@ class Input(object):
         return self._do_read(self.rfile.read, length)
 
     def readline(self, size=None):
-        return self._do_read(self.rfile.readline)
+        if self.chunked_input:
+            return self._chunked_read(self.rfile, size, True)
+        else:
+            return self._do_read(self.rfile.readline, size)
 
     def readlines(self, hint=None):
         return self._do_read(self.rfile.readlines, hint)
@@ -348,8 +366,9 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         finally:
             if hasattr(result, 'close'):
                 result.close()
-            if (self.environ['eventlet.input'].position
-                < self.environ.get('CONTENT_LENGTH', 0)):
+            if (self.environ['eventlet.input'].chunked_input or
+                    self.environ['eventlet.input'].position \
+                    < self.environ['eventlet.input'].content_length):
                 ## Read and discard body if there was no pending 100-continue
                 if not self.environ['eventlet.input'].wfile:
                     while self.environ['eventlet.input'].read(MINIMUM_CHUNK_SIZE):
