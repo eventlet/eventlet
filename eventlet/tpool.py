@@ -16,13 +16,14 @@
 import os
 import sys
 
-from Queue import Empty, Queue
-
 from eventlet import event
 from eventlet import greenio
 from eventlet import greenthread
 from eventlet import patcher
 threading = patcher.original('threading')
+Queue_module = patcher.original('Queue')
+Queue = Queue_module.Queue
+Empty = Queue_module.Empty
 
 __all__ = ['execute', 'Proxy', 'killall']
 
