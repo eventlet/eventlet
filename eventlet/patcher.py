@@ -126,6 +126,8 @@ def original(modname):
         finally:
             if current_mod is not None:
                 sys.modules[modname] = current_mod
+            else:
+                del sys.modules[modname]
     return _originals.get(modname)
 
 already_patched = {}
