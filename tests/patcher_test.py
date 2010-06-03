@@ -126,22 +126,6 @@ print "newmod"
         self.assertEqual(len(lines), 2, repr(output))
         self.assert_(lines[0].startswith('newmod'), repr(output))
         
-    def test_tpool(self):
-        new_mod = """
-import eventlet
-from eventlet import patcher
-patcher.monkey_patch()
-from eventlet import tpool
-print "newmod", tpool.execute(len, "hi")
-print "newmod", tpool.execute(len, "hi2")
-"""
-        self.write_to_tempfile("newmod", new_mod)
-        output, lines = self.launch_subprocess('newmod.py')
-        self.assertEqual(len(lines), 3, repr(output))
-        self.assert_(lines[0].startswith('newmod'), repr(output))
-        self.assert_('2' in lines[0], repr(output))
-        self.assert_('3' in lines[1], repr(output))
-        
 
     def test_typeerror(self):
         new_mod = """
@@ -238,6 +222,22 @@ def test_monkey_patch_threading():
 
 class Tpool(Patcher):
     TEST_TIMEOUT=3
+
+    def test_simple(self):
+        new_mod = """
+import eventlet
+from eventlet import patcher
+patcher.monkey_patch()
+from eventlet import tpool
+print "newmod", tpool.execute(len, "hi")
+print "newmod", tpool.execute(len, "hi2")
+"""
+        self.write_to_tempfile("newmod", new_mod)
+        output, lines = self.launch_subprocess('newmod.py')
+        self.assertEqual(len(lines), 3, output)
+        self.assert_(lines[0].startswith('newmod'), repr(output))
+        self.assert_('2' in lines[0], repr(output))
+        self.assert_('3' in lines[1], repr(output))
 
     def test_unpatched_thread(self):
         new_mod = """import eventlet

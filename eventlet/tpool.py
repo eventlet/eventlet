@@ -68,7 +68,10 @@ SYS_EXCS = (KeyboardInterrupt, SystemExit)
 def tworker():
     global _reqq, _rspq
     while(True):
-        msg = _reqq.get()
+        try:
+            msg = _reqq.get()
+        except AttributeError:
+            return # can't get anything off of a dud queue
         if msg is None:
             return
         (e,meth,args,kwargs) = msg
@@ -249,7 +252,7 @@ def setup():
     _reqq = Queue(maxsize=-1)
     _rspq = Queue(maxsize=-1)
     for i in range(0,_nthreads):
-        t = threading.Thread(target=tworker)
+        t = threading.Thread(target=tworker, name="tpool_thread_%s" % i)
         t.setDaemon(True)
         t.start()
         _threads.add(t)
