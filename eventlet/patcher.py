@@ -113,22 +113,49 @@ def patch_function(func, *additional_modules):
                     del sys.modules[name]
     return patched
 
-_originals = {}
-def original(modname):
-    mod = _originals.get(modname)
-    if mod is None:
-        # re-import the "pure" module and store it in the global _originals
-        # dict; be sure to restore whatever module had that name already
-        current_mod = sys.modules.pop(modname, None)
+def _original_patch_function(func, *module_names):
+    """Kind of the opposite of patch_function; wraps a function such
+    that sys.modules is populated only with the unpatched versions of
+    the specified modules.  Also a gross hack; tell your kids not to
+    import inside function bodies!"""
+    def patched(*args, **kw):
+        saved = {}
+        for name in module_names:
+            saved[name] = sys.modules.get(name, None)
+            sys.modules[name] = original(name)
         try:
-            real_mod = __import__(modname, {}, {}, modname.split('.')[:-1])
-            _originals[modname] = real_mod
+            return func(*args, **kw)
         finally:
-            if current_mod is not None:
-                sys.modules[modname] = current_mod
-            else:
-                del sys.modules[modname]
-    return _originals.get(modname)
+            for name in module_names:
+                if saved[name] is not None:
+                    sys.modules[name] = saved[name]
+                else:
+                    del sys.modules[name]
+    return patched
+
+
+def original(modname):
+    original_name = '__original_module_' + modname
+    if original_name in sys.modules:
+        return sys.modules.get(original_name)
+
+    # re-import the "pure" module and store it in the global _originals
+    # dict; be sure to restore whatever module had that name already
+    current_mod = sys.modules.pop(modname, None)
+    try:
+        real_mod = __import__(modname, {}, {}, modname.split('.')[:-1])
+        # hacky hack: Queue's constructor imports threading; therefore
+        # we wrap it with something that ensures it always gets the
+        # original threading
+        if modname == 'Queue':
+            real_mod.Queue.__init__ = _original_patch_function(real_mod.Queue.__init__, 'threading')
+        sys.modules[original_name] = real_mod
+    finally:
+        if current_mod is not None:
+            sys.modules[modname] = current_mod
+        else:
+            del sys.modules[modname]
+    return sys.modules[original_name]
 
 already_patched = {}
 def monkey_patch(**on):

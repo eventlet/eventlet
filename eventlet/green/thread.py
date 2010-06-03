@@ -1,4 +1,4 @@
-"""implements standard module 'thread' with greenlets"""
+"""Implements the standard thread module, using greenthreads."""
 __thread = __import__('thread')
 from eventlet.support import greenlets as greenlet
 from eventlet import greenthread

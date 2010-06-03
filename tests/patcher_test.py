@@ -217,5 +217,52 @@ print "already_patched", ",".join(sorted(patcher.already_patched.keys()))
                                       "select=True)",
                                          'select')
 
+
+test_monkey_patch_threading = """
+def test_monkey_patch_threading():
+    tickcount = [0]
+    def tick():
+        for i in xrange(1000):
+            tickcount[0] += 1
+            eventlet.sleep()
+
+    def do_sleep():
+        tpool.execute(time.sleep, 0.5)
+
+    eventlet.spawn(tick)
+    w1 = eventlet.spawn(do_sleep)
+    w1.wait()
+    print tickcount[0]
+    assert tickcount[0] > 900
+"""
+
+class Tpool(Patcher):
+    TEST_TIMEOUT=3
+
+    def test_unpatched_thread(self):
+        new_mod = """import eventlet
+eventlet.monkey_patch(time=False, thread=False)
+from eventlet import tpool
+import time
+"""
+        new_mod += test_monkey_patch_threading
+        new_mod += "\ntest_monkey_patch_threading()\n"
+        self.write_to_tempfile("newmod", new_mod)
+        output, lines = self.launch_subprocess('newmod.py')
+        self.assertEqual(len(lines), 2, lines)
+
+    def test_patched_thread(self):
+        new_mod = """import eventlet
+eventlet.monkey_patch(time=False, thread=True)
+from eventlet import tpool
+import time
+"""
+        new_mod += test_monkey_patch_threading
+        new_mod += "\ntest_monkey_patch_threading()\n"
+        self.write_to_tempfile("newmod", new_mod)
+        output, lines = self.launch_subprocess('newmod.py')
+        self.assertEqual(len(lines), 2, lines)
+
+
 if __name__ == '__main__':
     main()
