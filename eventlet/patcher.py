@@ -121,8 +121,9 @@ def patch_function(func, *additional_modules):
             _green_time_modules())
 
     def patched(*args, **kw):
-        saver = SysModulesSaver(additional_modules.keys())
+        saver = SysModulesSaver()
         for name, mod in additional_modules:
+            saver.save(name)
             sys.modules[name] = mod
         try:
             return func(*args, **kw)
