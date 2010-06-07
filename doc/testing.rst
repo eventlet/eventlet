@@ -23,6 +23,8 @@ That's it!  The output from running nose is the same as unittest's output, if th
 
 Many tests are skipped based on environmental factors; for example, it makes no sense to test Twisted-specific functionality when Twisted is not installed.  These are printed as S's during execution, and in the summary printed after the tests run it will tell you how many were skipped.
 
+.. note:: If running Python version 2.4, use this command instead: ``python tests/nosewrapper.py``.  There are several tests which make use of the `with` statement and therefore will cause nose grief when it tries to import them; nosewrapper.py excludes these tests so they are skipped.
+
 Doctests
 --------
 
