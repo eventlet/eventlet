@@ -4,7 +4,7 @@ import subprocess
 import sys
 import tempfile
 
-from tests import LimitedTestCase, main
+from tests import LimitedTestCase, main, skip_with_pyevent
 
 base_module_contents = """
 import socket
@@ -223,6 +223,7 @@ def test_monkey_patch_threading():
 class Tpool(Patcher):
     TEST_TIMEOUT=3
 
+    @skip_with_pyevent
     def test_simple(self):
         new_mod = """
 import eventlet
@@ -239,6 +240,7 @@ print "newmod", tpool.execute(len, "hi2")
         self.assert_('2' in lines[0], repr(output))
         self.assert_('3' in lines[1], repr(output))
 
+    @skip_with_pyevent
     def test_unpatched_thread(self):
         new_mod = """import eventlet
 eventlet.monkey_patch(time=False, thread=False)
@@ -251,6 +253,7 @@ import time
         output, lines = self.launch_subprocess('newmod.py')
         self.assertEqual(len(lines), 2, lines)
 
+    @skip_with_pyevent
     def test_patched_thread(self):
         new_mod = """import eventlet
 eventlet.monkey_patch(time=False, thread=True)
