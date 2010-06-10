@@ -2,6 +2,7 @@ import collections
 import errno
 import string
 import struct
+from socket import error as SocketError
 
 try:
     from hashlib import md5
@@ -47,6 +48,10 @@ class WebSocketWSGI(object):
         # See if they sent the new-format headers
         if 'HTTP_SEC_WEBSOCKET_KEY1' in environ:
             self.protocol_version = 76
+            if 'HTTP_SEC_WEBSOCKET_KEY2' not in environ:
+                # That's bad.
+                start_response('400 Bad Request', [('Connection','close')])
+                return []
         else:
             self.protocol_version = 75
 
@@ -84,7 +89,7 @@ class WebSocketWSGI(object):
                                "Sec-WebSocket-Location: ws://%s%s\r\n"
                                "\r\n%s"% (
                     environ.get('HTTP_ORIGIN'),
-                    environ.get('HTTP_SEC_WEBSOCKET_PROTOCOL'),
+                    environ.get('HTTP_SEC_WEBSOCKET_PROTOCOL', 'default'),
                     environ.get('HTTP_HOST'),
                     environ.get('PATH_INFO'),
                     response))
@@ -98,7 +103,7 @@ class WebSocketWSGI(object):
             if get_errno(e) not in ACCEPTABLE_CLIENT_ERRORS:
                 raise
         # Make sure we send the closing frame
-        ws._send_closing_frame()
+        ws._send_closing_frame(True)
         # use this undocumented feature of eventlet.wsgi to ensure that it
         # doesn't barf on the fact that we didn't call start_response
         return wsgi.ALREADY_HANDLED
@@ -222,10 +227,16 @@ class WebSocket(object):
             self._msgs.extend(msgs)
         return self._msgs.popleft()
 
-    def _send_closing_frame(self):
+    def _send_closing_frame(self, ignore_send_errors=False):
         """Sends the closing frame to the client, if required."""
         if self.version == 76 and not self.websocket_closed:
-            self.socket.sendall("\xff\x00")
+            try:
+                self.socket.sendall("\xff\x00")
+            except SocketError:
+                # Sometimes, like when the remote side cuts off the connection,
+                # we don't care about this.
+                if not ignore_send_errors:
+                    raise
             self.websocket_closed = True
 
     def close(self):
