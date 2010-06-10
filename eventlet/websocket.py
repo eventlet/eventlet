@@ -1,5 +1,12 @@
 import collections
 import errno
+import string
+import struct
+
+try:
+    from hashlib import md5
+except ImportError:
+    from md5 import md5
 
 import eventlet
 from eventlet import semaphore
@@ -28,6 +35,7 @@ class WebSocketWSGI(object):
     """
     def __init__(self, handler):
         self.handler = handler
+        self.protocol_version = None
 
     def __call__(self, environ, start_response):
         if not (environ.get('HTTP_CONNECTION') == 'Upgrade' and
@@ -35,17 +43,54 @@ class WebSocketWSGI(object):
             # need to check a few more things here for true compliance
             start_response('400 Bad Request', [('Connection','close')])
             return []
+    
+        # See if they sent the new-format headers
+        if 'HTTP_SEC_WEBSOCKET_KEY1' in environ:
+            self.protocol_version = 76
+        else:
+            self.protocol_version = 75
 
+        # Get the underlying socket and wrap a WebSocket class around it
         sock = environ['eventlet.input'].get_socket()
         ws = WebSocket(sock, environ)
-        handshake_reply = ("HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
-                           "Upgrade: WebSocket\r\n"
-                           "Connection: Upgrade\r\n"
-                           "WebSocket-Origin: %s\r\n"
-                           "WebSocket-Location: ws://%s%s\r\n\r\n" % (
-                environ.get('HTTP_ORIGIN'),
-                environ.get('HTTP_HOST'),
-                environ.get('PATH_INFO')))
+        
+        # If it's new-version, we need to work out our challenge response
+        if self.protocol_version == 76:
+            key1 = self._extract_number(environ['HTTP_SEC_WEBSOCKET_KEY1'])
+            key2 = self._extract_number(environ['HTTP_SEC_WEBSOCKET_KEY2'])
+            # There's no content-length header in the request, but it has 8
+            # bytes of data.
+            environ['wsgi.input'].content_length = 8
+            key3 = environ['wsgi.input'].read(8)
+            key = struct.pack(">II", key1, key2) + key3
+            response = md5(key).digest()
+        
+        # Start building the response
+        if self.protocol_version == 75:
+            handshake_reply = ("HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
+                               "Upgrade: WebSocket\r\n"
+                               "Connection: Upgrade\r\n"
+                               "WebSocket-Origin: %s\r\n"
+                               "WebSocket-Location: ws://%s%s\r\n\r\n" % (
+                    environ.get('HTTP_ORIGIN'),
+                    environ.get('HTTP_HOST'),
+                    environ.get('PATH_INFO')))
+        elif self.protocol_version == 76:
+            handshake_reply = ("HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
+                               "Upgrade: WebSocket\r\n"
+                               "Connection: Upgrade\r\n"
+                               "Sec-WebSocket-Origin: %s\r\n"
+                               "Sec-WebSocket-Protocol: %s\r\n"
+                               "Sec-WebSocket-Location: ws://%s%s\r\n"
+                               "\r\n%s"% (
+                    environ.get('HTTP_ORIGIN'),
+                    environ.get('HTTP_SEC_WEBSOCKET_PROTOCOL'),
+                    environ.get('HTTP_HOST'),
+                    environ.get('PATH_INFO'),
+                    response))
+        else:
+            raise ValueError("Unknown WebSocket protocol version.")
+        
         sock.sendall(handshake_reply)
         try:
             self.handler(ws)
@@ -55,6 +100,20 @@ class WebSocketWSGI(object):
         # use this undocumented feature of eventlet.wsgi to ensure that it
         # doesn't barf on the fact that we didn't call start_response
         return wsgi.ALREADY_HANDLED
+
+    def _extract_number(self, value):
+        """
+        Utility function which, given a string like 'g98sd  5[]221@1', will
+        return 9852211. Used to parse the Sec-WebSocket-Key headers.
+        """
+        out = ""
+        spaces = 0
+        for char in value:
+            if char in string.digits:
+                out += char
+            elif char == " ":
+                spaces += 1
+        return int(out) / spaces
 
 class WebSocket(object):
     """A websocket object that handles the details of
