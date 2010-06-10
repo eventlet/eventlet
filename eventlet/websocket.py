@@ -97,6 +97,8 @@ class WebSocketWSGI(object):
         except socket.error, e:
             if get_errno(e) not in ACCEPTABLE_CLIENT_ERRORS:
                 raise
+        # Make sure we send the closing frame
+        ws._send_closing_frame()
         # use this undocumented feature of eventlet.wsgi to ensure that it
         # doesn't barf on the fact that we didn't call start_response
         return wsgi.ALREADY_HANDLED
@@ -134,17 +136,20 @@ class WebSocket(object):
         The full WSGI environment for this request.
 
     """
-    def __init__(self, sock, environ):
+    def __init__(self, sock, environ, version=76):
         """
         :param socket: The eventlet socket
         :type socket: :class:`eventlet.greenio.GreenSocket`
         :param environ: The wsgi environment
+        :param version: The WebSocket spec version to follow (default is 76)
         """
         self.socket = sock
         self.origin = environ.get('HTTP_ORIGIN')
         self.protocol = environ.get('HTTP_WEBSOCKET_PROTOCOL')
         self.path = environ.get('PATH_INFO')
         self.environ = environ
+        self.version = version
+        self.websocket_closed = False
         self._buf = ""
         self._msgs = collections.deque()
         self._sendlock = semaphore.Semaphore()
@@ -173,12 +178,21 @@ class WebSocket(object):
         end_idx = 0
         buf = self._buf
         while buf:
-            assert ord(buf[0]) == 0, "Don't understand how to parse this type of message: %r" % buf
-            end_idx = buf.find("\xFF")
-            if end_idx == -1: #pragma NO COVER
+            frame_type = ord(buf[0])
+            if frame_type == 0:
+                # Normal message.
+                end_idx = buf.find("\xFF")
+                if end_idx == -1: #pragma NO COVER
+                    break
+                msgs.append(buf[1:end_idx].decode('utf-8', 'replace'))
+                buf = buf[end_idx+1:]
+            elif frame_type == 255:
+                # Closing handshake.
+                assert ord(buf[1]) == 0, "Unexpected closing handshake: %r" % buf
+                self.websocket_closed = True
                 break
-            msgs.append(buf[1:end_idx].decode('utf-8', 'replace'))
-            buf = buf[end_idx+1:]
+            else:
+                raise ValueError("Don't understand how to parse this type of message: %r" % buf)
         self._buf = buf
         return msgs
     
@@ -199,18 +213,25 @@ class WebSocket(object):
         """Waits for and deserializes messages. Returns a single
         message; the oldest not yet processed."""
         while not self._msgs:
-            # no parsed messages, must mean buf needs more data
+            # no parsed messages, must mean buf needs more data (or it's closed)
             delta = self.socket.recv(8096)
-            if delta == '':
+            if delta == '' or self.websocket_closed:
                 return None
             self._buf += delta
             msgs = self._parse_messages()
             self._msgs.extend(msgs)
         return self._msgs.popleft()
 
+    def _send_closing_frame(self):
+        """Sends the closing frame to the client, if required."""
+        if self.version == 76 and not self.websocket_closed:
+            self.socket.sendall("\xff\x00")
+            self.websocket_closed = True
+
     def close(self):
         """Forcibly close the websocket; generally it is preferable to
         return from the handler method."""
+        self._send_closing_frame()
         self.socket.shutdown(True)
         self.socket.close()
 
