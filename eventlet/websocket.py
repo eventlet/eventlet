@@ -52,7 +52,7 @@ class WebSocketWSGI(object):
 
         # Get the underlying socket and wrap a WebSocket class around it
         sock = environ['eventlet.input'].get_socket()
-        ws = WebSocket(sock, environ)
+        ws = WebSocket(sock, environ, self.protocol_version)
         
         # If it's new-version, we need to work out our challenge response
         if self.protocol_version == 76:
