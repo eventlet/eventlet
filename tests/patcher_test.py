@@ -218,6 +218,7 @@ def test_monkey_patch_threading():
     w1.wait()
     print tickcount[0]
     assert tickcount[0] > 900
+    tpool.killall()
 """
 
 class Tpool(ProcessBase):
@@ -232,6 +233,7 @@ patcher.monkey_patch()
 from eventlet import tpool
 print "newmod", tpool.execute(len, "hi")
 print "newmod", tpool.execute(len, "hi2")
+tpool.killall()
 """
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod.py')
