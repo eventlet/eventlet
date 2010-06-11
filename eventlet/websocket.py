@@ -6,7 +6,7 @@ from socket import error as SocketError
 
 try:
     from hashlib import md5
-except ImportError:
+except ImportError: #pragma NO COVER
     from md5 import md5
 
 import eventlet
@@ -93,8 +93,8 @@ class WebSocketWSGI(object):
                     environ.get('HTTP_HOST'),
                     environ.get('PATH_INFO'),
                     response))
-        else:
-            raise ValueError("Unknown WebSocket protocol version.")
+        else: #pragma NO COVER
+            raise ValueError("Unknown WebSocket protocol version.") 
         
         sock.sendall(handshake_reply)
         try:
@@ -218,9 +218,12 @@ class WebSocket(object):
         """Waits for and deserializes messages. Returns a single
         message; the oldest not yet processed."""
         while not self._msgs:
-            # no parsed messages, must mean buf needs more data (or it's closed)
+            # Websocket might be closed already.
+            if self.websocket_closed:
+                return None
+            # no parsed messages, must mean buf needs more data
             delta = self.socket.recv(8096)
-            if delta == '' or self.websocket_closed:
+            if delta == '':
                 return None
             self._buf += delta
             msgs = self._parse_messages()
@@ -235,7 +238,7 @@ class WebSocket(object):
             except SocketError:
                 # Sometimes, like when the remote side cuts off the connection,
                 # we don't care about this.
-                if not ignore_send_errors:
+                if not ignore_send_errors: #pragma NO COVER
                     raise
             self.websocket_closed = True
 
