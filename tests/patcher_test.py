@@ -264,7 +264,7 @@ import time
         new_mod += "\ntest_monkey_patch_threading()\n"
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod.py')
-        self.assertEqual(len(lines), 2, lines)
+        self.assertEqual(len(lines), 2, "\n".join(lines))
 
 
 if __name__ == '__main__':

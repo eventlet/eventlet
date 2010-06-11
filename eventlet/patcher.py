@@ -241,6 +241,8 @@ def monkey_patch(**on):
 
     for name, mod in modules_to_patch:
         orig_mod = sys.modules.get(name)
+        if orig_mod is None:
+            orig_mod = __import__(name)
         for attr_name in mod.__patched__:
             patched_attr = getattr(mod, attr_name, None)
             if patched_attr is not None:

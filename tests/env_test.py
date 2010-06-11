@@ -14,7 +14,8 @@ socket.getaddrinfo('localhost', 80)
             self.assertEqual(len(lines), 1, lines)
         finally:
             del os.environ['EVENTLET_TPOOL_DNS']
-    
+
+class Tpool(ProcessBase):    
     def test_tpool_size(self):
         new_mod = """from eventlet import tpool
 import eventlet
@@ -23,7 +24,7 @@ current = [0]
 highwater = [0]
 def count():
     current[0] += 1
-    time.sleep(0.01)
+    time.sleep(0.02)
     if current[0] > highwater[0]:
         highwater[0] = current[0]
     current[0] -= 1
@@ -41,6 +42,7 @@ assert highwater[0] == expected, "%s != %s" % (highwater[0], expected)"""
         finally:
             del os.environ['EVENTLET_THREADPOOL_SIZE']
 
+class Hub(ProcessBase):
     def test_eventlet_hub(self):
         new_mod = """from eventlet import hubs
 print hubs.get_hub()
