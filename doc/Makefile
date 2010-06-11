@@ -3,7 +3,7 @@
 
 # You can set these variables from the command line.
 SPHINXOPTS    =
-SPHINXBUILD   = PYTHONPATH=../:$(PYTHONPATH) sphinx-build
+SPHINXBUILD   = PYTHONPATH=../:$(PYTHONPATH) ~/p/bin/sphinx-build
 PAPER         =
 
 # Internal variables.

@@ -12,8 +12,8 @@ os = __import__('os')
 import sys
 import warnings
 
-__patched__ = ['fromfd', 'socketpair', 'gethostbyname', 'create_connection',
-               'ssl', 'socket']
+__patched__ = ['fromfd', 'socketpair', 'gethostbyname', 'getaddrinfo',
+               'create_connection', 'ssl', 'socket']
 
 try:
     __original_fromfd__ = __socket.fromfd
@@ -31,20 +31,11 @@ except AttributeError:
     pass
 
 __original_gethostbyname__ = __socket.gethostbyname
-def gethostbyname(name):
-    can_use_tpool = os.environ.get("EVENTLET_TPOOL_GETHOSTBYNAME",
-                                   '').lower() == "yes"
-    if getattr(get_hub(), 'uses_twisted_reactor', None):
-        globals()['gethostbyname'] = _gethostbyname_twisted
-    elif sys.platform.startswith('darwin') or not can_use_tpool:
-        # the thread primitives on Darwin have some bugs that make
-        # it undesirable to use tpool for hostname lookups
-        globals()['gethostbyname'] = __original_gethostbyname__
-    else:
-        globals()['gethostbyname'] = _gethostbyname_tpool
-
-    return globals()['gethostbyname'](name)
-
+# the thread primitives on Darwin have some bugs that make
+# it undesirable to use tpool for hostname lookups
+_can_use_tpool = (
+    os.environ.get("EVENTLET_TPOOL_DNS",'').lower() == "yes"
+    and not sys.platform.startswith('darwin'))
 def _gethostbyname_twisted(name):
     from twisted.internet import reactor
     from eventlet.twistedutil import block_on as _block_on
@@ -55,12 +46,25 @@ def _gethostbyname_tpool(name):
     return tpool.execute(
         __original_gethostbyname__, name)
 
-#     def getaddrinfo(*args, **kw):
-#         return tpool.execute(
-#             __socket.getaddrinfo, *args, **kw)
-#
-# XXX there're few more blocking functions in socket
-# XXX having a hub-independent way to access thread pool would be nice
+if getattr(get_hub(), 'uses_twisted_reactor', None):
+    gethostbyname = _gethostbyname_twisted
+elif _can_use_tpool:
+    gethostbyname = _gethostbyname_tpool
+else:
+    gethostbyname = __original_gethostbyname__
+
+
+__original_getaddrinfo__ = __socket.getaddrinfo
+def _getaddrinfo_tpool(*args, **kw):
+    from eventlet import tpool
+    return tpool.execute(
+        __original_getaddrinfo__, *args, **kw)
+
+if _can_use_tpool:
+    getaddrinfo = _getaddrinfo_tpool
+else:
+    getaddrinfo = __original_getaddrinfo__
+
 
 def create_connection(address, timeout=_GLOBAL_DEFAULT_TIMEOUT):
     """Connect to *address* and return the socket object.

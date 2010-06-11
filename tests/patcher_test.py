@@ -27,7 +27,7 @@ import socket
 print "importing", patching, socket, patching.socket, patching.urllib
 """
 
-class Patcher(LimitedTestCase):
+class ProcessBase(LimitedTestCase):
     TEST_TIMEOUT=3 # starting processes is time-consuming
     def setUp(self):
         self._saved_syspath = sys.path
@@ -55,7 +55,7 @@ class Patcher(LimitedTestCase):
         return output, lines
 
 
-class ImportPatched(Patcher):
+class ImportPatched(ProcessBase):
     def test_patch_a_module(self):
         self.write_to_tempfile("base", base_module_contents)
         self.write_to_tempfile("patching", patching_module_contents)
@@ -85,7 +85,7 @@ print "newmod", base, base.socket, base.urllib.socket.socket
         self.assert_('GreenSocket' in lines[1], repr(output))
 
 
-class MonkeyPatch(Patcher):        
+class MonkeyPatch(ProcessBase):        
     def test_patched_modules(self):
         new_mod = """
 from eventlet import patcher
@@ -220,7 +220,7 @@ def test_monkey_patch_threading():
     assert tickcount[0] > 900
 """
 
-class Tpool(Patcher):
+class Tpool(ProcessBase):
     TEST_TIMEOUT=3
 
     @skip_with_pyevent
