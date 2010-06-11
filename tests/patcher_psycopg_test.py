@@ -34,7 +34,7 @@ assert count[0] > 100, count[0]
 print "done"
 """
 
-class PatchingPsycopg(patcher_test.Patcher):
+class PatchingPsycopg(patcher_test.ProcessBase):
     def test_psycopg_pached(self):
         if 'PSYCOPG_TEST_DSN' not in os.environ:
             # construct a non-json dsn for the subprocess
