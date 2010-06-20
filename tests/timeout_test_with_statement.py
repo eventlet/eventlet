@@ -15,7 +15,7 @@ class Error(Exception):
     pass
 
 class Test(LimitedTestCase):
-    def test_api(self):
+    def test_cancellation(self):
         # Nothing happens if with-block finishes before the timeout expires
         t = Timeout(DELAY*2)
         sleep(0)  # make it pending
@@ -27,6 +27,7 @@ class Test(LimitedTestCase):
         assert not t.pending, repr(t)
         sleep(DELAY*2)
 
+    def test_raising_self(self):
         # An exception will be raised if it's not
         try:
             with Timeout(DELAY) as t:
@@ -36,6 +37,17 @@ class Test(LimitedTestCase):
         else:
             raise AssertionError('must raise Timeout')
 
+    def test_raising_self_true(self):
+        # specifying True as the exception raises self as well
+        try:
+            with Timeout(DELAY, True) as t:
+                sleep(DELAY*2)
+        except Timeout, ex:
+            assert ex is t, (ex, t)
+        else:
+            raise AssertionError('must raise Timeout')
+        
+    def test_raising_custom_exception(self):
         # You can customize the exception raised:
         try:
             with Timeout(DELAY, IOError("Operation takes way too long")):
@@ -43,6 +55,7 @@ class Test(LimitedTestCase):
         except IOError, ex:
             assert str(ex)=="Operation takes way too long", repr(ex)
 
+    def test_raising_exception_class(self):
         # Providing classes instead of values should be possible too:
         try:
             with Timeout(DELAY, ValueError):
@@ -50,6 +63,7 @@ class Test(LimitedTestCase):
         except ValueError:
             pass
 
+    def test_raising_exc_tuple(self):
         try:
             1//0
         except:
@@ -63,12 +77,16 @@ class Test(LimitedTestCase):
         else:
             raise AssertionError('should not get there')
 
+    def test_cancel_timer_inside_block(self):
         # It's possible to cancel the timer inside the block:
         with Timeout(DELAY) as timer:
             timer.cancel()
             sleep(DELAY*2)
 
-        # To silent the exception before exiting the block, pass False as second parameter.
+        
+    def test_silent_block(self):
+        # To silence the exception before exiting the block, pass
+        # False as second parameter.
         XDELAY=0.1
         start = time.time()
         with Timeout(XDELAY, False):
@@ -76,6 +94,8 @@ class Test(LimitedTestCase):
         delta = (time.time()-start)
         assert delta<XDELAY*2, delta
 
+
+    def test_dummy_timer(self):
         # passing None as seconds disables the timer
         with Timeout(None):
             sleep(DELAY)

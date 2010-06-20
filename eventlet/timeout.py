@@ -57,7 +57,7 @@ class Timeout(BaseException):
                '%r is already started; to restart it, cancel it first' % self
         if self.seconds is None: # "fake" timeout (never expires)
             self.timer = None
-        elif self.exception is None or self.exception is False: # timeout that raises self
+        elif self.exception is None or isinstance(self.exception, bool): # timeout that raises self
             self.timer = get_hub().schedule_call_global(
                 self.seconds, greenlet.getcurrent().throw, self)
         else: # regular timeout with user-provided exception
@@ -112,7 +112,7 @@ class Timeout(BaseException):
             suffix = ''
         else:
             suffix = 's'
-        if self.exception is None:
+        if self.exception is None or self.exception is True:
             return '%s second%s' % (self.seconds, suffix)
         elif self.exception is False:
             return '%s second%s (silent)' % (self.seconds, suffix)
