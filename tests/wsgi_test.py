@@ -5,7 +5,7 @@ import errno
 import os
 import socket
 import sys
-from tests import skipped, LimitedTestCase
+from tests import skipped, LimitedTestCase, skip_with_pyevent
 from unittest import main
 
 from eventlet import greenio
@@ -927,6 +927,7 @@ class IterableAlreadyHandledTest(_TestBase):
 class ProxiedIterableAlreadyHandledTest(IterableAlreadyHandledTest):
     # same thing as the previous test but ensuring that it works with tpooled
     # results as well as regular ones
+    @skip_with_pyevent
     def get_app(self):
         from eventlet import tpool
         return tpool.Proxy(super(ProxiedIterableAlreadyHandledTest, self).get_app())
