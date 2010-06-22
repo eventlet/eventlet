@@ -93,11 +93,11 @@ class IterableApp(object):
         return self.return_val
 
 class IterableSite(Site):
-
     def __call__(self, env, start_response):
-        iter = self.application(env, start_response)
-        for i in iter:
+        it = self.application(env, start_response)
+        for i in it:
             yield i
+
 
 
 CONTENT_LENGTH = 'content-length'
@@ -899,12 +899,14 @@ def read_headers(sock):
     return response_line, headers
 
 class IterableAlreadyHandledTest(_TestBase):
-
     def set_site(self):
         self.site = IterableSite()
 
+    def get_app(self):
+        return IterableApp(True)
+
     def test_iterable_app_keeps_socket_open_unless_connection_close_sent(self):
-        self.site.application = IterableApp(True)
+        self.site.application = self.get_app()
         sock = eventlet.connect(
             ('localhost', self.port))
 
@@ -921,6 +923,13 @@ class IterableAlreadyHandledTest(_TestBase):
         self.assertEqual(response_line, 'HTTP/1.1 200 OK\r\n')
         self.assertEqual(headers.get('transfer-encoding'), 'chunked')
         self.assertEqual(body, '0\r\n\r\n') # Still coming back chunked
+
+class ProxiedIterableAlreadyHandledTest(IterableAlreadyHandledTest):
+    # same thing as the previous test but ensuring that it works with tpooled
+    # results as well as regular ones
+    def get_app(self):
+        from eventlet import tpool
+        return tpool.Proxy(super(ProxiedIterableAlreadyHandledTest, self).get_app())
 
 class TestChunkedInput(_TestBase):
     dirt = ""
