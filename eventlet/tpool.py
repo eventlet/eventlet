@@ -196,11 +196,16 @@ class Proxy(object):
         return proxy_call(self._autowrap, self._obj.__deepcopy__, memo)
     def __copy__(self, memo=None):
         return proxy_call(self._autowrap, self._obj.__copy__, memo)
+    def __call__(self, *a, **kw):
+        if '__call__' in self._autowrap_names:
+            return Proxy(proxy_call(self._autowrap, self._obj, *a, **kw))
+        else:
+            return proxy_call(self._autowrap, self._obj, *a, **kw)
     # these don't go through a proxy call, because they're likely to
     # be called often, and are unlikely to be implemented on the
     # wrapped object in such a way that they would block
     def __eq__(self, rhs):
-        return self._obj.__eq__(rhs)
+        return self._obj == rhs
     def __hash__(self):
         return self._obj.__hash__()
     def __repr__(self):
@@ -212,10 +217,11 @@ class Proxy(object):
     def __nonzero__(self):
         return bool(self._obj)
     def __iter__(self):
-        if iter(self._obj) == self._obj:
+        it = iter(self._obj)
+        if it == self._obj:
             return self
         else:
-            return Proxy(iter(self._obj))
+            return Proxy(it)
     def next(self):
         return proxy_call(self._autowrap, self._obj.next)
 
