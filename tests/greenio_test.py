@@ -6,7 +6,6 @@ from eventlet import debug
 from eventlet.support import get_errno
 from eventlet.green import socket
 from eventlet.green import time
-from eventlet.green.socket import GreenSSLObject
 import errno
 
 import eventlet
