@@ -4,6 +4,13 @@ import traceback
 import warnings
 import signal
 
+HAS_ITIMER = False
+try:
+    import itimer
+    HAS_ITIMER = True
+except ImportError:
+    pass
+
 from eventlet.support import greenlets as greenlet, clear_sys_exc_info
 from eventlet.hubs import timer
 from eventlet import patcher
@@ -71,13 +78,19 @@ class BaseHub(object):
         self.timers_canceled = 0
         self.debug_exceptions = True
         self.debug_blocking = False
+        self.debug_blocking_resolution = 1
 
     def block_detect_pre(self):
         # shortest alarm we can possibly raise is one second
         tmp = signal.signal(signal.SIGALRM, alarm_handler)
         if tmp != alarm_handler:
             self._old_signal_handler = tmp
-        signal.alarm(1)
+
+        if HAS_ITIMER:
+            itimer.alarm(self.debug_blocking_resolution)
+        else:
+            signal.alarm(self.debug_blocking_resolution)
+
     def block_detect_post(self):
         if (hasattr(self, "_old_signal_handler") and
             self._old_signal_handler):

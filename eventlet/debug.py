@@ -132,13 +132,14 @@ def tpool_exceptions(state = False):
     from eventlet import tpool
     tpool.QUIET = not state
 
-def hub_blocking_detection(state = False):
+def hub_blocking_detection(state = False, resolution = 1):
     """Toggles whether Eventlet makes an effort to detect blocking
     behavior in other code.  It does this by setting a SIGALARM with a short 
     timeout.
     """
     from eventlet import hubs
     hubs.get_hub().debug_blocking = state
+    hubs.get_hub().debug_blocking_resolution = resolution
     if(not state):
         hubs.get_hub().block_detect_post()
     

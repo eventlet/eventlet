@@ -92,6 +92,16 @@ def skip_on_windows(func):
     import sys
     return skip_if(sys.platform.startswith('win'))(func)
 
+def skip_if_no_itimer(func):
+    """ Decorator that skips a test if the `itimer` module isn't found """
+    has_itimer = False
+    try:
+        import itimer
+        has_itimer = True
+    except ImportError:
+        pass
+    return skip_unless(has_itimer)(func)
+
 
 class TestIsTakingTooLong(Exception):
     """ Custom exception class to be raised when a test's runtime exceeds a limit. """

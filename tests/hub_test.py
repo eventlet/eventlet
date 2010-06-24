@@ -1,4 +1,4 @@
-from tests import LimitedTestCase, main, skip_with_pyevent
+from tests import LimitedTestCase, main, skip_with_pyevent, skip_if_no_itimer
 import time
 import eventlet
 from eventlet import hubs
@@ -150,6 +150,18 @@ class TestHubBlockingDetector(LimitedTestCase):
             time.sleep(2)
         from eventlet import debug
         debug.hub_blocking_detection(True)
+        gt = eventlet.spawn(look_im_blocking)
+        self.assertRaises(RuntimeError, gt.wait)
+        debug.hub_blocking_detection(False)
+
+    @skip_if_no_itimer
+    def test_block_detect_with_itimer(self):
+        def look_im_blocking():
+            import time
+            time.sleep(0.5)
+
+        from eventlet import debug
+        debug.hub_blocking_detection(True, resolution=0.1)
         gt = eventlet.spawn(look_im_blocking)
         self.assertRaises(RuntimeError, gt.wait)
         debug.hub_blocking_detection(False)
