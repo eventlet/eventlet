@@ -84,9 +84,7 @@ class Hub(BaseHub):
         SYSTEM_EXCEPTIONS = self.SYSTEM_EXCEPTIONS
 
         if self.debug_blocking:
-            # shortest alarm we can possibly set is one second
-            signal.signal(signal.SIGALRM, alarm_handler)
-            signal.alarm(1)
+            self.block_detect_pre()
 
         for fileno, event in presult:
             try:
@@ -107,5 +105,5 @@ class Hub(BaseHub):
                 clear_sys_exc_info()
         
         if self.debug_blocking:
-            signal.alarm(0)
+            self.block_detect_post()
 
