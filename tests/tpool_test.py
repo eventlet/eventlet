@@ -96,6 +96,11 @@ class TestTpool(LimitedTestCase):
         self.assert_(exp1 != exp3)
 
     @skip_with_pyevent
+    def test_wrap_ints(self):
+        p = tpool.Proxy(4)
+        self.assert_(p == 4)
+
+    @skip_with_pyevent
     def test_wrap_hash(self):
         prox1 = tpool.Proxy(''+'A')
         prox2 = tpool.Proxy('A'+'')
@@ -243,6 +248,28 @@ class TestTpool(LimitedTestCase):
         # violating the abstraction to check that we didn't double-wrap
         self.assert_(not isinstance(x._obj, tpool.Proxy))
 
+    @skip_with_pyevent
+    def test_callable(self):
+        def wrapped(arg):
+            return arg
+        x = tpool.Proxy(wrapped)
+        self.assertEquals(4, x(4))
+        # verify that it wraps return values if specified
+        x = tpool.Proxy(wrapped, autowrap_names=('__call__',))
+        self.assert_(isinstance(x(4), tpool.Proxy))
+        self.assertEquals("4", str(x(4)))
+
+    @skip_with_pyevent
+    def test_callable_iterator(self):
+        def wrapped(arg):
+            yield arg
+            yield arg
+            yield arg
+
+        x = tpool.Proxy(wrapped, autowrap_names=('__call__',))
+        for r in x(3):
+            self.assertEquals(3, r)
+
 class TpoolLongTests(LimitedTestCase):
     TEST_TIMEOUT=60
     @skip_with_pyevent
@@ -293,6 +320,7 @@ from eventlet.tpool import execute
         print "%s iterations\nTpool overhead is %s seconds per call.  Normal: %s; Tpool: %s" % (
             iterations, tpool_overhead, best_normal, best_tpool)
         tpool.killall()
+
 
 if __name__ == '__main__':
     main()

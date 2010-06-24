@@ -64,12 +64,33 @@ Port Forwarder
 
 .. literalinclude:: ../examples/forwarder.py
 
+.. _recursive_crawler_example:
+
+Recursive Web Crawler
+-----------------------------------------
+``examples/recursive_crawler.py``
+
+This is an example recursive web crawler that fetches linked pages from a seed url.
+
+.. literalinclude:: ../examples/recursive_crawler.py
+
 .. _producer_consumer_example:
 
-Producer Consumer/Recursive Web Crawler
+Producer Consumer Web Crawler
 -----------------------------------------
 ``examples/producer_consumer.py``
 
-This is an example implementation of the producer/consumer pattern as well as a functional recursive web crawler.
+This is an example implementation of the producer/consumer pattern as well as being identical in functionality to the recursive web crawler.
 
 .. literalinclude:: ../examples/producer_consumer.py
+
+.. _websocket_example:
+
+Websocket Server Example
+--------------------------
+``examples/websocket.py``
+
+This exercises some of the features of the websocket server
+implementation.
+
+.. literalinclude:: ../examples/websocket.py

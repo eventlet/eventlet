@@ -7,10 +7,11 @@ import linecache
 import re
 import inspect
 
-__all__ = ['spew', 'unspew', 'format_hub_listeners', 'hub_listener_stacks', 
-'hub_exceptions', 'tpool_exceptions']
+__all__ = ['spew', 'unspew', 'format_hub_listeners', 'format_hub_timers', 
+           'hub_listener_stacks', 'hub_exceptions', 'tpool_exceptions', 
+           'hub_prevent_multiple_readers', 'hub_timer_stacks']
 
-_token_spliter = re.compile('\W+')
+_token_splitter = re.compile('\W+')
 
 class Spew(object):
     """
@@ -42,7 +43,7 @@ class Spew(object):
                 if not self.show_values:
                     return self
                 details = []
-                tokens = _token_spliter.split(line)
+                tokens = _token_splitter.split(line)
                 for tok in tokens:
                     if tok in frame.f_globals:
                         details.append('%s=%r' % (tok, frame.f_globals[tok]))

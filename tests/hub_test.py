@@ -154,6 +154,42 @@ class TestHubBlockingDetector(LimitedTestCase):
         self.assertRaises(RuntimeError, gt.wait)
         debug.hub_blocking_detection(False)
 
+class TestSuspend(LimitedTestCase):
+    TEST_TIMEOUT=3
+    def test_suspend_doesnt_crash(self):
+        import errno
+        import os
+        import shutil
+        import signal
+        import subprocess
+        import sys
+        import tempfile
+        self.tempdir = tempfile.mkdtemp('test_suspend')
+        filename = os.path.join(self.tempdir,  'test_suspend.py')
+        fd = open(filename, "w")
+        fd.write("""import eventlet
+eventlet.Timeout(0.5)
+try:
+   eventlet.listen(("127.0.0.1", 0)).accept()
+except eventlet.Timeout:
+   print "exited correctly"
+""")
+        fd.close()
+        python_path = os.pathsep.join(sys.path + [self.tempdir])
+        new_env = os.environ.copy()
+        new_env['PYTHONPATH'] = python_path
+        p = subprocess.Popen([sys.executable, 
+                              os.path.join(self.tempdir, filename)],
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=new_env)
+        eventlet.sleep(0.4)  # wait for process to hit accept
+        os.kill(p.pid, signal.SIGSTOP) # suspend and resume to generate EINTR
+        os.kill(p.pid, signal.SIGCONT)
+        output, _ = p.communicate()
+        lines = [l for l in output.split("\n") if l]
+        self.assert_("exited correctly" in lines[-1])
+        shutil.rmtree(self.tempdir)
+
+
 class Foo(object):
     pass
 

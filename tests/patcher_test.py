@@ -4,7 +4,7 @@ import subprocess
 import sys
 import tempfile
 
-from tests import LimitedTestCase, main
+from tests import LimitedTestCase, main, skip_with_pyevent
 
 base_module_contents = """
 import socket
@@ -27,7 +27,7 @@ import socket
 print "importing", patching, socket, patching.socket, patching.urllib
 """
 
-class Patcher(LimitedTestCase):
+class ProcessBase(LimitedTestCase):
     TEST_TIMEOUT=3 # starting processes is time-consuming
     def setUp(self):
         self._saved_syspath = sys.path
@@ -55,7 +55,7 @@ class Patcher(LimitedTestCase):
         return output, lines
 
 
-class ImportPatched(Patcher):
+class ImportPatched(ProcessBase):
     def test_patch_a_module(self):
         self.write_to_tempfile("base", base_module_contents)
         self.write_to_tempfile("patching", patching_module_contents)
@@ -85,7 +85,7 @@ print "newmod", base, base.socket, base.urllib.socket.socket
         self.assert_('GreenSocket' in lines[1], repr(output))
 
 
-class MonkeyPatch(Patcher):        
+class MonkeyPatch(ProcessBase):        
     def test_patched_modules(self):
         new_mod = """
 from eventlet import patcher
@@ -126,22 +126,6 @@ print "newmod"
         self.assertEqual(len(lines), 2, repr(output))
         self.assert_(lines[0].startswith('newmod'), repr(output))
         
-    def test_tpool(self):
-        new_mod = """
-import eventlet
-from eventlet import patcher
-patcher.monkey_patch()
-from eventlet import tpool
-print "newmod", tpool.execute(len, "hi")
-print "newmod", tpool.execute(len, "hi2")
-"""
-        self.write_to_tempfile("newmod", new_mod)
-        output, lines = self.launch_subprocess('newmod.py')
-        self.assertEqual(len(lines), 3, repr(output))
-        self.assert_(lines[0].startswith('newmod'), repr(output))
-        self.assert_('2' in lines[0], repr(output))
-        self.assert_('3' in lines[1], repr(output))
-        
 
     def test_typeerror(self):
         new_mod = """
@@ -172,7 +156,7 @@ print "already_patched", ",".join(sorted(patcher.already_patched.keys()))
         self.assert_(lines[0].startswith(ap), repr(output))
         patched_modules = lines[0][len(ap):].strip()
         # psycopg might or might not be patched based on installed modules
-        patched_modules.replace("psycopg,", "")
+        patched_modules = patched_modules.replace("psycopg,", "")
         self.assertEqual(patched_modules, expected,
                          "Logic:%s\nExpected: %s != %s" %(call, expected,
                                                           patched_modules))
@@ -216,6 +200,74 @@ print "already_patched", ",".join(sorted(patcher.already_patched.keys()))
         self.assert_boolean_logic("patcher.monkey_patch(socket=False, "\
                                       "select=True)",
                                          'select')
+
+
+test_monkey_patch_threading = """
+def test_monkey_patch_threading():
+    tickcount = [0]
+    def tick():
+        for i in xrange(1000):
+            tickcount[0] += 1
+            eventlet.sleep()
+
+    def do_sleep():
+        tpool.execute(time.sleep, 0.5)
+
+    eventlet.spawn(tick)
+    w1 = eventlet.spawn(do_sleep)
+    w1.wait()
+    print tickcount[0]
+    assert tickcount[0] > 900
+    tpool.killall()
+"""
+
+class Tpool(ProcessBase):
+    TEST_TIMEOUT=3
+
+    @skip_with_pyevent
+    def test_simple(self):
+        new_mod = """
+import eventlet
+from eventlet import patcher
+patcher.monkey_patch()
+from eventlet import tpool
+print "newmod", tpool.execute(len, "hi")
+print "newmod", tpool.execute(len, "hi2")
+tpool.killall()
+"""
+        self.write_to_tempfile("newmod", new_mod)
+        output, lines = self.launch_subprocess('newmod.py')
+        self.assertEqual(len(lines), 3, output)
+        self.assert_(lines[0].startswith('newmod'), repr(output))
+        self.assert_('2' in lines[0], repr(output))
+        self.assert_('3' in lines[1], repr(output))
+
+    @skip_with_pyevent
+    def test_unpatched_thread(self):
+        new_mod = """import eventlet
+eventlet.monkey_patch(time=False, thread=False)
+from eventlet import tpool
+import time
+"""
+        new_mod += test_monkey_patch_threading
+        new_mod += "\ntest_monkey_patch_threading()\n"
+        self.write_to_tempfile("newmod", new_mod)
+        output, lines = self.launch_subprocess('newmod.py')
+        self.assertEqual(len(lines), 2, lines)
+
+    @skip_with_pyevent
+    def test_patched_thread(self):
+        new_mod = """import eventlet
+eventlet.monkey_patch(time=False, thread=True)
+from eventlet import tpool
+import time
+"""
+        new_mod += test_monkey_patch_threading
+        new_mod += "\ntest_monkey_patch_threading()\n"
+        self.write_to_tempfile("newmod", new_mod)
+        output, lines = self.launch_subprocess('newmod.py')
+        self.assertEqual(len(lines), 2, "\n".join(lines))
+
 
 if __name__ == '__main__':
     main()

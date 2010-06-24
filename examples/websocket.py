@@ -5,6 +5,8 @@ from eventlet import websocket
 # demo app
 import os
 import random
+
+@websocket.WebSocketWSGI
 def handle(ws):
     """  This is the websocket handler function.  Note that we 
     can dispatch based on path in here, too."""
@@ -20,12 +22,11 @@ def handle(ws):
             ws.send("0 %s %s\n" % (i, random.random()))
             eventlet.sleep(0.1)
                   
-wsapp = websocket.WebSocketWSGI(handle)
 def dispatch(environ, start_response):
     """ This resolves to the web page or the websocket depending on
     the path."""
     if environ['PATH_INFO'] == '/data':
-        return wsapp(environ, start_response)
+        return handle(environ, start_response)
     else:
         start_response('200 OK', [('content-type', 'text/html')])
         return [open(os.path.join(

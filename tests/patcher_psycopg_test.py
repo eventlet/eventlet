@@ -30,11 +30,11 @@ def fetch(num, secs):
 f = eventlet.spawn(fetch, 2, 1)
 t = eventlet.spawn(tick, 2, 100)
 f.wait()
-assert count[0] > 150
+assert count[0] > 100, count[0]
 print "done"
 """
 
-class PatchingPsycopg(patcher_test.Patcher):
+class PatchingPsycopg(patcher_test.ProcessBase):
     def test_psycopg_pached(self):
         if 'PSYCOPG_TEST_DSN' not in os.environ:
             # construct a non-json dsn for the subprocess
@@ -50,5 +50,5 @@ class PatchingPsycopg(patcher_test.Patcher):
             print "Can't test psycopg2 patching; it's not installed."
             return
         # if there's anything wrong with the test program it'll have a stack trace
-        self.assert_(lines[0].startswith('done'), repr(output))
+        self.assert_(lines[0].startswith('done'), output)
 

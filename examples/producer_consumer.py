@@ -2,7 +2,7 @@
 it doesn't respect robots.txt and it is pretty brutal about how quickly it 
 fetches pages.
 
-This is a kind of "producer/consumer" example; the producer function produces 
+This is a kind of "producer/consumer" example; the fetch function produces 
 jobs, and the GreenPool itself is the consumer, farming out work concurrently.  
 It's easier to write it this way rather than writing a standard consumer loop;
 GreenPool handles any exceptions raised and arranges so that there's a set
@@ -43,7 +43,7 @@ def producer(start_url):
         # limit requests to eventlet.net so we don't crash all over the internet
         if url not in seen and 'eventlet.net' in url:
             seen.add(url)
-            pool.spawn(fetch, url, q)
+            pool.spawn_n(fetch, url, q)
     return seen
 
 

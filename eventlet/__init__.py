@@ -1,4 +1,4 @@
-version_info = (0, 9, 7, "dev1")
+version_info = (0, 9, 10, "dev1")
 __version__ = ".".join(map(str, version_info))
 
 try:
@@ -31,6 +31,7 @@ try:
     listen = convenience.listen
     serve = convenience.serve
     StopServe = convenience.StopServe
+    wrap_ssl = convenience.wrap_ssl
 
     getcurrent = greenlet.greenlet.getcurrent
     

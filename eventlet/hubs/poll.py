@@ -77,7 +77,7 @@ class Hub(BaseHub):
             return
         try:
             presult = self.do_poll(seconds)
-        except select.error, e:
+        except (IOError, select.error), e:
             if get_errno(e) == errno.EINTR:
                 return
             raise

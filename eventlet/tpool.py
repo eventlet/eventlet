@@ -16,13 +16,14 @@
 import os
 import sys
 
-from Queue import Empty, Queue
-
 from eventlet import event
 from eventlet import greenio
 from eventlet import greenthread
 from eventlet import patcher
 threading = patcher.original('threading')
+Queue_module = patcher.original('Queue')
+Queue = Queue_module.Queue
+Empty = Queue_module.Empty
 
 __all__ = ['execute', 'Proxy', 'killall']
 
@@ -67,7 +68,10 @@ SYS_EXCS = (KeyboardInterrupt, SystemExit)
 def tworker():
     global _reqq, _rspq
     while(True):
-        msg = _reqq.get()
+        try:
+            msg = _reqq.get()
+        except AttributeError:
+            return # can't get anything off of a dud queue
         if msg is None:
             return
         (e,meth,args,kwargs) = msg
@@ -192,11 +196,16 @@ class Proxy(object):
         return proxy_call(self._autowrap, self._obj.__deepcopy__, memo)
     def __copy__(self, memo=None):
         return proxy_call(self._autowrap, self._obj.__copy__, memo)
+    def __call__(self, *a, **kw):
+        if '__call__' in self._autowrap_names:
+            return Proxy(proxy_call(self._autowrap, self._obj, *a, **kw))
+        else:
+            return proxy_call(self._autowrap, self._obj, *a, **kw)
     # these don't go through a proxy call, because they're likely to
     # be called often, and are unlikely to be implemented on the
     # wrapped object in such a way that they would block
     def __eq__(self, rhs):
-        return self._obj.__eq__(rhs)
+        return self._obj == rhs
     def __hash__(self):
         return self._obj.__hash__()
     def __repr__(self):
@@ -208,10 +217,11 @@ class Proxy(object):
     def __nonzero__(self):
         return bool(self._obj)
     def __iter__(self):
-        if iter(self._obj) == self._obj:
+        it = iter(self._obj)
+        if it == self._obj:
             return self
         else:
-            return Proxy(iter(self._obj))
+            return Proxy(it)
     def next(self):
         return proxy_call(self._autowrap, self._obj.next)
 
@@ -231,7 +241,7 @@ def setup():
         _rpipe, _wpipe = os.pipe()
         _wfile = greenio.GreenPipe(_wpipe, 'wb', 0)
         _rfile = greenio.GreenPipe(_rpipe, 'rb', 0)
-    except ImportError:
+    except (ImportError, NotImplementedError):
         # This is Windows compatibility -- use a socket instead of a pipe because
         # pipes don't really exist on Windows.
         import socket
@@ -248,7 +258,7 @@ def setup():
     _reqq = Queue(maxsize=-1)
     _rspq = Queue(maxsize=-1)
     for i in range(0,_nthreads):
-        t = threading.Thread(target=tworker)
+        t = threading.Thread(target=tworker, name="tpool_thread_%s" % i)
         t.setDaemon(True)
         t.start()
         _threads.add(t)

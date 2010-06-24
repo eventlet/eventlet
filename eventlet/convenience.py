@@ -97,11 +97,14 @@ def serve(sock, handle, concurrency=1000):
 
 
 def wrap_ssl(sock, keyfile=None, certfile=None, server_side=False,
-    cert_reqs=None, ssl_version=None, ca_certs=None,
+    cert_reqs=0, ssl_version=2, ca_certs=None,
     do_handshake_on_connect=True, suppress_ragged_eofs=True):
-    """Convenience function for converting a regular socket into an SSL
-    socket.  Has the same interface as :func:`ssl.wrap_socket`, but
-    works on 2.5 or earlier, using PyOpenSSL.
+    """Convenience function for converting a regular socket into an
+    SSL socket.  Has the same interface as :func:`ssl.wrap_socket`,
+    but works on 2.5 or earlier, using PyOpenSSL (though note that it
+    ignores the *cert_reqs*, *ssl_version*, *ca_certs*,
+    *do_handshake_on_connect*, and *suppress_ragged_eofs* arguments
+    when using PyOpenSSL).
 
     The preferred idiom is to call wrap_ssl directly on the creation
     method, e.g., ``wrap_ssl(connect(addr))`` or
@@ -111,4 +114,41 @@ def wrap_ssl(sock, keyfile=None, certfile=None, server_side=False,
 
     :return Green SSL object.
     """
-    pass
+    return wrap_ssl_impl(sock, keyfile=keyfile, certfile=certfile, 
+                         server_side=server_side,
+                         cert_reqs=cert_reqs,
+                         ssl_version=ssl_version,
+                         ca_certs=ca_certs,
+                         do_handshake_on_connect=do_handshake_on_connect,
+                         suppress_ragged_eofs=suppress_ragged_eofs)
+
+try:
+    from eventlet.green import ssl
+    wrap_ssl_impl = ssl.wrap_socket
+except ImportError:
+    # < 2.6, trying PyOpenSSL
+    from eventlet.green.OpenSSL import SSL
+    try:
+        def wrap_ssl_impl(sock, keyfile=None, certfile=None, server_side=False,
+                          cert_reqs=None, ssl_version=None, ca_certs=None,
+                          do_handshake_on_connect=True, suppress_ragged_eofs=True):
+            # theoretically the ssl_version could be respected in this
+            # next line
+            context = SSL.Context(SSL.SSLv23_METHOD)
+            if certfile is not None:
+                context.use_certificate_file(certfile)
+            if keyfile is not None:
+                context.use_privatekey_file(keyfile)
+            context.set_verify(SSL.VERIFY_NONE, lambda *x: True)
+
+            connection = SSL.Connection(context, sock)
+            if server_side:
+                connection.set_accept_state()
+            else:
+                connection.set_connect_state()
+            return connection
+    except ImportError:
+        def wrap_ssl_impl(*a, **kw):
+            raise ImportError("To use SSL with Eventlet, "
+                              "you must install PyOpenSSL or use Python 2.6 or later.")
+        

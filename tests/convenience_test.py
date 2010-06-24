@@ -1,6 +1,11 @@
+import os
+
 import eventlet
 from eventlet import event
 from tests import LimitedTestCase, s2b
+
+certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
+private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
 
 class TestServe(LimitedTestCase):
     def setUp(self):
@@ -101,3 +106,17 @@ class TestServe(LimitedTestCase):
             timeout_value="timed out")
         self.assertEquals(x, "timed out")
 
+    def test_wrap_ssl(self):
+        server = eventlet.wrap_ssl(eventlet.listen(('localhost', 0)),
+                                    certfile=certificate_file,
+                                    keyfile=private_key_file, server_side=True)
+        port = server.getsockname()[1]
+        def handle(sock,addr):
+            sock.sendall(sock.recv(1024))
+            raise eventlet.StopServe()
+        eventlet.spawn(eventlet.serve, server, handle)
+        client = eventlet.wrap_ssl(eventlet.connect(('localhost', port)))
+        client.sendall("echo")
+        self.assertEquals("echo", client.recv(1024))
+        
+        

@@ -191,6 +191,7 @@ def get_database_auth():
     try:
         import simplejson
     except ImportError:
+        print "No simplejson, using baked-in db credentials."
         return retval 
 
     if 'EVENTLET_DB_TEST_AUTH' in os.environ:

@@ -74,6 +74,8 @@ Network Convenience Functions
 
 .. autofunction:: eventlet.listen
 
+.. autofunction:: eventlet.wrap_ssl
+
 .. autofunction:: eventlet.serve
 
 .. autofunction:: eventlet.StopServe
