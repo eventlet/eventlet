@@ -932,6 +932,11 @@ class ProxiedIterableAlreadyHandledTest(IterableAlreadyHandledTest):
         from eventlet import tpool
         return tpool.Proxy(super(ProxiedIterableAlreadyHandledTest, self).get_app())
 
+    def tearDown(self):
+        from eventlet import tpool
+        tpool.killall()
+        super(ProxiedIterableAlreadyHandledTest, self).tearDown()
+
 class TestChunkedInput(_TestBase):
     dirt = ""
     validator = None
