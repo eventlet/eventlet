@@ -144,6 +144,7 @@ class TestHubSelection(LimitedTestCase):
 
 class TestHubBlockingDetector(LimitedTestCase):
     TEST_TIMEOUT = 10
+    @skip_with_pyevent
     def test_block_detect(self):
         def look_im_blocking():
             import time
@@ -154,6 +155,7 @@ class TestHubBlockingDetector(LimitedTestCase):
         self.assertRaises(RuntimeError, gt.wait)
         debug.hub_blocking_detection(False)
 
+    @skip_with_pyevent
     @skip_if_no_itimer
     def test_block_detect_with_itimer(self):
         def look_im_blocking():
