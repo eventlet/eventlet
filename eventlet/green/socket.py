@@ -17,10 +17,11 @@ __patched__ = __socket.__patched__ + ['gethostbyname', 'getaddrinfo']
 
 
 greendns = None
-try:
-    from eventlet.support import greendns
-except ImportError:
-    pass
+if os.environ.get("EVENTLET_NO_GREENDNS",'').lower() != "yes":
+    try:
+        from eventlet.support import greendns
+    except ImportError:
+        pass
 
 __original_gethostbyname__ = __socket.gethostbyname
 # the thread primitives on Darwin have some bugs that make

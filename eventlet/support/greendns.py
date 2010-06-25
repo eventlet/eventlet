@@ -35,7 +35,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import random
 from eventlet import patcher
 from eventlet.green import _socket_nodns
 from eventlet.green import time
@@ -43,8 +42,8 @@ from eventlet.green import select
 
 __imports = []
 for package in ('dns', 'dns.query', 'dns.exception', 'dns.inet',
-        'dns.message', 'dns.name', 'dns.rdata', 'dns.rdataset',
-        'dns.rdatatype', 'dns.resolver', 'dns.reversename'):
+                'dns.message', 'dns.rdatatype', 'dns.resolver', 
+                'dns.reversename'):
     __imports.append('%(pkg)s = patcher.import_patched(\'%(pkg)s\', socket=_socket_nodns, time=time, select=select)' % dict(pkg=package))
 exec '\n'.join(__imports)
 

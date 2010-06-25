@@ -59,3 +59,4 @@ Thanks To
 * David Ziegler, reporting issue #53
 * Favo Yang, twisted hub patch
 * Schmir, patch that fixes readline method with chunked encoding in wsgi.py
+* Slide, for open-sourcing gogreen
