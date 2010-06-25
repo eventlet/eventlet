@@ -1,6 +1,5 @@
 __socket = __import__('socket')
-for var in __socket.__all__:
-    exec "%s = __socket.%s" % (var, var)
+exec "\n".join(["%s = __socket.%s" % (var, var) for var in __socket.__all__])
 
 os = __import__('os')
 import sys

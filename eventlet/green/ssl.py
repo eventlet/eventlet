@@ -1,7 +1,6 @@
 __ssl = __import__('ssl')
 
-for attr in dir(__ssl):
-    exec "%s = __ssl.%s" % (attr, attr)
+exec "\n".join(["%s = __ssl.%s" % (attr, attr) for attr in dir(__ssl)])
 
 import errno
 time = __import__('time')

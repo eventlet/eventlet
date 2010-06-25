@@ -30,8 +30,8 @@ FIXME: No testcases for this module.
 
 profile_orig = __import__('profile')
 
-for var in profile_orig.__all__:
-    exec "%s = profile_orig.%s" % (var, var)
+exec "\n".join(["%s = profile_orig.%s" % (var, var) 
+                for var in profile_orig.__all__])
 
 import new
 import sys

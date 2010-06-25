@@ -3,8 +3,7 @@ import sys
 from eventlet.hubs import get_hub
 __import__('eventlet.green._socket_nodns')
 __socket = sys.modules['eventlet.green._socket_nodns']
-for var in __socket.__all__:
-    exec "%s = __socket.%s" % (var, var)
+exec "\n".join(["%s = __socket.%s" % (var, var) for var in __socket.__all__])
 # these are desired but are not in __all__
 _GLOBAL_DEFAULT_TIMEOUT = __socket._GLOBAL_DEFAULT_TIMEOUT
 _fileobject = __socket._fileobject
