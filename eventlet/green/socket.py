@@ -64,5 +64,6 @@ else:
 if greendns:
     gethostbyname_ex = greendns.gethostbyname_ex
     getnameinfo = greendns.getnameinfo
+    __patched__ + ['gethostbyname_ex', 'getnameinfo']
 
 

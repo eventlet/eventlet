@@ -41,19 +41,12 @@ from eventlet.green import _socket_nodns
 from eventlet.green import time
 from eventlet.green import select
 
-start = time.time()
-
 __imports = []
 for package in ('dns', 'dns.query', 'dns.exception', 'dns.inet',
         'dns.message', 'dns.name', 'dns.rdata', 'dns.rdataset',
         'dns.rdatatype', 'dns.resolver', 'dns.reversename'):
     __imports.append('%(pkg)s = patcher.import_patched(\'%(pkg)s\', socket=_socket_nodns, time=time, select=select)' % dict(pkg=package))
 exec '\n'.join(__imports)
-
-end = time.time()
-
-with open('times_%s.txt' % random.random(), 'w') as fd:
-    fd.write('%s\n' % (end - start))
 
 socket = _socket_nodns
 
