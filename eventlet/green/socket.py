@@ -15,6 +15,13 @@ except AttributeError:
 __all__     = __socket.__all__
 __patched__ = __socket.__patched__ + ['gethostbyname', 'getaddrinfo']
 
+
+greendns = None
+try:
+    from eventlet.support import greendns
+except ImportError:
+    pass
+
 __original_gethostbyname__ = __socket.gethostbyname
 # the thread primitives on Darwin have some bugs that make
 # it undesirable to use tpool for hostname lookups
@@ -33,6 +40,8 @@ def _gethostbyname_tpool(name):
 
 if getattr(get_hub(), 'uses_twisted_reactor', None):
     gethostbyname = _gethostbyname_twisted
+elif greendns:
+    gethostbyname = greendns.gethostbyname
 elif _can_use_tpool:
     gethostbyname = _gethostbyname_tpool
 else:
@@ -45,8 +54,15 @@ def _getaddrinfo_tpool(*args, **kw):
     return tpool.execute(
         __original_getaddrinfo__, *args, **kw)
 
-if _can_use_tpool:
+if greendns:
+    getaddrinfo = greendns.getaddrinfo
+elif _can_use_tpool:
     getaddrinfo = _getaddrinfo_tpool
 else:
     getaddrinfo = __original_getaddrinfo__
+
+if greendns:
+    gethostbyname_ex = greendns.gethostbyname_ex
+    getnameinfo = greendns.getnameinfo
+
 
