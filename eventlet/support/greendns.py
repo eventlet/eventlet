@@ -204,9 +204,14 @@ def getnameinfo(sockaddr, flags):
     """
     try:
         host, port = sockaddr
-    except ValueError:
-        # must be ipv6 sockaddr, pretending we don't know how to resolve it
-        raise socket.gaierror(-2, 'name or service not known')
+    except (ValueError, TypeError):
+        if not isinstance(sockaddr, tuple):
+            del sockaddr  # to pass a stdlib test that is
+                          # hyper-careful about reference counts
+            raise TypeError('getnameinfo() argument 1 must be a tuple')
+        else:
+            # must be ipv6 sockaddr, pretending we don't know how to resolve it
+            raise socket.gaierror(-2, 'name or service not known')
 
     if (flags & socket.NI_NAMEREQD) and (flags & socket.NI_NUMERICHOST):
         # Conflicting flags.  Punt.
