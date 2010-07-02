@@ -376,6 +376,9 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                         pass
             finish = time.time()
 
+            for hook, args, kwargs in self.environ['eventlet.posthooks']:
+                hook(self.environ, *args, **kwargs)
+
             self.server.log_message(self.server.log_format % dict(
                 client_ip=self.get_client_ip(),
                 date_time=self.log_date_time_string(),
@@ -442,6 +445,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         env['wsgi.input'] = env['eventlet.input'] = Input(
             self.rfile, length, wfile=wfile, wfile_line=wfile_line,
             chunked_input=chunked)
+        env['eventlet.posthooks'] = []
 
         return env
 
