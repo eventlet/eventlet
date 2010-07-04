@@ -818,6 +818,60 @@ class TestHttpd(_TestBase):
                 pass # TODO: should test with OpenSSL
             greenthread.kill(g)
 
+    def test_029_posthooks(self):
+        posthook1_count = [0]
+        posthook2_count = [0]
+        def posthook1(env, value, multiplier=1):
+            self.assertEquals(env['local.test'], 'test_029_posthooks')
+            posthook1_count[0] += value * multiplier
+        def posthook2(env, value, divisor=1):
+            self.assertEquals(env['local.test'], 'test_029_posthooks')
+            posthook2_count[0] += value / divisor
+
+        def one_posthook_app(env, start_response):
+            env['local.test'] = 'test_029_posthooks'
+            if 'eventlet.posthooks' not in env:
+                start_response('500 eventlet.posthooks not supported',
+                               [('Content-Type', 'text/plain')])
+            else:
+                env['eventlet.posthooks'].append(
+                    (posthook1, (2,), {'multiplier': 3}))
+                start_response('200 OK', [('Content-Type', 'text/plain')])
+            yield ''
+        self.site.application = one_posthook_app
+        sock = eventlet.connect(('localhost', self.port))
+        fp = sock.makefile('rw')
+        fp.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+        fp.flush()
+        self.assertEquals(fp.readline(), 'HTTP/1.1 200 OK\r\n')
+        fp.close()
+        sock.close()
+        self.assertEquals(posthook1_count[0], 6)
+        self.assertEquals(posthook2_count[0], 0)
+
+        def two_posthook_app(env, start_response):
+            env['local.test'] = 'test_029_posthooks'
+            if 'eventlet.posthooks' not in env:
+                start_response('500 eventlet.posthooks not supported',
+                               [('Content-Type', 'text/plain')])
+            else:
+                env['eventlet.posthooks'].append(
+                    (posthook1, (4,), {'multiplier': 5}))
+                env['eventlet.posthooks'].append(
+                    (posthook2, (100,), {'divisor': 4}))
+                start_response('200 OK', [('Content-Type', 'text/plain')])
+            yield ''
+        self.site.application = two_posthook_app
+        sock = eventlet.connect(('localhost', self.port))
+        fp = sock.makefile('rw')
+        fp.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+        fp.flush()
+        self.assertEquals(fp.readline(), 'HTTP/1.1 200 OK\r\n')
+        fp.close()
+        sock.close()
+        self.assertEquals(posthook1_count[0], 26)
+        self.assertEquals(posthook2_count[0], 25)
+
     def test_zero_length_chunked_response(self):
         def zero_chunked_app(env, start_response):
             start_response('200 OK', [('Content-type', 'text/plain')])

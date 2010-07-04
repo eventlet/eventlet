@@ -21,5 +21,41 @@ To launch a wsgi server, simply create a socket and call :func:`eventlet.wsgi.se
 You can find a slightly more elaborate version of this code in the file
 ``examples/wsgi.py``.
 
+Non-Standard Extension to Support Post Hooks
+--------------------------------------------
+Eventlet's WSGI server supports a non-standard extension to the WSGI
+specification where :samp:`env['eventlet.posthooks']` contains an array of
+`post hooks` that will be called after fully sending a response. Each post hook
+is a tuple of :samp:`(func, args, kwargs)` and the `func` will be called with
+the WSGI environment dictionary, followed by the `args` and then the `kwargs`
+in the post hook.
+
+For example::
+
+    from eventlet import wsgi
+    import eventlet
+
+    def hook(env, arg1, arg2, kwarg3=None, kwarg4=None):
+        print 'Hook called: %s %s %s %s %s' % (env, arg1, arg2, kwarg3, kwarg4)
+    
+    def hello_world(env, start_response):
+        env['eventlet.posthooks'].append(
+            (hook, ('arg1', 'arg2'), {'kwarg3': 3, 'kwarg4': 4}))
+        start_response('200 OK', [('Content-Type', 'text/plain')])
+        return ['Hello, World!\r\n']
+    
+    wsgi.server(eventlet.listen(('', 8090)), hello_world)
+
+The above code will print the WSGI environment and the other passed function
+arguments for every request processed.
+
+Post hooks are useful when code needs to be executed after a response has been
+fully sent to the client (or when the client disconnects early). One example is
+for more accurate logging of bandwidth used, as client disconnects use less
+bandwidth than the actual Content-Length.
+
+API
+---
+
 .. automodule:: eventlet.wsgi
 	:members:
