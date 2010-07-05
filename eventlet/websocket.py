@@ -71,27 +71,33 @@ class WebSocketWSGI(object):
             response = md5(key).digest()
         
         # Start building the response
+        location = 'ws://%s%s%s' % (
+            environ.get('HTTP_HOST'), 
+            environ.get('SCRIPT_NAME'), 
+            environ.get('PATH_INFO')
+        )
+        qs = environ.get('QUERY_STRING')
+        if qs:
+            location += '?' + qs
         if self.protocol_version == 75:
             handshake_reply = ("HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
                                "Upgrade: WebSocket\r\n"
                                "Connection: Upgrade\r\n"
                                "WebSocket-Origin: %s\r\n"
-                               "WebSocket-Location: ws://%s%s\r\n\r\n" % (
+                               "WebSocket-Location: %s\r\n\r\n" % (
                     environ.get('HTTP_ORIGIN'),
-                    environ.get('HTTP_HOST'),
-                    environ.get('PATH_INFO')))
+                    location))
         elif self.protocol_version == 76:
             handshake_reply = ("HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
                                "Upgrade: WebSocket\r\n"
                                "Connection: Upgrade\r\n"
                                "Sec-WebSocket-Origin: %s\r\n"
                                "Sec-WebSocket-Protocol: %s\r\n"
-                               "Sec-WebSocket-Location: ws://%s%s\r\n"
+                               "Sec-WebSocket-Location: %s\r\n"
                                "\r\n%s"% (
                     environ.get('HTTP_ORIGIN'),
                     environ.get('HTTP_SEC_WEBSOCKET_PROTOCOL', 'default'),
-                    environ.get('HTTP_HOST'),
-                    environ.get('PATH_INFO'),
+                    location,
                     response))
         else: #pragma NO COVER
             raise ValueError("Unknown WebSocket protocol version.") 

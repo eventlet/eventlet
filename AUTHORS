@@ -55,7 +55,8 @@ Thanks To
 * Benoit Chesneau, bug report on green.os and patch to fix it
 * Slant, better iterator implementation in tpool
 * Ambroff, nice pygtk hub example
-* Michael Carter, and Marcin Bachry, nice repro of a bug and good diagnosis leading to the fix
+* Michael Carter, websocket patch to improve location handling
+* Marcin Bachry, nice repro of a bug and good diagnosis leading to the fix
 * David Ziegler, reporting issue #53
 * Favo Yang, twisted hub patch
 * Schmir, patch that fixes readline method with chunked encoding in wsgi.py
