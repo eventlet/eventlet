@@ -1,7 +1,8 @@
 __ssl = __import__('ssl')
 
-exec "\n".join(["%s = __ssl.%s" % (attr, attr) for attr in dir(__ssl)])
+exec "\n".join("%s = __ssl.%s" % (attr, attr) for attr in dir(__ssl))
 
+import sys
 import errno
 time = __import__('time')
 
@@ -10,7 +11,12 @@ from eventlet.hubs import trampoline
 from eventlet.greenio import set_nonblocking, GreenSocket, SOCKET_CLOSED, CONNECT_ERR, CONNECT_SUCCESS
 orig_socket = __import__('socket')
 socket = orig_socket.socket
-timeout_exc = orig_socket.timeout
+if sys.version_info >= (2,7):
+    has_ciphers = True
+    timeout_exc = SSLError
+else:
+    has_ciphers = False
+    timeout_exc = orig_socket.timeout
 
 __patched__ = ['SSLSocket', 'wrap_socket', 'sslwrap_simple']
 
@@ -38,9 +44,14 @@ class GreenSSLSocket(__ssl.SSLSocket):
         self._timeout = sock.gettimeout()
         super(GreenSSLSocket, self).__init__(sock.fd, *args, **kw)
        
-        # the superclass initializer trashes the methods so... 
-        for fn in orig_socket._delegate_methods:
-            delattr(self, fn)
+        # the superclass initializer trashes the methods so we remove
+        # the local-object versions of them and let the actual class
+        # methods shine through
+        try:
+            for fn in orig_socket._delegate_methods:
+                delattr(self, fn)
+        except AttributeError:
+            pass
        
     def settimeout(self, timeout):
         self._timeout = timeout
@@ -247,9 +258,14 @@ class GreenSSLSocket(__ssl.SSLSocket):
         if self._sslobj:
             raise ValueError("attempt to connect already-connected SSLSocket!")
         self._socket_connect(addr)
-        self._sslobj = _ssl.sslwrap(self._sock, False, self.keyfile, self.certfile,
-                                    self.cert_reqs, self.ssl_version,
-                                    self.ca_certs)
+        if has_ciphers:
+            self._sslobj = _ssl.sslwrap(self._sock, False, self.keyfile, self.certfile,
+                                        self.cert_reqs, self.ssl_version,
+                                        self.ca_certs, self.ciphers)
+        else:
+            self._sslobj = _ssl.sslwrap(self._sock, False, self.keyfile, self.certfile,
+                                        self.cert_reqs, self.ssl_version,
+                                        self.ca_certs)
         if self.do_handshake_on_connect:
             self.do_handshake()
 
@@ -286,16 +302,8 @@ class GreenSSLSocket(__ssl.SSLSocket):
                                
 SSLSocket = GreenSSLSocket
 
-def wrap_socket(sock, keyfile=None, certfile=None,
-                server_side=False, cert_reqs=CERT_NONE,
-                ssl_version=PROTOCOL_SSLv23, ca_certs=None,
-                do_handshake_on_connect=True,
-                suppress_ragged_eofs=True):
-    return GreenSSLSocket(sock, keyfile=keyfile, certfile=certfile,
-                     server_side=server_side, cert_reqs=cert_reqs,
-                     ssl_version=ssl_version, ca_certs=ca_certs,
-                     do_handshake_on_connect=do_handshake_on_connect,
-                     suppress_ragged_eofs=suppress_ragged_eofs)
+def wrap_socket(sock, *a, **kw):
+    return GreenSSLSocket(sock, *a, **kw)
 
 
 if hasattr(__ssl, 'sslwrap_simple'):

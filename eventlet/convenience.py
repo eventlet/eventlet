@@ -96,9 +96,7 @@ def serve(sock, handle, concurrency=1000):
             return
 
 
-def wrap_ssl(sock, keyfile=None, certfile=None, server_side=False,
-    cert_reqs=0, ssl_version=2, ca_certs=None,
-    do_handshake_on_connect=True, suppress_ragged_eofs=True):
+def wrap_ssl(sock, *a, **kw):
     """Convenience function for converting a regular socket into an
     SSL socket.  Has the same interface as :func:`ssl.wrap_socket`,
     but works on 2.5 or earlier, using PyOpenSSL (though note that it
@@ -114,13 +112,7 @@ def wrap_ssl(sock, keyfile=None, certfile=None, server_side=False,
 
     :return Green SSL object.
     """
-    return wrap_ssl_impl(sock, keyfile=keyfile, certfile=certfile, 
-                         server_side=server_side,
-                         cert_reqs=cert_reqs,
-                         ssl_version=ssl_version,
-                         ca_certs=ca_certs,
-                         do_handshake_on_connect=do_handshake_on_connect,
-                         suppress_ragged_eofs=suppress_ragged_eofs)
+    return wrap_ssl_impl(sock, *a, **kw)
 
 try:
     from eventlet.green import ssl
@@ -131,7 +123,8 @@ except ImportError:
     try:
         def wrap_ssl_impl(sock, keyfile=None, certfile=None, server_side=False,
                           cert_reqs=None, ssl_version=None, ca_certs=None,
-                          do_handshake_on_connect=True, suppress_ragged_eofs=True):
+                          do_handshake_on_connect=True, 
+                          suppress_ragged_eofs=True, ciphers=None):
             # theoretically the ssl_version could be respected in this
             # next line
             context = SSL.Context(SSL.SSLv23_METHOD)

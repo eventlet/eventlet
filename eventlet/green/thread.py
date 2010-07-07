@@ -5,9 +5,14 @@ from eventlet import greenthread
 from eventlet.semaphore import Semaphore as LockType
 
 __patched__ = ['get_ident', 'start_new_thread', 'start_new', 'allocate_lock',
-    'allocate', 'exit', 'interrupt_main', 'stack_size', '_local', 'LockType']
+               'allocate', 'exit', 'interrupt_main', 'stack_size', '_local', 
+               'LockType', '_count']
 
 error = __thread.error
+__threadcount = 0
+
+def _count():
+    return __threadcount
 
 def get_ident(gr=None):
     if gr is None:
@@ -15,13 +20,21 @@ def get_ident(gr=None):
     else:
         return id(gr)
 
+def __thread_body(func, args, kwargs):
+    global __threadcount
+    __threadcount += 1
+    try:
+        func(*args, **kwargs)
+    finally:
+        __threadcount -= 1
+
 def start_new_thread(function, args=(), kwargs={}):
-    g = greenthread.spawn_n(function, *args, **kwargs)
+    g = greenthread.spawn_n(__thread_body, function, args, kwargs)
     return get_ident(g)
     
 start_new = start_new_thread
 
-def allocate_lock():
+def allocate_lock(*a):
     return LockType(1)
 
 allocate = allocate_lock
