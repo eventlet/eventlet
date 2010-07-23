@@ -59,8 +59,10 @@ class Popen(subprocess_orig.Popen):
                                         globals())
         except AttributeError:
             # 2.4 only has communicate
-            communicate = new.function(subprocess_orig.Popen.communicate.im_func.func_code,
+            _communicate = new.function(subprocess_orig.Popen.communicate.im_func.func_code,
                                         globals())
+            def communicate(self, input=None):
+                return self._communicate(input)
 
 # Borrow subprocess.call() and check_call(), but patch them so they reference
 # OUR Popen class rather than subprocess.Popen.
