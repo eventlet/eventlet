@@ -164,18 +164,23 @@ def original(modname):
     # dict; be sure to restore whatever module had that name already
     saver = SysModulesSaver((modname,))
     sys.modules.pop(modname, None)
-    # install original thread module if we're getting the original
-    # threading module
-    if modname == 'threading':
-        saver.save('thread')
-        sys.modules['thread'] = original('thread')
+    # some rudimentary dependency checking -- fortunately the modules
+    # we're working on don't have many dependencies so we can just do
+    # some special-casing here
+    deps = {'threading':'thread', 'Queue':'threading'}
+    if modname in deps:
+        dependency = deps[modname]
+        saver.save(dependency)
+        sys.modules[dependency] = original(dependency)
     try:
         real_mod = __import__(modname, {}, {}, modname.split('.')[:-1])
-        # hacky hack: Queue's constructor imports threading; therefore
-        # we wrap it with something that ensures it always gets the
-        # original threading
-        if modname == 'Queue':
-            real_mod.Queue.__init__ = _original_patch_function(real_mod.Queue.__init__, 'threading')
+        if modname == 'Queue' and not hasattr(real_mod, '_threading'):
+            # tricky hack: Queue's constructor in <2.7 imports
+            # threading on every instantiation; therefore we wrap
+            # it so that it always gets the original threading
+            real_mod.Queue.__init__ = _original_patch_function(
+                real_mod.Queue.__init__, 
+                'threading')
         # save a reference to the unpatched module so it doesn't get lost
         sys.modules[original_name] = real_mod
     finally:
