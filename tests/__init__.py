@@ -199,19 +199,22 @@ def get_database_auth():
     retval = {'MySQLdb':{'host': 'localhost','user': 'root','passwd': ''},
               'psycopg2':{'user':'test'}}
     try:
-        import simplejson
+        import json
     except ImportError:
-        print "No simplejson, using baked-in db credentials."
-        return retval 
+        try:
+            import simplejson as json
+        except ImportError:
+            print "No json implementation, using baked-in db credentials."
+            return retval 
 
     if 'EVENTLET_DB_TEST_AUTH' in os.environ:
-        return simplejson.loads(os.environ.get('EVENTLET_DB_TEST_AUTH'))
+        return json.loads(os.environ.get('EVENTLET_DB_TEST_AUTH'))
 
     files = [os.path.join(os.path.dirname(__file__), '.test_dbauth'),
              os.path.join(os.path.expanduser('~'), '.test_dbauth')]
     for f in files:
         try:
-            auth_utf8 = simplejson.load(open(f))
+            auth_utf8 = json.load(open(f))
             # Have to convert unicode objects to str objects because
             # mysqldb is dum. Using a doubly-nested list comprehension
             # because we know that the structure is a two-level dict.
