@@ -5,13 +5,7 @@ from eventlet.green import socket
 from eventlet.green import threading
 from eventlet.green import time
 
-patcher.inject("test.test_asyncore",
-    globals(),
-    ('asyncore', asyncore),
-    ('select', select),
-    ('socket', socket),
-    ('threading', threading),
-    ('time', time))
+patcher.inject("test.test_asyncore", globals())
 
 def new_closeall_check(self, usedefault):
     # Check that close_all() closes everything in a given map
@@ -46,6 +40,10 @@ def new_closeall_check(self, usedefault):
         self.assertEqual(c.socket.closed, True)
         
 HelperFunctionTests.closeall_check = new_closeall_check
+
+# Eventlet's select() emulation doesn't support the POLLPRI flag,
+# which this test relies on.  Therefore, nuke it!
+BaseTestAPI.test_handle_expt = lambda *a, **kw: None
 
 if __name__ == "__main__":
     test_main()
