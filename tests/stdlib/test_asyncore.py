@@ -41,9 +41,12 @@ def new_closeall_check(self, usedefault):
         
 HelperFunctionTests.closeall_check = new_closeall_check
 
-# Eventlet's select() emulation doesn't support the POLLPRI flag,
-# which this test relies on.  Therefore, nuke it!
-BaseTestAPI.test_handle_expt = lambda *a, **kw: None
+try:
+    # Eventlet's select() emulation doesn't support the POLLPRI flag,
+    # which this test relies on.  Therefore, nuke it!
+    BaseTestAPI.test_handle_expt = lambda *a, **kw: None
+except NameError:
+    pass
 
 if __name__ == "__main__":
     test_main()
