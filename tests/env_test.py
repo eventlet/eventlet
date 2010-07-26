@@ -26,7 +26,7 @@ current = [0]
 highwater = [0]
 def count():
     current[0] += 1
-    time.sleep(0.04)
+    time.sleep(0.1)
     if current[0] > highwater[0]:
         highwater[0] = current[0]
     current[0] -= 1
