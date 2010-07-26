@@ -1,6 +1,6 @@
 import os
 import shutil
-from eventlet.green import subprocess
+import subprocess
 import sys
 import tempfile
 
