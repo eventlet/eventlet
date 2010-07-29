@@ -61,3 +61,4 @@ Thanks To
 * Favo Yang, twisted hub patch
 * Schmir, patch that fixes readline method with chunked encoding in wsgi.py
 * Slide, for open-sourcing gogreen
+* Holger Krekel, websocket example small fix

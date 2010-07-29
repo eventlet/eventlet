@@ -35,6 +35,6 @@ def dispatch(environ, start_response):
         
 if __name__ == "__main__":
     # run an example app from the command line            
-    listener = eventlet.listen(('localhost', 7000))
+    listener = eventlet.listen(('127.0.0.1', 7000))
     print "\nVisit http://localhost:7000/ in your websocket-capable browser.\n"
     wsgi.server(listener, dispatch)
