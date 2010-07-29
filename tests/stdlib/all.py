@@ -9,9 +9,11 @@ debug.hub_prevent_multiple_readers(False)
 def restart_hub():
     from eventlet import hubs
     hub = hubs.get_hub()
-    hub.abort()
     hub_shortname = hub.__module__.split('.')[-1]
-    hubs.use_hub(hub_shortname)
+    # don't restart the pyevent hub; it's not necessary
+    if hub_shortname != 'pyevent':
+        hub.abort()
+        hubs.use_hub(hub_shortname)
 
 def assimilate_patched(name):
     try:
