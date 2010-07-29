@@ -9,6 +9,7 @@ def noop():
     pass
 
 class TestTimerCleanup(LimitedTestCase):
+    TEST_TIMEOUT = 2
     @skip_with_pyevent
     def test_cancel_immediate(self):
         hub = hubs.get_hub()
