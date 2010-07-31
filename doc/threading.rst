@@ -9,7 +9,7 @@ You can only communicate cross-thread using the "real" thread primitives and pip
 
 The vast majority of the times you'll want to use threads are to wrap some operation that is not "green", such as a C library that uses its own OS calls to do socket operations.  The :mod:`~eventlet.tpool` module is provided to make these uses simpler.
 
-The pyevent hub is not compatible with threads.
+The optional :ref:`pyevent hub <understanding_hubs>` is not compatible with threads.
 
 Tpool - Simple thread pool
 ---------------------------
