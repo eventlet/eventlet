@@ -59,6 +59,6 @@ Thanks To
 * Marcin Bachry, nice repro of a bug and good diagnosis leading to the fix
 * David Ziegler, reporting issue #53
 * Favo Yang, twisted hub patch
-* Schmir, patch that fixes readline method with chunked encoding in wsgi.py
+* Schmir, patch that fixes readline method with chunked encoding in wsgi.py, advice on patcher
 * Slide, for open-sourcing gogreen
 * Holger Krekel, websocket example small fix

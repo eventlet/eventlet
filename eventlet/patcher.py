@@ -1,5 +1,5 @@
 import sys
-
+import imp
 
 __all__ = ['inject', 'import_patched', 'monkey_patch', 'is_monkey_patched']
 
@@ -11,6 +11,7 @@ class SysModulesSaver(object):
     constructor."""
     def __init__(self, module_names=()):
         self._saved = {}
+        imp.acquire_lock()
         self.save(*module_names)
 
     def save(self, *module_names):
@@ -22,14 +23,17 @@ class SysModulesSaver(object):
         """Restores the modules that the saver knows about into
         sys.modules.
         """
-        for modname, mod in self._saved.iteritems():
-            if mod is not None:
-                sys.modules[modname] = mod
-            else:
-                try:
-                    del sys.modules[modname]
-                except KeyError:
-                    pass
+        try:
+            for modname, mod in self._saved.iteritems():
+                if mod is not None:
+                    sys.modules[modname] = mod
+                else:
+                    try:
+                        del sys.modules[modname]
+                    except KeyError:
+                        pass
+        finally:
+            imp.release_lock()
                 
 
 def inject(module_name, new_globals, *additional_modules):
@@ -63,7 +67,7 @@ def inject(module_name, new_globals, *additional_modules):
             _green_time_modules())
     
     # after this we are gonna screw with sys.modules, so capture the
-    # state of all the modules we're going to mess with
+    # state of all the modules we're going to mess with, and lock
     saver = SysModulesSaver([name for name, m in additional_modules])
     saver.save(module_name)
 
@@ -244,19 +248,22 @@ def monkey_patch(**on):
             # tell us whether or not we succeeded
             pass
 
-    for name, mod in modules_to_patch:
-        orig_mod = sys.modules.get(name)
-        if orig_mod is None:
-            orig_mod = __import__(name)
-        for attr_name in mod.__patched__:
-            patched_attr = getattr(mod, attr_name, None)
-            if patched_attr is not None:
-                setattr(orig_mod, attr_name, patched_attr)
+    imp.acquire_lock()
+    try:
+        for name, mod in modules_to_patch:
+            orig_mod = sys.modules.get(name)
+            if orig_mod is None:
+                orig_mod = __import__(name)
+            for attr_name in mod.__patched__:
+                patched_attr = getattr(mod, attr_name, None)
+                if patched_attr is not None:
+                    setattr(orig_mod, attr_name, patched_attr)
 
-    # hacks ahead; this is necessary to prevent a KeyError on program exit
-    if patched_thread:
-        _patch_main_thread(sys.modules['threading'])
-
+        # hacks ahead; this is necessary to prevent a KeyError on program exit
+        if patched_thread:
+            _patch_main_thread(sys.modules['threading'])
+    finally:
+        imp.release_lock()
 
 def _patch_main_thread(mod):
     """This is some gnarly patching specific to the threading module;
