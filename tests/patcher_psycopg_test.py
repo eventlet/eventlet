@@ -35,7 +35,7 @@ print "done"
 """
 
 class PatchingPsycopg(patcher_test.ProcessBase):
-    def test_psycopg_pached(self):
+    def test_psycopg_patched(self):
         if 'PSYCOPG_TEST_DSN' not in os.environ:
             # construct a non-json dsn for the subprocess
             psycopg_auth = get_database_auth()['psycopg2']
