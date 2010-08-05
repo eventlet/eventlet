@@ -1,3 +1,15 @@
+0.9.10
+======
+* Greendns: if dnspython is installed, Eventlet will automatically use it to provide non-blocking DNS queries.  Set the environment variable 'EVENTLET_NO_GREENDNS' if you don't want greendns but have dnspython installed.
+* Full test suite passes on Python 2.7.
+* Tests no longer depend on simplejson for >2.6.
+* Potential-bug fixes in patcher (thanks to Schmir, and thanks to Hudson)
+* Websockets work with query strings (thanks to mcarter)
+* WSGI posthooks that get called after the request completed (thanks to gholt, nice docs, too)
+* Blocking detector merged -- use it to detect places where your code is not yielding to the hub for > 1 second.
+* tpool.Proxy can wrap callables
+* Tweaked Timeout class to do something sensible when True is passed to the constructor
+
 0.9.9
 =====
 * A fix for monkeypatching on systems with psycopg version 2.0.14.
