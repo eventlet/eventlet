@@ -34,7 +34,7 @@ To run the doctests included in many of the eventlet modules, use this command:
 
   $ nosetests --with-doctest eventlet/*.py
   
-Currently there are 14 doctests.
+Currently there are 16 doctests.
 
 Standard Library Tests
 ----------------------

@@ -167,6 +167,44 @@ class Event(object):
                     waiter.throw(*exc)
 
     def send_exception(self, *args):
-        """Same as :meth:`send`, but sends an exception to waiters."""
+        """Same as :meth:`send`, but sends an exception to waiters.
+        
+        The arguments to send_exception are the same as the arguments
+        to ``raise``.  If a single exception object is passed in, it
+        will be re-raised when :meth:`wait` is called, generating a
+        new stacktrace.  
+        
+           >>> from eventlet import event
+           >>> evt = event.Event()
+           >>> evt.send_exception(RuntimeError())
+           >>> evt.wait()
+           Traceback (most recent call last):
+             File "<stdin>", line 1, in <module>
+             File "eventlet/event.py", line 120, in wait
+               current.throw(*self._exc)
+           RuntimeError
+        
+        If it's important to preserve the entire original stack trace,
+        you must pass in the entire :func:`sys.exc_info` tuple.
+
+           >>> import sys
+           >>> evt = event.Event()
+           >>> try:
+           ...     raise RuntimeError()
+           ... except RuntimeError:
+           ...     evt.send_exception(*sys.exc_info())
+           ... 
+           >>> evt.wait()
+           Traceback (most recent call last):
+             File "<stdin>", line 1, in <module>
+             File "eventlet/event.py", line 120, in wait
+               current.throw(*self._exc)
+             File "<stdin>", line 2, in <module>
+           RuntimeError
+           
+        Note that doing so stores a traceback object directly on the
+        Event object, which may cause reference cycles. See the
+        :func:`sys.exc_info` documentation.
+        """
         # the arguments and the same as for greenlet.throw
         return self.send(None, args)
