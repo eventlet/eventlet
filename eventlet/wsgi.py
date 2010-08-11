@@ -266,7 +266,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
                 client_conn = self.headers.get('Connection', '').lower()
                 send_keep_alive = False
-                if self.server.keepalive and (client_conn == 'keep-alive' or \
+                if self.close_connection == 0 and \
+                   self.server.keepalive and (client_conn == 'keep-alive' or \
                     (self.request_version == 'HTTP/1.1' and
                      not client_conn == 'close')):
                         # only send keep-alives back to clients that sent them,
@@ -362,7 +363,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 print exc
                 if not headers_set:
                     start_response("500 Internal Server Error",
-                                   [('Content-type', 'text/plain')])
+                                   [('Content-type', 'text/plain'),
+                                    ('Content-length', len(exc))])
                     write(exc)
         finally:
             if hasattr(result, 'close'):

@@ -924,6 +924,20 @@ class TestHttpd(_TestBase):
         self.assertEqual(read_content.wait(), 'ok')
         self.assert_(blew_up[0])
 
+    def test_exceptions_close_connection(self):
+        def wsgi_app(environ, start_response):
+            raise RuntimeError("intentional error")
+        self.site.application = wsgi_app
+        sock = eventlet.connect(('localhost', self.port))
+        fd = sock.makefile('rw')
+        fd.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+        fd.flush()
+        response_line, headers, body = read_http(sock)
+        self.assert_(response_line.startswith('HTTP/1.1 500 Internal Server Error'))
+        self.assertEqual(headers['connection'], 'close')
+        self.assert_('transfer-encoding' not in headers)
+
+
 def read_headers(sock):
     fd = sock.makefile()
     try:
