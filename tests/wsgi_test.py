@@ -937,6 +937,20 @@ class TestHttpd(_TestBase):
         self.assertEqual(headers['connection'], 'close')
         self.assert_('transfer-encoding' not in headers)
 
+    def test_unicode_raises_error(self):
+        def wsgi_app(environ, start_response):
+            start_response("200 OK", [])
+            yield u"oh hai"
+            yield u"non-encodable unicode: \u0230"
+        self.site.application = wsgi_app
+        sock = eventlet.connect(('localhost', self.port))
+        fd = sock.makefile('rw')
+        fd.write('GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
+        fd.flush()
+        response_line, headers, body = read_http(sock)
+        self.assert_(response_line.startswith('HTTP/1.1 500 Internal Server Error'))
+        self.assertEqual(headers['connection'], 'close')
+        self.assert_('unicode' in body)
 
 def read_headers(sock):
     fd = sock.makefile()

@@ -301,14 +301,14 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 _writelines(towrite)
                 length[0] = length[0] + sum(map(len, towrite))
             except UnicodeEncodeError:
-                print "Encountered unicode while attempting to write wsgi response: ", \
-                      [x for x in towrite if isinstance(x, unicode)]
-                traceback.print_exc()
+                self.server.log_message("Encountered non-ascii unicode while attempting to write wsgi response: %r" % [x for x in towrite if isinstance(x, unicode)])
+                self.server.log_message(traceback.format_exc())
                 _writelines(
-                    ["HTTP/1.0 500 Internal Server Error\r\n",
+                    ["HTTP/1.1 500 Internal Server Error\r\n",
                     "Connection: close\r\n",
                     "Content-type: text/plain\r\n",
                     "Content-length: 98\r\n",
+                    "Date: %s\r\n" % format_date_time(time.time()),
                     "\r\n",
                     ("Internal Server Error: wsgi application passed "
                      "a unicode object to the server instead of a string.")])
@@ -360,7 +360,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             except Exception:
                 self.close_connection = 1
                 exc = traceback.format_exc()
-                print exc
+                self.server.log_message(exc)
                 if not headers_set:
                     start_response("500 Internal Server Error",
                                    [('Content-type', 'text/plain'),
