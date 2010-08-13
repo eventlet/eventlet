@@ -7,6 +7,8 @@ exec "\n".join(["%s = __socket.%s" % (var, var) for var in __socket.__all__])
 # these are desired but are not in __all__
 _GLOBAL_DEFAULT_TIMEOUT = __socket._GLOBAL_DEFAULT_TIMEOUT
 _fileobject = __socket._fileobject
+# missing from __all__ because 2.6.1 is still common on Macs
+create_connection = __socket.create_connection  
 try:
     ssl = __socket.ssl
 except AttributeError:
