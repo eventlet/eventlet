@@ -94,3 +94,13 @@ This exercises some of the features of the websocket server
 implementation.
 
 .. literalinclude:: ../examples/websocket.py
+
+.. _websocket_chat_example:
+
+Websocket Multi-User Chat Example
+--------------------------
+``examples/websocket_chat.py``
+
+This is a mashup of the websocket example and the multi-user chat example, showing how you can do the same sorts of things with websockets that you can do with regular sockets.
+
+.. literalinclude:: ../examples/websocket_chat.py
