@@ -31,10 +31,6 @@ def get_default_hub():
     #except:
     #    pass
 
-    if 'twisted.internet.reactor' in sys.modules:
-        from eventlet.hubs import twistedr
-        return twistedr
-
     select = patcher.original('select')
     try:
         import eventlet.hubs.epolls

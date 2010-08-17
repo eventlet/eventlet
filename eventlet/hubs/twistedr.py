@@ -1,7 +1,7 @@
 import sys
 import threading
 from twisted.internet.base import DelayedCall as TwistedDelayedCall
-from eventlet import getcurrent, greenlet
+from eventlet.support import greenlets as greenlet
 from eventlet.hubs.hub import FdListener, READ, WRITE
 
 class DelayedCall(TwistedDelayedCall):
@@ -16,7 +16,7 @@ class DelayedCall(TwistedDelayedCall):
 class LocalDelayedCall(DelayedCall):
 
     def __init__(self, *args, **kwargs):
-        self.greenlet = getcurrent()
+        self.greenlet = greenlet.getcurrent()
         DelayedCall.__init__(self, *args, **kwargs)
 
     def _get_cancelled(self):
@@ -103,10 +103,10 @@ class BaseTwistedHub(object):
         self.greenlet = mainloop_greenlet
 
     def switch(self):
-        assert getcurrent() is not self.greenlet, \
+        assert greenlet.getcurrent() is not self.greenlet, \
                "Cannot switch from MAINLOOP to MAINLOOP"
         try:
-           getcurrent().parent = self.greenlet
+           greenlet.getcurrent().parent = self.greenlet
         except ValueError:
            pass
         return self.greenlet.switch()
@@ -201,12 +201,12 @@ class TwistedHub(BaseTwistedHub):
         BaseTwistedHub.__init__(self, g)
 
     def switch(self):
-        assert getcurrent() is not self.greenlet, \
+        assert greenlet.getcurrent() is not self.greenlet, \
                "Cannot switch from MAINLOOP to MAINLOOP"
         if self.greenlet.dead:
             self.greenlet = greenlet.greenlet(self.run)
         try:
-            getcurrent().parent = self.greenlet
+            greenlet.getcurrent().parent = self.greenlet
         except ValueError:
             pass
         return self.greenlet.switch()
