@@ -1,10 +1,11 @@
 __socket = __import__('socket')
-exec "\n".join(["%s = __socket.%s" % (var, var) for var in __socket.__all__])
+globals().update(dict([(var, getattr(__socket, var))
+                       for var in dir(__socket) 
+                       if not var.startswith('__')]))
 
 os = __import__('os')
 import sys
 import warnings
-
 from eventlet.hubs import get_hub
 from eventlet.greenio import GreenSocket as socket
 from eventlet.greenio import SSL as _SSL  # for exceptions
@@ -13,7 +14,6 @@ from eventlet.greenio import _fileobject
 
 __all__     = __socket.__all__
 __patched__ = ['fromfd', 'socketpair', 'create_connection', 'ssl', 'socket']
-
 try:
     __original_fromfd__ = __socket.fromfd
     def fromfd(*args):

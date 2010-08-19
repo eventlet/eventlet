@@ -1,5 +1,7 @@
 __time = __import__('time')
-exec "\n".join("%s = __time.%s" % (var, var) for var in dir(__time))
+globals().update(dict([(var, getattr(__time, var))
+                       for var in dir(__time) 
+                       if not var.startswith('__')]))
 __patched__ = ['sleep']
 from eventlet.greenthread import sleep
 sleep # silence pyflakes

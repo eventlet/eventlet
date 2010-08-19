@@ -3,16 +3,10 @@ import sys
 from eventlet.hubs import get_hub
 __import__('eventlet.green._socket_nodns')
 __socket = sys.modules['eventlet.green._socket_nodns']
-exec "\n".join(["%s = __socket.%s" % (var, var) for var in __socket.__all__])
-# these are desired but are not in __all__
-_GLOBAL_DEFAULT_TIMEOUT = __socket._GLOBAL_DEFAULT_TIMEOUT
-_fileobject = __socket._fileobject
-# missing from __all__ because 2.6.1 is still common on Macs
-create_connection = __socket.create_connection  
-try:
-    ssl = __socket.ssl
-except AttributeError:
-    pass
+globals().update(dict([(var, getattr(__socket, var))
+                       for var in dir(__socket) 
+                       if not var.startswith('__')]))
+               
 __all__     = __socket.__all__
 __patched__ = __socket.__patched__ + ['gethostbyname', 'getaddrinfo']
 

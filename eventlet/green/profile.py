@@ -29,9 +29,10 @@ FIXME: No testcases for this module.
 """
 
 profile_orig = __import__('profile')
-
-exec "\n".join(["%s = profile_orig.%s" % (var, var) 
-                for var in profile_orig.__all__])
+globals().update(dict([(var, getattr(profile_orig, var))
+                       for var in dir(profile_orig) 
+                       if not var.startswith('__')]))
+__all__ = profile_orig.__all__
 
 import new
 import sys

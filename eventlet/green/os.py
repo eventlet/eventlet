@@ -8,7 +8,10 @@ from eventlet import greenthread
 from eventlet import hubs
 
 __patched__ = ['fdopen', 'read', 'write', 'wait', 'waitpid']
-exec "\n".join(["%s = os_orig.%s" % (var, var) for var in dir(os_orig)])
+globals().update(dict([(var, getattr(os_orig, var))
+                       for var in dir(os_orig) 
+                       if not var.startswith('__')]))
+__all__ = os_orig.__all__
 
 def fdopen(fd, *args, **kw):
     """fdopen(fd [, mode='r' [, bufsize]]) -> file_object

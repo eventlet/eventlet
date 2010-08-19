@@ -1,6 +1,8 @@
 __ssl = __import__('ssl')
 
-exec "\n".join("%s = __ssl.%s" % (attr, attr) for attr in dir(__ssl))
+globals().update(dict([(var, getattr(__ssl, var))
+                       for var in dir(__ssl) 
+                       if not var.startswith('__')]))
 
 import sys
 import errno
