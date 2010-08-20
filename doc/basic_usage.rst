@@ -78,6 +78,6 @@ Network Convenience Functions
 
 .. autofunction:: eventlet.serve
 
-.. autofunction:: eventlet.StopServe
+.. autoclass:: eventlet.StopServe
     
 These are the basic primitives of Eventlet; there are a lot more out there in the other Eventlet modules; check out the :doc:`modules`.

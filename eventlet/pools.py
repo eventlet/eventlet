@@ -161,11 +161,11 @@ class Pool(object):
         return max(0, self.channel.getting() - self.channel.putting())
 
     def create(self):
-        """Generate a new pool item.  In order for the pool to function,
-        either this method must be overriden in a subclass or pool must be
-        created with `create`=callable argument.  It accepts no arguments
-        and returns a single instance of whatever thing the pool is supposed
-        to contain.
+        """Generate a new pool item.  In order for the pool to
+        function, either this method must be overriden in a subclass
+        or the pool must be constructed with the `create` argument.
+        It accepts no arguments and returns a single instance of
+        whatever thing the pool is supposed to contain.
 
         In general, :meth:`create` is called whenever the pool exceeds its
         previous high-water mark of concurrently-checked-out-items.  In other
