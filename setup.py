@@ -7,7 +7,7 @@ from os import path
 import sys
 
 requirements = []
-for flag, req in [('--without-greenlet','greenlet >= 0.2')]:
+for flag, req in [('--without-greenlet','greenlet >= 0.3')]:
     if flag in sys.argv:
         sys.argv.remove(flag)
     else:

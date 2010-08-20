@@ -48,12 +48,6 @@ def spawn(func, *args, **kwargs):
     return g
     
     
-def _main_wrapper(func, args, kwargs):
-    # function that gets around the fact that greenlet.switch
-    # doesn't accept keyword arguments
-    return func(*args, **kwargs)
-
-
 def spawn_n(func, *args, **kwargs):
     """Same as :func:`spawn`, but returns a ``greenlet`` object from
     which it is not possible to retrieve either a return value or
@@ -126,8 +120,8 @@ def call_after_local(seconds, function, *args, **kwargs):
         "has the same signature and semantics (plus a bit extra).",
         DeprecationWarning, stacklevel=2)
     hub = hubs.get_hub()
-    g = greenlet.greenlet(_main_wrapper, parent=hub.greenlet)
-    t = hub.schedule_call_local(seconds, g.switch, function, args, kwargs)
+    g = greenlet.greenlet(function, parent=hub.greenlet)
+    t = hub.schedule_call_local(seconds, g.switch, *args, **kwargs)
     return t
 
 
@@ -149,12 +143,8 @@ with_timeout = timeout.with_timeout
 
 def _spawn_n(seconds, func, args, kwargs):
     hub = hubs.get_hub()
-    if kwargs:
-        g = greenlet.greenlet(_main_wrapper, parent=hub.greenlet)
-        t = hub.schedule_call_global(seconds, g.switch, func, args, kwargs)
-    else:
-        g = greenlet.greenlet(func, parent=hub.greenlet)
-        t = hub.schedule_call_global(seconds, g.switch, *args)
+    g = greenlet.greenlet(func, parent=hub.greenlet)
+    t = hub.schedule_call_global(seconds, g.switch, *args, **kwargs)
     return t, g
 
 
