@@ -1,3 +1,15 @@
+0.9.12
+======
+* Eventlet no longer uses the Twisted hub if Twisted is imported -- you must call eventlet.hubs.use_hub('twistedr') if you want to use it.  This prevents strange race conditions for those who want to use both Twisted and Eventlet separately.
+* Removed circular import in twistedr.py
+* Added websocket multi-user chat example
+* Not using exec() in green modules anymore.
+* eventlet.green.socket now contains all attributes of the stdlib socket module, even those that were left out by bugs.
+* Eventlet.wsgi doesn't call print anymore, instead uses the logfiles for everything (it used to print exceptions in one place).
+* Eventlet.wsgi properly closes the connection when an error is raised
+* Better documentation on eventlet.event.Event.send_exception
+* Adding websocket.html to tarball so that you can run the examples without checking out the source
+
 0.9.10
 ======
 * Greendns: if dnspython is installed, Eventlet will automatically use it to provide non-blocking DNS queries.  Set the environment variable 'EVENTLET_NO_GREENDNS' if you don't want greendns but have dnspython installed.
