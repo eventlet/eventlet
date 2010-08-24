@@ -4,17 +4,17 @@ import traceback
 import warnings
 import signal
 
+HAS_ITIMER = False
 alarm_func = signal.alarm
-
-try:
-    if hasattr(signal, 'setitimer'):
-        HAS_ITIMER = True
-    else:
+if hasattr(signal, 'setitimer'):
+    HAS_ITIMER = True
+else:
+    try:
         import itimer
         HAS_ITIMER = True
         alarm_func = itimer.alarm
-except ImportError:
-    pass
+    except ImportError:
+        pass
 
 from eventlet.support import greenlets as greenlet, clear_sys_exc_info
 from eventlet.hubs import timer
@@ -92,9 +92,7 @@ class BaseHub(object):
             self._old_signal_handler = tmp
 
         if HAS_ITIMER:
-            itimer.alarm(self.debug_blocking_resolution)
-        else:
-            signal.alarm(self.debug_blocking_resolution)
+            alarm_func(self.debug_blocking_resolution)
 
     def block_detect_post(self):
         if (hasattr(self, "_old_signal_handler") and
