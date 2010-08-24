@@ -4,10 +4,15 @@ import traceback
 import warnings
 import signal
 
-HAS_ITIMER = False
+alarm_func = signal.alarm
+
 try:
-    import itimer
-    HAS_ITIMER = True
+    if hasattr(signal, 'setitimer'):
+        HAS_ITIMER = True
+    else:
+        import itimer
+        HAS_ITIMER = True
+        alarm_func = itimer.alarm
 except ImportError:
     pass
 
