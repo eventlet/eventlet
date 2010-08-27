@@ -19,10 +19,3 @@ EVENTLET_THREADPOOL_SIZE
    The size of the threadpool in :mod:`~eventlet.tpool`.  This is an
    environment variable because tpool constructs its pool on first
    use, so any control of the pool size needs to happen before then.
-
-EVENTLET_TPOOL_DNS 
-
-   If set to 'yes', uses :func:`eventlet.tpool.execute` to call
-   :func:`~socket.gethostbyname` and :func:`~socket.getaddrinfo`,
-   making them appear non-blocking.  This environment variable is
-   ignored on OS X.
