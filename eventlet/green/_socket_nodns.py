@@ -13,7 +13,7 @@ from eventlet.greenio import _GLOBAL_DEFAULT_TIMEOUT
 from eventlet.greenio import _fileobject
 
 __all__     = __socket.__all__
-__patched__ = ['fromfd', 'socketpair', 'create_connection', 'ssl', 'socket']
+__patched__ = ['fromfd', 'socketpair', 'ssl', 'socket']
 try:
     __original_fromfd__ = __socket.fromfd
     def fromfd(*args):
@@ -29,40 +29,6 @@ try:
 except AttributeError:
     pass
 
-
-
-def create_connection(address, 
-                      timeout=_GLOBAL_DEFAULT_TIMEOUT, 
-                      source_address=None):
-    """Connect to *address* and return the socket object.
-
-    Convenience function.  Connect to *address* (a 2-tuple ``(host,
-    port)``) and return the socket object.  Passing the optional
-    *timeout* parameter will set the timeout on the socket instance
-    before attempting to connect.  If no *timeout* is supplied, the
-    global default timeout setting returned by :func:`getdefaulttimeout`
-    is used.
-    """
-
-    msg = "getaddrinfo returns an empty list"
-    host, port = address
-    for res in getaddrinfo(host, port, 0, SOCK_STREAM):
-        af, socktype, proto, canonname, sa = res
-        sock = None
-        try:
-            sock = socket(af, socktype, proto)
-            if timeout is not _GLOBAL_DEFAULT_TIMEOUT:
-                sock.settimeout(timeout)
-            if source_address:
-                sock.bind(source_address)
-            sock.connect(sa)
-            return sock
-
-        except error, msg:
-            if sock is not None:
-                sock.close()
-
-    raise error, msg
 
 
 def _convert_to_sslerror(ex):
