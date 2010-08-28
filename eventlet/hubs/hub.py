@@ -1,20 +1,23 @@
 import heapq
-import sys
+import math
 import traceback
-import warnings
 import signal
+import sys
+import warnings
 
-HAS_ITIMER = False
-alarm_func = signal.alarm
+arm_alarm = None
 if hasattr(signal, 'setitimer'):
-    HAS_ITIMER = True
+    def alarm_itimer(seconds):
+        signal.setitimer(signal.ITIMER_REAL, seconds)
+    arm_alarm = alarm_itimer
 else:
     try:
         import itimer
-        HAS_ITIMER = True
-        alarm_func = itimer.alarm
+        arm_alarm = itimer.alarm
     except ImportError:
-        pass
+        def alarm_signal(seconds):
+            signal.alarm(math.ceil(seconds))
+        arm_alarm = alarm_signal
 
 from eventlet.support import greenlets as greenlet, clear_sys_exc_info
 from eventlet.hubs import timer
@@ -57,7 +60,7 @@ class DebugListener(FdListener):
 
 def alarm_handler(signum, frame):
     import inspect
-    raise RuntimeError("ALARMED at" + str(inspect.getframeinfo(frame)))
+    raise RuntimeError("Blocking detector ALARMED at" + str(inspect.getframeinfo(frame)))
 
 
 class BaseHub(object):
@@ -91,8 +94,7 @@ class BaseHub(object):
         if tmp != alarm_handler:
             self._old_signal_handler = tmp
 
-        if HAS_ITIMER:
-            alarm_func(self.debug_blocking_resolution)
+        arm_alarm(self.debug_blocking_resolution)
 
     def block_detect_post(self):
         if (hasattr(self, "_old_signal_handler") and

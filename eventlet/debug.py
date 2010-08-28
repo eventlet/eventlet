@@ -134,10 +134,23 @@ def tpool_exceptions(state = False):
 
 def hub_blocking_detection(state = False, resolution = 1):
     """Toggles whether Eventlet makes an effort to detect blocking
-    behavior in other code.  It does this by setting a SIGALARM with a short 
-    timeout.
+    behavior in an application.
+
+    It does this by telling the kernel to raise a SIGALARM after a
+    short timeout, and clearing the timeout every time the hub
+    greenlet is resumed.  Therefore, any code that runs for a long
+    time without yielding to the hub will get interrupted by the
+    blocking detector (don't use it in production!).
+
+    The *resolution* argument governs how long the SIGALARM timeout
+    waits in seconds.  If on Python 2.6 or later, the implementation
+    uses :func:`signal.setitimer` and can be specified as a
+    floating-point value.  On 2.5 or earlier, 1 second is the minimum.
+    The shorter the resolution, the greater the chance of false
+    positives.
     """
     from eventlet import hubs
+    assert resolution > 0
     hubs.get_hub().debug_blocking = state
     hubs.get_hub().debug_blocking_resolution = resolution
     if(not state):
