@@ -44,6 +44,27 @@ assert highwater[0] == expected, "%s != %s" % (highwater[0], expected)"""
         finally:
             del os.environ['EVENTLET_THREADPOOL_SIZE']
 
+    def test_tpool_negative(self):
+        new_mod = """from eventlet import tpool
+import eventlet
+import time
+def do():
+    print "should not get here"
+try:
+    tpool.execute(do)
+except AssertionError:
+    print "success"
+"""
+        os.environ['EVENTLET_THREADPOOL_SIZE'] = "-1"
+        try:
+            self.write_to_tempfile("newmod", new_mod)
+            output, lines = self.launch_subprocess('newmod.py')
+            self.assertEqual(len(lines), 2, lines)
+            self.assertEqual(lines[0], "success", output)
+        finally:
+            del os.environ['EVENTLET_THREADPOOL_SIZE']
+
+
 class Hub(ProcessBase):
     def test_eventlet_hub(self):
         new_mod = """from eventlet import hubs

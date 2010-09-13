@@ -257,6 +257,7 @@ def setup():
 
     _reqq = Queue(maxsize=-1)
     _rspq = Queue(maxsize=-1)
+    assert _nthreads >= 0, "Can't specify negative number of threads"
     for i in range(0,_nthreads):
         t = threading.Thread(target=tworker, name="tpool_thread_%s" % i)
         t.setDaemon(True)
