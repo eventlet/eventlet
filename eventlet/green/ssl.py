@@ -300,7 +300,9 @@ class GreenSSLSocket(__ssl.SSLSocket):
                           do_handshake_on_connect=self.do_handshake_on_connect,
                           suppress_ragged_eofs=self.suppress_ragged_eofs)
         return (new_ssl, addr)
-        
+
+    def dup(self):
+        raise NotImplementedError("Can't dup an ssl object")
                                
 SSLSocket = GreenSSLSocket
 

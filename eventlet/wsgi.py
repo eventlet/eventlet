@@ -160,7 +160,7 @@ class Input(object):
         return iter(self.read())
 
     def get_socket(self):
-        return self.rfile._sock.dup()
+        return self.rfile._sock
 
 
 class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
@@ -498,6 +498,10 @@ class Server(BaseHTTPServer.HTTPServer):
             'wsgi.run_once': False,
             'wsgi.url_scheme': 'http',
         }
+        # detect secure socket
+        if hasattr(self.socket, 'do_handshake'):
+            d['wsgi.url_scheme'] = 'https'
+            d['HTTPS'] = 'on'
         if self.environ is not None:
             d.update(self.environ)
         return d

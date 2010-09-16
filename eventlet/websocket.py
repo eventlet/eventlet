@@ -71,7 +71,11 @@ class WebSocketWSGI(object):
             response = md5(key).digest()
         
         # Start building the response
-        location = 'ws://%s%s%s' % (
+        scheme = 'ws'
+        if environ.get('wsgi.url_scheme') == 'https':
+            scheme = 'wss'
+        location = '%s://%s%s%s' % (
+            scheme,
             environ.get('HTTP_HOST'), 
             environ.get('SCRIPT_NAME'), 
             environ.get('PATH_INFO')

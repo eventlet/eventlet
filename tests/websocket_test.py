@@ -8,7 +8,7 @@ from eventlet.websocket import WebSocket, WebSocketWSGI
 from eventlet import wsgi
 from eventlet import event
 
-from tests import mock, LimitedTestCase
+from tests import mock, LimitedTestCase, certificate_file, private_key_file
 from tests.wsgi_test import _TestBase
 
 
@@ -458,6 +458,50 @@ class TestWebSocket(_TestBase):
         resp = sock.recv(1024)
         done_with_request.wait()
         self.assert_(error_detected[0])
+
+
+class TestWebSocketSSL(_TestBase):
+    def set_site(self):
+        self.site = wsapp
+
+    def test_ssl_sending_messages(self):
+        s = eventlet.wrap_ssl(eventlet.listen(('localhost', 0)),
+                              certfile=certificate_file, 
+                              keyfile=private_key_file,
+                              server_side=True)
+        self.spawn_server(sock=s)
+        connect = [
+                "GET /echo HTTP/1.1",
+                "Upgrade: WebSocket",
+                "Connection: Upgrade",
+                "Host: localhost:%s" % self.port,
+                "Origin: http://localhost:%s" % self.port,
+                "Sec-WebSocket-Protocol: ws",
+                "Sec-WebSocket-Key1: 4 @1  46546xW%0l 1 5",
+                "Sec-WebSocket-Key2: 12998 5 Y3 1  .P00",
+                ]
+        sock = eventlet.wrap_ssl(eventlet.connect(
+                ('localhost', self.port)))
+
+        sock.sendall('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U')
+        first_resp = sock.recv(1024)
+        # make sure it sets the wss: protocol on the location header
+        loc_line = [x for x in first_resp.split("\r\n") 
+                    if x.lower().startswith('sec-websocket-location')][0]
+        self.assert_("wss://localhost" in loc_line, 
+                     "Expecting wss protocol in location: %s" % loc_line)
+        sock.sendall('\x00hello\xFF')
+        result = sock.recv(1024)
+        self.assertEqual(result, '\x00hello\xff')
+        sock.sendall('\x00start')
+        eventlet.sleep(0.001)
+        sock.sendall(' end\xff')
+        result = sock.recv(1024)
+        self.assertEqual(result, '\x00start end\xff')
+        sock.shutdown(socket.SHUT_RDWR)
+        sock.close()
+        eventlet.sleep(0.01)
+
 
 
 class TestWebSocketObject(LimitedTestCase):
