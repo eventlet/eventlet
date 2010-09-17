@@ -22,9 +22,10 @@ To create a websocket server, simply decorate a handler method with
 You can find a slightly more elaborate version of this code in the file
 ``examples/websocket.py``.
 
-**Note** that the web socket spec is still under development, and it
-will be necessary to change the way that this module works in response
-to spec changes.
+As of version 0.9.13, eventlet.websocket supports SSL websockets; all that's necessary is to use an :ref:`SSL wsgi server <wsgi_ssl>`.
+
+.. note :: The web socket spec is still under development, and it will be necessary to change the way that this module works in response to spec changes.
+
 
 .. automodule:: eventlet.websocket
 	:members:

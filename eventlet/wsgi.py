@@ -551,7 +551,7 @@ def server(sock, site,
     :param log_x_forwarded_for: If True (the default), logs the contents of the x-forwarded-for header in addition to the actual client ip address in the 'client_ip' field of the log line.
     :param custom_pool: A custom GreenPool instance which is used to spawn client green threads.  If this is supplied, max_size is ignored.
     :param keepalive: If set to False, disables keepalives on the server; all connections will be closed after serving one request.
-    :param log_format: A python format string that is used as the template to generate log lines.  The following values can be formatted into it: client_ip, date_time, request_line, status_code, body_length, wall_seconds.  Look the default for an example of how to use this.
+    :param log_format: A python format string that is used as the template to generate log lines.  The following values can be formatted into it: client_ip, date_time, request_line, status_code, body_length, wall_seconds.  The default is a good example of how to use it.
     """
     serv = Server(sock, sock.getsockname(),
                   site, log,

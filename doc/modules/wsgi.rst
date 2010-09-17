@@ -1,7 +1,7 @@
 :mod:`wsgi` -- WSGI server
 ===========================
 
-The wsgi module provides a simple an easy way to start an event-driven 
+The wsgi module provides a simple and easy way to start an event-driven 
 `WSGI <http://wsgi.org/wsgi/>`_ server.  This can serve as an embedded
 web server in an application, or as the basis for a more full-featured web
 server package.  One such package is `Spawning <http://pypi.python.org/pypi/Spawning/>`_.
@@ -20,6 +20,25 @@ To launch a wsgi server, simply create a socket and call :func:`eventlet.wsgi.se
 
 You can find a slightly more elaborate version of this code in the file
 ``examples/wsgi.py``.
+
+.. automodule:: eventlet.wsgi
+	:members:
+
+.. _wsgi_ssl:
+
+SSL
+---
+
+Creating a secure server is only slightly more involved than the base example.  All that's needed is to pass an SSL-wrapped socket to the :func:`~eventlet.wsgi.server` method::
+
+    wsgi.server(eventlet.wrap_ssl(eventlet.listen(('', 8090)),
+                                  certfile='cert.crt',
+                                  keyfile='private.key',
+                                  server_side=True),
+                hello_world)
+
+Applications can detect whether they are inside a secure server by the value of the ``env['wsgi.url_scheme']`` environment variable.
+
 
 Non-Standard Extension to Support Post Hooks
 --------------------------------------------
@@ -53,9 +72,3 @@ Post hooks are useful when code needs to be executed after a response has been
 fully sent to the client (or when the client disconnects early). One example is
 for more accurate logging of bandwidth used, as client disconnects use less
 bandwidth than the actual Content-Length.
-
-API
----
-
-.. automodule:: eventlet.wsgi
-	:members:
