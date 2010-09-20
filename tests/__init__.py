@@ -224,3 +224,6 @@ def get_database_auth():
         except IOError:
             pass
     return retval
+
+certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
+private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')

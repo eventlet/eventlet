@@ -1,12 +1,9 @@
-from tests import skipped, LimitedTestCase, skip_unless
+from tests import skipped, LimitedTestCase, skip_unless, certificate_file, private_key_file
 from unittest import main
 import eventlet
 from eventlet import util, coros, greenio
 import socket
 import os
-
-certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
-private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
 
 def listen_ssl_socket(address=('127.0.0.1', 0)):
     sock = util.wrap_ssl(socket.socket(), certificate_file,
