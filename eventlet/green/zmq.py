@@ -1,5 +1,7 @@
 __zmq__ = __import__('zmq')
+from eventlet import patcher
 from eventlet.hubs import trampoline
+
 __patched__ = ['Context', 'Socket']
 globals().update(dict([(var, getattr(__zmq__, var))
                        for var in __zmq__.__all__
@@ -17,18 +19,17 @@ class Socket(__zmq__.Socket):
             
 
     def _send_message(self, data, flags=0, copy=True):
-#        flags |= __zmq__.NOBLOCK
-        print 'send'
+        flags |= __zmq__.NOBLOCK
         while True:
             try:
                 return super(Socket, self)._send_message(data, flags)
             except __zmq__.ZMQError, e:
                 if e.errno != EAGAIN:
                     raise
-            trampoline(self, read=True)
+            trampoline(self, write=True)
 
     def _send_copy(self, data, flags=0, copy=True):
-#        flags |= __zmq__.NOBLOCK
+        flags |= __zmq__.NOBLOCK
         while True:
             try:
                 return super(Socket, self)._send_copy(data, flags)

@@ -1,6 +1,6 @@
 from eventlet import patcher
 from eventlet.green import zmq
-from eventlet.hubs import poll
+from eventlet.hubs import poll, _threadlocal
 from eventlet.hubs.hub import BaseHub, noop
 from eventlet.hubs.poll  import READ, WRITE
 from eventlet.support import clear_sys_exc_info
@@ -21,6 +21,23 @@ class Hub(poll.Hub):
     def __init__(self, clock=time.time):
         BaseHub.__init__(self, clock)
         self.poll = zmq.Poller()
+
+    def get_context(self):
+        """zmq's Context must be unique within a hub
+
+        The zeromq API documentation states:
+        All zmq sockets passed to the zmq_poll() function must share the same
+        zmq context and must belong to the thread calling zmq_poll()
+
+        As zmq_poll is what's eventually being called then we need to insure
+        that all sockets that are going to be passed to zmq_poll (via
+        hub.do_poll) are in the same context
+        """
+        try:
+            return _threadlocal.context
+        except AttributeError:
+            _threadlocal.context = zmq.Context()
+            return _threadlocal.context
 
     def register(self, fileno, new=False):
         mask = 0
