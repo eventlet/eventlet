@@ -38,7 +38,7 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
     @skip_unless_zmq
     def test_recv_spawned_before_send_is_non_blocking(self):
         ipc = 'ipc:///tmp/tests'
-        req, rep = self.create_bound_pair(zmq.PAIR, zmq.PAIR, interface='inproc://')
+        req, rep = self.create_bound_pair(zmq.PAIR, zmq.PAIR)
 #        req.connect(ipc)
 #        rep.bind(ipc)
         sleep()
@@ -54,8 +54,7 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
 
     @skip_unless_zmq
     def test_send_1k_req_rep(self):
-        self.reset_timeout(2)
-        req, rep = self.create_bound_pair(zmq.REQ, zmq.REP, interface='inproc://')
+        req, rep = self.create_bound_pair(zmq.REQ, zmq.REP)
         sleep()
         done = event.Event()
         def tx():
@@ -79,13 +78,12 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
 
     @skip_unless_zmq
     def test_send_1k_up_down(self):
-        self.reset_timeout(2)
-        down, up = self.create_bound_pair(zmq.DOWNSTREAM, zmq.UPSTREAM, interface='inproc://')
+        down, up = self.create_bound_pair(zmq.DOWNSTREAM, zmq.UPSTREAM)
         sleep()
         done = event.Event()
         def tx():
             tx_i = 0
-            while True:
+            while tx_i <= 1000:
                 tx_i += 1
                 down.send(str(tx_i))
         def rx():

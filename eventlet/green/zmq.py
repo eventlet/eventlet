@@ -1,5 +1,5 @@
 __zmq__ = __import__('zmq')
-from eventlet import patcher
+from eventlet import sleep
 from eventlet.hubs import trampoline
 
 __patched__ = ['Context', 'Socket']
@@ -22,7 +22,9 @@ class Socket(__zmq__.Socket):
         flags |= __zmq__.NOBLOCK
         while True:
             try:
-                return super(Socket, self)._send_message(data, flags)
+                super(Socket, self)._send_message(data, flags)
+                sleep()
+                return
             except __zmq__.ZMQError, e:
                 if e.errno != EAGAIN:
                     raise
@@ -32,7 +34,9 @@ class Socket(__zmq__.Socket):
         flags |= __zmq__.NOBLOCK
         while True:
             try:
-                return super(Socket, self)._send_copy(data, flags)
+                super(Socket, self)._send_copy(data, flags)
+                sleep()
+                return
             except __zmq__.ZMQError, e:
                 if e.errno != EAGAIN:
                     raise
