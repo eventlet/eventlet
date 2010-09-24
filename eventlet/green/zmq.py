@@ -23,7 +23,6 @@ class Socket(__zmq__.Socket):
         while True:
             try:
                 super(Socket, self)._send_message(data, flags)
-                sleep()
                 return
             except __zmq__.ZMQError, e:
                 if e.errno != EAGAIN:
@@ -35,7 +34,6 @@ class Socket(__zmq__.Socket):
         while True:
             try:
                 super(Socket, self)._send_copy(data, flags)
-                sleep()
                 return
             except __zmq__.ZMQError, e:
                 if e.errno != EAGAIN:

@@ -37,7 +37,6 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
 
     @skip_unless_zmq
     def test_recv_spawned_before_send_is_non_blocking(self):
-        ipc = 'ipc:///tmp/tests'
         req, rep = self.create_bound_pair(zmq.PAIR, zmq.PAIR)
 #        req.connect(ipc)
 #        rep.bind(ipc)
@@ -51,6 +50,14 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         req.send('test')
         done.wait()
         self.assertEqual(msg['res'], 'test')
+
+    @skip_unless_zmq
+    def test_close_socket_raises_enotsup(self):
+        req, rep = self.create_bound_pair(zmq.PAIR, zmq.PAIR)
+        rep.close()
+        req.close()
+        self.assertRaisesErrno(zmq.ENOTSUP, rep.recv)
+        self.assertRaisesErrno(zmq.ENOTSUP, req.send, 'test')
 
     @skip_unless_zmq
     def test_send_1k_req_rep(self):
@@ -68,6 +75,7 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
                 rx_i = rep.recv()
                 if rx_i == "1000":
                     rep.send('done')
+                    sleep()
                     done.send(0)
                     break
                 rep.send('i')
@@ -128,7 +136,11 @@ class TestThreadedContextAccess(TestCase):
         test_result = []
         def assert_different(ctx):
             assert not hasattr(_threadlocal, 'hub')
-            this_thread_context = get_hub().get_context()
+            hub = get_hub()
+            try:
+                this_thread_context = hub.get_context()
+            except:
+                test_result.append('fail')
             test_result.append(ctx is this_thread_context)
         Thread(target=assert_different, args=(context,)).start()
         while not len(test_result):
