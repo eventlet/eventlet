@@ -18,8 +18,8 @@ class TestTimerCleanup(LimitedTestCase):
         for i in xrange(2000):
             t = hubs.get_hub().schedule_call_global(60, noop)
             t.cancel()
-            self.assert_less_than_equal(hub.timers_canceled - scanceled,
-                                  hub.get_timers_count() - stimers + 1)
+            self.assert_less_than_equal(hub.timers_canceled,
+                                  hub.get_timers_count() + 1)
         # there should be fewer than 1000 new timers and canceled
         self.assert_less_than_equal(hub.get_timers_count(), 1000 + stimers)
         self.assert_less_than_equal(hub.timers_canceled, 1000)
@@ -33,11 +33,11 @@ class TestTimerCleanup(LimitedTestCase):
         for i in xrange(2000):
             t = hubs.get_hub().schedule_call_global(60, noop)
             eventlet.sleep()
-            self.assert_less_than_equal(hub.timers_canceled - scanceled,
-                                  hub.get_timers_count() - stimers + 1)
+            self.assert_less_than_equal(hub.timers_canceled,
+                                  hub.get_timers_count() + 1)
             t.cancel()
-            self.assert_less_than_equal(hub.timers_canceled - scanceled,
-                                  hub.get_timers_count() - stimers + 1)
+            self.assert_less_than_equal(hub.timers_canceled,
+                                  hub.get_timers_count() + 1, hub.timers)
         # there should be fewer than 1000 new timers and canceled
         self.assert_less_than_equal(hub.get_timers_count(), 1000 + stimers)
         self.assert_less_than_equal(hub.timers_canceled, 1000)
@@ -56,11 +56,11 @@ class TestTimerCleanup(LimitedTestCase):
             t2 = hubs.get_hub().schedule_call_global(60, noop)
             t3 = hubs.get_hub().schedule_call_global(60, noop)
             eventlet.sleep()
-            self.assert_less_than_equal(hub.timers_canceled - scanceled,
-                                        hub.get_timers_count() - stimers + 1)
+            self.assert_less_than_equal(hub.timers_canceled,
+                                        hub.get_timers_count() + 1)
             t.cancel()
-            self.assert_less_than_equal(hub.timers_canceled - scanceled,
-                                        hub.get_timers_count() - stimers + 1)
+            self.assert_less_than_equal(hub.timers_canceled,
+                                        hub.get_timers_count() + 1)
             uncanceled_timers.append(t2)
             uncanceled_timers.append(t3)
         # 3000 new timers, plus a few extras
@@ -69,8 +69,8 @@ class TestTimerCleanup(LimitedTestCase):
         self.assertEqual(hub.timers_canceled, 1000)
         for t in uncanceled_timers:
             t.cancel()
-            self.assert_less_than_equal(hub.timers_canceled - scanceled,
-                                        hub.get_timers_count() - stimers + 1)
+            self.assert_less_than_equal(hub.timers_canceled,
+                                        hub.get_timers_count())
         eventlet.sleep()
         
 
