@@ -37,11 +37,10 @@ def _signal_t2e():
     _wfile.write(_bytetosend)
     _wfile.flush()
 
-_reqq = None
 _rspq = None
 
 def tpool_trampoline():
-    global _reqq, _rspq
+    global _rspq
     while(True):
         try:
             _c = _rfile.read(1)
@@ -56,20 +55,19 @@ def tpool_trampoline():
             except Empty:
                 pass
 
-def esend(meth,*args, **kwargs):
-    global _reqq, _rspq
+def esend(reqq, meth, *args, **kwargs):
     e = event.Event()
-    _reqq.put((e,meth,args,kwargs))
+    reqq.put((e,meth,args,kwargs))
     return e
 
 SYS_EXCS = (KeyboardInterrupt, SystemExit)
 
 
-def tworker():
-    global _reqq, _rspq
+def tworker(reqq):
+    global _rspq
     while(True):
         try:
-            msg = _reqq.get()
+            msg = reqq.get()
         except AttributeError:
             return # can't get anything off of a dud queue
         if msg is None:
@@ -82,25 +80,11 @@ def tworker():
             raise
         except Exception:
             rv = sys.exc_info()
-        _rspq.put((e,rv))               # @@tavis: not supposed to
-                                        # keep references to
-                                        # sys.exc_info() so it would
-                                        # be worthwhile testing
-                                        # if this leads to memory leaks
+        # test_leakage_from_tracebacks verifies that the use of
+        # exc_info does not lead to memory leaks
+        _rspq.put((e,rv))
         meth = args = kwargs = e = rv = None
         _signal_t2e()
-
-
-def erecv(e):
-    rv = e.wait()
-    if isinstance(rv,tuple) and len(rv) == 3 and isinstance(rv[1],Exception):
-        import traceback
-        (c,e,tb) = rv
-        if not QUIET:
-            traceback.print_exception(c,e,tb)
-            traceback.print_stack()
-        raise c,e,tb
-    return rv
 
 
 def execute(meth,*args, **kwargs):
@@ -116,11 +100,30 @@ def execute(meth,*args, **kwargs):
     """
     global _threads
     setup()
+    # if already in tpool, it doesn't work to esend
     my_thread = threading.currentThread()
     if my_thread in _threads:
         return meth(*args, **kwargs)
-    e = esend(meth, *args, **kwargs)
-    rv = erecv(e)
+
+    cur = greenthread.getcurrent()
+    # a mini mixing function to make up for the fact that hash(greenlet) doesn't
+    # have much variability in the lower bits
+    k = hash(cur)
+    k = k + 0x2c865fd + (k >> 5)
+    k = k ^ 0xc84d1b7 ^ (k >> 7)
+    thread_index = k % len(_threads)
+    
+    reqq, _thread = _threads[thread_index]
+    e = esend(reqq, meth, *args, **kwargs)
+    
+    rv = e.wait()
+    if isinstance(rv,tuple) and len(rv) == 3 and isinstance(rv[1],Exception):
+        import traceback
+        (c,e,tb) = rv
+        if not QUIET:
+            traceback.print_exception(c,e,tb)
+            traceback.print_stack()
+        raise c,e,tb
     return rv
 
 
@@ -226,13 +229,12 @@ class Proxy(object):
         return proxy_call(self._autowrap, self._obj.next)
 
 
-
 _nthreads = int(os.environ.get('EVENTLET_THREADPOOL_SIZE', 20))
-_threads = set()
+_threads = []
 _coro = None
 _setup_already = False
 def setup():
-    global _rfile, _wfile, _threads, _coro, _setup_already, _reqq, _rspq
+    global _rfile, _wfile, _threads, _coro, _setup_already, _rspq
     if _setup_already:
         return
     else:
@@ -255,33 +257,34 @@ def setup():
         _rfile = greenio.GreenSocket(csock).makefile('rb', 0)
         _wfile = nsock.makefile('wb',0)
 
-    _reqq = Queue(maxsize=-1)
     _rspq = Queue(maxsize=-1)
     assert _nthreads >= 0, "Can't specify negative number of threads"
     for i in range(0,_nthreads):
-        t = threading.Thread(target=tworker, name="tpool_thread_%s" % i)
+        reqq = Queue(maxsize=-1)
+        t = threading.Thread(target=tworker, 
+                             name="tpool_thread_%s" % i, 
+                             args=(reqq,))
         t.setDaemon(True)
         t.start()
-        _threads.add(t)
+        _threads.append((reqq, t))
 
     _coro = greenthread.spawn_n(tpool_trampoline)
 
 
 def killall():
-    global _setup_already, _reqq, _rspq, _rfile, _wfile
+    global _setup_already, _rspq, _rfile, _wfile
     if not _setup_already:
         return
-    for i in _threads:
-        _reqq.put(None)
-    for thr in _threads:
+    for reqq, _ in _threads:
+        reqq.put(None)
+    for _, thr in _threads:
         thr.join()
-    _threads.clear()
+    del _threads[:]
     if _coro is not None:
         greenthread.kill(_coro)
     _rfile.close()
     _wfile.close()
     _rfile = None
     _wfile = None
-    _reqq = None
     _rspq = None
     _setup_already = False
