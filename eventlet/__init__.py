@@ -39,7 +39,11 @@ try:
     TimeoutError = timeout.Timeout
     exc_after = greenthread.exc_after
     call_after_global = greenthread.call_after_global
-except ImportError:
-    # this is to make Debian packaging easier
-    import traceback
-    traceback.print_exc()
+except ImportError, e:
+    # This is to make Debian packaging easier, it ignores import
+    # errors of greenlet so that the packager can still at least
+    # access the version.  Also this makes easy_install a little quieter
+    if 'greenlet' not in str(e):
+        # any other exception should be printed
+        import traceback
+        traceback.print_exc()
