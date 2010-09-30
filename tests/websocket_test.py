@@ -7,6 +7,7 @@ from eventlet.green import httplib
 from eventlet.websocket import WebSocket, WebSocketWSGI
 from eventlet import wsgi
 from eventlet import event
+from eventlet import greenio
 
 from tests import mock, LimitedTestCase, certificate_file, private_key_file
 from tests.wsgi_test import _TestBase
@@ -498,7 +499,7 @@ class TestWebSocketSSL(_TestBase):
         sock.sendall(' end\xff')
         result = sock.recv(1024)
         self.assertEqual(result, '\x00start end\xff')
-        sock.shutdown(socket.SHUT_RDWR)
+        greenio.shutdown_safe(sock)
         sock.close()
         eventlet.sleep(0.01)
 
