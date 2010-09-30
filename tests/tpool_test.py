@@ -323,20 +323,18 @@ from eventlet.tpool import execute
         tpool.killall()
 
     def test_leakage_from_tracebacks(self):
-        def raiser():
-            raise RuntimeError()
         tpool.execute(noop)  # get it started
         gc.collect()
         initial_objs = len(gc.get_objects())
         for i in xrange(10):
-            self.assertRaises(RuntimeError, tpool.execute, raiser)
+            self.assertRaises(RuntimeError, tpool.execute, raise_exception)
         gc.collect()
         middle_objs = len(gc.get_objects())
         # some objects will inevitably be created by the previous loop
         # now we test to ensure that running the loop an order of
         # magnitude more doesn't generate additional objects
         for i in xrange(100):
-            self.assertRaises(RuntimeError, tpool.execute, raiser)
+            self.assertRaises(RuntimeError, tpool.execute, raise_exception)
         first_created = middle_objs - initial_objs
         gc.collect()
         second_created = len(gc.get_objects()) - middle_objs
