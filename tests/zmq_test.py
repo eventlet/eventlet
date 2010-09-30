@@ -17,6 +17,10 @@ def skip_unless_zmq(func):
 
 class TestUpstreamDownStream(LimitedTestCase):
 
+    def tearDown(self):
+        self.clear_up_sockets()
+        super(TestUpstreamDownStream, self).tearDown()
+
     def create_bound_pair(self, type1, type2, interface='tcp://127.0.0.1'):
         """Create a bound socket pair using a random port."""
         self.context = context = get_hub().get_context()
@@ -24,7 +28,12 @@ class TestUpstreamDownStream(LimitedTestCase):
         port = s1.bind_to_random_port(interface)
         s2 = context.socket(type2)
         s2.connect('%s:%s' % (interface, port))
-        return s1, s2
+        self.sockets = [s1, s2]
+        return s1, s2, port
+
+    def clear_up_sockets(self):
+        for sock in self.sockets:
+            sock.close()
 
     def assertRaisesErrno(self, errno, func, *args):
         try:
@@ -37,7 +46,7 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
 
     @skip_unless_zmq
     def test_recv_spawned_before_send_is_non_blocking(self):
-        req, rep = self.create_bound_pair(zmq.PAIR, zmq.PAIR)
+        req, rep, port = self.create_bound_pair(zmq.PAIR, zmq.PAIR)
 #        req.connect(ipc)
 #        rep.bind(ipc)
         sleep()
@@ -53,7 +62,7 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
 
     @skip_unless_zmq
     def test_close_socket_raises_enotsup(self):
-        req, rep = self.create_bound_pair(zmq.PAIR, zmq.PAIR)
+        req, rep, port = self.create_bound_pair(zmq.PAIR, zmq.PAIR)
         rep.close()
         req.close()
         self.assertRaisesErrno(zmq.ENOTSUP, rep.recv)
@@ -61,7 +70,7 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
 
     @skip_unless_zmq
     def test_send_1k_req_rep(self):
-        req, rep = self.create_bound_pair(zmq.REQ, zmq.REP)
+        req, rep, port = self.create_bound_pair(zmq.REQ, zmq.REP)
         sleep()
         done = event.Event()
         def tx():
@@ -85,8 +94,8 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         self.assertEqual(final_i, 0)
 
     @skip_unless_zmq
-    def test_send_1k_up_down(self):
-        down, up = self.create_bound_pair(zmq.DOWNSTREAM, zmq.UPSTREAM)
+    def test_send_1k_push_pull(self):
+        down, up, port = self.create_bound_pair(zmq.PUSH, zmq.PULL)
         sleep()
         done = event.Event()
         def tx():
@@ -104,6 +113,99 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         spawn(rx)
         final_i = done.wait()
         self.assertEqual(final_i, 0)
+
+    @skip_unless_zmq
+    def test_send_1k_pub_sub(self):
+        pub, sub_all, port = self.create_bound_pair(zmq.PUB, zmq.SUB)
+        sub1 = self.context.socket(zmq.SUB)
+        sub2 = self.context.socket(zmq.SUB)
+        self.sockets.extend([sub1, sub2])
+        addr = 'tcp://127.0.0.1:%s' % port
+        sub1.connect(addr)
+        sub2.connect(addr)
+        sub_all.setsockopt(zmq.SUBSCRIBE, '')
+        sub1.setsockopt(zmq.SUBSCRIBE, 'sub1')
+        sub2.setsockopt(zmq.SUBSCRIBE, 'sub2')
+        sub_all_done = event.Event()
+        sub1_done = event.Event()
+        sub2_done = event.Event()
+
+        def rx(sock, done_evt, msg_count=10000):
+            count = 0
+            while count < msg_count:
+                msg = sock.recv()
+                if 'LAST' in msg:
+                    break
+                count += 1
+
+            done_evt.send(count)
+
+        def tx(sock):
+            for i in range(1, 1001):
+                msg = "sub%s %s" % (1 if i % 2 else 2, i)
+                sock.send(msg)
+                sleep()
+            sock.send('sub1 LAST')
+            sock.send('sub2 LAST')
+
+        spawn(rx, sub_all, sub_all_done)
+        spawn(rx, sub1, sub1_done)
+        spawn(rx, sub2, sub2_done)
+        spawn(tx, pub)
+        sub1_count = sub1_done.wait()
+        sub2_count = sub2_done.wait()
+        sub_all_count = sub_all_done.wait()
+        self.assertEqual(sub1_count, 500)
+        self.assertEqual(sub2_count, 500)
+        self.assertEqual(sub_all_count, 1000)
+
+    @skip_unless_zmq
+    def test_change_subscription(self):
+        pub, sub, port = self.create_bound_pair(zmq.PUB, zmq.SUB)
+        sub.setsockopt(zmq.SUBSCRIBE, 'test')
+
+        sub_done = event.Event()
+
+        def rx(sock, done_evt):
+            count = 0
+            sub = 'test'
+            while True:
+                msg = sock.recv()
+                if sub == 'done':
+                    break
+                if 'LAST' in msg and sub == 'test':
+                    sock.setsockopt(zmq.UNSUBSCRIBE, 'test')
+                    sock.setsockopt(zmq.SUBSCRIBE, 'done')
+                    sub = 'done'
+                count += 1
+            done_evt.send(count)
+
+        def tx(sock):
+            for i in range(1, 101):
+                msg = "test %s" % i
+                sock.send(msg)
+                if i == 50:
+                    sock.send('test LAST')
+                sleep()
+            sock.send('done DONE')
+
+        spawn(rx, sub, sub_done)
+        spawn(tx, pub)
+
+        rx_count = sub_done.wait()
+        self.assertEqual(rx_count, 50)
+
+
+
+        
+
+
+
+
+
+
+
+
 
 
 
@@ -136,15 +238,19 @@ class TestThreadedContextAccess(TestCase):
         test_result = []
         def assert_different(ctx):
             assert not hasattr(_threadlocal, 'hub')
+            import os
+            os.environ['EVENTLET_HUB'] = 'zeromq'
             hub = get_hub()
             try:
                 this_thread_context = hub.get_context()
             except:
                 test_result.append('fail')
+                raise
             test_result.append(ctx is this_thread_context)
         Thread(target=assert_different, args=(context,)).start()
-        while not len(test_result):
-            pass
+        count = 0
+        while count < 100 and not test_result:
+            count += 1
         self.assertFalse(test_result[0])
 
 
