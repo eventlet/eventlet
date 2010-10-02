@@ -219,7 +219,7 @@ class BaseHub(object):
                 else:
                     self.wait(0)
             else:
-                self.canceled_timers = 0
+                self.timers_canceled = 0
                 del self.timers[:]
                 del self.next_timers[:]
         finally:
