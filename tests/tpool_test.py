@@ -322,6 +322,7 @@ from eventlet.tpool import execute
             iterations, tpool_overhead, best_normal, best_tpool)
         tpool.killall()
 
+    @skip_with_pyevent
     def test_leakage_from_tracebacks(self):
         tpool.execute(noop)  # get it started
         gc.collect()

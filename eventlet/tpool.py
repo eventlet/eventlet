@@ -55,10 +55,6 @@ def tpool_trampoline():
             except Empty:
                 pass
 
-def esend(reqq, meth, *args, **kwargs):
-    e = event.Event()
-    reqq.put((e,meth,args,kwargs))
-    return e
 
 SYS_EXCS = (KeyboardInterrupt, SystemExit)
 
@@ -100,7 +96,7 @@ def execute(meth,*args, **kwargs):
     """
     global _threads
     setup()
-    # if already in tpool, it doesn't work to esend
+    # if already in tpool, don't recurse into the tpool
     my_thread = threading.currentThread()
     if my_thread in _threads:
         return meth(*args, **kwargs)
@@ -114,8 +110,9 @@ def execute(meth,*args, **kwargs):
     thread_index = k % len(_threads)
     
     reqq, _thread = _threads[thread_index]
-    e = esend(reqq, meth, *args, **kwargs)
-    
+    e = event.Event()
+    reqq.put((e,meth,args,kwargs))
+
     rv = e.wait()
     if isinstance(rv,tuple) and len(rv) == 3 and isinstance(rv[1],Exception):
         import traceback
