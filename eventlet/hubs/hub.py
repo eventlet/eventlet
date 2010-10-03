@@ -193,9 +193,12 @@ class BaseHub(object):
             return None
         return t[0][0]
 
-    def run(self):
+    def run(self, *a, **kw):
         """Run the runloop until abort is called.
         """
+        # accept and discard variable arguments because they will be
+        # supplied if other greenlets have run and exited before the
+        # hub's greenlet gets a chance to run
         if self.running:
             raise RuntimeError("Already running!")
         try:
