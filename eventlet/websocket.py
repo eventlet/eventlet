@@ -84,7 +84,7 @@ class WebSocketWSGI(object):
         if qs:
             location += '?' + qs
         if self.protocol_version == 75:
-            handshake_reply = ("HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
+            handshake_reply = ("HTTP/1.1 101 WebSocket Protocol Handshake\r\n"
                                "Upgrade: WebSocket\r\n"
                                "Connection: Upgrade\r\n"
                                "WebSocket-Origin: %s\r\n"
@@ -92,7 +92,7 @@ class WebSocketWSGI(object):
                     environ.get('HTTP_ORIGIN'),
                     location))
         elif self.protocol_version == 76:
-            handshake_reply = ("HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
+            handshake_reply = ("HTTP/1.1 101 WebSocket Protocol Handshake\r\n"
                                "Upgrade: WebSocket\r\n"
                                "Connection: Upgrade\r\n"
                                "Sec-WebSocket-Origin: %s\r\n"

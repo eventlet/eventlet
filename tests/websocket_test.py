@@ -115,7 +115,7 @@ class TestWebSocket(_TestBase):
         result = sock.recv(1024)
         ## The server responds the correct Websocket handshake
         self.assertEqual(result,
-                         '\r\n'.join(['HTTP/1.1 101 Web Socket Protocol Handshake',
+                         '\r\n'.join(['HTTP/1.1 101 WebSocket Protocol Handshake',
                                       'Upgrade: WebSocket',
                                       'Connection: Upgrade',
                                       'WebSocket-Origin: http://localhost:%s' % self.port,
@@ -139,7 +139,7 @@ class TestWebSocket(_TestBase):
         result = sock.recv(1024)
         ## The server responds the correct Websocket handshake
         self.assertEqual(result,
-                         '\r\n'.join(['HTTP/1.1 101 Web Socket Protocol Handshake',
+                         '\r\n'.join(['HTTP/1.1 101 WebSocket Protocol Handshake',
                                       'Upgrade: WebSocket',
                                       'Connection: Upgrade',
                                       'Sec-WebSocket-Origin: http://localhost:%s' % self.port,
