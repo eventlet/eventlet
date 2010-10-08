@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import imp
 import os
 import sys
 
@@ -97,8 +98,10 @@ def execute(meth,*args, **kwargs):
     global _threads
     setup()
     # if already in tpool, don't recurse into the tpool
+    # also, call functions directly if we're inside an import lock, because
+    # if meth does any importing (sadly common), it will hang
     my_thread = threading.currentThread()
-    if my_thread in _threads:
+    if my_thread in _threads or imp.lock_held():
         return meth(*args, **kwargs)
 
     cur = greenthread.getcurrent()
