@@ -129,11 +129,12 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         sub_all_done = event.Event()
         sub1_done = event.Event()
         sub2_done = event.Event()
-
+        sleep(0.2)
         def rx(sock, done_evt, msg_count=10000):
             count = 0
             while count < msg_count:
                 msg = sock.recv()
+                sleep()
                 if 'LAST' in msg:
                     break
                 count += 1
@@ -165,26 +166,29 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         sub.setsockopt(zmq.SUBSCRIBE, 'test')
 
         sub_done = event.Event()
-
+        sleep(0.2)
         def rx(sock, done_evt):
             count = 0
             sub = 'test'
             while True:
                 msg = sock.recv()
-                if sub == 'done':
+                sleep()
+                if 'DONE' in msg:
                     break
                 if 'LAST' in msg and sub == 'test':
                     sock.setsockopt(zmq.UNSUBSCRIBE, 'test')
                     sock.setsockopt(zmq.SUBSCRIBE, 'done')
                     sub = 'done'
+                    #continue # We don't want to count this message
                 count += 1
             done_evt.send(count)
 
         def tx(sock):
             for i in range(1, 101):
                 msg = "test %s" % i
-                sock.send(msg)
-                if i == 50:
+                if i != 50:
+                    sock.send(msg)
+                else:
                     sock.send('test LAST')
                 sleep()
             sock.send('done DONE')
