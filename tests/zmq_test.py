@@ -200,22 +200,6 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         self.assertEqual(rx_count, 50)
 
 
-
-        
-
-
-
-
-
-
-
-
-
-
-
-
-        
-
 class TestThreadedContextAccess(TestCase):
     """zmq's Context must be unique within a hub
 
@@ -241,9 +225,9 @@ class TestThreadedContextAccess(TestCase):
         context = get_hub().get_context()
         test_result = []
         def assert_different(ctx):
-            assert not hasattr(_threadlocal, 'hub')
-            import os
-            os.environ['EVENTLET_HUB'] = 'zeromq'
+#            assert not hasattr(_threadlocal, 'hub')
+#            import os
+#            os.environ['EVENTLET_HUB'] = 'zeromq'
             hub = get_hub()
             try:
                 this_thread_context = hub.get_context()
@@ -252,9 +236,8 @@ class TestThreadedContextAccess(TestCase):
                 raise
             test_result.append(ctx is this_thread_context)
         Thread(target=assert_different, args=(context,)).start()
-        count = 0
-        while count < 100 and not test_result:
-            count += 1
+        while not test_result:
+            sleep(0.1)
         self.assertFalse(test_result[0])
 
 
