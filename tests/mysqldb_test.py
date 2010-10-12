@@ -57,7 +57,7 @@ class MySQLdbTester(LimitedTestCase):
             self.drop_db()
         except Exception:
             pass
-        dbname = 'test_%d_%d' % (os.getpid(), time.time()*1000)
+        dbname = 'test_%d_%d' % (os.getpid(), int(time.time()*1000))
         db = MySQLdb.connect(**auth).cursor()
         db.execute("create database "+dbname)
         db.close()
