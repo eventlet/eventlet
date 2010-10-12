@@ -47,12 +47,20 @@ class ProcessBase(LimitedTestCase):
         python_path = os.pathsep.join(sys.path + [self.tempdir])
         new_env = os.environ.copy()
         new_env['PYTHONPATH'] = python_path
+        if not filename.endswith('.py'):
+            filename = filename + '.py'
         p = subprocess.Popen([sys.executable, 
                               os.path.join(self.tempdir, filename)],
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=new_env)
         output, _ = p.communicate()
         lines = output.split("\n")
         return output, lines
+
+    def run_script(self, contents, modname=None):
+        if modname is None:
+            modname = "testmod"
+        self.write_to_tempfile(modname, contents)
+        return self.launch_subprocess(modname)
 
 
 class ImportPatched(ProcessBase):
@@ -157,6 +165,8 @@ print "already_patched", ",".join(sorted(patcher.already_patched.keys()))
         patched_modules = lines[0][len(ap):].strip()
         # psycopg might or might not be patched based on installed modules
         patched_modules = patched_modules.replace("psycopg,", "")
+        # ditto for MySQLdb
+        patched_modules = patched_modules.replace("MySQLdb,", "")
         self.assertEqual(patched_modules, expected,
                          "Logic:%s\nExpected: %s != %s" %(call, expected,
                                                           patched_modules))

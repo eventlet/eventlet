@@ -23,7 +23,7 @@ def sleep(seconds=0):
     occasionally; otherwise nothing else will run.
     """
     hub = hubs.get_hub()
-    current = greenlet.getcurrent()
+    current = getcurrent()
     assert hub.greenlet is not current, 'do not call blocking functions from the mainloop'
     timer = hub.schedule_call_global(seconds, current.switch)
     try:
@@ -255,7 +255,8 @@ def kill(g, *throw_args):
                 g.main(just_raise, (), {})
             except:
                 pass
-    if getcurrent() is not hub.greenlet:
+    current = getcurrent()
+    if current is not hub.greenlet:
         # arrange to wake the caller back up immediately
-        hub.schedule_call_global(0,getcurrent().switch)
+        hub.schedule_call_global(0, current.switch)
     g.throw(*throw_args)

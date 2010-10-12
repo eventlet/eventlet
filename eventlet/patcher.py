@@ -64,7 +64,8 @@ def inject(module_name, new_globals, *additional_modules):
             _green_select_modules() +
             _green_socket_modules() +
             _green_thread_modules() +
-            _green_time_modules())
+            _green_time_modules()) 
+            #_green_MySQLdb()) # enable this after a short baking-in period
     
     # after this we are gonna screw with sys.modules, so capture the
     # state of all the modules we're going to mess with, and lock
@@ -205,8 +206,9 @@ def monkey_patch(**on):
     module if present; and thread, which patches thread, threading, and Queue.
 
     It's safe to call monkey_patch multiple times.
-    """
-    accepted_args = set(('os', 'select', 'socket', 'thread', 'time', 'psycopg'))
+    """    
+    accepted_args = set(('os', 'select', 'socket', 
+                         'thread', 'time', 'psycopg', 'MySQLdb'))
     default_on = on.pop("all",None)
     for k in on.iterkeys():
         if k not in accepted_args:
@@ -215,6 +217,9 @@ def monkey_patch(**on):
     if default_on is None:
         default_on = not (True in on.values())
     for modname in accepted_args:
+        if modname == 'MySQLdb':
+            # MySQLdb is only on when explicitly patched for the moment
+            on.setdefault(modname, False)
         on.setdefault(modname, default_on)
         
     modules_to_patch = []
@@ -235,6 +240,9 @@ def monkey_patch(**on):
     if on['time'] and not already_patched.get('time'):
         modules_to_patch += _green_time_modules()
         already_patched['time'] = True
+    if on.get('MySQLdb') and not already_patched.get('MySQLdb'):
+        modules_to_patch += _green_MySQLdb()
+        already_patched['MySQLdb'] = True
     if on['psycopg'] and not already_patched.get('psycopg'):
         try:
             from eventlet.support import psycopg2_patcher
@@ -315,6 +323,13 @@ def _green_thread_modules():
 def _green_time_modules():
     from eventlet.green import time
     return [('time', time)]
+
+def _green_MySQLdb():
+    try:
+        from eventlet.green import MySQLdb
+        return [('MySQLdb', MySQLdb)]
+    except ImportError:
+        return []
 
 
 if __name__ == "__main__":

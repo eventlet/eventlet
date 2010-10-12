@@ -18,6 +18,7 @@ import random
 from sys import stdout
 import time
 import re
+import gc
 from tests import skipped, skip_with_pyevent, LimitedTestCase, main
 
 from eventlet import tpool, debug
@@ -172,7 +173,6 @@ class TestTpool(LimitedTestCase):
             self.assert_(item >= previtem)
         # make sure the tick happened at least a few times so that we know
         # that our iterations in foo() were actually tpooled
-        print counter[0]
         self.assert_(counter[0] > 10, counter[0])
         gt.kill()
 
@@ -292,11 +292,12 @@ class TpoolLongTests(LimitedTestCase):
                 self.assertEquals(token, rv)
                 eventlet.sleep(random.random()/200.0)
 
-        pile = eventlet.GreenPile(10)
-        for i in xrange(10):
+        cnt = 10
+        pile = eventlet.GreenPile(cnt)
+        for i in xrange(cnt):
             pile.spawn(sender_loop,i)
         results = list(pile)
-        self.assertEquals(len(results), 10)
+        self.assertEquals(len(results), cnt)
         tpool.killall()
         
     @skipped
@@ -319,6 +320,28 @@ from eventlet.tpool import execute
         tpool_overhead = (best_tpool-best_normal)/iterations
         print "%s iterations\nTpool overhead is %s seconds per call.  Normal: %s; Tpool: %s" % (
             iterations, tpool_overhead, best_normal, best_tpool)
+        tpool.killall()
+
+    @skip_with_pyevent
+    def test_leakage_from_tracebacks(self):
+        tpool.execute(noop)  # get it started
+        gc.collect()
+        initial_objs = len(gc.get_objects())
+        for i in xrange(10):
+            self.assertRaises(RuntimeError, tpool.execute, raise_exception)
+        gc.collect()
+        middle_objs = len(gc.get_objects())
+        # some objects will inevitably be created by the previous loop
+        # now we test to ensure that running the loop an order of
+        # magnitude more doesn't generate additional objects
+        for i in xrange(100):
+            self.assertRaises(RuntimeError, tpool.execute, raise_exception)
+        first_created = middle_objs - initial_objs
+        gc.collect()
+        second_created = len(gc.get_objects()) - middle_objs
+        self.assert_(second_created - first_created < 10,
+                     "first loop: %s, second loop: %s" % (first_created,
+                                                          second_created))
         tpool.killall()
 
 

@@ -19,6 +19,8 @@ socket.getaddrinfo('localhost', 80)
 class Tpool(ProcessBase):
     @skip_with_pyevent
     def test_tpool_size(self):
+        expected = "40"
+        normal = "20"
         new_mod = """from eventlet import tpool
 import eventlet
 import time
@@ -30,15 +32,17 @@ def count():
     if current[0] > highwater[0]:
         highwater[0] = current[0]
     current[0] -= 1
-expected = 40
+expected = %s
+normal = %s
 p = eventlet.GreenPool()
-for i in xrange(expected):
-    p.spawn(tpool.execute,count)
+for i in xrange(expected*2):
+    p.spawn(tpool.execute, count)
 p.waitall()
-assert highwater[0] == expected, "%s != %s" % (highwater[0], expected)"""
-        os.environ['EVENTLET_THREADPOOL_SIZE'] = "40"
+assert highwater[0] > 20, "Highwater %%s  <= %%s" %% (highwater[0], normal)
+"""
+        os.environ['EVENTLET_THREADPOOL_SIZE'] = expected
         try:
-            self.write_to_tempfile("newmod", new_mod)
+            self.write_to_tempfile("newmod", new_mod % (expected, normal))
             output, lines = self.launch_subprocess('newmod.py')
             self.assertEqual(len(lines), 1, lines)
         finally:

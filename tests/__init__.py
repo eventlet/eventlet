@@ -38,14 +38,17 @@ def skip_if(condition):
     should return True to skip the test.
     """
     def skipped_wrapper(func):
-        if isinstance(condition, bool):
-            result = condition
-        else:
-            result = condition(func)
-        if result:
-            return skipped(func)
-        else:
-            return func
+        def wrapped(*a, **kw):
+            if isinstance(condition, bool):
+                result = condition
+            else:
+                result = condition(func)
+            if result:
+                return skipped(func)(*a, **kw)
+            else:
+                return func(*a, **kw)
+        wrapped.__name__ = func.__name__
+        return wrapped
     return skipped_wrapper
 
 
@@ -56,14 +59,17 @@ def skip_unless(condition):
     should return True if the condition is satisfied.
     """    
     def skipped_wrapper(func):
-        if isinstance(condition, bool):
-            result = condition
-        else:
-            result = condition(func)
-        if not result:
-            return skipped(func)
-        else:
-            return func
+        def wrapped(*a, **kw):
+            if isinstance(condition, bool):
+                result = condition
+            else:
+                result = condition(func)
+            if not result:
+                return skipped(func)(*a, **kw)
+            else:
+                return func(*a, **kw)
+        wrapped.__name__ = func.__name__
+        return wrapped
     return skipped_wrapper
 
 
@@ -81,6 +87,7 @@ def requires_twisted(func):
 def using_pyevent(_f):
     from eventlet.hubs import get_hub
     return 'pyevent' in type(get_hub()).__module__
+
     
 def skip_with_pyevent(func):
     """ Decorator that skips a test if we're using the pyevent hub."""

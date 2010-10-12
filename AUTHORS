@@ -27,6 +27,7 @@ Contributors
 * Tavis Rudd
 * Sergey Shepelev
 * Chuck Thier
+* Nick V
 * Daniele Varrazzo
 * Ryan Williams
 
@@ -62,3 +63,4 @@ Thanks To
 * Schmir, patch that fixes readline method with chunked encoding in wsgi.py, advice on patcher
 * Slide, for open-sourcing gogreen
 * Holger Krekel, websocket example small fix
+* mikepk, debugging MySQLdb/tpool issues
