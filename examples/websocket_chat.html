@@ -5,7 +5,7 @@
 <script>
 window.onload = function() {
   var data = {};
-  var s = new WebSocket("ws://127.0.0.1:7000/chat");
+  var s = new WebSocket("ws://127.0.0.1:%(port)s/chat");
   s.onopen = function() {
     s.send('New participant joined');
   };

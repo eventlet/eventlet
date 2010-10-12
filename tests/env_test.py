@@ -70,15 +70,25 @@ except AssertionError:
 
 
 class Hub(ProcessBase):
+
+    def setUp(self):
+        super(Hub, self).setUp()
+        self.old_environ = os.environ.get('EVENTLET_HUB')
+        os.environ['EVENTLET_HUB'] = 'selects'
+
+    def tearDown(self):
+        if self.old_environ:
+            os.environ['EVENTLET_HUB'] = self.old_environ
+        else:
+            del os.environ['EVENTLET_HUB']
+        super(Hub, self).tearDown()
+
     def test_eventlet_hub(self):
         new_mod = """from eventlet import hubs
 print hubs.get_hub()
 """
-        os.environ['EVENTLET_HUB'] = 'selects'
-        try:
-            self.write_to_tempfile("newmod", new_mod)
-            output, lines = self.launch_subprocess('newmod.py')
-            self.assertEqual(len(lines), 2, "\n".join(lines))
-            self.assert_("selects" in lines[0])
-        finally:
-            del os.environ['EVENTLET_HUB']
+        self.write_to_tempfile("newmod", new_mod)
+        output, lines = self.launch_subprocess('newmod.py')
+        self.assertEqual(len(lines), 2, "\n".join(lines))
+        self.assert_("selects" in lines[0])
+
