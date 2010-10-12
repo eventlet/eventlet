@@ -24,8 +24,7 @@ from eventlet.hubs import get_hub, use_hub
 from uuid import uuid1
 
 use_hub('zeromq')
-hub = get_hub()
-ctx = hub.get_context()
+ctx = zmq.Context()
 
 class IDName(object):
 

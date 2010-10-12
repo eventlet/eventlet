@@ -17,12 +17,11 @@ WRITE_MASK = zmq.POLLOUT
 class Hub(poll.Hub):
 
 
-
     def __init__(self, clock=time.time):
         BaseHub.__init__(self, clock)
         self.poll = zmq.Poller()
 
-    def get_context(self):
+    def get_context(self, io_threads=1):
         """zmq's Context must be unique within a hub
 
         The zeromq API documentation states:
@@ -36,7 +35,7 @@ class Hub(poll.Hub):
         try:
             return _threadlocal.context
         except AttributeError:
-            _threadlocal.context = zmq.Context()
+            _threadlocal.context = zmq._Context(io_threads)
             return _threadlocal.context
 
     def register(self, fileno, new=False):

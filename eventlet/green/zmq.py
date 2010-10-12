@@ -1,6 +1,6 @@
 __zmq__ = __import__('zmq')
 from eventlet import sleep
-from eventlet.hubs import trampoline
+from eventlet.hubs import trampoline, get_hub
 
 __patched__ = ['Context', 'Socket']
 globals().update(dict([(var, getattr(__zmq__, var))
@@ -10,7 +10,18 @@ globals().update(dict([(var, getattr(__zmq__, var))
                               var in __patched__)
                        ]))
 
-class Context(__zmq__.Context):
+
+def get_hub_name_from_instance(hub):
+    return hub.__class__.__module__.rsplit('.',1)[-1]
+
+def Context(io_threads=1):
+    hub = get_hub()
+    hub_name = get_hub_name_from_instance(hub)
+    if hub_name != 'zeromq':
+        raise RuntimeError("Hub must be 'zeromq', got '%s'" % hub_name)
+    return hub.get_context(io_threads)
+
+class _Context(__zmq__.Context):
 
     def socket(self, socket_type):
         return Socket(self, socket_type)
