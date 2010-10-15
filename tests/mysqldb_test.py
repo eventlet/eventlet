@@ -223,6 +223,6 @@ print "mysqltest", ",".join(sorted(patcher.already_patched.keys()))
 print "connect", m.connect == gm.connect
 """)
         self.assertEqual(len(lines), 3)
-        self.assertEqual(lines[0].replace("psycopg", ""),
+        self.assertEqual(lines[0].replace("psycopg,", ""),
                          'mysqltest MySQLdb,os,select,socket,thread,time')
         self.assertEqual(lines[1], "connect True")
