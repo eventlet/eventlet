@@ -145,7 +145,7 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
 
         def tx(sock):
             for i in range(1, 1001):
-                msg = "sub%s %s" % (1 if i % 2 else 2, i)
+                msg = "sub%s %s" % ([2,1][i % 2], i)
                 sock.send(msg)
                 sleep()
             sock.send('sub1 LAST')
