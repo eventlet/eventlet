@@ -4,6 +4,8 @@ import eventlet
 from eventlet import wsgi
 from eventlet import websocket
 
+PORT = 7000
+
 participants = set()
 
 @websocket.WebSocketWSGI
@@ -27,10 +29,10 @@ def dispatch(environ, start_response):
         start_response('200 OK', [('content-type', 'text/html')])
         return [open(os.path.join(
                      os.path.dirname(__file__), 
-                     'websocket_chat.html')).read()]
+                     'websocket_chat.html')).read() % PORT]
         
 if __name__ == "__main__":
     # run an example app from the command line            
-    listener = eventlet.listen(('127.0.0.1', 7000))
+    listener = eventlet.listen(('127.0.0.1', PORT))
     print "\nVisit http://localhost:7000/ in your websocket-capable browser.\n"
     wsgi.server(listener, dispatch)
