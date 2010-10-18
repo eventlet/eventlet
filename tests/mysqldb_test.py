@@ -126,7 +126,7 @@ class MySQLdbTester(LimitedTestCase):
         import MySQLdb as orig
         for key in dir(orig):
             if key not in ('__author__', '__path__', '__revision__',
-                           '__version__'):
+                           '__version__', '__loader__'):
                 self.assert_(hasattr(MySQLdb, key), "%s %s" % (key, getattr(orig, key)))
 
     def test_connecting(self):
