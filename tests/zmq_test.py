@@ -131,7 +131,6 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         sub_all_done = event.Event()
         sub1_done = event.Event()
         sub2_done = event.Event()
-        sleep(0.2)
         def rx(sock, done_evt, msg_count=10000):
             count = 0
             while count < msg_count:
@@ -168,7 +167,6 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         sub.setsockopt(zmq.SUBSCRIBE, 'test')
 
         sub_done = event.Event()
-        sleep(0.2)
         def rx(sock, done_evt):
             count = 0
             sub = 'test'

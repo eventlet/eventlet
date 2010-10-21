@@ -17,3 +17,4 @@ Module Reference
    modules/timeout
    modules/websocket
    modules/wsgi
+   modules/zmq

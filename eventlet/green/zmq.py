@@ -1,3 +1,5 @@
+"""The :mod:`zmq` module wraps the :class:`Socket` and :class:`Context` found in :mod:`pyzmq <zmq>` to be non blocking
+"""
 __zmq__ = __import__('zmq')
 from eventlet import sleep
 from eventlet.hubs import trampoline, get_hub
@@ -15,6 +17,12 @@ def get_hub_name_from_instance(hub):
     return hub.__class__.__module__.rsplit('.',1)[-1]
 
 def Context(io_threads=1):
+    """:func:`Context` is a factory function which creates a :class:`_Context`
+
+    It's a factory function due to the fact that there can only be one :class:`_Context`
+    instance per thread. This is due to the way :class:`zmq.core.poll.Poller`
+    works
+    """
     hub = get_hub()
     hub_name = get_hub_name_from_instance(hub)
     if hub_name != 'zeromq':
@@ -24,6 +32,7 @@ def Context(io_threads=1):
 class _Context(__zmq__.Context):
 
     def socket(self, socket_type):
+        """ensure that a wrapped :class:`Socket` instance is returned"""
         return Socket(self, socket_type)
 
 class Socket(__zmq__.Socket):

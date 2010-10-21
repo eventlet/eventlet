@@ -56,6 +56,7 @@ class Hub(poll.Hub):
 
         if not readers and not writers:
             if seconds:
+                print 'wait called with %s seconds' % seconds
                 sleep(seconds)
             return
         try:

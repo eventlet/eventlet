@@ -116,7 +116,7 @@ class BaseHub(object):
         bucket = self.listeners[evtype]
         if fileno in bucket:
             if g_prevent_multiple_readers:
-               raise RuntimeError("Second simultaneous %s on fileno %s "\
+                raise RuntimeError("Second simultaneous %s on fileno %s "\
                      "detected.  Unless you really know what you're doing, "\
                      "make sure that only one greenthread can %s any "\
                      "particular socket.  Consider using a pools.Pool. "\
