@@ -402,12 +402,10 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         env['REQUEST_METHOD'] = self.command
         env['SCRIPT_NAME'] = ''
 
-        if '?' in self.path:
-            path, query = self.path.split('?', 1)
-        else:
-            path, query = self.path, ''
-        env['PATH_INFO'] = urllib.unquote(path)
-        env['QUERY_STRING'] = query
+        pq = self.path.split('?', 1)
+        env['PATH_INFO'] = urllib.unquote(pq[0])
+        if len(pq) > 1:
+            env['QUERY_STRING'] = pq[1]
 
         if self.headers.typeheader is None:
             env['CONTENT_TYPE'] = self.headers.type

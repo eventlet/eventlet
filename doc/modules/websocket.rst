@@ -2,7 +2,7 @@
 =====================================
 
 This module provides a simple way to create a `websocket
-<http://dev.w3.org/html5/websockets/>` server.  It works with a few
+<http://dev.w3.org/html5/websockets/>`_ server.  It works with a few
 tweaks in the :mod:`~eventlet.wsgi` module that allow websockets to
 coexist with other WSGI applications.
 
