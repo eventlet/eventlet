@@ -64,3 +64,4 @@ Thanks To
 * Slide, for open-sourcing gogreen
 * Holger Krekel, websocket example small fix
 * mikepk, debugging MySQLdb/tpool issues
+* Malcolm Cleaton, patch for Event exception handling
