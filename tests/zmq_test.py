@@ -1,15 +1,19 @@
 from eventlet import event, spawn, sleep, patcher
 from eventlet.hubs import get_hub, _threadlocal, use_hub
-from eventlet.green import zmq
 from nose.tools import *
 from tests import mock, LimitedTestCase, skip_unless
 from unittest import TestCase
 
 from threading import Thread
-from eventlet.hubs.zeromq import Hub
+try:
+    from eventlet.green import zmq
+    from eventlet.hubs.zeromq import Hub
+except ImportError:
+    zmq = None
+    Hub = None
 
 def using_zmq(_f):
-    return 'zeromq' in type(get_hub()).__module__
+    return zmq and 'zeromq' in type(get_hub()).__module__
 
 def skip_unless_zmq(func):
     """ Decorator that skips a test if we're using the pyevent hub."""
@@ -213,45 +217,45 @@ class TestThreadedContextAccess(TestCase):
     all sockets that are going to be passed to zmq_poll (via hub.do_poll) are
     in the same context
     """
+    if zmq:  # don't call decorators if zmq module unavailable
+        @skip_unless_zmq
+        @mock.patch('eventlet.green.zmq.get_hub_name_from_instance')
+        @mock.patch('eventlet.green.zmq.get_hub', spec=Hub)
+        def test_context_factory_funtion(self, get_hub_mock, hub_name_mock):
+            hub_name_mock.return_value = 'zeromq'
+            ctx = zmq.Context()
+            self.assertTrue(get_hub_mock().get_context.called)
 
-    @skip_unless_zmq
-    @mock.patch('eventlet.green.zmq.get_hub_name_from_instance')
-    @mock.patch('eventlet.green.zmq.get_hub', spec=Hub)
-    def test_context_factory_funtion(self, get_hub_mock, hub_name_mock):
-        hub_name_mock.return_value = 'zeromq'
-        ctx = zmq.Context()
-        self.assertTrue(get_hub_mock().get_context.called)
-
-    @skip_unless_zmq
-    def test_threadlocal_context(self):
-        hub = get_hub()
-        context = zmq.Context()
-        self.assertEqual(context, _threadlocal.context)
-        next_context = hub.get_context()
-        self.assertTrue(context is next_context)
-
-    @skip_unless_zmq
-    def test_different_context_in_different_thread(self):
-        context = zmq.Context()
-        test_result = []
-        def assert_different(ctx):
-#            assert not hasattr(_threadlocal, 'hub')
-#            import os
-#            os.environ['EVENTLET_HUB'] = 'zeromq'
+        @skip_unless_zmq
+        def test_threadlocal_context(self):
             hub = get_hub()
-            try:
-                this_thread_context = zmq.Context()
-            except:
-                test_result.append('fail')
-                raise
-            test_result.append(ctx is this_thread_context)
-        Thread(target=assert_different, args=(context,)).start()
-        while not test_result:
-            sleep(0.1)
-        self.assertFalse(test_result[0])
+            context = zmq.Context()
+            self.assertEqual(context, _threadlocal.context)
+            next_context = hub.get_context()
+            self.assertTrue(context is next_context)
+
+        @skip_unless_zmq
+        def test_different_context_in_different_thread(self):
+            context = zmq.Context()
+            test_result = []
+            def assert_different(ctx):
+    #            assert not hasattr(_threadlocal, 'hub')
+    #            import os
+    #            os.environ['EVENTLET_HUB'] = 'zeromq'
+                hub = get_hub()
+                try:
+                    this_thread_context = zmq.Context()
+                except:
+                    test_result.append('fail')
+                    raise
+                test_result.append(ctx is this_thread_context)
+            Thread(target=assert_different, args=(context,)).start()
+            while not test_result:
+                sleep(0.1)
+            self.assertFalse(test_result[0])
 
 class TestCheckingForZMQHub(TestCase):
-
+    @skip_unless_zmq
     def setUp(self):
         self.orig_hub = zmq.get_hub_name_from_instance(get_hub())
         use_hub('poll')
