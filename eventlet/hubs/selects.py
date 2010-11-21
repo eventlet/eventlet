@@ -21,7 +21,7 @@ class Hub(BaseHub):
             try:
                 select.select([fd], [], [], 0)
             except select.error, e:
-                if get_errno(e) == errno.EBADF:
+                if get_errno(e) in BAD_SOCK:
                     self.remove_descriptor(fd)
 
     def wait(self, seconds=None):
