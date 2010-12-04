@@ -12,9 +12,19 @@ globals().update(dict([(var, getattr(__zmq__, var))
 
 
 def get_hub_name_from_instance(hub):
+    """Get the string name the eventlet uses to refer to hub
+
+    :param hub: An eventlet hub
+    """
     return hub.__class__.__module__.rsplit('.',1)[-1]
 
 def Context(io_threads=1):
+    """Factory function replacement for :class:`zmq.core.context.Context`
+
+    This factory ensures the :class:`zeromq hub <eventlet.hubs.zeromq.Hub>`
+    is the active hub, and defers creation (or retreival) of the ``Context``
+    to the hub's :meth:`~eventlet.hubs.zeromq.Hub.get_context` method
+    """
     hub = get_hub()
     hub_name = get_hub_name_from_instance(hub)
     if hub_name != 'zeromq':
@@ -22,11 +32,35 @@ def Context(io_threads=1):
     return hub.get_context(io_threads)
 
 class _Context(__zmq__.Context):
+    """Internal subclass of :class:`zmq.core.context.Context`
+
+    .. warning:: Do not grab one of these yourself, use the factory function
+        :func:`eventlet.green.zmq.Context`
+    """
 
     def socket(self, socket_type):
+        """Overridden method to ensure that the green version of socket is used
+
+        Behaves the same as :meth:`zmq.core.context.Context.socket`, but ensures
+        that a :class:`Socket` with all of its send and recv methods set to be
+        non-blocking is returned
+        """
         return Socket(self, socket_type)
 
 class Socket(__zmq__.Socket):
+    """Green version of :class:`zmq.core.socket.Socket
+
+    The following four methods are overridden:
+
+        * _send_message
+        * _send_copy
+        * _recv_message
+        * _recv_copy
+
+    To ensure that the ``zmq.NOBLOCK`` flag is set and that sending or recieving
+    is deferred to the hub (using :func:`eventlet.hubs.trampoline`) if a
+    ``zmq.EAGAIN`` (retry) error is raised
+    """
 
 
     def _send_message(self, msg, flags=0):

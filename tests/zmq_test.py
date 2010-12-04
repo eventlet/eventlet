@@ -58,9 +58,11 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         sleep()
         msg = dict(res=None)
         done = event.Event()
+
         def rx():
             msg['res'] = rep.recv()
             done.send('done')
+
         spawn(rx)
         req.send('test')
         done.wait()
@@ -69,6 +71,7 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
     @skip_unless_zmq
     def test_close_socket_raises_enotsup(self):
         req, rep, port = self.create_bound_pair(zmq.PAIR, zmq.PAIR)
+
         rep.close()
         req.close()
         self.assertRaisesErrno(zmq.ENOTSUP, rep.recv)
@@ -79,12 +82,14 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         req, rep, port = self.create_bound_pair(zmq.REQ, zmq.REP)
         sleep()
         done = event.Event()
+
         def tx():
             tx_i = 0
             req.send(str(tx_i))
             while req.recv() != 'done':
                 tx_i += 1
                 req.send(str(tx_i))
+
         def rx():
             while True:
                 rx_i = rep.recv()
@@ -103,12 +108,15 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
     def test_send_1k_push_pull(self):
         down, up, port = self.create_bound_pair(zmq.PUSH, zmq.PULL)
         sleep()
+
         done = event.Event()
+
         def tx():
             tx_i = 0
             while tx_i <= 1000:
                 tx_i += 1
                 down.send(str(tx_i))
+
         def rx():
             while True:
                 rx_i = up.recv()
@@ -132,10 +140,13 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         sub_all.setsockopt(zmq.SUBSCRIBE, '')
         sub1.setsockopt(zmq.SUBSCRIBE, 'sub1')
         sub2.setsockopt(zmq.SUBSCRIBE, 'sub2')
+
         sub_all_done = event.Event()
         sub1_done = event.Event()
         sub2_done = event.Event()
+
         sleep(0.2)
+
         def rx(sock, done_evt, msg_count=10000):
             count = 0
             while count < msg_count:
@@ -173,6 +184,7 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
 
         sub_done = event.Event()
         sleep(0.2)
+
         def rx(sock, done_evt):
             count = 0
             sub = 'test'
@@ -185,7 +197,6 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
                     sock.setsockopt(zmq.UNSUBSCRIBE, 'test')
                     sock.setsockopt(zmq.SUBSCRIBE, 'done')
                     sub = 'done'
-                    #continue # We don't want to count this message
                 count += 1
             done_evt.send(count)
 
@@ -231,7 +242,7 @@ class TestThreadedContextAccess(TestCase):
     All zmq sockets passed to the zmq_poll() function must share the same zmq
     context and must belong to the thread calling zmq_poll()
 
-    As zmq_poll is what's eventually being called then we need to insure that
+    As zmq_poll is what's eventually being called then we need to ensure that
     all sockets that are going to be passed to zmq_poll (via hub.do_poll) are
     in the same context
     """
@@ -257,9 +268,6 @@ class TestThreadedContextAccess(TestCase):
             context = zmq.Context()
             test_result = []
             def assert_different(ctx):
-    #            assert not hasattr(_threadlocal, 'hub')
-    #            import os
-    #            os.environ['EVENTLET_HUB'] = 'zeromq'
                 hub = get_hub()
                 try:
                     this_thread_context = zmq.Context()
@@ -272,7 +280,9 @@ class TestThreadedContextAccess(TestCase):
                 sleep(0.1)
             self.assertFalse(test_result[0])
 
+
 class TestCheckingForZMQHub(TestCase):
+
     @skip_unless_zmq
     def setUp(self):
         self.orig_hub = zmq.get_hub_name_from_instance(get_hub())
