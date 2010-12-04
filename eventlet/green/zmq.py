@@ -27,7 +27,7 @@ class _Context(__zmq__.Context):
         return Socket(self, socket_type)
 
 class Socket(__zmq__.Socket):
-            
+
 
     def _send_message(self, data, flags=0, copy=True):
         flags |= __zmq__.NOBLOCK
@@ -40,7 +40,7 @@ class Socket(__zmq__.Socket):
                     raise
             trampoline(self, write=True)
 
-    def _send_copy(self, data, flags=0, copy=True):
+    def _send_copy(self, data, flags=0):
         flags |= __zmq__.NOBLOCK
         while True:
             try:
@@ -51,13 +51,13 @@ class Socket(__zmq__.Socket):
                     raise
             trampoline(self, write=True)
 
-    def _recv_message(self, flags=0):
+    def _recv_message(self, flags=0, track=False):
 
         flags |= __zmq__.NOBLOCK
         while True:
             try:
                 m = super(Socket, self)._recv_message(flags)
-                if m:
+                if m is not None:
                     return m
             except __zmq__.ZMQError, e:
                 if e.errno != EAGAIN:
@@ -69,7 +69,7 @@ class Socket(__zmq__.Socket):
         while True:
             try:
                 m = super(Socket, self)._recv_copy(flags)
-                if m:
+                if m is not None:
                     return m
             except __zmq__.ZMQError, e:
                 if e.errno != EAGAIN:
@@ -78,4 +78,3 @@ class Socket(__zmq__.Socket):
 
 
 
-    

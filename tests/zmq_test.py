@@ -208,11 +208,20 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
     @skip_unless_zmq
     def test_recv_multipart_bug68(self):
         req, rep, port = self.create_bound_pair(zmq.REQ, zmq.REP)
-
         msg = ['']
         req.send_multipart(msg)
         recieved_msg = rep.recv_multipart()
         self.assertEqual(recieved_msg, msg)
+
+        # Send a message back the other way
+        msg2 = [""]
+        rep.send_multipart(msg2, copy=False)
+        # When receiving a copy it's a zmq.core.message.Message you get back
+        recieved_msg = req.recv_multipart(copy=False)
+        # So it needs to be converted to a string
+        # I'm calling str(m) consciously here; Message has a .data attribute
+        # but it's private __str__ appears to be the way to go
+        self.assertEqual([str(m) for m in recieved_msg], msg2)
 
 
 class TestThreadedContextAccess(TestCase):
