@@ -205,6 +205,15 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         rx_count = sub_done.wait()
         self.assertEqual(rx_count, 50)
 
+    @skip_unless_zmq
+    def test_recv_multipart_bug68(self):
+        req, rep, port = self.create_bound_pair(zmq.REQ, zmq.REP)
+
+        msg = ['']
+        req.send_multipart(msg)
+        recieved_msg = rep.recv_multipart()
+        self.assertEqual(recieved_msg, msg)
+
 
 class TestThreadedContextAccess(TestCase):
     """zmq's Context must be unique within a hub
