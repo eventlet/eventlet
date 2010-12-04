@@ -136,7 +136,7 @@ class BaseHub(object):
         self.listeners[evtype].pop(fileno, None)
         # migrate a secondary listener to be the primary listener
         if fileno in self.secondaries[evtype]:
-            sec = self.secondaries[evtype].get(fileno, ())
+            sec = self.secondaries[evtype].get(fileno, None)
             if not sec:
                 return
             self.listeners[evtype][fileno] = sec.pop(0)
@@ -146,10 +146,16 @@ class BaseHub(object):
     def remove_descriptor(self, fileno):
         """ Completely remove all listeners for this fileno.  For internal use
         only."""
-        self.listeners[READ].pop(fileno, None)
-        self.listeners[WRITE].pop(fileno, None)
-        self.secondaries[READ].pop(fileno, None)
-        self.secondaries[WRITE].pop(fileno, None)
+        listeners = []
+        listeners.append(self.listeners[READ].pop(fileno, noop))
+        listeners.append(self.listeners[WRITE].pop(fileno, noop))
+        listeners.extend(self.secondaries[READ].pop(fileno, ()))
+        listeners.extend(self.secondaries[WRITE].pop(fileno, ()))
+        for listener in listeners:
+            try:
+                listener.cb(fileno)
+            except Exception, e:
+                self.squelch_generic_exception(sys.exc_info())
 
     def switch(self):
         cur = greenlet.getcurrent()
@@ -160,7 +166,6 @@ class BaseHub(object):
                 switch_out()
             except:
                 self.squelch_generic_exception(sys.exc_info())
-                clear_sys_exc_info()
         if self.greenlet.dead:
             self.greenlet = greenlet.greenlet(self.run)
         try:
@@ -252,11 +257,13 @@ class BaseHub(object):
         if self.debug_exceptions:
             traceback.print_exception(*exc_info)
             sys.stderr.flush()
+            clear_sys_exc_info()
 
     def squelch_timer_exception(self, timer, exc_info):
         if self.debug_exceptions:
             traceback.print_exception(*exc_info)
             sys.stderr.flush()
+            clear_sys_exc_info()
 
     def add_timer(self, timer):
         scheduled_time = self.clock() + timer.seconds

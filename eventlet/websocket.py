@@ -81,7 +81,7 @@ class WebSocketWSGI(object):
             environ.get('PATH_INFO')
         )
         qs = environ.get('QUERY_STRING')
-        if qs:
+        if qs is not None:
             location += '?' + qs
         if self.protocol_version == 75:
             handshake_reply = ("HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
@@ -212,9 +212,11 @@ class WebSocket(object):
         return msgs
     
     def send(self, message):
-        """Send a message to the browser.  *message* should be
-        convertable to a string; unicode objects should be encodable
-        as utf-8."""
+        """Send a message to the browser.  
+        
+        *message* should be convertable to a string; unicode objects should be
+        encodable as utf-8.  Raises socket.error with errno of 32
+        (broken pipe) if the socket has already been closed by the client."""
         packed = self._pack_message(message)
         # if two greenthreads are trying to send at the same time
         # on the same socket, sendlock prevents interleaving and corruption
@@ -225,8 +227,12 @@ class WebSocket(object):
             self._sendlock.release()
 
     def wait(self):
-        """Waits for and deserializes messages. Returns a single
-        message; the oldest not yet processed."""
+        """Waits for and deserializes messages. 
+        
+        Returns a single message; the oldest not yet processed. If the client
+        has already closed the connection, returns None.  This is different
+        from normal socket behavior because the empty string is a valid
+        websocket message."""
         while not self._msgs:
             # Websocket might be closed already.
             if self.websocket_closed:

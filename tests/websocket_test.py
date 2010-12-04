@@ -145,6 +145,58 @@ class TestWebSocket(_TestBase):
                                       'Sec-WebSocket-Origin: http://localhost:%s' % self.port,
                                       'Sec-WebSocket-Protocol: ws',
                                       'Sec-WebSocket-Location: ws://localhost:%s/echo\r\n\r\n8jKS\'y:G*Co,Wxa-' % self.port]))
+                                      
+                                      
+    def test_query_string(self):
+        # verify that the query string comes out the other side unscathed
+        connect = [
+                "GET /echo?query_string HTTP/1.1",
+                "Upgrade: WebSocket",
+                "Connection: Upgrade",
+                "Host: localhost:%s" % self.port,
+                "Origin: http://localhost:%s" % self.port,
+                "Sec-WebSocket-Protocol: ws",
+                "Sec-WebSocket-Key1: 4 @1  46546xW%0l 1 5",
+                "Sec-WebSocket-Key2: 12998 5 Y3 1  .P00",
+                ]
+        sock = eventlet.connect(
+            ('localhost', self.port))
+
+        sock.sendall('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U')
+        result = sock.recv(1024)
+        self.assertEqual(result,
+                         '\r\n'.join(['HTTP/1.1 101 WebSocket Protocol Handshake',
+                                      'Upgrade: WebSocket',
+                                      'Connection: Upgrade',
+                                      'Sec-WebSocket-Origin: http://localhost:%s' % self.port,
+                                      'Sec-WebSocket-Protocol: ws',
+                                      'Sec-WebSocket-Location: ws://localhost:%s/echo?query_string\r\n\r\n8jKS\'y:G*Co,Wxa-' % self.port]))
+
+    def test_empty_query_string(self):
+        # verify that a single trailing ? doesn't get nuked
+        connect = [
+                "GET /echo? HTTP/1.1",
+                "Upgrade: WebSocket",
+                "Connection: Upgrade",
+                "Host: localhost:%s" % self.port,
+                "Origin: http://localhost:%s" % self.port,
+                "Sec-WebSocket-Protocol: ws",
+                "Sec-WebSocket-Key1: 4 @1  46546xW%0l 1 5",
+                "Sec-WebSocket-Key2: 12998 5 Y3 1  .P00",
+                ]
+        sock = eventlet.connect(
+            ('localhost', self.port))
+
+        sock.sendall('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U')
+        result = sock.recv(1024)
+        self.assertEqual(result,
+                         '\r\n'.join(['HTTP/1.1 101 WebSocket Protocol Handshake',
+                                      'Upgrade: WebSocket',
+                                      'Connection: Upgrade',
+                                      'Sec-WebSocket-Origin: http://localhost:%s' % self.port,
+                                      'Sec-WebSocket-Protocol: ws',
+                                      'Sec-WebSocket-Location: ws://localhost:%s/echo?\r\n\r\n8jKS\'y:G*Co,Wxa-' % self.port]))
+                                    
 
     def test_sending_messages_to_websocket_75(self):
         connect = [

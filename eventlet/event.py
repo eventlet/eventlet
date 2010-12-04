@@ -153,18 +153,16 @@ class Event(object):
             exc = (exc, )
         self._exc = exc
         hub = hubs.get_hub()
-        if self._waiters:
+        for waiter in self._waiters:
             hub.schedule_call_global(
-                0, self._do_send, self._result, self._exc, self._waiters.copy())
+                0, self._do_send, self._result, self._exc, waiter)
 
-    def _do_send(self, result, exc, waiters):
-        while waiters:
-            waiter = waiters.pop()
-            if waiter in self._waiters:
-                if exc is None:
-                    waiter.switch(result)
-                else:
-                    waiter.throw(*exc)
+    def _do_send(self, result, exc, waiter):
+        if waiter in self._waiters:
+            if exc is None:
+                waiter.switch(result)
+            else:
+                waiter.throw(*exc)
 
     def send_exception(self, *args):
         """Same as :meth:`send`, but sends an exception to waiters.

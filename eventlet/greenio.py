@@ -14,6 +14,8 @@ __all__ = ['GreenSocket', 'GreenPipe', 'shutdown_safe']
 
 CONNECT_ERR = set((errno.EINPROGRESS, errno.EALREADY, errno.EWOULDBLOCK))
 CONNECT_SUCCESS = set((0, errno.EISCONN))
+if sys.platform[:3]=="win":
+    CONNECT_ERR.add(errno.WSAEINVAL)   # Bug 67
 
 # Emulate _fileobject class in 3.x implementation
 # Eventually this internal socket structure could be replaced with makefile calls.

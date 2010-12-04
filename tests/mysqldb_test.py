@@ -126,7 +126,7 @@ class MySQLdbTester(LimitedTestCase):
         import MySQLdb as orig
         for key in dir(orig):
             if key not in ('__author__', '__path__', '__revision__',
-                           '__version__'):
+                           '__version__', '__loader__'):
                 self.assert_(hasattr(MySQLdb, key), "%s %s" % (key, getattr(orig, key)))
 
     def test_connecting(self):
@@ -223,6 +223,6 @@ print "mysqltest", ",".join(sorted(patcher.already_patched.keys()))
 print "connect", m.connect == gm.connect
 """)
         self.assertEqual(len(lines), 3)
-        self.assertEqual(lines[0].replace("psycopg", ""),
+        self.assertEqual(lines[0].replace("psycopg,", ""),
                          'mysqltest MySQLdb,os,select,socket,thread,time')
         self.assertEqual(lines[1], "connect True")

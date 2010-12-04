@@ -1,3 +1,21 @@
+0.9.13
+======
+* ZeroMQ hub, and eventlet.green.zmq make supersockets green.  Thanks to Ben Ford!
+* eventlet.green.MySQLdb added.  It's an interface to MySQLdb that uses tpool to make it appear nonblocking
+* Greenthread affinity in tpool.  Each greenthread is assigned to the same thread when using tpool, making it easier to work with non-thread-safe libraries.
+* Eventlet now depends on greenlet 0.3 or later.
+* Fixed a hang when using tpool during an import causes another import.  Thanks to mikepk for tracking that down.
+* Improved websocket draft 76 compliance, thanks to Nick V.
+* Rare greenthread.kill() bug fixed, which was probably brought about by a bugfix in greenlet 0.3.
+* Easy_installing eventlet should no longer print an ImportError about greenlet
+* Support for serving up SSL websockets, thanks to chwagssd for reporting #62
+* eventlet.wsgi properly sets 'wsgi.url_scheme' environment variable to 'https', and 'HTTPS' to 'on' if serving over ssl
+* Blocking detector uses setitimer on 2.6 or later, allowing for sub-second block detection, thanks to rtyler.
+* Blocking detector is documented now, too
+* socket.create_connection properly uses dnspython for nonblocking dns.  Thanks to rtyler.
+* Removed EVENTLET_TPOOL_DNS, nobody liked that.  But if you were using it, install dnspython instead.  Thanks to pigmej and gholt.
+* Removed _main_wrapper from greenthread, thanks to Ambroff adding keyword arguments to switch() in 0.3!
+
 0.9.12
 ======
 * Eventlet no longer uses the Twisted hub if Twisted is imported -- you must call eventlet.hubs.use_hub('twistedr') if you want to use it.  This prevents strange race conditions for those who want to use both Twisted and Eventlet separately.

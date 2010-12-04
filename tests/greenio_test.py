@@ -1,5 +1,5 @@
 import socket as _orig_sock
-from tests import LimitedTestCase, skip_with_pyevent, main, skipped, s2b
+from tests import LimitedTestCase, skip_with_pyevent, main, skipped, s2b, skip_if
 from eventlet import event
 from eventlet import greenio
 from eventlet import debug
@@ -30,6 +30,15 @@ def min_buf_size():
     test_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     test_sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 1)
     return test_sock.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
+
+
+def using_epoll_hub(_f):
+        from eventlet.hubs import get_hub
+        try:
+            return 'epolls' in type(get_hub()).__module__
+        except Exception:
+            return False
+
 
 class TestGreenSocket(LimitedTestCase):
     def assertWriteToClosedFileRaises(self, fd):
@@ -472,7 +481,44 @@ class TestGreenSocket(LimitedTestCase):
         s.sendall('b')
         a.wait()
 
-        
+    @skip_with_pyevent
+    @skip_if(using_epoll_hub)
+    def test_closure(self):
+        def spam_to_me(address):
+            sock = eventlet.connect(address)
+            while True:
+                try:
+                    sock.sendall('hello world')
+                except socket.error, e:
+                    if e.errno == errno.EPIPE:
+                        return
+                    raise
+
+        server = eventlet.listen(('127.0.0.1', 0))
+        sender = eventlet.spawn(spam_to_me, server.getsockname())
+        client, address = server.accept()
+        server.close()
+
+        def reader():
+            try:
+                while True:
+                    data = client.recv(1024)
+                    self.assert_(data)
+            except socket.error, e:
+                # we get an EBADF because client is closed in the same process
+                # (but a different greenthread)
+                if e.errno != errno.EBADF:
+                    raise
+
+        def closer():
+            client.close()
+
+        reader = eventlet.spawn(reader)
+        eventlet.spawn_n(closer)
+        reader.wait()
+        sender.wait()
+    
+    
 class TestGreenPipe(LimitedTestCase):
     def setUp(self):
         super(self.__class__, self).setUp()

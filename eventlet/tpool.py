@@ -95,13 +95,12 @@ def execute(meth,*args, **kwargs):
     cooperate with green threads by sticking them in native threads, at the cost
     of some overhead.
     """
-    global _threads
     setup()
     # if already in tpool, don't recurse into the tpool
     # also, call functions directly if we're inside an import lock, because
     # if meth does any importing (sadly common), it will hang
     my_thread = threading.currentThread()
-    if my_thread in _threads or imp.lock_held():
+    if my_thread in _threads or imp.lock_held() or _nthreads == 0:
         return meth(*args, **kwargs)
 
     cur = greenthread.getcurrent()
@@ -110,7 +109,7 @@ def execute(meth,*args, **kwargs):
     k = hash(cur)
     k = k + 0x2c865fd + (k >> 5)
     k = k ^ 0xc84d1b7 ^ (k >> 7)
-    thread_index = k % len(_threads)
+    thread_index = k % _nthreads
     
     reqq, _thread = _threads[thread_index]
     e = event.Event()
@@ -259,7 +258,12 @@ def setup():
 
     _rspq = Queue(maxsize=-1)
     assert _nthreads >= 0, "Can't specify negative number of threads"
-    for i in range(0,_nthreads):
+    if _nthreads == 0:
+        import warnings
+        warnings.warn("Zero threads in tpool.  All tpool.execute calls will\
+            execute in main thread.  Check the value of the environment \
+            variable EVENTLET_THREADPOOL_SIZE.", RuntimeWarning)
+    for i in xrange(_nthreads):
         reqq = Queue(maxsize=-1)
         t = threading.Thread(target=tworker, 
                              name="tpool_thread_%s" % i, 
@@ -267,6 +271,7 @@ def setup():
         t.setDaemon(True)
         t.start()
         _threads.append((reqq, t))
+        
 
     _coro = greenthread.spawn_n(tpool_trampoline)
 

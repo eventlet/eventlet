@@ -56,7 +56,6 @@ class Hub(poll.Hub):
 
         if not readers and not writers:
             if seconds:
-                print 'wait called with %s seconds' % seconds
                 sleep(seconds)
             return
         try:
@@ -91,3 +90,10 @@ class Hub(poll.Hub):
 
         if self.debug_blocking:
             self.block_detect_post()
+
+
+#    def do_poll(self, seconds):
+#        print 'poll: ', seconds
+#        if seconds < 0:
+#            seconds = 500
+#        return self.poll.poll(seconds)

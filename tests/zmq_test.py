@@ -1,19 +1,24 @@
 from eventlet import event, spawn, sleep, patcher
 from eventlet.hubs import get_hub, _threadlocal, use_hub
-from eventlet.green import zmq
 from nose.tools import *
 from tests import mock, LimitedTestCase, skip_unless
 from unittest import TestCase
 
 from threading import Thread
-from eventlet.hubs.zeromq import Hub
+try:
+    from eventlet.green import zmq
+    from eventlet.hubs.zeromq import Hub
+except ImportError:
+    zmq = None
+    Hub = None
 
 def using_zmq(_f):
-    return 'zeromq' in type(get_hub()).__module__
+    return zmq and 'zeromq' in type(get_hub()).__module__
 
 def skip_unless_zmq(func):
     """ Decorator that skips a test if we're using the pyevent hub."""
     return skip_unless(using_zmq)(func)
+
 
 class TestUpstreamDownStream(LimitedTestCase):
 
@@ -54,9 +59,11 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         sleep()
         msg = dict(res=None)
         done = event.Event()
+
         def rx():
             msg['res'] = rep.recv()
             done.send('done')
+
         spawn(rx)
         req.send('test')
         done.wait()
@@ -65,6 +72,7 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
     @skip_unless_zmq
     def test_close_socket_raises_enotsup(self):
         req, rep, port = self.create_bound_pair(zmq.PAIR, zmq.PAIR)
+
         rep.close()
         req.close()
         self.assertRaisesErrno(zmq.ENOTSUP, rep.recv)
@@ -75,12 +83,14 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         req, rep, port = self.create_bound_pair(zmq.REQ, zmq.REP)
         sleep()
         done = event.Event()
+
         def tx():
             tx_i = 0
             req.send(str(tx_i))
             while req.recv() != 'done':
                 tx_i += 1
                 req.send(str(tx_i))
+
         def rx():
             while True:
                 rx_i = rep.recv()
@@ -99,12 +109,15 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
     def test_send_1k_push_pull(self):
         down, up, port = self.create_bound_pair(zmq.PUSH, zmq.PULL)
         sleep()
+
         done = event.Event()
+
         def tx():
             tx_i = 0
             while tx_i <= 1000:
                 tx_i += 1
                 down.send(str(tx_i))
+
         def rx():
             while True:
                 rx_i = up.recv()
@@ -128,9 +141,12 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         sub_all.setsockopt(zmq.SUBSCRIBE, '')
         sub1.setsockopt(zmq.SUBSCRIBE, 'sub1')
         sub2.setsockopt(zmq.SUBSCRIBE, 'sub2')
+
         sub_all_done = event.Event()
         sub1_done = event.Event()
         sub2_done = event.Event()
+
+
         def rx(sock, done_evt, msg_count=10000):
             count = 0
             while count < msg_count:
@@ -144,7 +160,7 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
 
         def tx(sock):
             for i in range(1, 1001):
-                msg = "sub%s %s" % (1 if i % 2 else 2, i)
+                msg = "sub%s %s" % ([2,1][i % 2], i)
                 sock.send(msg)
                 sleep()
             sock.send('sub1 LAST')
@@ -167,6 +183,7 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         sub.setsockopt(zmq.SUBSCRIBE, 'test')
 
         sub_done = event.Event()
+
         def rx(sock, done_evt):
             count = 0
             sub = 'test'
@@ -179,7 +196,6 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
                     sock.setsockopt(zmq.UNSUBSCRIBE, 'test')
                     sock.setsockopt(zmq.SUBSCRIBE, 'done')
                     sub = 'done'
-                    #continue # We don't want to count this message
                 count += 1
             done_evt.send(count)
 
@@ -199,6 +215,24 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         rx_count = sub_done.wait()
         self.assertEqual(rx_count, 50)
 
+    @skip_unless_zmq
+    def test_recv_multipart_bug68(self):
+        req, rep, port = self.create_bound_pair(zmq.REQ, zmq.REP)
+        msg = ['']
+        req.send_multipart(msg)
+        recieved_msg = rep.recv_multipart()
+        self.assertEqual(recieved_msg, msg)
+
+        # Send a message back the other way
+        msg2 = [""]
+        rep.send_multipart(msg2, copy=False)
+        # When receiving a copy it's a zmq.core.message.Message you get back
+        recieved_msg = req.recv_multipart(copy=False)
+        # So it needs to be converted to a string
+        # I'm calling str(m) consciously here; Message has a .data attribute
+        # but it's private __str__ appears to be the way to go
+        self.assertEqual([str(m) for m in recieved_msg], msg2)
+
 
 class TestThreadedContextAccess(TestCase):
     """zmq's Context must be unique within a hub
@@ -207,49 +241,48 @@ class TestThreadedContextAccess(TestCase):
     All zmq sockets passed to the zmq_poll() function must share the same zmq
     context and must belong to the thread calling zmq_poll()
 
-    As zmq_poll is what's eventually being called then we need to insure that
+    As zmq_poll is what's eventually being called then we need to ensure that
     all sockets that are going to be passed to zmq_poll (via hub.do_poll) are
     in the same context
     """
+    if zmq:  # don't call decorators if zmq module unavailable
+        @skip_unless_zmq
+        @mock.patch('eventlet.green.zmq.get_hub_name_from_instance')
+        @mock.patch('eventlet.green.zmq.get_hub', spec=Hub)
+        def test_context_factory_funtion(self, get_hub_mock, hub_name_mock):
+            hub_name_mock.return_value = 'zeromq'
+            ctx = zmq.Context()
+            self.assertTrue(get_hub_mock().get_context.called)
 
-    @skip_unless_zmq
-    @mock.patch('eventlet.green.zmq.get_hub_name_from_instance')
-    @mock.patch('eventlet.green.zmq.get_hub', spec=Hub)
-    def test_context_factory_funtion(self, get_hub_mock, hub_name_mock):
-        hub_name_mock.return_value = 'zeromq'
-        ctx = zmq.Context()
-        self.assertTrue(get_hub_mock().get_context.called)
-
-    @skip_unless_zmq
-    def test_threadlocal_context(self):
-        hub = get_hub()
-        context = zmq.Context()
-        self.assertEqual(context, _threadlocal.context)
-        next_context = hub.get_context()
-        self.assertTrue(context is next_context)
-
-    @skip_unless_zmq
-    def test_different_context_in_different_thread(self):
-        context = zmq.Context()
-        test_result = []
-        def assert_different(ctx):
-#            assert not hasattr(_threadlocal, 'hub')
-#            import os
-#            os.environ['EVENTLET_HUB'] = 'zeromq'
+        @skip_unless_zmq
+        def test_threadlocal_context(self):
             hub = get_hub()
-            try:
-                this_thread_context = zmq.Context()
-            except:
-                test_result.append('fail')
-                raise
-            test_result.append(ctx is this_thread_context)
-        Thread(target=assert_different, args=(context,)).start()
-        while not test_result:
-            sleep(0.1)
-        self.assertFalse(test_result[0])
+            context = zmq.Context()
+            self.assertEqual(context, _threadlocal.context)
+            next_context = hub.get_context()
+            self.assertTrue(context is next_context)
+
+        @skip_unless_zmq
+        def test_different_context_in_different_thread(self):
+            context = zmq.Context()
+            test_result = []
+            def assert_different(ctx):
+                hub = get_hub()
+                try:
+                    this_thread_context = zmq.Context()
+                except:
+                    test_result.append('fail')
+                    raise
+                test_result.append(ctx is this_thread_context)
+            Thread(target=assert_different, args=(context,)).start()
+            while not test_result:
+                sleep(0.1)
+            self.assertFalse(test_result[0])
+
 
 class TestCheckingForZMQHub(TestCase):
 
+    @skip_unless_zmq
     def setUp(self):
         self.orig_hub = zmq.get_hub_name_from_instance(get_hub())
         use_hub('poll')

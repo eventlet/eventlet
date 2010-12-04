@@ -29,7 +29,6 @@ Contents
    examples
    ssl
    threading
-   zeromq
    hubs
    testing
    environment

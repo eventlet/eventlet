@@ -68,6 +68,25 @@ except AssertionError:
         finally:
             del os.environ['EVENTLET_THREADPOOL_SIZE']
 
+    def test_tpool_zero(self):
+        new_mod = """from eventlet import tpool
+import eventlet
+import time
+def do():
+    print "ran it"
+tpool.execute(do)
+"""
+        os.environ['EVENTLET_THREADPOOL_SIZE'] = "0"
+        try:
+            self.write_to_tempfile("newmod", new_mod)
+            output, lines = self.launch_subprocess('newmod.py')
+            self.assertEqual(len(lines), 4, lines)
+            self.assertEqual(lines[-2], 'ran it', lines)
+            self.assert_('Warning' in lines[1], lines)
+        finally:
+            del os.environ['EVENTLET_THREADPOOL_SIZE']
+
+
 
 class Hub(ProcessBase):
 
