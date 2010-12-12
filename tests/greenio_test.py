@@ -1,5 +1,5 @@
 import socket as _orig_sock
-from tests import LimitedTestCase, skip_with_pyevent, main, skipped, s2b, skip_if
+from tests import LimitedTestCase, skip_with_pyevent, main, skipped, s2b, skip_if, skip_on_windows
 from eventlet import event
 from eventlet import greenio
 from eventlet import debug
@@ -490,7 +490,7 @@ class TestGreenSocket(LimitedTestCase):
                 try:
                     sock.sendall('hello world')
                 except socket.error, e:
-                    if e.errno == errno.EPIPE:
+                    if get_errno(e)== errno.EPIPE:
                         return
                     raise
 
@@ -507,7 +507,7 @@ class TestGreenSocket(LimitedTestCase):
             except socket.error, e:
                 # we get an EBADF because client is closed in the same process
                 # (but a different greenthread)
-                if e.errno != errno.EBADF:
+                if get_errno(e) != errno.EBADF:
                     raise
 
         def closer():
@@ -518,8 +518,13 @@ class TestGreenSocket(LimitedTestCase):
         reader.wait()
         sender.wait()
     
+    def test_invalid_connection(self):
+        # find an unused port by creating a socket then closing it
+        port = eventlet.listen(('127.0.0.1', 0)).getsockname()[1]
+        self.assertRaises(socket.error, eventlet.connect, ('127.0.0.1', port))
     
 class TestGreenPipe(LimitedTestCase):
+    @skip_on_windows
     def setUp(self):
         super(self.__class__, self).setUp()
         self.tempdir = tempfile.mkdtemp('_green_pipe_test')

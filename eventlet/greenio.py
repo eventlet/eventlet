@@ -37,6 +37,10 @@ def socket_connect(descriptor, address):
         raise socket.error(err, errno.errorcode[err])
     return descriptor
 
+def socket_checkerr(descriptor):
+    err = descriptor.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
+    if err not in CONNECT_SUCCESS:
+        raise socket.error(err, errno.errorcode[err])
 
 def socket_accept(descriptor):
     """
@@ -162,6 +166,7 @@ class GreenSocket(object):
         if self.gettimeout() is None:
             while not socket_connect(fd, address):
                 trampoline(fd, write=True)
+                socket_checkerr(fd)
         else:
             end = time.time() + self.gettimeout()
             while True:
@@ -171,6 +176,7 @@ class GreenSocket(object):
                     raise socket.timeout("timed out")
                 trampoline(fd, write=True, timeout=end-time.time(),
                         timeout_exc=socket.timeout("timed out"))
+                socket_checkerr(fd)
 
     def connect_ex(self, address):
         if self.act_non_blocking:
@@ -180,6 +186,7 @@ class GreenSocket(object):
             while not socket_connect(fd, address):
                 try:
                     trampoline(fd, write=True)
+                    socket_checkerr(fd)
                 except socket.error, ex:
                     return get_errno(ex)
         else:
@@ -192,6 +199,7 @@ class GreenSocket(object):
                         raise socket.timeout(errno.EAGAIN)
                     trampoline(fd, write=True, timeout=end-time.time(),
                             timeout_exc=socket.timeout(errno.EAGAIN))
+                    socket_checkerr(fd)
                 except socket.error, ex:
                     return get_errno(ex)
 
