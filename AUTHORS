@@ -65,4 +65,4 @@ Thanks To
 * Holger Krekel, websocket example small fix
 * mikepk, debugging MySQLdb/tpool issues
 * Malcolm Cleaton, patch for Event exception handling
-* Alexey Borzenkov, finding and fixing issue with Windows error detection (#53)
+* Alexey Borzenkov, finding and fixing issue with Windows error detection (#53), finding and fixing error in websocket chat example (#70)

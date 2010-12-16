@@ -27,9 +27,8 @@ def dispatch(environ, start_response):
         return handle(environ, start_response)
     else:
         start_response('200 OK', [('content-type', 'text/html')])
-        return [open(os.path.join(
-                     os.path.dirname(__file__), 
-                     'websocket_chat.html')).read() % PORT]
+        html_path = os.path.join(os.path.dirname(__file__), 'websocket_chat.html')
+        return [open(html_path).read() % {'port': PORT}]
         
 if __name__ == "__main__":
     # run an example app from the command line            
