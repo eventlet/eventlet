@@ -1,8 +1,7 @@
 from eventlet import patcher
 from eventlet.green import zmq
-from eventlet.hubs import poll, _threadlocal
-from eventlet.hubs.hub import BaseHub, noop
-from eventlet.hubs.poll  import READ, WRITE
+from eventlet.hubs import _threadlocal
+from eventlet.hubs.hub import BaseHub, READ, WRITE, noop
 from eventlet.support import clear_sys_exc_info
 import sys
 
@@ -14,9 +13,7 @@ EXC_MASK = zmq.POLLERR
 READ_MASK = zmq.POLLIN
 WRITE_MASK = zmq.POLLOUT
 
-class Hub(poll.Hub):
-
-
+class Hub(BaseHub):
     def __init__(self, clock=time.time):
         BaseHub.__init__(self, clock)
         self.poll = zmq.Poller()
@@ -38,6 +35,15 @@ class Hub(poll.Hub):
             _threadlocal.context = zmq._Context(io_threads)
             return _threadlocal.context
 
+    def add(self, evtype, fileno, cb):
+        listener = super(Hub, self).add(evtype, fileno, cb)
+        self.register(fileno, new=True)
+        return listener
+
+    def remove(self, listener):
+        super(Hub, self).remove(listener)
+        self.register(listener.fileno)
+
     def register(self, fileno, new=False):
         mask = 0
         if self.listeners[READ].get(fileno):
@@ -49,6 +55,18 @@ class Hub(poll.Hub):
         else:
             self.poll.unregister(fileno)
 
+    def remove_descriptor(self, fileno):
+        super(Hub, self).remove_descriptor(fileno)
+        try:
+            self.poll.unregister(fileno)
+        except (KeyError, ValueError, IOError, OSError):
+            # raised if we try to remove a fileno that was
+            # already removed/invalid
+            pass
+
+    def do_poll(self, seconds):
+        # zmq.Poller.poll expects milliseconds
+        return self.poll.poll(seconds * 1000.0)
 
     def wait(self, seconds=None):
         readers = self.listeners[READ]
@@ -90,10 +108,3 @@ class Hub(poll.Hub):
 
         if self.debug_blocking:
             self.block_detect_post()
-
-
-#    def do_poll(self, seconds):
-#        print 'poll: ', seconds
-#        if seconds < 0:
-#            seconds = 500
-#        return self.poll.poll(seconds)

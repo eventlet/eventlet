@@ -287,7 +287,7 @@ class TestCheckingForZMQHub(TestCase):
     @skip_unless_zmq
     def setUp(self):
         self.orig_hub = zmq.get_hub_name_from_instance(get_hub())
-        use_hub('poll')
+        use_hub('selects')
 
     def tearDown(self):
         use_hub(self.orig_hub)
