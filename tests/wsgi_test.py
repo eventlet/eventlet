@@ -1138,7 +1138,26 @@ class TestChunkedInput(_TestBase):
 
         assert not got_signal, "caught alarm signal. infinite loop detected."
 
-        
+    def test_ipv6(self):
+        try:
+            sock = eventlet.listen(('::1', 0), family=socket.AF_INET6)
+        except (socket.gaierror, socket.error):  # probably no ipv6
+            return
+        log = StringIO()
+        # first thing the server does is try to log the IP it's bound to
+        def run_server():
+            try:
+                server = wsgi.server(sock=sock, log=log, site=Site())
+            except ValueError:
+                log.write('broked')
+        eventlet.spawn_n(run_server)
+        logval = log.getvalue()
+        while not logval:
+            eventlet.sleep(0.0)
+            logval = log.getvalue()
+        if 'broked' in logval:
+            self.fail('WSGI server raised exception with ipv6 socket')
+
 
 if __name__ == '__main__':
     main()

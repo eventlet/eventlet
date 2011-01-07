@@ -417,7 +417,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             env['CONTENT_LENGTH'] = length
         env['SERVER_PROTOCOL'] = 'HTTP/1.0'
 
-        host, port = self.request.getsockname()
+        host, port = self.request.getsockname()[:2]
         env['SERVER_NAME'] = host
         env['SERVER_PORT'] = str(port)
         env['REMOTE_ADDR'] = self.client_address[0]
@@ -569,7 +569,7 @@ def server(sock, site,
     else:
         pool = greenpool.GreenPool(max_size)
     try:
-        host, port = sock.getsockname()
+        host, port = sock.getsockname()[:2]
         port = ':%s' % (port, )
         if hasattr(sock, 'do_handshake'):
             scheme = 'https'
