@@ -119,8 +119,8 @@ try:
     wrap_ssl_impl = ssl.wrap_socket
 except ImportError:
     # < 2.6, trying PyOpenSSL
-    from eventlet.green.OpenSSL import SSL
     try:
+        from eventlet.green.OpenSSL import SSL
         def wrap_ssl_impl(sock, keyfile=None, certfile=None, server_side=False,
                           cert_reqs=None, ssl_version=None, ca_certs=None,
                           do_handshake_on_connect=True, 

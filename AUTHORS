@@ -68,3 +68,4 @@ Thanks To
 * Alexey Borzenkov, for finding and fixing issues with Windows error detection (#66, #69), reducing dependencies in zeromq hub (#71)
 * Anonymous, finding and fixing error in websocket chat example (#70)
 * Edward George, finding and fixing an issue in the [e]poll hubs (#74)
+* Ruijun Luo, figuring out incorrect openssl import for wrap_ssl (#73)
