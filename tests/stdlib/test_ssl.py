@@ -37,6 +37,7 @@ patcher.inject('test.test_ssl',
 # external servers.
 NetworkedTests.testConnect = lambda s: None
 NetworkedTests.testFetchServerCert = lambda s: None
+NetworkedTests.test_algorithms = lambda s: None
 
 # these don't pass because nonblocking ssl sockets don't report
 # when the socket is closed uncleanly, per the docstring on 
