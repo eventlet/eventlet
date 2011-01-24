@@ -1,7 +1,7 @@
 from eventlet import event, spawn, sleep, patcher
 from eventlet.hubs import get_hub, _threadlocal, use_hub
 from nose.tools import *
-from tests import mock, LimitedTestCase, skip_unless
+from tests import mock, LimitedTestCase, skip_unless_zmq
 from unittest import TestCase
 
 from threading import Thread
@@ -11,13 +11,6 @@ try:
 except ImportError:
     zmq = None
     Hub = None
-
-def using_zmq(_f):
-    return zmq and 'zeromq' in type(get_hub()).__module__
-
-def skip_unless_zmq(func):
-    """ Decorator that skips a test if we're using the pyevent hub."""
-    return skip_unless(using_zmq)(func)
 
 
 class TestUpstreamDownStream(LimitedTestCase):
