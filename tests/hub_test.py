@@ -168,6 +168,7 @@ class TestHubBlockingDetector(LimitedTestCase):
         gt = eventlet.spawn(look_im_blocking)
         self.assertRaises(RuntimeError, gt.wait)
         debug.hub_blocking_detection(False)
+        
 
 class TestSuspend(LimitedTestCase):
     TEST_TIMEOUT=3
@@ -203,6 +204,14 @@ except eventlet.Timeout:
         lines = [l for l in output.split("\n") if l]
         self.assert_("exited correctly" in lines[-1])
         shutil.rmtree(self.tempdir)
+
+
+class TestBadFilenos(LimitedTestCase):
+    @skip_with_pyevent
+    def test_repeated_selects(self):
+        from eventlet.green import select
+        self.assertRaises(ValueError, select.select, [-1], [], [])
+        self.assertRaises(ValueError, select.select, [-1], [], [])
 
 
 class Foo(object):

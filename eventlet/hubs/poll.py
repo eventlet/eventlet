@@ -38,21 +38,26 @@ class Hub(BaseHub):
             mask |= READ_MASK | EXC_MASK
         if self.listeners[WRITE].get(fileno):
             mask |= WRITE_MASK | EXC_MASK
-        if mask:
-            if new:
-                self.poll.register(fileno, mask)
-            else:
-                try:
-                    self.modify(fileno, mask)
-                except (IOError, OSError):
+        try:
+            if mask:
+                if new:
                     self.poll.register(fileno, mask)
-        else: 
-            try:
-                self.poll.unregister(fileno)
-            except (KeyError, IOError, OSError):
-                # raised if we try to remove a fileno that was
-                # already removed/invalid
-                pass
+                else:
+                    try:
+                        self.modify(fileno, mask)
+                    except (IOError, OSError):
+                        self.poll.register(fileno, mask)
+            else: 
+                try:
+                    self.poll.unregister(fileno)
+                except (KeyError, IOError, OSError):
+                    # raised if we try to remove a fileno that was
+                    # already removed/invalid
+                    pass
+        except ValueError:
+            # fileno is bad, issue 74
+            self.remove_descriptor(fileno)
+            raise
 
     def remove_descriptor(self, fileno):
         super(Hub, self).remove_descriptor(fileno)
