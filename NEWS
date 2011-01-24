@@ -1,3 +1,16 @@
+0.9.14
+======
+* Many fixes to the ZeroMQ hub, which now requires version 2.0.10 or later.  Thanks to Ben Ford.
+* ZeroMQ hub no longer depends on pollhub, and thus works on Windows (thanks, Alexey Borzenkov)
+* Better handling of connect errors on Windows, thanks again to Alexey Borzenkov.
+* More-robust Event delivery, thanks to Malcolm Cleaton
+* wsgi.py now distinguishes between an empty query string ("") and a non-existent query string (no entry in environ).
+* wsgi.py handles ipv6 correctly (thanks, redbo)
+* Better behavior in tpool when you give it nonsensical numbers, thanks to R. Tyler for the nonsense.  :)
+* Fixed importing on 2.5 (#73, thanks to Ruijun Luo)
+* Hub doesn't hold on to invalid fds (#74, thanks to Edward George)
+* Documentation for eventlet.green.zmq, courtesy of Ben Ford
+
 0.9.13
 ======
 * ZeroMQ hub, and eventlet.green.zmq make supersockets green.  Thanks to Ben Ford!
