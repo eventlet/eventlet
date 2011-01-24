@@ -82,7 +82,7 @@ tpool.execute(do)
             output, lines = self.launch_subprocess('newmod.py')
             self.assertEqual(len(lines), 4, lines)
             self.assertEqual(lines[-2], 'ran it', lines)
-            self.assert_('Warning' in lines[1], lines)
+            self.assert_('Warning' in lines[1] or 'Warning' in lines[0], lines)
         finally:
             del os.environ['EVENTLET_THREADPOOL_SIZE']
 
