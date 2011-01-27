@@ -70,6 +70,9 @@ class Socket(__zmq__.Socket):
 
 
     def _send_message(self, msg, flags=0):
+        if flags & __zmq__.NOBLOCK:
+            super(Socket,self)._send_message(msg, flags)
+            return
         flags |= __zmq__.NOBLOCK
         while True:
             try:
@@ -81,6 +84,9 @@ class Socket(__zmq__.Socket):
             trampoline(self, write=True)
 
     def _send_copy(self, msg, flags=0):
+        if flags & __zmq__.NOBLOCK:
+            super(Socket,self)._send_copy(msg, flags)
+            return
         flags |= __zmq__.NOBLOCK
         while True:
             try:
@@ -92,7 +98,8 @@ class Socket(__zmq__.Socket):
             trampoline(self, write=True)
 
     def _recv_message(self, flags=0, track=False):
-
+        if flags & __zmq__.NOBLOCK:
+            return super(Socket,self)._recv_message(flags)
         flags |= __zmq__.NOBLOCK
         while True:
             try:
@@ -105,6 +112,8 @@ class Socket(__zmq__.Socket):
             trampoline(self, read=True)
 
     def _recv_copy(self, flags=0):
+        if flags & __zmq__.NOBLOCK:
+            return super(Socket,self)._recv_copy(flags)
         flags |= __zmq__.NOBLOCK
         while True:
             try:
