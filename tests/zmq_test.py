@@ -228,6 +228,13 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         # but it's private __str__ appears to be the way to go
         self.assertEqual([str(m) for m in recieved_msg], msg2)
 
+    @skip_unless_zmq
+    def test_recv_noblock_bug76(self):
+        req, rep, port = self.create_bound_pair(zmq.REQ, zmq.REP)
+        self.assertRaisesErrno(zmq.EAGAIN, rep.recv, zmq.NOBLOCK)
+        self.assertRaisesErrno(zmq.EAGAIN, rep.recv, zmq.NOBLOCK, True)
+
+
 
 class TestThreadedContextAccess(TestCase):
     """zmq's Context must be unique within a hub
