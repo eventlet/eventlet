@@ -359,13 +359,16 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     write('')
             except Exception:
                 self.close_connection = 1
-                exc = traceback.format_exc()
-                self.server.log_message(exc)
+                tb = traceback.format_exc()
+                self.server.log_message(tb)
                 if not headers_set:
+                    err_body = ""
+                    if(self.server.debug):
+                        err_body = tb
                     start_response("500 Internal Server Error",
                                    [('Content-type', 'text/plain'),
-                                    ('Content-length', len(exc))])
-                    write(exc)
+                                    ('Content-length', len(err_body))])
+                    write(err_body)
         finally:
             if hasattr(result, 'close'):
                 result.close()
@@ -455,6 +458,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         self.connection.close()
 
 
+
 class Server(BaseHTTPServer.HTTPServer):
     def __init__(self,
                  socket,
@@ -467,7 +471,8 @@ class Server(BaseHTTPServer.HTTPServer):
                  minimum_chunk_size=None,
                  log_x_forwarded_for=True,
                  keepalive=True,
-                 log_format=DEFAULT_LOG_FORMAT):
+                 log_format=DEFAULT_LOG_FORMAT,
+                 debug=True):
 
         self.outstanding_requests = 0
         self.socket = socket
@@ -486,6 +491,7 @@ class Server(BaseHTTPServer.HTTPServer):
             protocol.minimum_chunk_size = minimum_chunk_size
         self.log_x_forwarded_for = log_x_forwarded_for
         self.log_format = log_format
+        self.debug = debug
 
     def get_environ(self):
         d = {
@@ -531,7 +537,8 @@ def server(sock, site,
            log_x_forwarded_for=True,
            custom_pool=None,
            keepalive=True,
-           log_format=DEFAULT_LOG_FORMAT):
+           log_format=DEFAULT_LOG_FORMAT,
+           debug=True):
     """  Start up a wsgi server handling requests from the supplied server
     socket.  This function loops forever.  The *sock* object will be closed after server exits,
     but the underlying file descriptor will remain open, so if you have a dup() of *sock*,
@@ -550,6 +557,7 @@ def server(sock, site,
     :param custom_pool: A custom GreenPool instance which is used to spawn client green threads.  If this is supplied, max_size is ignored.
     :param keepalive: If set to False, disables keepalives on the server; all connections will be closed after serving one request.
     :param log_format: A python format string that is used as the template to generate log lines.  The following values can be formatted into it: client_ip, date_time, request_line, status_code, body_length, wall_seconds.  The default is a good example of how to use it.
+    :param debug: True if the server should send exception tracebacks to the clients on 500 errors.  If False, the server will respond with empty bodies.
     """
     serv = Server(sock, sock.getsockname(),
                   site, log,
@@ -559,7 +567,8 @@ def server(sock, site,
                   minimum_chunk_size=minimum_chunk_size,
                   log_x_forwarded_for=log_x_forwarded_for,
                   keepalive=keepalive,
-                  log_format=log_format)
+                  log_format=log_format,
+                  debug=debug)
     if server_event is not None:
         server_event.send(serv)
     if max_size is None:

@@ -124,7 +124,7 @@ def read_http(sock):
             raise ConnectionClosed
         raise
     if not response_line:
-        raise ConnectionClosed
+        raise ConnectionClosed(response_line)
     
     header_lines = []
     while True:
@@ -174,7 +174,6 @@ class _TestBase(LimitedTestCase):
         eventlet.sleep(0) # give previous server a chance to start
         if self.killer:
             greenthread.kill(self.killer)
-            eventlet.sleep(0) # give killer a chance to kill
 
         new_kwargs = dict(max_size=128,
                           log=self.logfile,
@@ -952,6 +951,58 @@ class TestHttpd(_TestBase):
         self.assertEqual(headers['connection'], 'close')
         self.assert_('unicode' in body)
 
+    def test_ipv6(self):
+        try:
+            sock = eventlet.listen(('::1', 0), family=socket.AF_INET6)
+        except (socket.gaierror, socket.error):  # probably no ipv6
+            return
+        log = StringIO()
+        # first thing the server does is try to log the IP it's bound to
+        def run_server():
+            try:
+                server = wsgi.server(sock=sock, log=log, site=Site())
+            except ValueError:
+                log.write('broked')
+        eventlet.spawn_n(run_server)
+        logval = log.getvalue()
+        while not logval:
+            eventlet.sleep(0.0)
+            logval = log.getvalue()
+        if 'broked' in logval:
+            self.fail('WSGI server raised exception with ipv6 socket')
+
+    def test_debug(self):
+        self.spawn_server(debug=False)
+        def crasher(env, start_response):
+            raise RuntimeError("intentional crash")
+        self.site.application = crasher
+
+        sock = eventlet.connect(('localhost', self.port))
+        fd = sock.makefile('w')
+        fd.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+        fd.flush()
+        response_line, headers, body = read_http(sock)
+        self.assert_(response_line.startswith('HTTP/1.1 500 Internal Server Error'))
+        self.assertEqual(body, '')
+        self.assertEqual(headers['connection'], 'close')
+        self.assert_('transfer-encoding' not in headers)
+
+        # verify traceback when debugging enabled
+        self.spawn_server(debug=True)
+        self.site.application = crasher
+        sock = eventlet.connect(('localhost', self.port))
+        fd = sock.makefile('w')
+        fd.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+        fd.flush()
+        response_line, headers, body = read_http(sock)
+        self.assert_(response_line.startswith('HTTP/1.1 500 Internal Server Error'))
+        self.assert_('intentional crash' in body)
+        self.assert_('RuntimeError' in body)
+        self.assert_('Traceback' in body)
+        self.assertEqual(headers['connection'], 'close')
+        self.assert_('transfer-encoding' not in headers)
+
+
 def read_headers(sock):
     fd = sock.makefile()
     try:
@@ -1136,27 +1187,7 @@ class TestChunkedInput(_TestBase):
             signal.alarm(0)
             signal.signal(signal.SIGALRM, signal.SIG_DFL)
 
-        assert not got_signal, "caught alarm signal. infinite loop detected."
-
-    def test_ipv6(self):
-        try:
-            sock = eventlet.listen(('::1', 0), family=socket.AF_INET6)
-        except (socket.gaierror, socket.error):  # probably no ipv6
-            return
-        log = StringIO()
-        # first thing the server does is try to log the IP it's bound to
-        def run_server():
-            try:
-                server = wsgi.server(sock=sock, log=log, site=Site())
-            except ValueError:
-                log.write('broked')
-        eventlet.spawn_n(run_server)
-        logval = log.getvalue()
-        while not logval:
-            eventlet.sleep(0.0)
-            logval = log.getvalue()
-        if 'broked' in logval:
-            self.fail('WSGI server raised exception with ipv6 socket')
+        assert not got_signal, "caught alarm signal. infinite loop detected."        
 
 
 if __name__ == '__main__':
