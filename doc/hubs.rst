@@ -15,6 +15,8 @@ Eventlet has multiple hub implementations, and when you start using it, it tries
     Lowest-common-denominator, available everywhere.
 **pyevent**
     This is a libevent-based backend and is thus the fastest.  It's disabled by default, because it does not support native threads, but you can enable it yourself if your use case doesn't require them.  (You have to install pyevent, too.)
+**zeromq**
+    `ZeroMQ <http://zeromq.org>`_-powered hub.  This hub supports all normal non-blocking socket operations, and it's required for :mod:`eventlet.green.zeromq` to work.   
 
 If the selected hub is not idea for the application, another can be selected.  You can make the selection either with the environment variable :ref:`EVENTLET_HUB <env_vars>`, or with use_hub.
 
