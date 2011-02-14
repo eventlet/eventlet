@@ -27,7 +27,7 @@ class Popen(subprocess_orig.Popen):
             # eventlet.processes.Process.run() method.
             for attr in "stdin", "stdout", "stderr":
                 pipe = getattr(self, attr)
-                if pipe is not None:
+                if pipe is not None and not type(pipe) == greenio.GreenPipe:
                     wrapped_pipe = greenio.GreenPipe(pipe, pipe.mode, bufsize)
                     setattr(self, attr, wrapped_pipe)
         __init__.__doc__ = subprocess_orig.Popen.__init__.__doc__
