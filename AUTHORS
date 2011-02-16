@@ -70,3 +70,4 @@ Thanks To
 * Edward George, finding and fixing an issue in the [e]poll hubs (#74)
 * Ruijun Luo, figuring out incorrect openssl import for wrap_ssl (#73)
 * rfk, patch to get green zmq to respect noblock flag.
+* Soren Hansen, finding and fixing issue in subprocess (#77)

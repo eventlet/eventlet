@@ -279,5 +279,19 @@ import time
         self.assertEqual(len(lines), 2, "\n".join(lines))
 
 
+class Subprocess(ProcessBase):
+    def test_monkeypatched_subprocess(self):
+        new_mod = """import eventlet
+eventlet.monkey_patch()
+from eventlet.green import subprocess
+
+subprocess.Popen(['/bin/true'], stdin=subprocess.PIPE)
+print "done"
+"""
+        self.write_to_tempfile("newmod", new_mod)
+        output, lines = self.launch_subprocess('newmod')
+        self.assertEqual(output, "done\n", output)
+
+
 if __name__ == '__main__':
     main()
