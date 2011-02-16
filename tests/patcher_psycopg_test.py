@@ -1,7 +1,8 @@
 import os
 
-from tests import patcher_test
+from tests import patcher_test, skip_unless
 from tests import get_database_auth
+from tests.db_pool_test import postgres_requirement
 
 psycopg_test_file = """
 import os
@@ -35,6 +36,7 @@ print "done"
 """
 
 class PatchingPsycopg(patcher_test.ProcessBase):
+    @skip_unless(postgres_requirement)
     def test_psycopg_patched(self):
         if 'PSYCOPG_TEST_DSN' not in os.environ:
             # construct a non-json dsn for the subprocess

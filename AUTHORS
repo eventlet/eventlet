@@ -71,3 +71,4 @@ Thanks To
 * Ruijun Luo, figuring out incorrect openssl import for wrap_ssl (#73)
 * rfk, patch to get green zmq to respect noblock flag.
 * Soren Hansen, finding and fixing issue in subprocess (#77)
+* Stefano Rivera, making tests pass in absence of postgres (#78)
