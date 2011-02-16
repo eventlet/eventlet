@@ -78,19 +78,18 @@ class GreenSSLSocket(__ssl.SSLSocket):
                     return func(*a, **kw)
                 except SSLError, exc:
                     if get_errno(exc) == SSL_ERROR_WANT_READ:
-                        trampoline(self, 
-                                   read=True, 
-                                   timeout=self.gettimeout(), 
+                        trampoline(self,
+                                   read=True,
+                                   timeout=self.gettimeout(),
                                    timeout_exc=timeout_exc('timed out'))
                     elif get_errno(exc) == SSL_ERROR_WANT_WRITE:
-                        trampoline(self, 
-                                   write=True, 
-                                   timeout=self.gettimeout(), 
+                        trampoline(self,
+                                   write=True,
+                                   timeout=self.gettimeout(),
                                    timeout_exc=timeout_exc('timed out'))
                     else:
                         raise
 
-        
     def write(self, data):
         """Write DATA to the underlying SSL channel.  Returns
         number of bytes of DATA actually transmitted."""
@@ -101,38 +100,15 @@ class GreenSSLSocket(__ssl.SSLSocket):
         """Read up to LEN bytes and return them.
         Return zero-length string on EOF."""
         return self._call_trampolining(
-            super(GreenSSLSocket, self).read,len)
+            super(GreenSSLSocket, self).read, len)
 
     def send (self, data, flags=0):
-        # *NOTE: gross, copied code from ssl.py becase it's not factored well enough to be used as-is
         if self._sslobj:
-            if flags != 0:
-                raise ValueError(
-                    "non-zero flags not allowed in calls to send() on %s" %
-                    self.__class__)
-            while True:
-                try:
-                    v = self._sslobj.write(data)
-                except SSLError, e:
-                    if get_errno(e) == SSL_ERROR_WANT_READ:
-                        return 0
-                    elif get_errno(e) == SSL_ERROR_WANT_WRITE:
-                        return 0
-                    else:
-                        raise
-                else:
-                    return v
+            return self._call_trampolining(
+                super(GreenSSLSocket, self).send, data, flags)
         else:
-            while True:
-                try:
-                    return socket.send(self, data, flags)
-                except orig_socket.error, e:
-                    if self.act_non_blocking:
-                        raise
-                    if get_errno(e) == errno.EWOULDBLOCK or \
-                       get_errno(e) == errno.ENOTCONN:
-                        return 0
-                    raise
+            trampoline(self, write=True, timeout_exc=timeout_exc('timed out'))
+            return socket.send(self, data, flags)
 
     def sendto (self, data, addr, flags=0):
         # *NOTE: gross, copied code from ssl.py becase it's not factored well enough to be used as-is
