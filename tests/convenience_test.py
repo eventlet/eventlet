@@ -2,6 +2,7 @@ import os
 
 import eventlet
 from eventlet import event
+from eventlet.green import socket
 from tests import LimitedTestCase, s2b
 
 certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
@@ -119,4 +120,12 @@ class TestServe(LimitedTestCase):
         client.sendall("echo")
         self.assertEquals("echo", client.recv(1024))
         
-        
+    def test_socket_reuse(self):
+        lsock1 = eventlet.listen(('localhost',0))
+        port = lsock1.getsockname()[1]
+        def same_socket():
+            return eventlet.listen(('localhost',port))
+        self.assertRaises(socket.error,same_socket)
+        lsock1.close()
+        assert same_socket()
+
