@@ -5,12 +5,7 @@ from tests import mock, LimitedTestCase, skip_unless_zmq
 from unittest import TestCase
 
 from threading import Thread
-try:
-    from eventlet.green import zmq
-    from eventlet.hubs.zeromq import Hub
-except ImportError:
-    zmq = None
-    Hub = None
+from eventlet.green import zmq
 
 
 class TestUpstreamDownStream(LimitedTestCase):
@@ -47,8 +42,8 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
     @skip_unless_zmq
     def test_recv_spawned_before_send_is_non_blocking(self):
         req, rep, port = self.create_bound_pair(zmq.PAIR, zmq.PAIR)
-#        req.connect(ipc)
-#        rep.bind(ipc)
+#       req.connect(ipc)
+#       rep.bind(ipc)
         sleep()
         msg = dict(res=None)
         done = event.Event()
@@ -249,19 +244,15 @@ class TestThreadedContextAccess(TestCase):
     """
     if zmq:  # don't call decorators if zmq module unavailable
         @skip_unless_zmq
-        @mock.patch('eventlet.green.zmq.get_hub_name_from_instance')
-        @mock.patch('eventlet.green.zmq.get_hub', spec=Hub)
-        def test_context_factory_funtion(self, get_hub_mock, hub_name_mock):
-            hub_name_mock.return_value = 'zeromq'
+        def test_context_factory_function(self):
             ctx = zmq.Context()
-            self.assertTrue(get_hub_mock().get_context.called)
+            self.assertTrue(ctx is not None)
 
         @skip_unless_zmq
         def test_threadlocal_context(self):
-            hub = get_hub()
             context = zmq.Context()
             self.assertEqual(context, _threadlocal.context)
-            next_context = hub.get_context()
+            next_context = zmq.Context()
             self.assertTrue(context is next_context)
 
         @skip_unless_zmq
@@ -269,33 +260,15 @@ class TestThreadedContextAccess(TestCase):
             context = zmq.Context()
             test_result = []
             def assert_different(ctx):
-                hub = get_hub()
                 try:
                     this_thread_context = zmq.Context()
                 except:
                     test_result.append('fail')
                     raise
                 test_result.append(ctx is this_thread_context)
+
             Thread(target=assert_different, args=(context,)).start()
             while not test_result:
                 sleep(0.1)
             self.assertFalse(test_result[0])
-
-
-class TestCheckingForZMQHub(TestCase):
-
-    @skip_unless_zmq
-    def setUp(self):
-        self.orig_hub = zmq.get_hub_name_from_instance(get_hub())
-        use_hub('selects')
-
-    def tearDown(self):
-        use_hub(self.orig_hub)
-
-    def test_assertionerror_raise_by_context(self):
-        self.assertRaises(RuntimeError, zmq.Context)
-
-
-
-
 

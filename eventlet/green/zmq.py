@@ -2,7 +2,7 @@
 """
 __zmq__ = __import__('zmq')
 from eventlet import sleep
-from eventlet.hubs import trampoline, get_hub
+from eventlet.hubs import trampoline, _threadlocal
 
 __patched__ = ['Context', 'Socket']
 globals().update(dict([(var, getattr(__zmq__, var))
@@ -12,13 +12,6 @@ globals().update(dict([(var, getattr(__zmq__, var))
                               var in __patched__)
                        ]))
 
-
-def get_hub_name_from_instance(hub):
-    """Get the string name the eventlet uses to refer to hub
-
-    :param hub: An eventlet hub
-    """
-    return hub.__class__.__module__.rsplit('.',1)[-1]
 
 def Context(io_threads=1):
     """Factory function replacement for :class:`zmq.core.context.Context`
@@ -31,11 +24,11 @@ def Context(io_threads=1):
     instance per thread. This is due to the way :class:`zmq.core.poll.Poller`
     works
     """
-    hub = get_hub()
-    hub_name = get_hub_name_from_instance(hub)
-    if hub_name != 'zeromq':
-        raise RuntimeError("Hub must be 'zeromq', got '%s'" % hub_name)
-    return hub.get_context(io_threads)
+    try:
+        return _threadlocal.context
+    except AttributeError:
+        _threadlocal.context = _Context(io_threads)
+        return _threadlocal.context
 
 class _Context(__zmq__.Context):
     """Internal subclass of :class:`zmq.core.context.Context`
@@ -68,62 +61,65 @@ class Socket(__zmq__.Socket):
     ``zmq.EAGAIN`` (retry) error is raised
     """
 
+    def _sock_wait(self, read=False, write=False):
+        """
+        First checks if there are events in the socket, to avoid
+        edge trigger problems with race conditions.  Then if there
+        are none it will trampoline and when coming back check
+        for the events.
+        """
+        events = self.getsockopt(__zmq__.EVENTS)
 
-    def _send_message(self, msg, flags=0):
+        if read and (events & __zmq__.POLLIN):
+            return events
+        elif write and (events & __zmq__.POLLOUT):
+            return events
+        else:
+            # ONLY trampoline on read events for the zmq FD
+            trampoline(self.getsockopt(__zmq__.FD), read=True)
+            return self.getsockopt(__zmq__.EVENTS)
+
+    def send(self, msg, flags=0, copy=True, track=False):
+        """
+        Override this instead of the internal _send_* methods 
+        since those change and it's not clear when/how they're
+        called in real code.
+        """
         if flags & __zmq__.NOBLOCK:
-            super(Socket, self)._send_message(msg, flags)
+            super(Socket, self).send(msg, flags=flags, track=track, copy=copy)
             return
+
         flags |= __zmq__.NOBLOCK
+
         while True:
             try:
-                super(Socket, self)._send_message(msg, flags)
+                self._sock_wait(write=True)
+                super(Socket, self).send(msg, flags=flags, track=track,
+                                         copy=copy)
                 return
             except __zmq__.ZMQError, e:
                 if e.errno != EAGAIN:
                     raise
-            trampoline(self, write=True)
 
-    def _send_copy(self, msg, flags=0):
+    def recv(self, flags=0, copy=True, track=False):
+        """
+        Override this instead of the internal _recv_* methods 
+        since those change and it's not clear when/how they're
+        called in real code.
+        """
         if flags & __zmq__.NOBLOCK:
-            super(Socket, self)._send_copy(msg, flags)
-            return
+            return super(Socket, self).recv(flags=flags, track=track, copy=copy)
+
         flags |= __zmq__.NOBLOCK
+
         while True:
             try:
-                super(Socket, self)._send_copy(msg, flags)
-                return
-            except __zmq__.ZMQError, e:
-                if e.errno != EAGAIN:
-                    raise
-            trampoline(self, write=True)
-
-    def _recv_message(self, flags=0, track=False):
-        if flags & __zmq__.NOBLOCK:
-            return super(Socket, self)._recv_message(flags, track)
-        flags |= __zmq__.NOBLOCK
-        while True:
-            try:
-                m = super(Socket, self)._recv_message(flags, track)
+                self._sock_wait(read=True)
+                m = super(Socket, self).recv(flags=flags, track=track, copy=copy)
                 if m is not None:
                     return m
             except __zmq__.ZMQError, e:
                 if e.errno != EAGAIN:
                     raise
-            trampoline(self, read=True)
-
-    def _recv_copy(self, flags=0):
-        if flags & __zmq__.NOBLOCK:
-            return super(Socket, self)._recv_copy(flags)
-        flags |= __zmq__.NOBLOCK
-        while True:
-            try:
-                m = super(Socket, self)._recv_copy(flags)
-                if m is not None:
-                    return m
-            except __zmq__.ZMQError, e:
-                if e.errno != EAGAIN:
-                    raise
-            trampoline(self, read=True)
-
 
 
