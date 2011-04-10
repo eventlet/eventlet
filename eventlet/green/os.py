@@ -6,12 +6,13 @@ from eventlet import greenio
 from eventlet.support import get_errno
 from eventlet import greenthread
 from eventlet import hubs
+from eventlet.patcher import slurp_properties
 
-__patched__ = ['fdopen', 'read', 'write', 'wait', 'waitpid']
-globals().update(dict([(var, getattr(os_orig, var))
-                       for var in dir(os_orig) 
-                       if not var.startswith('__')]))
 __all__ = os_orig.__all__
+__patched__ = ['fdopen', 'read', 'write', 'wait', 'waitpid']
+
+slurp_properties(os_orig, globals(), 
+    ignore=__patched__, srckeys=dir(os_orig))
 
 def fdopen(fd, *args, **kw):
     """fdopen(fd [, mode='r' [, bufsize]]) -> file_object

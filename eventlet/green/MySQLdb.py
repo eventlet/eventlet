@@ -1,11 +1,12 @@
 __MySQLdb = __import__('MySQLdb')
-globals().update(dict([(var, getattr(__MySQLdb, var))
-                       for var in dir(__MySQLdb)
-                       if not var.startswith('__')]))
-                       
+
 __all__ = __MySQLdb.__all__
 __patched__ = ["connect", "Connect", 'Connection', 'connections']
 
+from eventlet.patcher import slurp_properties
+slurp_properties(__MySQLdb, globals(), 
+    ignore=__patched__, srckeys=dir(__MySQLdb))
+                       
 from eventlet import tpool
 
 __orig_connections = __import__('MySQLdb.connections').connections

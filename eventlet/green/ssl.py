@@ -1,8 +1,7 @@
 __ssl = __import__('ssl')
 
-globals().update(dict([(var, getattr(__ssl, var))
-                       for var in dir(__ssl) 
-                       if not var.startswith('__')]))
+from eventlet.patcher import slurp_properties
+slurp_properties(__ssl, globals(), srckeys=dir(__ssl))
 
 import sys
 import errno

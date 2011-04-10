@@ -29,10 +29,10 @@ FIXME: No testcases for this module.
 """
 
 profile_orig = __import__('profile')
-globals().update(dict([(var, getattr(profile_orig, var))
-                       for var in dir(profile_orig) 
-                       if not var.startswith('__')]))
 __all__ = profile_orig.__all__
+
+from eventlet.patcher import slurp_properties
+slurp_properties(profile_orig, globals(), srckeys=dir(profile_orig))
 
 import new
 import sys

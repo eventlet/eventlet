@@ -1,7 +1,6 @@
 __time = __import__('time')
-globals().update(dict([(var, getattr(__time, var))
-                       for var in dir(__time) 
-                       if not var.startswith('__')]))
+from eventlet.patcher import slurp_properties
 __patched__ = ['sleep']
+slurp_properties(__time, globals(), ignore=__patched__, srckeys=dir(__time))
 from eventlet.greenthread import sleep
 sleep # silence pyflakes

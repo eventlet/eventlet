@@ -3,12 +3,12 @@ import sys
 from eventlet.hubs import get_hub
 __import__('eventlet.green._socket_nodns')
 __socket = sys.modules['eventlet.green._socket_nodns']
-globals().update(dict([(var, getattr(__socket, var))
-                       for var in dir(__socket)
-                       if not var.startswith('__')]))
 
 __all__     = __socket.__all__
 __patched__ = __socket.__patched__ + ['gethostbyname', 'getaddrinfo', 'create_connection',]
+
+from eventlet.patcher import slurp_properties
+slurp_properties(__socket, globals(), srckeys=dir(__socket))
 
 
 greendns = None

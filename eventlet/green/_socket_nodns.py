@@ -1,7 +1,11 @@
 __socket = __import__('socket')
-globals().update(dict([(var, getattr(__socket, var))
-                       for var in dir(__socket) 
-                       if not var.startswith('__')]))
+
+__all__     = __socket.__all__
+__patched__ = ['fromfd', 'socketpair', 'ssl', 'socket']
+
+from eventlet.patcher import slurp_properties
+slurp_properties(__socket, globals(), 
+    ignore=__patched__, srckeys=dir(__socket))
 
 os = __import__('os')
 import sys
@@ -12,8 +16,6 @@ from eventlet.greenio import SSL as _SSL  # for exceptions
 from eventlet.greenio import _GLOBAL_DEFAULT_TIMEOUT
 from eventlet.greenio import _fileobject
 
-__all__     = __socket.__all__
-__patched__ = ['fromfd', 'socketpair', 'ssl', 'socket']
 try:
     __original_fromfd__ = __socket.fromfd
     def fromfd(*args):
