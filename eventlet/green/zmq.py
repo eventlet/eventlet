@@ -3,14 +3,10 @@
 __zmq__ = __import__('zmq')
 from eventlet import sleep
 from eventlet.hubs import trampoline, _threadlocal
+from eventlet.patcher import slurp_properties
 
 __patched__ = ['Context', 'Socket']
-globals().update(dict([(var, getattr(__zmq__, var))
-                       for var in __zmq__.__all__
-                       if not (var.startswith('__')
-                            or
-                              var in __patched__)
-                       ]))
+slurp_properties(__zmq__, globals(), ignore=__patched__)
 
 
 def Context(io_threads=1):
