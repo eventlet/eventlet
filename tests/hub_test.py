@@ -1,4 +1,4 @@
-from tests import LimitedTestCase, main, skip_with_pyevent, skip_if_no_itimer, skip_with_zmq
+from tests import LimitedTestCase, main, skip_with_pyevent, skip_if_no_itimer
 import time
 import eventlet
 from eventlet import hubs
@@ -208,7 +208,6 @@ except eventlet.Timeout:
 
 class TestBadFilenos(LimitedTestCase):
     @skip_with_pyevent
-    @skip_with_zmq
     def test_repeated_selects(self):
         from eventlet.green import select
         self.assertRaises(ValueError, select.select, [-1], [], [])
@@ -218,7 +217,6 @@ class TestBadFilenos(LimitedTestCase):
 from tests.patcher_test import ProcessBase
 class TestFork(ProcessBase):
     @skip_with_pyevent
-    @skip_with_zmq
     def test_fork(self):
         new_mod = """
 import os

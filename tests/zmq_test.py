@@ -1,12 +1,21 @@
 from eventlet import event, spawn, sleep, patcher
 from eventlet.hubs import get_hub, _threadlocal, use_hub
 from nose.tools import *
-from tests import mock, LimitedTestCase, skip_unless_zmq
+from tests import mock, LimitedTestCase, using_pyevent, skip_unless
 from unittest import TestCase
 
 from threading import Thread
-from eventlet.green import zmq
+try:
+    from eventlet.green import zmq
+except ImportError:
+    zmq = {}    # for systems lacking zmq, skips tests instead of barfing
 
+def zmq_supported(_):
+    try:
+        import zmq
+    except ImportError:
+        return False
+    return not using_pyevent(_)
 
 class TestUpstreamDownStream(LimitedTestCase):
 
@@ -39,7 +48,7 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         else:
             self.fail("Function did not raise any error")
 
-    @skip_unless_zmq
+    @skip_unless(zmq_supported)
     def test_recv_spawned_before_send_is_non_blocking(self):
         req, rep, port = self.create_bound_pair(zmq.PAIR, zmq.PAIR)
 #       req.connect(ipc)
@@ -57,7 +66,7 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         done.wait()
         self.assertEqual(msg['res'], 'test')
 
-    @skip_unless_zmq
+    @skip_unless(zmq_supported)
     def test_close_socket_raises_enotsup(self):
         req, rep, port = self.create_bound_pair(zmq.PAIR, zmq.PAIR)
 
@@ -66,7 +75,7 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         self.assertRaisesErrno(zmq.ENOTSUP, rep.recv)
         self.assertRaisesErrno(zmq.ENOTSUP, req.send, 'test')
 
-    @skip_unless_zmq
+    @skip_unless(zmq_supported)
     def test_send_1k_req_rep(self):
         req, rep, port = self.create_bound_pair(zmq.REQ, zmq.REP)
         sleep()
@@ -93,7 +102,7 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         final_i = done.wait()
         self.assertEqual(final_i, 0)
 
-    @skip_unless_zmq
+    @skip_unless(zmq_supported)
     def test_send_1k_push_pull(self):
         down, up, port = self.create_bound_pair(zmq.PUSH, zmq.PULL)
         sleep()
@@ -117,7 +126,7 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         final_i = done.wait()
         self.assertEqual(final_i, 0)
 
-    @skip_unless_zmq
+    @skip_unless(zmq_supported)
     def test_send_1k_pub_sub(self):
         pub, sub_all, port = self.create_bound_pair(zmq.PUB, zmq.SUB)
         sub1 = self.context.socket(zmq.SUB)
@@ -166,7 +175,7 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         self.assertEqual(sub2_count, 500)
         self.assertEqual(sub_all_count, 1000)
 
-    @skip_unless_zmq
+    @skip_unless(zmq_supported)
     def test_change_subscription(self):
         pub, sub, port = self.create_bound_pair(zmq.PUB, zmq.SUB)
         sub.setsockopt(zmq.SUBSCRIBE, 'test')
@@ -205,7 +214,7 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         rx_count = sub_done.wait()
         self.assertEqual(rx_count, 50)
 
-    @skip_unless_zmq
+    @skip_unless(zmq_supported)
     def test_recv_multipart_bug68(self):
         req, rep, port = self.create_bound_pair(zmq.REQ, zmq.REP)
         msg = ['']
@@ -223,7 +232,7 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         # but it's private __str__ appears to be the way to go
         self.assertEqual([str(m) for m in recieved_msg], msg2)
 
-    @skip_unless_zmq
+    @skip_unless(zmq_supported)
     def test_recv_noblock_bug76(self):
         req, rep, port = self.create_bound_pair(zmq.REQ, zmq.REP)
         self.assertRaisesErrno(zmq.EAGAIN, rep.recv, zmq.NOBLOCK)
@@ -243,19 +252,19 @@ class TestThreadedContextAccess(TestCase):
     in the same context
     """
     if zmq:  # don't call decorators if zmq module unavailable
-        @skip_unless_zmq
+        @skip_unless(zmq_supported)
         def test_context_factory_function(self):
             ctx = zmq.Context()
             self.assertTrue(ctx is not None)
 
-        @skip_unless_zmq
+        @skip_unless(zmq_supported)
         def test_threadlocal_context(self):
             context = zmq.Context()
             self.assertEqual(context, _threadlocal.context)
             next_context = zmq.Context()
             self.assertTrue(context is next_context)
 
-        @skip_unless_zmq
+        @skip_unless(zmq_supported)
         def test_different_context_in_different_thread(self):
             context = zmq.Context()
             test_result = []
