@@ -269,6 +269,12 @@ class TestTpool(LimitedTestCase):
         x = tpool.Proxy(wrapped, autowrap_names=('__call__',))
         for r in x(3):
             self.assertEquals(3, r)
+            
+    @skip_with_pyevent
+    def test_eventlet_timeout(self):
+        def raise_timeout():
+            raise eventlet.Timeout()
+        self.assertRaises(eventlet.Timeout, tpool.execute, raise_timeout)
 
 class TpoolLongTests(LimitedTestCase):
     TEST_TIMEOUT=60

@@ -21,6 +21,7 @@ from eventlet import event
 from eventlet import greenio
 from eventlet import greenthread
 from eventlet import patcher
+from eventlet import timeout
 threading = patcher.original('threading')
 Queue_module = patcher.original('Queue')
 Queue = Queue_module.Queue
@@ -58,7 +59,7 @@ def tpool_trampoline():
 
 
 SYS_EXCS = (KeyboardInterrupt, SystemExit)
-
+EXC_CLASSES = (Exception, timeout.Timeout)
 
 def tworker(reqq):
     global _rspq
@@ -75,7 +76,7 @@ def tworker(reqq):
             rv = meth(*args,**kwargs)
         except SYS_EXCS:
             raise
-        except Exception:
+        except EXC_CLASSES:
             rv = sys.exc_info()
         # test_leakage_from_tracebacks verifies that the use of
         # exc_info does not lead to memory leaks
@@ -116,7 +117,9 @@ def execute(meth,*args, **kwargs):
     reqq.put((e,meth,args,kwargs))
 
     rv = e.wait()
-    if isinstance(rv,tuple) and len(rv) == 3 and isinstance(rv[1],Exception):
+    if isinstance(rv,tuple) \
+      and len(rv) == 3 \
+      and isinstance(rv[1],EXC_CLASSES):
         import traceback
         (c,e,tb) = rv
         if not QUIET:

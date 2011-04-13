@@ -2,11 +2,12 @@
 ======
 * ZeroMQ support without an explicit hub now implemented!  Thanks to Zed Shaw for the patch.
 * zmq module supports the NOBLOCK flag, thanks to rfk. (#76)
-* eventlet.wsgi has a debug flag which can be set to false to not send tracebacks to the client
-* Recursive GreenPipe madeness forestalled by Soren Hansen (#77)
+* eventlet.wsgi has a debug flag which can be set to false to not send tracebacks to the client (per redbo's request)
+* Recursive GreenPipe madness forestalled by Soren Hansen (#77)
 * eventlet.green.ssl no longer busywaits on send()
 * EEXIST ignored in epoll hub (#80)
 * eventlet.listen's behavior on Windows improved, thanks to Nick Vatamaniuc (#83)
+* Timeouts raised within tpool.execute are propagated back to the caller (thanks again to redbo for being the squeaky wheel)
 
 0.9.14
 ======
