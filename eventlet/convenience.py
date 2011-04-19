@@ -33,7 +33,7 @@ def listen(addr, family=socket.AF_INET, backlog=50):
     :return: The listening green socket object.
     """
     sock = socket.socket(family, socket.SOCK_STREAM)
-    if sys.platform[:3]=="win":
+    if sys.platform[:3] != "win":
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.bind(addr)
     sock.listen(backlog)

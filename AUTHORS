@@ -67,7 +67,7 @@ Thanks To
 * Malcolm Cleaton, patch for Event exception handling
 * Alexey Borzenkov, for finding and fixing issues with Windows error detection (#66, #69), reducing dependencies in zeromq hub (#71)
 * Anonymous, finding and fixing error in websocket chat example (#70)
-* Edward George, finding and fixing an issue in the [e]poll hubs (#74)
+* Edward George, finding and fixing an issue in the [e]poll hubs (#74), and in convenience (#86)
 * Ruijun Luo, figuring out incorrect openssl import for wrap_ssl (#73)
 * rfk, patch to get green zmq to respect noblock flag.
 * Soren Hansen, finding and fixing issue in subprocess (#77)
