@@ -1,6 +1,6 @@
 0.9.16
 ======
-* SO_RESUSEADDR now correctly set.
+* SO_REUSEADDR now correctly set.
 
 0.9.15
 ======
