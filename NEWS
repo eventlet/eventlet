@@ -1,3 +1,7 @@
+0.9.16
+======
+* SO_RESUSEADDR now correctly set.
+
 0.9.15
 ======
 * ZeroMQ support without an explicit hub now implemented!  Thanks to Zed Shaw for the patch.
