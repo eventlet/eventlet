@@ -38,12 +38,17 @@ def producer(start_url):
     q = eventlet.Queue()
     q.put(start_url)
     # keep looping if there are new urls, or workers that may produce more urls
-    while not q.empty() or pool.running() != 0:
-        url = eventlet.with_timeout(0.1, q.get, timeout_value='')
-        # limit requests to eventlet.net so we don't crash all over the internet
-        if url not in seen and 'eventlet.net' in url:
-            seen.add(url)
-            pool.spawn_n(fetch, url, q)
+    while True: 
+        while not q.empty():
+            url = q.get()
+            # limit requests to eventlet.net so we don't crash all over the internet
+            if url not in seen and 'eventlet.net' in url:
+                seen.add(url)
+                pool.spawn_n(fetch, url, q)
+        pool.waitall()
+        if q.empty():
+            break
+        
     return seen
 
 
