@@ -113,10 +113,15 @@ class Pool(object):
         """
         if self.free_items:
             return self.free_items.popleft()
-        if self.current_size < self.max_size:
-            created = self.create()
-            self.current_size += 1
+        self.current_size += 1
+        if self.current_size <= self.max_size:
+            try:
+                created = self.create()
+            except:
+                self.current_size -= 1
+                raise                
             return created
+        self.current_size -= 1 # did not create
         return self.channel.get()
 
     if item_impl is not None:
