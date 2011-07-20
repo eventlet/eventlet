@@ -296,6 +296,7 @@ class GenericConnectionWrapper(object):
     def errno(self,*args, **kwargs): return self._base.errno(*args, **kwargs)
     def error(self,*args, **kwargs): return self._base.error(*args, **kwargs)
     def errorhandler(self, *args, **kwargs): return self._base.errorhandler(*args, **kwargs)
+    def insert_id(self, *args, **kwargs): return self._base.insert_id(*args, **kwargs)
     def literal(self, *args, **kwargs): return self._base.literal(*args, **kwargs)
     def set_character_set(self, *args, **kwargs): return self._base.set_character_set(*args, **kwargs)
     def set_sql_mode(self, *args, **kwargs): return self._base.set_sql_mode(*args, **kwargs)
