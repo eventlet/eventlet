@@ -57,6 +57,7 @@ _disable_recv_types = set([__zmq__.PUB, __zmq__.PUSH])
 # - Ensure that recv* and send* methods raise error when called on a
 #   closed socket. They should not block.
 # - Return correct message tracker from send* methods
+# - Make MessageTracker.wait zmq friendly
 
 class Socket(__zmq__.Socket):
     """Green version of :class:`zmq.core.socket.Socket
@@ -79,6 +80,8 @@ class Socket(__zmq__.Socket):
     def __init__(self, context, socket_type):
         super(Socket, self).__init__(context, socket_type)
 
+        self._writers = None
+        self._readers = None
         # customize send and recv functions based on socket type
         if socket_type in _multi_writer_types:
             # support multiple greenthreads writing at the same time
@@ -86,7 +89,7 @@ class Socket(__zmq__.Socket):
             self.send = self._xsafe_send
             self.send_multipart = self._xsafe_send_multipart
         elif socket_type in _disable_send_types:
-            self.send = self.send_multipart = _send_not_supported
+            self.send = self.send_multipart = self._send_not_supported
 
         if socket_type in _multi_reader_types:
             # support multiple greenthreads reading at the same time
@@ -94,7 +97,7 @@ class Socket(__zmq__.Socket):
             self.recv = self._xsafe_recv
             self.recv_multipart = self._xsafe_recv_multipart
         elif socket_type in _disable_recv_types:
-            self.recv = self.recv_multipart = _recv_not_supported
+            self.recv = self.recv_multipart = self._recv_not_supported
 
     def _sock_wait(self, read=False, write=False):
         """
@@ -207,10 +210,12 @@ class Socket(__zmq__.Socket):
     def _xsafe_inner_send(self, msg, flags, copy, track):
         is_listening = bool(self._writers or self._readers)
 
-        self._writers.append((msg, flags | __zmq__.NOBLOCK, copy, track, greenlet.getcurrent()))
+        self._writers.append((greenlet.getcurrent(), msg, flags | __zmq__.NOBLOCK, copy, track))
         if is_listening:
-            # Other readers or writers are blocked. If this the first writer, it may be possible to send immediately
+            # Other readers or writers are blocked. If this is the
+            # first writer, it may be possible to send immediately
             if len(self._writers) == 1:
+                # TODO: Check EVENTS first?
                 result = self._send_queued()
                 if not self._writers:
                     # success!
@@ -227,6 +232,57 @@ class Socket(__zmq__.Socket):
                 return result
         else:
             return self._process_queues()
+
+    def _xsafe_recv(self, flags=0, copy=True, track=False):
+        """
+        A recv method that's safe to use when multiple greenthreads
+        are calling send, send_multipart, recv and recv_multipart on
+        the same socket.
+        """
+
+        if flags & __zmq__.NOBLOCK:
+            return super(Socket, self).recv(flags=flags, copy=copy, track=track)
+
+        return self._xsafe_inner_recv(False, flags, copy, track)
+
+    def _xsafe_recv_multipart(self, flags=0, copy=True, track=False):
+        """
+        A recv method that's safe to use when multiple greenthreads
+        are calling send, send_multipart, recv and recv_multipart on
+        the same socket.
+        """
+        if flags & __zmq__.NOBLOCK:
+            return super(Socket, self).recv_multipart(flags=flags, copy=copy, track=track)
+
+        return self._xsafe_inner_recv(True, flags, copy, track)
+
+    def _xsafe_inner_recv(self, multi, flags, copy, track):
+        is_listening = bool(self._writers or self._readers)
+
+        self._readers.append((greenlet.getcurrent(), multi, flags | __zmq__.NOBLOCK, copy, track))
+
+        if is_listening:
+            # Other readers or writers are blocked. If this is the
+            # first reader, it may be possible to recv immediately
+            if len(self._readers) == 1:
+                # TODO: Check EVENTS first?
+                result = self._recv_queued()
+                if not self._readers:
+                    # success!
+                    return result
+            
+            # other readers or writers are blocked so this greenthread must wait its turn
+            result = hubs.get_hub().switch()
+            if result is False:
+                # msg was not yet received, but this thread was woken up
+                # so that it could process the queues
+                return self._process_queues()
+            else:
+                # msg was received
+                return result
+        else:
+            return self._process_queues()
+
 
     def _process_queues(self):
         """ If there are readers or writers queued, this method tries
@@ -251,24 +307,24 @@ class Socket(__zmq__.Socket):
                 # an error occurred for this greenthread's send/recv
                 # call. Wake another thread to continue processing.
                 if readers:
-                    hubs.get_hub().schedule_call_global(0, readers[0].switch, False)
+                    hubs.get_hub().schedule_call_global(0, readers[0][0].switch, False)
                 elif writers:
-                    hubs.get_hub().schedule_call_global(0, writers[0][-1].switch, False)
+                    hubs.get_hub().schedule_call_global(0, writers[0][0].switch, False)
                 raise
 
             # send and recv cannot continue right now. If there are
             # more readers or writers queued, either trampoline or
             # wake another greenthread.
-            current = greelnet.getcurrent()
-            if (readers and readers[0] is current) or (writers and writers[0][-1] is current):
+            current = greenlet.getcurrent()
+            if (readers and readers[0][0] is current) or (writers and writers[0][0] is current):
                 # Only trampoline if this thread is the next reader or writer,
                 # and ONLY trampoline on read events for zmq FDs.
                 trampoline(self.getsockopt(__zmq__.FD), read=True)
             else:
                 if readers:
-                    hubs.get_hub().schedule_call_global(0, readers[0].switch, False)
+                    hubs.get_hub().schedule_call_global(0, readers[0][0].switch, False)
                 elif writers:
-                    hubs.get_hub().schedule_call_global(0, writers[0][-1].switch, False)
+                    hubs.get_hub().schedule_call_global(0, writers[0][0].switch, False)
                 return send_result or recv_result
                 
 
@@ -277,7 +333,7 @@ class Socket(__zmq__.Socket):
         Send as many msgs from the writers deque as possible. Wake up
         the greenthreads for messages that are sent.
         """
-        writers = self.writers
+        writers = self._writers
         current = greenlet.getcurrent()
         hub = hubs.get_hub()
         super_send = super(Socket, self).send
@@ -286,7 +342,7 @@ class Socket(__zmq__.Socket):
         result = None
 
         while writers:
-            msg, flags, copy, track, writer = writers[0]
+            writer, msg, flags, copy, track = writers[0]
             try:
                 if isinstance(msg, list):
                     r = super_send_multipart(msg, flags=flags, copy=copy, track=track)
@@ -315,23 +371,51 @@ class Socket(__zmq__.Socket):
             # wake writer
             if current is not writer:
                 hub.schedule_call_global(0, writer.switch, r)
-        return result    
-                    
-    def _xsafe_recv(self, flags=0, copy=True, track=False):
-        """
-        A recv method that's safe to use when multiple greenthreads
-        are calling send, send_multipart, recv and recv_multipart on
-        the same socket.
-        """
+        return result
 
-        if flags & __zmq__.NOBLOCK:
-            return super(Socket, self).recv(flags=flags, copy=copy, track=track)
 
-    def _xsafe_recv_multipart(self, flags=0, copy=True, track=False):
+    def _recv_queued(self):
         """
-        A recv method that's safe to use when multiple greenthreads
-        are calling send, send_multipart, recv and recv_multipart on
-        the same socket.
+        Recv as many msgs for each of the greenthreads in the readers
+        deque. Wakes up the greenthreads for messages that are
+        received. If the received message is for the current
+        greenthread, returns immediately.
         """
-        if flags & __zmq__.NOBLOCK:
-            return super(Socket, self).recv_multipart(flags=flags, copy=copy, track=track)
+        readers = self._readers
+        super_recv = super(Socket, self).recv
+        super_recv_multipart = super(Socket, self).recv_multipart
+
+        current = greenlet.getcurrent()
+        hub = hubs.get_hub()
+
+        while readers:
+            reader, multi, flags, copy, track = readers[0]
+            try:
+                if multi:
+                    msg = super_recv_multipart(flags, copy, track)
+                else:
+                    msg = super_recv(flags, copy, track)
+
+            except (SystemExit, KeyboardInterrupt):
+                raise
+            except __zmq__.ZMQError, e:
+                if e.errno == EAGAIN:
+                    return None
+                else:
+                    # message failed to send
+                    readers.popleft()
+                    if current is reader:
+                        raise
+                    else:
+                        hub.schedule_call_global(0, reader.throw, e)
+                        continue
+
+            # move to the next reader
+            readers.popleft()
+
+            if current is reader:
+                return msg
+            else:
+                hub.schedule_call_global(0, reader.switch, msg)
+
+        return None
