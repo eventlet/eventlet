@@ -308,6 +308,9 @@ class Socket(__zmq__.Socket):
         result = None
         while True:
             try:
+                # Processing readers before writers here is arbitrary,
+                # but if you change the order be sure you modify the
+                # following code that calls getsockopt(EVENTS).
                 if readers:
                     result = self._recv_queued() or result
                 if writers:
@@ -323,35 +326,56 @@ class Socket(__zmq__.Socket):
                     hubs.get_hub().schedule_call_global(0, writers[0][0].switch, False)
                 raise
 
-            events = self._super_getsockopt(__zmq__.EVENTS)
-            if (readers and (events & __zmq__.POLLIN)) or \
-               (writers and (events & __zmq__.POLLOUT)):
-                # more work to do
-                continue            
+            # Above we processed all queued readers and then all
+            # queued writers. Each call to send or recv can cause the
+            # zmq to process pending events, so by calling send last
+            # there may now be a message waiting for a
+            # reader. However, if we just call recv now then further
+            # events may notify the socket that a pipe has room for a
+            # message to be send. To break this vicious cycle and
+            # safely call trampoline, check getsockopt(EVENTS) to
+            # ensure a message can't be either sent or received a
+            # message.
+
+            if readers:
+                events = self._super_getsockopt(__zmq__.EVENTS)
+                if (events & __zmq__.POLLIN) or (writers and (events & __zmq__.POLLOUT)):
+                    # more work to do
+                    continue
+
+            next_reader = readers[0][0] if readers else None
+            next_writer = writers[0][0] if writers else None
+
+            next_thread = next_reader or next_writer
 
             # send and recv cannot continue right now. If there are
             # more readers or writers queued, either trampoline or
             # wake another greenthread.
-            if (readers and readers[0][0] is current) or \
-               (writers and writers[0][0] is current):
-                # Only trampoline if this thread is the next reader or writer,
-                # and ONLY trampoline on read events for zmq FDs.
-                try:
-                    self._blocked_thread = current
-                    trampoline(self._fd, read=True)
-                finally:
-                    if self._wakeup_timer is not None:
-                        self._wakeup_timer.cancel()
-                        self._wakeup_timer = None
-                    
-                    self._blocked_thread = None
-            else:
-                if readers:
-                    hubs.get_hub().schedule_call_global(0, readers[0][0].switch, False)
-                elif writers:
-                    hubs.get_hub().schedule_call_global(0, writers[0][0].switch, False)
-                return result
-                
+            if next_thread:
+                # Only trampoline if this thread is the next reader or writer
+                if next_reader is current or next_writer is current:
+                    try:
+                        self._blocked_thread = current
+                        # Only trampoline on read events for zmq FDs, never write.
+                        trampoline(self._fd, read=True)
+                        continue
+                    finally:
+                        self._blocked_thread = None
+                        # Either the fd is readable or we were woken by
+                        # another thread. Cleanup the wakeup timer.
+                        t = self._wakeup_timer
+                        if t is not None:
+                            # Important to cancel the timer so it doesn't
+                            # spuriously wake this greenthread later on.
+                            t.cancel()
+                            self._wakeup_timer = None
+                else:
+                    # This greenthread's work is done. Wake another to
+                    # continue processing the queues if there is one
+                    # blocked. This arbitrarily prefers to wake the
+                    # next reader, but I don't think it matters which.
+                    hubs.get_hub().schedule_call_global(0, next_thread.switch, False)
+            return result                
 
     def _send_queued(self):
         """
