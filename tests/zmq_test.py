@@ -242,10 +242,12 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
     def test_send_during_recv(self):
         sender, receiver, port = self.create_bound_pair(zmq.XREQ, zmq.XREQ)
         sleep()
-        done = event.Event()
 
-        def slow_rx():
-            self.assertEqual(sender.recv(), "done")
+        num_recvs = 30
+        done_evts = [event.Event() for _ in range(num_recvs)]
+
+        def slow_rx(done, msg):
+            self.assertEqual(sender.recv(), msg)
             done.send(0)
 
         def tx():
@@ -253,48 +255,50 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
             while tx_i <= 1000:
                 sender.send(str(tx_i))
                 tx_i += 1
-
+    
         def rx():
             while True:
                 rx_i = receiver.recv()
                 if rx_i == "1000":
-                    receiver.send('done')
+                    for i in range(num_recvs):
+                        receiver.send('done%d' % i)
+                    sleep()
                     return
-        spawn(slow_rx)
+
+        for i in range(num_recvs):
+            spawn(slow_rx, done_evts[i], "done%d" % i)
+
         spawn(tx)
         spawn(rx)
+        for i in range(num_recvs):
+            final_i = done_evts[i].wait()
+            self.assertEqual(final_i, 0)
+
+            
+    # Need someway to ensure a thread is blocked on send... This isn't working 
+    @skip_unless(zmq_supported)
+    def test_recv_during_send(self):
+        sender, receiver, port = self.create_bound_pair(zmq.XREQ, zmq.XREQ)
+        sleep()
+
+        num_recvs = 30
+        done = event.Event()
+        
+        sender.setsockopt(zmq.HWM, 10)
+        sender.setsockopt(zmq.SNDBUF, 10)
+        
+        receiver.setsockopt(zmq.RCVBUF, 10)
+        
+        def tx():
+            tx_i = 0
+            while tx_i <= 1000:
+                sender.send(str(tx_i))
+                tx_i += 1
+            done.send(0)
+
+        spawn(tx)
         final_i = done.wait()
         self.assertEqual(final_i, 0)
-
-    # Need someway to ensure a thread is blocked on send. This method
-    # below uses too much memory. Try adjust watermarks or other
-    # socket opts?
-
-    # @skip_unless(zmq_supported)
-    # def test_recv_during_send(self):
-    #     sender, receiver, port = self.create_bound_pair(zmq.XREQ, zmq.XREQ)
-    #     sleep()
-    #     done = event.Event()
-
-    #     def tx():
-    #         msg = "0" * 1024
-    #         while True:
-    #             sender.send(msg)
-
-    #     def rx():
-    #         self.assertEqual(sender.recv(), "done")
-    #         sender_thread.kill()
-    #         done.send(0)
-
-    #     def single_tx():
-    #         receiver.send("done")
-
-    #     sender_thread = spawn(tx)
-    #     sleep()
-    #     spawn(rx)
-    #     spawn(single_tx)
-    #     final_i = done.wait()
-    #     self.assertEqual(final_i, 0)
 
 
 class TestThreadedContextAccess(TestCase):
