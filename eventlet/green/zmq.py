@@ -63,8 +63,13 @@ _disable_recv_types = set([__zmq__.PUB, __zmq__.PUSH])
 # TODO: 
 # - Ensure that recv* and send* methods raise error when called on a
 #   closed socket. They should not block.
+# - Ensure that recv* and send* methods raise EFSM error when socket
+#   is in improper state. Avoid blocking.
 # - Return correct message tracker from send* methods
 # - Make MessageTracker.wait zmq friendly
+# - What should happen to threads blocked on send/recv when socket is
+#   closed?
+
 
 class Socket(__zmq__.Socket):
     """Green version of :class:`zmq.core.socket.Socket
