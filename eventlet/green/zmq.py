@@ -412,13 +412,19 @@ class Socket(__zmq__.Socket):
                 if e.errno == EAGAIN:
                     return result
                 else:
-                    # message failed to send
                     writers.popleft()
                     if current is writer:
                         raise
                     else:
                         hub.schedule_call_global(0, writer.throw, e)
                         continue
+            except:
+                writers.popleft()
+                if current is writer:
+                    raise
+                else:
+                    hub.schedule_call_global(0, writer.throw, e)
+                    continue
 
             # move to the next msg
             writers.popleft()
@@ -456,13 +462,19 @@ class Socket(__zmq__.Socket):
                 if e.errno == EAGAIN:
                     return None
                 else:
-                    # message failed to send
                     readers.popleft()
                     if current is reader:
                         raise
                     else:
                         hub.schedule_call_global(0, reader.throw, e)
                         continue
+            except:
+                readers.popleft()
+                if current is reader:
+                    raise
+                else:
+                    hub.schedule_call_global(0, reader.throw, e)
+                    continue
 
             # move to the next reader
             readers.popleft()
