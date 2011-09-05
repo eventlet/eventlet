@@ -68,6 +68,12 @@ _disable_recv_types = set([__zmq__.PUB, __zmq__.PUSH])
 # - What should happen to threads blocked on send/recv when socket is
 #   closed?
 
+def _wraps(source_fn):
+    def wrapper(dest_fn):
+        dest_fn.__name__ = source_fn.__name__
+        dest_fn.__doc__ = source_fn.__doc__
+        return dest_fn
+    return wrapper
 
 class Socket(__zmq__.Socket):
     """Green version of :class:`zmq.core.socket.Socket
@@ -75,6 +81,7 @@ class Socket(__zmq__.Socket):
     The following two methods are always overridden:
         * send
         * recv
+        * getsockopt
     To ensure that the ``zmq.NOBLOCK`` flag is set and that sending or recieving
     is deferred to the hub (using :func:`eventlet.hubs.trampoline`) if a
     ``zmq.EAGAIN`` (retry) error is raised
@@ -84,7 +91,6 @@ class Socket(__zmq__.Socket):
     overridden:
         * send_multipart
         * recv_multipart
-
     """
 
     def __init__(self, context, socket_type):
@@ -123,7 +129,8 @@ class Socket(__zmq__.Socket):
         Because the zmq FD is edge triggered, any call that causes the
         zmq socket to process its events must wake the greenthread
         that called trampoline by calling _wake_listener in case it
-        missed the event."""
+        missed the event.
+        """
         try:
             self._blocked_thread = greenlet.getcurrent()
             # Only trampoline on read events for zmq FDs, never write.
@@ -145,7 +152,8 @@ class Socket(__zmq__.Socket):
         thread has already been woken up.
 
         Returns True if there is a listener thread that called
-        trampoline, False if not."""
+        trampoline, False if not.
+        """
         is_listener = self._blocked_thread is not None
         
         if is_listener and self._wakeup_timer is None:
@@ -154,11 +162,11 @@ class Socket(__zmq__.Socket):
 
         return is_listener
 
+    @_wraps(__zmq__.Socket.send)
     def send(self, msg, flags=0, copy=True, track=False):
-        """
-        Override this instead of the internal _send_* methods 
-        since those change and it's not clear when/how they're
-        called in real code.
+        """Send method used by REP and REQ sockets. The lock-step
+        send->recv->send->recv restriction of these sockets makes this
+        implementation simple.
         """
         if flags & __zmq__.NOBLOCK:
             return super(Socket, self).send(msg, flags, copy, track)
@@ -174,11 +182,11 @@ class Socket(__zmq__.Socket):
                 else:
                     raise
 
+    @_wraps(__zmq__.Socket.recv)
     def recv(self, flags=0, copy=True, track=False):
-        """
-        Override this instead of the internal _recv_* methods 
-        since those change and it's not clear when/how they're
-        called in real code.
+        """Recv method used by REP and REQ sockets. The lock-step
+        send->recv->send->recv restriction of these sockets makes this
+        implementation simple.
         """
         if flags & __zmq__.NOBLOCK:
             return super(Socket, self).recv(flags, copy, track)
@@ -194,6 +202,7 @@ class Socket(__zmq__.Socket):
                 else:
                     raise
 
+    @_wraps(__zmq__.Socket.getsockopt)
     def getsockopt(self, option):
         result = self._super_getsockopt(option)
         if option == __zmq__.EVENTS:
@@ -207,7 +216,6 @@ class Socket(__zmq__.Socket):
                    (self._writers and (result & __zmq__.POLLOUT)):
                    self._wake_listener()
         return result
-            
 
     def _send_not_supported(self, msg, flags, copy, track):
         raise __zmq__.ZMQError(__zmq__.ENOTSUP)
@@ -215,31 +223,26 @@ class Socket(__zmq__.Socket):
     def _recv_not_supported(self, flags, copy, track):
         raise __zmq__.ZMQError(__zmq__.ENOTSUP)
 
+    @_wraps(__zmq__.Socket.send)
     def _xsafe_send(self, msg, flags=0, copy=True, track=False):
-        """
-        A send method that's safe to use when multiple greenthreads
+        """A send method that's safe to use when multiple greenthreads
         are calling send, send_multipart, recv and recv_multipart on
         the same socket.
         """
         if flags & __zmq__.NOBLOCK:
-            raise __zmq__.ZMQError(__zmq__.ENOTSUP)
             result = super(Socket, self).send(msg, flags, copy, track)
             self._wake_listener()
             return result
 
         return self._xsafe_inner_send(msg, False, flags, copy, track)
    
+    @_wraps(__zmq__.Socket.send_multipart)
     def _xsafe_send_multipart(self, msg_parts, flags=0, copy=True, track=False):
-        """
-        A send_multipart method that's safe to use when multiple
+        """A send_multipart method that's safe to use when multiple
         greenthreads are calling send, send_multipart, recv and
         recv_multipart on the same socket.
-
-        Ensure multipart messages are not interleaved.
         """
-
         if flags & __zmq__.NOBLOCK:
-            raise __zmq__.ZMQError(__zmq__.ENOTSUP)
             result = super(Socket, self).send_multipart(msg_parts, flags, copy, track)
             self._wake_listener()
             return result
@@ -271,29 +274,26 @@ class Socket(__zmq__.Socket):
         self._writers.append((greenlet.getcurrent(), multi, msg, flags, copy, track))
         return self._inner_send_recv()
 
+    @_wraps(__zmq__.Socket.recv)
     def _xsafe_recv(self, flags=0, copy=True, track=False):
-        """
-        A recv method that's safe to use when multiple greenthreads
+        """A recv method that's safe to use when multiple greenthreads
         are calling send, send_multipart, recv and recv_multipart on
         the same socket.
         """
-
         if flags & __zmq__.NOBLOCK:
-            raise __zmq__.ZMQError(__zmq__.ENOTSUP)
             msg = super(Socket, self).recv(flags, copy, track)
             self._wake_listener()
             return msg
 
         return self._xsafe_inner_recv(False, flags, copy, track)
 
+    @_wraps(__zmq__.Socket.recv_multipart)
     def _xsafe_recv_multipart(self, flags=0, copy=True, track=False):
-        """
-        A recv method that's safe to use when multiple greenthreads
-        are calling send, send_multipart, recv and recv_multipart on
-        the same socket.
+        """A recv_multipart method that's safe to use when multiple
+        greenthreads are calling send, send_multipart, recv and
+        recv_multipart on the same socket.
         """
         if flags & __zmq__.NOBLOCK:
-            raise __zmq__.ZMQError(__zmq__.ENOTSUP)
             msg = super(Socket, self).recv_multipart(flags, copy, track)
             self._wake_listener()
             return msg
@@ -334,9 +334,10 @@ class Socket(__zmq__.Socket):
         return self._process_queues()
 
     def _process_queues(self):
-        """ If there are readers or writers queued, this method tries
+        """If there are readers or writers queued, this method tries
         to recv or send messages and ensures processing continues
-        either in this greenthread or in another one. """
+        either in this greenthread or in another one.
+        """
         readers = self._readers
         writers = self._writers
         current = greenlet.getcurrent()
@@ -401,9 +402,8 @@ class Socket(__zmq__.Socket):
             return result                
 
     def _send_queued(self):
-        """
-        Send as many msgs from the writers deque as possible. Wake up
-        the greenthreads for messages that are sent.
+        """Send as many msgs from the writers deque as possible. Wake
+        up the greenthreads for messages that are sent.
         """
         writers = self._writers
         current = greenlet.getcurrent()
@@ -451,11 +451,9 @@ class Socket(__zmq__.Socket):
                 hub.schedule_call_global(0, writer.switch, r)
         return result
 
-
     def _recv_queued(self):
-        """
-        Recv as many msgs for each of the greenthreads in the readers
-        deque. Wakes up the greenthreads for messages that are
+        """Recv as many msgs for each of the greenthreads in the
+        readers deque. Wakes up the greenthreads for messages that are
         received. If the received message is for the current
         greenthread, returns immediately.
         """
