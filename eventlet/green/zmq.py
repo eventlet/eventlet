@@ -207,7 +207,7 @@ class Socket(__zmq__.Socket):
             self._wake_listener()
             return result
 
-        return self._xsafe_inner_send(msg, flags, copy, track)
+        return self._xsafe_inner_send(msg, False, flags, copy, track)
    
     def _xsafe_send_multipart(self, msg_parts, flags=0, copy=True, track=False):
         """
@@ -224,19 +224,33 @@ class Socket(__zmq__.Socket):
             self._wake_listener()
             return result
 
-        return self._xsafe_inner_send(list(msg_parts), flags, copy, track)
+        return self._xsafe_inner_send(msg_parts, True, flags, copy, track)
 
-    def _xsafe_inner_send(self, msg, flags, copy, track):
-        self._writers.append((greenlet.getcurrent(), msg, flags | __zmq__.NOBLOCK, copy, track))
+    def _xsafe_inner_send(self, msg, multi, flags, copy, track):
+        flags |= __zmq__.NOBLOCK
+        if not self._writers:
+            # no other waiting writers, may be able to send
+            # immediately. This is the fast path.
+            try:
+                if multi:
+                    r = super(Socket, self).send_multipart(
+                        msg, flags=flags, copy=copy, track=track)
+                else:
+                    r = super(Socket, self).send(
+                        msg, flags=flags, copy=copy, track=track)
 
-        if len(self._writers) == 1:
-            # no other waiting writers, may be able to send immediately
-            result = self._send_queued()
-            if not self._writers:
-                # received message
                 self._wake_listener()
-                return result
+                return r
+            except __zmq__.ZMQError, e:
+                if e.errno != EAGAIN:
+                    raise
 
+        # copy msg lists so they can't be modified by caller
+        if multi:
+            msg = list(msg)
+
+        # queue msg to be sent later
+        self._writers.append((greenlet.getcurrent(), multi, msg, flags, copy, track))
         return self._inner_send_recv()
 
     def _xsafe_recv(self, flags=0, copy=True, track=False):
@@ -269,16 +283,26 @@ class Socket(__zmq__.Socket):
         return self._xsafe_inner_recv(True, flags, copy, track)
 
     def _xsafe_inner_recv(self, multi, flags, copy, track):
-        self._readers.append((greenlet.getcurrent(), multi, flags | __zmq__.NOBLOCK, copy, track))
+        flags |= __zmq__.NOBLOCK
+        if not self._readers:
+            # no other waiting readers, may be able to recv
+            # immediately. This is the fast path.
+            try:
+                if multi:
+                    msg = super(Socket, self).recv_multipart(
+                        flags=flags, copy=copy, track=track)
+                else:
+                    msg = super(Socket, self).recv(
+                        flags=flags, copy=copy, track=track)
 
-        if len(self._readers) == 1:
-            # no other waiting readers, may be able to recv immediately
-            result = self._recv_queued()
-            if result is not None:
-                # received message
                 self._wake_listener()
-                return result
+                return msg
+            except __zmq__.ZMQError, e:
+                if e.errno != EAGAIN:
+                    raise
 
+        # queue recv for later
+        self._readers.append((greenlet.getcurrent(), multi, flags, copy, track))
         return self._inner_send_recv()
 
     def _inner_send_recv(self):
@@ -396,9 +420,9 @@ class Socket(__zmq__.Socket):
         result = None
 
         while writers:
-            writer, msg, flags, copy, track = writers[0]
+            writer, multi, msg, flags, copy, track = writers[0]
             try:
-                if isinstance(msg, list):
+                if multi:
                     r = super_send_multipart(msg, flags=flags, copy=copy, track=track)
                 else:
                     r = super_send(msg, flags=flags, copy=copy, track=track)
