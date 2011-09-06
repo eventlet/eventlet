@@ -390,7 +390,10 @@ class Socket(__zmq__.Socket):
 
     def _send_queued(self):
         """Send as many msgs from the writers deque as possible. Wake
-        up the greenthreads for messages that are sent.
+        up the greenthreads for messages that are sent. Continue
+        sending messages even after this greenthread has sent its own
+        message because that seems like the best way to increase
+        throughput but that is an untested assumption.
         """
         writers = self._writers
         current = greenlet.getcurrent()
