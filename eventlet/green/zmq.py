@@ -88,9 +88,6 @@ class Socket(__zmq__.Socket):
         self._blocked_thread = None
         self._wakeup_timer = None
 
-        self._super_getsockopt = super(Socket, self).getsockopt
-        self._fd = self._super_getsockopt(__zmq__.FD)
-
         # customize send and recv methods based on socket type
         ops = self._eventlet_ops.get(socket_type)
         if ops:
@@ -124,7 +121,7 @@ class Socket(__zmq__.Socket):
         try:
             self._blocked_thread = greenlet.getcurrent()
             # Only trampoline on read events for zmq FDs, never write.
-            trampoline(self._fd, read=True)
+            trampoline(self.getsockopt(__zmq__.FD), read=True)
         finally:
             self._blocked_thread = None
             # Either the fd is readable or we were woken by
@@ -194,7 +191,7 @@ class Socket(__zmq__.Socket):
 
     @_wraps(__zmq__.Socket.getsockopt)
     def getsockopt(self, option):
-        result = self._super_getsockopt(option)
+        result = super(Socket, self).getsockopt(option)
         if option == __zmq__.EVENTS:
             # Getting the events causes the zmq socket to process
             # events which may mean a msg can be sent or received. If
@@ -365,7 +362,7 @@ class Socket(__zmq__.Socket):
             # message.
 
             if readers:
-                events = self._super_getsockopt(__zmq__.EVENTS)
+                events = self.getsockopt(__zmq__.EVENTS)
                 if (events & __zmq__.POLLIN) or (writers and (events & __zmq__.POLLOUT)):
                     # more work to do
                     continue
