@@ -10,6 +10,7 @@ __patched__ = ['Context', 'Socket']
 slurp_properties(__zmq__, globals(), ignore=__patched__)
 
 from collections import deque
+from types import MethodType
 
 def Context(io_threads=1):
     """Factory function replacement for :class:`zmq.core.context.Context`
@@ -45,21 +46,6 @@ class _Context(__zmq__.Context):
         return Socket(self, socket_type)
 
 
-# see http://api.zeromq.org/2-1:zmq-socket for explanation of socket types
-_multi_reader_types = set([__zmq__.SUB, __zmq__.PULL, __zmq__.PAIR])
-_multi_writer_types = set([__zmq__.PUB, __zmq__.PUSH, __zmq__.PAIR])
-try:
-    _multi_reader_types.update([__zmq__.XREP, __zmq__.XREQ])
-    _multi_writer_types.update([__zmq__.XREP, __zmq__.XREQ])
-except AttributeError:
-    # XREP and XREQ are being renamed ROUTER and DEALER
-    _multi_reader_types.update([__zmq__.ROUTER, __zmq__.DEALER])
-    _multi_writer_types.update([__zmq__.ROUTER, __zmq__.DEALER])
-
-_disable_send_types = set([__zmq__.SUB, __zmq__.PULL])
-_disable_recv_types = set([__zmq__.PUB, __zmq__.PUSH])
-
-
 # TODO: 
 # - Ensure that recv* and send* methods raise error when called on a
 #   closed socket. They should not block.
@@ -69,6 +55,9 @@ _disable_recv_types = set([__zmq__.PUB, __zmq__.PUSH])
 #   closed?
 
 def _wraps(source_fn):
+    """A decorator that copies the __name__ and __doc__ from the given
+    function
+    """
     def wrapper(dest_fn):
         dest_fn.__name__ = source_fn.__name__
         dest_fn.__doc__ = source_fn.__doc__
@@ -96,30 +85,31 @@ class Socket(__zmq__.Socket):
     def __init__(self, context, socket_type):
         super(Socket, self).__init__(context, socket_type)
 
-        self._writers = None
-        self._readers = None
         self._blocked_thread = None
         self._wakeup_timer = None
 
         self._super_getsockopt = super(Socket, self).getsockopt
         self._fd = self._super_getsockopt(__zmq__.FD)
 
-        # customize send and recv functions based on socket type
-        if socket_type in _multi_writer_types:
-            # support multiple greenthreads writing at the same time
-            self._writers = deque()
-            self.send = self._xsafe_send
-            self.send_multipart = self._xsafe_send_multipart
-        elif socket_type in _disable_send_types:
-            self.send = self.send_multipart = self._send_not_supported
+        # customize send and recv methods based on socket type
+        ops = self._eventlet_ops.get(socket_type)
+        if ops:
+            self._writers = None
+            self._readers = None
+            send, msend, recv, mrecv = ops
+            if send:
+                self._writers = deque()
+                self.send = MethodType(send, self, Socket)
+                self.send_multipart = MethodType(msend, self, Socket)
+            else:
+                self.send = self.send_multipart = self._send_not_supported
 
-        if socket_type in _multi_reader_types:
-            # support multiple greenthreads reading at the same time
-            self._readers = deque()
-            self.recv = self._xsafe_recv
-            self.recv_multipart = self._xsafe_recv_multipart
-        elif socket_type in _disable_recv_types:
-            self.recv = self.recv_multipart = self._recv_not_supported
+            if recv:
+                self._readers = deque()
+                self.recv = MethodType(recv, self, Socket)
+                self.recv_multipart = MethodType(mrecv, self, Socket)
+            else:
+                self.recv = self.recv_multipart = self._send_not_supported
 
     def _trampoline(self):
         """Wait for events on the zmq socket. After this method
@@ -501,3 +491,31 @@ class Socket(__zmq__.Socket):
                 hub.schedule_call_global(0, reader.switch, msg)
 
         return None
+
+
+    # The behavior of the send and recv methods depends on the socket
+    # type. See http://api.zeromq.org/2-1:zmq-socket for explanation
+    # of socket types. For the green Socket, our main concern is
+    # supporting calling send or recv from multiple greenthreads when
+    # it makes sense for the socket type.
+    _send_only_ops = (_xsafe_send, _xsafe_send_multipart, None, None)
+    _recv_only_ops = (None, None, _xsafe_recv, _xsafe_recv_multipart)
+    _full_ops = (_xsafe_send, _xsafe_send_multipart, _xsafe_recv, _xsafe_recv_multipart)
+
+    _eventlet_ops = {
+        __zmq__.PUB: _send_only_ops,
+        __zmq__.SUB: _recv_only_ops,
+
+        __zmq__.PUSH: _send_only_ops,
+        __zmq__.PULL: _recv_only_ops,
+
+        __zmq__.PAIR: _full_ops
+        }
+
+    try:
+        _eventlet_ops[__zmq__.XREP] = _full_ops
+        _eventlet_ops[__zmq__.XREQ] = _full_ops
+    except AttributeError:
+        # XREP and XREQ are being renamed ROUTER and DEALER
+        _eventlet_ops[__zmq__.ROUTER] = _full_ops
+        _eventlet_ops[__zmq__.DEALER] = _full_ops
