@@ -144,7 +144,7 @@ class Socket(__zmq__.Socket):
         is_listener = self._blocked_thread is not None
         
         if is_listener and self._wakeup_timer is None:
-            self._wakeup_timer = hubs.get_hub().schedule_call_global(0, self._blocked_thread.switch)
+            self.getsockopt(__zmq__.EVENTS) # triggers the wakeup
             return True
 
         return is_listener
@@ -198,10 +198,10 @@ class Socket(__zmq__.Socket):
             # there is a greenthread blocked and waiting for events,
             # it will miss the edge-triggered read event, so wake it
             # up.
-            if self._blocked_thread is not None:
+            if self._blocked_thread is not None and self._wakeup_timer is None:
                 if (self._readers and (result & __zmq__.POLLIN)) or \
                    (self._writers and (result & __zmq__.POLLOUT)):
-                   self._wake_listener()
+                    self._wakeup_timer = hubs.get_hub().schedule_call_global(0, self._blocked_thread.switch)
         return result
 
     def _send_not_supported(self, msg, flags, copy, track):
