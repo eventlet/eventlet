@@ -173,18 +173,20 @@ class Socket(__zmq__.Socket):
         if ops:
             self._send_lock = None
             self._recv_lock = None
-            send, recv = ops
+            send, msend, recv, mrecv = ops
             if send:
                 self._send_lock = _QueueLock()
                 self.send = MethodType(send, self, Socket)
+                self.send_multipart = MethodType(msend, self, Socket)
             else:
-                self.send = self._send_not_supported
+                self.send = self.send_multipart = self._send_not_supported
 
             if recv:
                 self._recv_lock = _QueueLock()
                 self.recv = MethodType(recv, self, Socket)
+                self.recv_multipart = MethodType(mrecv, self, Socket)
             else:
-                self.recv = self._send_not_supported
+                self.recv = self.recv_multipart = self._send_not_supported
 
     def _trampoline(self, is_send):
         """Wait for events on the zmq socket. After this method
@@ -280,7 +282,8 @@ class Socket(__zmq__.Socket):
         """
         if flags & __zmq__.NOBLOCK:
             result = super(Socket, self).send(msg, flags, copy, track)
-            self._wake_listener()
+            if self._send_event or self._recv_event:
+                getsockopt(__zmq__.EVENTS) # triggers wakeups
             return result
 
         # TODO: pyzmq will copy the message buffer and create Message
@@ -290,20 +293,33 @@ class Socket(__zmq__.Socket):
         with self._send_lock:
             while True:
                 try:
-                    try:
-                        return super(Socket, self).send(msg, flags, copy, track)
-                    finally:
-
-                        # The call to send processes 0mq events and may
-                        # make the socket ready to recv. Wake the next
-                        # receiver. (Could check EVENTS for POLLIN here)
-                        if self._recv_event:
-                            self._recv_event.wake()
+                    return super(Socket, self).send(msg, flags, copy, track)
                 except __zmq__.ZMQError, e:
                     if e.errno == EAGAIN:
                         self._trampoline(True)
                     else:
                         raise
+                finally:
+                    # The call to send processes 0mq events and may
+                    # make the socket ready to recv. Wake the next
+                    # receiver. (Could check EVENTS for POLLIN here)
+                    if self._recv_event:
+                        self._recv_event.wake()
+
+
+    @_wraps(__zmq__.Socket.send_multipart)
+    def _xsafe_send_multipart(self, msg_parts, flags=0, copy=True, track=False):
+        """A send_multipart method that's safe to use when multiple
+        greenthreads are calling send, send_multipart, recv and
+        recv_multipart on the same socket.
+        """
+        if flags & __zmq__.NOBLOCK:
+            return super(Socket, self).send_multipart(msg_parts, flags, copy, track)
+
+        # acquire lock here so the subsequent calls to send for the
+        # message parts after the first don't block
+        with self._send_lock:
+            return super(Socket, self).send_multipart(msg_parts, flags, copy, track)
 
     @_wraps(__zmq__.Socket.recv)
     def _xsafe_recv(self, flags=0, copy=True, track=False):
@@ -313,7 +329,8 @@ class Socket(__zmq__.Socket):
         """
         if flags & __zmq__.NOBLOCK:
             msg = super(Socket, self).recv(flags, copy, track)
-            self._wake_listener()
+            if self._send_event or self._recv_event:
+                getsockopt(__zmq__.EVENTS) # triggers wakeups
             return msg
 
         flags |= __zmq__.NOBLOCK
@@ -334,14 +351,28 @@ class Socket(__zmq__.Socket):
                     else:
                         raise
 
+    @_wraps(__zmq__.Socket.recv_multipart)
+    def _xsafe_recv_multipart(self, flags=0, copy=True, track=False):
+        """A recv_multipart method that's safe to use when multiple
+        greenthreads are calling send, send_multipart, recv and
+        recv_multipart on the same socket.
+        """
+        if flags & __zmq__.NOBLOCK:
+            return super(Socket, self).recv_multipart(flags, copy, track)
+
+        # acquire lock here so the subsequent calls to recv for the
+        # message parts after the first don't block
+        with self._recv_lock:
+            return super(Socket, self).recv_multipart(flags, copy, track)              
+
     # The behavior of the send and recv methods depends on the socket
     # type. See http://api.zeromq.org/2-1:zmq-socket for explanation
     # of socket types. For the green Socket, our main concern is
     # supporting calling send or recv from multiple greenthreads when
     # it makes sense for the socket type.
-    _send_only_ops = (_xsafe_send, None)
-    _recv_only_ops = (None, _xsafe_recv)
-    _full_ops = (_xsafe_send, _xsafe_recv)
+    _send_only_ops = (_xsafe_send, _xsafe_send_multipart, None, None)
+    _recv_only_ops = (None, None, _xsafe_recv, _xsafe_recv_multipart)
+    _full_ops = (_xsafe_send, _xsafe_send_multipart, _xsafe_recv, _xsafe_recv_multipart)
 
     _eventlet_ops = {
         __zmq__.PUB: _send_only_ops,
