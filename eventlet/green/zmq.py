@@ -86,7 +86,7 @@ class Socket(__zmq__.Socket):
         super(Socket, self).__init__(context, socket_type)
 
         self._blocked_thread = None
-        self._wakeup_timer = None
+        self._wakeupper = None
 
         # customize send and recv methods based on socket type
         ops = self._eventlet_ops.get(socket_type)
@@ -125,13 +125,13 @@ class Socket(__zmq__.Socket):
         finally:
             self._blocked_thread = None
             # Either the fd is readable or we were woken by
-            # another thread. Cleanup the wakeup timer.
-            t = self._wakeup_timer
+            # another thread. Cleanup the wakeup task.
+            t = self._wakeupper
             if t is not None:
-                # Important to cancel the timer so it doesn't
+                # Important to cancel the wakeup task so it doesn't
                 # spuriously wake this greenthread later on.
                 t.cancel()
-                self._wakeup_timer = None
+                self._wakeupper = None
 
     def _wake_listener(self):
         """If a thread has called trampoline, wake it up. This can
@@ -143,7 +143,7 @@ class Socket(__zmq__.Socket):
         """
         is_listener = self._blocked_thread is not None
         
-        if is_listener and self._wakeup_timer is None:
+        if is_listener and self._wakeupper is None:
             self.getsockopt(__zmq__.EVENTS) # triggers the wakeup
             return True
 
@@ -198,10 +198,10 @@ class Socket(__zmq__.Socket):
             # there is a greenthread blocked and waiting for events,
             # it will miss the edge-triggered read event, so wake it
             # up.
-            if self._blocked_thread is not None and self._wakeup_timer is None:
+            if self._blocked_thread is not None and self._wakeupper is None:
                 if (self._readers and (result & __zmq__.POLLIN)) or \
                    (self._writers and (result & __zmq__.POLLOUT)):
-                    self._wakeup_timer = hubs.get_hub().schedule_call_global(0, self._blocked_thread.switch)
+                    self._wakeupper = hubs.get_hub().schedule_call_global(0, self._blocked_thread.switch)
         return result
 
     def _send_not_supported(self, msg, flags, copy, track):
