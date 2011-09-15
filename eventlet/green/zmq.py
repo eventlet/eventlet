@@ -99,28 +99,8 @@ class _SimpleEvent(object):
             return True
         return False
 
-def Context(io_threads=1):
-    """Factory function replacement for :class:`zmq.core.context.Context`
-
-    This factory ensures the :class:`zeromq hub <eventlet.hubs.zeromq.Hub>`
-    is the active hub, and defers creation (or retreival) of the ``Context``
-    to the hub's :meth:`~eventlet.hubs.zeromq.Hub.get_context` method
-    
-    It's a factory function due to the fact that there can only be one :class:`_Context`
-    instance per thread. This is due to the way :class:`zmq.core.poll.Poller`
-    works
-    """
-    try:
-        return _threadlocal.context
-    except AttributeError:
-        _threadlocal.context = _Context(io_threads)
-        return _threadlocal.context
-
-class _Context(__zmq__.Context):
-    """Internal subclass of :class:`zmq.core.context.Context`
-
-    .. warning:: Do not grab one of these yourself, use the factory function
-        :func:`eventlet.green.zmq.Context`
+class Context(__zmq__.Context):
+    """Subclass of :class:`zmq.core.context.Context`
     """
 
     def socket(self, socket_type):

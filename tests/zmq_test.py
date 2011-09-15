@@ -300,48 +300,6 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         final_i = done.wait()
         self.assertEqual(final_i, 0)
 
-
-class TestThreadedContextAccess(TestCase):
-    """zmq's Context must be unique within a hub
-
-    The zeromq API documentation states:
-    All zmq sockets passed to the zmq_poll() function must share the same zmq
-    context and must belong to the thread calling zmq_poll()
-
-    As zmq_poll is what's eventually being called then we need to ensure that
-    all sockets that are going to be passed to zmq_poll (via hub.do_poll) are
-    in the same context
-    """
-    if zmq:  # don't call decorators if zmq module unavailable
-        @skip_unless(zmq_supported)
-        def test_context_factory_function(self):
-            ctx = zmq.Context()
-            self.assertTrue(ctx is not None)
-
-        @skip_unless(zmq_supported)
-        def test_threadlocal_context(self):
-            context = zmq.Context()
-            self.assertEqual(context, _threadlocal.context)
-            next_context = zmq.Context()
-            self.assertTrue(context is next_context)
-
-        @skip_unless(zmq_supported)
-        def test_different_context_in_different_thread(self):
-            context = zmq.Context()
-            test_result = []
-            def assert_different(ctx):
-                try:
-                    this_thread_context = zmq.Context()
-                except:
-                    test_result.append('fail')
-                    raise
-                test_result.append(ctx is this_thread_context)
-
-            Thread(target=assert_different, args=(context,)).start()
-            while not test_result:
-                sleep(0.1)
-            self.assertFalse(test_result[0])
-
 class TestQueueLock(LimitedTestCase):
     @skip_unless(zmq_supported)
     def test_queue_lock_order(self):
