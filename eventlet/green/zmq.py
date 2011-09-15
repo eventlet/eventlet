@@ -112,15 +112,6 @@ class Context(__zmq__.Context):
         """
         return Socket(self, socket_type)
 
-
-# TODO: 
-# - Ensure that recv* and send* methods raise error when called on a
-#   closed socket. They should not block.
-# - Return correct message tracker from send* methods
-# - Make MessageTracker.wait zmq friendly
-# - What should happen to threads blocked on send/recv when socket is
-#   closed?
-
 def _wraps(source_fn):
     """A decorator that copies the __name__ and __doc__ from the given
     function
@@ -131,16 +122,80 @@ def _wraps(source_fn):
         return dest_fn
     return wrapper
 
+# Implementation notes: Each socket in 0mq contains a pipe that the
+# background IO threads use to communicate with the socket. These
+# events are important because they tell the socket when it is able to
+# send and when it has messages waiting to be received. The read end
+# of the events pipe is the same FD that getsockopt(zmq.FD) returns.
+#
+# Events are read from the socket's event pipe only on the thread that
+# the 0mq context is associated with, which is the native thread the
+# greenthreads are running on, and the only operations that cause the
+# events to be read and processed are send(), recv() and
+# getsockopt(EVENTS). This means that after doing any of these three
+# operations, the ability of the socket to send or receive a message
+# without blocking may have changed. If you're not careful, this can
+# cause the hub to miss the read event for the socket.
+#
+# For example, suppose thread A calls trampoline and blocks because it
+# called recv() when there was no waiting message. It should be
+# notified when the state of the socket changes. However, while thread
+# A is blocked, thread B calls send(), which internally causes the
+# events to be processed, and the socket learns that it has a message
+# waiting to be received. Unfortunately, because eventlet is currently
+# running greenthread B, it isn't currently blocked in hub.wait() in
+# poll or the equivalent. When hub.wait() is eventually called, the
+# socket's event pipe will no longer be readable, so thread A will not
+# be awoken, even though a message is waiting to be read!
+#
+# If we understand that after calling send() a message might be ready
+# to be received and that after calling recv() a message might be able
+# to be sent, what should we do next? There are two approaches:
+#
+#   1. Always wake the other thread if there is one waiting. This
+#   wakeup may be spurious because the socket might not actually be
+#   ready for a send() or recv().  However, if a thread is in a
+#   tight-loop successfully calling send() or recv() then the wakeups
+#   are naturally batched and there's very little cost added to each
+#   send/recv call.
+#
+# or
+#
+#  2. Call getsockopt(zmq.EVENTS) and explicitly check if the other
+#  thread should be woken up. This avoids spurious wake-ups but may
+#  add overhead because getsockopt will cause all events to be
+#  processed, whereas send and recv can avoid processing
+#  events. Admittedly, all of the events will need to be processed
+#  eventually, but it is likely faster to batch the processing.
+#
+# Which approach is better? I have no idea. Right now the NOBLOCK
+# paths in _xsafe_send and _xsafe_recv check getsockopt(zmq.EVENTS)
+# and the other paths always wake the other blocked thread. It's done
+# this way only because it was convenient to implement, not based on
+# any benchmarks.
+#
+# TODO: 
+# - Ensure that recv* and send* methods raise error when called on a
+#   closed socket. They should not block.
+# - Return correct message tracker from send* methods
+# - Make MessageTracker.wait zmq friendly
+# - What should happen to threads blocked on send/recv when socket is
+#   closed?
+
 class Socket(__zmq__.Socket):
     """Green version of :class:`zmq.core.socket.Socket
 
-    The following two methods are always overridden:
+    The following three methods are always overridden:
         * send
         * recv
         * getsockopt
     To ensure that the ``zmq.NOBLOCK`` flag is set and that sending or recieving
     is deferred to the hub (using :func:`eventlet.hubs.trampoline`) if a
     ``zmq.EAGAIN`` (retry) error is raised
+
+    For some socket types, the following methods are also overridden:
+        * send_multipart
+        * recv_multipart
     """
 
     def __init__(self, context, socket_type):
