@@ -274,6 +274,43 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
             final_i = done_evts[i].wait()
             self.assertEqual(final_i, 0)
 
+
+    @skip_unless(zmq_supported)
+    def test_send_during_recv_multipart(self):
+        sender, receiver, port = self.create_bound_pair(zmq.XREQ, zmq.XREQ)
+        sleep()
+
+        num_recvs = 1
+        done_evts = [event.Event() for _ in range(num_recvs)]
+
+        def slow_rx(done, msg):
+            self.assertEqual(sender.recv_multipart(), msg)
+            done.send(0)
+
+        def tx():
+            tx_i = 0
+            while tx_i <= 1000:
+                sender.send_multipart([str(tx_i), '1', '2', '3'])
+                tx_i += 1
+
+        def rx():
+            while True:
+                rx_i = receiver.recv_multipart()
+                if rx_i == ["1000", '1', '2', '3']:
+                    for i in range(num_recvs):
+                        receiver.send_multipart(['done%d' % i, 'a', 'b', 'c'])
+                    sleep()
+                    return
+
+        for i in range(num_recvs):
+            spawn(slow_rx, done_evts[i], ["done%d" % i, 'a', 'b', 'c'])
+
+        spawn(tx)
+        spawn(rx)
+        for i in range(num_recvs):
+            final_i = done_evts[i].wait()
+            self.assertEqual(final_i, 0)
+
             
     # Need someway to ensure a thread is blocked on send... This isn't working 
     @skip_unless(zmq_supported)
