@@ -280,7 +280,7 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         sender, receiver, port = self.create_bound_pair(zmq.XREQ, zmq.XREQ)
         sleep()
 
-        num_recvs = 1
+        num_recvs = 30
         done_evts = [event.Event() for _ in range(num_recvs)]
 
         def slow_rx(done, msg):
