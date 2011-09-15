@@ -47,7 +47,8 @@ class _QueueLock(object):
         self._count += 1
 
     def release(self):
-        assert self._count > 0, 'Cannot release unacquired lock'
+        if self._count <= 0:
+            raise Exception("Cannot release unacquired lock")
 
         self._count -= 1
         if self._count == 0:
@@ -75,7 +76,8 @@ class _SimpleEvent(object):
             hubs.get_hub().switch()
 
     def __enter__(self):
-        assert self._blocked_thread is None, 'Cannot block more than one thread on one SimpleEvent'
+        if self._blocked_thread is not None:
+            raise Exception("Cannot block more than one thread on one SimpleEvent")
         self._blocked_thread = greenlet.getcurrent()
         
     def __exit__(self, type, value, traceback):
