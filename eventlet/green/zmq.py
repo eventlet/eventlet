@@ -110,6 +110,8 @@ class Context(__zmq__.Context):
         that a :class:`Socket` with all of its send and recv methods set to be
         non-blocking is returned
         """
+        if self.closed:
+            raise ZMQError(ENOTSUP)
         return Socket(self, socket_type)
 
 def _wraps(source_fn):
