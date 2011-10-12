@@ -247,6 +247,12 @@ class DBConnectionPool(DBTester):
         self.pool.clear()
         self.assertEqual(len(self.pool.free_items), 0)
 
+    def test_clear_warmup(self):
+        """Clear implicitly created connections (min_size > 0)"""
+        self.pool = self.create_pool(min_size=1)
+        self.pool.clear()
+        self.assertEqual(len(self.pool.free_items), 0)
+
     def test_unwrap_connection(self):
         self.assert_(isinstance(self.connection,
                                 db_pool.GenericConnectionWrapper))
@@ -438,12 +444,12 @@ class RaisingDBModule(object):
 
 class TpoolConnectionPool(DBConnectionPool):
     __test__ = False  # so that nose doesn't try to execute this directly
-    def create_pool(self, max_size=1, max_idle=10, max_age=10,
+    def create_pool(self, min_size=0, max_size=1, max_idle=10, max_age=10,
                     connect_timeout=0.5, module=None):
         if module is None:
             module = self._dbmodule
         return db_pool.TpooledConnectionPool(module,
-            min_size=0, max_size=max_size,
+            min_size=min_size, max_size=max_size,
             max_idle=max_idle, max_age=max_age,
             connect_timeout = connect_timeout,
             **self._auth)
@@ -462,12 +468,12 @@ class TpoolConnectionPool(DBConnectionPool):
 
 class RawConnectionPool(DBConnectionPool):
     __test__ = False  # so that nose doesn't try to execute this directly
-    def create_pool(self, max_size=1, max_idle=10, max_age=10,
+    def create_pool(self, min_size=0, max_size=1, max_idle=10, max_age=10,
                     connect_timeout=0.5, module=None):
         if module is None:
             module = self._dbmodule
         return db_pool.RawConnectionPool(module,
-            min_size=0, max_size=max_size,
+            min_size=min_size, max_size=max_size,
             max_idle=max_idle, max_age=max_age,
             connect_timeout=connect_timeout,
             **self._auth)
