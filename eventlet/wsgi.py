@@ -16,6 +16,7 @@ DEFAULT_MAX_SIMULTANEOUS_REQUESTS = 1024
 DEFAULT_MAX_HTTP_VERSION = 'HTTP/1.1'
 MAX_REQUEST_LINE = 8192
 MAX_HEADER_LINE = 8192
+MAX_TOTAL_HEADER_SIZE = 65536
 MINIMUM_CHUNK_SIZE = 4096
 DEFAULT_LOG_FORMAT= ('%(client_ip)s - - [%(date_time)s] "%(request_line)s"'
                      ' %(status_code)s %(body_length)s %(wall_seconds).6f')
@@ -164,7 +165,11 @@ class Input(object):
         return self.rfile._sock
 
 
-class ReadlineTooLong(Exception):
+class HeaderLineTooLong(Exception):
+    pass
+
+
+class HeadersTooLarge(Exception):
     pass
 
 
@@ -172,14 +177,18 @@ class FileObjectForHeaders(object):
 
     def __init__(self, fp):
         self.fp = fp
+        self.total_header_size = 0
 
     def readline(self, size=-1):
         sz = size
         if size < 0:
             sz = MAX_HEADER_LINE
         rv = self.fp.readline(sz)
-        if size < 0 and len(rv) == MAX_HEADER_LINE:
-            raise ReadlineTooLong()
+        if size < 0 and len(rv) >= MAX_HEADER_LINE:
+            raise HeaderLineTooLong()
+        self.total_header_size += len(rv)
+        if self.total_header_size > MAX_TOTAL_HEADER_SIZE:
+            raise HeadersTooLarge()
         return rv
 
 
@@ -235,9 +244,15 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             self.rfile = FileObjectForHeaders(self.rfile)
             if not self.parse_request():
                 return
-        except ReadlineTooLong:
+        except HeaderLineTooLong:
             self.wfile.write(
                 "HTTP/1.0 400 Header Line Too Long\r\n"
+                "Connection: close\r\nContent-length: 0\r\n\r\n")
+            self.close_connection = 1
+            return
+        except HeadersTooLarge:
+            self.wfile.write(
+                "HTTP/1.0 400 Headers Too Large\r\n"
                 "Connection: close\r\nContent-length: 0\r\n\r\n")
             self.close_connection = 1
             return
