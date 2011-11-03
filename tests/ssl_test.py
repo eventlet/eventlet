@@ -65,6 +65,28 @@ class SSLTest(LimitedTestCase):
         ssl_client.close()
         server_coro.wait()
 
+    def test_ssl_unwrap(self):
+        def serve():
+            sock, addr = listener.accept()
+            self.assertEquals(sock.recv(6), 'before')
+            sock_ssl = util.wrap_ssl(sock, certificate_file, private_key_file,
+                                     server_side=True)
+            sock_ssl.do_handshake()
+            self.assertEquals(sock_ssl.read(6), 'during')
+            sock2 = sock_ssl.unwrap()
+            self.assertEquals(sock2.recv(5), 'after')
+            sock2.close()
+
+        listener = eventlet.listen(('127.0.0.1', 0))
+        server_coro = eventlet.spawn(serve)
+        client = eventlet.connect((listener.getsockname()))
+        client.send('before')
+        client_ssl = util.wrap_ssl(client)
+        client_ssl.do_handshake()
+        client_ssl.write('during')
+        client2 = client_ssl.unwrap()
+        client2.send('after')
+        server_coro.wait()
 
 class SocketSSLTest(LimitedTestCase):
     @skip_unless(hasattr(socket, 'ssl'))
