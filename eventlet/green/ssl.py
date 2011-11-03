@@ -185,7 +185,8 @@ class GreenSSLSocket(__ssl.SSLSocket):
         return super(GreenSSLSocket, self).recvfrom_into(buffer, nbytes, flags)
 
     def unwrap(self):
-        return GreenSocket(super(GreenSSLSocket, self).unwrap())
+        return GreenSocket(self._call_trampolining(
+                super(GreenSSLSocket, self).unwrap))
 
     def do_handshake(self):    
         """Perform a TLS/SSL handshake."""
