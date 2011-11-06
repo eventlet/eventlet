@@ -383,14 +383,16 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
             for hook, args, kwargs in self.environ['eventlet.posthooks']:
                 hook(self.environ, *args, **kwargs)
-
-            self.server.log_message(self.server.log_format % dict(
-                client_ip=self.get_client_ip(),
-                date_time=self.log_date_time_string(),
-                request_line=self.requestline,
-                status_code=status_code[0],
-                body_length=length[0],
-                wall_seconds=finish - start))
+            
+            if self.server.log_output:
+                
+                self.server.log_message(self.server.log_format % dict(
+                    client_ip=self.get_client_ip(),
+                    date_time=self.log_date_time_string(),
+                    request_line=self.requestline,
+                    status_code=status_code[0],
+                    body_length=length[0],
+                    wall_seconds=finish - start))
 
     def get_client_ip(self):
         client_ip = self.client_address[0]
@@ -471,6 +473,7 @@ class Server(BaseHTTPServer.HTTPServer):
                  minimum_chunk_size=None,
                  log_x_forwarded_for=True,
                  keepalive=True,
+                 log_output=True,
                  log_format=DEFAULT_LOG_FORMAT,
                  debug=True):
 
@@ -490,6 +493,7 @@ class Server(BaseHTTPServer.HTTPServer):
         if minimum_chunk_size is not None:
             protocol.minimum_chunk_size = minimum_chunk_size
         self.log_x_forwarded_for = log_x_forwarded_for
+        self.log_output = log_output
         self.log_format = log_format
         self.debug = debug
 
@@ -536,7 +540,8 @@ def server(sock, site,
            minimum_chunk_size=None,
            log_x_forwarded_for=True,
            custom_pool=None,
-           keepalive=True,
+           keepalive=True,             
+           log_output=True,         
            log_format=DEFAULT_LOG_FORMAT,
            debug=True):
     """  Start up a wsgi server handling requests from the supplied server
@@ -556,6 +561,7 @@ def server(sock, site,
     :param log_x_forwarded_for: If True (the default), logs the contents of the x-forwarded-for header in addition to the actual client ip address in the 'client_ip' field of the log line.
     :param custom_pool: A custom GreenPool instance which is used to spawn client green threads.  If this is supplied, max_size is ignored.
     :param keepalive: If set to False, disables keepalives on the server; all connections will be closed after serving one request.
+    :param log_output: A Boolean indicating if the server will log data or not.
     :param log_format: A python format string that is used as the template to generate log lines.  The following values can be formatted into it: client_ip, date_time, request_line, status_code, body_length, wall_seconds.  The default is a good example of how to use it.
     :param debug: True if the server should send exception tracebacks to the clients on 500 errors.  If False, the server will respond with empty bodies.
     """
@@ -567,6 +573,7 @@ def server(sock, site,
                   minimum_chunk_size=minimum_chunk_size,
                   log_x_forwarded_for=log_x_forwarded_for,
                   keepalive=keepalive,
+                  log_output=log_output,
                   log_format=log_format,
                   debug=debug)
     if server_event is not None:
