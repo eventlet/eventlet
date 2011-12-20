@@ -15,6 +15,8 @@ from eventlet.support import get_errno
 DEFAULT_MAX_SIMULTANEOUS_REQUESTS = 1024
 DEFAULT_MAX_HTTP_VERSION = 'HTTP/1.1'
 MAX_REQUEST_LINE = 8192
+MAX_HEADER_LINE = 8192
+MAX_TOTAL_HEADER_SIZE = 65536
 MINIMUM_CHUNK_SIZE = 4096
 DEFAULT_LOG_FORMAT= ('%(client_ip)s - - [%(date_time)s] "%(request_line)s"'
                      ' %(status_code)s %(body_length)s %(wall_seconds).6f')
@@ -163,6 +165,33 @@ class Input(object):
         return self.rfile._sock
 
 
+class HeaderLineTooLong(Exception):
+    pass
+
+
+class HeadersTooLarge(Exception):
+    pass
+
+
+class FileObjectForHeaders(object):
+
+    def __init__(self, fp):
+        self.fp = fp
+        self.total_header_size = 0
+
+    def readline(self, size=-1):
+        sz = size
+        if size < 0:
+            sz = MAX_HEADER_LINE
+        rv = self.fp.readline(sz)
+        if size < 0 and len(rv) >= MAX_HEADER_LINE:
+            raise HeaderLineTooLong()
+        self.total_header_size += len(rv)
+        if self.total_header_size > MAX_TOTAL_HEADER_SIZE:
+            raise HeadersTooLarge()
+        return rv
+
+
 class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
     protocol_version = 'HTTP/1.1'
     minimum_chunk_size = MINIMUM_CHUNK_SIZE
@@ -210,8 +239,25 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             self.close_connection = 1
             return
 
-        if not self.parse_request():
+        orig_rfile = self.rfile
+        try:
+            self.rfile = FileObjectForHeaders(self.rfile)
+            if not self.parse_request():
+                return
+        except HeaderLineTooLong:
+            self.wfile.write(
+                "HTTP/1.0 400 Header Line Too Long\r\n"
+                "Connection: close\r\nContent-length: 0\r\n\r\n")
+            self.close_connection = 1
             return
+        except HeadersTooLarge:
+            self.wfile.write(
+                "HTTP/1.0 400 Headers Too Large\r\n"
+                "Connection: close\r\nContent-length: 0\r\n\r\n")
+            self.close_connection = 1
+            return
+        finally:
+            self.rfile = orig_rfile
 
         content_length = self.headers.getheader('content-length')
         if content_length:
@@ -383,14 +429,16 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
             for hook, args, kwargs in self.environ['eventlet.posthooks']:
                 hook(self.environ, *args, **kwargs)
-
-            self.server.log_message(self.server.log_format % dict(
-                client_ip=self.get_client_ip(),
-                date_time=self.log_date_time_string(),
-                request_line=self.requestline,
-                status_code=status_code[0],
-                body_length=length[0],
-                wall_seconds=finish - start))
+            
+            if self.server.log_output:
+                
+                self.server.log_message(self.server.log_format % dict(
+                    client_ip=self.get_client_ip(),
+                    date_time=self.log_date_time_string(),
+                    request_line=self.requestline,
+                    status_code=status_code[0],
+                    body_length=length[0],
+                    wall_seconds=finish - start))
 
     def get_client_ip(self):
         client_ip = self.client_address[0]
@@ -471,6 +519,7 @@ class Server(BaseHTTPServer.HTTPServer):
                  minimum_chunk_size=None,
                  log_x_forwarded_for=True,
                  keepalive=True,
+                 log_output=True,
                  log_format=DEFAULT_LOG_FORMAT,
                  debug=True):
 
@@ -490,6 +539,7 @@ class Server(BaseHTTPServer.HTTPServer):
         if minimum_chunk_size is not None:
             protocol.minimum_chunk_size = minimum_chunk_size
         self.log_x_forwarded_for = log_x_forwarded_for
+        self.log_output = log_output
         self.log_format = log_format
         self.debug = debug
 
@@ -536,7 +586,8 @@ def server(sock, site,
            minimum_chunk_size=None,
            log_x_forwarded_for=True,
            custom_pool=None,
-           keepalive=True,
+           keepalive=True,             
+           log_output=True,         
            log_format=DEFAULT_LOG_FORMAT,
            debug=True):
     """  Start up a wsgi server handling requests from the supplied server
@@ -556,6 +607,7 @@ def server(sock, site,
     :param log_x_forwarded_for: If True (the default), logs the contents of the x-forwarded-for header in addition to the actual client ip address in the 'client_ip' field of the log line.
     :param custom_pool: A custom GreenPool instance which is used to spawn client green threads.  If this is supplied, max_size is ignored.
     :param keepalive: If set to False, disables keepalives on the server; all connections will be closed after serving one request.
+    :param log_output: A Boolean indicating if the server will log data or not.
     :param log_format: A python format string that is used as the template to generate log lines.  The following values can be formatted into it: client_ip, date_time, request_line, status_code, body_length, wall_seconds.  The default is a good example of how to use it.
     :param debug: True if the server should send exception tracebacks to the clients on 500 errors.  If False, the server will respond with empty bodies.
     """
@@ -567,6 +619,7 @@ def server(sock, site,
                   minimum_chunk_size=minimum_chunk_size,
                   log_x_forwarded_for=log_x_forwarded_for,
                   keepalive=keepalive,
+                  log_output=log_output,
                   log_format=log_format,
                   debug=debug)
     if server_event is not None:
