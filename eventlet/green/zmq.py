@@ -143,12 +143,12 @@ def _wraps(source_fn):
 # to be received and that after calling recv() a message might be able
 # to be sent, what should we do next? There are two approaches:
 #
-#   1. Always wake the other thread if there is one waiting. This
-#   wakeup may be spurious because the socket might not actually be
-#   ready for a send() or recv().  However, if a thread is in a
-#   tight-loop successfully calling send() or recv() then the wakeups
-#   are naturally batched and there's very little cost added to each
-#   send/recv call.
+#  1. Always wake the other thread if there is one waiting. This
+#  wakeup may be spurious because the socket might not actually be
+#  ready for a send() or recv().  However, if a thread is in a
+#  tight-loop successfully calling send() or recv() then the wakeups
+#  are naturally batched and there's very little cost added to each
+#  send/recv call.
 #
 # or
 #
@@ -224,6 +224,7 @@ class Socket(_Socket):
         hub = hubs.get_hub()
         self._event_listener = hub.add(hub.READ, self.getsockopt(FD), event)
 
+    @_wraps(_Socket.close)
     def close(self):
         if self._event_listener is not None:
             hubs.get_hub().remove(self._event_listener)
@@ -294,9 +295,11 @@ class Socket(_Socket):
                 self._recv_evt.wake()
         return result
 
+    @_wraps(_Socket.send)
     def _send_not_supported(self, msg, flags, copy, track):
         raise ZMQError(ENOTSUP)
 
+    @_wraps(_Socket.recv)
     def _recv_not_supported(self, flags, copy, track):
         raise ZMQError(ENOTSUP)
 
