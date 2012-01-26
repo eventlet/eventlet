@@ -2,7 +2,6 @@
 """
 __zmq__ = __import__('zmq')
 from eventlet import hubs
-from eventlet.hubs import trampoline
 from eventlet.patcher import slurp_properties
 from eventlet.support import greenlets as greenlet
 
