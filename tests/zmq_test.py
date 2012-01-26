@@ -96,14 +96,13 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
             while req.recv() != 'done':
                 tx_i += 1
                 req.send(str(tx_i))
+            done.send(0)
 
         def rx():
             while True:
                 rx_i = rep.recv()
                 if rx_i == "1000":
                     rep.send('done')
-                    sleep()
-                    done.send(0)
                     break
                 rep.send('i')
         spawn(tx)
