@@ -336,6 +336,26 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         final_i = done.wait()
         self.assertEqual(final_i, 0)
 
+    @skip_unless(zmq_supported)
+    def test_close_during_recv(self):
+        sender, receiver, port = self.create_bound_pair(zmq.XREQ, zmq.XREQ)
+        sleep()
+        done1 = event.Event()
+        done2 = event.Event()
+
+        def rx(e):
+            self.assertRaisesErrno(zmq.ENOTSUP, receiver.recv)
+            e.send()
+
+        spawn(rx, done1)
+        spawn(rx, done2)
+
+        sleep()
+        receiver.close()
+
+        done1.wait()
+        done2.wait()
+
 class TestQueueLock(LimitedTestCase):
     @skip_unless(zmq_supported)
     def test_queue_lock_order(self):
@@ -416,10 +436,10 @@ class TestQueueLock(LimitedTestCase):
         s.acquire()
         self.assertEquals(results, [1])
 
-class TestSimpleEvent(LimitedTestCase):
+class TestBlockedThread(LimitedTestCase):
     @skip_unless(zmq_supported)
     def test_block(self):
-        e = zmq._SimpleEvent()
+        e = zmq._BlockedThread()
         done = event.Event()
         self.assertFalse(e)
 
@@ -433,35 +453,3 @@ class TestSimpleEvent(LimitedTestCase):
         self.assertFalse(done.has_result())
         e.wake()
         done.wait()
-
-    @skip_unless(zmq_supported)
-    def test_enter_exit(self):
-        e = zmq._SimpleEvent()
-        done = event.Event()
-        self.assertFalse(e)
-
-        def block():
-            with e:
-                get_hub().switch()
-            done.send(1)
-
-        gt = spawn(block)
-        sleep()
-
-        self.assertFalse(done.has_result())
-        get_hub().schedule_call_global(0, gt.switch)
-        done.wait()
-
-
-    @skip_unless(zmq_supported)
-    def test_error(self):
-        e1 = zmq._SimpleEvent()
-        with e1:
-            with self.assertRaises(Exception):
-                with e1:
-                    pass
-
-        e2 = zmq._SimpleEvent()
-        with e2:
-            with self.assertRaises(Exception):
-                e2.block()
