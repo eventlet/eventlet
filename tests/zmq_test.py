@@ -19,7 +19,9 @@ def zmq_supported(_):
 
 class TestUpstreamDownStream(LimitedTestCase):
 
-    sockets = []
+    def setUp(self):
+        super(TestUpstreamDownStream, self).setUp()
+        self.sockets = []
 
     def tearDown(self):
         self.clear_up_sockets()
@@ -32,12 +34,14 @@ class TestUpstreamDownStream(LimitedTestCase):
         port = s1.bind_to_random_port(interface)
         s2 = context.socket(type2)
         s2.connect('%s:%s' % (interface, port))
-        self.sockets = [s1, s2]
+        self.sockets.append(s1)
+        self.sockets.append(s2)
         return s1, s2, port
 
     def clear_up_sockets(self):
         for sock in self.sockets:
             sock.close()
+        self.sockets = None
 
     def assertRaisesErrno(self, errno, func, *args):
         try:
