@@ -270,9 +270,8 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
 
         spawn(tx)
         spawn(rx)
-        for i in range(num_recvs):
-            final_i = done_evts[i].wait()
-            self.assertEqual(final_i, 0)
+        for evt in done_evts:
+            self.assertEqual(evt.wait(), 0)
 
 
     @skip_unless(zmq_supported)
