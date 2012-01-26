@@ -76,6 +76,15 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         self.assertRaisesErrno(zmq.ENOTSUP, req.send, 'test')
 
     @skip_unless(zmq_supported)
+    def test_close_xsocket_raises_enotsup(self):
+        req, rep, port = self.create_bound_pair(zmq.XREQ, zmq.XREP)
+
+        rep.close()
+        req.close()
+        self.assertRaisesErrno(zmq.ENOTSUP, rep.recv)
+        self.assertRaisesErrno(zmq.ENOTSUP, req.send, 'test')
+
+    @skip_unless(zmq_supported)
     def test_send_1k_req_rep(self):
         req, rep, port = self.create_bound_pair(zmq.REQ, zmq.REP)
         sleep()

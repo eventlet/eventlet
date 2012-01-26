@@ -162,11 +162,7 @@ def _wraps(source_fn):
 # Which approach is better? I have no idea.
 #
 # TODO: 
-# - Ensure that recv* and send* methods raise error when called on a
-#   closed socket. They should not block.
 # - Support MessageTrackers and make MessageTracker.wait green
-# - What should happen to threads blocked on send/recv when socket is
-#   closed?
 
 _Socket = __zmq__.Socket
 _Socket_recv = _Socket.recv
