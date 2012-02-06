@@ -9,7 +9,6 @@ __patched__ = ['Context', 'Socket']
 slurp_properties(__zmq__, globals(), ignore=__patched__)
 
 from collections import deque
-from types import MethodType
 
 class _QueueLock(object):
     """A Lock that can be acquired by at most one thread. Any other
