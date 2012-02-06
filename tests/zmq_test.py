@@ -1,4 +1,4 @@
-from eventlet import event, spawn, sleep, patcher
+from eventlet import event, spawn, sleep, patcher, semaphore
 from eventlet.hubs import get_hub, _threadlocal, use_hub
 from nose.tools import *
 from tests import mock, LimitedTestCase, using_pyevent, skip_unless
@@ -19,7 +19,9 @@ def zmq_supported(_):
 
 class TestUpstreamDownStream(LimitedTestCase):
 
-    sockets = []
+    def setUp(self):
+        super(TestUpstreamDownStream, self).setUp()
+        self.sockets = []
 
     def tearDown(self):
         self.clear_up_sockets()
@@ -32,12 +34,14 @@ class TestUpstreamDownStream(LimitedTestCase):
         port = s1.bind_to_random_port(interface)
         s2 = context.socket(type2)
         s2.connect('%s:%s' % (interface, port))
-        self.sockets = [s1, s2]
+        self.sockets.append(s1)
+        self.sockets.append(s2)
         return s1, s2, port
 
     def clear_up_sockets(self):
         for sock in self.sockets:
             sock.close()
+        self.sockets = None
 
     def assertRaisesErrno(self, errno, func, *args):
         try:
@@ -76,6 +80,15 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         self.assertRaisesErrno(zmq.ENOTSUP, req.send, 'test')
 
     @skip_unless(zmq_supported)
+    def test_close_xsocket_raises_enotsup(self):
+        req, rep, port = self.create_bound_pair(zmq.XREQ, zmq.XREP)
+
+        rep.close()
+        req.close()
+        self.assertRaisesErrno(zmq.ENOTSUP, rep.recv)
+        self.assertRaisesErrno(zmq.ENOTSUP, req.send, 'test')
+
+    @skip_unless(zmq_supported)
     def test_send_1k_req_rep(self):
         req, rep, port = self.create_bound_pair(zmq.REQ, zmq.REP)
         sleep()
@@ -87,14 +100,13 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
             while req.recv() != 'done':
                 tx_i += 1
                 req.send(str(tx_i))
+            done.send(0)
 
         def rx():
             while True:
                 rx_i = rep.recv()
                 if rx_i == "1000":
                     rep.send('done')
-                    sleep()
-                    done.send(0)
                     break
                 rep.send('i')
         spawn(tx)
@@ -238,46 +250,218 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         self.assertRaisesErrno(zmq.EAGAIN, rep.recv, zmq.NOBLOCK)
         self.assertRaisesErrno(zmq.EAGAIN, rep.recv, zmq.NOBLOCK, True)
 
+    @skip_unless(zmq_supported)
+    def test_send_during_recv(self):
+        sender, receiver, port = self.create_bound_pair(zmq.XREQ, zmq.XREQ)
+        sleep()
+
+        num_recvs = 30
+        done_evts = [event.Event() for _ in range(num_recvs)]
+
+        def slow_rx(done, msg):
+            self.assertEqual(sender.recv(), msg)
+            done.send(0)
+
+        def tx():
+            tx_i = 0
+            while tx_i <= 1000:
+                sender.send(str(tx_i))
+                tx_i += 1
+    
+        def rx():
+            while True:
+                rx_i = receiver.recv()
+                if rx_i == "1000":
+                    for i in range(num_recvs):
+                        receiver.send('done%d' % i)
+                    sleep()
+                    return
+
+        for i in range(num_recvs):
+            spawn(slow_rx, done_evts[i], "done%d" % i)
+
+        spawn(tx)
+        spawn(rx)
+        for evt in done_evts:
+            self.assertEqual(evt.wait(), 0)
 
 
-class TestThreadedContextAccess(TestCase):
-    """zmq's Context must be unique within a hub
+    @skip_unless(zmq_supported)
+    def test_send_during_recv_multipart(self):
+        sender, receiver, port = self.create_bound_pair(zmq.XREQ, zmq.XREQ)
+        sleep()
 
-    The zeromq API documentation states:
-    All zmq sockets passed to the zmq_poll() function must share the same zmq
-    context and must belong to the thread calling zmq_poll()
+        num_recvs = 30
+        done_evts = [event.Event() for _ in range(num_recvs)]
 
-    As zmq_poll is what's eventually being called then we need to ensure that
-    all sockets that are going to be passed to zmq_poll (via hub.do_poll) are
-    in the same context
-    """
-    if zmq:  # don't call decorators if zmq module unavailable
-        @skip_unless(zmq_supported)
-        def test_context_factory_function(self):
-            ctx = zmq.Context()
-            self.assertTrue(ctx is not None)
+        def slow_rx(done, msg):
+            self.assertEqual(sender.recv_multipart(), msg)
+            done.send(0)
 
-        @skip_unless(zmq_supported)
-        def test_threadlocal_context(self):
-            context = zmq.Context()
-            self.assertEqual(context, _threadlocal.context)
-            next_context = zmq.Context()
-            self.assertTrue(context is next_context)
+        def tx():
+            tx_i = 0
+            while tx_i <= 1000:
+                sender.send_multipart([str(tx_i), '1', '2', '3'])
+                tx_i += 1
 
-        @skip_unless(zmq_supported)
-        def test_different_context_in_different_thread(self):
-            context = zmq.Context()
-            test_result = []
-            def assert_different(ctx):
-                try:
-                    this_thread_context = zmq.Context()
-                except:
-                    test_result.append('fail')
-                    raise
-                test_result.append(ctx is this_thread_context)
+        def rx():
+            while True:
+                rx_i = receiver.recv_multipart()
+                if rx_i == ["1000", '1', '2', '3']:
+                    for i in range(num_recvs):
+                        receiver.send_multipart(['done%d' % i, 'a', 'b', 'c'])
+                    sleep()
+                    return
 
-            Thread(target=assert_different, args=(context,)).start()
-            while not test_result:
-                sleep(0.1)
-            self.assertFalse(test_result[0])
+        for i in range(num_recvs):
+            spawn(slow_rx, done_evts[i], ["done%d" % i, 'a', 'b', 'c'])
 
+        spawn(tx)
+        spawn(rx)
+        for i in range(num_recvs):
+            final_i = done_evts[i].wait()
+            self.assertEqual(final_i, 0)
+
+            
+    # Need someway to ensure a thread is blocked on send... This isn't working 
+    @skip_unless(zmq_supported)
+    def test_recv_during_send(self):
+        sender, receiver, port = self.create_bound_pair(zmq.XREQ, zmq.XREQ)
+        sleep()
+
+        num_recvs = 30
+        done = event.Event()
+        
+        sender.setsockopt(zmq.HWM, 10)
+        sender.setsockopt(zmq.SNDBUF, 10)
+        
+        receiver.setsockopt(zmq.RCVBUF, 10)
+        
+        def tx():
+            tx_i = 0
+            while tx_i <= 1000:
+                sender.send(str(tx_i))
+                tx_i += 1
+            done.send(0)
+
+        spawn(tx)
+        final_i = done.wait()
+        self.assertEqual(final_i, 0)
+
+    @skip_unless(zmq_supported)
+    def test_close_during_recv(self):
+        sender, receiver, port = self.create_bound_pair(zmq.XREQ, zmq.XREQ)
+        sleep()
+        done1 = event.Event()
+        done2 = event.Event()
+
+        def rx(e):
+            self.assertRaisesErrno(zmq.ENOTSUP, receiver.recv)
+            e.send()
+
+        spawn(rx, done1)
+        spawn(rx, done2)
+
+        sleep()
+        receiver.close()
+
+        done1.wait()
+        done2.wait()
+
+class TestQueueLock(LimitedTestCase):
+    @skip_unless(zmq_supported)
+    def test_queue_lock_order(self):
+        q = zmq._QueueLock()
+        s = semaphore.Semaphore(0)
+        results = []
+
+        def lock(x):
+            with q:
+                results.append(x)
+            s.release()
+
+        q.acquire()
+
+        spawn(lock, 1)
+        sleep()
+        spawn(lock, 2)
+        sleep()
+        spawn(lock, 3)
+        sleep()
+
+        self.assertEquals(results, [])
+        q.release()
+        s.acquire()
+        s.acquire()
+        s.acquire()
+        self.assertEquals(results, [1,2,3])
+        
+    @skip_unless(zmq_supported)
+    def test_count(self):
+        q = zmq._QueueLock()
+        self.assertFalse(q)
+        q.acquire()
+        self.assertTrue(q)
+        q.release()
+        self.assertFalse(q)
+
+        with q:
+            self.assertTrue(q)
+        self.assertFalse(q)
+
+    @skip_unless(zmq_supported)
+    def test_errors(self):
+        q = zmq._QueueLock()
+
+        with self.assertRaises(Exception):
+            q.release()
+
+        q.acquire()
+        q.release()
+
+        with self.assertRaises(Exception):
+            q.release()
+
+    @skip_unless(zmq_supported)
+    def test_nested_acquire(self):
+        q = zmq._QueueLock()
+        self.assertFalse(q)
+        q.acquire()
+        q.acquire()
+
+        s = semaphore.Semaphore(0)
+        results = []
+        def lock(x):
+            with q:
+                results.append(x)
+            s.release()
+
+        spawn(lock, 1)
+        sleep()
+        self.assertEquals(results, [])
+        q.release()
+        sleep()
+        self.assertEquals(results, [])
+        self.assertTrue(q)
+        q.release()
+
+        s.acquire()
+        self.assertEquals(results, [1])
+
+class TestBlockedThread(LimitedTestCase):
+    @skip_unless(zmq_supported)
+    def test_block(self):
+        e = zmq._BlockedThread()
+        done = event.Event()
+        self.assertFalse(e)
+
+        def block():
+            e.block()
+            done.send(1)
+
+        spawn(block)
+        sleep()
+
+        self.assertFalse(done.has_result())
+        e.wake()
+        done.wait()
