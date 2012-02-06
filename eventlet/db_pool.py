@@ -232,7 +232,9 @@ class BaseConnectionPool(Pool):
         if self._expiration_timer:
             self._expiration_timer.cancel()
         free_items, self.free_items = self.free_items, deque()
-        for _last_used, _created_at, conn in free_items:
+        for item in free_items:
+            # Free items created using min_size>0 are not tuples.
+            conn = item[2] if isinstance(item, tuple) else item
             self._safe_close(conn, quiet=True)
 
     def __del__(self):

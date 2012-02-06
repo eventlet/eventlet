@@ -871,6 +871,30 @@ class TestHttpd(_TestBase):
         self.assertEquals(posthook1_count[0], 26)
         self.assertEquals(posthook2_count[0], 25)
 
+    def test_030_reject_long_header_lines(self):
+        sock = eventlet.connect(('localhost', self.port))
+        request = 'GET / HTTP/1.0\r\nHost: localhost\r\nLong: %s\r\n\r\n' % \
+            ('a' * 10000)
+        fd = sock.makefile('rw')
+        fd.write(request)
+        fd.flush()
+        response_line, headers, body = read_http(sock)
+        self.assertEquals(response_line,
+            'HTTP/1.0 400 Header Line Too Long\r\n')
+        fd.close()
+
+    def test_031_reject_large_headers(self):
+        sock = eventlet.connect(('localhost', self.port))
+        headers = 'Name: Value\r\n' * 5050
+        request = 'GET / HTTP/1.0\r\nHost: localhost\r\n%s\r\n\r\n' % headers
+        fd = sock.makefile('rw')
+        fd.write(request)
+        fd.flush()
+        response_line, headers, body = read_http(sock)
+        self.assertEquals(response_line,
+            'HTTP/1.0 400 Headers Too Large\r\n')
+        fd.close()
+
     def test_zero_length_chunked_response(self):
         def zero_chunked_app(env, start_response):
             start_response('200 OK', [('Content-type', 'text/plain')])

@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import traceback
 from tests import skipped, skip_unless, using_pyevent, get_database_auth, LimitedTestCase
 import eventlet
 from eventlet import event
