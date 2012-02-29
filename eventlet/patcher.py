@@ -223,7 +223,6 @@ def monkey_patch(**on):
         on.setdefault(modname, default_on)
         
     modules_to_patch = []
-    patched_thread = False
     if on['os'] and not already_patched.get('os'):
         modules_to_patch += _green_os_modules()
         already_patched['os'] = True
@@ -234,7 +233,6 @@ def monkey_patch(**on):
         modules_to_patch += _green_socket_modules()
         already_patched['socket'] = True
     if on['thread'] and not already_patched.get('thread'):
-        patched_thread = True
         modules_to_patch += _green_thread_modules()
         already_patched['thread'] = True
     if on['time'] and not already_patched.get('time'):
@@ -266,26 +264,8 @@ def monkey_patch(**on):
                 patched_attr = getattr(mod, attr_name, None)
                 if patched_attr is not None:
                     setattr(orig_mod, attr_name, patched_attr)
-
-        # hacks ahead; this is necessary to prevent a KeyError on program exit
-        if patched_thread:
-            _patch_main_thread(sys.modules['threading'])
     finally:
         imp.release_lock()
-
-def _patch_main_thread(mod):
-    """This is some gnarly patching specific to the threading module;
-    threading will always be initialized prior to monkeypatching, and
-    its _active dict will have the wrong key (it uses the real thread
-    id but once it's patched it will use the greenlet ids); so what we
-    do is rekey the _active dict so that the main thread's entry uses
-    the greenthread key.  Other threads' keys are ignored."""
-    thread = original('thread')
-    curthread = mod._active.pop(thread.get_ident(), None)
-    if curthread:
-        import eventlet.green.thread
-        mod._active[eventlet.green.thread.get_ident()] = curthread
-
 
 def is_monkey_patched(module):
     """Returns True if the given module is monkeypatched currently, False if

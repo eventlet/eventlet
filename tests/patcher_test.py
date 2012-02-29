@@ -293,5 +293,95 @@ print "done"
         self.assertEqual(output, "done\n", output)
 
 
+class Threading(ProcessBase):
+    def test_orig_thread(self):
+        new_mod = """import eventlet
+eventlet.monkey_patch()
+from eventlet import patcher
+import threading
+_threading = patcher.original('threading')
+def test():
+    print repr(threading.current_thread())
+t = _threading.Thread(target=test)
+t.start()
+t.join()
+print len(threading._active)
+print len(_threading._active)
+"""
+        self.write_to_tempfile("newmod", new_mod)
+        output, lines = self.launch_subprocess('newmod')
+        self.assertEqual(len(lines), 4, "\n".join(lines))
+        self.assert_(lines[0].startswith('<Thread'), lines[0])
+        self.assertEqual(lines[1], "1", lines[1])
+        self.assertEqual(lines[2], "1", lines[2])
+
+    def test_threading(self):
+        new_mod = """import eventlet
+eventlet.monkey_patch()
+import threading
+def test():
+    print repr(threading.current_thread())
+t = threading.Thread(target=test)
+t.start()
+t.join()
+print len(threading._active)
+"""
+        self.write_to_tempfile("newmod", new_mod)
+        output, lines = self.launch_subprocess('newmod')
+        self.assertEqual(len(lines), 3, "\n".join(lines))
+        self.assert_(lines[0].startswith('<_MainThread'), lines[0])
+        self.assertEqual(lines[1], "1", lines[1])
+
+    def test_tpool(self):
+        new_mod = """import eventlet
+eventlet.monkey_patch()
+from eventlet import tpool
+import threading
+def test():
+    print repr(threading.current_thread())
+tpool.execute(test)
+print len(threading._active)
+"""
+        self.write_to_tempfile("newmod", new_mod)
+        output, lines = self.launch_subprocess('newmod')
+        self.assertEqual(len(lines), 3, "\n".join(lines))
+        self.assert_(lines[0].startswith('<Thread'), lines[0])
+        self.assertEqual(lines[1], "1", lines[1])
+
+    def test_greenlet(self):
+        new_mod = """import eventlet
+eventlet.monkey_patch()
+from eventlet import event
+import threading
+evt = event.Event()
+def test():
+    print repr(threading.current_thread())
+    evt.send()
+eventlet.spawn_n(test)
+evt.wait()
+print len(threading._active)
+"""
+        self.write_to_tempfile("newmod", new_mod)
+        output, lines = self.launch_subprocess('newmod')
+        self.assertEqual(len(lines), 3, "\n".join(lines))
+        self.assert_(lines[0].startswith('<_MainThread'), lines[0])
+        self.assertEqual(lines[1], "1", lines[1])
+
+    def test_greenthread(self):
+        new_mod = """import eventlet
+eventlet.monkey_patch()
+import threading
+def test():
+    print repr(threading.current_thread())
+t = eventlet.spawn(test)
+t.wait()
+print len(threading._active)
+"""
+        self.write_to_tempfile("newmod", new_mod)
+        output, lines = self.launch_subprocess('newmod')
+        self.assertEqual(len(lines), 3, "\n".join(lines))
+        self.assert_(lines[0].startswith('<_GreenThread'), lines[0])
+        self.assertEqual(lines[1], "1", lines[1])
+
 if __name__ == '__main__':
     main()
