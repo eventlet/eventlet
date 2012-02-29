@@ -622,8 +622,8 @@ class TestHttpd(_TestBase):
             for environ_var in ['wsgi.version', 'wsgi.url_scheme',
                 'wsgi.input', 'wsgi.errors', 'wsgi.multithread',
                 'wsgi.multiprocess', 'wsgi.run_once', 'REQUEST_METHOD',
-                'SCRIPT_NAME', 'PATH_INFO', 'QUERY_STRING', 'CONTENT_TYPE',
-                'CONTENT_LENGTH', 'SERVER_NAME', 'SERVER_PORT', 
+                'SCRIPT_NAME', 'RAW_PATH_INFO', 'PATH_INFO', 'QUERY_STRING',
+                'CONTENT_TYPE', 'CONTENT_LENGTH', 'SERVER_NAME', 'SERVER_PORT',
                 'SERVER_PROTOCOL']:
                 environ[environ_var] = None
             start_response('200 OK', [('Content-type', 'text/plain')])
@@ -974,6 +974,22 @@ class TestHttpd(_TestBase):
         self.assert_(response_line.startswith('HTTP/1.1 500 Internal Server Error'))
         self.assertEqual(headers['connection'], 'close')
         self.assert_('unicode' in body)
+
+    def test_path_info_decoding(self):
+        def wsgi_app(environ, start_response):
+            start_response("200 OK", [])
+            yield "decoded: %s" % environ['PATH_INFO']
+            yield "raw: %s" % environ['RAW_PATH_INFO']
+        self.site.application = wsgi_app
+        sock = eventlet.connect(('localhost', self.port))
+        fd = sock.makefile('rw')
+        fd.write('GET /a*b@%40%233 HTTP/1.1\r\nHost: localhost\r\nConnection: '\
+                'close\r\n\r\n')
+        fd.flush()
+        response_line, headers, body = read_http(sock)
+        self.assert_(response_line.startswith('HTTP/1.1 200'))
+        self.assert_('decoded: /a*b@@#3' in body)
+        self.assert_('raw: /a*b@%40%233' in body)
 
     def test_ipv6(self):
         try:

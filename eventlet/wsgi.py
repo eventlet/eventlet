@@ -454,6 +454,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         env['SCRIPT_NAME'] = ''
 
         pq = self.path.split('?', 1)
+        env['RAW_PATH_INFO'] = pq[0]
         env['PATH_INFO'] = urllib.unquote(pq[0])
         if len(pq) > 1:
             env['QUERY_STRING'] = pq[1]
