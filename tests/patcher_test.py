@@ -383,5 +383,85 @@ print len(threading._active)
         self.assert_(lines[0].startswith('<_GreenThread'), lines[0])
         self.assertEqual(lines[1], "1", lines[1])
 
+
+class GreenThreadWrapper(ProcessBase):
+    prologue = """import eventlet
+eventlet.monkey_patch()
+import threading
+def test():
+    t = threading.current_thread()
+"""
+    epilogue = """
+t = eventlet.spawn(test)
+t.wait()
+"""
+
+    def test_join(self):
+        self.write_to_tempfile("newmod", self.prologue + """
+    def test2():
+        global t2
+        t2 = threading.current_thread()
+    eventlet.spawn(test2)
+""" + self.epilogue + """
+print repr(t2)
+t2.join()
+""")
+        output, lines = self.launch_subprocess('newmod')
+        self.assertEqual(len(lines), 2, "\n".join(lines))
+        self.assert_(lines[0].startswith('<_GreenThread'), lines[0])
+
+    def test_name(self):
+        self.write_to_tempfile("newmod", self.prologue + """
+    print t.name
+    print t.getName()
+    print t.get_name()
+    t.name = 'foo'
+    print t.name
+    print t.getName()
+    print t.get_name()
+    t.setName('bar')
+    print t.name
+    print t.getName()
+    print t.get_name()
+""" + self.epilogue)
+        output, lines = self.launch_subprocess('newmod')
+        self.assertEqual(len(lines), 10, "\n".join(lines))
+        for i in xrange(0, 3):
+            self.assertEqual(lines[i], "GreenThread-1", lines[i])
+        for i in xrange(3, 6):
+            self.assertEqual(lines[i], "foo", lines[i])
+        for i in xrange(6, 9):
+            self.assertEqual(lines[i], "bar", lines[i])
+
+    def test_ident(self):
+        self.write_to_tempfile("newmod", self.prologue + """
+    print id(t._g)
+    print t.ident
+""" + self.epilogue)
+        output, lines = self.launch_subprocess('newmod')
+        self.assertEqual(len(lines), 3, "\n".join(lines))
+        self.assertEqual(lines[0], lines[1])
+
+    def test_is_alive(self):
+        self.write_to_tempfile("newmod", self.prologue + """
+    print t.is_alive()
+    print t.isAlive()
+""" + self.epilogue)
+        output, lines = self.launch_subprocess('newmod')
+        self.assertEqual(len(lines), 3, "\n".join(lines))
+        self.assertEqual(lines[0], "True", lines[0])
+        self.assertEqual(lines[1], "True", lines[1])
+
+    def test_is_daemon(self):
+        self.write_to_tempfile("newmod", self.prologue + """
+    print t.is_daemon()
+    print t.isDaemon()
+""" + self.epilogue)
+        output, lines = self.launch_subprocess('newmod')
+        self.assertEqual(len(lines), 3, "\n".join(lines))
+        self.assertEqual(lines[0], "True", lines[0])
+        self.assertEqual(lines[1], "True", lines[1])
+
+
 if __name__ == '__main__':
     main()

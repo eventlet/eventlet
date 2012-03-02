@@ -33,16 +33,40 @@ class _GreenThread(object):
     def __repr__(self):
         return '<_GreenThread(%s, %r)>' % (self._name, self._g)
 
+    def join(self, timeout=None):
+        return self._g.wait()
+
     @property
     def name(self):
         return self._name
+
+    @name.setter
+    def name(self, name):
+        self._name = str(name)
 
     def getName(self):
         return self.name
     get_name = getName
 
-    def join(self):
-        return self._g.wait()
+    def setName(self, name):
+        self.name = name
+    set_name = setName
+
+    @property
+    def ident(self):
+        return id(self._g)
+
+    def isAlive(self):
+        return True
+    is_alive = isAlive
+
+    @property
+    def daemon(self):
+        return True
+
+    def isDaemon(self):
+        return self.daemon
+    is_daemon = isDaemon
 
 
 __threading = None
