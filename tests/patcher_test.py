@@ -383,6 +383,14 @@ print len(threading._active)
         self.assert_(lines[0].startswith('<_GreenThread'), lines[0])
         self.assertEqual(lines[1], "1", lines[1])
 
+    def test_keyerror(self):
+        new_mod = """import eventlet
+eventlet.monkey_patch()
+"""
+        self.write_to_tempfile("newmod", new_mod)
+        output, lines = self.launch_subprocess('newmod')
+        self.assertEqual(len(lines), 1, "\n".join(lines))
+
 
 class GreenThreadWrapper(ProcessBase):
     prologue = """import eventlet

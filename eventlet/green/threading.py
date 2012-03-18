@@ -6,7 +6,7 @@ from eventlet.support import greenlets as greenlet
 
 __patched__ = ['_start_new_thread', '_allocate_lock', '_get_ident', '_sleep',
                'local', 'stack_size', 'Lock', 'currentThread',
-               'current_thread', '_after_fork']
+               'current_thread', '_after_fork', '_shutdown']
 
 __orig_threading = patcher.original('threading')
 __threadlocal = __orig_threading.local()
