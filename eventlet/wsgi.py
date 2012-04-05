@@ -221,8 +221,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             return
 
         try:
-            self.raw_requestline = self.rfile.readline(MAX_REQUEST_LINE)
-            if len(self.raw_requestline) == MAX_REQUEST_LINE:
+            self.raw_requestline = self.rfile.readline(self.server.url_length_limit)
+            if len(self.raw_requestline) == self.server.url_length_limit:
                 self.wfile.write(
                     "HTTP/1.0 414 Request URI Too Long\r\n"
                     "Connection: close\r\nContent-length: 0\r\n\r\n")
@@ -522,6 +522,7 @@ class Server(BaseHTTPServer.HTTPServer):
                  keepalive=True,
                  log_output=True,
                  log_format=DEFAULT_LOG_FORMAT,
+                 url_length_limit=MAX_REQUEST_LINE,
                  debug=True):
 
         self.outstanding_requests = 0
@@ -542,6 +543,7 @@ class Server(BaseHTTPServer.HTTPServer):
         self.log_x_forwarded_for = log_x_forwarded_for
         self.log_output = log_output
         self.log_format = log_format
+        self.url_length_limit = url_length_limit
         self.debug = debug
 
     def get_environ(self):
@@ -590,6 +592,7 @@ def server(sock, site,
            keepalive=True,             
            log_output=True,         
            log_format=DEFAULT_LOG_FORMAT,
+           url_length_limit=MAX_REQUEST_LINE,
            debug=True):
     """  Start up a wsgi server handling requests from the supplied server
     socket.  This function loops forever.  The *sock* object will be closed after server exits,
@@ -610,6 +613,7 @@ def server(sock, site,
     :param keepalive: If set to False, disables keepalives on the server; all connections will be closed after serving one request.
     :param log_output: A Boolean indicating if the server will log data or not.
     :param log_format: A python format string that is used as the template to generate log lines.  The following values can be formatted into it: client_ip, date_time, request_line, status_code, body_length, wall_seconds.  The default is a good example of how to use it.
+    :param url_length_limit: A maximum allowed length of the request url. If exceeded, 414 error is returned.
     :param debug: True if the server should send exception tracebacks to the clients on 500 errors.  If False, the server will respond with empty bodies.
     """
     serv = Server(sock, sock.getsockname(),
@@ -622,6 +626,7 @@ def server(sock, site,
                   keepalive=keepalive,
                   log_output=log_output,
                   log_format=log_format,
+                  url_length_limit=url_length_limit,
                   debug=debug)
     if server_event is not None:
         server_event.send(serv)

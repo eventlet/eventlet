@@ -919,6 +919,23 @@ class TestHttpd(_TestBase):
         # (one terminates the chunk, one terminates the body)
         self.assertEqual(response, ['0', '', ''])
 
+    def test_configurable_url_length_limit(self):
+        self.spawn_server(url_length_limit=20000)
+        sock = eventlet.connect(
+            ('localhost', self.port))
+        path = 'x' * 15000
+        request = 'GET /%s HTTP/1.0\r\nHost: localhost\r\n\r\n' % path
+        fd = sock.makefile('rw')
+        fd.write(request)
+        fd.flush()
+        result = fd.readline()
+        if result:
+            # windows closes the socket before the data is flushed,
+            # so we never get anything back
+            status = result.split(' ')[1]
+            self.assertEqual(status, '200')
+        fd.close()
+
     def test_aborted_chunked_post(self):
         read_content = event.Event()
         blew_up = [False]
