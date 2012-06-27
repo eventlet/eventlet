@@ -1,3 +1,4 @@
+import errno
 from eventlet.support import get_errno
 from eventlet import patcher
 time = patcher.original('time')
