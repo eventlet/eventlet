@@ -1,3 +1,18 @@
+0.9.17
+======
+* ZeroMQ support calling send and recv from multiple greenthreads (thanks to Geoff Salmon)
+* SSL: unwrap() sends data, and so it needs trampolining (#104 thanks to Brandon Rhodes)
+* hubs.epolls: Fix imports for exception handler (#123 thanks to Johannes Erdfelt)
+* db_pool: Fix .clear() when min_size > 0
+* db_pool: Add MySQL's insert_id() method (thanks to Peter Scott)
+* db_pool: Close connections after timeout, fix get-after-close race condition with using TpooledConnectionPool (thanks to Peter Scott)
+* threading monkey patch fixes (#115 thanks to Johannes Erdfelt)
+* pools: Better accounting of current_size in pools.Pool (#91 thanks to Brett Hoerner)
+* wsgi: environ['RAW_PATH_INFO'] with request path as received from client (thanks to dweimer)
+* wsgi: log_output flag (thanks to Juan Manuel Garcia)
+* wsgi: Limit HTTP header size (thanks to Gregory Holt)
+* wsgi: Configurable maximum URL length (thanks to Tomas Sedovic)
+
 0.9.16
 ======
 * SO_REUSEADDR now correctly set.
