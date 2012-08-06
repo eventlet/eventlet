@@ -19,6 +19,7 @@ bin
 include
 .noseids
 pip-log.txt
+.tox
 
 syntax: re
 ^.ropeproject/.*$
