@@ -157,6 +157,17 @@ class BaseHub(object):
             except Exception, e:
                 self.squelch_generic_exception(sys.exc_info())
 
+    def ensure_greenlet(self):
+        if self.greenlet.dead:
+            # create new greenlet sharing same parent as original
+            new = greenlet.greenlet(self.run, self.greenlet.parent)
+            # need to assign as parent of old greenlet
+            # for those greenlets that are currently
+            # children of the dead hub and may subsequently
+            # exit without further switching to hub.
+            self.greenlet.parent = new
+            self.greenlet = new
+
     def switch(self):
         cur = greenlet.getcurrent()
         assert cur is not self.greenlet, 'Cannot switch to MAINLOOP from MAINLOOP'
@@ -166,8 +177,7 @@ class BaseHub(object):
                 switch_out()
             except:
                 self.squelch_generic_exception(sys.exc_info())
-        if self.greenlet.dead:
-            self.greenlet = greenlet.greenlet(self.run)
+        self.ensure_greenlet()
         try:
             if self.greenlet.parent is not cur:
                 cur.parent = self.greenlet
