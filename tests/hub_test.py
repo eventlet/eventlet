@@ -283,7 +283,7 @@ class TestDeadRunLoop(LimitedTestCase):
 
     def test_parent(self):
         """ Checks that a terminating greenthread whose parent
-        was a previous, now-defunkt hub greenlet returns execution to
+        was a previous, now-defunct hub greenlet returns execution to
         the hub runloop and not the hub greenlet's parent. """
         hub = hubs.get_hub()
 
