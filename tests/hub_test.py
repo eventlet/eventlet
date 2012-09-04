@@ -249,6 +249,62 @@ else:
         self.assert_("child died ok" in lines[1])
 
 
+class TestDeadRunLoop(LimitedTestCase):
+    TEST_TIMEOUT=2
+
+    class CustomException(Exception):
+        pass
+
+    def test_kill(self):
+        """ Checks that killing a process after the hub runloop dies does
+        not immediately return to hub greenlet's parent and schedule a
+        redundant timer. """
+        hub = hubs.get_hub()
+
+        def dummyproc():
+            hub.switch()
+
+        g = eventlet.spawn(dummyproc)
+        eventlet.sleep(0)  # let dummyproc run
+        assert hub.greenlet.parent == eventlet.greenthread.getcurrent()
+        self.assertRaises(KeyboardInterrupt, hub.greenlet.throw,
+            KeyboardInterrupt())
+
+        # kill dummyproc, this schedules a timer to return execution to
+        # this greenlet before throwing an exception in dummyproc.
+        # it is from this timer that execution should be returned to this
+        # greenlet, and not by propogating of the terminating greenlet.
+        g.kill()
+        with eventlet.Timeout(0.5, self.CustomException()):
+            # we now switch to the hub, there should be no existing timers
+            # that switch back to this greenlet and so this hub.switch()
+            # call should block indefinately.
+            self.assertRaises(self.CustomException, hub.switch)
+
+    def test_parent(self):
+        """ Checks that a terminating greenthread whose parent
+        was a previous, now-defunct hub greenlet returns execution to
+        the hub runloop and not the hub greenlet's parent. """
+        hub = hubs.get_hub()
+
+        def dummyproc():
+            pass
+
+        g = eventlet.spawn(dummyproc)
+        assert hub.greenlet.parent == eventlet.greenthread.getcurrent()
+        self.assertRaises(KeyboardInterrupt, hub.greenlet.throw,
+            KeyboardInterrupt())
+
+        assert not g.dead  # check dummyproc hasn't completed
+        with eventlet.Timeout(0.5, self.CustomException()):
+            # we now switch to the hub which will allow
+            # completion of dummyproc.
+            # this should return execution back to the runloop and not
+            # this greenlet so that hub.switch() would block indefinately.
+            self.assertRaises(self.CustomException, hub.switch)
+        assert g.dead  # sanity check that dummyproc has completed
+
+
 class Foo(object):
     pass
 

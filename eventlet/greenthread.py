@@ -258,5 +258,6 @@ def kill(g, *throw_args):
     current = getcurrent()
     if current is not hub.greenlet:
         # arrange to wake the caller back up immediately
+        hub.ensure_greenlet()
         hub.schedule_call_global(0, current.switch)
     g.throw(*throw_args)
