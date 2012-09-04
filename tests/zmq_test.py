@@ -1,3 +1,5 @@
+from __future__ import with_statement
+
 from eventlet import event, spawn, sleep, patcher, semaphore
 from eventlet.hubs import get_hub, _threadlocal, use_hub
 from nose.tools import *

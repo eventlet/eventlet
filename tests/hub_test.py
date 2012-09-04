@@ -1,3 +1,5 @@
+from __future__ import with_statement
+
 from tests import LimitedTestCase, main, skip_with_pyevent, skip_if_no_itimer
 import time
 import eventlet

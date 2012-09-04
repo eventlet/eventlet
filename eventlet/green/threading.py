@@ -36,33 +36,23 @@ class _GreenThread(object):
     def join(self, timeout=None):
         return self._g.wait()
 
-    @property
-    def name(self):
-        return self._name
-
-    @name.setter
-    def name(self, name):
-        self._name = str(name)
-
     def getName(self):
-        return self.name
+        return self._name
     get_name = getName
 
     def setName(self, name):
-        self.name = name
+        self._name = str(name)
     set_name = setName
 
-    @property
-    def ident(self):
-        return id(self._g)
+    name = property(getName, setName)
+
+    ident = property(lambda self: id(self._g))
 
     def isAlive(self):
         return True
     is_alive = isAlive
 
-    @property
-    def daemon(self):
-        return True
+    daemon = property(lambda self: True)
 
     def isDaemon(self):
         return self.daemon
@@ -111,7 +101,7 @@ def current_thread():
             # Not a GreenThread type, so there's no way to hook into
             # the green thread exiting. Fall back to the standard
             # function then.
-            t = _fixup_thread(__orig_threading.current_thread())
+            t = _fixup_thread(__orig_threading.currentThread())
         else:
             t = active[id(g)] = _GreenThread(g)
 

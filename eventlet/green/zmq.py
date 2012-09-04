@@ -1,5 +1,8 @@
 """The :mod:`zmq` module wraps the :class:`Socket` and :class:`Context` found in :mod:`pyzmq <zmq>` to be non blocking
 """
+
+from __future__ import with_statement
+
 __zmq__ = __import__('zmq')
 from eventlet import hubs
 from eventlet.patcher import slurp_properties
