@@ -110,6 +110,17 @@ def skip_if_no_itimer(func):
     return skip_unless(has_itimer)(func)
 
 
+def skip_if_no_ssl(func):
+    """ Decorator that skips a test if SSL is not available."""
+    try:
+        import eventlet.green.ssl
+    except ImportError:
+        try:
+            import eventlet.green.OpenSSL
+        except ImportError:
+            skipped(func)
+
+
 class TestIsTakingTooLong(Exception):
     """ Custom exception class to be raised when a test's runtime exceeds a limit. """
     pass

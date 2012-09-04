@@ -5,7 +5,7 @@ import errno
 import os
 import socket
 import sys
-from tests import skipped, LimitedTestCase, skip_with_pyevent
+from tests import skipped, LimitedTestCase, skip_with_pyevent, skip_if_no_ssl
 from unittest import main
 
 from eventlet import greenio
@@ -370,6 +370,7 @@ class TestHttpd(_TestBase):
         # Require a CRLF to close the message body
         self.assertEqual(response, '\r\n')
 
+    @skip_if_no_ssl
     def test_012_ssl_server(self):
         def wsgi_app(environ, start_response):
             start_response('200 OK', {})
@@ -390,6 +391,7 @@ class TestHttpd(_TestBase):
         result = sock.read(8192)
         self.assertEquals(result[-3:], 'abc')
         
+    @skip_if_no_ssl
     def test_013_empty_return(self):
         def wsgi_app(environ, start_response):
             start_response("200 OK", [])
@@ -487,6 +489,7 @@ class TestHttpd(_TestBase):
         self.assertEquals(1, len([l for l in header_lines
                 if l.lower().startswith('content-length')]))
 
+    @skip_if_no_ssl
     def test_017_ssl_zeroreturnerror(self):
 
         def server(sock, site, log):
@@ -781,6 +784,7 @@ class TestHttpd(_TestBase):
         fd.flush()
         read_http(sock)
 
+    @skip_if_no_ssl
     def test_028_ssl_handshake_errors(self):
         errored = [False]
         def server(sock):

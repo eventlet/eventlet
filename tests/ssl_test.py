@@ -1,4 +1,5 @@
-from tests import skipped, LimitedTestCase, skip_unless, certificate_file, private_key_file
+from tests import LimitedTestCase, certificate_file, private_key_file
+from tests import skip_if_no_ssl
 from unittest import main
 import eventlet
 from eventlet import util, coros, greenio
@@ -15,6 +16,7 @@ def listen_ssl_socket(address=('127.0.0.1', 0)):
    
 
 class SSLTest(LimitedTestCase):
+    @skip_if_no_ssl
     def test_duplex_response(self):
         def serve(listener):
             sock, addr = listener.accept()
@@ -30,6 +32,7 @@ class SSLTest(LimitedTestCase):
         self.assertEquals(client.read(8192), 'response')
         server_coro.wait()
         
+    @skip_if_no_ssl
     def test_ssl_close(self):
         def serve(listener):
             sock, addr = listener.accept()
@@ -50,6 +53,7 @@ class SSLTest(LimitedTestCase):
         client.close()
         server_coro.wait()
         
+    @skip_if_no_ssl
     def test_ssl_connect(self):
         def serve(listener):
             sock, addr = listener.accept()
@@ -65,6 +69,7 @@ class SSLTest(LimitedTestCase):
         ssl_client.close()
         server_coro.wait()
 
+    @skip_if_no_ssl
     def test_ssl_unwrap(self):
         def serve():
             sock, addr = listener.accept()
@@ -89,7 +94,7 @@ class SSLTest(LimitedTestCase):
         server_coro.wait()
 
 class SocketSSLTest(LimitedTestCase):
-    @skip_unless(hasattr(socket, 'ssl'))
+    @skip_if_no_ssl
     def test_greensslobject(self):
         import warnings
         # disabling socket.ssl warnings because we're testing it here

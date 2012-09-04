@@ -3,7 +3,7 @@ import os
 import eventlet
 from eventlet import event
 from eventlet.green import socket
-from tests import LimitedTestCase, s2b
+from tests import LimitedTestCase, s2b, skip_if_no_ssl
 
 certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
 private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
@@ -107,6 +107,7 @@ class TestServe(LimitedTestCase):
             timeout_value="timed out")
         self.assertEquals(x, "timed out")
 
+    @skip_if_no_ssl
     def test_wrap_ssl(self):
         server = eventlet.wrap_ssl(eventlet.listen(('localhost', 0)),
                                     certfile=certificate_file,

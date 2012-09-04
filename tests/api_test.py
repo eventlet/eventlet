@@ -10,6 +10,9 @@ from eventlet import api
 warnings.simplefilter('default', DeprecationWarning)
 from eventlet import greenio, util, hubs, greenthread, spawn
 
+from tests import skip_if_no_ssl
+
+
 def check_hub():
     # Clear through the descriptor queue
     api.sleep(0)
@@ -60,6 +63,7 @@ class TestApi(TestCase):
 
         check_hub()
 
+    @skip_if_no_ssl
     def test_connect_ssl(self):
         def accept_once(listenfd):
             try:

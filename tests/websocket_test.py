@@ -10,6 +10,7 @@ from eventlet import event
 from eventlet import greenio
 
 from tests import mock, LimitedTestCase, certificate_file, private_key_file
+from tests import skip_if_no_ssl
 from tests.wsgi_test import _TestBase
 
 
@@ -517,6 +518,7 @@ class TestWebSocketSSL(_TestBase):
     def set_site(self):
         self.site = wsapp
 
+    @skip_if_no_ssl
     def test_ssl_sending_messages(self):
         s = eventlet.wrap_ssl(eventlet.listen(('localhost', 0)),
                               certfile=certificate_file, 
