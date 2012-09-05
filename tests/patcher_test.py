@@ -301,7 +301,7 @@ from eventlet import patcher
 import threading
 _threading = patcher.original('threading')
 def test():
-    print repr(threading.current_thread())
+    print repr(threading.currentThread())
 t = _threading.Thread(target=test)
 t.start()
 t.join()
@@ -320,7 +320,7 @@ print len(_threading._active)
 eventlet.monkey_patch()
 import threading
 def test():
-    print repr(threading.current_thread())
+    print repr(threading.currentThread())
 t = threading.Thread(target=test)
 t.start()
 t.join()
@@ -338,7 +338,7 @@ eventlet.monkey_patch()
 from eventlet import tpool
 import threading
 def test():
-    print repr(threading.current_thread())
+    print repr(threading.currentThread())
 tpool.execute(test)
 print len(threading._active)
 """
@@ -355,7 +355,7 @@ from eventlet import event
 import threading
 evt = event.Event()
 def test():
-    print repr(threading.current_thread())
+    print repr(threading.currentThread())
     evt.send()
 eventlet.spawn_n(test)
 evt.wait()
@@ -372,7 +372,7 @@ print len(threading._active)
 eventlet.monkey_patch()
 import threading
 def test():
-    print repr(threading.current_thread())
+    print repr(threading.currentThread())
 t = eventlet.spawn(test)
 t.wait()
 print len(threading._active)
@@ -397,7 +397,7 @@ class GreenThreadWrapper(ProcessBase):
 eventlet.monkey_patch()
 import threading
 def test():
-    t = threading.current_thread()
+    t = threading.currentThread()
 """
     epilogue = """
 t = eventlet.spawn(test)
@@ -408,7 +408,7 @@ t.wait()
         self.write_to_tempfile("newmod", self.prologue + """
     def test2():
         global t2
-        t2 = threading.current_thread()
+        t2 = threading.currentThread()
     eventlet.spawn(test2)
 """ + self.epilogue + """
 print repr(t2)
