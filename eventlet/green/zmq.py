@@ -225,9 +225,9 @@ class Socket(_Socket):
             # it will miss the edge-triggered read event, so wake it
             # up.
             if (result & POLLOUT):
-                self._send_evt.wake()
+                self._eventlet_send_event.wake()
             if (result & POLLIN):
-                self._recv_evt.wake()
+                self._eventlet_recv_event.wake()
         return result
 
     @_wraps(_Socket.send)
