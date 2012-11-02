@@ -296,3 +296,6 @@ def killall():
     _wfile = None
     _rspq = None
     _setup_already = False
+
+def set_num_threads(nthreads):
+    _nthreads = nthreads
