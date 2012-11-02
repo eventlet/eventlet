@@ -298,4 +298,5 @@ def killall():
     _setup_already = False
 
 def set_num_threads(nthreads):
+    global _nthreads
     _nthreads = nthreads

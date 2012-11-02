@@ -275,6 +275,11 @@ class TestTpool(LimitedTestCase):
         def raise_timeout():
             raise eventlet.Timeout()
         self.assertRaises(eventlet.Timeout, tpool.execute, raise_timeout)
+    
+    @skip_with_pyevent
+    def test_tpool_set_num_threads(self):
+        tpool.set_num_threads(5)
+        self.assertEquals(5, tpool._nthreads)
 
 class TpoolLongTests(LimitedTestCase):
     TEST_TIMEOUT=60
