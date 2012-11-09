@@ -392,6 +392,19 @@ eventlet.monkey_patch()
         self.assertEqual(len(lines), 1, "\n".join(lines))
 
 
+class Os(ProcessBase):
+    def test_waitpid(self):
+        new_mod = """import subprocess
+import eventlet
+eventlet.monkey_patch(all=False, os=True)
+process = subprocess.Popen("sleep 0.1 && false", shell=True)
+print process.wait()"""
+        self.write_to_tempfile("newmod", new_mod)
+        output, lines = self.launch_subprocess('newmod')
+        self.assertEqual(len(lines), 2, "\n".join(lines))
+        self.assertEqual('1',  lines[0], repr(output))
+
+
 class GreenThreadWrapper(ProcessBase):
     prologue = """import eventlet
 eventlet.monkey_patch()
