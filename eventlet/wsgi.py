@@ -423,7 +423,12 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         return env
 
     def finish(self):
-        BaseHTTPServer.BaseHTTPRequestHandler.finish(self)
+        try:
+            BaseHTTPServer.BaseHTTPRequestHandler.finish(self)
+        except socket.error, e:
+            # Broken pipe, connection reset by peer
+            if get_errno(e) not in BROKEN_SOCK:
+                raise
         greenio.shutdown_safe(self.connection)
         self.connection.close()
 
