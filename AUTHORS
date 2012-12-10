@@ -1,6 +1,6 @@
 Maintainer (i.e., Who To Hassle If You Find Bugs)
 -------------------------------------------------
-Ryan Williams, rdw on Freenode, breath@alum.mit.edu
+Sergey Shepelev, temoto on Freenode, temotor@gmail.com
 
 Original Authors
 ----------------
@@ -74,3 +74,5 @@ Thanks To
 * Stefano Rivera, making tests pass in absence of postgres (#78)
 * Joshua Kwan, fixing busy-wait in eventlet.green.ssl.
 * Nick Vatamaniuc, Windows SO_REUSEADDR patch (#83)
+* Clay Gerrard, wsgi handle socket closed by client (#95)
+* Eric Windisch, zmq getsockopt(EVENTS) wake correct threads (pull request 22)
