@@ -30,7 +30,7 @@ class _QueueLock(object):
 
     def __enter__(self):
         self.acquire()
-        
+
     def __exit__(self, type, value, traceback):
         self.release()
 
@@ -58,7 +58,7 @@ class _QueueLock(object):
             if self._waiters:
                 # wake next
                 self._hub.schedule_call_global(0, self._waiters[0].switch)
-        
+
 class _BlockedThread(object):
     """Is either empty, or represents a single blocked thread that
     blocked itself by calling the block() method. The thread can be
@@ -162,7 +162,7 @@ def _wraps(source_fn):
 #
 # Which approach is better? I have no idea.
 #
-# TODO: 
+# TODO:
 # - Support MessageTrackers and make MessageTracker.wait green
 
 _Socket = __zmq__.Socket

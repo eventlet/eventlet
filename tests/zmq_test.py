@@ -44,6 +44,7 @@ class TestUpstreamDownStream(LimitedTestCase):
         for sock in self.sockets:
             sock.close()
         self.sockets = None
+        self.context.destroy(0)
 
     def assertRaisesErrno(self, errno, func, *args):
         try:
@@ -269,7 +270,7 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
             while tx_i <= 1000:
                 sender.send(str(tx_i))
                 tx_i += 1
-    
+
         def rx():
             while True:
                 rx_i = receiver.recv()
@@ -324,8 +325,8 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
             final_i = done_evts[i].wait()
             self.assertEqual(final_i, 0)
 
-            
-    # Need someway to ensure a thread is blocked on send... This isn't working 
+
+    # Need someway to ensure a thread is blocked on send... This isn't working
     @skip_unless(zmq_supported)
     def test_recv_during_send(self):
         sender, receiver, port = self.create_bound_pair(zmq.XREQ, zmq.XREQ)
@@ -333,12 +334,12 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
 
         num_recvs = 30
         done = event.Event()
-        
+
         sender.setsockopt(zmq.HWM, 10)
         sender.setsockopt(zmq.SNDBUF, 10)
-        
+
         receiver.setsockopt(zmq.RCVBUF, 10)
-        
+
         def tx():
             tx_i = 0
             while tx_i <= 1000:
@@ -370,6 +371,26 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         done1.wait()
         done2.wait()
 
+    @skip_unless(zmq_supported)
+    def test_getsockopt_events(self):
+        sock1, sock2, _port = self.create_bound_pair(zmq.DEALER, zmq.DEALER)
+        sleep()
+        poll_out = zmq.Poller()
+        poll_out.register(sock1, zmq.POLLOUT)
+        sock_map = poll_out.poll(100)
+        self.assertEqual(len(sock_map), 1)
+        events = sock1.getsockopt(zmq.EVENTS)
+        self.assertEqual(events & zmq.POLLOUT, zmq.POLLOUT)
+        sock1.send('')
+
+        poll_in = zmq.Poller()
+        poll_in.register(sock2, zmq.POLLIN)
+        sock_map = poll_in.poll(100)
+        self.assertEqual(len(sock_map), 1)
+        events = sock2.getsockopt(zmq.EVENTS)
+        self.assertEqual(events & zmq.POLLIN, zmq.POLLIN)
+
+
 class TestQueueLock(LimitedTestCase):
     @skip_unless(zmq_supported)
     def test_queue_lock_order(self):
@@ -397,7 +418,7 @@ class TestQueueLock(LimitedTestCase):
         s.acquire()
         s.acquire()
         self.assertEquals(results, [1,2,3])
-        
+
     @skip_unless(zmq_supported)
     def test_count(self):
         q = zmq._QueueLock()
