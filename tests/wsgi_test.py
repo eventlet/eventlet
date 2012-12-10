@@ -125,7 +125,7 @@ def read_http(sock):
         raise
     if not response_line:
         raise ConnectionClosed(response_line)
-    
+
     header_lines = []
     while True:
         line = fd.readline()
@@ -150,6 +150,7 @@ def read_http(sock):
         body = fd.read()
 
     return response_line, headers, body
+
 
 class _TestBase(LimitedTestCase):
     def setUp(self):
@@ -190,6 +191,7 @@ class _TestBase(LimitedTestCase):
 
     def set_site(self):
         raise NotImplementedError
+
 
 class TestHttpd(_TestBase):
     def set_site(self):
@@ -379,18 +381,18 @@ class TestHttpd(_TestBase):
         certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
         private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
 
-        server_sock = eventlet.wrap_ssl(eventlet.listen(('localhost', 0)), 
-                                        certfile=certificate_file, 
+        server_sock = eventlet.wrap_ssl(eventlet.listen(('localhost', 0)),
+                                        certfile=certificate_file,
                                         keyfile=private_key_file,
                                         server_side=True)
         self.spawn_server(sock=server_sock, site=wsgi_app)
-    
+
         sock = eventlet.connect(('localhost', self.port))
         sock = eventlet.wrap_ssl(sock)
         sock.write('POST /foo HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\nContent-length:3\r\n\r\nabc')
         result = sock.read(8192)
         self.assertEquals(result[-3:], 'abc')
-        
+
     @skip_if_no_ssl
     def test_013_empty_return(self):
         def wsgi_app(environ, start_response):
@@ -399,8 +401,8 @@ class TestHttpd(_TestBase):
 
         certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
         private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
-        server_sock = eventlet.wrap_ssl(eventlet.listen(('localhost', 0)), 
-                                        certfile=certificate_file, 
+        server_sock = eventlet.wrap_ssl(eventlet.listen(('localhost', 0)),
+                                        certfile=certificate_file,
                                         keyfile=private_key_file,
                                         server_side=True)
         self.spawn_server(sock=server_sock, site=wsgi_app)
@@ -510,8 +512,8 @@ class TestHttpd(_TestBase):
         certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
         private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
 
-        sock = eventlet.wrap_ssl(eventlet.listen(('localhost', 0)), 
-                                        certfile=certificate_file, 
+        sock = eventlet.wrap_ssl(eventlet.listen(('localhost', 0)),
+                                        certfile=certificate_file,
                                         keyfile=private_key_file,
                                         server_side=True)
         server_coro = eventlet.spawn(server, sock, wsgi_app, self.logfile)
@@ -524,7 +526,7 @@ class TestHttpd(_TestBase):
 
         success = server_coro.wait()
         self.assert_(success)
-        
+
     def test_018_http_10_keepalive(self):
         # verify that if an http/1.0 client sends connection: keep-alive
         # that we don't close the connection
@@ -534,7 +536,7 @@ class TestHttpd(_TestBase):
         fd = sock.makefile('w')
         fd.write('GET / HTTP/1.0\r\nHost: localhost\r\nConnection: keep-alive\r\n\r\n')
         fd.flush()
-        
+
         response_line, headers, body = read_http(sock)
         self.assert_('connection' in headers)
         self.assertEqual('keep-alive', headers['connection'])
@@ -544,7 +546,7 @@ class TestHttpd(_TestBase):
         response_line, headers, body = read_http(sock)
         self.assert_('connection' in headers)
         self.assertEqual('keep-alive', headers['connection'])
-                     
+
     def test_019_fieldstorage_compat(self):
         def use_fieldstorage(environ, start_response):
             import cgi
@@ -552,7 +554,7 @@ class TestHttpd(_TestBase):
                                   environ=environ)
             start_response('200 OK', [('Content-type', 'text/plain')])
             return ['hello!']
-                             
+
         self.site.application = use_fieldstorage
         sock = eventlet.connect(
             ('localhost', self.port))
@@ -573,17 +575,17 @@ class TestHttpd(_TestBase):
         sock.recv(1024)
         sock.close()
         self.assert_('1.2.3.4,5.6.7.8,127.0.0.1' in self.logfile.getvalue())
-        
+
         # turning off the option should work too
         self.logfile = StringIO()
         self.spawn_server(log_x_forwarded_for=False)
-            
+
         sock = eventlet.connect(('localhost', self.port))
         sock.sendall('GET / HTTP/1.1\r\nHost: localhost\r\nX-Forwarded-For: 1.2.3.4, 5.6.7.8\r\n\r\n')
         sock.recv(1024)
         sock.close()
         self.assert_('1.2.3.4' not in self.logfile.getvalue())
-        self.assert_('5.6.7.8' not in self.logfile.getvalue())        
+        self.assert_('5.6.7.8' not in self.logfile.getvalue())
         self.assert_('127.0.0.1' in self.logfile.getvalue())
 
     def test_socket_remains_open(self):
@@ -648,7 +650,7 @@ class TestHttpd(_TestBase):
         from eventlet import greenpool
         p = greenpool.GreenPool(5)
         self.spawn_server(custom_pool=p)
-            
+
         # this stuff is copied from test_001_server, could be better factored
         sock = eventlet.connect(
             ('localhost', self.port))
@@ -744,18 +746,18 @@ class TestHttpd(_TestBase):
 
     def test_close_chunked_with_1_0_client(self):
         # verify that if we return a generator from our app
-        # and we're not speaking with a 1.1 client, that we 
+        # and we're not speaking with a 1.1 client, that we
         # close the connection
         self.site.application = chunked_app
         sock = eventlet.connect(('localhost', self.port))
 
         sock.sendall('GET / HTTP/1.0\r\nHost: localhost\r\nConnection: keep-alive\r\n\r\n')
-        
+
         response_line, headers, body = read_http(sock)
         self.assertEqual(headers['connection'], 'close')
         self.assertNotEqual(headers.get('transfer-encoding'), 'chunked')
         self.assertEquals(body, "thisischunked")
-        
+
     def test_026_http_10_nokeepalive(self):
         # verify that if an http/1.0 client sends connection: keep-alive
         # and the server doesn't accept keep-alives, we close the connection
@@ -796,15 +798,15 @@ class TestHttpd(_TestBase):
             except Exception, e:
                 errored[0] = 'SSL handshake error raised exception %s.' % e
         for data in ('', 'GET /non-ssl-request HTTP/1.0\r\n\r\n'):
-            srv_sock = eventlet.wrap_ssl(eventlet.listen(('localhost', 0)), 
-                                        certfile=certificate_file, 
+            srv_sock = eventlet.wrap_ssl(eventlet.listen(('localhost', 0)),
+                                        certfile=certificate_file,
                                         keyfile=private_key_file,
                                         server_side=True)
             port = srv_sock.getsockname()[1]
             g = eventlet.spawn_n(server, srv_sock)
             client = eventlet.connect(('localhost', port))
             if data: # send non-ssl request
-                client.sendall(data) 
+                client.sendall(data)
             else: # close sock prematurely
                 client.close()
             eventlet.sleep(0) # let context switch back to server
@@ -1063,6 +1065,30 @@ class TestHttpd(_TestBase):
         self.assertEqual(headers['connection'], 'close')
         self.assert_('transfer-encoding' not in headers)
 
+    def test_client_disconnect(self):
+        """Issue #95 Server must handle disconnect from client in the middle of response
+        """
+        def long_response(environ, start_response):
+            start_response('200 OK', [('Content-Length', '9876')])
+            yield 'a' * 9876
+
+        server_sock = eventlet.listen(('localhost', 0))
+        self.port = server_sock.getsockname()[1]
+        server = wsgi.Server(server_sock, server_sock.getsockname(), long_response,
+                             log=self.logfile)
+
+        def make_request():
+            sock = eventlet.connect(server_sock.getsockname())
+            sock.send('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+            sock.close()
+
+        request_thread = eventlet.spawn(make_request)
+        server_conn = server_sock.accept()
+        # Next line must not raise IOError -32 Broken pipe
+        server.process_request(server_conn)
+        request_thread.wait()
+        server_sock.close()
+
 
 def read_headers(sock):
     fd = sock.makefile()
@@ -1248,7 +1274,7 @@ class TestChunkedInput(_TestBase):
             signal.alarm(0)
             signal.signal(signal.SIGALRM, signal.SIG_DFL)
 
-        assert not got_signal, "caught alarm signal. infinite loop detected."        
+        assert not got_signal, "caught alarm signal. infinite loop detected."
 
 
 if __name__ == '__main__':
