@@ -9,19 +9,10 @@ from eventlet.support import greenlets as greenlet
 
 __all__ = ['GreenPool', 'GreenPile']
 
-DEBUG = False
-
-try:
-    next
-except NameError:
-    def next(it):
-        try:
-            return it.next()
-        except AttributeError:
-            raise TypeError("%s object is not an iterator" % type(it))
+DEBUG = True
 
 class GreenPool(object):
-    """ The GreenPool class is a pool of green threads.
+    """The GreenPool class is a pool of green threads.
     """
     def __init__(self, size=1000):
         self.size = size
@@ -44,7 +35,7 @@ class GreenPool(object):
 
     def running(self):
         """ Returns the number of greenthreads that are currently executing
-        functions in the Parallel's pool."""
+        functions in the GreenPool."""
         return len(self.coroutines_running)
 
     def free(self):
@@ -100,7 +91,7 @@ class GreenPool(object):
                 self._spawn_done(coro)
 
     def spawn_n(self, function, *args, **kwargs):
-        """ Create a greenthread to run the *function*, the same as
+        """Create a greenthread to run the *function*, the same as
         :meth:`spawn`.  The difference is that :meth:`spawn_n` returns
         None; the results of *function* are not retrievable.
         """
@@ -119,6 +110,9 @@ class GreenPool(object):
 
     def waitall(self):
         """Waits until all greenthreads in the pool are finished working."""
+        assert greenthread.getcurrent() not in self.coroutines_running, \
+                          "Calling waitall() from within one of the "\
+                          "GreenPool's greenthreads will never terminate."
         if self.running():
             self.no_coros_running.wait()
 
@@ -160,6 +154,14 @@ class GreenPool(object):
     def imap(self, function, *iterables):
         """This is the same as :func:`itertools.imap`, and has the same
         concurrency and memory behavior as :meth:`starmap`.
+        
+        It's quite convenient for, e.g., farming out jobs from a file::
+           
+           def worker(line):
+               return do_something(line)
+           pool = GreenPool()
+           for result in pool.imap(worker, open("filename", 'r')):
+               print result
         """
         return self.starmap(function, itertools.izip(*iterables))
 

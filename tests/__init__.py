@@ -10,6 +10,10 @@ from eventlet import debug, hubs
 # convenience for importers
 main = unittest.main
 
+def s2b(s):
+    """portable way to convert string to bytes. In 3.x socket.send and recv require bytes"""
+    return s.encode()
+
 def skipped(func):
     """ Decorator that marks a function as skipped.  Uses nose's SkipTest exception
     if installed.  Without nose, this will count skipped tests as passing tests."""
@@ -34,14 +38,17 @@ def skip_if(condition):
     should return True to skip the test.
     """
     def skipped_wrapper(func):
-        if isinstance(condition, bool):
-            result = condition
-        else:
-            result = condition(func)
-        if result:
-            return skipped(func)
-        else:
-            return func
+        def wrapped(*a, **kw):
+            if isinstance(condition, bool):
+                result = condition
+            else:
+                result = condition(func)
+            if result:
+                return skipped(func)(*a, **kw)
+            else:
+                return func(*a, **kw)
+        wrapped.__name__ = func.__name__
+        return wrapped
     return skipped_wrapper
 
 
@@ -52,14 +59,17 @@ def skip_unless(condition):
     should return True if the condition is satisfied.
     """    
     def skipped_wrapper(func):
-        if isinstance(condition, bool):
-            result = condition
-        else:
-            result = condition(func)
-        if not result:
-            return skipped(func)
-        else:
-            return func
+        def wrapped(*a, **kw):
+            if isinstance(condition, bool):
+                result = condition
+            else:
+                result = condition(func)
+            if not result:
+                return skipped(func)(*a, **kw)
+            else:
+                return func(*a, **kw)
+        wrapped.__name__ = func.__name__
+        return wrapped
     return skipped_wrapper
 
 
@@ -77,6 +87,7 @@ def requires_twisted(func):
 def using_pyevent(_f):
     from eventlet.hubs import get_hub
     return 'pyevent' in type(get_hub()).__module__
+
     
 def skip_with_pyevent(func):
     """ Decorator that skips a test if we're using the pyevent hub."""
@@ -87,6 +98,27 @@ def skip_on_windows(func):
     """ Decorator that skips a test on Windows."""
     import sys
     return skip_if(sys.platform.startswith('win'))(func)
+
+def skip_if_no_itimer(func):
+    """ Decorator that skips a test if the `itimer` module isn't found """
+    has_itimer = False
+    try:
+        import itimer
+        has_itimer = True
+    except ImportError:
+        pass
+    return skip_unless(has_itimer)(func)
+
+
+def skip_if_no_ssl(func):
+    """ Decorator that skips a test if SSL is not available."""
+    try:
+        import eventlet.green.ssl
+    except ImportError:
+        try:
+            import eventlet.green.OpenSSL
+        except ImportError:
+            skipped(func)
 
 
 class TestIsTakingTooLong(Exception):
@@ -106,6 +138,13 @@ class LimitedTestCase(unittest.TestCase):
         self.timer = eventlet.Timeout(self.TEST_TIMEOUT, 
                                       TestIsTakingTooLong(self.TEST_TIMEOUT))
 
+    def reset_timeout(self, new_timeout):
+        """Changes the timeout duration; only has effect during one test case"""
+        import eventlet
+        self.timer.cancel()
+        self.timer = eventlet.Timeout(new_timeout, 
+                                      TestIsTakingTooLong(new_timeout))
+
     def tearDown(self):
         self.timer.cancel()
         try:
@@ -118,6 +157,21 @@ class LimitedTestCase(unittest.TestCase):
             print debug.format_hub_timers()
             print debug.format_hub_listeners()
 
+    def assert_less_than(self, a,b,msg=None):
+        if msg:
+            self.assert_(a<b, msg)
+        else:
+            self.assert_(a<b, "%s not less than %s" % (a,b))
+
+    assertLessThan = assert_less_than
+
+    def assert_less_than_equal(self, a,b,msg=None):
+        if msg:
+            self.assert_(a<=b, msg)
+        else:
+            self.assert_(a<=b, "%s not less than or equal to %s" % (a,b))
+
+    assertLessThanEqual = assert_less_than_equal
 
 def verify_hub_empty():
     from eventlet import hubs
@@ -144,3 +198,50 @@ def silence_warnings(func):
             warnings.simplefilter('default', DeprecationWarning)
     wrapper.__name__ = func.__name__
     return wrapper
+
+
+def get_database_auth():
+    """Retrieves a dict of connection parameters for connecting to test databases.
+
+    Authentication parameters are highly-machine specific, so
+    get_database_auth gets its information from either environment
+    variables or a config file.  The environment variable is
+    "EVENTLET_DB_TEST_AUTH" and it should contain a json object.  If
+    this environment variable is present, it's used and config files
+    are ignored.  If it's not present, it looks in the local directory
+    (tests) and in the user's home directory for a file named
+    ".test_dbauth", which contains a json map of parameters to the
+    connect function.
+    """
+    import os
+    retval = {'MySQLdb':{'host': 'localhost','user': 'root','passwd': ''},
+              'psycopg2':{'user':'test'}}
+    try:
+        import json
+    except ImportError:
+        try:
+            import simplejson as json
+        except ImportError:
+            print "No json implementation, using baked-in db credentials."
+            return retval 
+
+    if 'EVENTLET_DB_TEST_AUTH' in os.environ:
+        return json.loads(os.environ.get('EVENTLET_DB_TEST_AUTH'))
+
+    files = [os.path.join(os.path.dirname(__file__), '.test_dbauth'),
+             os.path.join(os.path.expanduser('~'), '.test_dbauth')]
+    for f in files:
+        try:
+            auth_utf8 = json.load(open(f))
+            # Have to convert unicode objects to str objects because
+            # mysqldb is dum. Using a doubly-nested list comprehension
+            # because we know that the structure is a two-level dict.
+            return dict([(str(modname), dict([(str(k), str(v))
+                                       for k, v in connectargs.items()]))
+                         for modname, connectargs in auth_utf8.items()])
+        except IOError:
+            pass
+    return retval
+
+certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
+private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')

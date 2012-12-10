@@ -1,4 +1,4 @@
-version_info = (0, 9, 6, "dev1")
+version_info = (0, 9, 18, "dev")
 __version__ = ".".join(map(str, version_info))
 
 try:
@@ -7,7 +7,7 @@ try:
     from eventlet import queue
     from eventlet import timeout
     from eventlet import patcher
-    from eventlet import greenio
+    from eventlet import convenience
     import greenlet
 
     sleep = greenthread.sleep
@@ -27,16 +27,23 @@ try:
     import_patched = patcher.import_patched
     monkey_patch = patcher.monkey_patch
     
-    connect = greenio.connect
-    listen = greenio.listen
+    connect = convenience.connect
+    listen = convenience.listen
+    serve = convenience.serve
+    StopServe = convenience.StopServe
+    wrap_ssl = convenience.wrap_ssl
 
-    getcurrent = greenlet.getcurrent
+    getcurrent = greenlet.greenlet.getcurrent
     
     # deprecated    
     TimeoutError = timeout.Timeout
     exc_after = greenthread.exc_after
     call_after_global = greenthread.call_after_global
-except ImportError:
-    # this is to make Debian packaging easier
-    import traceback
-    traceback.print_exc()
+except ImportError, e:
+    # This is to make Debian packaging easier, it ignores import
+    # errors of greenlet so that the packager can still at least
+    # access the version.  Also this makes easy_install a little quieter
+    if 'greenlet' not in str(e):
+        # any other exception should be printed
+        import traceback
+        traceback.print_exc()

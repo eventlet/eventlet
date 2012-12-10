@@ -55,3 +55,52 @@ Feed Scraper
 This example requires `Feedparser <http://www.feedparser.org/>`_ to be installed or on the PYTHONPATH.
 
 .. literalinclude:: ../examples/feedscraper.py
+
+.. _forwarder_example:
+
+Port Forwarder
+-----------------------
+``examples/forwarder.py``
+
+.. literalinclude:: ../examples/forwarder.py
+
+.. _recursive_crawler_example:
+
+Recursive Web Crawler
+-----------------------------------------
+``examples/recursive_crawler.py``
+
+This is an example recursive web crawler that fetches linked pages from a seed url.
+
+.. literalinclude:: ../examples/recursive_crawler.py
+
+.. _producer_consumer_example:
+
+Producer Consumer Web Crawler
+-----------------------------------------
+``examples/producer_consumer.py``
+
+This is an example implementation of the producer/consumer pattern as well as being identical in functionality to the recursive web crawler.
+
+.. literalinclude:: ../examples/producer_consumer.py
+
+.. _websocket_example:
+
+Websocket Server Example
+--------------------------
+``examples/websocket.py``
+
+This exercises some of the features of the websocket server
+implementation.
+
+.. literalinclude:: ../examples/websocket.py
+
+.. _websocket_chat_example:
+
+Websocket Multi-User Chat Example
+-----------------------------------
+``examples/websocket_chat.py``
+
+This is a mashup of the websocket example and the multi-user chat example, showing how you can do the same sorts of things with websockets that you can do with regular sockets.
+
+.. literalinclude:: ../examples/websocket_chat.py

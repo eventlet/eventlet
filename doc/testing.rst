@@ -23,6 +23,8 @@ That's it!  The output from running nose is the same as unittest's output, if th
 
 Many tests are skipped based on environmental factors; for example, it makes no sense to test Twisted-specific functionality when Twisted is not installed.  These are printed as S's during execution, and in the summary printed after the tests run it will tell you how many were skipped.
 
+.. note:: If running Python version 2.4, use this command instead: ``python tests/nosewrapper.py``.  There are several tests which make use of the `with` statement and therefore will cause nose grief when it tries to import them; nosewrapper.py excludes these tests so they are skipped.
+
 Doctests
 --------
 
@@ -32,7 +34,7 @@ To run the doctests included in many of the eventlet modules, use this command:
 
   $ nosetests --with-doctest eventlet/*.py
   
-Currently there are 14 doctests.
+Currently there are 16 doctests.
 
 Standard Library Tests
 ----------------------
@@ -46,6 +48,8 @@ There's a convenience module called all.py designed to handle the impedance mism
   $ nosetests tests/stdlib/all.py
   
 That will run all the tests, though the output will be a little weird because it will look like Nose is running about 20 tests, each of which consists of a bunch of sub-tests.  Not all test modules are present in all versions of Python, so there will be an occasional printout of "Not importing %s, it doesn't exist in this installation/version of Python".
+
+If you see "Ran 0 tests in 0.001s", it means that your Python installation lacks its own tests.  This is usually the case for Linux distributions.  One way to get the missing tests is to download a source tarball (of the same version you have installed on your system!) and copy its Lib/test directory into the correct place on your PYTHONPATH.
 
 
 Testing Eventlet Hubs

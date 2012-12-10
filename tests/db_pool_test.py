@@ -4,7 +4,7 @@ import os
 import traceback
 from unittest import TestCase, main
 
-from tests import skipped, skip_unless, skip_with_pyevent
+from tests import skipped, skip_unless, skip_with_pyevent, get_database_auth
 from eventlet import event
 from eventlet import db_pool
 import eventlet
@@ -247,6 +247,12 @@ class DBConnectionPool(DBTester):
         self.pool.clear()
         self.assertEqual(len(self.pool.free_items), 0)
 
+    def test_clear_warmup(self):
+        """Clear implicitly created connections (min_size > 0)"""
+        self.pool = self.create_pool(min_size=1)
+        self.pool.clear()
+        self.assertEqual(len(self.pool.free_items), 0)
+
     def test_unwrap_connection(self):
         self.assert_(isinstance(self.connection,
                                 db_pool.GenericConnectionWrapper))
@@ -438,12 +444,12 @@ class RaisingDBModule(object):
 
 class TpoolConnectionPool(DBConnectionPool):
     __test__ = False  # so that nose doesn't try to execute this directly
-    def create_pool(self, max_size=1, max_idle=10, max_age=10,
+    def create_pool(self, min_size=0, max_size=1, max_idle=10, max_age=10,
                     connect_timeout=0.5, module=None):
         if module is None:
             module = self._dbmodule
         return db_pool.TpooledConnectionPool(module,
-            min_size=0, max_size=max_size,
+            min_size=min_size, max_size=max_size,
             max_idle=max_idle, max_age=max_age,
             connect_timeout = connect_timeout,
             **self._auth)
@@ -462,39 +468,17 @@ class TpoolConnectionPool(DBConnectionPool):
 
 class RawConnectionPool(DBConnectionPool):
     __test__ = False  # so that nose doesn't try to execute this directly
-    def create_pool(self, max_size=1, max_idle=10, max_age=10,
+    def create_pool(self, min_size=0, max_size=1, max_idle=10, max_age=10,
                     connect_timeout=0.5, module=None):
         if module is None:
             module = self._dbmodule
         return db_pool.RawConnectionPool(module,
-            min_size=0, max_size=max_size,
+            min_size=min_size, max_size=max_size,
             max_idle=max_idle, max_age=max_age,
             connect_timeout=connect_timeout,
             **self._auth)
 
-
-def get_auth():
-    """Looks in the local directory and in the user's home directory
-    for a file named ".test_dbauth", which contains a json map of
-    parameters to the connect function.
-    """
-    files = [os.path.join(os.path.dirname(__file__), '.test_dbauth'),
-             os.path.join(os.path.expanduser('~'), '.test_dbauth')]
-    for f in files:
-        try:
-            import simplejson
-            auth_utf8 = simplejson.load(open(f))
-            # have to convert unicode objects to str objects because mysqldb is dum
-            # using a doubly-nested list comprehension because we know that the structure
-            # of the structure is a two-level dict
-            return dict([(str(modname), dict([(str(k), str(v))
-                                       for k, v in connectargs.items()]))
-                         for modname, connectargs in auth_utf8.items()])
-        except (IOError, ImportError):
-            pass
-    return {'MySQLdb':{'host': 'localhost','user': 'root','passwd': ''},
-            'psycopg2':{'user':'test'}}
-
+get_auth = get_database_auth
 
 def mysql_requirement(_f):
     verbose = os.environ.get('eventlet_test_mysql_verbose')
@@ -603,22 +587,24 @@ class Psycopg2ConnectionPool(object):
         super(Psycopg2ConnectionPool, self).tearDown()
 
     def create_db(self):
+        dbname = 'test%s' % os.getpid()
+        self._auth['database'] = dbname
         try:
             self.drop_db()
         except Exception:
             pass
         auth = self._auth.copy()
+        auth.pop('database')  # can't create if you're connecting to it
         conn = self._dbmodule.connect(**auth)
         conn.set_isolation_level(0)
         db = conn.cursor()
-        dbname = 'test%s' % os.getpid()
-        self._auth['database'] = dbname
         db.execute("create database "+dbname)
         db.close()
         del db
 
     def drop_db(self):
         auth = self._auth.copy()
+        auth.pop('database')  # can't drop database we connected to
         conn = self._dbmodule.connect(**auth)
         conn.set_isolation_level(0)
         db = conn.cursor()

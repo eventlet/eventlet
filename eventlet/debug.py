@@ -4,11 +4,15 @@ debugging Eventlet-powered applications."""
 import os
 import sys
 import linecache
-import string
+import re
 import inspect
 
-__all__ = ['spew', 'unspew', 'format_hub_listeners', 'hub_listener_stacks', 
-'hub_exceptions', 'tpool_exceptions']
+__all__ = ['spew', 'unspew', 'format_hub_listeners', 'format_hub_timers', 
+           'hub_listener_stacks', 'hub_exceptions', 'tpool_exceptions', 
+           'hub_prevent_multiple_readers', 'hub_timer_stacks', 
+           'hub_blocking_detection']
+
+_token_splitter = re.compile('\W+')
 
 class Spew(object):
     """
@@ -39,16 +43,15 @@ class Spew(object):
                 print '%s:%s: %s' % (name, lineno, line.rstrip())
                 if not self.show_values:
                     return self
-                details = '\t'
-                tokens = line.translate(
-                    string.maketrans(' ,.()', '\0' * 5)).split('\0')
+                details = []
+                tokens = _token_splitter.split(line)
                 for tok in tokens:
                     if tok in frame.f_globals:
-                        details += '%s=%r ' % (tok, frame.f_globals[tok])
+                        details.append('%s=%r' % (tok, frame.f_globals[tok]))
                     if tok in frame.f_locals:
-                        details += '%s=%r ' % (tok, frame.f_locals[tok])
-                if details.strip():
-                    print details
+                        details.append('%s=%r' % (tok, frame.f_locals[tok]))
+                if details:
+                    print "\t%s" % ' '.join(details)
         return self
 
 
@@ -92,7 +95,7 @@ def format_hub_timers():
         result.append(repr(l))
     return os.linesep.join(result)
     
-def hub_listener_stacks(state):
+def hub_listener_stacks(state = False):
     """Toggles whether or not the hub records the stack when clients register 
     listeners on file descriptors.  This can be useful when trying to figure 
     out what the hub is up to at any given moment.  To inspect the stacks
@@ -102,15 +105,19 @@ def hub_listener_stacks(state):
     from eventlet import hubs
     hubs.get_hub().set_debug_listeners(state)
     
-def hub_timer_stacks(state):
+def hub_timer_stacks(state = False):
     """Toggles whether or not the hub records the stack when timers are set.  
     To inspect the stacks of the current timers, call :func:`format_hub_timers` 
     at critical junctures in the application logic.
     """
     from eventlet.hubs import timer
     timer._g_debug = state
+
+def hub_prevent_multiple_readers(state = True):
+    from eventlet.hubs import hub
+    hub.g_prevent_multiple_readers = state
     
-def hub_exceptions(state):
+def hub_exceptions(state = True):
     """Toggles whether the hub prints exceptions that are raised from its
     timers.  This can be useful to see how greenthreads are terminating.
     """
@@ -119,9 +126,34 @@ def hub_exceptions(state):
     from eventlet import greenpool
     greenpool.DEBUG = state
     
-def tpool_exceptions(state):
+def tpool_exceptions(state = False):
     """Toggles whether tpool itself prints exceptions that are raised from 
     functions that are executed in it, in addition to raising them like
     it normally does."""
     from eventlet import tpool
     tpool.QUIET = not state
+
+def hub_blocking_detection(state = False, resolution = 1):
+    """Toggles whether Eventlet makes an effort to detect blocking
+    behavior in an application.
+
+    It does this by telling the kernel to raise a SIGALARM after a
+    short timeout, and clearing the timeout every time the hub
+    greenlet is resumed.  Therefore, any code that runs for a long
+    time without yielding to the hub will get interrupted by the
+    blocking detector (don't use it in production!).
+
+    The *resolution* argument governs how long the SIGALARM timeout
+    waits in seconds.  If on Python 2.6 or later, the implementation
+    uses :func:`signal.setitimer` and can be specified as a
+    floating-point value.  On 2.5 or earlier, 1 second is the minimum.
+    The shorter the resolution, the greater the chance of false
+    positives.
+    """
+    from eventlet import hubs
+    assert resolution > 0
+    hubs.get_hub().debug_blocking = state
+    hubs.get_hub().debug_blocking_resolution = resolution
+    if(not state):
+        hubs.get_hub().block_detect_post()
+    

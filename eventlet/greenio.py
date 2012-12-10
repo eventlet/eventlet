@@ -1,3 +1,4 @@
+from eventlet.support import get_errno
 from eventlet.hubs import trampoline
 BUFFER_SIZE = 4096
 
@@ -13,6 +14,16 @@ __all__ = ['GreenSocket', 'GreenPipe', 'shutdown_safe']
 
 CONNECT_ERR = set((errno.EINPROGRESS, errno.EALREADY, errno.EWOULDBLOCK))
 CONNECT_SUCCESS = set((0, errno.EISCONN))
+if sys.platform[:3]=="win":
+    CONNECT_ERR.add(errno.WSAEINVAL)   # Bug 67
+
+# Emulate _fileobject class in 3.x implementation
+# Eventually this internal socket structure could be replaced with makefile calls.
+try:
+    _fileobject = socket._fileobject
+except AttributeError:
+   def _fileobject(sock, *args, **kwargs):
+        return _original_socket.makefile(sock, *args, **kwargs)
 
 def socket_connect(descriptor, address):
     """
@@ -26,6 +37,10 @@ def socket_connect(descriptor, address):
         raise socket.error(err, errno.errorcode[err])
     return descriptor
 
+def socket_checkerr(descriptor):
+    err = descriptor.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
+    if err not in CONNECT_SUCCESS:
+        raise socket.error(err, errno.errorcode[err])
 
 def socket_accept(descriptor):
     """
@@ -36,7 +51,7 @@ def socket_accept(descriptor):
     try:
         return descriptor.accept()
     except socket.error, e:
-        if e[0] == errno.EWOULDBLOCK:
+        if get_errno(e) == errno.EWOULDBLOCK:
             return None
         raise
 
@@ -96,7 +111,6 @@ class GreenSocket(object):
     Green version of socket.socket class, that is intended to be 100%
     API-compatible.
     """
-    timeout = None
     def __init__(self, family_or_realsock=socket.AF_INET, *args, **kwargs):
         if isinstance(family_or_realsock, (int, long)):
             fd = _original_socket(family_or_realsock, *args, **kwargs)
@@ -107,13 +121,12 @@ class GreenSocket(object):
 
         # import timeout from other socket, if it was there
         try:
-            self.timeout = fd.gettimeout() or socket.getdefaulttimeout()
+            self._timeout = fd.gettimeout() or socket.getdefaulttimeout()
         except AttributeError:
-            self.timeout = socket.getdefaulttimeout()
-
+            self._timeout = socket.getdefaulttimeout()
+        
         set_nonblocking(fd)
         self.fd = fd
-        self.closed = False
         # when client calls setblocking(0) or settimeout(0) the socket must
         # act non-blocking
         self.act_non_blocking = False
@@ -122,17 +135,16 @@ class GreenSocket(object):
     def _sock(self):
         return self
 
-    @property
-    def family(self):
-        return self.fd.family
-
-    @property
-    def type(self):
-        return self.fd.type
-
-    @property
-    def proto(self):
-        return self.fd.proto
+    #forward unknown attibutes to fd
+    # cache the value for future use.
+    # I do not see any simple attribute which could be changed
+    # so caching everything in self is fine,
+    # If we find such attributes - only attributes having __get__ might be cahed.
+    # For now - I do not want to complicate it.
+    def __getattr__(self, name):
+        attr = getattr(self.fd, name)
+        setattr(self, name, attr)
+        return attr
 
     def accept(self):
         if self.act_non_blocking:
@@ -147,17 +159,6 @@ class GreenSocket(object):
             trampoline(fd, read=True, timeout=self.gettimeout(),
                            timeout_exc=socket.timeout("timed out"))
 
-    def bind(self, *args, **kw):
-        fn = self.bind = self.fd.bind
-        return fn(*args, **kw)
-
-    def close(self, *args, **kw):
-        if self.closed:
-            return
-        self.closed = True
-        res = self.fd.close()
-        return res
-
     def connect(self, address):
         if self.act_non_blocking:
             return self.fd.connect(address)
@@ -165,6 +166,7 @@ class GreenSocket(object):
         if self.gettimeout() is None:
             while not socket_connect(fd, address):
                 trampoline(fd, write=True)
+                socket_checkerr(fd)
         else:
             end = time.time() + self.gettimeout()
             while True:
@@ -174,6 +176,7 @@ class GreenSocket(object):
                     raise socket.timeout("timed out")
                 trampoline(fd, write=True, timeout=end-time.time(),
                         timeout_exc=socket.timeout("timed out"))
+                socket_checkerr(fd)
 
     def connect_ex(self, address):
         if self.act_non_blocking:
@@ -183,8 +186,9 @@ class GreenSocket(object):
             while not socket_connect(fd, address):
                 try:
                     trampoline(fd, write=True)
+                    socket_checkerr(fd)
                 except socket.error, ex:
-                    return ex[0]
+                    return get_errno(ex)
         else:
             end = time.time() + self.gettimeout()
             while True:
@@ -195,43 +199,24 @@ class GreenSocket(object):
                         raise socket.timeout(errno.EAGAIN)
                     trampoline(fd, write=True, timeout=end-time.time(),
                             timeout_exc=socket.timeout(errno.EAGAIN))
+                    socket_checkerr(fd)
                 except socket.error, ex:
-                    return ex[0]
+                    return get_errno(ex)
 
     def dup(self, *args, **kw):
         sock = self.fd.dup(*args, **kw)
         set_nonblocking(sock)
         newsock = type(self)(sock)
-        newsock.settimeout(self.timeout)
+        newsock.settimeout(self.gettimeout())
         return newsock
 
-    def fileno(self, *args, **kw):
-        fn = self.fileno = self.fd.fileno
-        return fn(*args, **kw)
+    def makefile(self, *args, **kw):
+        return _fileobject(self.dup(), *args, **kw)
 
-    def getpeername(self, *args, **kw):
-        fn = self.getpeername = self.fd.getpeername
-        return fn(*args, **kw)
-
-    def getsockname(self, *args, **kw):
-        fn = self.getsockname = self.fd.getsockname
-        return fn(*args, **kw)
-
-    def getsockopt(self, *args, **kw):
-        fn = self.getsockopt = self.fd.getsockopt
-        return fn(*args, **kw)
-
-    def listen(self, *args, **kw):
-        fn = self.listen = self.fd.listen
-        return fn(*args, **kw)
-
-    def makefile(self, mode='r', bufsize=-1):
-        return socket._fileobject(self.dup(), mode, bufsize)
-
-    def makeGreenFile(self, mode='r', bufsize=-1):
+    def makeGreenFile(self, *args, **kw):
         warnings.warn("makeGreenFile has been deprecated, please use "
             "makefile instead", DeprecationWarning, stacklevel=2)
-        return self.makefile(mode, bufsize)
+        return self.makefile(*args, **kw)
 
     def recv(self, buflen, flags=0):
         fd = self.fd
@@ -241,15 +226,15 @@ class GreenSocket(object):
             try:
                 return fd.recv(buflen, flags)
             except socket.error, e:
-                if e[0] in SOCKET_BLOCKING:
+                if get_errno(e) in SOCKET_BLOCKING:
                     pass
-                elif e[0] in SOCKET_CLOSED:
+                elif get_errno(e) in SOCKET_CLOSED:
                     return ''
                 else:
                     raise
-            trampoline(fd,
-                read=True,
-                timeout=self.timeout,
+            trampoline(fd, 
+                read=True, 
+                timeout=self.gettimeout(), 
                 timeout_exc=socket.timeout("timed out"))
 
     def recvfrom(self, *args):
@@ -283,7 +268,7 @@ class GreenSocket(object):
             try:
                 total_sent += fd.send(data[total_sent:], flags)
             except socket.error, e:
-                if e[0] not in SOCKET_BLOCKING:
+                if get_errno(e) not in SOCKET_BLOCKING:
                     raise
 
             if total_sent == len_data:
@@ -307,18 +292,10 @@ class GreenSocket(object):
     def setblocking(self, flag):
         if flag:
             self.act_non_blocking = False
-            self.timeout = None
+            self._timeout = None
         else:
             self.act_non_blocking = True
-            self.timeout = 0.0
-
-    def setsockopt(self, *args, **kw):
-        fn = self.setsockopt = self.fd.setsockopt
-        return fn(*args, **kw)
-
-    def shutdown(self, *args, **kw):
-        fn = self.shutdown = self.fd.shutdown
-        return fn(*args, **kw)
+            self._timeout = 0.0
 
     def settimeout(self, howlong):
         if howlong is None or howlong == _GLOBAL_DEFAULT_TIMEOUT:
@@ -334,138 +311,187 @@ class GreenSocket(object):
         if howlong == 0.0:
             self.setblocking(howlong)
         else:
-            self.timeout = howlong
+            self._timeout = howlong
 
     def gettimeout(self):
-        return self.timeout
+        return self._timeout
 
+class _SocketDuckForFd(object):
+    """ Class implementing all socket method used by _fileobject in cooperative manner using low level os I/O calls."""
+    def __init__(self, fileno):
+        self._fileno = fileno
 
-class GreenPipe(object):
-    """ GreenPipe is a cooperatively-yielding wrapper around OS pipes.
-    """
-    newlines = '\n'
-    def __init__(self, fd):
-        set_nonblocking(fd)
-        self.fd = fd
-        self.closed = False
-        self.recvbuffer = ''
-
-    def close(self):
-        self.fd.close()
-        self.closed = True
+    @property
+    def _sock(self):
+        return self
 
     def fileno(self):
-        return self.fd.fileno()
+        return self._fileno
 
-    def _recv(self, buflen):
-        fd = self.fd
-        buf = self.recvbuffer
-        if buf:
-            chunk, self.recvbuffer = buf[:buflen], buf[buflen:]
-            return chunk
+    def recv(self, buflen):
         while True:
             try:
-                return fd.read(buflen)
-            except IOError, e:
-                if e[0] != errno.EAGAIN:
-                    return ''
-            except socket.error, e:
-                if e[0] == errno.EPIPE:
-                    return ''
-                raise
-            trampoline(fd, read=True)
+                data = os.read(self._fileno, buflen)
+                return data
+            except OSError, e:
+                if get_errno(e) != errno.EAGAIN:
+                    raise IOError(*e.args)
+            trampoline(self, read=True)
 
-
-    def read(self, size=None):
-        """read at most size bytes, returned as a string."""
-        accum = ''
-        while True:
-            if size is None:
-                recv_size = BUFFER_SIZE
-            else:
-                recv_size = size - len(accum)
-            chunk =  self._recv(recv_size)
-            accum += chunk
-            if chunk == '':
-                return accum
-            if size is not None and len(accum) >= size:
-                return accum
-
-    def write(self, data):
-        fd = self.fd
-        while True:
+    def sendall(self, data):
+        len_data = len(data)
+        os_write = os.write
+        fileno = self._fileno
+        try:
+            total_sent = os_write(fileno, data)
+        except OSError, e:
+            if get_errno(e) != errno.EAGAIN:
+                raise IOError(*e.args)
+            total_sent = 0
+        while total_sent <len_data:
+            trampoline(self, write=True)
             try:
-                fd.write(data)
-                fd.flush()
-                return len(data)
-            except IOError, e:
-                if e[0] != errno.EAGAIN:
-                    raise
-            except ValueError, e:
-                # what's this for?
-                pass
-            except socket.error, e:
-                if e[0] != errno.EPIPE:
-                    raise
-            trampoline(fd, write=True)
+                total_sent += os_write(fileno, data[total_sent:])
+            except OSError, e:
+                if get_errno(e) != errno. EAGAIN:
+                    raise IOError(*e.args)
 
-    def flush(self):
-        pass
+    def __del__(self):
+        try:
+            os.close(self._fileno)
+        except:
+            # os.close may fail if __init__ didn't complete (i.e file dscriptor passed to popen was invalid
+            pass
 
-    def readuntil(self, terminator, size=None):
-        buf, self.recvbuffer = self.recvbuffer, ''
-        checked = 0
-        if size is None:
-            while True:
-                found = buf.find(terminator, checked)
-                if found != -1:
-                    found += len(terminator)
-                    chunk, self.recvbuffer = buf[:found], buf[found:]
-                    return chunk
-                checked = max(0, len(buf) - (len(terminator) - 1))
-                d = self._recv(BUFFER_SIZE)
-                if not d:
-                    break
-                buf += d
-            return buf
-        while len(buf) < size:
-            found = buf.find(terminator, checked)
-            if found != -1:
-                found += len(terminator)
-                chunk, self.recvbuffer = buf[:found], buf[found:]
-                return chunk
-            checked = len(buf)
-            d = self._recv(BUFFER_SIZE)
-            if not d:
-                break
-            buf += d
-        chunk, self.recvbuffer = buf[:size], buf[size:]
-        return chunk
+    def __repr__(self):  
+        return "%s:%d" % (self.__class__.__name__, self._fileno)
 
-    def readline(self, size=None):
-        return self.readuntil(self.newlines, size=size)
+def _operationOnClosedFile(*args, **kwargs):
+    raise ValueError("I/O operation on closed file")
 
-    def __iter__(self):
-        return self.xreadlines()
+class GreenPipe(_fileobject):
+    """
+    GreenPipe is a cooperative replacement for file class.
+    It will cooperate on pipes. It will block on regular file.
+    Differneces from file class:
+    - mode is r/w property. Should re r/o
+    - encoding property not implemented
+    - write/writelines will not raise TypeError exception when non-string data is written
+      it will write str(data) instead
+    - Universal new lines are not supported and newlines property not implementeded
+    - file argument can be descriptor, file name or file object.
+    """
+    def __init__(self, f, mode='r', bufsize=-1):
+        if not isinstance(f, (basestring, int, file)):
+            raise TypeError('f(ile) should be int, str, unicode or file, not %r' % f)
 
-    def xreadlines(self, size=None):
-        if size is None:
-            while True:
-                line = self.readline()
-                if not line:
-                    break
-                yield line
+        if isinstance(f, basestring):
+            f = open(f, mode, 0)
+ 
+        if isinstance(f, int):
+            fileno = f
+            self._name = "<fd:%d>" % fileno
         else:
-            while size > 0:
-                line = self.readline(size)
-                if not line:
-                    break
-                yield line
-                size -= len(line)
+            fileno = os.dup(f.fileno())
+            self._name = f.name
+            if f.mode != mode:
+                raise ValueError('file.mode %r does not match mode parameter %r' % (f.mode, mode))
+            self._name = f.name
+            f.close()
 
-    def writelines(self, lines):
-        for line in lines:
-            self.write(line)
+        super(GreenPipe, self).__init__(_SocketDuckForFd(fileno), mode, bufsize)
+        set_nonblocking(self)
+        self.softspace = 0
+
+    @property
+    def name(self): return self._name
+
+    def __repr__(self):
+        return "<%s %s %r, mode %r at 0x%x>" % (
+            self.closed and 'closed' or 'open',
+            self.__class__.__name__,
+            self.name,
+            self.mode,
+            (id(self) < 0) and (sys.maxint +id(self)) or id(self))
+
+    def close(self):
+        super(GreenPipe, self).close()
+        for method in ['fileno', 'flush', 'isatty', 'next', 'read', 'readinto',
+                   'readline', 'readlines', 'seek', 'tell', 'truncate',
+                   'write', 'xreadlines', '__iter__', 'writelines']:
+            setattr(self, method, _operationOnClosedFile)
+
+    if getattr(file, '__enter__', None):
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            self.close()
+
+    def xreadlines(self, buffer):
+        return iterator(self)
+
+    def readinto(self, buf):
+        data = self.read(len(buf)) #FIXME could it be done without allocating intermediate?
+        n = len(data)
+        try:
+            buf[:n] = data
+        except TypeError, err:
+            if not isinstance(buf, array.array):
+                raise err
+            buf[:n] = array.array('c', data)
+        return n
+
+    def _get_readahead_len(self):
+        try:
+            return len(self._rbuf.getvalue()) # StringIO in 2.5
+        except AttributeError:
+            return len(self._rbuf) # str in 2.4
+
+    def _clear_readahead_buf(self):
+        len = self._get_readahead_len()
+        if len>0:
+            self.read(len)
+
+    def tell(self):
+        self.flush()
+        try:
+            return os.lseek(self.fileno(), 0, 1) - self._get_readahead_len()
+        except OSError, e:
+            raise IOError(*e.args)
+
+    def seek(self, offset, whence=0):
+        self.flush()
+        if whence == 1 and offset==0: # tell synonym
+            return self.tell()
+        if whence == 1: # adjust offset by what is read ahead
+            offset -= self.get_readahead_len()
+        try:
+            rv = os.lseek(self.fileno(), offset, whence)
+        except OSError, e:
+            raise IOError(*e.args)
+        else:
+            self._clear_readahead_buf()
+            return rv
+
+    if getattr(file, "truncate", None): # not all OSes implement truncate
+        def truncate(self, size=-1):
+            self.flush()
+            if size ==-1:
+                size = self.tell()
+            try:
+                rv = os.ftruncate(self.fileno(), size)
+            except OSError, e:
+                raise IOError(*e.args)
+            else:
+                self.seek(size) # move position&clear buffer
+                return rv
+
+    def isatty(self):
+        try:
+            return os.isatty(self.fileno())
+        except OSError, e:
+            raise IOError(*e.args)
 
 
 # import SSL module here so we can refer to greenio.SSL.exceptionclass
@@ -506,78 +532,6 @@ def shutdown_safe(sock):
     except socket.error, e:
         # we don't care if the socket is already closed;
         # this will often be the case in an http server context
-        if e[0] != errno.ENOTCONN:
+        if get_errno(e) != errno.ENOTCONN:
             raise
 
-
-def connect(addr, family=socket.AF_INET, bind=None):
-    """Convenience function for opening client sockets.
-
-    :param addr: Address of the server to connect to.  For TCP sockets, this is a (host, port) tuple.
-    :param family: Socket family, optional.  See :mod:`socket` documentation for available families.
-    :param bind: Local address to bind to, optional.
-    :return: The connected green socket object.
-    """
-    sock = GreenSocket(family, socket.SOCK_STREAM)
-    if bind is not None:
-        sock.bind(bind)
-    sock.connect(addr)
-    return sock
-
-
-def listen(addr, family=socket.AF_INET, backlog=50):
-    """Convenience function for opening server sockets.  This
-    socket can be used in an ``accept()`` loop.
-
-    Sets SO_REUSEADDR on the socket to save on annoyance.
-
-    :param addr: Address to listen on.  For TCP sockets, this is a (host, port)  tuple.
-    :param family: Socket family, optional.  See :mod:`socket` documentation for available families.
-    :param backlog: The maximum number of queued connections. Should be at least 1; the maximum value is system-dependent.
-    :return: The listening green socket object.
-    """
-    sock = GreenSocket(family, socket.SOCK_STREAM)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind(addr)
-    sock.listen(backlog)
-    return sock
-
-
-def wrap_ssl(sock, keyfile=None, certfile=None, server_side=False,
-    cert_reqs=None, ssl_version=None, ca_certs=None,
-    do_handshake_on_connect=True, suppress_ragged_eofs=True):
-    """Convenience function for converting a regular socket into an SSL
-    socket.  Has the same interface as :func:`ssl.wrap_socket`, but
-    works on 2.5 or earlier, using PyOpenSSL.
-
-    The preferred idiom is to call wrap_ssl directly on the creation
-    method, e.g., ``wrap_ssl(connect(addr))`` or
-    ``wrap_ssl(listen(addr), server_side=True)``. This way there is
-    no "naked" socket sitting around to accidentally corrupt the SSL
-    session.
-
-    :return Green SSL object.
-    """
-    pass
-
-
-def serve(sock, handle, concurrency=1000):
-    """Runs a server on the supplied socket.  Calls the function
-    *handle* in a separate greenthread for every incoming request.
-    This function blocks the calling greenthread; it won't return until
-    the server completes.  If you desire an immediate return,
-    spawn a new greenthread for :func:`serve`.
-
-    The *handle* function must raise an EndServerException to
-    gracefully terminate the server -- that's the only way to get the
-    server() function to return.  Any other uncaught exceptions raised
-    in *handle* are raised as exceptions from :func:`serve`, so be
-    sure to do a good job catching exceptions that your application
-    raises.  The return value of *handle* is ignored.
-
-    The value in *concurrency* controls the maximum number of
-    greenthreads that will be open at any time handling requests.  When
-    the server hits the concurrency limit, it stops accepting new
-    connections until the existing ones complete.
-    """
-    pass

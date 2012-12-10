@@ -1,3 +1,5 @@
+import errno
+from eventlet.support import get_errno
 from eventlet import patcher
 time = patcher.original('time')
 select = patcher.original("select")
@@ -31,7 +33,6 @@ from eventlet.hubs.poll import READ, WRITE
 # are identical in value to the poll constants
 
 class Hub(poll.Hub):
-    WAIT_MULTIPLIER = 1.0  # epoll.poll's timeout is measured in seconds
     def __init__(self, clock=time.time):
         BaseHub.__init__(self, clock)
         self.poll = epoll()
@@ -45,9 +46,16 @@ class Hub(poll.Hub):
         oldlisteners = bool(self.listeners[READ].get(fileno) or
                             self.listeners[WRITE].get(fileno))
         listener = BaseHub.add(self, evtype, fileno, cb)
-        if not oldlisteners:
-            # Means we've added a new listener
-            self.register(fileno, new=True)
-        else:
-            self.register(fileno, new=False)
+        try:
+            if not oldlisteners:
+                # Means we've added a new listener
+                self.register(fileno, new=True)
+            else:
+                self.register(fileno, new=False)
+        except IOError, ex:    # ignore EEXIST, #80
+            if get_errno(ex) != errno.EEXIST:
+                raise
         return listener
+
+    def do_poll(self, seconds):
+        return self.poll.poll(seconds)

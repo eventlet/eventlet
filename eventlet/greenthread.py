@@ -23,8 +23,9 @@ def sleep(seconds=0):
     occasionally; otherwise nothing else will run.
     """
     hub = hubs.get_hub()
-    assert hub.greenlet is not greenlet.getcurrent(), 'do not call blocking functions from the mainloop'
-    timer = hub.schedule_call_global(seconds, greenlet.getcurrent().switch)
+    current = getcurrent()
+    assert hub.greenlet is not current, 'do not call blocking functions from the mainloop'
+    timer = hub.schedule_call_global(seconds, current.switch)
     try:
         hub.switch()
     finally:
@@ -47,16 +48,16 @@ def spawn(func, *args, **kwargs):
     return g
     
     
-def _main_wrapper(func, args, kwargs):
-    # function that gets around the fact that greenlet.switch
-    # doesn't accept keyword arguments
-    return func(*args, **kwargs)
-
-
 def spawn_n(func, *args, **kwargs):
-    """Same as :func:`spawn`, but returns a ``greenlet`` object from which it is 
-    not possible to retrieve the results.  This is faster than :func:`spawn`;
-    it is fastest if there are no keyword arguments."""
+    """Same as :func:`spawn`, but returns a ``greenlet`` object from
+    which it is not possible to retrieve either a return value or
+    whether it raised any exceptions.  This is faster than
+    :func:`spawn`; it is fastest if there are no keyword arguments.
+    
+    If an exception is raised in the function, spawn_n prints a stack
+    trace; the print can be disabled by calling
+    :func:`eventlet.debug.hub_exceptions` with False.
+    """
     return _spawn_n(0, func, args, kwargs)[1]
     
     
@@ -119,8 +120,8 @@ def call_after_local(seconds, function, *args, **kwargs):
         "has the same signature and semantics (plus a bit extra).",
         DeprecationWarning, stacklevel=2)
     hub = hubs.get_hub()
-    g = greenlet.greenlet(_main_wrapper, parent=hub.greenlet)
-    t = hub.schedule_call_local(seconds, g.switch, function, args, kwargs)
+    g = greenlet.greenlet(function, parent=hub.greenlet)
+    t = hub.schedule_call_local(seconds, g.switch, *args, **kwargs)
     return t
 
 
@@ -142,12 +143,8 @@ with_timeout = timeout.with_timeout
 
 def _spawn_n(seconds, func, args, kwargs):
     hub = hubs.get_hub()
-    if kwargs:
-        g = greenlet.greenlet(_main_wrapper, parent=hub.greenlet)
-        t = hub.schedule_call_global(seconds, g.switch, func, args, kwargs)
-    else:
-        g = greenlet.greenlet(func, parent=hub.greenlet)
-        t = hub.schedule_call_global(seconds, g.switch, *args)
+    g = greenlet.greenlet(func, parent=hub.greenlet)
+    t = hub.schedule_call_global(seconds, g.switch, *args, **kwargs)
     return t, g
 
 
@@ -258,6 +255,9 @@ def kill(g, *throw_args):
                 g.main(just_raise, (), {})
             except:
                 pass
-    hub.schedule_call_global(0, g.throw, *throw_args)
-    if getcurrent() is not hub.greenlet:
-        sleep(0)
+    current = getcurrent()
+    if current is not hub.greenlet:
+        # arrange to wake the caller back up immediately
+        hub.ensure_greenlet()
+        hub.schedule_call_global(0, current.switch)
+    g.throw(*throw_args)

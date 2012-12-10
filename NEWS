@@ -1,3 +1,134 @@
+0.9.17
+======
+* ZeroMQ support calling send and recv from multiple greenthreads (thanks to Geoff Salmon)
+* SSL: unwrap() sends data, and so it needs trampolining (#104 thanks to Brandon Rhodes)
+* hubs.epolls: Fix imports for exception handler (#123 thanks to Johannes Erdfelt)
+* db_pool: Fix .clear() when min_size > 0
+* db_pool: Add MySQL's insert_id() method (thanks to Peter Scott)
+* db_pool: Close connections after timeout, fix get-after-close race condition with using TpooledConnectionPool (thanks to Peter Scott)
+* threading monkey patch fixes (#115 thanks to Johannes Erdfelt)
+* pools: Better accounting of current_size in pools.Pool (#91 thanks to Brett Hoerner)
+* wsgi: environ['RAW_PATH_INFO'] with request path as received from client (thanks to dweimer)
+* wsgi: log_output flag (thanks to Juan Manuel Garcia)
+* wsgi: Limit HTTP header size (thanks to Gregory Holt)
+* wsgi: Configurable maximum URL length (thanks to Tomas Sedovic)
+
+0.9.16
+======
+* SO_REUSEADDR now correctly set.
+
+0.9.15
+======
+* ZeroMQ support without an explicit hub now implemented!  Thanks to Zed Shaw for the patch.
+* zmq module supports the NOBLOCK flag, thanks to rfk. (#76)
+* eventlet.wsgi has a debug flag which can be set to false to not send tracebacks to the client (per redbo's request)
+* Recursive GreenPipe madness forestalled by Soren Hansen (#77)
+* eventlet.green.ssl no longer busywaits on send()
+* EEXIST ignored in epoll hub (#80)
+* eventlet.listen's behavior on Windows improved, thanks to Nick Vatamaniuc (#83)
+* Timeouts raised within tpool.execute are propagated back to the caller (thanks again to redbo for being the squeaky wheel)
+
+0.9.14
+======
+* Many fixes to the ZeroMQ hub, which now requires version 2.0.10 or later.  Thanks to Ben Ford.
+* ZeroMQ hub no longer depends on pollhub, and thus works on Windows (thanks, Alexey Borzenkov)
+* Better handling of connect errors on Windows, thanks again to Alexey Borzenkov.
+* More-robust Event delivery, thanks to Malcolm Cleaton
+* wsgi.py now distinguishes between an empty query string ("") and a non-existent query string (no entry in environ).
+* wsgi.py handles ipv6 correctly (thanks, redbo)
+* Better behavior in tpool when you give it nonsensical numbers, thanks to R. Tyler for the nonsense.  :)
+* Fixed importing on 2.5 (#73, thanks to Ruijun Luo)
+* Hub doesn't hold on to invalid fds (#74, thanks to Edward George)
+* Documentation for eventlet.green.zmq, courtesy of Ben Ford
+
+0.9.13
+======
+* ZeroMQ hub, and eventlet.green.zmq make supersockets green.  Thanks to Ben Ford!
+* eventlet.green.MySQLdb added.  It's an interface to MySQLdb that uses tpool to make it appear nonblocking
+* Greenthread affinity in tpool.  Each greenthread is assigned to the same thread when using tpool, making it easier to work with non-thread-safe libraries.
+* Eventlet now depends on greenlet 0.3 or later.
+* Fixed a hang when using tpool during an import causes another import.  Thanks to mikepk for tracking that down.
+* Improved websocket draft 76 compliance, thanks to Nick V.
+* Rare greenthread.kill() bug fixed, which was probably brought about by a bugfix in greenlet 0.3.
+* Easy_installing eventlet should no longer print an ImportError about greenlet
+* Support for serving up SSL websockets, thanks to chwagssd for reporting #62
+* eventlet.wsgi properly sets 'wsgi.url_scheme' environment variable to 'https', and 'HTTPS' to 'on' if serving over ssl
+* Blocking detector uses setitimer on 2.6 or later, allowing for sub-second block detection, thanks to rtyler.
+* Blocking detector is documented now, too
+* socket.create_connection properly uses dnspython for nonblocking dns.  Thanks to rtyler.
+* Removed EVENTLET_TPOOL_DNS, nobody liked that.  But if you were using it, install dnspython instead.  Thanks to pigmej and gholt.
+* Removed _main_wrapper from greenthread, thanks to Ambroff adding keyword arguments to switch() in 0.3!
+
+0.9.12
+======
+* Eventlet no longer uses the Twisted hub if Twisted is imported -- you must call eventlet.hubs.use_hub('twistedr') if you want to use it.  This prevents strange race conditions for those who want to use both Twisted and Eventlet separately.
+* Removed circular import in twistedr.py
+* Added websocket multi-user chat example
+* Not using exec() in green modules anymore.
+* eventlet.green.socket now contains all attributes of the stdlib socket module, even those that were left out by bugs.
+* Eventlet.wsgi doesn't call print anymore, instead uses the logfiles for everything (it used to print exceptions in one place).
+* Eventlet.wsgi properly closes the connection when an error is raised
+* Better documentation on eventlet.event.Event.send_exception
+* Adding websocket.html to tarball so that you can run the examples without checking out the source
+
+0.9.10
+======
+* Greendns: if dnspython is installed, Eventlet will automatically use it to provide non-blocking DNS queries.  Set the environment variable 'EVENTLET_NO_GREENDNS' if you don't want greendns but have dnspython installed.
+* Full test suite passes on Python 2.7.
+* Tests no longer depend on simplejson for >2.6.
+* Potential-bug fixes in patcher (thanks to Schmir, and thanks to Hudson)
+* Websockets work with query strings (thanks to mcarter)
+* WSGI posthooks that get called after the request completed (thanks to gholt, nice docs, too)
+* Blocking detector merged -- use it to detect places where your code is not yielding to the hub for > 1 second.
+* tpool.Proxy can wrap callables
+* Tweaked Timeout class to do something sensible when True is passed to the constructor
+
+0.9.9
+=====
+* A fix for monkeypatching on systems with psycopg version 2.0.14.
+* Improved support for chunked transfers in wsgi, plus a bunch of tests from schmir (ported from gevent by redbo)
+* A fix for the twisted hub from Favo Yang
+
+0.9.8
+=====
+* Support for psycopg2's asynchronous mode, from Daniele Varrazzo
+* websocket module is now part of core Eventlet with 100% unit test coverage thanks to Ben Ford.  See its documentation at http://eventlet.net/doc/modules/websocket.html
+* Added wrap_ssl convenience method, meaning that we truly no longer need api or util modules.
+* Multiple-reader detection code protects against the common mistake of having multiple greenthreads read from the same socket at the same time, which can be overridden if you know what you're doing.
+* Cleaner monkey_patch API: the "all" keyword is no longer necessary.
+* Pool objects have a more convenient constructor -- no more need to subclass
+* amajorek's reimplementation of GreenPipe
+* Many bug fixes, major and minor.
+
+0.9.7
+=====
+* GreenPipe is now a context manager (thanks, quad)
+* tpool.Proxy supports iterators properly
+* bug fixes in eventlet.green.os (thanks, Benoit)
+* much code cleanup from Tavis
+* a few more example apps
+* multitudinous improvements in Py3k compatibility from amajorek
+
+
+0.9.6
+=====
+* new EVENTLET_HUB environment variable allows you to select a hub without code
+* improved GreenSocket and GreenPipe compatibility with stdlib
+* bugfixes on GreenSocket and GreenPipe objects
+* code coverage increased across the board
+* Queue resizing
+* internal DeprecationWarnings largely eliminated
+* tpool is now reentrant (i.e., can call tpool.execute(tpool.execute(foo)))
+* more reliable access to unpatched modules reduces some race conditions when monkeypatching
+* completely threading-compatible corolocal implementation, plus tests and enthusiastic adoption
+* tests stomp on each others' toes less
+* performance improvements in timers, hubs, greenpool
+* Greenlet-aware profile module courtesy of CCP
+* support for select26 module's epoll
+* better PEP-8 compliance and import cleanup
+* new eventlet.serve convenience function for easy TCP servers
+
+
 0.9.5
 =====
 * support psycopg in db_pool

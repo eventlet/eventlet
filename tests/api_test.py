@@ -4,10 +4,14 @@ import socket
 from unittest import TestCase, main
 import warnings
 
+import eventlet
 warnings.simplefilter('ignore', DeprecationWarning)
 from eventlet import api
 warnings.simplefilter('default', DeprecationWarning)
 from eventlet import greenio, util, hubs, greenthread, spawn
+
+from tests import skip_if_no_ssl
+
 
 def check_hub():
     # Clear through the descriptor queue
@@ -19,9 +23,8 @@ def check_hub():
         assert not dct, "hub.%s not empty: %s" % (nm, dct)
     # Stop the runloop (unless it's twistedhub which does not support that)
     if not getattr(hub, 'uses_twisted_reactor', None):
-        hub.abort()
-        api.sleep(0)
-        ### ??? assert not hubs.get_hub().running
+        hub.abort(True)
+        assert not hub.running
 
 
 class TestApi(TestCase):
@@ -30,7 +33,7 @@ class TestApi(TestCase):
     private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
 
     def test_tcp_listener(self):
-        socket = greenio.listen(('0.0.0.0', 0))
+        socket = eventlet.listen(('0.0.0.0', 0))
         assert socket.getsockname()[0] == '0.0.0.0'
         socket.close()
 
@@ -40,17 +43,17 @@ class TestApi(TestCase):
         def accept_once(listenfd):
             try:
                 conn, addr = listenfd.accept()
-                fd = conn.makefile()
+                fd = conn.makefile(mode='w')
                 conn.close()
                 fd.write('hello\n')
                 fd.close()
             finally:
                 listenfd.close()
 
-        server = greenio.listen(('0.0.0.0', 0))
+        server = eventlet.listen(('0.0.0.0', 0))
         api.spawn(accept_once, server)
 
-        client = greenio.connect(('127.0.0.1', server.getsockname()[1]))
+        client = eventlet.connect(('127.0.0.1', server.getsockname()[1]))
         fd = client.makefile()
         client.close()
         assert fd.readline() == 'hello\n'
@@ -60,6 +63,7 @@ class TestApi(TestCase):
 
         check_hub()
 
+    @skip_if_no_ssl
     def test_connect_ssl(self):
         def accept_once(listenfd):
             try:
@@ -76,7 +80,7 @@ class TestApi(TestCase):
                                   self.private_key_file)
         api.spawn(accept_once, server)
 
-        raw_client = greenio.connect(('127.0.0.1', server.getsockname()[1]))
+        raw_client = eventlet.connect(('127.0.0.1', server.getsockname()[1]))
         client = util.wrap_ssl(raw_client)
         fd = socket._fileobject(client, 'rb', 8192)
 
@@ -93,7 +97,7 @@ class TestApi(TestCase):
 
     def test_001_trampoline_timeout(self):
         from eventlet import coros
-        server_sock = greenio.listen(('127.0.0.1', 0))
+        server_sock = eventlet.listen(('127.0.0.1', 0))
         bound_port = server_sock.getsockname()[1]
         def server(sock):
             client, addr = sock.accept()
@@ -101,7 +105,7 @@ class TestApi(TestCase):
         server_evt = spawn(server, server_sock)
         api.sleep(0)
         try:
-            desc = greenio.connect(('127.0.0.1', bound_port))
+            desc = eventlet.connect(('127.0.0.1', bound_port))
             api.trampoline(desc, read=True, write=False, timeout=0.001)
         except api.TimeoutError:
             pass # test passed
@@ -112,7 +116,7 @@ class TestApi(TestCase):
         check_hub()
 
     def test_timeout_cancel(self):
-        server = greenio.listen(('0.0.0.0', 0))
+        server = eventlet.listen(('0.0.0.0', 0))
         bound_port = server.getsockname()[1]
 
         done = [False]
@@ -122,7 +126,7 @@ class TestApi(TestCase):
                 conn.close()
 
         def go():
-            desc = greenio.connect(('127.0.0.1', bound_port))
+            desc = eventlet.connect(('127.0.0.1', bound_port))
             try:
                 api.trampoline(desc, read=True, timeout=0.1)
             except api.TimeoutError:

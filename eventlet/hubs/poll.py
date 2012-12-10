@@ -1,19 +1,19 @@
 import sys
 import errno
+import signal
 from eventlet import patcher
 select = patcher.original('select')
 time = patcher.original('time')
 sleep = time.sleep
 
-from eventlet.hubs.hub import BaseHub, READ, WRITE
+from eventlet.support import get_errno, clear_sys_exc_info
+from eventlet.hubs.hub import BaseHub, READ, WRITE, noop, alarm_handler
 
 EXC_MASK = select.POLLERR | select.POLLHUP
 READ_MASK = select.POLLIN | select.POLLPRI
 WRITE_MASK = select.POLLOUT
 
 class Hub(BaseHub):
-    WAIT_MULTIPLIER=1000.0 # poll.poll's timeout is measured in milliseconds
-
     def __init__(self, clock=time.time):
         super(Hub, self).__init__(clock)
         self.poll = select.poll()
@@ -38,34 +38,39 @@ class Hub(BaseHub):
             mask |= READ_MASK | EXC_MASK
         if self.listeners[WRITE].get(fileno):
             mask |= WRITE_MASK | EXC_MASK
-        if mask:
-            if new:
-                self.poll.register(fileno, mask)
-            else:
-                try:
-                    self.modify(fileno, mask)
-                except (IOError, OSError):
+        try:
+            if mask:
+                if new:
                     self.poll.register(fileno, mask)
-        else: 
-            try:
-                self.poll.unregister(fileno)
-            except KeyError:
-                pass
-            except (IOError, OSError):
-                # raised if we try to remove a fileno that was
-                # already removed/invalid
-                pass
+                else:
+                    try:
+                        self.modify(fileno, mask)
+                    except (IOError, OSError):
+                        self.poll.register(fileno, mask)
+            else: 
+                try:
+                    self.poll.unregister(fileno)
+                except (KeyError, IOError, OSError):
+                    # raised if we try to remove a fileno that was
+                    # already removed/invalid
+                    pass
+        except ValueError:
+            # fileno is bad, issue 74
+            self.remove_descriptor(fileno)
+            raise
 
     def remove_descriptor(self, fileno):
         super(Hub, self).remove_descriptor(fileno)
         try:
             self.poll.unregister(fileno)
-        except (KeyError, ValueError):
-            pass
-        except (IOError, OSError):
+        except (KeyError, ValueError, IOError, OSError):
             # raised if we try to remove a fileno that was
             # already removed/invalid
             pass
+
+    def do_poll(self, seconds):
+        # poll.poll expects integral milliseconds
+        return self.poll.poll(int(seconds * 1000.0))
 
     def wait(self, seconds=None):
         readers = self.listeners[READ]
@@ -76,36 +81,34 @@ class Hub(BaseHub):
                 sleep(seconds)
             return
         try:
-            presult = self.poll.poll(seconds * self.WAIT_MULTIPLIER)
-        except select.error, e:
-            if e.args[0] == errno.EINTR:
+            presult = self.do_poll(seconds)
+        except (IOError, select.error), e:
+            if get_errno(e) == errno.EINTR:
                 return
             raise
         SYSTEM_EXCEPTIONS = self.SYSTEM_EXCEPTIONS
 
+        if self.debug_blocking:
+            self.block_detect_pre()
+
         for fileno, event in presult:
             try:
-                listener = None
-                try:
-                    if event & READ_MASK:
-                        listener = readers[fileno][0]
-                    if event & WRITE_MASK:
-                        listener = writers[fileno][0]
-                except KeyError:
-                    pass
-                else:
-                    if listener:
-                        listener(fileno)
+                if event & READ_MASK:
+                    readers.get(fileno, noop).cb(fileno)
+                if event & WRITE_MASK:
+                    writers.get(fileno, noop).cb(fileno)
                 if event & select.POLLNVAL:
                     self.remove_descriptor(fileno)
                     continue
                 if event & EXC_MASK:
-                    for listeners in (readers.get(fileno, []), 
-                                      writers.get(fileno, [])):
-                        for listener in listeners:
-                            listener(fileno)
+                    readers.get(fileno, noop).cb(fileno)
+                    writers.get(fileno, noop).cb(fileno)
             except SYSTEM_EXCEPTIONS:
                 raise
             except:
                 self.squelch_exception(fileno, sys.exc_info())
-                sys.exc_clear()
+                clear_sys_exc_info()
+        
+        if self.debug_blocking:
+            self.block_detect_post()
+

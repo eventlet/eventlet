@@ -5,7 +5,7 @@ from code import InteractiveConsole
 
 import eventlet
 from eventlet import hubs
-from eventlet.support import greenlets
+from eventlet.support import greenlets, get_errno
 
 try:
     sys.ps1
@@ -20,25 +20,26 @@ except AttributeError:
 class FileProxy(object):
     def __init__(self, f):
         self.f = f
-        def writeflush(*a, **kw):
-            f.write(*a, **kw)
-            f.flush()
-        self.fixups = {
-            'softspace': 0,
-            'isatty': lambda: True,
-            'flush': lambda: None,
-            'write': writeflush,
-            'readline': lambda *a: f.readline(*a).replace('\r\n', '\n'),
-        }
+
+    def isatty(self): 
+        return True
+
+    def flush(self): 
+        pass
+
+    def write(self, *a, **kw):
+        self.f.write(*a, **kw)
+        self.f.flush()
+
+    def readline(self, *a):
+        return self.f.readline(*a).replace('\r\n', '\n')
 
     def __getattr__(self, attr):
-        fixups = object.__getattribute__(self, 'fixups')
-        if attr in fixups:
-            return fixups[attr]    
-        f = object.__getattribute__(self, 'f')
-        return getattr(f, attr)
+        return getattr(self.f, attr)
 
 
+# @@tavis: the `locals` args below mask the built-in function.  Should
+# be renamed.
 class SocketConsole(greenlets.greenlet):
     def __init__(self, desc, hostport, locals):
         self.hostport = hostport
@@ -70,12 +71,12 @@ class SocketConsole(greenlets.greenlet):
 
 
 def backdoor_server(sock, locals=None):
-    """ Blocking function that runs a backdoor server on the socket *sock*, 
+    """ Blocking function that runs a backdoor server on the socket *sock*,
     accepting connections and running backdoor consoles for each client that
     connects.
-    
+
     The *locals* argument is a dictionary that will be included in the locals()
-    of the interpreters.  It can be convenient to stick important application 
+    of the interpreters.  It can be convenient to stick important application
     variables in here.
     """
     print "backdoor server listening on %s:%s" % sock.getsockname()
@@ -86,7 +87,7 @@ def backdoor_server(sock, locals=None):
                 backdoor(socketpair, locals)
         except socket.error, e:
             # Broken pipe means it was shutdown
-            if e[0] != errno.EPIPE:
+            if get_errno(e) != errno.EPIPE:
                 raise
     finally:
         sock.close()
@@ -94,7 +95,7 @@ def backdoor_server(sock, locals=None):
 
 def backdoor((conn, addr), locals=None):
     """Sets up an interactive console on a socket with a single connected
-    client.  This does not block the caller, as it spawns a new greenlet to 
+    client.  This does not block the caller, as it spawns a new greenlet to
     handle the console.  This is meant to be called from within an accept loop
     (such as backdoor_server).
     """
@@ -108,4 +109,3 @@ def backdoor((conn, addr), locals=None):
 
 if __name__ == '__main__':
     backdoor_server(eventlet.listen(('127.0.0.1', 9000)), {})
-

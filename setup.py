@@ -3,10 +3,11 @@
 
 from setuptools import find_packages, setup
 from eventlet import __version__
+from os import path
 import sys
 
 requirements = []
-for flag, req in [('--without-greenlet','greenlet >= 0.2')]:
+for flag, req in [('--without-greenlet','greenlet >= 0.3')]:
     if flag in sys.argv:
         sys.argv.remove(flag)
     else:
@@ -19,22 +20,27 @@ setup(
     author='Linden Lab',
     author_email='eventletdev@lists.secondlife.com',
     url='http://eventlet.net',
-    packages=find_packages(exclude=['tests']),
+    packages=find_packages(exclude=['tests', 'benchmarks']),
     install_requires=requirements,
     zip_safe=False,
-    long_description="""
-    Eventlet is a networking library written in Python. It achieves
-    high scalability by using non-blocking io while at the same time
-    retaining high programmer usability by using coroutines to make
-    the non-blocking io operations appear blocking at the source code
-    level.""",
+    long_description=open(
+        path.join(
+            path.dirname(__file__),
+            'README'
+        )
+    ).read(),
     test_suite = 'nose.collector',
+    tests_require = 'httplib2',
     classifiers=[
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python",
     "Operating System :: MacOS :: MacOS X",
     "Operating System :: POSIX",
     "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 2.4",
+    "Programming Language :: Python :: 2.5",
+    "Programming Language :: Python :: 2.6",
+    "Programming Language :: Python :: 2.7",
     "Topic :: Internet",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Intended Audience :: Developers",

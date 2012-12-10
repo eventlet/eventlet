@@ -301,6 +301,11 @@ class GreenPool(tests.LimitedTestCase):
     def test_waitall_on_nothing(self):
         p = greenpool.GreenPool()
         p.waitall()
+        
+    def test_recursive_waitall(self):
+        p = greenpool.GreenPool()
+        gt = p.spawn(p.waitall)
+        self.assertRaises(AssertionError, gt.wait)
 
             
 class GreenPile(tests.LimitedTestCase):
@@ -379,7 +384,7 @@ class Stress(tests.LimitedTestCase):
             try:
                 i = it.next()
             except StressException, exc:
-                i = exc[0]
+                i = exc.args[0]
             except StopIteration:
                 break
             received += 1                

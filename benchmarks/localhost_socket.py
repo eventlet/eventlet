@@ -6,6 +6,7 @@ import benchmarks
 BYTES=1000
 SIZE=1
 CONCURRENCY=50
+TRIES=5
 
 def reader(sock):
     expect = BYTES
@@ -82,16 +83,20 @@ if __name__ == "__main__":
                       default=SIZE)
     parser.add_option('-c', '--concurrency', type='int', dest='concurrency', 
                       default=CONCURRENCY)
+    parser.add_option('-t', '--tries', type='int', dest='tries', 
+                      default=TRIES)
+
     
     opts, args = parser.parse_args()
     BYTES=opts.bytes
     SIZE=opts.size
     CONCURRENCY=opts.concurrency
+    TRIES=opts.tries
     
     funcs = [launch_green_threads]
     if opts.threading:
         funcs = [launch_green_threads, launch_heavy_threads]
-    results = benchmarks.measure_best(3, 3,
+    results = benchmarks.measure_best(TRIES, 3,
                                       lambda: None, lambda: None,
                                       *funcs)
     print "green:", results[launch_green_threads]

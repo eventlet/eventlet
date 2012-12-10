@@ -1,12 +1,10 @@
-from tests import skipped, LimitedTestCase, skip_unless
+from tests import LimitedTestCase, certificate_file, private_key_file
+from tests import skip_if_no_ssl
 from unittest import main
 import eventlet
 from eventlet import util, coros, greenio
 import socket
 import os
-
-certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
-private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
 
 def listen_ssl_socket(address=('127.0.0.1', 0)):
     sock = util.wrap_ssl(socket.socket(), certificate_file,
@@ -18,6 +16,7 @@ def listen_ssl_socket(address=('127.0.0.1', 0)):
    
 
 class SSLTest(LimitedTestCase):
+    @skip_if_no_ssl
     def test_duplex_response(self):
         def serve(listener):
             sock, addr = listener.accept()
@@ -33,6 +32,7 @@ class SSLTest(LimitedTestCase):
         self.assertEquals(client.read(8192), 'response')
         server_coro.wait()
         
+    @skip_if_no_ssl
     def test_ssl_close(self):
         def serve(listener):
             sock, addr = listener.accept()
@@ -53,6 +53,7 @@ class SSLTest(LimitedTestCase):
         client.close()
         server_coro.wait()
         
+    @skip_if_no_ssl
     def test_ssl_connect(self):
         def serve(listener):
             sock, addr = listener.accept()
@@ -68,9 +69,32 @@ class SSLTest(LimitedTestCase):
         ssl_client.close()
         server_coro.wait()
 
+    @skip_if_no_ssl
+    def test_ssl_unwrap(self):
+        def serve():
+            sock, addr = listener.accept()
+            self.assertEquals(sock.recv(6), 'before')
+            sock_ssl = util.wrap_ssl(sock, certificate_file, private_key_file,
+                                     server_side=True)
+            sock_ssl.do_handshake()
+            self.assertEquals(sock_ssl.read(6), 'during')
+            sock2 = sock_ssl.unwrap()
+            self.assertEquals(sock2.recv(5), 'after')
+            sock2.close()
+
+        listener = eventlet.listen(('127.0.0.1', 0))
+        server_coro = eventlet.spawn(serve)
+        client = eventlet.connect((listener.getsockname()))
+        client.send('before')
+        client_ssl = util.wrap_ssl(client)
+        client_ssl.do_handshake()
+        client_ssl.write('during')
+        client2 = client_ssl.unwrap()
+        client2.send('after')
+        server_coro.wait()
 
 class SocketSSLTest(LimitedTestCase):
-    @skip_unless(hasattr(socket, 'ssl'))
+    @skip_if_no_ssl
     def test_greensslobject(self):
         import warnings
         # disabling socket.ssl warnings because we're testing it here

@@ -7,12 +7,20 @@ dist
 build
 *.esproj
 .DS_Store
+.idea
 doc/_build
 annotated
 cover
 nosetests*.xml
 .coverage
 *,cover
+lib*
+bin
+include
+.noseids
+pip-log.txt
+.tox
 
 syntax: re
 ^.ropeproject/.*$
+

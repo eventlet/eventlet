@@ -4,7 +4,9 @@ import time
 
 from eventlet.pools import Pool
 from eventlet import timeout
-from eventlet import greenthread
+from eventlet import hubs
+from eventlet.hubs.timer import Timer
+from eventlet.greenthread import GreenThread
 
 
 class ConnectTimeout(Exception):
@@ -67,8 +69,7 @@ class BaseConnectionPool(Pool):
             return
 
         if ( self._expiration_timer is not None
-             and not getattr(self._expiration_timer, 'called', False)
-             and not getattr(self._expiration_timer, 'cancelled', False) ):
+             and not getattr(self._expiration_timer, 'called', False)):
             # the next timer is already scheduled
             return
 
@@ -89,8 +90,9 @@ class BaseConnectionPool(Pool):
 
         if next_delay > 0:
             # set up a continuous self-calling loop
-            self._expiration_timer = greenthread.spawn_after(next_delay,
-                                                    self._schedule_expiration)
+            self._expiration_timer = Timer(next_delay, GreenThread(hubs.get_hub().greenlet).switch,
+                                           self._schedule_expiration, [], {})
+            self._expiration_timer.schedule()
 
     def _expire_old_connections(self, now):
         """ Iterates through the open connections contained in the pool, closing
@@ -104,8 +106,6 @@ class BaseConnectionPool(Pool):
             conn
             for last_used, created_at, conn in self.free_items
             if self._is_expired(now, last_used, created_at)]
-        for conn in expired:
-            self._safe_close(conn, quiet=True)
 
         new_free = [
             (last_used, created_at, conn)
@@ -117,6 +117,9 @@ class BaseConnectionPool(Pool):
         # adjust the current size counter to account for expired
         # connections
         self.current_size -= original_count - len(self.free_items)
+
+        for conn in expired:
+            self._safe_close(conn, quiet=True)
 
     def _is_expired(self, now, last_used, created_at):
         """ Returns true and closes the connection if it's expired."""
@@ -229,7 +232,9 @@ class BaseConnectionPool(Pool):
         if self._expiration_timer:
             self._expiration_timer.cancel()
         free_items, self.free_items = self.free_items, deque()
-        for _last_used, _created_at, conn in free_items:
+        for item in free_items:
+            # Free items created using min_size>0 are not tuples.
+            conn = item[2] if isinstance(item, tuple) else item
             self._safe_close(conn, quiet=True)
 
     def __del__(self):
@@ -297,6 +302,7 @@ class GenericConnectionWrapper(object):
     def errno(self,*args, **kwargs): return self._base.errno(*args, **kwargs)
     def error(self,*args, **kwargs): return self._base.error(*args, **kwargs)
     def errorhandler(self, *args, **kwargs): return self._base.errorhandler(*args, **kwargs)
+    def insert_id(self, *args, **kwargs): return self._base.insert_id(*args, **kwargs)
     def literal(self, *args, **kwargs): return self._base.literal(*args, **kwargs)
     def set_character_set(self, *args, **kwargs): return self._base.set_character_set(*args, **kwargs)
     def set_sql_mode(self, *args, **kwargs): return self._base.set_sql_mode(*args, **kwargs)

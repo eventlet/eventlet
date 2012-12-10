@@ -1,10 +1,11 @@
 import sys
 import errno
 from eventlet import patcher
+from eventlet.support import get_errno, clear_sys_exc_info
 select = patcher.original('select')
 time = patcher.original('time')
 
-from eventlet.hubs.hub import BaseHub, READ, WRITE
+from eventlet.hubs.hub import BaseHub, READ, WRITE, noop
 
 try:
     BAD_SOCK = set((errno.EBADF, errno.WSAENOTSOCK))
@@ -20,7 +21,7 @@ class Hub(BaseHub):
             try:
                 select.select([fd], [], [], 0)
             except select.error, e:
-                if e.args[0] == errno.EBADF:
+                if get_errno(e) in BAD_SOCK:
                     self.remove_descriptor(fd)
 
     def wait(self, seconds=None):
@@ -33,28 +34,24 @@ class Hub(BaseHub):
         try:
             r, w, er = select.select(readers.keys(), writers.keys(), readers.keys() + writers.keys(), seconds)
         except select.error, e:
-            if e.args[0] == errno.EINTR:
+            if get_errno(e) == errno.EINTR:
                 return
-            elif e.args[0] in BAD_SOCK:
+            elif get_errno(e) in BAD_SOCK:
                 self._remove_bad_fds()
                 return
             else:
                 raise
 
         for fileno in er:
-            for reader in readers.get(fileno, ()):
-                reader(fileno)
-            for writer in writers.get(fileno, ()):
-                writer(fileno)
+            readers.get(fileno, noop).cb(fileno)
+            writers.get(fileno, noop).cb(fileno)
             
         for listeners, events in ((readers, r), (writers, w)):
             for fileno in events:
                 try:
-                    l_list = listeners[fileno]
-                    if l_list:
-                        l_list[0](fileno)
+                    listeners.get(fileno, noop).cb(fileno)
                 except self.SYSTEM_EXCEPTIONS:
                     raise
                 except:
                     self.squelch_exception(fileno, sys.exc_info())
-                    sys.exc_clear()
+                    clear_sys_exc_info()

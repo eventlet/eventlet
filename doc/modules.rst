@@ -15,4 +15,6 @@ Module Reference
    modules/queue
    modules/semaphore
    modules/timeout
+   modules/websocket
    modules/wsgi
+   modules/zmq

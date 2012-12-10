@@ -137,6 +137,26 @@ class TestIntPool(TestCase):
         # resize larger and assert that there are more free items
         pool.resize(2)
         self.assertEquals(pool.free(), 2)
+        
+    def test_create_contention(self):
+        creates = [0]
+        def sleep_create():
+            creates[0] += 1
+            eventlet.sleep()
+            return "slept"
+            
+        p = pools.Pool(max_size=4, create=sleep_create)
+
+        def do_get():
+            x = p.get()
+            self.assertEquals(x, "slept")
+            p.put(x)
+
+        gp = eventlet.GreenPool()
+        for i in xrange(100):
+            gp.spawn_n(do_get)
+        gp.waitall()
+        self.assertEquals(creates[0], 4)
 
 
 class TestAbstract(TestCase):

@@ -117,7 +117,7 @@ def _read_response(id, attribute, input, cp):
     """local helper method to read respones from the rpc server."""
     try:
         str = _read_lp_hunk(input)
-        _prnt(`str`)
+        _prnt(repr(str))
         response = Pickle.loads(str)
     except (AttributeError, DeadProcess, Pickle.UnpicklingError), e:
         raise UnrecoverableError(e)
@@ -577,7 +577,7 @@ class Server(object):
         _log("responding with: %s" % body)
         #_log("objects: %s" % self._objects)
         s = Pickle.dumps(body)
-        _log(`s`)
+        _log(repr(s))
         _write_lp_hunk(self._out, s)
 
     def write_exception(self, e):

@@ -6,7 +6,7 @@ import linecache
 import inspect
 import warnings
 
-from eventlet.support import greenlets as greenlet
+from eventlet.support import greenlets as greenlet, BaseException
 from eventlet import hubs
 from eventlet import greenthread
 from eventlet import debug
@@ -68,6 +68,8 @@ def ssl_listener(address, certificate, private_key):
     Returns a socket object on which one should call ``accept()`` to
     accept a connection on the newly bound socket.
     """
+    warnings.warn("""eventlet.api.ssl_listener is deprecated.  Please use eventlet.wrap_ssl(eventlet.listen()) instead.""",
+        DeprecationWarning, stacklevel=2)
     from eventlet import util
     import socket
 
@@ -106,7 +108,7 @@ call_after_local = greenthread.call_after_local
 call_after_global = greenthread.call_after_global
 
 
-class _SilentException:
+class _SilentException(BaseException):
     pass
 
 class FakeTimer(object):

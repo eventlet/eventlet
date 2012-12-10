@@ -47,7 +47,7 @@ def semaphore(count=0, limit=None):
     if limit is None:
         return Semaphore(count)
     else:
-        return BoundedSemaphore(count, limit)
+        return BoundedSemaphore(count)
 
 
 class metaphore(object):

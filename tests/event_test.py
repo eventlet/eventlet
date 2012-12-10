@@ -12,6 +12,12 @@ class TestEvent(LimitedTestCase):
         self.assertEqual(evt.wait(), value)
 
     def test_multiple_waiters(self):
+        self._test_multiple_waiters(False)
+
+    def test_multiple_waiters_with_exception(self):
+        self._test_multiple_waiters(True)
+
+    def _test_multiple_waiters(self, exception):
         evt = event.Event()
         value = 'some stuff'
         results = []
@@ -19,12 +25,15 @@ class TestEvent(LimitedTestCase):
             evt.wait()
             results.append(True)
             i_am_done.send()
+            if exception:
+                raise Exception()
 
         waiters = []
         count = 5
         for i in range(count):
             waiters.append(event.Event())
             eventlet.spawn_n(wait_on_event, waiters[-1])
+        eventlet.sleep()  # allow spawns to start executing
         evt.send()
 
         for w in waiters:
