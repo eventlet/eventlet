@@ -12,6 +12,7 @@ try:
 except ImportError:
     zmq = {}    # for systems lacking zmq, skips tests instead of barfing
 
+
 def zmq_supported(_):
     try:
         import zmq
@@ -19,22 +20,24 @@ def zmq_supported(_):
         return False
     return not using_pyevent(_)
 
-class TestUpstreamDownStream(LimitedTestCase):
 
+class TestUpstreamDownStream(LimitedTestCase):
+    @skip_unless(zmq_supported)
     def setUp(self):
         super(TestUpstreamDownStream, self).setUp()
+        self.context = zmq.Context()
         self.sockets = []
 
+    @skip_unless(zmq_supported)
     def tearDown(self):
         self.clear_up_sockets()
         super(TestUpstreamDownStream, self).tearDown()
 
     def create_bound_pair(self, type1, type2, interface='tcp://127.0.0.1'):
         """Create a bound socket pair using a random port."""
-        self.context = context = zmq.Context()
-        s1 = context.socket(type1)
+        s1 = self.context.socket(type1)
         port = s1.bind_to_random_port(interface)
-        s2 = context.socket(type2)
+        s2 = self.context.socket(type2)
         s2.connect('%s:%s' % (interface, port))
         self.sockets.append(s1)
         self.sockets.append(s2)
@@ -436,14 +439,12 @@ class TestQueueLock(LimitedTestCase):
     def test_errors(self):
         q = zmq._QueueLock()
 
-        with self.assertRaises(Exception):
-            q.release()
+        self.assertRaises(zmq.LockReleaseError, q.release)
 
         q.acquire()
         q.release()
 
-        with self.assertRaises(Exception):
-            q.release()
+        self.assertRaises(zmq.LockReleaseError, q.release)
 
     @skip_unless(zmq_supported)
     def test_nested_acquire(self):
@@ -470,6 +471,7 @@ class TestQueueLock(LimitedTestCase):
 
         s.acquire()
         self.assertEquals(results, [1])
+
 
 class TestBlockedThread(LimitedTestCase):
     @skip_unless(zmq_supported)

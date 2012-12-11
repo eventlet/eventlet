@@ -13,6 +13,11 @@ slurp_properties(__zmq__, globals(), ignore=__patched__)
 
 from collections import deque
 
+
+class LockReleaseError(Exception):
+    pass
+
+
 class _QueueLock(object):
     """A Lock that can be acquired by at most one thread. Any other
     thread calling acquire will be blocked in a queue. When release
@@ -50,7 +55,7 @@ class _QueueLock(object):
 
     def release(self):
         if self._count <= 0:
-            raise Exception("Cannot release unacquired lock")
+            raise LockReleaseError("Cannot release unacquired lock")
 
         self._count -= 1
         if self._count == 0:
@@ -58,6 +63,7 @@ class _QueueLock(object):
             if self._waiters:
                 # wake next
                 self._hub.schedule_call_global(0, self._waiters[0].switch)
+
 
 class _BlockedThread(object):
     """Is either empty, or represents a single blocked thread that
