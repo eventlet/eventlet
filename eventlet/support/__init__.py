@@ -1,4 +1,8 @@
 import sys
+
+from eventlet.support import greenlets
+
+
 def get_errno(exc):
     """ Get the error code out of socket.error objects.
     socket.error in <2.5 does not have errno attribute
@@ -18,7 +22,7 @@ def get_errno(exc):
     except IndexError:
         return None
 
-if sys.version_info[0]<3:
+if sys.version_info[0]<3 and not greenlets.preserves_excinfo:
     from sys import exc_clear as clear_sys_exc_info
 else:
     def clear_sys_exc_info():
