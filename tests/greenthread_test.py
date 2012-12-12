@@ -86,6 +86,21 @@ class Spawn(LimitedTestCase, Asserts):
         gt.link(link_func, 4, b=5)
         self.assertEquals(results, [gt, (4,), {'b':5}])
 
+    def test_link_relinks(self):
+        # test that linking in a linked func doesn't cause infinite recursion.
+        called = []
+
+        def link_func(g):
+            g.link(link_func_pass)
+
+        def link_func_pass(g):
+            called.append(True)
+
+        gt = greenthread.spawn(passthru)
+        gt.link(link_func)
+        gt.wait()
+        self.assertEquals(called, [True])
+
 class SpawnAfter(LimitedTestCase, Asserts):
     def test_basic(self):
         gt = greenthread.spawn_after(0.1, passthru, 20)
