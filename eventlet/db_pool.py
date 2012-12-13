@@ -246,10 +246,9 @@ class TpooledConnectionPool(BaseConnectionPool):
     connections.
     """
     def create(self):
-        return self.connect(self._db_module,
-                                    self.connect_timeout,
-                                    *self._args,
-                                    **self._kwargs)
+        now = time.time()
+        return now, now, self.connect(self._db_module,
+            self.connect_timeout, *self._args, **self._kwargs)
 
     @classmethod
     def connect(cls, db_module, connect_timeout, *args, **kw):
@@ -266,10 +265,9 @@ class RawConnectionPool(BaseConnectionPool):
     """A pool which gives out plain database connections.
     """
     def create(self):
-        return self.connect(self._db_module,
-                                    self.connect_timeout,
-                                    *self._args,
-                                    **self._kwargs)
+        now = time.time()
+        return now, now, self.connect(self._db_module,
+            self.connect_timeout, *self._args, **self._kwargs)
 
     @classmethod
     def connect(cls, db_module, connect_timeout, *args, **kw):
@@ -353,7 +351,7 @@ class PooledConnectionWrapper(GenericConnectionWrapper):
         self._destroy()
 
     def __del__(self):
-        return  # this causes some issues if __del__ is called in the 
+        return  # this causes some issues if __del__ is called in the
                 # main coroutine, so for now this is disabled
         #self.close()
 
