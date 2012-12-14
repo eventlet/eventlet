@@ -473,7 +473,7 @@ class GreenPipe(_fileobject):
         if whence == 1 and offset == 0: # tell synonym
             return self.tell()
         if whence == 1: # adjust offset by what is read ahead
-            offset -= self.get_readahead_len()
+            offset -= self._get_readahead_len()
         try:
             rv = os.lseek(self.fileno(), offset, whence)
         except OSError, e:

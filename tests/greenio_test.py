@@ -627,6 +627,8 @@ class TestGreenPipe(LimitedTestCase):
         self.assertEquals(f.tell(), 2)
         f.seek(0, 1)
         self.assertEqual(f.readline(), '34567890')
+        f.seek(-5, 1)
+        self.assertEqual(f.readline(), '67890')
         f.seek(0)
         self.assertEqual(f.readline(), '1234567890')
         f.seek(0, 2)
