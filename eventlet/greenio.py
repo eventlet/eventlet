@@ -2,6 +2,7 @@ from eventlet.support import get_errno
 from eventlet.hubs import trampoline
 BUFFER_SIZE = 4096
 
+import array
 import errno
 import os
 import socket
@@ -14,7 +15,7 @@ __all__ = ['GreenSocket', 'GreenPipe', 'shutdown_safe']
 
 CONNECT_ERR = set((errno.EINPROGRESS, errno.EALREADY, errno.EWOULDBLOCK))
 CONNECT_SUCCESS = set((0, errno.EISCONN))
-if sys.platform[:3]=="win":
+if sys.platform[:3] == "win":
     CONNECT_ERR.add(errno.WSAEINVAL)   # Bug 67
 
 # Emulate _fileobject class in 3.x implementation
@@ -22,8 +23,9 @@ if sys.platform[:3]=="win":
 try:
     _fileobject = socket._fileobject
 except AttributeError:
-   def _fileobject(sock, *args, **kwargs):
+    def _fileobject(sock, *args, **kwargs):
         return _original_socket.makefile(sock, *args, **kwargs)
+
 
 def socket_connect(descriptor, address):
     """
@@ -37,10 +39,12 @@ def socket_connect(descriptor, address):
         raise socket.error(err, errno.errorcode[err])
     return descriptor
 
+
 def socket_checkerr(descriptor):
     err = descriptor.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
     if err not in CONNECT_SUCCESS:
         raise socket.error(err, errno.errorcode[err])
+
 
 def socket_accept(descriptor):
     """
@@ -56,7 +60,7 @@ def socket_accept(descriptor):
         raise
 
 
-if sys.platform[:3]=="win":
+if sys.platform[:3] == "win":
     # winsock sometimes throws ENOTCONN
     SOCKET_BLOCKING = set((errno.EWOULDBLOCK,))
     SOCKET_CLOSED = set((errno.ECONNRESET, errno.ENOTCONN, errno.ESHUTDOWN))
@@ -124,7 +128,7 @@ class GreenSocket(object):
             self._timeout = fd.gettimeout() or socket.getdefaulttimeout()
         except AttributeError:
             self._timeout = socket.getdefaulttimeout()
-        
+
         set_nonblocking(fd)
         self.fd = fd
         # when client calls setblocking(0) or settimeout(0) the socket must
@@ -157,7 +161,7 @@ class GreenSocket(object):
                 set_nonblocking(client)
                 return type(self)(client), addr
             trampoline(fd, read=True, timeout=self.gettimeout(),
-                           timeout_exc=socket.timeout("timed out"))
+                timeout_exc=socket.timeout("timed out"))
 
     def connect(self, address):
         if self.act_non_blocking:
@@ -174,7 +178,7 @@ class GreenSocket(object):
                     return
                 if time.time() >= end:
                     raise socket.timeout("timed out")
-                trampoline(fd, write=True, timeout=end-time.time(),
+                trampoline(fd, write=True, timeout=end - time.time(),
                         timeout_exc=socket.timeout("timed out"))
                 socket_checkerr(fd)
 
@@ -197,7 +201,7 @@ class GreenSocket(object):
                         return 0
                     if time.time() >= end:
                         raise socket.timeout(errno.EAGAIN)
-                    trampoline(fd, write=True, timeout=end-time.time(),
+                    trampoline(fd, write=True, timeout=end - time.time(),
                             timeout_exc=socket.timeout(errno.EAGAIN))
                     socket_checkerr(fd)
                 except socket.error, ex:
@@ -232,9 +236,9 @@ class GreenSocket(object):
                     return ''
                 else:
                     raise
-            trampoline(fd, 
-                read=True, 
-                timeout=self.gettimeout(), 
+            trampoline(fd,
+                read=True,
+                timeout=self.gettimeout(),
                 timeout_exc=socket.timeout("timed out"))
 
     def recvfrom(self, *args):
@@ -316,6 +320,7 @@ class GreenSocket(object):
     def gettimeout(self):
         return self._timeout
 
+
 class _SocketDuckForFd(object):
     """ Class implementing all socket method used by _fileobject in cooperative manner using low level os I/O calls."""
     def __init__(self, fileno):
@@ -348,7 +353,7 @@ class _SocketDuckForFd(object):
             if get_errno(e) != errno.EAGAIN:
                 raise IOError(*e.args)
             total_sent = 0
-        while total_sent <len_data:
+        while total_sent < len_data:
             trampoline(self, write=True)
             try:
                 total_sent += os_write(fileno, data[total_sent:])
@@ -363,11 +368,13 @@ class _SocketDuckForFd(object):
             # os.close may fail if __init__ didn't complete (i.e file dscriptor passed to popen was invalid
             pass
 
-    def __repr__(self):  
+    def __repr__(self):
         return "%s:%d" % (self.__class__.__name__, self._fileno)
+
 
 def _operationOnClosedFile(*args, **kwargs):
     raise ValueError("I/O operation on closed file")
+
 
 class GreenPipe(_fileobject):
     """
@@ -387,7 +394,7 @@ class GreenPipe(_fileobject):
 
         if isinstance(f, basestring):
             f = open(f, mode, 0)
- 
+
         if isinstance(f, int):
             fileno = f
             self._name = "<fd:%d>" % fileno
@@ -404,7 +411,8 @@ class GreenPipe(_fileobject):
         self.softspace = 0
 
     @property
-    def name(self): return self._name
+    def name(self):
+        return self._name
 
     def __repr__(self):
         return "<%s %s %r, mode %r at 0x%x>" % (
@@ -412,7 +420,7 @@ class GreenPipe(_fileobject):
             self.__class__.__name__,
             self.name,
             self.mode,
-            (id(self) < 0) and (sys.maxint +id(self)) or id(self))
+            (id(self) < 0) and (sys.maxint + id(self)) or id(self))
 
     def close(self):
         super(GreenPipe, self).close()
@@ -432,7 +440,7 @@ class GreenPipe(_fileobject):
         return iterator(self)
 
     def readinto(self, buf):
-        data = self.read(len(buf)) #FIXME could it be done without allocating intermediate?
+        data = self.read(len(buf)) # FIXME could it be done without allocating intermediate?
         n = len(data)
         try:
             buf[:n] = data
@@ -450,7 +458,7 @@ class GreenPipe(_fileobject):
 
     def _clear_readahead_buf(self):
         len = self._get_readahead_len()
-        if len>0:
+        if len > 0:
             self.read(len)
 
     def tell(self):
@@ -462,7 +470,7 @@ class GreenPipe(_fileobject):
 
     def seek(self, offset, whence=0):
         self.flush()
-        if whence == 1 and offset==0: # tell synonym
+        if whence == 1 and offset == 0: # tell synonym
             return self.tell()
         if whence == 1: # adjust offset by what is read ahead
             offset -= self.get_readahead_len()
@@ -477,7 +485,7 @@ class GreenPipe(_fileobject):
     if getattr(file, "truncate", None): # not all OSes implement truncate
         def truncate(self, size=-1):
             self.flush()
-            if size ==-1:
+            if size == -1:
                 size = self.tell()
             try:
                 rv = os.ftruncate(self.fileno(), size)
@@ -534,4 +542,3 @@ def shutdown_safe(sock):
         # this will often be the case in an http server context
         if get_errno(e) != errno.ENOTCONN:
             raise
-
