@@ -1,0 +1,242 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Eventlet Documentation &mdash; Eventlet 0.11.0.dev documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.11.0.dev',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Eventlet 0.11.0.dev documentation" href="#" />
+    <link rel="next" title="Basic Usage" href="basic_usage.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="basic_usage.html" title="Basic Usage"
+             accesskey="N">next</a> |</li>
+        <li><a href="#">Eventlet 0.11.0.dev documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="eventlet-documentation">
+<h1>Eventlet Documentation<a class="headerlink" href="#eventlet-documentation" title="Permalink to this headline">¶</a></h1>
+<p>Code talks!  This is a simple web crawler that fetches a bunch of urls concurrently:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">urls</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;http://www.google.com/intl/en_ALL/images/logo.gif&quot;</span><span class="p">,</span>
+     <span class="s">&quot;https://wiki.secondlife.com/w/images/secondlife.jpg&quot;</span><span class="p">,</span>
+     <span class="s">&quot;http://us.i1.yimg.com/us.yimg.com/i/ww/beta/y3.gif&quot;</span><span class="p">]</span>
+
+<span class="kn">import</span> <span class="nn">eventlet</span>
+<span class="kn">from</span> <span class="nn">eventlet.green</span> <span class="kn">import</span> <span class="n">urllib2</span>
+
+<span class="k">def</span> <span class="nf">fetch</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
+  <span class="k">return</span> <span class="n">urllib2</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+
+<span class="n">pool</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">GreenPool</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">body</span> <span class="ow">in</span> <span class="n">pool</span><span class="o">.</span><span class="n">imap</span><span class="p">(</span><span class="n">fetch</span><span class="p">,</span> <span class="n">urls</span><span class="p">):</span>
+  <span class="k">print</span> <span class="s">&quot;got body&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="contents">
+<h1>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="basic_usage.html">Basic Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="basic_usage.html#primary-api">Primary API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="basic_usage.html#greenthread-spawn">Greenthread Spawn</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basic_usage.html#greenthread-control">Greenthread Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basic_usage.html#patching-functions">Patching Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basic_usage.html#network-convenience-functions">Network Convenience Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="design_patterns.html">Design Patterns</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="design_patterns.html#client-pattern">Client Pattern</a></li>
+<li class="toctree-l2"><a class="reference internal" href="design_patterns.html#server-pattern">Server Pattern</a></li>
+<li class="toctree-l2"><a class="reference internal" href="design_patterns.html#dispatch-pattern">Dispatch Pattern</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="patching.html">Greening The World</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="patching.html#import-green">Import Green</a></li>
+<li class="toctree-l2"><a class="reference internal" href="patching.html#monkeypatching-the-standard-library">Monkeypatching the Standard Library</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#web-crawler">Web Crawler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#wsgi-server">WSGI Server</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#echo-server">Echo Server</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#socket-connect">Socket Connect</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#multi-user-chat-server">Multi-User Chat Server</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#feed-scraper">Feed Scraper</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#port-forwarder">Port Forwarder</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#recursive-web-crawler">Recursive Web Crawler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#producer-consumer-web-crawler">Producer Consumer Web Crawler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#websocket-server-example">Websocket Server Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#websocket-multi-user-chat-example">Websocket Multi-User Chat Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ssl.html">Using SSL With Eventlet</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ssl.html#with-python-2-6">With Python 2.6</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ssl.html#with-python-2-5-or-earlier">With Python 2.5 or Earlier</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ssl.html#pyopenssl">PyOpenSSL</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="threading.html">Threads</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="threading.html#tpool-simple-thread-pool">Tpool - Simple thread pool</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="zeromq.html">Zeromq</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="zeromq.html#what-is-omq">What is ØMQ?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="zeromq.html#api-documentation">API documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="hubs.html">Understanding Eventlet Hubs</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="hubs.html#how-the-hubs-work">How the Hubs Work</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hubs.html#more-hub-related-functions">More Hub-Related Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="testing.html">Testing Eventlet</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="testing.html#doctests">Doctests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html#standard-library-tests">Standard Library Tests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html#testing-eventlet-hubs">Testing Eventlet Hubs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html#writing-tests">Writing Tests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html#coverage">Coverage</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="environment.html">Environment Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Module Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/backdoor.html"><tt class="docutils literal"><span class="pre">backdoor</span></tt> &#8211; Python interactive interpreter within a running process</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/corolocal.html"><tt class="docutils literal"><span class="pre">corolocal</span></tt> &#8211; Coroutine local storage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/debug.html"><tt class="docutils literal"><span class="pre">debug</span></tt> &#8211; Debugging tools for Eventlet</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/db_pool.html"><tt class="docutils literal"><span class="pre">db_pool</span></tt> &#8211; DBAPI 2 database connection pooling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/event.html"><tt class="docutils literal"><span class="pre">event</span></tt> &#8211; Cross-greenthread primitive</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/greenpool.html"><tt class="docutils literal"><span class="pre">greenpool</span></tt> &#8211; Green Thread Pools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/greenthread.html"><tt class="docutils literal"><span class="pre">greenthread</span></tt> &#8211; Green Thread Implementation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/pools.html"><tt class="docutils literal"><span class="pre">pools</span></tt> - Generic pools of resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/queue.html"><tt class="docutils literal"><span class="pre">queue</span></tt> &#8211; Queue class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/semaphore.html"><tt class="docutils literal"><span class="pre">semaphore</span></tt> &#8211; Semaphore classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/timeout.html"><tt class="docutils literal"><span class="pre">timeout</span></tt> &#8211; Universal Timeouts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/websocket.html"><tt class="docutils literal"><span class="pre">websocket</span></tt> &#8211; Websocket Server</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/wsgi.html"><tt class="docutils literal"><span class="pre">wsgi</span></tt> &#8211; WSGI server</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/zmq.html"><tt class="docutils literal"><span class="pre">eventlet.green.zmq</span></tt> &#8211; ØMQ support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/zmq.html#zmq-the-pyzmq-omq-python-bindings"><tt class="docutils literal"><span class="pre">zmq</span></tt> &#8211; The pyzmq ØMQ python bindings</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="authors.html">Authors</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="authors.html#maintainer-i-e-who-to-hassle-if-you-find-bugs">Maintainer (i.e., Who To Hassle If You Find Bugs)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="authors.html#original-authors">Original Authors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="authors.html#contributors">Contributors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="authors.html#linden-lab-contributors">Linden Lab Contributors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="authors.html#thanks-to">Thanks To</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="history.html">History</a></li>
+</ul>
+</div>
+<div class="section" id="license">
+<h2>License<a class="headerlink" href="#license" title="Permalink to this headline">¶</a></h2>
+<p>Eventlet is made available under the terms of the open source <a class="reference external" href="http://www.opensource.org/licenses/mit-license.php">MIT license</a></p>
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><em>Index</em></a></li>
+<li><a class="reference internal" href="py-modindex.html"><em>Module Index</em></a></li>
+<li><a class="reference internal" href="search.html"><em>Search Page</em></a></li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Eventlet Documentation</a></li>
+<li><a class="reference internal" href="#contents">Contents</a><ul>
+<li><a class="reference internal" href="#license">License</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+
+  <h4>Next topic</h4>
+  <p class="topless"><a href="basic_usage.html"
+                        title="next chapter">Basic Usage</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/index.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="basic_usage.html" title="Basic Usage"
+             >next</a> |</li>
+        <li><a href="#">Eventlet 0.11.0.dev documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2005-2010, Eventlet Contributors.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

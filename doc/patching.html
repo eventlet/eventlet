@@ -1,0 +1,191 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Greening The World &mdash; Eventlet 0.11.0.dev documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.11.0.dev',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Eventlet 0.11.0.dev documentation" href="index.html" />
+    <link rel="next" title="Examples" href="examples.html" />
+    <link rel="prev" title="Design Patterns" href="design_patterns.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="examples.html" title="Examples"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="design_patterns.html" title="Design Patterns"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Eventlet 0.11.0.dev documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="greening-the-world">
+<h1>Greening The World<a class="headerlink" href="#greening-the-world" title="Permalink to this headline">¶</a></h1>
+<p>One of the challenges of writing a library like Eventlet is that the built-in networking libraries don&#8217;t natively support the sort of cooperative yielding that we need.  What we must do instead is patch standard library modules in certain key places so that they do cooperatively yield.  We&#8217;ve in the past considered doing this automatically upon importing Eventlet, but have decided against that course of action because it is un-Pythonic to change the behavior of module A simply by importing module B.</p>
+<p>Therefore, the application using Eventlet must explicitly green the world for itself, using one or both of the convenient methods provided.</p>
+<div class="section" id="import-green">
+<span id="id1"></span><h2>Import Green<a class="headerlink" href="#import-green" title="Permalink to this headline">¶</a></h2>
+<p>The first way of greening an application is to import networking-related libraries from the <tt class="docutils literal"><span class="pre">eventlet.green</span></tt> package.  It contains libraries that have the same interfaces as common standard ones, but they are modified to behave well with green threads.  Using this method is a good engineering practice, because the true dependencies are apparent in every file:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">eventlet.green</span> <span class="kn">import</span> <span class="n">socket</span>
+<span class="kn">from</span> <span class="nn">eventlet.green</span> <span class="kn">import</span> <span class="n">threading</span>
+<span class="kn">from</span> <span class="nn">eventlet.green</span> <span class="kn">import</span> <span class="n">asyncore</span>
+</pre></div>
+</div>
+<p>This works best if every library can be imported green in this manner.  If <tt class="docutils literal"><span class="pre">eventlet.green</span></tt> lacks a module (for example, non-python-standard modules), then <a class="reference internal" href="#eventlet.patcher.import_patched" title="eventlet.patcher.import_patched"><tt class="xref py py-func docutils literal"><span class="pre">import_patched()</span></tt></a> function can come to the rescue.  It is a replacement for the builtin import statement that greens any module on import.</p>
+<dl class="function">
+<dt id="eventlet.patcher.import_patched">
+<tt class="descclassname">eventlet.patcher.</tt><tt class="descname">import_patched</tt><big>(</big><em>module_name</em>, <em>*additional_modules</em>, <em>**kw_additional_modules</em><big>)</big><a class="headerlink" href="#eventlet.patcher.import_patched" title="Permalink to this definition">¶</a></dt>
+<dd><p>Imports a module in a greened manner, so that the module&#8217;s use of networking libraries like socket will use Eventlet&#8217;s green versions instead.  The only required argument is the name of the module to be imported:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">eventlet</span>
+<span class="n">httplib2</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">import_patched</span><span class="p">(</span><span class="s">&#39;httplib2&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Under the hood, it works by temporarily swapping out the &#8220;normal&#8221; versions of the libraries in sys.modules for an eventlet.green equivalent.  When the import of the to-be-patched module completes, the state of sys.modules is restored.  Therefore, if the patched module contains the statement &#8216;import socket&#8217;, import_patched will have it reference eventlet.green.socket.  One weakness of this approach is that it doesn&#8217;t work for late binding (i.e. imports that happen during runtime).  Late binding of imports is fortunately rarely done (it&#8217;s slow and against <a class="reference external" href="http://www.python.org/dev/peps/pep-0008/">PEP-8</a>), so in most cases import_patched will work just fine.</p>
+<p>One other aspect of import_patched is the ability to specify exactly which modules are patched.  Doing so may provide a slight performance benefit since only the needed modules are imported, whereas import_patched with no arguments imports a bunch of modules in case they&#8217;re needed.  The <em>additional_modules</em> and <em>kw_additional_modules</em> arguments are both sequences of name/module pairs.  Either or both can be used:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">eventlet.green</span> <span class="kn">import</span> <span class="n">socket</span>
+<span class="kn">from</span> <span class="nn">eventlet.green</span> <span class="kn">import</span> <span class="n">SocketServer</span>
+<span class="n">BaseHTTPServer</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">import_patched</span><span class="p">(</span><span class="s">&#39;BaseHTTPServer&#39;</span><span class="p">,</span>
+                        <span class="p">(</span><span class="s">&#39;socket&#39;</span><span class="p">,</span> <span class="n">socket</span><span class="p">),</span>
+                        <span class="p">(</span><span class="s">&#39;SocketServer&#39;</span><span class="p">,</span> <span class="n">SocketServer</span><span class="p">))</span>
+<span class="n">BaseHTTPServer</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">import_patched</span><span class="p">(</span><span class="s">&#39;BaseHTTPServer&#39;</span><span class="p">,</span>
+                        <span class="n">socket</span><span class="o">=</span><span class="n">socket</span><span class="p">,</span> <span class="n">SocketServer</span><span class="o">=</span><span class="n">SocketServer</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="monkeypatching-the-standard-library">
+<span id="monkey-patch"></span><h2>Monkeypatching the Standard Library<a class="headerlink" href="#monkeypatching-the-standard-library" title="Permalink to this headline">¶</a></h2>
+<p>The other way of greening an application is simply to monkeypatch the standard
+library.  This has the disadvantage of appearing quite magical, but the advantage of avoiding the late-binding problem.</p>
+<dl class="function">
+<dt id="eventlet.patcher.monkey_patch">
+<tt class="descclassname">eventlet.patcher.</tt><tt class="descname">monkey_patch</tt><big>(</big><em>os=None</em>, <em>select=None</em>, <em>socket=None</em>, <em>thread=None</em>, <em>time=None</em>, <em>psycopg=None</em><big>)</big><a class="headerlink" href="#eventlet.patcher.monkey_patch" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function monkeypatches the key system modules by replacing their key elements with green equivalents.  If no arguments are specified, everything is patched:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">eventlet</span>
+<span class="n">eventlet</span><span class="o">.</span><span class="n">monkey_patch</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The keyword arguments afford some control over which modules are patched, in case that&#8217;s important.  Most patch the single module of the same name (e.g. time=True means that the time module is patched [time.sleep is patched by eventlet.sleep]).  The exceptions to this rule are <em>socket</em>, which also patches the <a class="reference external" href="http://docs.python.org/library/ssl.html#ssl" title="(in Python v2.7)"><tt class="xref py py-mod docutils literal"><span class="pre">ssl</span></tt></a> module if present; and <em>thread</em>, which patches <a class="reference external" href="http://docs.python.org/library/thread.html#thread" title="(in Python v2.7)"><tt class="xref py py-mod docutils literal"><span class="pre">thread</span></tt></a>, <a class="reference external" href="http://docs.python.org/library/threading.html#threading" title="(in Python v2.7)"><tt class="xref py py-mod docutils literal"><span class="pre">threading</span></tt></a>, and <a class="reference external" href="http://docs.python.org/library/queue.html#Queue" title="(in Python v2.7)"><tt class="xref py py-mod docutils literal"><span class="pre">Queue</span></tt></a>.</p>
+<p>Here&#8217;s an example of using monkey_patch to patch only a few modules:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">eventlet</span>
+<span class="n">eventlet</span><span class="o">.</span><span class="n">monkey_patch</span><span class="p">(</span><span class="n">socket</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">select</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>It is important to call <a class="reference internal" href="#eventlet.patcher.monkey_patch" title="eventlet.patcher.monkey_patch"><tt class="xref py py-func docutils literal"><span class="pre">monkey_patch()</span></tt></a> as early in the lifetime of the application as possible.  Try to do it as one of the first lines in the main module.  The reason for this is that sometimes there is a class that inherits from a class that needs to be greened &#8211; e.g. a class that inherits from socket.socket &#8211; and inheritance is done at import time, so therefore the monkeypatching should happen before the derived class is defined.      It&#8217;s safe to call monkey_patch multiple times.</p>
+<p>The psycopg monkeypatching relies on Daniele Varrazzo&#8217;s green psycopg2 branch; see <a class="reference external" href="https://lists.secondlife.com/pipermail/eventletdev/2010-April/000800.html">the announcement</a> for more information.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="eventlet.patcher.is_monkey_patched">
+<tt class="descclassname">eventlet.patcher.</tt><tt class="descname">is_monkey_patched</tt><big>(</big><em>module</em><big>)</big><a class="headerlink" href="#eventlet.patcher.is_monkey_patched" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether or not the specified module is currently monkeypatched. <em>module</em> can either be the module itself or the module&#8217;s name.</p>
+<blockquote>
+<div>Based entirely off the name of the module, so if you import a module some other way than with the import keyword (including <a class="reference internal" href="#eventlet.patcher.import_patched" title="eventlet.patcher.import_patched"><tt class="xref py py-func docutils literal"><span class="pre">import_patched()</span></tt></a>), is_monkey_patched might not be correct about that particular module.</div></blockquote>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Greening The World</a><ul>
+<li><a class="reference internal" href="#import-green">Import Green</a></li>
+<li><a class="reference internal" href="#monkeypatching-the-standard-library">Monkeypatching the Standard Library</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="design_patterns.html"
+                        title="previous chapter">Design Patterns</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="examples.html"
+                        title="next chapter">Examples</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/patching.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="examples.html" title="Examples"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="design_patterns.html" title="Design Patterns"
+             >previous</a> |</li>
+        <li><a href="index.html">Eventlet 0.11.0.dev documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2005-2010, Eventlet Contributors.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

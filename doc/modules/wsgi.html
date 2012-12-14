@@ -1,0 +1,231 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>wsgi – WSGI server &mdash; Eventlet 0.11.0.dev documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.11.0.dev',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Eventlet 0.11.0.dev documentation" href="../index.html" />
+    <link rel="up" title="Module Reference" href="../modules.html" />
+    <link rel="next" title="eventlet.green.zmq – ØMQ support" href="zmq.html" />
+    <link rel="prev" title="websocket – Websocket Server" href="websocket.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="zmq.html" title="eventlet.green.zmq – ØMQ support"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="websocket.html" title="websocket – Websocket Server"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">Eventlet 0.11.0.dev documentation</a> &raquo;</li>
+          <li><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="wsgi-wsgi-server">
+<h1><tt class="xref py py-mod docutils literal"><span class="pre">wsgi</span></tt> &#8211; WSGI server<a class="headerlink" href="#wsgi-wsgi-server" title="Permalink to this headline">¶</a></h1>
+<p>The wsgi module provides a simple and easy way to start an event-driven
+<a class="reference external" href="http://wsgi.org/wsgi/">WSGI</a> server.  This can serve as an embedded
+web server in an application, or as the basis for a more full-featured web
+server package.  One such package is <a class="reference external" href="http://pypi.python.org/pypi/Spawning/">Spawning</a>.</p>
+<p>To launch a wsgi server, simply create a socket and call <a class="reference internal" href="#eventlet.wsgi.server" title="eventlet.wsgi.server"><tt class="xref py py-func docutils literal"><span class="pre">eventlet.wsgi.server()</span></tt></a> with it:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">wsgi</span>
+<span class="kn">import</span> <span class="nn">eventlet</span>
+
+<span class="k">def</span> <span class="nf">hello_world</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+    <span class="n">start_response</span><span class="p">(</span><span class="s">&#39;200 OK&#39;</span><span class="p">,</span> <span class="p">[(</span><span class="s">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="s">&#39;text/plain&#39;</span><span class="p">)])</span>
+    <span class="k">return</span> <span class="p">[</span><span class="s">&#39;Hello, World!</span><span class="se">\r\n</span><span class="s">&#39;</span><span class="p">]</span>
+
+<span class="n">wsgi</span><span class="o">.</span><span class="n">server</span><span class="p">(</span><span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="mi">8090</span><span class="p">)),</span> <span class="n">hello_world</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You can find a slightly more elaborate version of this code in the file
+<tt class="docutils literal"><span class="pre">examples/wsgi.py</span></tt>.</p>
+<span class="target" id="module-eventlet.wsgi"></span><dl class="function">
+<dt id="eventlet.wsgi.server">
+<tt class="descclassname">eventlet.wsgi.</tt><tt class="descname">server</tt><big>(</big><em>sock</em>, <em>site</em>, <em>log=None</em>, <em>environ=None</em>, <em>max_size=None</em>, <em>max_http_version='HTTP/1.1'</em>, <em>protocol=&lt;class eventlet.wsgi.HttpProtocol at 0x48d40b8&gt;</em>, <em>server_event=None</em>, <em>minimum_chunk_size=None</em>, <em>log_x_forwarded_for=True</em>, <em>custom_pool=None</em>, <em>keepalive=True</em>, <em>log_output=True</em>, <em>log_format='%(client_ip)s - - [%(date_time)s] &quot;%(request_line)s&quot; %(status_code)s %(body_length)s %(wall_seconds).6f'</em>, <em>url_length_limit=8192</em>, <em>debug=True</em><big>)</big><a class="headerlink" href="#eventlet.wsgi.server" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start up a wsgi server handling requests from the supplied server
+socket.  This function loops forever.  The <em>sock</em> object will be closed after server exits,
+but the underlying file descriptor will remain open, so if you have a dup() of <em>sock</em>,
+it will remain usable.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>sock</strong> &#8211; Server socket, must be already bound to a port and listening.</li>
+<li><strong>site</strong> &#8211; WSGI application function.</li>
+<li><strong>log</strong> &#8211; File-like object that logs should be written to.  If not specified, sys.stderr is used.</li>
+<li><strong>environ</strong> &#8211; Additional parameters that go into the environ dictionary of every request.</li>
+<li><strong>max_size</strong> &#8211; Maximum number of client connections opened at any time by this server.</li>
+<li><strong>max_http_version</strong> &#8211; Set to &#8220;HTTP/1.0&#8221; to make the server pretend it only supports HTTP 1.0.  This can help with applications or clients that don&#8217;t behave properly using HTTP 1.1.</li>
+<li><strong>protocol</strong> &#8211; Protocol class.  Deprecated.</li>
+<li><strong>server_event</strong> &#8211; Used to collect the Server object.  Deprecated.</li>
+<li><strong>minimum_chunk_size</strong> &#8211; Minimum size in bytes for http chunks.  This  can be used to improve performance of applications which yield many small strings, though using it technically violates the WSGI spec.</li>
+<li><strong>log_x_forwarded_for</strong> &#8211; If True (the default), logs the contents of the x-forwarded-for header in addition to the actual client ip address in the &#8216;client_ip&#8217; field of the log line.</li>
+<li><strong>custom_pool</strong> &#8211; A custom GreenPool instance which is used to spawn client green threads.  If this is supplied, max_size is ignored.</li>
+<li><strong>keepalive</strong> &#8211; If set to False, disables keepalives on the server; all connections will be closed after serving one request.</li>
+<li><strong>log_output</strong> &#8211; A Boolean indicating if the server will log data or not.</li>
+<li><strong>log_format</strong> &#8211; A python format string that is used as the template to generate log lines.  The following values can be formatted into it: client_ip, date_time, request_line, status_code, body_length, wall_seconds.  The default is a good example of how to use it.</li>
+<li><strong>url_length_limit</strong> &#8211; A maximum allowed length of the request url. If exceeded, 414 error is returned.</li>
+<li><strong>debug</strong> &#8211; True if the server should send exception tracebacks to the clients on 500 errors.  If False, the server will respond with empty bodies.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="eventlet.wsgi.format_date_time">
+<tt class="descclassname">eventlet.wsgi.</tt><tt class="descname">format_date_time</tt><big>(</big><em>timestamp</em><big>)</big><a class="headerlink" href="#eventlet.wsgi.format_date_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Formats a unix timestamp into an HTTP standard string.</p>
+</dd></dl>
+
+<div class="section" id="ssl">
+<span id="wsgi-ssl"></span><h2>SSL<a class="headerlink" href="#ssl" title="Permalink to this headline">¶</a></h2>
+<p>Creating a secure server is only slightly more involved than the base example.  All that&#8217;s needed is to pass an SSL-wrapped socket to the <a class="reference internal" href="#eventlet.wsgi.server" title="eventlet.wsgi.server"><tt class="xref py py-func docutils literal"><span class="pre">server()</span></tt></a> method:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">wsgi</span><span class="o">.</span><span class="n">server</span><span class="p">(</span><span class="n">eventlet</span><span class="o">.</span><span class="n">wrap_ssl</span><span class="p">(</span><span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="mi">8090</span><span class="p">)),</span>
+                              <span class="n">certfile</span><span class="o">=</span><span class="s">&#39;cert.crt&#39;</span><span class="p">,</span>
+                              <span class="n">keyfile</span><span class="o">=</span><span class="s">&#39;private.key&#39;</span><span class="p">,</span>
+                              <span class="n">server_side</span><span class="o">=</span><span class="bp">True</span><span class="p">),</span>
+            <span class="n">hello_world</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Applications can detect whether they are inside a secure server by the value of the <tt class="docutils literal"><span class="pre">env['wsgi.url_scheme']</span></tt> environment variable.</p>
+</div>
+<div class="section" id="non-standard-extension-to-support-post-hooks">
+<h2>Non-Standard Extension to Support Post Hooks<a class="headerlink" href="#non-standard-extension-to-support-post-hooks" title="Permalink to this headline">¶</a></h2>
+<p>Eventlet&#8217;s WSGI server supports a non-standard extension to the WSGI
+specification where <tt class="samp docutils literal"><span class="pre">env['eventlet.posthooks']</span></tt> contains an array of
+<cite>post hooks</cite> that will be called after fully sending a response. Each post hook
+is a tuple of <tt class="samp docutils literal"><span class="pre">(func,</span> <span class="pre">args,</span> <span class="pre">kwargs)</span></tt> and the <cite>func</cite> will be called with
+the WSGI environment dictionary, followed by the <cite>args</cite> and then the <cite>kwargs</cite>
+in the post hook.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">wsgi</span>
+<span class="kn">import</span> <span class="nn">eventlet</span>
+
+<span class="k">def</span> <span class="nf">hook</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">arg1</span><span class="p">,</span> <span class="n">arg2</span><span class="p">,</span> <span class="n">kwarg3</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">kwarg4</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">print</span> <span class="s">&#39;Hook called: </span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">arg1</span><span class="p">,</span> <span class="n">arg2</span><span class="p">,</span> <span class="n">kwarg3</span><span class="p">,</span> <span class="n">kwarg4</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">hello_world</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+    <span class="n">env</span><span class="p">[</span><span class="s">&#39;eventlet.posthooks&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">hook</span><span class="p">,</span> <span class="p">(</span><span class="s">&#39;arg1&#39;</span><span class="p">,</span> <span class="s">&#39;arg2&#39;</span><span class="p">),</span> <span class="p">{</span><span class="s">&#39;kwarg3&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s">&#39;kwarg4&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">}))</span>
+    <span class="n">start_response</span><span class="p">(</span><span class="s">&#39;200 OK&#39;</span><span class="p">,</span> <span class="p">[(</span><span class="s">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="s">&#39;text/plain&#39;</span><span class="p">)])</span>
+    <span class="k">return</span> <span class="p">[</span><span class="s">&#39;Hello, World!</span><span class="se">\r\n</span><span class="s">&#39;</span><span class="p">]</span>
+
+<span class="n">wsgi</span><span class="o">.</span><span class="n">server</span><span class="p">(</span><span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="mi">8090</span><span class="p">)),</span> <span class="n">hello_world</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The above code will print the WSGI environment and the other passed function
+arguments for every request processed.</p>
+<p>Post hooks are useful when code needs to be executed after a response has been
+fully sent to the client (or when the client disconnects early). One example is
+for more accurate logging of bandwidth used, as client disconnects use less
+bandwidth than the actual Content-Length.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#"><tt class="docutils literal"><span class="pre">wsgi</span></tt> &#8211; WSGI server</a><ul>
+<li><a class="reference internal" href="#ssl">SSL</a></li>
+<li><a class="reference internal" href="#non-standard-extension-to-support-post-hooks">Non-Standard Extension to Support Post Hooks</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="websocket.html"
+                        title="previous chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">websocket</span></tt> &#8211; Websocket Server</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="zmq.html"
+                        title="next chapter"><tt class="docutils literal docutils literal"><span class="pre">eventlet.green.zmq</span></tt> &#8211; ØMQ support</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/modules/wsgi.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="zmq.html" title="eventlet.green.zmq – ØMQ support"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="websocket.html" title="websocket – Websocket Server"
+             >previous</a> |</li>
+        <li><a href="../index.html">Eventlet 0.11.0.dev documentation</a> &raquo;</li>
+          <li><a href="../modules.html" >Module Reference</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2005-2010, Eventlet Contributors.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

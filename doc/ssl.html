@@ -1,0 +1,175 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Using SSL With Eventlet &mdash; Eventlet 0.11.0.dev documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.11.0.dev',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Eventlet 0.11.0.dev documentation" href="index.html" />
+    <link rel="next" title="Threads" href="threading.html" />
+    <link rel="prev" title="Examples" href="examples.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="threading.html" title="Threads"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="examples.html" title="Examples"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Eventlet 0.11.0.dev documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="using-ssl-with-eventlet">
+<h1>Using SSL With Eventlet<a class="headerlink" href="#using-ssl-with-eventlet" title="Permalink to this headline">¶</a></h1>
+<p>Eventlet makes it easy to use non-blocking SSL sockets.  If you&#8217;re using Python 2.6 or later, you&#8217;re all set, eventlet wraps the built-in ssl module.  If on Python 2.5 or 2.4, you have to install <a class="reference external" href="https://launchpad.net/pyopenssl">pyOpenSSL</a> to use eventlet.</p>
+<p>In either case, the the <tt class="docutils literal"><span class="pre">green</span></tt> modules handle SSL sockets transparently, just like their standard counterparts.  As an example, <tt class="xref py py-mod docutils literal"><span class="pre">eventlet.green.urllib2</span></tt> can be used to fetch https urls in as non-blocking a fashion as you please:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">eventlet.green</span> <span class="kn">import</span> <span class="n">urllib2</span>
+<span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">coros</span>
+<span class="n">bodies</span> <span class="o">=</span> <span class="p">[</span><span class="n">coros</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">urllib2</span><span class="o">.</span><span class="n">urlopen</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
+     <span class="k">for</span> <span class="n">url</span> <span class="ow">in</span> <span class="p">(</span><span class="s">&quot;https://secondlife.com&quot;</span><span class="p">,</span><span class="s">&quot;https://google.com&quot;</span><span class="p">)]</span>
+<span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">bodies</span><span class="p">:</span>
+    <span class="k">print</span> <span class="n">b</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="section" id="with-python-2-6">
+<h2>With Python 2.6<a class="headerlink" href="#with-python-2-6" title="Permalink to this headline">¶</a></h2>
+<p>To use ssl sockets directly in Python 2.6, use <tt class="xref py py-mod docutils literal"><span class="pre">eventlet.green.ssl</span></tt>, which is a non-blocking wrapper around the standard Python <a class="reference external" href="http://docs.python.org/library/ssl.html#ssl" title="(in Python v2.7)"><tt class="xref py py-mod docutils literal"><span class="pre">ssl</span></tt></a> module, and which has the same interface.  See the standard documentation for instructions on use.</p>
+</div>
+<div class="section" id="with-python-2-5-or-earlier">
+<h2>With Python 2.5 or Earlier<a class="headerlink" href="#with-python-2-5-or-earlier" title="Permalink to this headline">¶</a></h2>
+<p>Prior to Python 2.6, there is no <a class="reference external" href="http://docs.python.org/library/ssl.html#ssl" title="(in Python v2.7)"><tt class="xref py py-mod docutils literal"><span class="pre">ssl</span></tt></a>, so SSL support is much weaker.  Eventlet relies on pyOpenSSL to implement its SSL support on these older versions, so be sure to install pyOpenSSL, or you&#8217;ll get an ImportError whenever your system tries to make an SSL connection.</p>
+<p>Once pyOpenSSL is installed, you can then use the <tt class="docutils literal"><span class="pre">eventlet.green</span></tt> modules, like <tt class="xref py py-mod docutils literal"><span class="pre">eventlet.green.httplib</span></tt> to fetch https urls.  You can also use <tt class="xref py py-func docutils literal"><span class="pre">eventlet.green.socket.ssl()</span></tt>, which is a nonblocking wrapper for <tt class="xref py py-func docutils literal"><span class="pre">socket.ssl()</span></tt>.</p>
+</div>
+<div class="section" id="pyopenssl">
+<h2>PyOpenSSL<a class="headerlink" href="#pyopenssl" title="Permalink to this headline">¶</a></h2>
+<p><tt class="xref py py-mod docutils literal"><span class="pre">eventlet.green.OpenSSL</span></tt> has exactly the same interface as <a class="reference external" href="https://launchpad.net/pyopenssl">pyOpenSSL</a> <a class="reference external" href="http://pyopenssl.sourceforge.net/pyOpenSSL.html/">(docs)</a>, and works in all versions of Python.  This module is much more powerful than <tt class="xref py py-func docutils literal"><span class="pre">socket.ssl()</span></tt>, and may have some advantages over <a class="reference external" href="http://docs.python.org/library/ssl.html#ssl" title="(in Python v2.7)"><tt class="xref py py-mod docutils literal"><span class="pre">ssl</span></tt></a>, depending on your needs.</p>
+<p>Here&#8217;s an example of a server:</p>
+<div class="highlight-python"><pre>from eventlet.green import socket
+from eventlet.green.OpenSSL import SSL
+
+# insecure context, only for example purposes
+context = SSL.Context(SSL.SSLv23_METHOD)
+context.set_verify(SSL.VERIFY_NONE, lambda *x: True))
+
+# create underlying green socket and wrap it in ssl
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+connection = SSL.Connection(context, sock)
+
+# configure as server
+connection.set_accept_state()
+connection.bind(('127.0.0.1', 80443))
+connection.listen(50)
+
+# accept one client connection then close up shop
+client_conn, addr = connection.accept()
+print client_conn.read(100)
+client_conn.shutdown()
+client_conn.close()
+connection.close()</pre>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Using SSL With Eventlet</a><ul>
+<li><a class="reference internal" href="#with-python-2-6">With Python 2.6</a></li>
+<li><a class="reference internal" href="#with-python-2-5-or-earlier">With Python 2.5 or Earlier</a></li>
+<li><a class="reference internal" href="#pyopenssl">PyOpenSSL</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="examples.html"
+                        title="previous chapter">Examples</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="threading.html"
+                        title="next chapter">Threads</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ssl.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="threading.html" title="Threads"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="examples.html" title="Examples"
+             >previous</a> |</li>
+        <li><a href="index.html">Eventlet 0.11.0.dev documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2005-2010, Eventlet Contributors.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

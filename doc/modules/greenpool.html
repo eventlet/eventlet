@@ -1,0 +1,240 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>greenpool – Green Thread Pools &mdash; Eventlet 0.11.0.dev documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.11.0.dev',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Eventlet 0.11.0.dev documentation" href="../index.html" />
+    <link rel="up" title="Module Reference" href="../modules.html" />
+    <link rel="next" title="greenthread – Green Thread Implementation" href="greenthread.html" />
+    <link rel="prev" title="event – Cross-greenthread primitive" href="event.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="greenthread.html" title="greenthread – Green Thread Implementation"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="event.html" title="event – Cross-greenthread primitive"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">Eventlet 0.11.0.dev documentation</a> &raquo;</li>
+          <li><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-eventlet.greenpool">
+<span id="greenpool-green-thread-pools"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">greenpool</span></tt> &#8211; Green Thread Pools<a class="headerlink" href="#module-eventlet.greenpool" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="eventlet.greenpool.GreenPool">
+<em class="property">class </em><tt class="descclassname">eventlet.greenpool.</tt><tt class="descname">GreenPool</tt><big>(</big><em>size=1000</em><big>)</big><a class="headerlink" href="#eventlet.greenpool.GreenPool" title="Permalink to this definition">¶</a></dt>
+<dd><p>The GreenPool class is a pool of green threads.</p>
+<dl class="method">
+<dt id="eventlet.greenpool.GreenPool.free">
+<tt class="descname">free</tt><big>(</big><big>)</big><a class="headerlink" href="#eventlet.greenpool.GreenPool.free" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the number of greenthreads available for use.</p>
+<p>If zero or less, the next call to <a class="reference internal" href="#eventlet.greenpool.GreenPool.spawn" title="eventlet.greenpool.GreenPool.spawn"><tt class="xref py py-meth docutils literal"><span class="pre">spawn()</span></tt></a> or <a class="reference internal" href="#eventlet.greenpool.GreenPool.spawn_n" title="eventlet.greenpool.GreenPool.spawn_n"><tt class="xref py py-meth docutils literal"><span class="pre">spawn_n()</span></tt></a> will
+block the calling greenthread until a slot becomes available.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventlet.greenpool.GreenPool.imap">
+<tt class="descname">imap</tt><big>(</big><em>function</em>, <em>*iterables</em><big>)</big><a class="headerlink" href="#eventlet.greenpool.GreenPool.imap" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is the same as <a class="reference external" href="http://docs.python.org/library/itertools.html#itertools.imap" title="(in Python v2.7)"><tt class="xref py py-func docutils literal"><span class="pre">itertools.imap()</span></tt></a>, and has the same
+concurrency and memory behavior as <a class="reference internal" href="#eventlet.greenpool.GreenPool.starmap" title="eventlet.greenpool.GreenPool.starmap"><tt class="xref py py-meth docutils literal"><span class="pre">starmap()</span></tt></a>.</p>
+<p>It&#8217;s quite convenient for, e.g., farming out jobs from a file:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">worker</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">do_something</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+<span class="n">pool</span> <span class="o">=</span> <span class="n">GreenPool</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">pool</span><span class="o">.</span><span class="n">imap</span><span class="p">(</span><span class="n">worker</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="s">&quot;filename&quot;</span><span class="p">,</span> <span class="s">&#39;r&#39;</span><span class="p">)):</span>
+    <span class="k">print</span> <span class="n">result</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventlet.greenpool.GreenPool.resize">
+<tt class="descname">resize</tt><big>(</big><em>new_size</em><big>)</big><a class="headerlink" href="#eventlet.greenpool.GreenPool.resize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Change the max number of greenthreads doing work at any given time.</p>
+<p>If resize is called when there are more than <em>new_size</em> greenthreads
+already working on tasks, they will be allowed to complete but no new
+tasks will be allowed to get launched until enough greenthreads finish
+their tasks to drop the overall quantity below <em>new_size</em>.  Until
+then, the return value of free() will be negative.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventlet.greenpool.GreenPool.running">
+<tt class="descname">running</tt><big>(</big><big>)</big><a class="headerlink" href="#eventlet.greenpool.GreenPool.running" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the number of greenthreads that are currently executing
+functions in the GreenPool.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventlet.greenpool.GreenPool.spawn">
+<tt class="descname">spawn</tt><big>(</big><em>function</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.greenpool.GreenPool.spawn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run the <em>function</em> with its arguments in its own green thread.
+Returns the <a class="reference internal" href="greenthread.html#eventlet.greenthread.GreenThread" title="eventlet.greenthread.GreenThread"><tt class="xref py py-class docutils literal"><span class="pre">GreenThread</span></tt></a>
+object that is running the function, which can be used to retrieve the
+results.</p>
+<p>If the pool is currently at capacity, <tt class="docutils literal"><span class="pre">spawn</span></tt> will block until one of
+the running greenthreads completes its task and frees up a slot.</p>
+<p>This function is reentrant; <em>function</em> can call <tt class="docutils literal"><span class="pre">spawn</span></tt> on the same
+pool without risk of deadlocking the whole thing.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventlet.greenpool.GreenPool.spawn_n">
+<tt class="descname">spawn_n</tt><big>(</big><em>function</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.greenpool.GreenPool.spawn_n" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a greenthread to run the <em>function</em>, the same as
+<a class="reference internal" href="#eventlet.greenpool.GreenPool.spawn" title="eventlet.greenpool.GreenPool.spawn"><tt class="xref py py-meth docutils literal"><span class="pre">spawn()</span></tt></a>.  The difference is that <a class="reference internal" href="#eventlet.greenpool.GreenPool.spawn_n" title="eventlet.greenpool.GreenPool.spawn_n"><tt class="xref py py-meth docutils literal"><span class="pre">spawn_n()</span></tt></a> returns
+None; the results of <em>function</em> are not retrievable.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventlet.greenpool.GreenPool.starmap">
+<tt class="descname">starmap</tt><big>(</big><em>function</em>, <em>iterable</em><big>)</big><a class="headerlink" href="#eventlet.greenpool.GreenPool.starmap" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is the same as <a class="reference external" href="http://docs.python.org/library/itertools.html#itertools.starmap" title="(in Python v2.7)"><tt class="xref py py-func docutils literal"><span class="pre">itertools.starmap()</span></tt></a>, except that <em>func</em> is
+executed in a separate green thread for each item, with the concurrency
+limited by the pool&#8217;s size. In operation, starmap consumes a constant
+amount of memory, proportional to the size of the pool, and is thus
+suited for iterating over extremely long input lists.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventlet.greenpool.GreenPool.waitall">
+<tt class="descname">waitall</tt><big>(</big><big>)</big><a class="headerlink" href="#eventlet.greenpool.GreenPool.waitall" title="Permalink to this definition">¶</a></dt>
+<dd><p>Waits until all greenthreads in the pool are finished working.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventlet.greenpool.GreenPool.waiting">
+<tt class="descname">waiting</tt><big>(</big><big>)</big><a class="headerlink" href="#eventlet.greenpool.GreenPool.waiting" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the number of greenthreads waiting to spawn.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="eventlet.greenpool.GreenPile">
+<em class="property">class </em><tt class="descclassname">eventlet.greenpool.</tt><tt class="descname">GreenPile</tt><big>(</big><em>size_or_pool=1000</em><big>)</big><a class="headerlink" href="#eventlet.greenpool.GreenPile" title="Permalink to this definition">¶</a></dt>
+<dd><p>GreenPile is an abstraction representing a bunch of I/O-related tasks.</p>
+<p>Construct a GreenPile with an existing GreenPool object.  The GreenPile will
+then use that pool&#8217;s concurrency as it processes its jobs.  There can be
+many GreenPiles associated with a single GreenPool.</p>
+<p>A GreenPile can also be constructed standalone, not associated with any
+GreenPool.  To do this, construct it with an integer size parameter instead
+of a GreenPool.</p>
+<p>It is not advisable to iterate over a GreenPile in a different greenthread
+than the one which is calling spawn.  The iterator will exit early in that
+situation.</p>
+<dl class="method">
+<dt id="eventlet.greenpool.GreenPile.next">
+<tt class="descname">next</tt><big>(</big><big>)</big><a class="headerlink" href="#eventlet.greenpool.GreenPile.next" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wait for the next result, suspending the current greenthread until it
+is available.  Raises StopIteration when there are no more results.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventlet.greenpool.GreenPile.spawn">
+<tt class="descname">spawn</tt><big>(</big><em>func</em>, <em>*args</em>, <em>**kw</em><big>)</big><a class="headerlink" href="#eventlet.greenpool.GreenPile.spawn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runs <em>func</em> in its own green thread, with the result available by
+iterating over the GreenPile object.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="event.html"
+                        title="previous chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">event</span></tt> &#8211; Cross-greenthread primitive</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="greenthread.html"
+                        title="next chapter"><tt class="docutils literal"><span class="pre">greenthread</span></tt> &#8211; Green Thread Implementation</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/modules/greenpool.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="greenthread.html" title="greenthread – Green Thread Implementation"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="event.html" title="event – Cross-greenthread primitive"
+             >previous</a> |</li>
+        <li><a href="../index.html">Eventlet 0.11.0.dev documentation</a> &raquo;</li>
+          <li><a href="../modules.html" >Module Reference</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2005-2010, Eventlet Contributors.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,149 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Zeromq &mdash; Eventlet 0.11.0.dev documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.11.0.dev',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Eventlet 0.11.0.dev documentation" href="index.html" />
+    <link rel="next" title="Understanding Eventlet Hubs" href="hubs.html" />
+    <link rel="prev" title="Threads" href="threading.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="hubs.html" title="Understanding Eventlet Hubs"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="threading.html" title="Threads"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Eventlet 0.11.0.dev documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="zeromq">
+<h1>Zeromq<a class="headerlink" href="#zeromq" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="what-is-omq">
+<h2>What is ØMQ?<a class="headerlink" href="#what-is-omq" title="Permalink to this headline">¶</a></h2>
+<p>&#8220;A ØMQ socket is what you get when you take a normal TCP socket, inject it with a mix of radioactive isotopes stolen
+from a secret Soviet atomic research project, bombard it with 1950-era cosmic rays, and put it into the hands of a drug-addled
+comic book author with a badly-disguised fetish for bulging muscles clad in spandex.&#8221;</p>
+<p>Key differences to conventional sockets
+Generally speaking, conventional sockets present a synchronous interface to either connection-oriented reliable byte streams (SOCK_STREAM),
+or connection-less unreliable datagrams (SOCK_DGRAM). In comparison, 0MQ sockets present an abstraction of an asynchronous message queue,
+with the exact queueing semantics depending on the socket type in use. Where conventional sockets transfer streams of bytes or discrete datagrams,
+0MQ sockets transfer discrete messages.</p>
+<p>0MQ sockets being asynchronous means that the timings of the physical connection setup and teardown,
+reconnect and effective delivery are transparent to the user and organized by 0MQ itself.
+Further, messages may be queued in the event that a peer is unavailable to receive them.</p>
+<p>Conventional sockets allow only strict one-to-one (two peers), many-to-one (many clients, one server),
+or in some cases one-to-many (multicast) relationships. With the exception of ZMQ::PAIR,
+0MQ sockets may be connected to multiple endpoints using connect(),
+while simultaneously accepting incoming connections from multiple endpoints bound to the socket using bind(), thus allowing many-to-many relationships.</p>
+</div>
+<div class="section" id="api-documentation">
+<h2>API documentation<a class="headerlink" href="#api-documentation" title="Permalink to this headline">¶</a></h2>
+<p>ØMQ support is provided in the <a class="reference internal" href="modules/zmq.html#module-eventlet.green.zmq" title="eventlet.green.zmq"><tt class="xref py py-mod docutils literal"><span class="pre">eventlet.green.zmq</span></tt></a> module</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Zeromq</a><ul>
+<li><a class="reference internal" href="#what-is-omq">What is ØMQ?</a></li>
+<li><a class="reference internal" href="#api-documentation">API documentation</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="threading.html"
+                        title="previous chapter">Threads</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="hubs.html"
+                        title="next chapter">Understanding Eventlet Hubs</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/zeromq.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="hubs.html" title="Understanding Eventlet Hubs"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="threading.html" title="Threads"
+             >previous</a> |</li>
+        <li><a href="index.html">Eventlet 0.11.0.dev documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2005-2010, Eventlet Contributors.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

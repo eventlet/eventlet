@@ -1,0 +1,158 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>backdoor – Python interactive interpreter within a running process &mdash; Eventlet 0.11.0.dev documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.11.0.dev',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Eventlet 0.11.0.dev documentation" href="../index.html" />
+    <link rel="up" title="Module Reference" href="../modules.html" />
+    <link rel="next" title="corolocal – Coroutine local storage" href="corolocal.html" />
+    <link rel="prev" title="Module Reference" href="../modules.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="corolocal.html" title="corolocal – Coroutine local storage"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../modules.html" title="Module Reference"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">Eventlet 0.11.0.dev documentation</a> &raquo;</li>
+          <li><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="backdoor-python-interactive-interpreter-within-a-running-process">
+<h1><tt class="xref py py-mod docutils literal"><span class="pre">backdoor</span></tt> &#8211; Python interactive interpreter within a running process<a class="headerlink" href="#backdoor-python-interactive-interpreter-within-a-running-process" title="Permalink to this headline">¶</a></h1>
+<p>The backdoor module is convenient for inspecting the state of a long-running process.  It supplies the normal Python interactive interpreter in a way that does not block the normal operation of the application.  This can be useful for debugging, performance tuning, or simply learning about how things behave in situ.</p>
+<p>In the application, spawn a greenthread running backdoor_server on a listening socket:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">eventlet</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="n">backdoor</span><span class="o">.</span><span class="n">backdoor_server</span><span class="p">,</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s">&#39;localhost&#39;</span><span class="p">,</span> <span class="mi">3000</span><span class="p">)))</span>
+</pre></div>
+</div>
+<p>When this is running, the backdoor is accessible via telnet to the specified port.</p>
+<div class="highlight-sh"><div class="highlight"><pre><span class="nv">$ </span>telnet localhost 3000
+Python 2.6.2 <span class="o">(</span>r262:71600, Apr 16 2009, 09:17:39<span class="o">)</span>
+<span class="o">[</span>GCC 4.0.1 <span class="o">(</span>Apple Computer, Inc. build 5250<span class="o">)]</span> on darwin
+Type <span class="s2">&quot;help&quot;</span>, <span class="s2">&quot;copyright&quot;</span>, <span class="s2">&quot;credits&quot;</span> or <span class="s2">&quot;license&quot;</span> <span class="k">for </span>more information.
+&gt;&gt;&gt; import myapp
+&gt;&gt;&gt; dir<span class="o">(</span>myapp<span class="o">)</span>
+<span class="o">[</span><span class="s1">&#39;__all__&#39;</span>, <span class="s1">&#39;__doc__&#39;</span>, <span class="s1">&#39;__name__&#39;</span>, <span class="s1">&#39;myfunc&#39;</span><span class="o">]</span>
+&gt;&gt;&gt;
+</pre></div>
+</div>
+<p>The backdoor cooperatively yields to the rest of the application between commands, so on a running server continuously serving requests, you can observe the internal state changing between interpreter commands.</p>
+<span class="target" id="module-eventlet.backdoor"></span><dl class="function">
+<dt id="eventlet.backdoor.backdoor">
+<tt class="descclassname">eventlet.backdoor.</tt><tt class="descname">backdoor</tt><big>(</big><em>(conn</em>, <em>addr)</em>, <em>locals=None</em><big>)</big><a class="headerlink" href="#eventlet.backdoor.backdoor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets up an interactive console on a socket with a single connected
+client.  This does not block the caller, as it spawns a new greenlet to
+handle the console.  This is meant to be called from within an accept loop
+(such as backdoor_server).</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="eventlet.backdoor.backdoor_server">
+<tt class="descclassname">eventlet.backdoor.</tt><tt class="descname">backdoor_server</tt><big>(</big><em>sock</em>, <em>locals=None</em><big>)</big><a class="headerlink" href="#eventlet.backdoor.backdoor_server" title="Permalink to this definition">¶</a></dt>
+<dd><p>Blocking function that runs a backdoor server on the socket <em>sock</em>,
+accepting connections and running backdoor consoles for each client that
+connects.</p>
+<p>The <em>locals</em> argument is a dictionary that will be included in the locals()
+of the interpreters.  It can be convenient to stick important application
+variables in here.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../modules.html"
+                        title="previous chapter">Module Reference</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="corolocal.html"
+                        title="next chapter"><tt class="docutils literal"><span class="pre">corolocal</span></tt> &#8211; Coroutine local storage</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/modules/backdoor.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="corolocal.html" title="corolocal – Coroutine local storage"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../modules.html" title="Module Reference"
+             >previous</a> |</li>
+        <li><a href="../index.html">Eventlet 0.11.0.dev documentation</a> &raquo;</li>
+          <li><a href="../modules.html" >Module Reference</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2005-2010, Eventlet Contributors.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

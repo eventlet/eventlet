@@ -1,0 +1,257 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>event – Cross-greenthread primitive &mdash; Eventlet 0.11.0.dev documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.11.0.dev',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Eventlet 0.11.0.dev documentation" href="../index.html" />
+    <link rel="up" title="Module Reference" href="../modules.html" />
+    <link rel="next" title="greenpool – Green Thread Pools" href="greenpool.html" />
+    <link rel="prev" title="db_pool – DBAPI 2 database connection pooling" href="db_pool.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="greenpool.html" title="greenpool – Green Thread Pools"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="db_pool.html" title="db_pool – DBAPI 2 database connection pooling"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">Eventlet 0.11.0.dev documentation</a> &raquo;</li>
+          <li><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-eventlet.event">
+<span id="event-cross-greenthread-primitive"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">event</span></tt> &#8211; Cross-greenthread primitive<a class="headerlink" href="#module-eventlet.event" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="eventlet.event.Event">
+<em class="property">class </em><tt class="descclassname">eventlet.event.</tt><tt class="descname">Event</tt><a class="headerlink" href="#eventlet.event.Event" title="Permalink to this definition">¶</a></dt>
+<dd><p>An abstraction where an arbitrary number of coroutines
+can wait for one event from another.</p>
+<p>Events are similar to a Queue that can only hold one item, but differ
+in two important ways:</p>
+<ol class="arabic simple">
+<li>calling <a class="reference internal" href="#eventlet.event.Event.send" title="eventlet.event.Event.send"><tt class="xref py py-meth docutils literal"><span class="pre">send()</span></tt></a> never unschedules the current greenthread</li>
+<li><a class="reference internal" href="#eventlet.event.Event.send" title="eventlet.event.Event.send"><tt class="xref py py-meth docutils literal"><span class="pre">send()</span></tt></a> can only be called once; create a new event to send again.</li>
+</ol>
+<p>They are good for communicating results between coroutines, and
+are the basis for how
+<a class="reference internal" href="greenthread.html#eventlet.greenthread.GreenThread.wait" title="eventlet.greenthread.GreenThread.wait"><tt class="xref py py-meth docutils literal"><span class="pre">GreenThread.wait()</span></tt></a>
+is implemented.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">event</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">eventlet</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">evt</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">baz</span><span class="p">(</span><span class="n">b</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="n">evt</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">b</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">_</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">spawn_n</span><span class="p">(</span><span class="n">baz</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">evt</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+<span class="go">4</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="eventlet.event.Event.ready">
+<tt class="descname">ready</tt><big>(</big><big>)</big><a class="headerlink" href="#eventlet.event.Event.ready" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return true if the <a class="reference internal" href="#eventlet.event.Event.wait" title="eventlet.event.Event.wait"><tt class="xref py py-meth docutils literal"><span class="pre">wait()</span></tt></a> call will return immediately.
+Used to avoid waiting for things that might take a while to time out.
+For example, you can put a bunch of events into a list, and then visit
+them all repeatedly, calling <a class="reference internal" href="#eventlet.event.Event.ready" title="eventlet.event.Event.ready"><tt class="xref py py-meth docutils literal"><span class="pre">ready()</span></tt></a> until one returns <tt class="docutils literal"><span class="pre">True</span></tt>,
+and then you can <a class="reference internal" href="#eventlet.event.Event.wait" title="eventlet.event.Event.wait"><tt class="xref py py-meth docutils literal"><span class="pre">wait()</span></tt></a> on that one.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventlet.event.Event.send">
+<tt class="descname">send</tt><big>(</big><em>result=None</em>, <em>exc=None</em><big>)</big><a class="headerlink" href="#eventlet.event.Event.send" title="Permalink to this definition">¶</a></dt>
+<dd><p>Makes arrangements for the waiters to be woken with the
+result and then returns immediately to the parent.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">event</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">eventlet</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">evt</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">waiter</span><span class="p">():</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="s">&#39;about to wait&#39;</span>
+<span class="gp">... </span>    <span class="n">result</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="s">&#39;waited for&#39;</span><span class="p">,</span> <span class="n">result</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">_</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="n">waiter</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">eventlet</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="go">about to wait</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">evt</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">&#39;a&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">eventlet</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="go">waited for a</span>
+</pre></div>
+</div>
+<p>It is an error to call <a class="reference internal" href="#eventlet.event.Event.send" title="eventlet.event.Event.send"><tt class="xref py py-meth docutils literal"><span class="pre">send()</span></tt></a> multiple times on the same event.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">evt</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">&#39;whoops&#39;</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">AssertionError</span>: <span class="n">Trying to re-send() an already-triggered event.</span>
+</pre></div>
+</div>
+<p>Use <tt class="xref py py-meth docutils literal"><span class="pre">reset()</span></tt> between <a class="reference internal" href="#eventlet.event.Event.send" title="eventlet.event.Event.send"><tt class="xref py py-meth docutils literal"><span class="pre">send()</span></tt></a> s to reuse an event object.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventlet.event.Event.send_exception">
+<tt class="descname">send_exception</tt><big>(</big><em>*args</em><big>)</big><a class="headerlink" href="#eventlet.event.Event.send_exception" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same as <a class="reference internal" href="#eventlet.event.Event.send" title="eventlet.event.Event.send"><tt class="xref py py-meth docutils literal"><span class="pre">send()</span></tt></a>, but sends an exception to waiters.</p>
+<p>The arguments to send_exception are the same as the arguments
+to <tt class="docutils literal"><span class="pre">raise</span></tt>.  If a single exception object is passed in, it
+will be re-raised when <a class="reference internal" href="#eventlet.event.Event.wait" title="eventlet.event.Event.wait"><tt class="xref py py-meth docutils literal"><span class="pre">wait()</span></tt></a> is called, generating a
+new stacktrace.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">event</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">evt</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">evt</span><span class="o">.</span><span class="n">send_exception</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">())</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">evt</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+<span class="gt">Traceback (most recent call last):</span>
+  File <span class="nb">&quot;&lt;stdin&gt;&quot;</span>, line <span class="m">1</span>, in <span class="n">&lt;module&gt;</span>
+  File <span class="nb">&quot;eventlet/event.py&quot;</span>, line <span class="m">120</span>, in <span class="n">wait</span>
+    <span class="n">current</span><span class="o">.</span><span class="n">throw</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_exc</span><span class="p">)</span>
+<span class="gr">RuntimeError</span>
+</pre></div>
+</div>
+<p>If it&#8217;s important to preserve the entire original stack trace,
+you must pass in the entire <a class="reference external" href="http://docs.python.org/library/sys.html#sys.exc_info" title="(in Python v2.7)"><tt class="xref py py-func docutils literal"><span class="pre">sys.exc_info()</span></tt></a> tuple.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">sys</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">evt</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">try</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">()</span>
+<span class="gp">... </span><span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">evt</span><span class="o">.</span><span class="n">send_exception</span><span class="p">(</span><span class="o">*</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">())</span>
+<span class="gp">... </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">evt</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+<span class="gt">Traceback (most recent call last):</span>
+  File <span class="nb">&quot;&lt;stdin&gt;&quot;</span>, line <span class="m">1</span>, in <span class="n">&lt;module&gt;</span>
+  File <span class="nb">&quot;eventlet/event.py&quot;</span>, line <span class="m">120</span>, in <span class="n">wait</span>
+    <span class="n">current</span><span class="o">.</span><span class="n">throw</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_exc</span><span class="p">)</span>
+  File <span class="nb">&quot;&lt;stdin&gt;&quot;</span>, line <span class="m">2</span>, in <span class="n">&lt;module&gt;</span>
+<span class="gr">RuntimeError</span>
+</pre></div>
+</div>
+<p>Note that doing so stores a traceback object directly on the
+Event object, which may cause reference cycles. See the
+<a class="reference external" href="http://docs.python.org/library/sys.html#sys.exc_info" title="(in Python v2.7)"><tt class="xref py py-func docutils literal"><span class="pre">sys.exc_info()</span></tt></a> documentation.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventlet.event.Event.wait">
+<tt class="descname">wait</tt><big>(</big><big>)</big><a class="headerlink" href="#eventlet.event.Event.wait" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wait until another coroutine calls <a class="reference internal" href="#eventlet.event.Event.send" title="eventlet.event.Event.send"><tt class="xref py py-meth docutils literal"><span class="pre">send()</span></tt></a>.
+Returns the value the other coroutine passed to
+<a class="reference internal" href="#eventlet.event.Event.send" title="eventlet.event.Event.send"><tt class="xref py py-meth docutils literal"><span class="pre">send()</span></tt></a>.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">event</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">eventlet</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">evt</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">wait_on</span><span class="p">():</span>
+<span class="gp">... </span>   <span class="n">retval</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+<span class="gp">... </span>   <span class="k">print</span> <span class="s">&quot;waited for&quot;</span><span class="p">,</span> <span class="n">retval</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">_</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="n">wait_on</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">evt</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">&#39;result&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">eventlet</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="go">waited for result</span>
+</pre></div>
+</div>
+<p>Returns immediately if the event has already
+occured.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">evt</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+<span class="go">&#39;result&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="db_pool.html"
+                        title="previous chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">db_pool</span></tt> &#8211; DBAPI 2 database connection pooling</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="greenpool.html"
+                        title="next chapter"><tt class="docutils literal"><span class="pre">greenpool</span></tt> &#8211; Green Thread Pools</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/modules/event.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="greenpool.html" title="greenpool – Green Thread Pools"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="db_pool.html" title="db_pool – DBAPI 2 database connection pooling"
+             >previous</a> |</li>
+        <li><a href="../index.html">Eventlet 0.11.0.dev documentation</a> &raquo;</li>
+          <li><a href="../modules.html" >Module Reference</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2005-2010, Eventlet Contributors.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
