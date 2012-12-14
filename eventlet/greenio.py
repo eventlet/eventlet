@@ -436,9 +436,6 @@ class GreenPipe(_fileobject):
         def __exit__(self, *args):
             self.close()
 
-    def xreadlines(self, buffer):
-        return iterator(self)
-
     def readinto(self, buf):
         data = self.read(len(buf)) # FIXME could it be done without allocating intermediate?
         n = len(data)
