@@ -1,3 +1,4 @@
+import errno
 import os
 import shutil
 import subprocess
@@ -281,13 +282,20 @@ import time
 
 class Subprocess(ProcessBase):
     def test_monkeypatched_subprocess(self):
+        # find true for this distribution
+        try:
+            truebin = (i for i in ('/bin/true', '/usr/bin/true')
+                       if os.path.exists(i)).next()
+        except StopIteration:
+            raise OSError(errno.ENOENT, "Could not find binary for \'true\'")
+
         new_mod = """import eventlet
 eventlet.monkey_patch()
 from eventlet.green import subprocess
 
-subprocess.Popen(['/bin/true'], stdin=subprocess.PIPE)
+subprocess.Popen(['%s'], stdin=subprocess.PIPE)
 print "done"
-"""
+""" % (truebin, )
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod')
         self.assertEqual(output, "done\n", output)
