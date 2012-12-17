@@ -285,7 +285,7 @@ class Subprocess(ProcessBase):
 eventlet.monkey_patch()
 from eventlet.green import subprocess
 
-subprocess.Popen(['/bin/true'], stdin=subprocess.PIPE)
+subprocess.Popen(['true'], stdin=subprocess.PIPE)
 print "done"
 """
         self.write_to_tempfile("newmod", new_mod)
