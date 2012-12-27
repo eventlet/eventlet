@@ -339,7 +339,12 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         num_recvs = 30
         done = event.Event()
 
-        sender.setsockopt(zmq.HWM, 10)
+        try:
+            HWM = zmq.HWM
+        except AttributeError:
+            HWM = zmq.SNDHWM
+
+        sender.setsockopt(HWM, 10)
         sender.setsockopt(zmq.SNDBUF, 10)
 
         receiver.setsockopt(zmq.RCVBUF, 10)
