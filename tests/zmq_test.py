@@ -3,6 +3,7 @@ from __future__ import with_statement
 from eventlet import event, spawn, sleep, patcher, semaphore
 from eventlet.hubs import get_hub, _threadlocal, use_hub
 from nose.tools import *
+import resource
 from tests import mock, LimitedTestCase, using_pyevent, skip_unless
 from unittest import TestCase
 
@@ -392,6 +393,55 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         self.assertEqual(len(sock_map), 1)
         events = sock2.getsockopt(zmq.EVENTS)
         self.assertEqual(events & zmq.POLLIN, zmq.POLLIN)
+
+    def assertIdleCpuUsage(self, duration, allowed_part):
+        r1 = resource.getrusage(resource.RUSAGE_SELF)
+        sleep(duration)
+        r2 = resource.getrusage(resource.RUSAGE_SELF)
+        utime = r2.ru_utime - r1.ru_utime
+        stime = r2.ru_stime - r1.ru_stime
+        self.assertTrue(utime + stime < duration * allowed_part,
+            "Idle zmq is eating CPU: user %.0f%% sys %.0f%% allowed %.0f%%" % (
+                utime / duration * 100, stime / duration * 100,
+                allowed_part * 100))
+
+    @skip_unless(zmq_supported)
+    def test_cpu_usage_after_bind(self):
+        """zmq eats CPU after PUB socket .bind()
+
+        https://bitbucket.org/which_linden/eventlet/issue/128
+
+        According to the ZeroMQ documentation, the socket file descriptor
+        can be readable without any pending messages. So we need to ensure
+        that Eventlet wraps around ZeroMQ sockets do not create busy loops.
+
+        A naive way to test it is to measure resource usage. This will require
+        some tuning to set appropriate acceptable limits.
+        """
+        sock = self.context.socket(zmq.PUB)
+        self.sockets.append(sock)
+        sock.bind_to_random_port("tcp://127.0.0.1")
+        sleep()
+        self.assertIdleCpuUsage(0.2, 0.1)
+
+    @skip_unless(zmq_supported)
+    def test_cpu_usage_after_pub_send_or_dealer_recv(self):
+        """zmq eats CPU after PUB send or DEALER recv.
+
+        Same https://bitbucket.org/which_linden/eventlet/issue/128
+        """
+        pub, sub, _port = self.create_bound_pair(zmq.PUB, zmq.SUB)
+        sub.setsockopt(zmq.SUBSCRIBE, "")
+        sleep()
+        pub.send('test_send')
+        self.assertIdleCpuUsage(0.2, 0.1)
+
+        sender, receiver, _port = self.create_bound_pair(zmq.DEALER, zmq.DEALER)
+        sleep()
+        sender.send('test_recv')
+        msg = receiver.recv()
+        self.assertEqual(msg, 'test_recv')
+        self.assertIdleCpuUsage(0.2, 0.1)
 
 
 class TestQueueLock(LimitedTestCase):
