@@ -11,19 +11,19 @@ _threadlocal = threading.local()
 def get_default_hub():
     """Select the default hub implementation based on what multiplexing
     libraries are installed.  The order that the hubs are tried is:
-    
+
     * twistedr
     * epoll
     * poll
     * select
-    
-    It won't automatically select the pyevent hub, because it's not 
+
+    It won't automatically select the pyevent hub, because it's not
     python-thread-safe.
-    
-    .. include:: ../../doc/common.txt
+
+    .. include:: ../doc/common.txt
     .. note :: |internal|
-    """    
-    
+    """
+
     # pyevent hub disabled for now because it is not thread-safe
     #try:
     #    import eventlet.hubs.pyevent
@@ -46,13 +46,13 @@ def get_default_hub():
 
 def use_hub(mod=None):
     """Use the module *mod*, containing a class called Hub, as the
-    event hub. Usually not required; the default hub is usually fine.  
-    
+    event hub. Usually not required; the default hub is usually fine.
+
     Mod can be an actual module, a string, or None.  If *mod* is a module,
-    it uses it directly.   If *mod* is a string, use_hub tries to import 
-    `eventlet.hubs.mod` and use that as the hub module.  If *mod* is None, 
-    use_hub uses the default hub.  Only call use_hub during application 
-    initialization,  because it resets the hub's state and any existing 
+    it uses it directly.   If *mod* is a string, use_hub tries to import
+    `eventlet.hubs.mod` and use that as the hub module.  If *mod* is None,
+    use_hub uses the default hub.  Only call use_hub during application
+    initialization,  because it resets the hub's state and any existing
     timers or listeners will never be resumed.
     """
     if mod is None:
@@ -71,7 +71,7 @@ def use_hub(mod=None):
 
 def get_hub():
     """Get the current event hub singleton object.
-    
+
     .. note :: |internal|
     """
     try:
@@ -85,7 +85,7 @@ def get_hub():
     return hub
 
 from eventlet import timeout
-def trampoline(fd, read=None, write=None, timeout=None, 
+def trampoline(fd, read=None, write=None, timeout=None,
                timeout_exc=timeout.Timeout):
     """Suspend the current coroutine until the given socket object or file
     descriptor is ready to *read*, ready to *write*, or the specified
@@ -98,7 +98,7 @@ def trampoline(fd, read=None, write=None, timeout=None,
     If the specified *timeout* elapses before the socket is ready to read or
     write, *timeout_exc* will be raised instead of ``trampoline()``
     returning normally.
-    
+
     .. note :: |internal|
     """
     t = None
