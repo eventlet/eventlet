@@ -1,11 +1,11 @@
 # package is named tests, not test, so it won't be confused with test in stdlib
-import sys
-import os
 import errno
+import os
 import unittest
 import warnings
 
 from eventlet import debug, hubs
+
 
 # convenience for importers
 main = unittest.main
@@ -34,7 +34,7 @@ def skipped(func):
 def skip_if(condition):
     """ Decorator that skips a test if the *condition* evaluates True.
     *condition* can be a boolean or a callable that accepts one argument.
-    The callable will be called with the function to be decorated, and 
+    The callable will be called with the function to be decorated, and
     should return True to skip the test.
     """
     def skipped_wrapper(func):
@@ -55,9 +55,9 @@ def skip_if(condition):
 def skip_unless(condition):
     """ Decorator that skips a test if the *condition* does not return True.
     *condition* can be a boolean or a callable that accepts one argument.
-    The callable will be called with the  function to be decorated, and 
+    The callable will be called with the  function to be decorated, and
     should return True if the condition is satisfied.
-    """    
+    """
     def skipped_wrapper(func):
         def wrapped(*a, **kw):
             if isinstance(condition, bool):
@@ -82,13 +82,13 @@ def requires_twisted(func):
         except Exception:
             return False
     return skip_unless(requirement)(func)
-    
+
 
 def using_pyevent(_f):
     from eventlet.hubs import get_hub
     return 'pyevent' in type(get_hub()).__module__
 
-    
+
 def skip_with_pyevent(func):
     """ Decorator that skips a test if we're using the pyevent hub."""
     return skip_if(using_pyevent)(func)
@@ -114,11 +114,13 @@ def skip_if_no_ssl(func):
     """ Decorator that skips a test if SSL is not available."""
     try:
         import eventlet.green.ssl
+        return func
     except ImportError:
         try:
             import eventlet.green.OpenSSL
+            return func
         except ImportError:
-            skipped(func)
+            return skipped(func)
 
 
 class TestIsTakingTooLong(Exception):
@@ -223,7 +225,7 @@ def get_database_auth():
             import simplejson as json
         except ImportError:
             print "No json implementation, using baked-in db credentials."
-            return retval 
+            return retval
 
     if 'EVENTLET_DB_TEST_AUTH' in os.environ:
         return json.loads(os.environ.get('EVENTLET_DB_TEST_AUTH'))
