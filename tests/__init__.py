@@ -2,6 +2,7 @@
 import errno
 import os
 import resource
+import signal
 import unittest
 import warnings
 
@@ -132,31 +133,52 @@ class TestIsTakingTooLong(Exception):
 
 class LimitedTestCase(unittest.TestCase):
     """ Unittest subclass that adds a timeout to all tests.  Subclasses must
-    be sure to call the LimitedTestCase setUp and tearDown methods.  The default 
-    timeout is 1 second, change it by setting self.TEST_TIMEOUT to the desired
+    be sure to call the LimitedTestCase setUp and tearDown methods.  The default
+    timeout is 1 second, change it by setting TEST_TIMEOUT to the desired
     quantity."""
-    
+
     TEST_TIMEOUT = 1
+
     def setUp(self):
-        import eventlet
-        self.timer = eventlet.Timeout(self.TEST_TIMEOUT, 
+        self.previous_alarm = None
+        self.timer = eventlet.Timeout(self.TEST_TIMEOUT,
                                       TestIsTakingTooLong(self.TEST_TIMEOUT))
 
     def reset_timeout(self, new_timeout):
-        """Changes the timeout duration; only has effect during one test case"""
-        import eventlet
+        """Changes the timeout duration; only has effect during one test.
+        `new_timeout` can be int or float.
+        """
         self.timer.cancel()
-        self.timer = eventlet.Timeout(new_timeout, 
+        self.timer = eventlet.Timeout(new_timeout,
                                       TestIsTakingTooLong(new_timeout))
+
+    def set_alarm(self, new_timeout):
+        """Call this in the beginning of your test if you expect busy loops.
+        Only has effect during one test.
+        `new_timeout` must be int.
+        """
+        def sig_alarm_handler(sig, frame):
+            # Could arm previous alarm but test is failed anyway
+            # seems to be no point in restoring previous state.
+            raise TestIsTakingTooLong(new_timeout)
+
+        self.previous_alarm = (
+            signal.signal(signal.SIGALRM, sig_alarm_handler),
+            signal.alarm(new_timeout),
+        )
 
     def tearDown(self):
         self.timer.cancel()
+        if self.previous_alarm:
+            signal.signal(signal.SIGALRM, self.previous_alarm[0])
+            signal.alarm(self.previous_alarm[1])
+
         try:
             hub = hubs.get_hub()
             num_readers = len(hub.get_readers())
             num_writers = len(hub.get_writers())
             assert num_readers == num_writers == 0
-        except AssertionError, e:
+        except AssertionError:
             print "ERROR: Hub not empty"
             print debug.format_hub_timers()
             print debug.format_hub_listeners()
