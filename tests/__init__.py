@@ -1,9 +1,11 @@
 # package is named tests, not test, so it won't be confused with test in stdlib
 import errno
 import os
+import resource
 import unittest
 import warnings
 
+import eventlet
 from eventlet import debug, hubs
 
 
@@ -174,6 +176,19 @@ class LimitedTestCase(unittest.TestCase):
             self.assert_(a<=b, "%s not less than or equal to %s" % (a,b))
 
     assertLessThanEqual = assert_less_than_equal
+
+
+def check_idle_cpu_usage(duration, allowed_part):
+    r1 = resource.getrusage(resource.RUSAGE_SELF)
+    eventlet.sleep(duration)
+    r2 = resource.getrusage(resource.RUSAGE_SELF)
+    utime = r2.ru_utime - r1.ru_utime
+    stime = r2.ru_stime - r1.ru_stime
+    assert utime + stime < duration * allowed_part, \
+        "CPU usage over limit: user %.0f%% sys %.0f%% allowed %.0f%%" % (
+            utime / duration * 100, stime / duration * 100,
+            allowed_part * 100)
+
 
 def verify_hub_empty():
     from eventlet import hubs
