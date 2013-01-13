@@ -59,6 +59,16 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
             self.fail("Function did not raise any error")
 
     @skip_unless(zmq_supported)
+    def test_close_linger(self):
+        """Socket.close() must support linger argument.
+
+        https://github.com/eventlet/eventlet/issues/9
+        """
+        sock1, sock2, _ = self.create_bound_pair(zmq.PAIR, zmq.PAIR)
+        sock1.close(1)
+        sock2.close(linger=0)
+
+    @skip_unless(zmq_supported)
     def test_recv_spawned_before_send_is_non_blocking(self):
         req, rep, port = self.create_bound_pair(zmq.PAIR, zmq.PAIR)
 #       req.connect(ipc)

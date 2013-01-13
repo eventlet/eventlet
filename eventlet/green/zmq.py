@@ -212,8 +212,8 @@ class Socket(_Socket):
         self._eventlet_listener = hub.add(hub.READ, self.getsockopt(FD), event)
 
     @_wraps(_Socket.close)
-    def close(self):
-        _Socket.close(self)
+    def close(self, linger=None):
+        super(Socket, self).close(linger)
         if self._eventlet_listener is not None:
             hubs.get_hub().remove(self._eventlet_listener)
             self._eventlet_listener = None
