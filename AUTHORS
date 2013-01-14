@@ -76,3 +76,5 @@ Thanks To
 * Nick Vatamaniuc, Windows SO_REUSEADDR patch (#83)
 * Clay Gerrard, wsgi handle socket closed by client (#95)
 * Eric Windisch, zmq getsockopt(EVENTS) wake correct threads (pull request 22)
+* Raymond Lu, fixing busy-wait in eventlet.green.ssl.socket.sendall()
+* Thomas Grainger, webcrawler example small fix, "requests" library import bug report

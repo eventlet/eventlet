@@ -1,5 +1,11 @@
+0.11
+====
+* ssl: Fix 100% busy CPU in socket.sendall() (thanks to Raymon Lu)
+* zmq: Return linger argument to Socket.close() (thanks to Eric Windisch)
+* tests: SSL tests were always skipped due to bug in skip_if_no_ssl decorator
+
 0.10
-======
+====
 * greenio: Fix relative seek() (thanks to AlanP)
 * db_pool: Fix pool.put() TypeError with min_size > 1 (thanks to Jessica Qi)
 * greenthread: Prevent infinite recursion with linking to current greenthread (thanks to Edward George)
