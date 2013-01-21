@@ -205,8 +205,13 @@ class Socket(_Socket):
             # Some events arrived at the zmq socket. This may mean
             # there's a message that can be read or there's space for
             # a message to be written.
-            self._eventlet_send_event.wake()
-            self._eventlet_recv_event.wake()
+            send_wake = self._eventlet_send_event.wake()
+            recv_wake = self._eventlet_recv_event.wake()
+            if not send_wake and not recv_wake:
+                # if no waiting send or recv thread was woken up, then
+                # force the zmq socket's events to be processed to
+                # avoid repeated wakeups
+                _Socket_getsockopt(self, EVENTS)
 
         hub = hubs.get_hub()
         self._eventlet_listener = hub.add(hub.READ, self.getsockopt(FD), event)
