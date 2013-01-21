@@ -313,8 +313,10 @@ class GreenSocket(object):
         if howlong < 0.0:
             raise ValueError('Timeout value out of range')
         if howlong == 0.0:
-            self.setblocking(howlong)
+            self.act_non_blocking = True
+            self._timeout = 0.0
         else:
+            self.act_non_blocking = False
             self._timeout = howlong
 
     def gettimeout(self):

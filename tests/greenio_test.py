@@ -528,6 +528,29 @@ class TestGreenSocket(LimitedTestCase):
         port = eventlet.listen(('127.0.0.1', 0)).getsockname()[1]
         self.assertRaises(socket.error, eventlet.connect, ('127.0.0.1', port))
 
+    def test_zero_timeout_and_back(self):
+        listen = eventlet.listen(('', 0))
+        # Keep reference to server side of socket
+        server = eventlet.spawn(listen.accept)
+        client = eventlet.connect(listen.getsockname())
+
+        client.settimeout(0.05)
+        # Now must raise socket.timeout
+        self.assertRaises(socket.timeout, client.recv, 1)
+
+        client.settimeout(0)
+        # Now must raise socket.error with EAGAIN
+        try:
+            client.recv(1)
+            assert False
+        except socket.error, e:
+            assert get_errno(e) == errno.EAGAIN
+
+        client.settimeout(0.05)
+        # Now socket.timeout again
+        self.assertRaises(socket.timeout, client.recv, 1)
+        server.wait()
+
 
 class TestGreenPipe(LimitedTestCase):
     @skip_on_windows
