@@ -2,7 +2,6 @@
 from setuptools import find_packages, setup
 from eventlet import __version__
 from os import path
-import sys
 
 
 setup(
@@ -15,7 +14,7 @@ setup(
     packages=find_packages(exclude=['tests', 'benchmarks']),
     install_requires=(
         'greenlet >= 0.3',
-    )
+    ),
     zip_safe=False,
     long_description=open(
         path.join(
