@@ -1,13 +1,12 @@
 #!/usr/bin/env python
-
-
 from setuptools import find_packages, setup
 from eventlet import __version__
 from os import path
 import sys
 
+
 requirements = []
-for flag, req in [('--without-greenlet','greenlet >= 0.3')]:
+for flag, req in [('--without-greenlet', 'greenlet >= 0.3')]:
     if flag in sys.argv:
         sys.argv.remove(flag)
     else:
@@ -29,21 +28,21 @@ setup(
             'README'
         )
     ).read(),
-    test_suite = 'nose.collector',
-    tests_require = 'httplib2',
+    test_suite='nose.collector',
+    tests_require='httplib2',
     classifiers=[
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python",
-    "Operating System :: MacOS :: MacOS X",
-    "Operating System :: POSIX",
-    "Operating System :: Microsoft :: Windows",
-    "Programming Language :: Python :: 2.4",
-    "Programming Language :: Python :: 2.5",
-    "Programming Language :: Python :: 2.6",
-    "Programming Language :: Python :: 2.7",
-    "Topic :: Internet",
-    "Topic :: Software Development :: Libraries :: Python Modules",
-    "Intended Audience :: Developers",
-    "Development Status :: 4 - Beta"]
-    )
-
+        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python",
+        "Operating System :: MacOS :: MacOS X",
+        "Operating System :: POSIX",
+        "Operating System :: Microsoft :: Windows",
+        "Programming Language :: Python :: 2.4",
+        "Programming Language :: Python :: 2.5",
+        "Programming Language :: Python :: 2.6",
+        "Programming Language :: Python :: 2.7",
+        "Topic :: Internet",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+        "Intended Audience :: Developers",
+        "Development Status :: 4 - Beta",
+    ]
+)
