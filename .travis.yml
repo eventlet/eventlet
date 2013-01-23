@@ -9,7 +9,8 @@ env:
   - EVENTLET_HUB=epolls
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install:
-  - "pip install pyzmq pyopenssl --use-mirrors"
+  - "pip install pyopenssl --use-mirrors"
+  - "if [ `python -c \"import platform; print platform.python_version().rsplit('.', 1)[0]\"` == \"2.5\" ]; then pip install 'pyzmq<2.2' --use-mirrors; else pip install pyzmq --use-mirrors; fi"
   - "pip install . --use-mirrors"
 # command to run tests, e.g. python setup.py test
 script:  nosetests
