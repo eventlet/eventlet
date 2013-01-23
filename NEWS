@@ -1,3 +1,12 @@
+0.12
+====
+* zmq: Fix 100% busy CPU in idle after .bind(PUB) (thanks to Geoff Salmon)
+* greenio: Fix socket.settimeout() did not switch back to blocking mode (thanks to Peter Skirko)
+* greenio: socket.dup() made excess fcntl syscalls (thanks to Peter Portante)
+* setup: Remove legacy --without-greenlet option and unused httplib2 dependency (thanks to Thomas Grainger)
+* wsgi: environ[REMOTE_PORT], also available in log_format, log accept event (thanks to Peter Portante)
+* tests: Support libzmq 3.0 SNDHWM option (thanks to Geoff Salmon)
+
 0.11
 ====
 * ssl: Fix 100% busy CPU in socket.sendall() (thanks to Raymon Lu)
