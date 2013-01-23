@@ -3,6 +3,10 @@ python:
   - "2.5"
   - "2.6"
   - "2.7"
+env:
+  - EVENTLET_HUB = selects
+  - EVENTLET_HUB = poll
+  - EVENTLET_HUB = epolls
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install: "pip install . --use-mirrors"
 # command to run tests, e.g. python setup.py test
