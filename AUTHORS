@@ -78,3 +78,4 @@ Thanks To
 * Eric Windisch, zmq getsockopt(EVENTS) wake correct threads (pull request 22)
 * Raymond Lu, fixing busy-wait in eventlet.green.ssl.socket.sendall()
 * Thomas Grainger, webcrawler example small fix, "requests" library import bug report
+* Peter Portante, save syscalls in socket.dup(), environ[REMOTE_PORT] in wsgi

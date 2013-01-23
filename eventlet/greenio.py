@@ -97,8 +97,10 @@ def set_nonblocking(fd):
                                       "(Windows pipes don't support non-blocking I/O)")
         # We managed to import fcntl.
         fileno = fd.fileno()
-        flags = fcntl.fcntl(fileno, fcntl.F_GETFL)
-        fcntl.fcntl(fileno, fcntl.F_SETFL, flags | os.O_NONBLOCK)
+        orig_flags = fcntl.fcntl(fileno, fcntl.F_GETFL)
+        new_flags = orig_flags | os.O_NONBLOCK
+        if new_flags != orig_flags:
+            fcntl.fcntl(fileno, fcntl.F_SETFL, new_flags)
     else:
         # socket supports setblocking()
         setblocking(0)
@@ -114,8 +116,13 @@ class GreenSocket(object):
     """
     Green version of socket.socket class, that is intended to be 100%
     API-compatible.
+
+    It also recognizes the keyword parameter, 'set_nonblocking=True'.
+    Pass False to indicate that socket is already in non-blocking mode
+    to save syscalls.
     """
     def __init__(self, family_or_realsock=socket.AF_INET, *args, **kwargs):
+        should_set_nonblocking = kwargs.pop('set_nonblocking', True)
         if isinstance(family_or_realsock, (int, long)):
             fd = _original_socket(family_or_realsock, *args, **kwargs)
         else:
@@ -129,7 +136,8 @@ class GreenSocket(object):
         except AttributeError:
             self._timeout = socket.getdefaulttimeout()
 
-        set_nonblocking(fd)
+        if should_set_nonblocking:
+            set_nonblocking(fd)
         self.fd = fd
         # when client calls setblocking(0) or settimeout(0) the socket must
         # act non-blocking
@@ -209,8 +217,7 @@ class GreenSocket(object):
 
     def dup(self, *args, **kw):
         sock = self.fd.dup(*args, **kw)
-        set_nonblocking(sock)
-        newsock = type(self)(sock)
+        newsock = type(self)(sock, set_nonblocking=False)
         newsock.settimeout(self.gettimeout())
         return newsock
 

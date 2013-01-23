@@ -4,12 +4,13 @@ from eventlet import event, greenio, debug
 from eventlet.hubs import get_hub
 from eventlet.green import socket, time
 from eventlet.support import get_errno
-import errno
 
+import array
+import errno
 import eventlet
+import fcntl
 import os
 import sys
-import array
 import tempfile, shutil
 
 
@@ -551,6 +552,35 @@ class TestGreenSocket(LimitedTestCase):
         self.assertRaises(socket.timeout, client.recv, 1)
         server.wait()
 
+    def test_default_nonblocking(self):
+        sock1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        flags = fcntl.fcntl(sock1.fd.fileno(), fcntl.F_GETFL)
+        assert flags & os.O_NONBLOCK
+
+        sock2 = socket.socket(sock1.fd)
+        flags = fcntl.fcntl(sock2.fd.fileno(), fcntl.F_GETFL)
+        assert flags & os.O_NONBLOCK
+
+    def test_dup_nonblocking(self):
+        sock1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        flags = fcntl.fcntl(sock1.fd.fileno(), fcntl.F_GETFL)
+        assert flags & os.O_NONBLOCK
+
+        sock2 = sock1.dup()
+        flags = fcntl.fcntl(sock2.fd.fileno(), fcntl.F_GETFL)
+        assert flags & os.O_NONBLOCK
+
+    def test_skip_nonblocking(self):
+        sock1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        fd = sock1.fd.fileno()
+        flags = fcntl.fcntl(fd, fcntl.F_GETFL)
+        flags = fcntl.fcntl(fd, fcntl.F_SETFL, flags & ~os.O_NONBLOCK)
+        assert flags & os.O_NONBLOCK == 0
+
+        sock2 = socket.socket(sock1.fd, set_nonblocking=False)
+        flags = fcntl.fcntl(sock2.fd.fileno(), fcntl.F_GETFL)
+        assert flags & os.O_NONBLOCK == 0
+
 
 class TestGreenPipe(LimitedTestCase):
     @skip_on_windows
@@ -820,6 +850,17 @@ class TestGreenIoStarvation(LimitedTestCase):
 
         assert maxstartdiff * 2 < runlengths[0], "Largest difference in starting times more than twice the shortest running time!"
         assert runlengths[0] * 2 > runlengths[-1], "Longest runtime more than twice as long as shortest!"
+
+
+def test_set_nonblocking():
+    sock = _orig_sock.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    fileno = sock.fileno()
+    orig_flags = fcntl.fcntl(fileno, fcntl.F_GETFL)
+    assert orig_flags & os.O_NONBLOCK == 0
+    greenio.set_nonblocking(sock)
+    new_flags = fcntl.fcntl(fileno, fcntl.F_GETFL)
+    assert new_flags == (orig_flags | os.O_NONBLOCK)
+
 
 if __name__ == '__main__':
     main()
