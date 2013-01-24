@@ -7,4 +7,5 @@ env:
   - EVENTLET_HUB=selects
   - EVENTLET_HUB=poll
   - EVENTLET_HUB=epolls
+install: pip install . --use-mirrors
 script:  python setup.py nosetests
