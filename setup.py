@@ -2,17 +2,20 @@
 from setuptools import find_packages, setup
 
 from eventlet import __version__
-from os import path
+from os import path, environ
 import sys
 
-tests_require = [
-    "pyopenssl",
-]
+tests_require = []
 
-if sys.version_info < (2,6):
-    tests_require.append("pyzmq<2.2")
-else:
-    tests_require.append("pyzmq")
+if environ.get("TRAVIS", False):
+    tests_require = [
+        "pyopenssl",
+    ]
+
+    if sys.version_info < (2, 6):
+        tests_require.append("pyzmq<2.2")
+    else:
+        tests_require.append("pyzmq")
 
 setup(
     name='eventlet',
