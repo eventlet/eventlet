@@ -12,6 +12,7 @@ install:
   - sudo apt-get install libmysqlclient-dev -qq
   - pip install . --use-mirrors
 script:  python setup.py nosetests
+services: mysql
 matrix:
   allow_failures:
     - python: "2.5"
