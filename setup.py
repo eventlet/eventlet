@@ -10,6 +10,7 @@ tests_require = []
 if environ.get("TRAVIS", False):
     tests_require = [
         "pyopenssl",
+        "MySQL-python",
     ]
 
     if sys.version_info < (2, 6):
