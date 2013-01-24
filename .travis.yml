@@ -7,9 +7,4 @@ env:
   - EVENTLET_HUB=selects
   - EVENTLET_HUB=poll
   - EVENTLET_HUB=epolls
-# command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
-install:
- - sudo apt-get update -qq
- - sudo apt-get install -qq libzmq-dev
-# command to run tests, e.g. python setup.py test
 script:  python setup.py nosetests
