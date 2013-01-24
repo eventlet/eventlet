@@ -9,3 +9,6 @@ env:
   - EVENTLET_HUB=epolls
 install: pip install . --use-mirrors
 script:  python setup.py nosetests
+matrix:
+  allow_failures:
+    - python: "2.5"
