@@ -1,8 +1,20 @@
 #!/usr/bin/env python
 from setuptools import find_packages, setup
+from distutils.version import StrictVersion
+
 from eventlet import __version__
 from os import path
 
+from platform import python_version
+
+tests_require = [
+    "pyopenssl",
+]
+
+if StrictVersion(python_version()) < "2.6":
+    tests_require.append("pyzmq<2.2")
+else:
+    tests_require.append("pyzmq")
 
 setup(
     name='eventlet',
@@ -23,6 +35,7 @@ setup(
         )
     ).read(),
     test_suite='nose.collector',
+    tests_require=tests_require,
     classifiers=[
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python",
