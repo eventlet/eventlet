@@ -1,17 +1,15 @@
 #!/usr/bin/env python
 from setuptools import find_packages, setup
-from distutils.version import StrictVersion
 
 from eventlet import __version__
 from os import path
-
-from platform import python_version
+import sys
 
 tests_require = [
     "pyopenssl",
 ]
 
-if StrictVersion(python_version()) < "2.6":
+if sys.version_info < (2,6):
     tests_require.append("pyzmq<2.2")
 else:
     tests_require.append("pyzmq")
