@@ -143,15 +143,28 @@ class GreenSocket(object):
         # act non-blocking
         self.act_non_blocking = False
 
+        # Copy some attributes from underlying real socket.
+        # This is the easiest way that i found to fix
+        # https://bitbucket.org/which_linden/eventlet/issue/136
+        # Only `getsockopt` is required to fix that issue, others
+        # are just premature optimization to save __getattr__ call.
+        self.bind = fd.bind
+        self.close = fd.close
+        self.fileno = fd.fileno
+        self.getsockname = fd.getsockname
+        self.getsockopt = fd.getsockopt
+        self.listen = fd.listen
+        self.setsockopt = fd.setsockopt
+        self.shutdown = fd.shutdown
+
     @property
     def _sock(self):
         return self
 
-    #forward unknown attibutes to fd
-    # cache the value for future use.
+    # Forward unknown attributes to fd, cache the value for future use.
     # I do not see any simple attribute which could be changed
-    # so caching everything in self is fine,
-    # If we find such attributes - only attributes having __get__ might be cahed.
+    # so caching everything in self is fine.
+    # If we find such attributes - only attributes having __get__ might be cached.
     # For now - I do not want to complicate it.
     def __getattr__(self, name):
         attr = getattr(self.fd, name)

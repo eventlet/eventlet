@@ -581,6 +581,12 @@ class TestGreenSocket(LimitedTestCase):
         flags = fcntl.fcntl(sock2.fd.fileno(), fcntl.F_GETFL)
         assert flags & os.O_NONBLOCK == 0
 
+    def test_sockopt_interface(self):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        assert sock.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR) == 0
+        assert sock.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) == '\000'
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
 
 class TestGreenPipe(LimitedTestCase):
     @skip_on_windows
