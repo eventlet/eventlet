@@ -3,6 +3,14 @@ import os
 from eventlet.support import greenlets as greenlet
 from eventlet import patcher
 
+try:
+    # try and import pkg_resources ...
+    import pkg_resources
+except ImportError:
+    # ... but do not depend on it
+    pass
+
+
 __all__ = ["use_hub", "get_hub", "get_default_hub", "trampoline"]
 
 threading = patcher.original('threading')
@@ -49,7 +57,10 @@ def use_hub(mod=None):
     event hub. Usually not required; the default hub is usually fine.
 
     Mod can be an actual module, a string, or None.  If *mod* is a module,
-    it uses it directly.   If *mod* is a string, use_hub tries to import
+    it uses it directly.   If *mod* is a string and contains either '.' or ':'
+    use_hub tries to import the hub using the 'package.subpackage.module:Class'
+    convention, otherwise use_hub looks for a matching setuptools entry point
+    in the 'eventlet.hubs' group to load or finally tries to import
     `eventlet.hubs.mod` and use that as the hub module.  If *mod* is None,
     use_hub uses the default hub.  Only call use_hub during application
     initialization,  because it resets the hub's state and any existing
@@ -63,7 +74,23 @@ def use_hub(mod=None):
         del _threadlocal.hub
     if isinstance(mod, str):
         assert mod.strip(), "Need to specify a hub"
-        mod = __import__('eventlet.hubs.' + mod, globals(), locals(), ['Hub'])
+        if '.' in mod or ':' in mod:
+            modulename, classname = mod.strip().split(':')
+            mod = __import__(modulename, globals(), locals(), [classname])
+            if classname:
+                mod = getattr(mod, classname)
+        else:
+            found = False
+            try:
+                iter_entry_points = pkg_resources.iter_entry_points
+            except NameError:
+                # no pkg_resources module installed
+                pass
+            else:
+                for entry in iter_entry_points(group='eventlet.hubs', name=mod):
+                    mod, found = entry.load(), True
+            if not found:
+                mod = __import__('eventlet.hubs.' + mod, globals(), locals(), ['Hub'])
     if hasattr(mod, 'Hub'):
         _threadlocal.Hub = mod.Hub
     else:
