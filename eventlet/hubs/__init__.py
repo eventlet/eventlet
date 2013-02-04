@@ -89,6 +89,7 @@ def use_hub(mod=None):
             else:
                 for entry in iter_entry_points(group='eventlet.hubs', name=mod):
                     mod, found = entry.load(), True
+                    break
             if not found:
                 mod = __import__('eventlet.hubs.' + mod, globals(), locals(), ['Hub'])
     if hasattr(mod, 'Hub'):
