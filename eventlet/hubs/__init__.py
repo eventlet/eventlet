@@ -75,7 +75,7 @@ def use_hub(mod=None):
     if isinstance(mod, str):
         assert mod.strip(), "Need to specify a hub"
         if '.' in mod or ':' in mod:
-            modulename, classname = mod.strip().split(':')
+            modulename, _, classname = mod.strip().partition(':')
             mod = __import__(modulename, globals(), locals(), [classname])
             if classname:
                 mod = getattr(mod, classname)
