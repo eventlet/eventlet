@@ -1,13 +1,16 @@
 import collections
 import errno
+from random import Random
 import string
 import struct
+import time
 from socket import error as SocketError
 
 try:
-    from hashlib import md5
+    from hashlib import md5, sha1
 except ImportError: #pragma NO COVER
     from md5 import md5
+    from sha import sha as sha1
 
 import eventlet
 from eventlet import semaphore
@@ -265,3 +268,134 @@ class WebSocket(object):
         self.socket.shutdown(True)
         self.socket.close()
 
+
+class RFC6455WebSocket(WebSocket):
+    def __init__(self, sock, environ, version=13):
+        super(RFC6455WebSocket, self).__init__(sock, environ, version)
+        self.iterator = self._iter_frames()
+
+    def _get_bytes(self, numbytes):
+        data = ''
+        while len(data) < numbytes:
+            d = self.socket.recv(numbytes - len(data))
+            if not d:
+                break
+            data = data + d
+        if len(data) < numbytes:
+            raise ConnectionClosedError()
+        return data
+
+    @staticmethod
+    def _apply_mask(data, mask, length=None):
+        if length is None:
+            length = len(data)
+        count = xrange(length)
+        return ''.join(chr(ord(data[i]) ^ mask[i % 4]) for i in count)
+
+    def _handle_control_frame(self, opcode, data):
+        raise NotImplementedError()
+
+    def _iter_frames(self):
+        fragments = []
+        fragment_opcode = None
+        while True:
+            finished, opcode, data = self._recv_frame()
+            if opcode & 8:
+                # allow multiplexed control codes
+                self._handle_control_frame(opcode, data)
+                continue
+            if fragments:
+                if opcode:
+                    raise NotImplementedError()
+            else:
+                if not opcode:
+                    raise NotImplementedError()
+                fragment_opcode = opcode
+            fragments.append(data)
+            if finished:
+                data, fragments = ''.join(fragments), []
+                if fragment_opcode == 1:  # text frame
+                    data = data.decode('utf-8')
+                yield data
+
+    def _recv_frame(self):
+        recv = self._get_bytes
+        header = recv(2)
+        a, b = struct.unpack('!BB', header)
+        finished = a >> 7 == 1
+        rsv123 = a >> 4 & 7
+        if rsv123:
+            # must be zero
+            raise NotImplementedError()
+        opcode = a & 15
+        masked = b & 128 == 128
+        length = b & 127
+        if opcode & 8:
+            if not finished:
+                raise NotImplementedError()
+            if length > 125:
+                raise NotImplementedError()
+        if length == 126:
+            length = struct.unpack('!H', recv(2))[0]
+        elif length == 127:
+            length = struct.unpack('!Q', recv(8))[0]
+        if masked:
+            mask = struct.unpack('!BBBB', recv(4))
+        data = recv(length)
+        if masked:
+            data = self._apply_mask(data, mask, length)
+        return finished, opcode, data
+
+    @staticmethod
+    def _pack_message(message, masked=True,
+                      continuation=False, final=True, control_code=None):
+        is_text = False
+        if isinstance(message, unicode):
+            message = message.encode('utf-8')
+            is_text = True
+        length = len(message)
+        if not length:
+            # no point masking empty data
+            masked = False
+        if control_code:
+            if control_code > 15:
+                raise NotImplementedError()
+            if continuation or not final:
+                raise NotImplementedError()
+            if length > 125:
+                raise NotImplementedError()
+            header = struct.pack('!B', control_code | 1 << 7)
+        else:
+            opcode = 0 if continuation else (1 if is_text else 2)
+            header = struct.pack('!B', opcode | (1 << 7 if final else 0))
+        lengthdata = 1 << 7 if masked else 0
+        if length > 65535:
+            lengthdata = struct.pack('!BQ', lengthdata | 127, length)
+        elif length > 125:
+            lengthdata = struct.pack('!BH', lengthdata | 126, length)
+        else:
+            lengthdata = struct.pack('!B', lengthdata | length)
+        if masked:
+            rand = Random(time.time())
+            mask = map(rand.getrandbits, (8, ) * 4)
+            message = RFC6455WebSocket._apply_mask(message, mask, length)
+            maskdata = struct.pack('!BBBB', *mask)
+        return ''.join((header, lengthdata, maskdata, message))
+
+    def wait(self):
+        return self.iterator.next()
+
+    def _send(self, frame):
+        self._sendlock.acquire()
+        try:
+            self.socket.sendall(frame)
+        finally:
+            self._sendlock.release()
+
+    def send(self, message, **kw):
+        payload = self._pack_message(message, **kw)
+        self._send(payload)
+
+    def _send_closing_frame(self, close_data=None, ignore_send_errors=False):
+        data = close_data or ''
+        self.send(data, control_code=8)
