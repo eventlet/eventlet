@@ -317,6 +317,10 @@ class FailedConnectionError(Exception):
         self.status = status
 
 
+class ProtocolError(ValueError):
+    pass
+
+
 class RFC6455WebSocket(WebSocket):
     def __init__(self, sock, environ, version=13):
         super(RFC6455WebSocket, self).__init__(sock, environ, version)
@@ -444,12 +448,12 @@ class RFC6455WebSocket(WebSocket):
             # no point masking empty data
             masked = False
         if control_code:
-            if control_code > 15:
-                raise NotImplementedError()
+            if control_code not in (8, 9, 0xA):
+                raise ProtocolError('Unknown control opcode.')
             if continuation or not final:
-                raise NotImplementedError()
+                raise ProtocolError('Control frame cannot be a fragment.')
             if length > 125:
-                raise NotImplementedError()
+                raise ProtocolError('Control frame data too large (>125).')
             header = struct.pack('!B', control_code | 1 << 7)
         else:
             opcode = 0 if continuation else (1 if is_text else 2)
