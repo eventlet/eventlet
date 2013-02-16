@@ -310,10 +310,9 @@ class FailedConnectionError(Exception):
 
 
 class RFC6455WebSocket(WebSocket):
-    def __init__(self, sock, environ, version=13, mask_frames=False):
+    def __init__(self, sock, environ, version=13):
         super(RFC6455WebSocket, self).__init__(sock, environ, version)
         self.iterator = self._iter_frames()
-        self.mask_frames = mask_frames
 
     def _get_bytes(self, numbytes):
         data = ''
@@ -385,6 +384,9 @@ class RFC6455WebSocket(WebSocket):
             raise NotImplementedError()
         opcode = a & 15
         masked = b & 128 == 128
+        if not masked:
+            raise FailedConnectionError(1002, "A client MUST mask all frames"
+                                        "that it sends to the server")
         length = b & 127
         if opcode & 8:
             if not finished:
@@ -403,7 +405,7 @@ class RFC6455WebSocket(WebSocket):
         return finished, opcode, data
 
     @staticmethod
-    def _pack_message(message, masked=True,
+    def _pack_message(message, masked=False,
                       continuation=False, final=True, control_code=None):
         is_text = False
         if isinstance(message, unicode):
@@ -432,6 +434,8 @@ class RFC6455WebSocket(WebSocket):
         else:
             lengthdata = struct.pack('!B', lengthdata | length)
         if masked:
+            # NOTE: RFC6455 states:
+            # A server MUST NOT mask any frames that it sends to the client
             rand = Random(time.time())
             mask = map(rand.getrandbits, (8, ) * 4)
             message = RFC6455WebSocket._apply_mask(message, mask, length)
@@ -452,7 +456,6 @@ class RFC6455WebSocket(WebSocket):
             self._sendlock.release()
 
     def send(self, message, **kw):
-        kw.setdefault('masked', self.mask_frames)
         payload = self._pack_message(message, **kw)
         self._send(payload)
 
