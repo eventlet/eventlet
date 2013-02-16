@@ -46,7 +46,7 @@ class WebSocketWSGI(object):
 
     def __call__(self, environ, start_response):
         if not (environ.get('HTTP_CONNECTION') == 'Upgrade' and
-                environ.get('HTTP_UPGRADE') == 'WebSocket'):
+                environ.get('HTTP_UPGRADE') in ('WebSocket', 'websocket')):
             # need to check a few more things here for true compliance
             start_response('400 Bad Request', [('Connection','close')])
             return []
@@ -54,12 +54,12 @@ class WebSocketWSGI(object):
         # See if they sent the new-format headers
         hybi_version = environ.get('HTTP_SEC_WEBSOCKET_VERSION', None)
         if hybi_version is not None:
-            if hybi_version != 13:
+            if hybi_version != '13':
                 start_response('426 Upgrade Required',
                                [('Connection', 'close'),
                                 ('Sec-WebSocket-Version', '13')])
                 return []
-            self.protocol_version = hybi_version
+            self.protocol_version = int(hybi_version)
             if 'HTTP_SEC_WEBSOCKET_KEY' not in environ:
                 # That's bad.
                 start_response('400 Bad Request', [('Connection','close')])
@@ -83,7 +83,7 @@ class WebSocketWSGI(object):
         # If it's new-version, we need to work out our challenge response
         if hybi_version is not None:
             key = environ['HTTP_SEC_WEBSOCKET_KEY']
-            response = base64.b64encode(sha1(key + PROTOCOL_GUID).digest)
+            response = base64.b64encode(sha1(key + PROTOCOL_GUID).digest())
         elif self.protocol_version == 76:
             key1 = self._extract_number(environ['HTTP_SEC_WEBSOCKET_KEY1'])
             key2 = self._extract_number(environ['HTTP_SEC_WEBSOCKET_KEY2'])
@@ -111,7 +111,8 @@ class WebSocketWSGI(object):
             handshake_reply = ("HTTP/1.1 101 Switching Protocols\r\n"
                                "Upgrade: websocket\r\n"
                                "Connection: Upgrade\r\n"
-                               "Sec-WebSocket-Accept: %s\r\n" % (response, ))
+                               "Sec-WebSocket-Accept: %s\r\n\r\n"
+                               % (response, ))
         elif self.protocol_version == 75:
             handshake_reply = ("HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
                                "Upgrade: WebSocket\r\n"
