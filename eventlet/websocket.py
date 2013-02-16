@@ -4,6 +4,7 @@ import errno
 from random import Random
 import string
 import struct
+import sys
 import time
 from socket import error as SocketError
 
@@ -297,6 +298,17 @@ class WebSocket(object):
         self.socket.close()
 
 
+class ConnectionClosedError(Exception):
+    pass
+
+
+class FailedConnectionError(Exception):
+    def __init__(self, status, message):
+        super(FailedConnectionError, self).__init__(status, message)
+        self.message = message
+        self.status = status
+
+
 class RFC6455WebSocket(WebSocket):
     def __init__(self, sock, environ, version=13, mask_frames=False):
         super(RFC6455WebSocket, self).__init__(sock, environ, version)
@@ -325,7 +337,7 @@ class RFC6455WebSocket(WebSocket):
         if opcode == 8:  # connection close
             status = struct.unpack_from('!H', data)
             self.close(close_data=(status, ''))
-            raise NotImplementedError()
+            raise ConnectionClosedError()
         elif opcode == 9:  # ping
             self.send(data, control_code=0xA)
         elif opcode == 0xA:  # pong
@@ -336,25 +348,31 @@ class RFC6455WebSocket(WebSocket):
     def _iter_frames(self):
         fragments = []
         fragment_opcode = None
-        while True:
-            finished, opcode, data = self._recv_frame()
-            if opcode & 8:
-                # allow multiplexed control codes
-                self._handle_control_frame(opcode, data)
-                continue
-            if fragments:
-                if opcode:
-                    raise NotImplementedError()
-            else:
-                if not opcode:
-                    raise NotImplementedError()
-                fragment_opcode = opcode
-            fragments.append(data)
-            if finished:
-                data, fragments = ''.join(fragments), []
-                if fragment_opcode == 1:  # text frame
-                    data = data.decode('utf-8')
-                yield data
+        try:
+            while True:
+                finished, opcode, data = self._recv_frame()
+                if opcode & 8:
+                    # allow multiplexed control codes
+                    self._handle_control_frame(opcode, data)
+                    continue
+                if fragments:
+                    if opcode:
+                        raise NotImplementedError()
+                else:
+                    if not opcode:
+                        raise NotImplementedError()
+                    fragment_opcode = opcode
+                fragments.append(data)
+                if finished:
+                    data, fragments = ''.join(fragments), []
+                    if fragment_opcode == 1:  # text frame
+                        data = data.decode('utf-8')
+                    yield data
+        except FailedConnectionError:
+            exc_typ, exc_val, exc_tb = sys.exc_info()
+            self.close(close_data=(exc_val.status, exc_val.message))
+        except ConnectionClosedError:
+            return
 
     def _recv_frame(self):
         recv = self._get_bytes
@@ -423,7 +441,8 @@ class RFC6455WebSocket(WebSocket):
         return ''.join((header, lengthdata, maskdata, message))
 
     def wait(self):
-        return self.iterator.next()
+        for i in self.iterator:
+            return i
 
     def _send(self, frame):
         self._sendlock.acquire()
