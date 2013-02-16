@@ -42,6 +42,7 @@ class WebSocketWSGI(object):
     """
     def __init__(self, handler):
         self.handler = handler
+        self.mask_frames = False
         self.protocol_version = None
 
     def __call__(self, environ, start_response):
@@ -297,9 +298,10 @@ class WebSocket(object):
 
 
 class RFC6455WebSocket(WebSocket):
-    def __init__(self, sock, environ, version=13):
+    def __init__(self, sock, environ, version=13, mask_frames=False):
         super(RFC6455WebSocket, self).__init__(sock, environ, version)
         self.iterator = self._iter_frames()
+        self.mask_frames = mask_frames
 
     def _get_bytes(self, numbytes):
         data = ''
@@ -416,6 +418,8 @@ class RFC6455WebSocket(WebSocket):
             mask = map(rand.getrandbits, (8, ) * 4)
             message = RFC6455WebSocket._apply_mask(message, mask, length)
             maskdata = struct.pack('!BBBB', *mask)
+        else:
+            maskdata = ''
         return ''.join((header, lengthdata, maskdata, message))
 
     def wait(self):
@@ -429,6 +433,7 @@ class RFC6455WebSocket(WebSocket):
             self._sendlock.release()
 
     def send(self, message, **kw):
+        kw.setdefault('masked', self.mask_frames)
         payload = self._pack_message(message, **kw)
         self._send(payload)
 
