@@ -293,7 +293,16 @@ class RFC6455WebSocket(WebSocket):
         return ''.join(chr(ord(data[i]) ^ mask[i % 4]) for i in count)
 
     def _handle_control_frame(self, opcode, data):
-        raise NotImplementedError()
+        if opcode == 8:  # connection close
+            status = struct.unpack_from('!H', data)
+            self.close(close_data=(status, ''))
+            raise NotImplementedError()
+        elif opcode == 9:  # ping
+            self.send(data, control_code=0xA)
+        elif opcode == 0xA:  # pong
+            pass
+        else:
+            raise NotImplementedError()
 
     def _iter_frames(self):
         fragments = []
@@ -397,5 +406,11 @@ class RFC6455WebSocket(WebSocket):
         self._send(payload)
 
     def _send_closing_frame(self, close_data=None, ignore_send_errors=False):
-        data = close_data or ''
+        if close_data is not None:
+            status, msg = close_data
+            if isinstance(msg, unicode):
+                msg = msg.encode('utf-8')
+            data = struct.pack('!H', status) + msg
+        else:
+            data = ''
         self.send(data, control_code=8)
