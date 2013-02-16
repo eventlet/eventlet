@@ -1,3 +1,4 @@
+import base64
 import collections
 import errno
 from random import Random
@@ -21,6 +22,8 @@ from eventlet.support import get_errno
 ACCEPTABLE_CLIENT_ERRORS = set((errno.ECONNRESET, errno.EPIPE))
 
 __all__ = ["WebSocketWSGI", "WebSocket"]
+PROTOCOL_GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
+
 
 class WebSocketWSGI(object):
     """Wraps a websocket handler function in a WSGI application.
@@ -49,6 +52,18 @@ class WebSocketWSGI(object):
             return []
     
         # See if they sent the new-format headers
+        hybi_version = environ.get('HTTP_SEC_WEBSOCKET_VERSION', None)
+        if hybi_version is not None:
+            if hybi_version != 13:
+                start_response('426 Upgrade Required',
+                               [('Connection', 'close'),
+                                ('Sec-WebSocket-Version', '13')])
+                return []
+            self.protocol_version = hybi_version
+            if 'HTTP_SEC_WEBSOCKET_KEY' not in environ:
+                # That's bad.
+                start_response('400 Bad Request', [('Connection','close')])
+                return []
         if 'HTTP_SEC_WEBSOCKET_KEY1' in environ:
             self.protocol_version = 76
             if 'HTTP_SEC_WEBSOCKET_KEY2' not in environ:
@@ -60,10 +75,16 @@ class WebSocketWSGI(object):
 
         # Get the underlying socket and wrap a WebSocket class around it
         sock = environ['eventlet.input'].get_socket()
-        ws = WebSocket(sock, environ, self.protocol_version)
+        if hybi_version is not None:
+            ws = RFC6455WebSocket(sock, environ, self.protocol_version)
+        else:
+            ws = WebSocket(sock, environ, self.protocol_version)
         
         # If it's new-version, we need to work out our challenge response
-        if self.protocol_version == 76:
+        if hybi_version is not None:
+            key = environ['HTTP_SEC_WEBSOCKET_KEY']
+            response = base64.b64encode(sha1(key + PROTOCOL_GUID).digest)
+        elif self.protocol_version == 76:
             key1 = self._extract_number(environ['HTTP_SEC_WEBSOCKET_KEY1'])
             key2 = self._extract_number(environ['HTTP_SEC_WEBSOCKET_KEY2'])
             # There's no content-length header in the request, but it has 8
@@ -86,7 +107,12 @@ class WebSocketWSGI(object):
         qs = environ.get('QUERY_STRING')
         if qs is not None:
             location += '?' + qs
-        if self.protocol_version == 75:
+        if hybi_version is not None:
+            handshake_reply = ("HTTP/1.1 101 Switching Protocols\r\n"
+                               "Upgrade: websocket\r\n"
+                               "Connection: Upgrade\r\n"
+                               "Sec-WebSocket-Accept: %s\r\n" % (response, ))
+        elif self.protocol_version == 75:
             handshake_reply = ("HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
                                "Upgrade: WebSocket\r\n"
                                "Connection: Upgrade\r\n"
