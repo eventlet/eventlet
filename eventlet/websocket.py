@@ -66,6 +66,14 @@ class WebSocketWSGI(object):
                 # That's bad.
                 start_response('400 Bad Request', [('Connection','close')])
                 return []
+            # TODO: handle Origin (Sec-Websocket-Origin for <=8)
+            #       (An unaccepted origin is a 403 Forbidden response.)
+            #protocols = environ.get('HTTP_SEC_WEBSOCKET_PROTOCOL', None)
+            #if protocols:
+            #    protocols = [i.strip() for i in protocols.split(',')]
+            #extensions = environ.get('HTTP_SEC_WEBSOCKET_EXTENSIONS', None)
+            #if extensions:
+            #    extensions = [i.strip() for i in extensions.split(',')]
         if 'HTTP_SEC_WEBSOCKET_KEY1' in environ:
             self.protocol_version = 76
             if 'HTTP_SEC_WEBSOCKET_KEY2' not in environ:
@@ -342,7 +350,8 @@ class RFC6455WebSocket(WebSocket):
         elif opcode == 0xA:  # pong
             pass
         else:
-            raise NotImplementedError()
+            raise FailedConnectionError(
+                1002, "Unknown control frame received.")
 
     def _iter_frames(self):
         fragments = []
@@ -356,16 +365,26 @@ class RFC6455WebSocket(WebSocket):
                     continue
                 if fragments:
                     if opcode:
-                        raise NotImplementedError()
+                        raise FailedConnectionError(
+                            1002,
+                            "Received a non-continuation opcode within"
+                            " fragmented message.")
                 else:
                     if not opcode:
-                        raise NotImplementedError()
+                        raise FailedConnectionError(
+                            1002,
+                            "Received continuation opcode with no previous"
+                            " fragments received.")
                     fragment_opcode = opcode
                 fragments.append(data)
                 if finished:
                     data, fragments = ''.join(fragments), []
                     if fragment_opcode == 1:  # text frame
-                        data = data.decode('utf-8')
+                        try:
+                            data = data.decode('utf-8')
+                        except UnicodeDecodeError:
+                            raise FailedConnectionError(
+                                1002, "Text data must be valid utf-8")
                     yield data
         except FailedConnectionError:
             exc_typ, exc_val, exc_tb = sys.exc_info()
@@ -381,18 +400,27 @@ class RFC6455WebSocket(WebSocket):
         rsv123 = a >> 4 & 7
         if rsv123:
             # must be zero
-            raise NotImplementedError()
+            raise FailedConnectionError(
+                1002,
+                "RSV1, RSV2, RSV3: MUST be 0 unless an extension is"
+                " negotiated that defines meanings for non-zero values.")
         opcode = a & 15
+        if opcode not in (0, 1, 2, 8, 9, 0xA):
+            raise FailedConnectionError(1002, "Unknown opcode received.")
         masked = b & 128 == 128
         if not masked:
             raise FailedConnectionError(1002, "A client MUST mask all frames"
-                                        "that it sends to the server")
+                                        " that it sends to the server")
         length = b & 127
         if opcode & 8:
             if not finished:
-                raise NotImplementedError()
+                raise FailedConnectionError(1002, "Control frames must not"
+                                            " be fragmented.")
             if length > 125:
-                raise NotImplementedError()
+                raise FailedConnectionError(
+                    1002,
+                    "All control frames MUST have a payload length of 125"
+                    " bytes or less")
         if length == 126:
             length = struct.unpack('!H', recv(2))[0]
         elif length == 127:
