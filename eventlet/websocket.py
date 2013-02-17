@@ -370,18 +370,29 @@ class RFC6455WebSocket(WebSocket):
         while len(data) < numbytes:
             d = self.socket.recv(numbytes - len(data))
             if not d:
-                break
+                raise ConnectionClosedError()
             data = data + d
-        if len(data) < numbytes:
-            raise ConnectionClosedError()
         return data
 
+    class Message(object):
+        def __init__(self, decoder=None):
+            self.decoder = decoder
+            self.data = []
+
+        def push(self, data, final=False):
+            if self.decoder:
+                data = self.decoder.decode(data, final=final)
+            self.data.append(data)
+
+        def getvalue(self):
+            return ''.join(self.data)
+
     @staticmethod
-    def _apply_mask(data, mask, length=None):
+    def _apply_mask(data, mask, length=None, offset=0):
         if length is None:
             length = len(data)
-        count = xrange(length)
-        return ''.join(chr(ord(data[i]) ^ mask[i % 4]) for i in count)
+        cnt = xrange(length)
+        return ''.join(chr(ord(data[i]) ^ mask[(offset + i) % 4]) for i in cnt)
 
     def _handle_control_frame(self, opcode, data):
         if opcode == 8:  # connection close
@@ -412,18 +423,15 @@ class RFC6455WebSocket(WebSocket):
                 1002, "Unknown control frame received.")
 
     def _iter_frames(self):
-        fragments = []
-        utf8decodercls = codecs.getincrementaldecoder('utf8')
-        decoder = None
-        utf8v = utf8validator.Utf8Validator() if utf8validator else None
+        fragmented_message = None
         try:
             while True:
-                finished, opcode, data = self._recv_frame()
+                finished, opcode, message = self._recv_frame(message=fragmented_message)
                 if opcode & 8:
                     # allow multiplexed control codes
-                    self._handle_control_frame(opcode, data)
+                    self._handle_control_frame(opcode, message.getvalue())
                     continue
-                if fragments:
+                if fragmented_message:
                     if opcode:
                         raise FailedConnectionError(
                             1002,
@@ -435,22 +443,10 @@ class RFC6455WebSocket(WebSocket):
                             1002,
                             "Received continuation opcode with no previous"
                             " fragments received.")
-                    decoder = utf8decodercls() if opcode == 1 else None
-                    if utf8v:
-                        utf8v.reset()
-                if decoder:
-                    if utf8v:
-                        if not utf8v.validate(data)[0]:
-                            raise FailedConnectionError(
-                                1007, "Text data must be valid utf-8")
-                    try:
-                        data = decoder.decode(data, finished)
-                    except (UnicodeDecodeError, ValueError):
-                        raise FailedConnectionError(
-                            1007, "Text data must be valid utf-8")
-                fragments.append(data)
+                fragmented_message = message
                 if finished:
-                    data, fragments = ''.join(fragments), []
+                    data = fragmented_message.getvalue()
+                    fragmented_message = None
                     yield data
         except FailedConnectionError:
             exc_typ, exc_val, exc_tb = sys.exc_info()
@@ -460,7 +456,7 @@ class RFC6455WebSocket(WebSocket):
         except Exception:
             self.close(close_data=(1011, 'Internal Server Error'))
 
-    def _recv_frame(self):
+    def _recv_frame(self, message=None):
         recv = self._get_bytes
         header = recv(2)
         a, b = struct.unpack('!BB', header)
@@ -489,16 +485,38 @@ class RFC6455WebSocket(WebSocket):
                     1002,
                     "All control frames MUST have a payload length of 125"
                     " bytes or less")
+        elif opcode and message:
+            raise FailedConnectionError(
+                1002,
+                "Received a non-continuation opcode within"
+                " fragmented message.")
         if length == 126:
             length = struct.unpack('!H', recv(2))[0]
         elif length == 127:
             length = struct.unpack('!Q', recv(8))[0]
         if masked:
             mask = struct.unpack('!BBBB', recv(4))
-        data = recv(length)
-        if masked:
-            data = self._apply_mask(data, mask, length)
-        return finished, opcode, data
+        received = 0
+        if not message or opcode & 8:
+            decoder = self.UTF8Decoder() if opcode == 1 else None
+            message = self.Message(decoder=decoder)
+        if not length:
+            message.push('', final=finished)
+        else:
+            while received < length:
+                d = self.socket.recv(length - received)
+                if not d:
+                    raise ConnectionClosedError()
+                dlen = len(d)
+                if masked:
+                    d = self._apply_mask(d, mask, length=dlen, offset=received)
+                received = received + dlen
+                try:
+                    message.push(d, final=finished)
+                except (UnicodeDecodeError, ValueError):
+                    raise FailedConnectionError(
+                        1007, "Text data must be valid utf-8")
+        return finished, opcode, message
 
     @staticmethod
     def _pack_message(message, masked=False,
