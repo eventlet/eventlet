@@ -25,12 +25,9 @@ from eventlet.support import get_errno
 # In order to pass autobahn's testsuite we need more lenient validation
 # if available...
 try:
-    from wsaccel import utf8validator
+    from autobahn import utf8validator
 except ImportError:
-    try:
-        from autobahn import utf8validator
-    except ImportError:
-        utf8validator = None
+    utf8validator = None
 
 ACCEPTABLE_CLIENT_ERRORS = set((errno.ECONNRESET, errno.EPIPE))
 
