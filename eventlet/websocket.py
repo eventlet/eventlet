@@ -1,4 +1,5 @@
 import base64
+import codecs
 import collections
 import errno
 from random import Random
@@ -363,7 +364,8 @@ class RFC6455WebSocket(WebSocket):
 
     def _iter_frames(self):
         fragments = []
-        fragment_opcode = None
+        utf8decodercls = codecs.getincrementaldecoder('utf8')
+        decoder = None
         try:
             while True:
                 finished, opcode, data = self._recv_frame()
@@ -383,19 +385,19 @@ class RFC6455WebSocket(WebSocket):
                             1002,
                             "Received continuation opcode with no previous"
                             " fragments received.")
-                    fragment_opcode = opcode
+                    decoder = utf8decodercls() if opcode == 1 else None
+                if decoder:
+                    try:
+                        data = decoder.decode(data, finished)
+                    except (UnicodeDecodeError, ValueError):
+                        raise FailedConnectionError(
+                            1007, "Text data must be valid utf-8")
+                    if INVALID_UTF8.search(data):
+                        raise FailedConnectionError(
+                            1007, "Text data must be valid utf-8")
                 fragments.append(data)
                 if finished:
                     data, fragments = ''.join(fragments), []
-                    if fragment_opcode == 1:  # text frame
-                        try:
-                            data = data.decode('utf-8', 'strict')
-                        except UnicodeDecodeError:
-                            raise FailedConnectionError(
-                                1007, "Text data must be valid utf-8")
-                        if INVALID_UTF8.search(data):
-                            raise FailedConnectionError(
-                                1007, "Text data must be valid utf-8")
                     yield data
         except FailedConnectionError:
             exc_typ, exc_val, exc_tb = sys.exc_info()
