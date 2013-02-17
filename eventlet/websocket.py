@@ -358,7 +358,12 @@ class RFC6455WebSocket(WebSocket):
 
     def _handle_control_frame(self, opcode, data):
         if opcode == 8:  # connection close
-            status = struct.unpack_from('!H', data)[0]
+            if not data:
+                status = 1000
+            elif len(data) > 1:
+                status = struct.unpack_from('!H', data)[0]
+            else:
+                status = 1002
             self.close(close_data=(status, ''))
             raise ConnectionClosedError()
         elif opcode == 9:  # ping
