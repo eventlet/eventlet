@@ -339,9 +339,10 @@ class ProtocolError(ValueError):
 
 
 class RFC6455WebSocket(WebSocket):
-    def __init__(self, sock, environ, version=13):
+    def __init__(self, sock, environ, version=13, client=False):
         super(RFC6455WebSocket, self).__init__(sock, environ, version)
         self.iterator = self._iter_frames()
+        self.client = client
 
     class UTF8Decoder(object):
         def __init__(self):
@@ -551,6 +552,7 @@ class RFC6455WebSocket(WebSocket):
             self._sendlock.release()
 
     def send(self, message, **kw):
+        kw['masked'] = self.client
         payload = self._pack_message(message, **kw)
         self._send(payload)
 
