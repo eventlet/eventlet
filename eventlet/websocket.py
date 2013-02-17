@@ -492,11 +492,26 @@ class RFC6455WebSocket(WebSocket):
         self._send(payload)
 
     def _send_closing_frame(self, close_data=None, ignore_send_errors=False):
-        if close_data is not None:
-            status, msg = close_data
-            if isinstance(msg, unicode):
-                msg = msg.encode('utf-8')
-            data = struct.pack('!H', status) + msg
-        else:
-            data = ''
-        self.send(data, control_code=8)
+        if self.version == 13 and not self.websocket_closed:
+            if close_data is not None:
+                status, msg = close_data
+                if isinstance(msg, unicode):
+                    msg = msg.encode('utf-8')
+                data = struct.pack('!H', status) + msg
+            else:
+                data = ''
+            try:
+                self.send(data, control_code=8)
+            except SocketError:
+                # Sometimes, like when the remote side cuts off the connection,
+                # we don't care about this.
+                if not ignore_send_errors:  # pragma NO COVER
+                    raise
+            self.websocket_closed = True
+
+    def close(self, close_data=None):
+        """Forcibly close the websocket; generally it is preferable to
+        return from the handler method."""
+        self._send_closing_frame(close_data=close_data)
+        self.socket.shutdown(socket.SHUT_WR)
+        self.socket.close()
