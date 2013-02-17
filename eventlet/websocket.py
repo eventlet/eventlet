@@ -460,9 +460,6 @@ class RFC6455WebSocket(WebSocket):
         except ConnectionClosedError:
             return
         except Exception:
-            import traceback
-            print 'Unhandled Exception'
-            traceback.print_exc()
             self.close(close_data=(1011, 'Internal Server Error'))
 
     def _recv_frame(self):
