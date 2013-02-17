@@ -74,7 +74,7 @@ class WebSocketWSGI(object):
             #extensions = environ.get('HTTP_SEC_WEBSOCKET_EXTENSIONS', None)
             #if extensions:
             #    extensions = [i.strip() for i in extensions.split(',')]
-        if 'HTTP_SEC_WEBSOCKET_KEY1' in environ:
+        elif 'HTTP_SEC_WEBSOCKET_KEY1' in environ:
             self.protocol_version = 76
             if 'HTTP_SEC_WEBSOCKET_KEY2' not in environ:
                 # That's bad.
@@ -346,7 +346,7 @@ class RFC6455WebSocket(WebSocket):
 
     def _handle_control_frame(self, opcode, data):
         if opcode == 8:  # connection close
-            status = struct.unpack_from('!H', data)
+            status = struct.unpack_from('!H', data)[0]
             self.close(close_data=(status, ''))
             raise ConnectionClosedError()
         elif opcode == 9:  # ping
