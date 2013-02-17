@@ -36,6 +36,14 @@ ACCEPTABLE_CLIENT_ERRORS = set((errno.ECONNRESET, errno.EPIPE))
 
 __all__ = ["WebSocketWSGI", "WebSocket"]
 PROTOCOL_GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
+VALID_CLOSE_STATUS = (range(1000, 1004)
+                      + range(1007, 1012)
+                      # 3000-3999: reserved for use by libraries, frameworks,
+                      # and applications
+                      + range(3000, 4000)
+                      # 4000-4999: reserved for private use and thus can't
+                      # be registered
+                      + range(4000, 5000))
 
 
 class WebSocketWSGI(object):
@@ -338,6 +346,27 @@ class RFC6455WebSocket(WebSocket):
         super(RFC6455WebSocket, self).__init__(sock, environ, version)
         self.iterator = self._iter_frames()
 
+    class UTF8Decoder(object):
+        def __init__(self):
+            if utf8validator:
+                self.validator = utf8validator.Utf8Validator()
+            else:
+                self.validator = None
+            decoderclass = codecs.getincrementaldecoder('utf8')
+            self.decoder = decoderclass()
+
+        def reset(self):
+            if self.validator:
+                self.validator.reset()
+            self.decoder.reset()
+
+        def decode(self, data, final=False):
+            if self.validator:
+                valid, eocp, c_i, t_i = self.validator.validate(data)
+                if not valid:
+                    raise ValueError('Data is not valid unicode')
+            return self.decoder.decode(data, final)
+
     def _get_bytes(self, numbytes):
         data = ''
         while len(data) < numbytes:
@@ -362,6 +391,16 @@ class RFC6455WebSocket(WebSocket):
                 status = 1000
             elif len(data) > 1:
                 status = struct.unpack_from('!H', data)[0]
+                if not status or status not in VALID_CLOSE_STATUS:
+                    raise FailedConnectionError(
+                        1002,
+                        "Unexpected close status code.")
+                try:
+                    data = self.UTF8Decoder().decode(data[2:], True)
+                except (UnicodeDecodeError, ValueError):
+                    raise FailedConnectionError(
+                        1002,
+                        "Close message data should be valid UTF-8.")
             else:
                 status = 1002
             self.close(close_data=(status, ''))
@@ -420,6 +459,11 @@ class RFC6455WebSocket(WebSocket):
             self.close(close_data=(exc_val.status, exc_val.message))
         except ConnectionClosedError:
             return
+        except Exception:
+            import traceback
+            print 'Unhandled Exception'
+            traceback.print_exc()
+            self.close(close_data=(1011, 'Internal Server Error'))
 
     def _recv_frame(self):
         recv = self._get_bytes
