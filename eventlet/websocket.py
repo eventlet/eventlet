@@ -2,6 +2,7 @@ import base64
 import collections
 import errno
 from random import Random
+import re
 import string
 import struct
 import sys
@@ -24,6 +25,9 @@ ACCEPTABLE_CLIENT_ERRORS = set((errno.ECONNRESET, errno.EPIPE))
 
 __all__ = ["WebSocketWSGI", "WebSocket"]
 PROTOCOL_GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
+# python 2's utf-8 decoding is more lenient than we'd like
+# and would fail tests like http://git.io/ZDb2Pg in autobahntestsuite
+INVALID_UTF8 = re.compile(u'[\uD800-\uDBFF]|[\0\uDC00-\uDFFF]')
 
 
 class WebSocketWSGI(object):
@@ -385,10 +389,13 @@ class RFC6455WebSocket(WebSocket):
                     data, fragments = ''.join(fragments), []
                     if fragment_opcode == 1:  # text frame
                         try:
-                            data = data.decode('utf-8')
+                            data = data.decode('utf-8', 'strict')
                         except UnicodeDecodeError:
                             raise FailedConnectionError(
-                                1002, "Text data must be valid utf-8")
+                                1007, "Text data must be valid utf-8")
+                        if INVALID_UTF8.search(data):
+                            raise FailedConnectionError(
+                                1007, "Text data must be valid utf-8")
                     yield data
         except FailedConnectionError:
             exc_typ, exc_val, exc_tb = sys.exc_info()
