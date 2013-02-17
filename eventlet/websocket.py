@@ -69,14 +69,14 @@ class WebSocketWSGI(object):
             # need to check a few more things here for true compliance
             start_response('400 Bad Request', [('Connection','close')])
             return []
-    
+
         # See if they sent the new-format headers
         hybi_version = environ.get('HTTP_SEC_WEBSOCKET_VERSION', None)
         if hybi_version is not None:
-            if hybi_version != '13':
+            if hybi_version not in ('8', '13', ):
                 start_response('426 Upgrade Required',
                                [('Connection', 'close'),
-                                ('Sec-WebSocket-Version', '13')])
+                                ('Sec-WebSocket-Version', '8, 13')])
                 return []
             self.protocol_version = int(hybi_version)
             if 'HTTP_SEC_WEBSOCKET_KEY' not in environ:
@@ -555,7 +555,7 @@ class RFC6455WebSocket(WebSocket):
         self._send(payload)
 
     def _send_closing_frame(self, close_data=None, ignore_send_errors=False):
-        if self.version == 13 and not self.websocket_closed:
+        if self.version in (8, 13) and not self.websocket_closed:
             if close_data is not None:
                 status, msg = close_data
                 if isinstance(msg, unicode):
