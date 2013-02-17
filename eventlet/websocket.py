@@ -3,7 +3,6 @@ import codecs
 import collections
 import errno
 from random import Random
-import re
 import string
 import struct
 import sys
@@ -22,13 +21,21 @@ from eventlet import wsgi
 from eventlet.green import socket
 from eventlet.support import get_errno
 
+# Python 2's utf8 decoding is more lenient than we'd like
+# In order to pass autobahn's testsuite we need more lenient validation
+# if available...
+try:
+    import cutf8validator as utf8validator
+except ImportError:
+    try:
+        from autobahn import utf8validator
+    except ImportError:
+        utf8validator = None
+
 ACCEPTABLE_CLIENT_ERRORS = set((errno.ECONNRESET, errno.EPIPE))
 
 __all__ = ["WebSocketWSGI", "WebSocket"]
 PROTOCOL_GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
-# python 2's utf-8 decoding is more lenient than we'd like
-# and would fail tests like http://git.io/ZDb2Pg in autobahntestsuite
-INVALID_UTF8 = re.compile(u'[\uD800-\uDBFF]|[\0\uDC00-\uDFFF]')
 
 
 class WebSocketWSGI(object):
@@ -366,6 +373,7 @@ class RFC6455WebSocket(WebSocket):
         fragments = []
         utf8decodercls = codecs.getincrementaldecoder('utf8')
         decoder = None
+        utf8v = utf8validator.Utf8Validator() if utf8validator else None
         try:
             while True:
                 finished, opcode, data = self._recv_frame()
@@ -386,13 +394,16 @@ class RFC6455WebSocket(WebSocket):
                             "Received continuation opcode with no previous"
                             " fragments received.")
                     decoder = utf8decodercls() if opcode == 1 else None
+                    if utf8v:
+                        utf8v.reset()
                 if decoder:
+                    if utf8v:
+                        if not utf8v.validate(data)[0]:
+                            raise FailedConnectionError(
+                                1007, "Text data must be valid utf-8")
                     try:
                         data = decoder.decode(data, finished)
                     except (UnicodeDecodeError, ValueError):
-                        raise FailedConnectionError(
-                            1007, "Text data must be valid utf-8")
-                    if INVALID_UTF8.search(data):
                         raise FailedConnectionError(
                             1007, "Text data must be valid utf-8")
                 fragments.append(data)
