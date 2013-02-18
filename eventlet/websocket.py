@@ -375,13 +375,16 @@ class RFC6455WebSocket(WebSocket):
         return data
 
     class Message(object):
-        def __init__(self, decoder=None):
+        def __init__(self, opcode, decoder=None):
             self.decoder = decoder
             self.data = []
+            self.finished = False
+            self.opcode = opcode
 
         def push(self, data, final=False):
             if self.decoder:
                 data = self.decoder.decode(data, final=final)
+            self.finished = final
             self.data.append(data)
 
         def getvalue(self):
@@ -426,25 +429,15 @@ class RFC6455WebSocket(WebSocket):
         fragmented_message = None
         try:
             while True:
-                finished, opcode, message = self._recv_frame(message=fragmented_message)
-                if opcode & 8:
-                    # allow multiplexed control codes
-                    self._handle_control_frame(opcode, message.getvalue())
+                message = self._recv_frame(message=fragmented_message)
+                if message.opcode & 8:
+                    self._handle_control_frame(
+                        message.opcode, message.getvalue())
                     continue
-                if fragmented_message:
-                    if opcode:
-                        raise FailedConnectionError(
-                            1002,
-                            "Received a non-continuation opcode within"
-                            " fragmented message.")
-                else:
-                    if not opcode:
-                        raise FailedConnectionError(
-                            1002,
-                            "Received continuation opcode with no previous"
-                            " fragments received.")
+                if fragmented_message and message is not fragmented_message:
+                    raise RuntimeError('Unexpected message change.')
                 fragmented_message = message
-                if finished:
+                if message.finished:
                     data = fragmented_message.getvalue()
                     fragmented_message = None
                     yield data
@@ -490,6 +483,11 @@ class RFC6455WebSocket(WebSocket):
                 1002,
                 "Received a non-continuation opcode within"
                 " fragmented message.")
+        elif not opcode and not message:
+            raise FailedConnectionError(
+                1002,
+                "Received continuation opcode with no previous"
+                " fragments received.")
         if length == 126:
             length = struct.unpack('!H', recv(2))[0]
         elif length == 127:
@@ -499,7 +497,7 @@ class RFC6455WebSocket(WebSocket):
         received = 0
         if not message or opcode & 8:
             decoder = self.UTF8Decoder() if opcode == 1 else None
-            message = self.Message(decoder=decoder)
+            message = self.Message(opcode, decoder=decoder)
         if not length:
             message.push('', final=finished)
         else:
@@ -516,7 +514,7 @@ class RFC6455WebSocket(WebSocket):
                 except (UnicodeDecodeError, ValueError):
                     raise FailedConnectionError(
                         1007, "Text data must be valid utf-8")
-        return finished, opcode, message
+        return message
 
     @staticmethod
     def _pack_message(message, masked=False,
@@ -574,7 +572,7 @@ class RFC6455WebSocket(WebSocket):
         payload = self._pack_message(message, **kw)
         self._send(payload)
 
-    def _send_closing_frame(self, close_data=None, ignore_send_errors=False):
+    def _send_closing_frame(self, ignore_send_errors=False, close_data=None):
         if self.version in (8, 13) and not self.websocket_closed:
             if close_data is not None:
                 status, msg = close_data
