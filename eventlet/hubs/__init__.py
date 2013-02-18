@@ -8,7 +8,7 @@ try:
     import pkg_resources
 except ImportError:
     # ... but do not depend on it
-    pass
+    pkg_resources = None
 
 
 __all__ = ["use_hub", "get_hub", "get_default_hub", "trampoline"]
@@ -81,13 +81,9 @@ def use_hub(mod=None):
                 mod = getattr(mod, classname)
         else:
             found = False
-            try:
-                iter_entry_points = pkg_resources.iter_entry_points
-            except NameError:
-                # no pkg_resources module installed
-                pass
-            else:
-                for entry in iter_entry_points(group='eventlet.hubs', name=mod):
+            if pkg_resources is not None:
+                for entry in pkg_resources.iter_entry_points(
+                        group='eventlet.hubs', name=mod):
                     mod, found = entry.load(), True
                     break
             if not found:
