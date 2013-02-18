@@ -67,7 +67,7 @@ class WebSocketWSGI(object):
         if not (environ.get('HTTP_CONNECTION') == 'Upgrade' and
                 environ.get('HTTP_UPGRADE') in ('WebSocket', 'websocket')):
             # need to check a few more things here for true compliance
-            start_response('400 Bad Request', [('Connection','close')])
+            start_response('400 Bad Request', [('Connection', 'close')])
             return []
 
         # See if they sent the new-format headers
@@ -81,7 +81,7 @@ class WebSocketWSGI(object):
             self.protocol_version = int(hybi_version)
             if 'HTTP_SEC_WEBSOCKET_KEY' not in environ:
                 # That's bad.
-                start_response('400 Bad Request', [('Connection','close')])
+                start_response('400 Bad Request', [('Connection', 'close')])
                 return []
             # TODO: handle Origin (Sec-Websocket-Origin for <=8)
             #       (An unaccepted origin is a 403 Forbidden response.)
@@ -95,7 +95,7 @@ class WebSocketWSGI(object):
             self.protocol_version = 76
             if 'HTTP_SEC_WEBSOCKET_KEY2' not in environ:
                 # That's bad.
-                start_response('400 Bad Request', [('Connection','close')])
+                start_response('400 Bad Request', [('Connection', 'close')])
                 return []
         else:
             self.protocol_version = 75
@@ -106,7 +106,7 @@ class WebSocketWSGI(object):
             ws = RFC6455WebSocket(sock, environ, self.protocol_version)
         else:
             ws = WebSocket(sock, environ, self.protocol_version)
-        
+
         # If it's new-version, we need to work out our challenge response
         if hybi_version is not None:
             key = environ['HTTP_SEC_WEBSOCKET_KEY']
@@ -120,15 +120,15 @@ class WebSocketWSGI(object):
             key3 = environ['wsgi.input'].read(8)
             key = struct.pack(">II", key1, key2) + key3
             response = md5(key).digest()
-        
+
         # Start building the response
         scheme = 'ws'
         if environ.get('wsgi.url_scheme') == 'https':
             scheme = 'wss'
         location = '%s://%s%s%s' % (
             scheme,
-            environ.get('HTTP_HOST'), 
-            environ.get('SCRIPT_NAME'), 
+            environ.get('HTTP_HOST'),
+            environ.get('SCRIPT_NAME'),
             environ.get('PATH_INFO')
         )
         qs = environ.get('QUERY_STRING')
@@ -155,14 +155,14 @@ class WebSocketWSGI(object):
                                "Sec-WebSocket-Origin: %s\r\n"
                                "Sec-WebSocket-Protocol: %s\r\n"
                                "Sec-WebSocket-Location: %s\r\n"
-                               "\r\n%s"% (
+                               "\r\n%s" % (
                     environ.get('HTTP_ORIGIN'),
                     environ.get('HTTP_SEC_WEBSOCKET_PROTOCOL', 'default'),
                     location,
                     response))
         else: #pragma NO COVER
             raise ValueError("Unknown WebSocket protocol version.") 
-        
+
         sock.sendall(handshake_reply)
         try:
             self.handler(ws)
@@ -192,12 +192,12 @@ class WebSocketWSGI(object):
 class WebSocket(object):
     """A websocket object that handles the details of
     serialization/deserialization to the socket.
-    
+
     The primary way to interact with a :class:`WebSocket` object is to
     call :meth:`send` and :meth:`wait` in order to pass messages back
     and forth with the browser.  Also available are the following
     properties:
-    
+
     path
         The path value of the request.  This is the same as the WSGI PATH_INFO variable, but more convenient.
     protocol
@@ -267,10 +267,10 @@ class WebSocket(object):
                 raise ValueError("Don't understand how to parse this type of message: %r" % buf)
         self._buf = buf
         return msgs
-    
+
     def send(self, message):
-        """Send a message to the browser.  
-        
+        """Send a message to the browser.
+
         *message* should be convertable to a string; unicode objects should be
         encodable as utf-8.  Raises socket.error with errno of 32
         (broken pipe) if the socket has already been closed by the client."""
@@ -284,8 +284,8 @@ class WebSocket(object):
             self._sendlock.release()
 
     def wait(self):
-        """Waits for and deserializes messages. 
-        
+        """Waits for and deserializes messages.
+
         Returns a single message; the oldest not yet processed. If the client
         has already closed the connection, returns None.  This is different
         from normal socket behavior because the empty string is a valid
