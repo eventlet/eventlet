@@ -448,6 +448,7 @@ class RFC6455WebSocket(WebSocket):
             return
         except Exception:
             self.close(close_data=(1011, 'Internal Server Error'))
+            raise
 
     def _recv_frame(self, message=None):
         recv = self._get_bytes
