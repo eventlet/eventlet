@@ -22,7 +22,7 @@ from eventlet.green import socket
 from eventlet.support import get_errno
 
 # Python 2's utf8 decoding is more lenient than we'd like
-# In order to pass autobahn's testsuite we need more lenient validation
+# In order to pass autobahn's testsuite we need stricter validation
 # if available...
 try:
     from autobahn import utf8validator
