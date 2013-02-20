@@ -68,9 +68,18 @@ class WebSocketWSGI(object):
     """
     def __init__(self, handler):
         self.handler = handler
-        self.mask_frames = False
         self.protocol_version = None
         self.support_legacy_versions = True
+
+    @classmethod
+    def configured(cls, handler=None, support_legacy_versions=False):
+        def decorator(handler):
+            inst = cls(handler)
+            inst.support_legacy_versions = support_legacy_versions
+            return inst
+        if handler is None:
+            return decorator
+        return decorator(handler)
 
     def __call__(self, environ, start_response):
         if not (environ.get('HTTP_CONNECTION') == 'Upgrade' and
