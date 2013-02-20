@@ -70,12 +70,18 @@ class WebSocketWSGI(object):
         self.handler = handler
         self.protocol_version = None
         self.support_legacy_versions = True
+        self.supported_protocols = []
 
     @classmethod
-    def configured(cls, handler=None, support_legacy_versions=False):
+    def configured(cls,
+                   handler=None,
+                   supported_protocols=None,
+                   support_legacy_versions=False):
         def decorator(handler):
             inst = cls(handler)
             inst.support_legacy_versions = support_legacy_versions
+            if supported_protocols:
+                inst.supported_protocols = supported_protocols
             return inst
         if handler is None:
             return decorator
@@ -184,22 +190,29 @@ class WebSocketWSGI(object):
             raise BadRequest()
         # TODO: handle Origin (Sec-Websocket-Origin for <=8)
         #       (An unaccepted origin is a 403 Forbidden response.)
-        #protocols = environ.get('HTTP_SEC_WEBSOCKET_PROTOCOL', None)
-        #if protocols:
-        #    protocols = [i.strip() for i in protocols.split(',')]
+        protocols = environ.get('HTTP_SEC_WEBSOCKET_PROTOCOL', None)
+        negotiated_protocol = None
+        if protocols:
+            for p in (i.strip() for i in protocols.split(',')):
+                if p in self.supported_protocols:
+                    negotiated_protocol = p
+                    break
         #extensions = environ.get('HTTP_SEC_WEBSOCKET_EXTENSIONS', None)
         #if extensions:
         #    extensions = [i.strip() for i in extensions.split(',')]
 
         key = environ['HTTP_SEC_WEBSOCKET_KEY']
         response = base64.b64encode(sha1(key + PROTOCOL_GUID).digest())
-        handshake_reply = ("HTTP/1.1 101 Switching Protocols\r\n"
-                           "Upgrade: websocket\r\n"
-                           "Connection: Upgrade\r\n"
-                           "Sec-WebSocket-Accept: %s\r\n\r\n"
-                           % (response, ))
-        sock.sendall(handshake_reply)
-        return RFC6455WebSocket(sock, environ, self.protocol_version)
+        handshake_reply = ["HTTP/1.1 101 Switching Protocols",
+                           "Upgrade: websocket",
+                           "Connection: Upgrade",
+                           "Sec-WebSocket-Accept: %s" % (response, )]
+        if negotiated_protocol:
+            handshake_reply.append("Sec-WebSocket-Protocol: %s"
+                                   % (negotiated_protocol, ))
+        sock.sendall('\r\n'.join(handshake_reply) + '\r\n\r\n')
+        return RFC6455WebSocket(sock, environ, self.protocol_version,
+                                protocol=negotiated_protocol)
 
     def _extract_number(self, value):
         """
@@ -365,10 +378,11 @@ class ProtocolError(ValueError):
 
 
 class RFC6455WebSocket(WebSocket):
-    def __init__(self, sock, environ, version=13, client=False):
+    def __init__(self, sock, environ, version=13, protocol=None, client=False):
         super(RFC6455WebSocket, self).__init__(sock, environ, version)
         self.iterator = self._iter_frames()
         self.client = client
+        self.protocol = protocol
 
     class UTF8Decoder(object):
         def __init__(self):
