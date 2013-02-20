@@ -71,15 +71,18 @@ class WebSocketWSGI(object):
         self.protocol_version = None
         self.support_legacy_versions = True
         self.supported_protocols = []
+        self.origin_checker = None
 
     @classmethod
     def configured(cls,
                    handler=None,
                    supported_protocols=None,
+                   origin_checker=None,
                    support_legacy_versions=False):
         def decorator(handler):
             inst = cls(handler)
             inst.support_legacy_versions = support_legacy_versions
+            inst.origin_checker = origin_checker
             if supported_protocols:
                 inst.supported_protocols = supported_protocols
             return inst
@@ -188,8 +191,13 @@ class WebSocketWSGI(object):
         if 'HTTP_SEC_WEBSOCKET_KEY' not in environ:
             # That's bad.
             raise BadRequest()
-        # TODO: handle Origin (Sec-Websocket-Origin for <=8)
-        #       (An unaccepted origin is a 403 Forbidden response.)
+        origin = environ.get(
+            'HTTP_ORIGIN',
+            (environ.get('HTTP_SEC_WEBSOCKET_ORIGIN', '')
+             if self.protocol_version <= 8 else ''))
+        if self.origin_checker is not None:
+            if not self.origin_checker(environ.get('HTTP_HOST'), origin):
+                raise BadRequest(status='403 Forbidden')
         protocols = environ.get('HTTP_SEC_WEBSOCKET_PROTOCOL', None)
         negotiated_protocol = None
         if protocols:
