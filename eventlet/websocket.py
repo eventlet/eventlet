@@ -43,6 +43,14 @@ VALID_CLOSE_STATUS = (range(1000, 1004)
                       + range(4000, 5000))
 
 
+class BadRequest(Exception):
+    def __init__(self, status='400 Bad Request', body=None, headers=None):
+        super(Exception, self).__init__()
+        self.status = status
+        self.body = body
+        self.headers = headers
+
+
 class WebSocketWSGI(object):
     """Wraps a websocket handler function in a WSGI application.
 
@@ -62,6 +70,7 @@ class WebSocketWSGI(object):
         self.handler = handler
         self.mask_frames = False
         self.protocol_version = None
+        self.support_legacy_versions = True
 
     def __call__(self, environ, start_response):
         if not (environ.get('HTTP_CONNECTION') == 'Upgrade' and
@@ -70,48 +79,43 @@ class WebSocketWSGI(object):
             start_response('400 Bad Request', [('Connection', 'close')])
             return []
 
-        # See if they sent the new-format headers
-        hybi_version = environ.get('HTTP_SEC_WEBSOCKET_VERSION', None)
-        if hybi_version is not None:
-            if hybi_version not in ('8', '13', ):
-                start_response('426 Upgrade Required',
-                               [('Connection', 'close'),
-                                ('Sec-WebSocket-Version', '8, 13')])
-                return []
-            self.protocol_version = int(hybi_version)
-            if 'HTTP_SEC_WEBSOCKET_KEY' not in environ:
-                # That's bad.
-                start_response('400 Bad Request', [('Connection', 'close')])
-                return []
-            # TODO: handle Origin (Sec-Websocket-Origin for <=8)
-            #       (An unaccepted origin is a 403 Forbidden response.)
-            #protocols = environ.get('HTTP_SEC_WEBSOCKET_PROTOCOL', None)
-            #if protocols:
-            #    protocols = [i.strip() for i in protocols.split(',')]
-            #extensions = environ.get('HTTP_SEC_WEBSOCKET_EXTENSIONS', None)
-            #if extensions:
-            #    extensions = [i.strip() for i in extensions.split(',')]
-        elif 'HTTP_SEC_WEBSOCKET_KEY1' in environ:
+        try:
+            if 'HTTP_SEC_WEBSOCKET_VERSION' in environ:
+                ws = self._handle_hybi_request(environ)
+            elif self.support_legacy_versions:
+                ws = self._handle_legacy_request(environ)
+            else:
+                raise BadRequest()
+        except BadRequest, e:
+            status = e.status
+            body = e.body or ''
+            headers = e.headers or []
+            start_response(status,
+                           [('Connection', 'close'), ] + headers)
+            return [body]
+
+        try:
+            self.handler(ws)
+        except socket.error, e:
+            if get_errno(e) not in ACCEPTABLE_CLIENT_ERRORS:
+                raise
+        # Make sure we send the closing frame
+        ws._send_closing_frame(True)
+        # use this undocumented feature of eventlet.wsgi to ensure that it
+        # doesn't barf on the fact that we didn't call start_response
+        return wsgi.ALREADY_HANDLED
+
+    def _handle_legacy_request(self, environ):
+        sock = environ['eventlet.input'].get_socket()
+
+        if 'HTTP_SEC_WEBSOCKET_KEY1' in environ:
             self.protocol_version = 76
             if 'HTTP_SEC_WEBSOCKET_KEY2' not in environ:
-                # That's bad.
-                start_response('400 Bad Request', [('Connection', 'close')])
-                return []
+                raise BadRequest()
         else:
             self.protocol_version = 75
 
-        # Get the underlying socket and wrap a WebSocket class around it
-        sock = environ['eventlet.input'].get_socket()
-        if hybi_version is not None:
-            ws = RFC6455WebSocket(sock, environ, self.protocol_version)
-        else:
-            ws = WebSocket(sock, environ, self.protocol_version)
-
-        # If it's new-version, we need to work out our challenge response
-        if hybi_version is not None:
-            key = environ['HTTP_SEC_WEBSOCKET_KEY']
-            response = base64.b64encode(sha1(key + PROTOCOL_GUID).digest())
-        elif self.protocol_version == 76:
+        if self.protocol_version == 76:
             key1 = self._extract_number(environ['HTTP_SEC_WEBSOCKET_KEY1'])
             key2 = self._extract_number(environ['HTTP_SEC_WEBSOCKET_KEY2'])
             # There's no content-length header in the request, but it has 8
@@ -134,13 +138,7 @@ class WebSocketWSGI(object):
         qs = environ.get('QUERY_STRING')
         if qs is not None:
             location += '?' + qs
-        if hybi_version is not None:
-            handshake_reply = ("HTTP/1.1 101 Switching Protocols\r\n"
-                               "Upgrade: websocket\r\n"
-                               "Connection: Upgrade\r\n"
-                               "Sec-WebSocket-Accept: %s\r\n\r\n"
-                               % (response, ))
-        elif self.protocol_version == 75:
+        if self.protocol_version == 75:
             handshake_reply = ("HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
                                "Upgrade: WebSocket\r\n"
                                "Connection: Upgrade\r\n"
@@ -162,18 +160,37 @@ class WebSocketWSGI(object):
                     response))
         else: #pragma NO COVER
             raise ValueError("Unknown WebSocket protocol version.") 
-
         sock.sendall(handshake_reply)
-        try:
-            self.handler(ws)
-        except socket.error, e:
-            if get_errno(e) not in ACCEPTABLE_CLIENT_ERRORS:
-                raise
-        # Make sure we send the closing frame
-        ws._send_closing_frame(True)
-        # use this undocumented feature of eventlet.wsgi to ensure that it
-        # doesn't barf on the fact that we didn't call start_response
-        return wsgi.ALREADY_HANDLED
+        return WebSocket(sock, environ, self.protocol_version)
+
+    def _handle_hybi_request(self, environ):
+        sock = environ['eventlet.input'].get_socket()
+        hybi_version = environ['HTTP_SEC_WEBSOCKET_VERSION']
+        if hybi_version not in ('8', '13', ):
+            raise BadRequest(status='426 Upgrade Required',
+                             headers=[('Sec-WebSocket-Version', '8, 13')])
+        self.protocol_version = int(hybi_version)
+        if 'HTTP_SEC_WEBSOCKET_KEY' not in environ:
+            # That's bad.
+            raise BadRequest()
+        # TODO: handle Origin (Sec-Websocket-Origin for <=8)
+        #       (An unaccepted origin is a 403 Forbidden response.)
+        #protocols = environ.get('HTTP_SEC_WEBSOCKET_PROTOCOL', None)
+        #if protocols:
+        #    protocols = [i.strip() for i in protocols.split(',')]
+        #extensions = environ.get('HTTP_SEC_WEBSOCKET_EXTENSIONS', None)
+        #if extensions:
+        #    extensions = [i.strip() for i in extensions.split(',')]
+
+        key = environ['HTTP_SEC_WEBSOCKET_KEY']
+        response = base64.b64encode(sha1(key + PROTOCOL_GUID).digest())
+        handshake_reply = ("HTTP/1.1 101 Switching Protocols\r\n"
+                           "Upgrade: websocket\r\n"
+                           "Connection: Upgrade\r\n"
+                           "Sec-WebSocket-Accept: %s\r\n\r\n"
+                           % (response, ))
+        sock.sendall(handshake_reply)
+        return RFC6455WebSocket(sock, environ, self.protocol_version)
 
     def _extract_number(self, value):
         """
