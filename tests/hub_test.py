@@ -1,10 +1,13 @@
 from __future__ import with_statement
+import sys
 
-from tests import LimitedTestCase, main, skip_with_pyevent, skip_if_no_itimer
+from tests import LimitedTestCase, main, skip_with_pyevent, skip_if_no_itimer, skip_unless
 import time
 import eventlet
 from eventlet import hubs
 from eventlet.green import socket
+from eventlet.semaphore import Semaphore
+from eventlet.support import greenlets
 
 DELAY = 0.001
 def noop():
@@ -130,6 +133,57 @@ class TestExceptionInMainloop(LimitedTestCase):
         delay = time.time() - start
 
         assert delay >= DELAY*0.9, 'sleep returned after %s seconds (was scheduled for %s)' % (delay, DELAY)
+
+
+class TestExceptionInGreenthread(LimitedTestCase):
+    @skip_unless(greenlets.preserves_excinfo)
+    def test_exceptionpreservation(self):
+        def test_gt1(sem1, sem2):
+            try:
+                raise KeyError()
+            except KeyError:
+                sem1.release()
+                sem2.acquire()
+                assert sys.exc_info()[0] is KeyError
+
+        def test_gt2(sem1, sem2):
+            sem1.acquire()
+            assert sys.exc_info()[0] is None
+            try:
+                raise ValueError()
+            except ValueError:
+                sem2.release()
+                eventlet.sleep(0.1)
+                assert sys.exc_info()[0] is ValueError
+
+        # semaphores for controlling execution order
+        sem1 = Semaphore()
+        sem1.acquire()
+        sem2 = Semaphore()
+        sem2.acquire()
+        g1 = eventlet.spawn(test_gt1, sem1, sem2)
+        g2 = eventlet.spawn(test_gt2, sem1, sem2)
+        g1.wait()
+        g2.wait()
+
+    def test_exceptionleaks(self):
+        # tests expected behaviour with all versions of greenlet
+        def test_gt(sem):
+            try:
+                raise KeyError()
+            except KeyError:
+                sem.release()
+                hubs.get_hub().switch()
+
+        # semaphores for controlling execution order
+        sem = Semaphore()
+        sem.acquire()
+        g = eventlet.spawn(test_gt, sem)
+        try:
+            sem.acquire()
+            assert sys.exc_info()[0] is None
+        finally:
+            g.kill()
 
 
 class TestHubSelection(LimitedTestCase):
