@@ -6,6 +6,7 @@ import time
 import eventlet
 from eventlet import hubs
 from eventlet.green import socket
+from eventlet.event import Event
 from eventlet.semaphore import Semaphore
 from eventlet.support import greenlets
 
@@ -138,33 +139,38 @@ class TestExceptionInMainloop(LimitedTestCase):
 class TestExceptionInGreenthread(LimitedTestCase):
     @skip_unless(greenlets.preserves_excinfo)
     def test_exceptionpreservation(self):
-        def test_gt1(sem1, sem2):
+        # events for controlling execution order
+        gt1event = Event()
+        gt2event = Event()
+
+        def test_gt1():
             try:
                 raise KeyError()
             except KeyError:
-                sem1.release()
-                sem2.acquire()
+                gt1event.send('exception')
+                gt2event.wait()
                 assert sys.exc_info()[0] is KeyError
+                gt1event.send('test passed')
 
-        def test_gt2(sem1, sem2):
-            sem1.acquire()
+        def test_gt2():
+            gt1event.wait()
+            gt1event.reset()
             assert sys.exc_info()[0] is None
             try:
                 raise ValueError()
             except ValueError:
-                sem2.release()
-                eventlet.sleep(0.1)
+                gt2event.send('exception')
+                gt1event.wait()
                 assert sys.exc_info()[0] is ValueError
 
-        # semaphores for controlling execution order
-        sem1 = Semaphore()
-        sem1.acquire()
-        sem2 = Semaphore()
-        sem2.acquire()
-        g1 = eventlet.spawn(test_gt1, sem1, sem2)
-        g2 = eventlet.spawn(test_gt2, sem1, sem2)
-        g1.wait()
-        g2.wait()
+        g1 = eventlet.spawn(test_gt1)
+        g2 = eventlet.spawn(test_gt2)
+        try:
+            g1.wait()
+            g2.wait()
+        finally:
+            g1.kill()
+            g2.kill()
 
     def test_exceptionleaks(self):
         # tests expected behaviour with all versions of greenlet
