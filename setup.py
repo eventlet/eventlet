@@ -1,8 +1,22 @@
 #!/usr/bin/env python
 from setuptools import find_packages, setup
-from eventlet import __version__
-from os import path
 
+from eventlet import __version__
+from os import path, environ
+import sys
+
+tests_require = []
+
+if environ.get("TRAVIS", False):
+    tests_require = [
+        "pyopenssl",
+        "MySQL-python",
+    ]
+
+    if sys.version_info < (2, 6):
+        tests_require.append("pyzmq<2.2")
+    else:
+        tests_require.append("pyzmq")
 
 setup(
     name='eventlet',
@@ -19,10 +33,11 @@ setup(
     long_description=open(
         path.join(
             path.dirname(__file__),
-            'README'
+            'README.rst'
         )
     ).read(),
     test_suite='nose.collector',
+    tests_require=tests_require,
     classifiers=[
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python",
