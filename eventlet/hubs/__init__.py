@@ -44,12 +44,16 @@ def get_default_hub():
         import eventlet.hubs.epolls
         return eventlet.hubs.epolls
     except ImportError:
-        if hasattr(select, 'poll'):
-            import eventlet.hubs.poll
-            return eventlet.hubs.poll
-        else:
-            import eventlet.hubs.selects
-            return eventlet.hubs.selects
+        try:
+            import eventlet.hubs.kqueue
+            return eventlet.hubs.kqueue
+        except ImportError:
+            if hasattr(select, 'poll'):
+                import eventlet.hubs.poll
+                return eventlet.hubs.poll
+            else:
+                import eventlet.hubs.selects
+                return eventlet.hubs.selects
 
 
 def use_hub(mod=None):
