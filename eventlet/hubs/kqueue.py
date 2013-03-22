@@ -27,15 +27,19 @@ class Hub(BaseHub):
             self.kqueue.control([event], 0, 0)
         return listener
 
+    def _delete_events(self, events):
+        del_events = map(lambda e: select.kevent(e.ident, e.filter,
+                         select.KQ_EV_DELETE), events)
+        self.kqueue.control(del_events, 0, 0)
+
     def remove(self, listener):
         super(Hub, self).remove(listener)
         evtype = listener.evtype
         fileno = listener.fileno
         if not self.listeners[evtype].get(fileno):
             event = self._events[fileno].pop(evtype)
-            event.flags = select.KQ_EV_DELETE
             try:
-                self.kqueue.control([event], 0, 0)
+                self._delete_events([event])
             except OSError, e:
                 pass
 
@@ -43,9 +47,7 @@ class Hub(BaseHub):
         super(Hub, self).remove_descriptor(fileno)
         try:
             events = self._events.pop(fileno).values()
-            for event in events:
-                event.flags = select.KQ_EV_DELETE
-            self.kqueue.control(events, 0, 0)
+            self._delete_events(events)
         except KeyError, e:
             pass
         except OSError, e:
