@@ -574,14 +574,20 @@ class Server(BaseHTTPServer.HTTPServer):
             d.update(self.environ)
         return d
 
-    def process_request(self, (socket, address)):
+    def process_request(self, (sock, address)):
         # The actual request handling takes place in __init__, so we need to
         # set minimum_chunk_size before __init__ executes and we don't want to modify
         # class variable
         proto = types.InstanceType(self.protocol)
         if self.minimum_chunk_size is not None:
             proto.minimum_chunk_size = self.minimum_chunk_size
-        proto.__init__(socket, address, self)
+        try:
+            proto.__init__(sock, address, self)
+        except socket.timeout:
+            # Expected exceptions are not exceptional
+            if self.debug:
+                # similar to logging "accepted" in server()
+                self.log_message('(%s) timed out %r' % (self.pid, address))
 
     def log_message(self, message):
         self.log.write(message + '\n')

@@ -14,7 +14,7 @@ from eventlet.green import socket as greensocket
 from eventlet import wsgi
 from eventlet.support import get_errno
 
-from tests import find_command
+from tests import find_command, run_python
 
 httplib = eventlet.import_patched('httplib')
 
@@ -1172,6 +1172,27 @@ class TestHttpd(_TestBase):
         request_thread.wait()
         server_sock.close()
 
+    def test_server_connection_timeout_exception(self):
+        # Handle connection socket timeouts
+        # https://bitbucket.org/eventlet/eventlet/issue/143/
+        # Runs tests.wsgi_test_conntimeout in a separate process.
+        testcode_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            'wsgi_test_conntimeout.py')
+        output = run_python(testcode_path)
+        sections = output.split("SEPERATOR_SENTINEL")
+        # first section is empty
+        self.assertEqual(3, len(sections), output)
+        # if the "BOOM" check fails, it's because our timeout didn't happen
+        # (if eventlet stops using file.readline() to read HTTP headers,
+        # for instance)
+        for runlog in sections[1:]:
+            debug = False if "debug set to: False" in runlog else True
+            if debug:
+                self.assertTrue("timed out" in runlog)
+            self.assertTrue("BOOM" in runlog)
+            self.assertFalse("Traceback" in runlog)
+
 
 def read_headers(sock):
     fd = sock.makefile()
@@ -1201,6 +1222,7 @@ def read_headers(sock):
         headers[key.lower()] = value
     return response_line, headers
 
+
 class IterableAlreadyHandledTest(_TestBase):
     def set_site(self):
         self.site = IterableSite()
@@ -1227,6 +1249,7 @@ class IterableAlreadyHandledTest(_TestBase):
         self.assertEqual(headers.get('transfer-encoding'), 'chunked')
         self.assertEqual(body, '0\r\n\r\n') # Still coming back chunked
 
+
 class ProxiedIterableAlreadyHandledTest(IterableAlreadyHandledTest):
     # same thing as the previous test but ensuring that it works with tpooled
     # results as well as regular ones
@@ -1239,6 +1262,7 @@ class ProxiedIterableAlreadyHandledTest(IterableAlreadyHandledTest):
         from eventlet import tpool
         tpool.killall()
         super(ProxiedIterableAlreadyHandledTest, self).tearDown()
+
 
 class TestChunkedInput(_TestBase):
     dirt = ""
