@@ -1,0 +1,11 @@
+language: python
+python: 2.7
+install:
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq libssl-dev libmysqlclient-dev libpq-dev
+  - pip install tox
+before_script:
+  - "export EVENTLET_DB_TEST_AUTH='{\"psycopg2\": {\"user\": \"postgres\"}, \"MySQLdb\": {\"passwd\": \"\", \"host\": \"localhost\", \"user\": \"root\"}}'"
+script:
+  - tox -e py25selects,py25poll; true
+  - tox -e py26selects,py26poll,py26epolls,py27selects,py27poll,py27epolls

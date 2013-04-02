@@ -182,6 +182,7 @@ class TestGreenSocket(LimitedTestCase):
         gt.wait()
 
     def test_send_timeout(self):
+        self.reset_timeout(2)
         listener = bufsized(eventlet.listen(('', 0)))
 
         evt = event.Event()
