@@ -786,27 +786,32 @@ class TestHttpd(_TestBase):
         self.assertNotEqual(headers.get('transfer-encoding'), 'chunked')
         self.assertEquals(body, "thisischunked")
 
+    def test_minimum_chunk_size_parameter_leaves_httpprotocol_class_member_intact(self):
+        start_size = wsgi.HttpProtocol.minimum_chunk_size
+
+        self.spawn_server(minimum_chunk_size=start_size * 2)
+        sock = eventlet.connect(('localhost', self.port))
+        sock.sendall('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+        read_http(sock)
+
+        self.assertEqual(wsgi.HttpProtocol.minimum_chunk_size, start_size)
+
     def test_error_in_chunked_closes_connection(self):
         # From http://rhodesmill.org/brandon/2013/chunked-wsgi/
-        greenthread.kill(self.killer)
-        eventlet.sleep(0)
-        try:
-            self.spawn_server(minimum_chunk_size=1)
+        self.spawn_server(minimum_chunk_size=1)
 
-            self.site.application = chunked_fail_app
-            sock = eventlet.connect(('localhost', self.port))
+        self.site.application = chunked_fail_app
+        sock = eventlet.connect(('localhost', self.port))
 
-            sock.sendall('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+        sock.sendall('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
 
-            response_line, headers, body = read_http(sock)
-            self.assertEqual(response_line, 'HTTP/1.1 200 OK\r\n')
-            self.assertEqual(headers.get('transfer-encoding'), 'chunked')
-            self.assertEqual(body, '27\r\nThe dwarves of yore made mighty spells,\r\n25\r\nWhile hammers fell like ringing bells\r\n')
+        response_line, headers, body = read_http(sock)
+        self.assertEqual(response_line, 'HTTP/1.1 200 OK\r\n')
+        self.assertEqual(headers.get('transfer-encoding'), 'chunked')
+        self.assertEqual(body, '27\r\nThe dwarves of yore made mighty spells,\r\n25\r\nWhile hammers fell like ringing bells\r\n')
 
-            # verify that socket is closed by server
-            self.assertEqual(sock.recv(1), '')
-        finally:
-            wsgi.HttpProtocol.minimum_chunk_size=wsgi.MINIMUM_CHUNK_SIZE
+        # verify that socket is closed by server
+        self.assertEqual(sock.recv(1), '')
 
     def test_026_http_10_nokeepalive(self):
         # verify that if an http/1.0 client sends connection: keep-alive

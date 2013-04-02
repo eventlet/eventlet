@@ -197,6 +197,16 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
     protocol_version = 'HTTP/1.1'
     minimum_chunk_size = MINIMUM_CHUNK_SIZE
 
+    def __init__(self, request, client_address, server, minimum_chunk_size=None):
+
+        # We inherit from BaseHTTPRequestHandler, which in turn inherits from SocketServer.BaseRequestHandler.
+        # BaseRequestHandler is nice enough to actually do stuff (handle the request) in its initializer so
+        # we need to set up everything that needs to be set up before calling it.
+        if minimum_chunk_size is not None:
+            self.minimum_chunk_size = minimum_chunk_size
+
+        BaseHTTPServer.BaseHTTPRequestHandler.__init__(self, request, client_address, server)
+
     def setup(self):
         # overriding SocketServer.setup to correctly handle SSL.Connection objects
         conn = self.connection = self.request
@@ -239,6 +249,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         if not self.raw_requestline:
             self.close_connection = 1
             return
+
 
         orig_rfile = self.rfile
         try:
@@ -424,7 +435,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     < self.environ['eventlet.input'].content_length):
                 ## Read and discard body if there was no pending 100-continue
                 if not self.environ['eventlet.input'].wfile:
-                    while self.environ['eventlet.input'].read(MINIMUM_CHUNK_SIZE):
+                    while self.environ['eventlet.input'].read(self.minimum_chunk_size):
                         pass
             finish = time.time()
 
@@ -546,8 +557,7 @@ class Server(BaseHTTPServer.HTTPServer):
         self.max_http_version = max_http_version
         self.protocol = protocol
         self.pid = os.getpid()
-        if minimum_chunk_size is not None:
-            protocol.minimum_chunk_size = minimum_chunk_size
+        self.minimum_chunk_size=minimum_chunk_size
         self.log_x_forwarded_for = log_x_forwarded_for
         self.log_output = log_output
         self.log_format = log_format
@@ -572,7 +582,7 @@ class Server(BaseHTTPServer.HTTPServer):
         return d
 
     def process_request(self, (socket, address)):
-        proto = self.protocol(socket, address, self)
+        proto = self.protocol(socket, address, self, minimum_chunk_size=self.minimum_chunk_size)
         proto.handle()
 
     def log_message(self, message):
