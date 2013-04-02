@@ -435,7 +435,9 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     < self.environ['eventlet.input'].content_length):
                 ## Read and discard body if there was no pending 100-continue
                 if not self.environ['eventlet.input'].wfile:
-                    while self.environ['eventlet.input'].read(self.minimum_chunk_size):
+                    # NOTE: MINIMUM_CHUNK_SIZE is used here for purpose different than chunking. We use it only
+                    # cause it's at hand and has reasonable value in terms of emptying the buffer.
+                    while self.environ['eventlet.input'].read(MINIMUM_CHUNK_SIZE):
                         pass
             finish = time.time()
 
