@@ -41,6 +41,8 @@ def using_epoll_hub(_f):
 
 
 class TestGreenSocket(LimitedTestCase):
+    TEST_TIMEOUT = 2
+
     def assertWriteToClosedFileRaises(self, fd):
         if sys.version_info[0] < 3:
             # 2.x socket._fileobjects are odd: writes don't check
