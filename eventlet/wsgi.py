@@ -4,6 +4,7 @@ import sys
 import time
 import traceback
 import warnings
+from types import InstanceType
 
 from eventlet.green import urllib
 from eventlet.green import socket
@@ -196,16 +197,6 @@ class FileObjectForHeaders(object):
 class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
     protocol_version = 'HTTP/1.1'
     minimum_chunk_size = MINIMUM_CHUNK_SIZE
-
-    def __init__(self, request, client_address, server, minimum_chunk_size=None):
-
-        # We inherit from BaseHTTPRequestHandler, which in turn inherits from SocketServer.BaseRequestHandler.
-        # BaseRequestHandler is nice enough to actually do stuff (handle the request) in its initializer so
-        # we need to set up everything that needs to be set up before calling it.
-        if minimum_chunk_size is not None:
-            self.minimum_chunk_size = minimum_chunk_size
-
-        BaseHTTPServer.BaseHTTPRequestHandler.__init__(self, request, client_address, server)
 
     def setup(self):
         # overriding SocketServer.setup to correctly handle SSL.Connection objects
@@ -584,8 +575,12 @@ class Server(BaseHTTPServer.HTTPServer):
         return d
 
     def process_request(self, (socket, address)):
-        proto = self.protocol(socket, address, self, minimum_chunk_size=self.minimum_chunk_size)
-        proto.handle()
+        # the actual request handling takes place in __init__, so we need to
+        # set minimum_chunk_size before __init__ executes and we don't want to modify
+        # class variable
+        proto = InstanceType(self.protocol)
+        proto.minimum_chunk_size = self.minimum_chunk_size
+        proto.__init__(socket, address, self)
 
     def log_message(self, message):
         self.log.write(message + '\n')
