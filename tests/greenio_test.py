@@ -40,6 +40,13 @@ def using_epoll_hub(_f):
             return False
 
 
+def using_kqueue_hub(_f):
+        try:
+            return 'kqueue' in type(get_hub()).__module__
+        except Exception:
+            return False
+
+
 class TestGreenSocket(LimitedTestCase):
     def assertWriteToClosedFileRaises(self, fd):
         if sys.version_info[0] < 3:
@@ -490,6 +497,7 @@ class TestGreenSocket(LimitedTestCase):
 
     @skip_with_pyevent
     @skip_if(using_epoll_hub)
+    @skip_if(using_kqueue_hub)
     def test_closure(self):
         def spam_to_me(address):
             sock = eventlet.connect(address)
