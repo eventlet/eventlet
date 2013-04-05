@@ -30,6 +30,7 @@ Contributors
 * Nick V
 * Daniele Varrazzo
 * Ryan Williams
+* Geoff Salmon
 
 Linden Lab Contributors
 -----------------------
@@ -76,3 +77,7 @@ Thanks To
 * Nick Vatamaniuc, Windows SO_REUSEADDR patch (#83)
 * Clay Gerrard, wsgi handle socket closed by client (#95)
 * Eric Windisch, zmq getsockopt(EVENTS) wake correct threads (pull request 22)
+* Raymond Lu, fixing busy-wait in eventlet.green.ssl.socket.sendall()
+* Thomas Grainger, webcrawler example small fix, "requests" library import bug report
+* Peter Portante, save syscalls in socket.dup(), environ[REMOTE_PORT] in wsgi
+* Peter Skirko, fixing socket.settimeout(0) bug

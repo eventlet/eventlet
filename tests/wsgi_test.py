@@ -43,11 +43,34 @@ def chunked_app(env, start_response):
     yield "chunked"
 
 
+def chunked_fail_app(environ, start_response):
+    """http://rhodesmill.org/brandon/2013/chunked-wsgi/
+    """
+    headers = [('Content-Type', 'text/plain')]
+    start_response('200 OK', headers)
+
+    # We start streaming data just fine.
+    yield "The dwarves of yore made mighty spells,"
+    yield "While hammers fell like ringing bells"
+
+    # Then the back-end fails!
+    try:
+        1 / 0
+    except Exception:
+        start_response('500 Error', headers, sys.exc_info())
+        return
+
+    # So rest of the response data is not available.
+    yield "In places deep, where dark things sleep,"
+    yield "In hollow halls beneath the fells."
+
+
 def big_chunks(env, start_response):
     start_response('200 OK', [('Content-type', 'text/plain')])
     line = 'a' * 8192
     for x in range(10):
         yield line
+
 
 def use_write(env, start_response):
     if env['PATH_INFO'] == '/a':
@@ -59,6 +82,7 @@ def use_write(env, start_response):
         write('abcde')
     return []
 
+
 def chunked_post(env, start_response):
     start_response('200 OK', [('Content-type', 'text/plain')])
     if env['PATH_INFO'] == '/a':
@@ -68,9 +92,11 @@ def chunked_post(env, start_response):
     elif env['PATH_INFO'] == '/c':
         return [x for x in iter(lambda: env['wsgi.input'].read(1), '')]
 
+
 def already_handled(env, start_response):
     start_response('200 OK', [('Content-type', 'text/plain')])
     return wsgi.ALREADY_HANDLED
+
 
 class Site(object):
     def __init__(self):
@@ -78,6 +104,7 @@ class Site(object):
 
     def __call__(self, env, start_response):
         return self.application(env, start_response)
+
 
 class IterableApp(object):
 
@@ -92,12 +119,12 @@ class IterableApp(object):
             start_response('200 OK', [('Content-type', 'text/plain')])
         return self.return_val
 
+
 class IterableSite(Site):
     def __call__(self, env, start_response):
         it = self.application(env, start_response)
         for i in it:
             yield i
-
 
 
 CONTENT_LENGTH = 'content-length'
@@ -110,6 +137,7 @@ Content-length: 11
 
 hello world
 """
+
 
 class ConnectionClosed(Exception):
     pass
@@ -757,6 +785,25 @@ class TestHttpd(_TestBase):
         self.assertEqual(headers['connection'], 'close')
         self.assertNotEqual(headers.get('transfer-encoding'), 'chunked')
         self.assertEquals(body, "thisischunked")
+
+    def test_error_in_chunked_closes_connection(self):
+        # From http://rhodesmill.org/brandon/2013/chunked-wsgi/
+        greenthread.kill(self.killer)
+        eventlet.sleep(0)
+        self.spawn_server(minimum_chunk_size=1)
+
+        self.site.application = chunked_fail_app
+        sock = eventlet.connect(('localhost', self.port))
+
+        sock.sendall('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+
+        response_line, headers, body = read_http(sock)
+        self.assertEqual(response_line, 'HTTP/1.1 200 OK\r\n')
+        self.assertEqual(headers.get('transfer-encoding'), 'chunked')
+        self.assertEqual(body, '27\r\nThe dwarves of yore made mighty spells,\r\n25\r\nWhile hammers fell like ringing bells\r\n')
+
+        # verify that socket is closed by server
+        self.assertEqual(sock.recv(1), '')
 
     def test_026_http_10_nokeepalive(self):
         # verify that if an http/1.0 client sends connection: keep-alive

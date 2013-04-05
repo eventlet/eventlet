@@ -45,6 +45,7 @@ class DBTester(object):
         if close_connection:
             connection.close()
 
+
 # silly mock class
 class Mock(object):
     pass
@@ -437,6 +438,15 @@ class DBConnectionPool(DBTester):
         self.assertEquals(self.pool.free(), 1)
 
 
+class DummyConnection(object):
+    pass
+
+
+class DummyDBModule(object):
+    def connect(self, *args, **kwargs):
+        return DummyConnection()
+
+
 class RaisingDBModule(object):
     def connect(self, *args, **kw):
         raise RuntimeError()
@@ -478,7 +488,19 @@ class RawConnectionPool(DBConnectionPool):
             connect_timeout=connect_timeout,
             **self._auth)
 
+
+class TestRawConnectionPool(TestCase):
+    def test_issue_125(self):
+        # pool = self.create_pool(min_size=3, max_size=5)
+        pool = db_pool.RawConnectionPool(DummyDBModule(),
+            dsn="dbname=test user=jessica port=5433",
+            min_size=3, max_size=5)
+        conn = pool.get()
+        pool.put(conn)
+
+
 get_auth = get_database_auth
+
 
 def mysql_requirement(_f):
     verbose = os.environ.get('eventlet_test_mysql_verbose')
@@ -497,6 +519,7 @@ def mysql_requirement(_f):
         if verbose:
             print >> sys.stderr, ">> Skipping mysql tests, MySQLdb not importable"
         return False
+
 
 class MysqlConnectionPool(object):
     dummy_table_sql = """CREATE TEMPORARY TABLE test_table
@@ -545,8 +568,10 @@ class MysqlConnectionPool(object):
 class Test01MysqlTpool(MysqlConnectionPool, TpoolConnectionPool, TestCase):
     __test__ = True
 
+
 class Test02MysqlRaw(MysqlConnectionPool, RawConnectionPool, TestCase):
     __test__ = True
+
 
 def postgres_requirement(_f):
     try:
@@ -612,11 +637,14 @@ class Psycopg2ConnectionPool(object):
         db.close()
         del db
 
+
 class Test01Psycopg2Tpool(Psycopg2ConnectionPool, TpoolConnectionPool, TestCase):
     __test__ = True
 
+
 class Test02Psycopg2Raw(Psycopg2ConnectionPool, RawConnectionPool, TestCase):
     __test__ = True
+
 
 if __name__ == '__main__':
     main()

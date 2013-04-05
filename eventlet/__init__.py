@@ -1,4 +1,4 @@
-version_info = (0, 9, 18, "dev")
+version_info = (0, 13, 0, "dev")
 __version__ = ".".join(map(str, version_info))
 
 try:
@@ -15,18 +15,18 @@ try:
     spawn_n = greenthread.spawn_n
     spawn_after = greenthread.spawn_after
     kill = greenthread.kill
-    
+
     Timeout = timeout.Timeout
     with_timeout = timeout.with_timeout
-    
+
     GreenPool = greenpool.GreenPool
     GreenPile = greenpool.GreenPile
-    
+
     Queue = queue.Queue
-    
+
     import_patched = patcher.import_patched
     monkey_patch = patcher.monkey_patch
-    
+
     connect = convenience.connect
     listen = convenience.listen
     serve = convenience.serve
@@ -34,8 +34,8 @@ try:
     wrap_ssl = convenience.wrap_ssl
 
     getcurrent = greenlet.greenlet.getcurrent
-    
-    # deprecated    
+
+    # deprecated
     TimeoutError = timeout.Timeout
     exc_after = greenthread.exc_after
     call_after_global = greenthread.call_after_global

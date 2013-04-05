@@ -1,3 +1,4 @@
+from collections import deque
 import sys
 
 from eventlet import event
@@ -156,6 +157,7 @@ class GreenThread(greenlet.greenlet):
     def __init__(self, parent):
         greenlet.greenlet.__init__(self, self.main, parent)
         self._exit_event = event.Event()
+        self._resolving_links = False
 
     def wait(self):
         """ Returns the result of the main function of this GreenThread.  If the   
@@ -182,7 +184,7 @@ class GreenThread(greenlet.greenlet):
         functions by doing things like switching explicitly to another 
         greenthread.
         """
-        self._exit_funcs = getattr(self, '_exit_funcs', [])
+        self._exit_funcs = getattr(self, '_exit_funcs', deque())
         self._exit_funcs.append((func, curried_args, curried_kwargs))
         if self._exit_event.ready():
             self._resolve_links()
@@ -200,9 +202,16 @@ class GreenThread(greenlet.greenlet):
     
     def _resolve_links(self):
         # ca and ckw are the curried function arguments
-        for f, ca, ckw in getattr(self, '_exit_funcs', []):
-            f(self, *ca, **ckw)
-        self._exit_funcs = [] # so they don't get called again
+        if self._resolving_links:
+            return
+        self._resolving_links = True
+        try:
+            exit_funcs = getattr(self, '_exit_funcs', deque())
+            while exit_funcs:
+                f, ca, ckw = exit_funcs.popleft()
+                f(self, *ca, **ckw)
+        finally:
+            self._resolving_links = False
     
     def kill(self, *throw_args):
         """Kills the greenthread using :func:`kill`.  After being killed

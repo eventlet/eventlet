@@ -1,11 +1,14 @@
 # package is named tests, not test, so it won't be confused with test in stdlib
-import sys
-import os
 import errno
+import os
+import resource
+import signal
 import unittest
 import warnings
 
+import eventlet
 from eventlet import debug, hubs
+
 
 # convenience for importers
 main = unittest.main
@@ -34,7 +37,7 @@ def skipped(func):
 def skip_if(condition):
     """ Decorator that skips a test if the *condition* evaluates True.
     *condition* can be a boolean or a callable that accepts one argument.
-    The callable will be called with the function to be decorated, and 
+    The callable will be called with the function to be decorated, and
     should return True to skip the test.
     """
     def skipped_wrapper(func):
@@ -55,9 +58,9 @@ def skip_if(condition):
 def skip_unless(condition):
     """ Decorator that skips a test if the *condition* does not return True.
     *condition* can be a boolean or a callable that accepts one argument.
-    The callable will be called with the  function to be decorated, and 
+    The callable will be called with the  function to be decorated, and
     should return True if the condition is satisfied.
-    """    
+    """
     def skipped_wrapper(func):
         def wrapped(*a, **kw):
             if isinstance(condition, bool):
@@ -82,13 +85,13 @@ def requires_twisted(func):
         except Exception:
             return False
     return skip_unless(requirement)(func)
-    
+
 
 def using_pyevent(_f):
     from eventlet.hubs import get_hub
     return 'pyevent' in type(get_hub()).__module__
 
-    
+
 def skip_with_pyevent(func):
     """ Decorator that skips a test if we're using the pyevent hub."""
     return skip_if(using_pyevent)(func)
@@ -114,11 +117,13 @@ def skip_if_no_ssl(func):
     """ Decorator that skips a test if SSL is not available."""
     try:
         import eventlet.green.ssl
+        return func
     except ImportError:
         try:
             import eventlet.green.OpenSSL
+            return func
         except ImportError:
-            skipped(func)
+            return skipped(func)
 
 
 class TestIsTakingTooLong(Exception):
@@ -128,31 +133,52 @@ class TestIsTakingTooLong(Exception):
 
 class LimitedTestCase(unittest.TestCase):
     """ Unittest subclass that adds a timeout to all tests.  Subclasses must
-    be sure to call the LimitedTestCase setUp and tearDown methods.  The default 
-    timeout is 1 second, change it by setting self.TEST_TIMEOUT to the desired
+    be sure to call the LimitedTestCase setUp and tearDown methods.  The default
+    timeout is 1 second, change it by setting TEST_TIMEOUT to the desired
     quantity."""
-    
+
     TEST_TIMEOUT = 1
+
     def setUp(self):
-        import eventlet
-        self.timer = eventlet.Timeout(self.TEST_TIMEOUT, 
+        self.previous_alarm = None
+        self.timer = eventlet.Timeout(self.TEST_TIMEOUT,
                                       TestIsTakingTooLong(self.TEST_TIMEOUT))
 
     def reset_timeout(self, new_timeout):
-        """Changes the timeout duration; only has effect during one test case"""
-        import eventlet
+        """Changes the timeout duration; only has effect during one test.
+        `new_timeout` can be int or float.
+        """
         self.timer.cancel()
-        self.timer = eventlet.Timeout(new_timeout, 
+        self.timer = eventlet.Timeout(new_timeout,
                                       TestIsTakingTooLong(new_timeout))
+
+    def set_alarm(self, new_timeout):
+        """Call this in the beginning of your test if you expect busy loops.
+        Only has effect during one test.
+        `new_timeout` must be int.
+        """
+        def sig_alarm_handler(sig, frame):
+            # Could arm previous alarm but test is failed anyway
+            # seems to be no point in restoring previous state.
+            raise TestIsTakingTooLong(new_timeout)
+
+        self.previous_alarm = (
+            signal.signal(signal.SIGALRM, sig_alarm_handler),
+            signal.alarm(new_timeout),
+        )
 
     def tearDown(self):
         self.timer.cancel()
+        if self.previous_alarm:
+            signal.signal(signal.SIGALRM, self.previous_alarm[0])
+            signal.alarm(self.previous_alarm[1])
+
         try:
             hub = hubs.get_hub()
             num_readers = len(hub.get_readers())
             num_writers = len(hub.get_writers())
             assert num_readers == num_writers == 0
-        except AssertionError, e:
+        except AssertionError:
             print "ERROR: Hub not empty"
             print debug.format_hub_timers()
             print debug.format_hub_listeners()
@@ -172,6 +198,19 @@ class LimitedTestCase(unittest.TestCase):
             self.assert_(a<=b, "%s not less than or equal to %s" % (a,b))
 
     assertLessThanEqual = assert_less_than_equal
+
+
+def check_idle_cpu_usage(duration, allowed_part):
+    r1 = resource.getrusage(resource.RUSAGE_SELF)
+    eventlet.sleep(duration)
+    r2 = resource.getrusage(resource.RUSAGE_SELF)
+    utime = r2.ru_utime - r1.ru_utime
+    stime = r2.ru_stime - r1.ru_stime
+    assert utime + stime < duration * allowed_part, \
+        "CPU usage over limit: user %.0f%% sys %.0f%% allowed %.0f%%" % (
+            utime / duration * 100, stime / duration * 100,
+            allowed_part * 100)
+
 
 def verify_hub_empty():
     from eventlet import hubs
@@ -223,7 +262,7 @@ def get_database_auth():
             import simplejson as json
         except ImportError:
             print "No json implementation, using baked-in db credentials."
-            return retval 
+            return retval
 
     if 'EVENTLET_DB_TEST_AUTH' in os.environ:
         return json.loads(os.environ.get('EVENTLET_DB_TEST_AUTH'))

@@ -18,6 +18,7 @@ MAX_REQUEST_LINE = 8192
 MAX_HEADER_LINE = 8192
 MAX_TOTAL_HEADER_SIZE = 65536
 MINIMUM_CHUNK_SIZE = 4096
+# %(client_port)s is also available
 DEFAULT_LOG_FORMAT= ('%(client_ip)s - - [%(date_time)s] "%(request_line)s"'
                      ' %(status_code)s %(body_length)s %(wall_seconds).6f')
 
@@ -429,16 +430,17 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
             for hook, args, kwargs in self.environ['eventlet.posthooks']:
                 hook(self.environ, *args, **kwargs)
-            
+
             if self.server.log_output:
-                
-                self.server.log_message(self.server.log_format % dict(
-                    client_ip=self.get_client_ip(),
-                    date_time=self.log_date_time_string(),
-                    request_line=self.requestline,
-                    status_code=status_code[0],
-                    body_length=length[0],
-                    wall_seconds=finish - start))
+                self.server.log_message(self.server.log_format % {
+                    'client_ip': self.get_client_ip(),
+                    'client_port': self.client_address[1],
+                    'date_time': self.log_date_time_string(),
+                    'request_line': self.requestline,
+                    'status_code': status_code[0],
+                    'body_length': length[0],
+                    'wall_seconds': finish - start,
+                })
 
     def get_client_ip(self):
         client_ip = self.client_address[0]
@@ -473,6 +475,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         env['SERVER_NAME'] = host
         env['SERVER_PORT'] = str(port)
         env['REMOTE_ADDR'] = self.client_address[0]
+        env['REMOTE_PORT'] = str(self.client_address[1])
         env['GATEWAY_INTERFACE'] = 'CGI/1.1'
 
         for h in self.headers.headers:
@@ -594,8 +597,8 @@ def server(sock, site,
            minimum_chunk_size=None,
            log_x_forwarded_for=True,
            custom_pool=None,
-           keepalive=True,             
-           log_output=True,         
+           keepalive=True,
+           log_output=True,
            log_format=DEFAULT_LOG_FORMAT,
            url_length_limit=MAX_REQUEST_LINE,
            debug=True):
@@ -654,10 +657,13 @@ def server(sock, site,
                 port = ''
 
         serv.log.write("(%s) wsgi starting up on %s://%s%s/\n" % (
-            os.getpid(), scheme, host, port))
+            serv.pid, scheme, host, port))
         while True:
             try:
                 client_socket = sock.accept()
+                if debug:
+                    serv.log.write("(%s) accepted %r\n" % (
+                        serv.pid, client_socket[1]))
                 try:
                     pool.spawn_n(serv.process_request, client_socket)
                 except AttributeError:

@@ -1,3 +1,35 @@
+0.12
+====
+* zmq: Fix 100% busy CPU in idle after .bind(PUB) (thanks to Geoff Salmon)
+* greenio: Fix socket.settimeout() did not switch back to blocking mode (thanks to Peter Skirko)
+* greenio: socket.dup() made excess fcntl syscalls (thanks to Peter Portante)
+* setup: Remove legacy --without-greenlet option and unused httplib2 dependency (thanks to Thomas Grainger)
+* wsgi: environ[REMOTE_PORT], also available in log_format, log accept event (thanks to Peter Portante)
+* tests: Support libzmq 3.0 SNDHWM option (thanks to Geoff Salmon)
+
+0.11
+====
+* ssl: Fix 100% busy CPU in socket.sendall() (thanks to Raymon Lu)
+* zmq: Return linger argument to Socket.close() (thanks to Eric Windisch)
+* tests: SSL tests were always skipped due to bug in skip_if_no_ssl decorator
+
+0.10
+====
+* greenio: Fix relative seek() (thanks to AlanP)
+* db_pool: Fix pool.put() TypeError with min_size > 1 (thanks to Jessica Qi)
+* greenthread: Prevent infinite recursion with linking to current greenthread (thanks to Edward George)
+* zmq: getsockopt(EVENTS) wakes correct threads (thanks to Eric Windisch)
+* wsgi: Handle client disconnect while sending response (thanks to Clay Gerrard)
+* hubs: Ensure that new hub greenlet is parent of old one (thanks to Edward George)
+* os: Fix waitpid() returning (0, 0) (thanks to Vishvananda Ishaya)
+* tpool: Add set_num_threads() method to set the number of tpool threads (thanks to David Ibarra)
+* threading, zmq: Fix Python 2.5 support (thanks to Floris Bruynooghe)
+* tests: tox configuration for all supported Python versions (thanks to Floris Bruynooghe)
+* tests: Fix zmq._QueueLock test in Python2.6
+* tests: Fix patcher_test on Darwin (/bin/true issue) (thanks to Edward George)
+* tests: Skip SSL tests when not available (thanks to Floris Bruynooghe)
+* greenio: Remove deprecated GreenPipe.xreadlines() method, was broken anyway
+
 0.9.17
 ======
 * ZeroMQ support calling send and recv from multiple greenthreads (thanks to Geoff Salmon)
@@ -216,7 +248,7 @@
 =====
 
 * Full-duplex sockets (simultaneous readers and writers in the same process).
-* Remove modules that distract from the core mission of making it straightforward to write event-driven networking apps: 
+* Remove modules that distract from the core mission of making it straightforward to write event-driven networking apps:
     httpd, httpc, channel, greenlib, httpdate, jsonhttp, logutil
 * Removed test dependency on sqlite, using nose instead.
 * Marked known-broken tests using nose's mechanism (most of these are not broken but are simply run in the incorrect context, such as threading-related tests that are incompatible with the libevent hub).
@@ -237,7 +269,7 @@
 
 0.8.14
 ======
-* Fixed some more Windows compatibility problems, resolving EVT-37 : 
+* Fixed some more Windows compatibility problems, resolving EVT-37 :
 http://jira.secondlife.com/browse/EVT-37
 * waiting() method on Pool class, which was lost when the Pool implementation
 replaced CoroutinePool.
@@ -250,14 +282,14 @@ replaced CoroutinePool.
 0.8.12
 ======
 
-* The ability to resize() pools of coroutines, which was lost when the 
+* The ability to resize() pools of coroutines, which was lost when the
 Pool implementation replaced CoroutinePool.
-* Fixed Cesar's issue with SSL connections, and furthermore did a 
-complete overhaul of SSL handling in eventlet so that it's much closer 
-to the behavior of the built-in libraries.  In particular, users of 
-GreenSSL sockets must now call shutdown() before close(), exactly 
+* Fixed Cesar's issue with SSL connections, and furthermore did a
+complete overhaul of SSL handling in eventlet so that it's much closer
+to the behavior of the built-in libraries.  In particular, users of
+GreenSSL sockets must now call shutdown() before close(), exactly
 like SSL.Connection objects.
-* A small patch that makes Eventlet work on Windows.  This is the first 
+* A small patch that makes Eventlet work on Windows.  This is the first
 release of Eventlet that works on Windows.
 
 0.8.11

@@ -3,7 +3,7 @@ from __future__ import with_statement
 from eventlet import event, spawn, sleep, patcher, semaphore
 from eventlet.hubs import get_hub, _threadlocal, use_hub
 from nose.tools import *
-from tests import mock, LimitedTestCase, using_pyevent, skip_unless
+from tests import check_idle_cpu_usage, mock, LimitedTestCase, using_pyevent, skip_unless
 from unittest import TestCase
 
 from threading import Thread
@@ -57,6 +57,16 @@ class TestUpstreamDownStream(LimitedTestCase):
 got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         else:
             self.fail("Function did not raise any error")
+
+    @skip_unless(zmq_supported)
+    def test_close_linger(self):
+        """Socket.close() must support linger argument.
+
+        https://github.com/eventlet/eventlet/issues/9
+        """
+        sock1, sock2, _ = self.create_bound_pair(zmq.PAIR, zmq.PAIR)
+        sock1.close(1)
+        sock2.close(linger=0)
 
     @skip_unless(zmq_supported)
     def test_recv_spawned_before_send_is_non_blocking(self):
@@ -338,7 +348,13 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         num_recvs = 30
         done = event.Event()
 
-        sender.setsockopt(zmq.HWM, 10)
+        try:
+            SNDHWM = zmq.SNDHWM
+        except AttributeError:
+            # ZeroMQ <3.0
+            SNDHWM = zmq.HWM
+
+        sender.setsockopt(SNDHWM, 10)
         sender.setsockopt(zmq.SNDBUF, 10)
 
         receiver.setsockopt(zmq.RCVBUF, 10)
@@ -392,6 +408,44 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         self.assertEqual(len(sock_map), 1)
         events = sock2.getsockopt(zmq.EVENTS)
         self.assertEqual(events & zmq.POLLIN, zmq.POLLIN)
+
+    @skip_unless(zmq_supported)
+    def test_cpu_usage_after_bind(self):
+        """zmq eats CPU after PUB socket .bind()
+
+        https://bitbucket.org/which_linden/eventlet/issue/128
+
+        According to the ZeroMQ documentation, the socket file descriptor
+        can be readable without any pending messages. So we need to ensure
+        that Eventlet wraps around ZeroMQ sockets do not create busy loops.
+
+        A naive way to test it is to measure resource usage. This will require
+        some tuning to set appropriate acceptable limits.
+        """
+        sock = self.context.socket(zmq.PUB)
+        self.sockets.append(sock)
+        sock.bind_to_random_port("tcp://127.0.0.1")
+        sleep()
+        check_idle_cpu_usage(0.2, 0.1)
+
+    @skip_unless(zmq_supported)
+    def test_cpu_usage_after_pub_send_or_dealer_recv(self):
+        """zmq eats CPU after PUB send or DEALER recv.
+
+        Same https://bitbucket.org/which_linden/eventlet/issue/128
+        """
+        pub, sub, _port = self.create_bound_pair(zmq.PUB, zmq.SUB)
+        sub.setsockopt(zmq.SUBSCRIBE, "")
+        sleep()
+        pub.send('test_send')
+        check_idle_cpu_usage(0.2, 0.1)
+
+        sender, receiver, _port = self.create_bound_pair(zmq.DEALER, zmq.DEALER)
+        sleep()
+        sender.send('test_recv')
+        msg = receiver.recv()
+        self.assertEqual(msg, 'test_recv')
+        check_idle_cpu_usage(0.2, 0.1)
 
 
 class TestQueueLock(LimitedTestCase):

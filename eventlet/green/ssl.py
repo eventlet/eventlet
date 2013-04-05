@@ -130,6 +130,8 @@ class GreenSSLSocket(__ssl.SSLSocket):
             while (count < amount):
                 v = self.send(data[count:])
                 count += v
+                if v == 0:
+                    trampoline(self, write=True, timeout_exc=timeout_exc('timed out'))
             return amount
         else:
             while True:
