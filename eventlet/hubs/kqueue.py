@@ -47,8 +47,7 @@ class Hub(BaseHub):
         if evtype not in events:
             try:
                 event = select.kevent(fileno,
-                    FILTERS.get(evtype), select.KQ_EV_ADD,
-                    fflags=(select.KQ_NOTE_FORK | select.KQ_NOTE_TRACK))
+                    FILTERS.get(evtype), select.KQ_EV_ADD)
                 self._control([event], 0, 0)
                 events[evtype] = event
             except ValueError:
@@ -95,8 +94,6 @@ class Hub(BaseHub):
         for event in result:
             fileno = event.ident
             evfilt = event.filter
-            if event.fflags & select.NOTE_FORK:
-                raise Exception('Forked')
             try:
                 if evfilt == FILTERS[READ]:
                     readers.get(fileno, noop).cb(fileno)
