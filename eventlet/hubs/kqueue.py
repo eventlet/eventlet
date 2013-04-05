@@ -27,9 +27,9 @@ class Hub(BaseHub):
         self.kqueue.close()
         self._init_kqueue()
         kqueue = self.kqueue
-        for fileno, eventsbytype in self._events.iteritems():
-            for evtype, event in eventsbytype.iteritems():
-                kqueue.control([event], 0, 0)
+        events = [e for i in self._events.itervalues()
+                  for e in i.itervalues()]
+        kqueue.control(events, 0, 0)
 
     def _control(self, events, max_events, timeout):
         try:
