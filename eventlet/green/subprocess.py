@@ -80,6 +80,15 @@ class Popen(subprocess_orig.Popen):
         try:
             _communicate = new.function(subprocess_orig.Popen._communicate.im_func.func_code,
                                         globals())
+            try:
+                _communicate_with_select = new.function(
+                    subprocess_orig.Popen._communicate_with_select.im_func.func_code,
+                    globals())
+                _communicate_with_poll = new.function(
+                    subprocess_orig.Popen._communicate_with_poll.im_func.func_code,
+                    globals())
+            except AttributeError:
+                pass
         except AttributeError:
             # 2.4 only has communicate
             _communicate = new.function(subprocess_orig.Popen.communicate.im_func.func_code,
