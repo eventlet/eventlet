@@ -1,3 +1,4 @@
+import os
 import sys
 from eventlet import patcher
 select = patcher.original('select')
@@ -15,22 +16,50 @@ class Hub(BaseHub):
 
     def __init__(self, clock=time.time):
         super(Hub, self).__init__(clock)
-        self.kqueue = select.kqueue()
         self._events = {}
+        self._init_kqueue()
+
+    def _init_kqueue(self):
+        self.kqueue = select.kqueue()
+        self._pid = os.getpid()
+
+    def _reinit_kqueue(self):
+        self.kqueue.close()
+        self._init_kqueue()
+        kqueue = self.kqueue
+        for fileno, eventsbytype in self._events.iteritems():
+            for evtype, event in eventsbytype.iteritems():
+                kqueue.control([event], 0, 0)
+
+    def _control(self, events, max_events, timeout):
+        try:
+            return self.kqueue.control(events, max_events, timeout)
+        except OSError:
+            # have we forked?
+            if os.getpid() != self._pid:
+                self._reinit_kqueue()
+                return self.kqueue.control(events, max_events, timeout)
+            raise
 
     def add(self, evtype, fileno, cb):
         listener = super(Hub, self).add(evtype, fileno, cb)
         events = self._events.setdefault(fileno, {})
         if evtype not in events:
-            event = events[evtype] = select.kevent(fileno,
-                FILTERS.get(evtype), select.KQ_EV_ADD)
-            self.kqueue.control([event], 0, 0)
+            try:
+                event = select.kevent(fileno,
+                    FILTERS.get(evtype), select.KQ_EV_ADD,
+                    fflags=(select.KQ_NOTE_FORK | select.KQ_NOTE_TRACK))
+                self._control([event], 0, 0)
+                events[evtype] = event
+            except ValueError:
+                super(Hub, self).remove(listener)
+                raise
         return listener
 
     def _delete_events(self, events):
         del_events = map(lambda e: select.kevent(e.ident, e.filter,
                          select.KQ_EV_DELETE), events)
-        self.kqueue.control(del_events, 0, 0)
+        self._control(del_events, 0, 0)
 
     def remove(self, listener):
         super(Hub, self).remove(listener)
@@ -61,11 +90,13 @@ class Hub(BaseHub):
             if seconds:
                 sleep(seconds)
             return
-        result = self.kqueue.control([], self.MAX_EVENTS, seconds)
+        result = self._control([], self.MAX_EVENTS, seconds)
         SYSTEM_EXCEPTIONS = self.SYSTEM_EXCEPTIONS
         for event in result:
             fileno = event.ident
-            evfilt = event.filter 
+            evfilt = event.filter
+            if event.fflags & select.NOTE_FORK:
+                raise Exception('Forked')
             try:
                 if evfilt == FILTERS[READ]:
                     readers.get(fileno, noop).cb(fileno)
@@ -76,8 +107,3 @@ class Hub(BaseHub):
             except:
                 self.squelch_exception(fileno, sys.exc_info())
                 clear_sys_exc_info()
-
-
-
-
-
