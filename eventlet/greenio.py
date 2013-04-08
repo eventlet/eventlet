@@ -145,7 +145,7 @@ class GreenSocket(object):
 
         # Copy some attributes from underlying real socket.
         # This is the easiest way that i found to fix
-        # https://bitbucket.org/which_linden/eventlet/issue/136
+        # https://bitbucket.org/eventlet/eventlet/issue/136
         # Only `getsockopt` is required to fix that issue, others
         # are just premature optimization to save __getattr__ call.
         self.bind = fd.bind

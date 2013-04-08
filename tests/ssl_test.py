@@ -97,7 +97,7 @@ class SSLTest(LimitedTestCase):
     def test_sendall_cpu_usage(self):
         """SSL socket.sendall() busy loop
 
-        https://bitbucket.org/which_linden/eventlet/issue/134/greenssl-performance-issues
+        https://bitbucket.org/eventlet/eventlet/issue/134/greenssl-performance-issues
 
         Idea of this test is to check that GreenSSLSocket.sendall() does not busy loop
         retrying .send() calls, but instead trampolines until socket is writeable.

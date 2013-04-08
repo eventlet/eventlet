@@ -413,7 +413,7 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
     def test_cpu_usage_after_bind(self):
         """zmq eats CPU after PUB socket .bind()
 
-        https://bitbucket.org/which_linden/eventlet/issue/128
+        https://bitbucket.org/eventlet/eventlet/issue/128
 
         According to the ZeroMQ documentation, the socket file descriptor
         can be readable without any pending messages. So we need to ensure
@@ -432,7 +432,7 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
     def test_cpu_usage_after_pub_send_or_dealer_recv(self):
         """zmq eats CPU after PUB send or DEALER recv.
 
-        Same https://bitbucket.org/which_linden/eventlet/issue/128
+        Same https://bitbucket.org/eventlet/eventlet/issue/128
         """
         pub, sub, _port = self.create_bound_pair(zmq.PUB, zmq.SUB)
         sub.setsockopt(zmq.SUBSCRIBE, "")
