@@ -24,10 +24,16 @@ from eventlet.support import get_errno
 # Python 2's utf8 decoding is more lenient than we'd like
 # In order to pass autobahn's testsuite we need stricter validation
 # if available...
-try:
-    from autobahn import utf8validator
-except ImportError:
-    utf8validator = None
+for _mod in ('wsaccel.utf8validator', 'autobahn.utf8validator'):
+    # autobahn has it's own python-based validator. in newest versions
+    # this prefers to use wsaccel, a cython based implementation, if available.
+    # wsaccel may also be installed w/out autobahn, or with a earlier version.
+    try:
+        utf8validator = __import__(_mod, {}, {}, [''])
+    except ImportError:
+        utf8validator = None
+    else:
+        break
 
 ACCEPTABLE_CLIENT_ERRORS = set((errno.ECONNRESET, errno.EPIPE))
 
