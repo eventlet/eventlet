@@ -3,6 +3,7 @@ import os
 import sys
 import time
 import traceback
+import types
 import warnings
 
 from eventlet.green import urllib
@@ -424,6 +425,9 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     < self.environ['eventlet.input'].content_length):
                 ## Read and discard body if there was no pending 100-continue
                 if not self.environ['eventlet.input'].wfile:
+                    # NOTE: MINIMUM_CHUNK_SIZE is used here for purpose different than chunking.
+                    # We use it only cause it's at hand and has reasonable value in terms of
+                    # emptying the buffer.
                     while self.environ['eventlet.input'].read(MINIMUM_CHUNK_SIZE):
                         pass
             finish = time.time()
@@ -546,8 +550,7 @@ class Server(BaseHTTPServer.HTTPServer):
         self.max_http_version = max_http_version
         self.protocol = protocol
         self.pid = os.getpid()
-        if minimum_chunk_size is not None:
-            protocol.minimum_chunk_size = minimum_chunk_size
+        self.minimum_chunk_size = minimum_chunk_size
         self.log_x_forwarded_for = log_x_forwarded_for
         self.log_output = log_output
         self.log_format = log_format
@@ -572,8 +575,13 @@ class Server(BaseHTTPServer.HTTPServer):
         return d
 
     def process_request(self, (socket, address)):
-        proto = self.protocol(socket, address, self)
-        proto.handle()
+        # The actual request handling takes place in __init__, so we need to
+        # set minimum_chunk_size before __init__ executes and we don't want to modify
+        # class variable
+        proto = types.InstanceType(self.protocol)
+        if self.minimum_chunk_size is not None:
+            proto.minimum_chunk_size = self.minimum_chunk_size
+        proto.__init__(socket, address, self)
 
     def log_message(self, message):
         self.log.write(message + '\n')

@@ -786,10 +786,18 @@ class TestHttpd(_TestBase):
         self.assertNotEqual(headers.get('transfer-encoding'), 'chunked')
         self.assertEquals(body, "thisischunked")
 
+    def test_minimum_chunk_size_parameter_leaves_httpprotocol_class_member_intact(self):
+        start_size = wsgi.HttpProtocol.minimum_chunk_size
+
+        self.spawn_server(minimum_chunk_size=start_size * 2)
+        sock = eventlet.connect(('localhost', self.port))
+        sock.sendall('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+        read_http(sock)
+
+        self.assertEqual(wsgi.HttpProtocol.minimum_chunk_size, start_size)
+
     def test_error_in_chunked_closes_connection(self):
         # From http://rhodesmill.org/brandon/2013/chunked-wsgi/
-        greenthread.kill(self.killer)
-        eventlet.sleep(0)
         self.spawn_server(minimum_chunk_size=1)
 
         self.site.application = chunked_fail_app
