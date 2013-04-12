@@ -30,7 +30,7 @@ def select(read_list, write_list, error_list, timeout=None):
         except ValueError:
             raise TypeError("Expected number for timeout")
     hub = get_hub()
-    t = None
+    timers = []
     current = getcurrent()
     assert hub.greenlet is not current, 'do not call blocking functions from the mainloop'
     ds = {}
@@ -55,11 +55,20 @@ def select(read_list, write_list, error_list, timeout=None):
         original = ds[get_fileno(d)]['error']
         current.switch(([], [], [original]))
 
-    def on_timeout():
+    def on_timeout2():
         current.switch(([], [], []))
 
+    def on_timeout():
+        # ensure that BaseHub.run() has a chance to call self.wait()
+        # at least once before timed out.  otherwise the following code
+        # can time out erroneously.
+        #
+        #       s1, s2 = socket.socketpair()
+        #       print select.select([], [s1], [], 0)
+        timers.append(hub.schedule_call_global(0, on_timeout2))
+
     if timeout is not None:
-        t = hub.schedule_call_global(timeout, on_timeout)
+        timers.append(hub.schedule_call_global(timeout, on_timeout))
     try:
         for k, v in ds.iteritems():
             if v.get('read'):
@@ -72,6 +81,5 @@ def select(read_list, write_list, error_list, timeout=None):
             for l in listeners:
                 hub.remove(l)
     finally:
-        if t is not None:
+        for t in timers:
             t.cancel()
-
