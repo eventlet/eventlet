@@ -2,7 +2,7 @@ import socket as _orig_sock
 from tests import LimitedTestCase, skip_with_pyevent, main, skipped, s2b, skip_if, skip_on_windows
 from eventlet import event, greenio, debug
 from eventlet.hubs import get_hub
-from eventlet.green import socket, time
+from eventlet.green import select, socket, time
 from eventlet.support import get_errno
 
 import array
@@ -587,6 +587,12 @@ class TestGreenSocket(LimitedTestCase):
         assert sock.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR) == 0
         assert sock.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) == '\000'
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+    def test_socketpair_select(self):
+        # https://github.com/eventlet/eventlet/pull/25
+        s1, s2 = socket.socketpair()
+        assert select.select([], [s1], [], 0) == ([], [s1], [])
+        assert select.select([], [s1], [], 0) == ([], [s1], [])
 
 
 class TestGreenPipe(LimitedTestCase):
