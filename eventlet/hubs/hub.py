@@ -122,7 +122,7 @@ class BaseHub(object):
                      "particular socket.  Consider using a pools.Pool. "\
                      "If you do know what you're doing and want to disable "\
                      "this error, call "\
-                     "eventlet.debug.hub_multiple_reader_prevention(False)" % (
+                     "eventlet.debug.hub_prevent_multiple_readers(False)" % (
                      evtype, fileno, evtype))
             # store off the second listener in another structure
             self.secondaries[evtype].setdefault(fileno, []).append(listener)
