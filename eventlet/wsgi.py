@@ -397,10 +397,12 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 towrite = []
                 towrite_size = 0
                 just_written_size = 0
+                minimum_write_chunk_size = int(self.environ.get(
+                    'eventlet.minimum_write_chunk_size', self.minimum_chunk_size))
                 for data in result:
                     towrite.append(data)
                     towrite_size += len(data)
-                    if towrite_size >= self.minimum_chunk_size:
+                    if towrite_size >= minimum_write_chunk_size:
                         write(''.join(towrite))
                         towrite = []
                         just_written_size = towrite_size
@@ -640,7 +642,7 @@ def server(sock, site,
     :param max_http_version: Set to "HTTP/1.0" to make the server pretend it only supports HTTP 1.0.  This can help with applications or clients that don't behave properly using HTTP 1.1.
     :param protocol: Protocol class.  Deprecated.
     :param server_event: Used to collect the Server object.  Deprecated.
-    :param minimum_chunk_size: Minimum size in bytes for http chunks.  This  can be used to improve performance of applications which yield many small strings, though using it technically violates the WSGI spec.
+    :param minimum_chunk_size: Minimum size in bytes for http chunks.  This  can be used to improve performance of applications which yield many small strings, though using it technically violates the WSGI spec. This can be overridden on a per request basis by setting environ['eventlet.minimum_write_chunk_size'].
     :param log_x_forwarded_for: If True (the default), logs the contents of the x-forwarded-for header in addition to the actual client ip address in the 'client_ip' field of the log line.
     :param custom_pool: A custom GreenPool instance which is used to spawn client green threads.  If this is supplied, max_size is ignored.
     :param keepalive: If set to False, disables keepalives on the server; all connections will be closed after serving one request.

@@ -1301,6 +1301,24 @@ class TestChunkedInput(_TestBase):
         elif pi=="/ping":
             input.read()
             response.append("pong")
+        elif pi.startswith("/yield_spaces"):
+            if pi.endswith('override_min'):
+                env['eventlet.minimum_write_chunk_size'] = 1
+            self.yield_next_space = False
+
+            def response_iter():
+                yield ' '
+                num_sleeps = 0
+                while not self.yield_next_space and num_sleeps < 200:
+                    eventlet.sleep(.01)
+                    num_sleeps += 1
+
+                yield ' '
+
+            start_response('200 OK',
+                           [('Content-Type', 'text/plain'),
+                            ('Content-Length', '2')])
+            return response_iter()
         else:
             raise RuntimeError("bad path")
 
@@ -1376,6 +1394,50 @@ class TestChunkedInput(_TestBase):
         fd = self.connect()
         fd.sendall(req)
         self.assertEquals(read_http(fd)[-1], 'this is chunked\nline 2\nline3')
+
+    def test_chunked_readline_wsgi_override_minimum_chunk_size(self):
+
+        fd = self.connect()
+        fd.sendall("POST /yield_spaces/override_min HTTP/1.1\r\nContent-Length: 0\r\n\r\n")
+
+        resp_so_far = ''
+        with eventlet.Timeout(.1):
+            while True:
+                one_byte = fd.recv(1)
+                resp_so_far += one_byte
+                if resp_so_far.endswith('\r\n\r\n'):
+                    break
+            self.assertEquals(fd.recv(1), ' ')
+        try:
+            with eventlet.Timeout(.1):
+                fd.recv(1)
+        except eventlet.Timeout:
+            pass
+        else:
+            self.assert_(False)
+        self.yield_next_space = True
+
+        with eventlet.Timeout(.1):
+            self.assertEquals(fd.recv(1), ' ')
+
+    def test_chunked_readline_wsgi_not_override_minimum_chunk_size(self):
+
+        fd = self.connect()
+        fd.sendall("POST /yield_spaces HTTP/1.1\r\nContent-Length: 0\r\n\r\n")
+
+        resp_so_far = ''
+        try:
+            with eventlet.Timeout(.1):
+                while True:
+                    one_byte = fd.recv(1)
+                    resp_so_far += one_byte
+                    if resp_so_far.endswith('\r\n\r\n'):
+                        break
+                self.assertEquals(fd.recv(1), ' ')
+        except eventlet.Timeout:
+            pass
+        else:
+            self.assert_(False)
 
     def test_close_before_finished(self):
         import signal
