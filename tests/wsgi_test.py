@@ -956,6 +956,34 @@ class TestHttpd(_TestBase):
             'HTTP/1.0 400 Headers Too Large\r\n')
         fd.close()
 
+    def test_032_wsgi_input_as_iterable(self):
+        # https://bitbucket.org/eventlet/eventlet/issue/150
+        # env['wsgi.input'] returns a single byte at a time
+        # when used as an iterator
+        g = [0]
+
+        def echo_by_iterating(env, start_response):
+            start_response('200 OK', [('Content-type', 'text/plain')])
+            for chunk in env['wsgi.input']:
+                g[0] += 1
+                yield chunk
+
+        self.site.application = echo_by_iterating
+        upload_data = '123456789abcdef' * 100
+        request = (
+            'POST / HTTP/1.0\r\n'
+            'Host: localhost\r\n'
+            'Content-Length: %i\r\n\r\n%s'
+        ) % (len(upload_data), upload_data)
+        sock = eventlet.connect(('localhost', self.port))
+        fd = sock.makefile('rw')
+        fd.write(request)
+        fd.flush()
+        response_line, headers, body = read_http(sock)
+        self.assertEquals(body, upload_data)
+        fd.close()
+        self.assertEquals(g[0], 1)
+
     def test_zero_length_chunked_response(self):
         def zero_chunked_app(env, start_response):
             start_response('200 OK', [('Content-type', 'text/plain')])

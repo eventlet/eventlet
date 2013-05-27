@@ -161,7 +161,7 @@ class Input(object):
         return self._do_read(self.rfile.readlines, hint)
 
     def __iter__(self):
-        return iter(self.read())
+        return iter(self.read, '')
 
     def get_socket(self):
         return self.rfile._sock
