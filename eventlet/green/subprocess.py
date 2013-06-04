@@ -1,5 +1,6 @@
 import errno
 import new
+import time
 
 import eventlet
 from eventlet import greenio
@@ -9,6 +10,23 @@ from eventlet.green import select
 
 patcher.inject('subprocess', globals(), ('select', select))
 subprocess_orig = __import__("subprocess")
+
+
+if getattr(subprocess_orig, 'TimeoutExpired', None) is None:
+    # Backported from Python 3.3.
+    # https://bitbucket.org/eventlet/eventlet/issue/89
+    class TimeoutExpired(Exception):
+        """This exception is raised when the timeout expires while waiting for
+        a child process.
+        """
+        def __init__(self, cmd, output=None):
+            self.cmd = cmd
+            self.output = output
+
+        def __str__(self):
+            return ("Command '%s' timed out after %s seconds" %
+                    (self.cmd, self.timeout))
+
 
 # This is the meat of this module, the green version of Popen.
 class Popen(subprocess_orig.Popen):
@@ -21,9 +39,10 @@ class Popen(subprocess_orig.Popen):
     # non-blocking I/O, don't even bother overriding it on Windows.
     if not subprocess_orig.mswindows:
         def __init__(self, args, bufsize=0, *argss, **kwds):
+            self.args = args
             # Forward the call to base-class constructor
             subprocess_orig.Popen.__init__(self, args, 0, *argss, **kwds)
-            # Now wrap the pipes, if any. This logic is loosely borrowed from 
+            # Now wrap the pipes, if any. This logic is loosely borrowed from
             # eventlet.processes.Process.run() method.
             for attr in "stdin", "stdout", "stderr":
                 pipe = getattr(self, attr)
@@ -32,14 +51,18 @@ class Popen(subprocess_orig.Popen):
                     setattr(self, attr, wrapped_pipe)
         __init__.__doc__ = subprocess_orig.Popen.__init__.__doc__
 
-    def wait(self, check_interval=0.01):
+    def wait(self, timeout=None, check_interval=0.01):
         # Instead of a blocking OS call, this version of wait() uses logic
         # borrowed from the eventlet 0.2 processes.Process.wait() method.
+        if timeout is not None:
+            endtime = time.time() + timeout
         try:
             while True:
                 status = self.poll()
                 if status is not None:
                     return status
+                if timeout is not None and time.time() > endtime:
+                    raise TimeoutExpired(self.args)
                 eventlet.sleep(check_interval)
         except OSError, e:
             if e.errno == errno.ECHILD:
@@ -52,7 +75,7 @@ class Popen(subprocess_orig.Popen):
 
     if not subprocess_orig.mswindows:
         # don't want to rewrite the original _communicate() method, we
-        # just want a version that uses eventlet.green.select.select() 
+        # just want a version that uses eventlet.green.select.select()
         # instead of select.select().
         try:
             _communicate = new.function(subprocess_orig.Popen._communicate.im_func.func_code,
