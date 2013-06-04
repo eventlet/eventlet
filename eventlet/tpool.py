@@ -54,7 +54,7 @@ def tpool_trampoline():
             try:
                 (e,rv) = _rspq.get(block=False)
                 e.send(rv)
-                rv = None
+                e = rv = None
             except Empty:
                 pass
 
@@ -82,7 +82,7 @@ def tworker():
         # test_leakage_from_tracebacks verifies that the use of
         # exc_info does not lead to memory leaks
         _rspq.put((e,rv))
-        meth = args = kwargs = e = rv = None
+        msg = meth = args = kwargs = e = rv = None
         _signal_t2e()
 
 
