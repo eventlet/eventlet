@@ -21,7 +21,10 @@ else:
 
 from eventlet.support import greenlets as greenlet, clear_sys_exc_info
 from eventlet.hubs import timer
+from eventlet import greenio
 from eventlet import patcher
+_os = patcher.original('os')
+_threading = patcher.original('threading')
 time = patcher.original('time')
 
 g_prevent_multiple_readers = True
@@ -78,6 +81,7 @@ class BaseHub(object):
 
         self.clock = clock
         self.greenlet = greenlet.greenlet(self.run)
+        self.greenlet_thr = _threading.current_thread().ident
         self.stopping = False
         self.running = False
         self.timers = []
@@ -87,6 +91,29 @@ class BaseHub(object):
         self.debug_exceptions = True
         self.debug_blocking = False
         self.debug_blocking_resolution = 1
+        self._setup_wakefile()
+
+    def _setup_wakefile(self):
+        r, w = _os.pipe()
+        self._wakefile_writer = greenio._SocketDuckForFd(w)
+        greenio.set_nonblocking(self._wakefile_writer)
+        self._wakefile_reader = greenio._SocketDuckForFd(r)
+        greenio.set_nonblocking(self._wakefile_reader)
+        self._wakefile_listener = self.add(self.READ, r, self._read_wakefile)
+
+    def _read_wakefile(self, fileno):
+        while True:
+            try:
+                _os.read(fileno, 1)
+            except OSError, e:
+                if greenio.get_errno(e) == greenio.errno.EAGAIN:
+                    return
+                raise
+
+    def wake(self):
+        if _threading.current_thread().ident != self.greenlet_thr:
+            # only need to explicitly wake if we're not the hub's thread
+            self._wakefile_writer.sendall('\0')
 
     def block_detect_pre(self):
         # shortest alarm we can possibly raise is one second
@@ -167,6 +194,7 @@ class BaseHub(object):
             # exit without further switching to hub.
             self.greenlet.parent = new
             self.greenlet = new
+            self.greenlet_thr = _threading.current_thread().ident
 
     def switch(self):
         cur = greenlet.getcurrent()
