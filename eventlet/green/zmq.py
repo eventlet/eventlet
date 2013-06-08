@@ -205,10 +205,10 @@ class Socket(_Socket):
     def __init__(self, context, socket_type):
         super(Socket, self).__init__(context, socket_type)
 
-        object.__setattr__(self, '_eventlet_send_event', _BlockedThread())
-        object.__setattr__(self, '_eventlet_recv_event', _BlockedThread())
-        object.__setattr__(self, '_eventlet_send_lock', _QueueLock())
-        object.__setattr__(self, '_eventlet_recv_lock', _QueueLock())
+        self.__dict__['_eventlet_send_event'] = _BlockedThread()
+        self.__dict__['_eventlet_recv_event'] = _BlockedThread()
+        self.__dict__['_eventlet_send_lock'] = _QueueLock()
+        self.__dict__['_eventlet_recv_lock'] = _QueueLock()
 
         def event(fd):
             # Some events arrived at the zmq socket. This may mean
@@ -223,14 +223,14 @@ class Socket(_Socket):
                 _Socket_getsockopt(self, EVENTS)
 
         hub = hubs.get_hub()
-        object.__setattr__(self, '_eventlet_listener', hub.add(hub.READ, self.getsockopt(FD), event))
+        self.__dict__['_eventlet_listener'] = hub.add(hub.READ, self.getsockopt(FD), event)
 
     @_wraps(_Socket.close)
     def close(self, linger=None):
         super(Socket, self).close(linger)
         if self._eventlet_listener is not None:
             hubs.get_hub().remove(self._eventlet_listener)
-            object.__setattr__(self, '_eventlet_listener', None)
+            self.__dict__['_eventlet_listener'] = None
             # wake any blocked threads
             self._eventlet_send_event.wake()
             self._eventlet_recv_event.wake()
