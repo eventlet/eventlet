@@ -1,9 +1,11 @@
 from __future__ import with_statement
 import sys
+import threading
 
 from tests import LimitedTestCase, main, skip_with_pyevent, skip_if_no_itimer, skip_unless
 import time
 import eventlet
+from eventlet import greenthread
 from eventlet import hubs
 from eventlet.green import socket
 from eventlet.event import Event
@@ -104,7 +106,53 @@ class TestScheduleCall(LimitedTestCase):
             eventlet.sleep(DELAY)
         self.assertEquals(lst, [1,2,3])
 
-        
+
+class TestWithThreading(LimitedTestCase):
+    TEST_TIMEOUT = 2
+
+    def test_crossthreadwake(self):
+        hub = hubs.get_hub()
+        gt = greenthread.getcurrent()
+
+        def wake_main():
+            # slightly annoying to have to add this sleep below
+            # this is just to ensure that we're out of the
+            # fire_timers phase of hub.run()
+            eventlet.sleep(0.1)
+            hub.schedule_call_global(
+                0, gt.switch,
+                threading.current_thread().ident)
+            hub.wake()
+
+        t = threading.Thread(target=wake_main)
+        t.daemon = True
+
+        hub.schedule_call_global(0, t.start)
+        start = time.time()
+        r = hub.switch()
+        # we do this time check because the test timeout
+        # assures that the hub will always wake after the
+        # timeout period, so we instead test that it has waked
+        # earlier than the timeout period.
+        assert time.time() - start < 1
+        assert r == t.ident
+        t.join()
+
+    def test_waketest(self):
+        # tests that the test_crossthreadwake test is working
+        # correctly across changes by asserting that it fails
+        # if wake is disabled.
+        hub = hubs.get_hub()
+        hub.wake = lambda: None
+        try:
+            # successful failure is AssertionError, not eventlet.Timeout
+            # because when timeout wakes hub, the gt.switch timer has been
+            # inserted first by the other thread, so that is called instead
+            self.assertRaises(AssertionError, self.test_crossthreadwake)
+        finally:
+            del hub.__dict__['wake']
+
+
 class TestDebug(LimitedTestCase):
     def test_debug_listeners(self):
         hubs.get_hub().set_debug_listeners(True)

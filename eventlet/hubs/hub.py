@@ -21,7 +21,10 @@ else:
 
 from eventlet.support import greenlets as greenlet, clear_sys_exc_info
 from eventlet.hubs import timer
+from eventlet import greenio
 from eventlet import patcher
+_os = patcher.original('os')
+_threading = patcher.original('threading')
 time = patcher.original('time')
 
 g_prevent_multiple_readers = True
@@ -78,6 +81,7 @@ class BaseHub(object):
 
         self.clock = clock
         self.greenlet = greenlet.greenlet(self.run)
+        self.greenlet_thr = _threading.current_thread().ident
         self.stopping = False
         self.running = False
         self.timers = []
@@ -87,6 +91,14 @@ class BaseHub(object):
         self.debug_exceptions = True
         self.debug_blocking = False
         self.debug_blocking_resolution = 1
+        self._waker = waker = greenio._IOSignal()
+        self._wake_listener = self.add(self.READ, waker.r.fileno(),
+                                       lambda f: waker.drain())
+
+    def wake(self):
+        if _threading.current_thread().ident != self.greenlet_thr:
+            # only need to explicitly wake if we're not the hub's thread
+            self._waker.send()
 
     def block_detect_pre(self):
         # shortest alarm we can possibly raise is one second
@@ -167,6 +179,7 @@ class BaseHub(object):
             # exit without further switching to hub.
             self.greenlet.parent = new
             self.greenlet = new
+            self.greenlet_thr = _threading.current_thread().ident
 
     def switch(self):
         cur = greenlet.getcurrent()

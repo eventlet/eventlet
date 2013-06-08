@@ -561,3 +561,50 @@ def shutdown_safe(sock):
         # this will often be the case in an http server context
         if get_errno(e) != errno.ENOTCONN:
             raise
+
+
+class _IOSignal():
+    """ Cross-platform socket-based signalling for use where one
+    might use os.pipe(). For internal use.
+
+    Windows method borrowed from tpool.py
+
+    """
+    def __init__(self):
+        try:
+            a, b = socket.socketpair()
+        except AttributeError:
+            s = _original_socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.bind(('localhost', 0))
+            s.listen(1)
+            b = _original_socket(socket.AF_INET, socket.SOCK_STREAM)
+            b.connect(s.getsockname())
+            a, _ = s.accept()
+
+        a, b = GreenSocket(a), GreenSocket(b)
+        b.setblocking(False)
+        self.w = a
+        self.r = b
+
+    def close(self):
+        self.w.shutdown(socket.SHUT_WR)
+        self.r.shutdown(socket.SHUT_WR)
+        self.w.close()
+        self.r.close()
+
+    def send(self):
+        self.w.sendall("\0")
+
+    def wait(self):
+        trampoline(self.r.fileno(), read=True)
+        self.drain()
+
+    def drain(self):
+        while True:
+            try:
+                if not self.r.recv(4096):
+                    return
+            except socket.error, e:
+                if get_errno(e) in SOCKET_BLOCKING:
+                    return
+                raise
