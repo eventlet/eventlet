@@ -16,12 +16,13 @@ __all__ = ["use_hub", "get_hub", "get_default_hub", "trampoline"]
 threading = patcher.original('threading')
 _threadlocal = threading.local()
 
+
 def get_default_hub():
     """Select the default hub implementation based on what multiplexing
     libraries are installed.  The order that the hubs are tried is:
 
-    * twistedr
     * epoll
+    * kqueue
     * poll
     * select
 
@@ -33,10 +34,10 @@ def get_default_hub():
     """
 
     # pyevent hub disabled for now because it is not thread-safe
-    #try:
+    # try:
     #    import eventlet.hubs.pyevent
     #    return eventlet.hubs.pyevent
-    #except:
+    # except:
     #    pass
 
     select = patcher.original('select')
@@ -91,11 +92,13 @@ def use_hub(mod=None):
                     mod, found = entry.load(), True
                     break
             if not found:
-                mod = __import__('eventlet.hubs.' + mod, globals(), locals(), ['Hub'])
+                mod = __import__(
+                    'eventlet.hubs.' + mod, globals(), locals(), ['Hub'])
     if hasattr(mod, 'Hub'):
         _threadlocal.Hub = mod.Hub
     else:
         _threadlocal.Hub = mod
+
 
 def get_hub():
     """Get the current event hub singleton object.
@@ -113,6 +116,8 @@ def get_hub():
     return hub
 
 from eventlet import timeout
+
+
 def trampoline(fd, read=None, write=None, timeout=None,
                timeout_exc=timeout.Timeout):
     """Suspend the current coroutine until the given socket object or file
@@ -133,7 +138,8 @@ def trampoline(fd, read=None, write=None, timeout=None,
     hub = get_hub()
     current = greenlet.getcurrent()
     assert hub.greenlet is not current, 'do not call blocking functions from the mainloop'
-    assert not (read and write), 'not allowed to trampoline for reading and writing'
+    assert not (
+        read and write), 'not allowed to trampoline for reading and writing'
     try:
         fileno = fd.fileno()
     except AttributeError:
