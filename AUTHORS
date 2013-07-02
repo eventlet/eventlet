@@ -31,6 +31,8 @@ Contributors
 * Daniele Varrazzo
 * Ryan Williams
 * Geoff Salmon
+* Edward George
+* Floris Bruynooghe
 
 Linden Lab Contributors
 -----------------------
@@ -78,6 +80,10 @@ Thanks To
 * Clay Gerrard, wsgi handle socket closed by client (#95)
 * Eric Windisch, zmq getsockopt(EVENTS) wake correct threads (pull request 22)
 * Raymond Lu, fixing busy-wait in eventlet.green.ssl.socket.sendall()
-* Thomas Grainger, webcrawler example small fix, "requests" library import bug report
+* Thomas Grainger, webcrawler example small fix, "requests" library import bug report, Travis integration
 * Peter Portante, save syscalls in socket.dup(), environ[REMOTE_PORT] in wsgi
 * Peter Skirko, fixing socket.settimeout(0) bug
+* Derk Tegeler, Pre-cache proxied GreenSocket methods (Bitbucket #136)
+* Jakub Stasiak, Travis integration, wsgi fix
+* Paul Oppenheim, bug reports
+* David Malcolm, optional "timeout" argument to the subprocess module (Bitbucket #89)
