@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -8,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>debug – Debugging tools for Eventlet &mdash; Eventlet 0.12.0 documentation</title>
+    <title>debug – Debugging tools for Eventlet &mdash; Eventlet 0.13.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -16,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.12.0',
+        VERSION:     '0.13.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,7 +23,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.12.0 documentation" href="../index.html" />
+    <link rel="top" title="Eventlet 0.13.0 documentation" href="../index.html" />
     <link rel="up" title="Module Reference" href="../modules.html" />
     <link rel="next" title="db_pool – DBAPI 2 database connection pooling" href="db_pool.html" />
     <link rel="prev" title="corolocal – Coroutine local storage" href="corolocal.html" /> 
@@ -46,7 +44,7 @@
         <li class="right" >
           <a href="corolocal.html" title="corolocal – Coroutine local storage"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.12.0 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Eventlet 0.13.0 documentation</a> &raquo;</li>
           <li><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
       </ul>
     </div>  
@@ -58,7 +56,7 @@
             
   <div class="section" id="module-eventlet.debug">
 <span id="debug-debugging-tools-for-eventlet"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">debug</span></tt> &#8211; Debugging tools for Eventlet<a class="headerlink" href="#module-eventlet.debug" title="Permalink to this headline">¶</a></h1>
-<p>The debug module contains utilities and functions for better 
+<p>The debug module contains utilities and functions for better
 debugging Eventlet-powered applications.</p>
 <dl class="function">
 <dt id="eventlet.debug.spew">
@@ -92,8 +90,8 @@ especially when used in conjunction with <a class="reference internal" href="#ev
 <dl class="function">
 <dt id="eventlet.debug.hub_listener_stacks">
 <tt class="descclassname">eventlet.debug.</tt><tt class="descname">hub_listener_stacks</tt><big>(</big><em>state=False</em><big>)</big><a class="headerlink" href="#eventlet.debug.hub_listener_stacks" title="Permalink to this definition">¶</a></dt>
-<dd><p>Toggles whether or not the hub records the stack when clients register 
-listeners on file descriptors.  This can be useful when trying to figure 
+<dd><p>Toggles whether or not the hub records the stack when clients register
+listeners on file descriptors.  This can be useful when trying to figure
 out what the hub is up to at any given moment.  To inspect the stacks
 of the current listeners, call <a class="reference internal" href="#eventlet.debug.format_hub_listeners" title="eventlet.debug.format_hub_listeners"><tt class="xref py py-func docutils literal"><span class="pre">format_hub_listeners()</span></tt></a> at critical
 junctures in the application logic.</p>
@@ -109,16 +107,27 @@ timers.  This can be useful to see how greenthreads are terminating.</p>
 <dl class="function">
 <dt id="eventlet.debug.tpool_exceptions">
 <tt class="descclassname">eventlet.debug.</tt><tt class="descname">tpool_exceptions</tt><big>(</big><em>state=False</em><big>)</big><a class="headerlink" href="#eventlet.debug.tpool_exceptions" title="Permalink to this definition">¶</a></dt>
-<dd><p>Toggles whether tpool itself prints exceptions that are raised from 
+<dd><p>Toggles whether tpool itself prints exceptions that are raised from
 functions that are executed in it, in addition to raising them like
 it normally does.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="eventlet.debug.hub_prevent_multiple_readers">
+<tt class="descclassname">eventlet.debug.</tt><tt class="descname">hub_prevent_multiple_readers</tt><big>(</big><em>state=True</em><big>)</big><a class="headerlink" href="#eventlet.debug.hub_prevent_multiple_readers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Toggle prevention of multiple greenlets reading from a socket</p>
+<p>When multiple greenlets read from the same socket it is often hard
+to predict which greenlet will receive what data.  To achieve
+resource sharing consider using <tt class="docutils literal"><span class="pre">eventlet.pools.Pool</span></tt> instead.</p>
+<p>But if you really know what you are doing you can change the state
+to <tt class="docutils literal"><span class="pre">False</span></tt> to stop the hub from protecting against this mistake.</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="eventlet.debug.hub_timer_stacks">
 <tt class="descclassname">eventlet.debug.</tt><tt class="descname">hub_timer_stacks</tt><big>(</big><em>state=False</em><big>)</big><a class="headerlink" href="#eventlet.debug.hub_timer_stacks" title="Permalink to this definition">¶</a></dt>
-<dd><p>Toggles whether or not the hub records the stack when timers are set.  
-To inspect the stacks of the current timers, call <a class="reference internal" href="#eventlet.debug.format_hub_timers" title="eventlet.debug.format_hub_timers"><tt class="xref py py-func docutils literal"><span class="pre">format_hub_timers()</span></tt></a> 
+<dd><p>Toggles whether or not the hub records the stack when timers are set.
+To inspect the stacks of the current timers, call <a class="reference internal" href="#eventlet.debug.format_hub_timers" title="eventlet.debug.format_hub_timers"><tt class="xref py py-func docutils literal"><span class="pre">format_hub_timers()</span></tt></a>
 at critical junctures in the application logic.</p>
 </dd></dl>
 
@@ -150,10 +159,10 @@ positives.</p>
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
   <p class="topless"><a href="corolocal.html"
-                        title="previous chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">corolocal</span></tt> &#8211; Coroutine local storage</a></p>
+                        title="previous chapter"><tt class="docutils literal docutils literal docutils literal docutils literal"><span class="pre">corolocal</span></tt> &#8211; Coroutine local storage</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="db_pool.html"
-                        title="next chapter"><tt class="docutils literal docutils literal"><span class="pre">db_pool</span></tt> &#8211; DBAPI 2 database connection pooling</a></p>
+                        title="next chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">db_pool</span></tt> &#8211; DBAPI 2 database connection pooling</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../_sources/modules/debug.txt"
@@ -191,13 +200,13 @@ positives.</p>
         <li class="right" >
           <a href="corolocal.html" title="corolocal – Coroutine local storage"
              >previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.12.0 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Eventlet 0.13.0 documentation</a> &raquo;</li>
           <li><a href="../modules.html" >Module Reference</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
   </body>
 </html>

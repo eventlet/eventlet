@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -8,15 +6,15 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Authors &mdash; Eventlet 0.12.0 documentation</title>
+    <title>Authors &mdash; Eventlet 0.13.0 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '',
-        VERSION:     '0.12.0',
+        URL_ROOT:    './',
+        VERSION:     '0.13.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.12.0 documentation" href="index.html" />
+    <link rel="top" title="Eventlet 0.13.0 documentation" href="index.html" />
     <link rel="next" title="History" href="history.html" />
     <link rel="prev" title="eventlet.green.zmq – ØMQ support" href="modules/zmq.html" /> 
   </head>
@@ -45,7 +43,7 @@
         <li class="right" >
           <a href="modules/zmq.html" title="eventlet.green.zmq – ØMQ support"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">Eventlet 0.12.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Eventlet 0.13.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -92,6 +90,8 @@
 <li>Daniele Varrazzo</li>
 <li>Ryan Williams</li>
 <li>Geoff Salmon</li>
+<li>Edward George</li>
+<li>Floris Bruynooghe</li>
 </ul>
 </div>
 <div class="section" id="linden-lab-contributors">
@@ -143,9 +143,13 @@
 <li>Clay Gerrard, wsgi handle socket closed by client (#95)</li>
 <li>Eric Windisch, zmq getsockopt(EVENTS) wake correct threads (pull request 22)</li>
 <li>Raymond Lu, fixing busy-wait in eventlet.green.ssl.socket.sendall()</li>
-<li>Thomas Grainger, webcrawler example small fix, &#8220;requests&#8221; library import bug report</li>
+<li>Thomas Grainger, webcrawler example small fix, &#8220;requests&#8221; library import bug report, Travis integration</li>
 <li>Peter Portante, save syscalls in socket.dup(), environ[REMOTE_PORT] in wsgi</li>
 <li>Peter Skirko, fixing socket.settimeout(0) bug</li>
+<li>Derk Tegeler, Pre-cache proxied GreenSocket methods (Bitbucket #136)</li>
+<li>Jakub Stasiak, Travis integration, wsgi fix</li>
+<li>Paul Oppenheim, bug reports</li>
+<li>David Malcolm, optional &#8220;timeout&#8221; argument to the subprocess module (Bitbucket #89)</li>
 </ul>
 </div>
 </div>
@@ -211,12 +215,12 @@
         <li class="right" >
           <a href="modules/zmq.html" title="eventlet.green.zmq – ØMQ support"
              >previous</a> |</li>
-        <li><a href="index.html">Eventlet 0.12.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Eventlet 0.13.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
   </body>
 </html>

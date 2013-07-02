@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -8,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>semaphore – Semaphore classes &mdash; Eventlet 0.12.0 documentation</title>
+    <title>semaphore – Semaphore classes &mdash; Eventlet 0.13.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -16,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.12.0',
+        VERSION:     '0.13.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,7 +23,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.12.0 documentation" href="../index.html" />
+    <link rel="top" title="Eventlet 0.13.0 documentation" href="../index.html" />
     <link rel="up" title="Module Reference" href="../modules.html" />
     <link rel="next" title="timeout – Universal Timeouts" href="timeout.html" />
     <link rel="prev" title="queue – Queue class" href="queue.html" /> 
@@ -46,7 +44,7 @@
         <li class="right" >
           <a href="queue.html" title="queue – Queue class"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.12.0 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Eventlet 0.13.0 documentation</a> &raquo;</li>
           <li><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
       </ul>
     </div>  
@@ -74,9 +72,15 @@ nonzero again.</p>
 </pre></div>
 </div>
 <p>If not specified, <em>value</em> defaults to 1.</p>
+<p>It is possible to limit acquire time:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">sem</span> <span class="o">=</span> <span class="n">Semaphore</span><span class="p">()</span>
+<span class="n">ok</span> <span class="o">=</span> <span class="n">sem</span><span class="o">.</span><span class="n">acquire</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="c"># True if acquired, False if timed out.</span>
+</pre></div>
+</div>
 <dl class="method">
 <dt id="eventlet.semaphore.Semaphore.acquire">
-<tt class="descname">acquire</tt><big>(</big><em>blocking=True</em><big>)</big><a class="headerlink" href="#eventlet.semaphore.Semaphore.acquire" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">acquire</tt><big>(</big><em>blocking=True</em>, <em>timeout=None</em><big>)</big><a class="headerlink" href="#eventlet.semaphore.Semaphore.acquire" title="Permalink to this definition">¶</a></dt>
 <dd><p>Acquire a semaphore.</p>
 <p>When invoked without arguments: if the internal counter is larger than
 zero on entry, decrement it by one and return immediately. If it is zero
@@ -239,7 +243,7 @@ counter is greater than or equal to <em>limit</em>.</p>
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
   <p class="topless"><a href="queue.html"
-                        title="previous chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">queue</span></tt> &#8211; Queue class</a></p>
+                        title="previous chapter"><tt class="docutils literal docutils literal docutils literal docutils literal"><span class="pre">queue</span></tt> &#8211; Queue class</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="timeout.html"
                         title="next chapter"><tt class="docutils literal"><span class="pre">timeout</span></tt> &#8211; Universal Timeouts</a></p>
@@ -280,13 +284,13 @@ counter is greater than or equal to <em>limit</em>.</p>
         <li class="right" >
           <a href="queue.html" title="queue – Queue class"
              >previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.12.0 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Eventlet 0.13.0 documentation</a> &raquo;</li>
           <li><a href="../modules.html" >Module Reference</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
   </body>
 </html>
