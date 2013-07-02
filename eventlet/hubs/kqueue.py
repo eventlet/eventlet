@@ -8,8 +8,12 @@ sleep = time.sleep
 from eventlet.support import get_errno, clear_sys_exc_info
 from eventlet.hubs.hub import BaseHub, READ, WRITE, noop
 
-FILTERS = {READ: select.KQ_FILTER_READ,
-           WRITE: select.KQ_FILTER_WRITE}
+if hasattr(select, "KQ_FILTER_READ"):
+    FILTERS = {READ: select.KQ_FILTER_READ,
+               WRITE: select.KQ_FILTER_WRITE}
+else:
+    # import needs to fail if you don't have a system with kqueue
+    raise ImportError("No kqueue implementation found in select module")
 
 class Hub(BaseHub):
     MAX_EVENTS = 100
