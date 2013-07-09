@@ -4,7 +4,7 @@ import subprocess
 import sys
 import tempfile
 
-from tests import LimitedTestCase, main, skip_with_pyevent
+from tests import LimitedTestCase, main, run_python, skip_with_pyevent
 
 
 base_module_contents = """
@@ -43,21 +43,16 @@ class ProcessBase(LimitedTestCase):
         shutil.rmtree(self.tempdir)
 
     def write_to_tempfile(self, name, contents):
-        filename = os.path.join(self.tempdir, name + '.py')
-        fd = open(filename, "w")
+        filename = os.path.join(self.tempdir, name)
+        if not filename.endswith('.py'):
+            filename = filename + '.py'
+        fd = open(filename, "wb")
         fd.write(contents)
         fd.close()
 
     def launch_subprocess(self, filename):
-        python_path = os.pathsep.join(sys.path + [self.tempdir])
-        new_env = os.environ.copy()
-        new_env['PYTHONPATH'] = python_path
-        if not filename.endswith('.py'):
-            filename = filename + '.py'
-        p = subprocess.Popen(
-            [sys.executable, os.path.join(self.tempdir, filename)],
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=new_env)
-        output, _ = p.communicate()
+        path = os.path.join(self.tempdir, filename)
+        output = run_python(path)
         lines = output.split("\n")
         return output, lines
 
