@@ -127,8 +127,6 @@ class GreenSocket(object):
             fd = _original_socket(family_or_realsock, *args, **kwargs)
         else:
             fd = family_or_realsock
-            assert not args, args
-            assert not kwargs, kwargs
 
         # import timeout from other socket, if it was there
         try:
