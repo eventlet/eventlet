@@ -40,13 +40,13 @@ from eventlet.green import _socket_nodns
 from eventlet.green import time
 from eventlet.green import select
 
-dns = patcher.import_patched('dns', 
+dns = patcher.import_patched('dns',
                              socket=_socket_nodns,
                              time=time,
                              select=select)
-for pkg in ('dns.query', 'dns.exception', 'dns.inet', 'dns.message', 
+for pkg in ('dns.query', 'dns.exception', 'dns.inet', 'dns.message',
             'dns.rdatatype','dns.resolver', 'dns.reversename'):
-   setattr(dns, pkg.split('.')[1], patcher.import_patched(pkg, 
+   setattr(dns, pkg.split('.')[1], patcher.import_patched(pkg,
                                                           socket=_socket_nodns,
                                                           time=time,
                                                           select=select))
@@ -252,11 +252,12 @@ def getnameinfo(sockaddr, flags):
             raise socket.gaierror(
                 (socket.EAI_NODATA, 'No address associated with hostname'))
 
-        if not (flags & socket.NI_NUMERICSERV):
-            proto = (flags & socket.NI_DGRAM) and 'udp' or 'tcp'
-            port = socket.getservbyport(port, proto)
+    if not (flags & socket.NI_NUMERICSERV):
+        proto = (flags & socket.NI_DGRAM) and 'udp' or 'tcp'
+        port = socket.getservbyport(port, proto)
 
     return (host, port)
+
 
 def is_ipv4_addr(host):
     """is_ipv4_addr returns true if host is a valid IPv4 address in
