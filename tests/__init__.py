@@ -1,7 +1,10 @@
 # package is named tests, not test, so it won't be confused with test in stdlib
 import errno
 import os
-import resource
+try:
+    import resource
+except ImportError:
+    resource = None
 import signal
 import unittest
 import warnings
@@ -201,6 +204,11 @@ class LimitedTestCase(unittest.TestCase):
 
 
 def check_idle_cpu_usage(duration, allowed_part):
+    if resource is None:
+        # TODO: use https://code.google.com/p/psutil/
+        from nose.plugins.skip import SkipTest
+        raise SkipTest('CPU usage testing not supported (`import resource` failed)')
+
     r1 = resource.getrusage(resource.RUSAGE_SELF)
     eventlet.sleep(duration)
     r2 = resource.getrusage(resource.RUSAGE_SELF)
