@@ -6,6 +6,8 @@ try:
 except ImportError:
     resource = None
 import signal
+import subprocess
+import sys
 import unittest
 import warnings
 
@@ -289,6 +291,25 @@ def get_database_auth():
         except IOError:
             pass
     return retval
+
+
+def run_python(path):
+    if not path.endswith('.py'):
+        path += '.py'
+    path = os.path.abspath(path)
+    dir_ = os.path.dirname(path)
+    new_env = os.environ.copy()
+    new_env['PYTHONPATH'] = os.pathsep.join(sys.path + [dir_])
+    p = subprocess.Popen(
+        [sys.executable, path],
+        env=new_env,
+        stderr=subprocess.STDOUT,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+    )
+    output, _ = p.communicate()
+    return output
+
 
 certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
 private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
