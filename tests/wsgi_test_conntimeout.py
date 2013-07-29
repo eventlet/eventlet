@@ -22,18 +22,17 @@ server / client accept() conn - ExplodingConnectionWrap
     V  V  V
 connection makefile() file objects - ExplodingSocketFile <-- these raise
 """
-# This code relies on a subclass of unittest.TestCase, but is NOT a test.
-# Should NOT be run by nose to avoid potential monkeypatch contamination.
-#  - Not just @skipped; nose must not consider this a test at all:
-__test__ = False
 
 import eventlet
 
 import socket
 import sys
-from cStringIO import StringIO
 
 import tests.wsgi_test
+
+
+# no standard tests in this file, ignore
+__test__ = False
 
 
 # This test might make you wince
@@ -114,50 +113,51 @@ class ExplodingSocketFile(socket._fileobject):
         return super(self.__class__, self).readline(*args, **kwargs)
 
 
-for debug in (False, True):
-    print "SEPERATOR_SENTINEL"
-    print "debug set to: %s" % debug
+if __name__ == '__main__':
+    for debug in (False, True):
+        print "SEPERATOR_SENTINEL"
+        print "debug set to: %s" % debug
 
-    server_sock = eventlet.listen(('localhost', 0))
-    server_addr = server_sock.getsockname()
-    sock_wrap = NaughtySocketAcceptWrap(server_sock)
+        server_sock = eventlet.listen(('localhost', 0))
+        server_addr = server_sock.getsockname()
+        sock_wrap = NaughtySocketAcceptWrap(server_sock)
 
-    eventlet.spawn_n(
-        eventlet.wsgi.server,
-        debug=debug,
-        log=sys.stdout,
-        max_size=128,
-        site=tests.wsgi_test.Site(),
-        sock=server_sock,
-    )
+        eventlet.spawn_n(
+            eventlet.wsgi.server,
+            debug=debug,
+            log=sys.stdout,
+            max_size=128,
+            site=tests.wsgi_test.Site(),
+            sock=server_sock,
+        )
 
-    try:
-        # req #1 - normal
-        sock1 = eventlet.connect(server_addr)
-        sock1.settimeout(0.1)
-        fd1 = sock1.makefile('rw')
-        fd1.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
-        fd1.flush()
-        tests.wsgi_test.read_http(sock1)
-
-        # let the server socket ops catch up, set bomb
-        eventlet.sleep(0)
-        print "arming..."
-        sock_wrap.arm()
-
-        # req #2 - old conn, post-arm - timeout
-        fd1.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
-        fd1.flush()
         try:
+            # req #1 - normal
+            sock1 = eventlet.connect(server_addr)
+            sock1.settimeout(0.1)
+            fd1 = sock1.makefile('rw')
+            fd1.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+            fd1.flush()
             tests.wsgi_test.read_http(sock1)
-            assert False, 'Expected ConnectionClosed exception'
-        except tests.wsgi_test.ConnectionClosed:
-            pass
 
-        fd1.close()
-        sock1.close()
-    finally:
-        # reset streams, then output trapped tracebacks
-        sock_wrap.unwrap()
-    # check output asserts in tests.wsgi_test.TestHttpd
-    # test_143_server_connection_timeout_exception
+            # let the server socket ops catch up, set bomb
+            eventlet.sleep(0)
+            print "arming..."
+            sock_wrap.arm()
+
+            # req #2 - old conn, post-arm - timeout
+            fd1.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+            fd1.flush()
+            try:
+                tests.wsgi_test.read_http(sock1)
+                assert False, 'Expected ConnectionClosed exception'
+            except tests.wsgi_test.ConnectionClosed:
+                pass
+
+            fd1.close()
+            sock1.close()
+        finally:
+            # reset streams, then output trapped tracebacks
+            sock_wrap.unwrap()
+        # check output asserts in tests.wsgi_test.TestHttpd
+        # test_143_server_connection_timeout_exception

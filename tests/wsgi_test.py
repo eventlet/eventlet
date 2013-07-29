@@ -195,15 +195,10 @@ class _TestBase(LimitedTestCase):
         super(_TestBase, self).tearDown()
 
     def spawn_server(self, **kwargs):
-        """Spawns a new wsgi server with the given arguments.
-        Sets self.port to the port of the server, and self.killer is the greenlet
-        running it.
+        """Spawns a new wsgi server with the given arguments using
+        :meth:`spawn_thread`.
 
-        Kills any previously-running server."""
-        eventlet.sleep(0) # give previous server a chance to start
-        if self.killer:
-            greenthread.kill(self.killer)
-
+        Sets self.port to the port of the server"""
         new_kwargs = dict(max_size=128,
                           log=self.logfile,
                           site=self.site)
@@ -213,9 +208,19 @@ class _TestBase(LimitedTestCase):
             new_kwargs['sock'] = eventlet.listen(('localhost', 0))
 
         self.port = new_kwargs['sock'].getsockname()[1]
-        self.killer = eventlet.spawn_n(
-            wsgi.server,
-            **new_kwargs)
+        self.spawn_thread(wsgi.server, **new_kwargs)
+
+    def spawn_thread(self, target, **kwargs):
+        """Spawns a new greenthread using specified target and arguments.
+
+        Kills any previously-running server and sets self.killer to the
+        greenthread running the target.
+        """
+        eventlet.sleep(0)  # give previous server a chance to start
+        if self.killer:
+            greenthread.kill(self.killer)
+
+        self.killer = eventlet.spawn_n(target, **kwargs)
 
     def set_site(self):
         raise NotImplementedError
@@ -1104,12 +1109,15 @@ class TestHttpd(_TestBase):
             return
         log = StringIO()
         # first thing the server does is try to log the IP it's bound to
+
         def run_server():
             try:
-                server = wsgi.server(sock=sock, log=log, site=Site())
+                wsgi.server(sock=sock, log=log, site=Site())
             except ValueError:
                 log.write('broked')
-        eventlet.spawn_n(run_server)
+
+        self.spawn_thread(run_server)
+
         logval = log.getvalue()
         while not logval:
             eventlet.sleep(0.0)

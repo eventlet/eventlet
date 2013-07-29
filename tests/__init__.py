@@ -12,7 +12,7 @@ import unittest
 import warnings
 
 import eventlet
-from eventlet import debug, hubs
+from eventlet import debug, hubs, tpool
 
 
 # convenience for importers
@@ -178,15 +178,8 @@ class LimitedTestCase(unittest.TestCase):
             signal.signal(signal.SIGALRM, self.previous_alarm[0])
             signal.alarm(self.previous_alarm[1])
 
-        try:
-            hub = hubs.get_hub()
-            num_readers = len(hub.get_readers())
-            num_writers = len(hub.get_writers())
-            assert num_readers == num_writers == 0
-        except AssertionError:
-            print "ERROR: Hub not empty"
-            print debug.format_hub_timers()
-            print debug.format_hub_listeners()
+        tpool.killall()
+        verify_hub_empty()
 
     def assert_less_than(self, a,b,msg=None):
         if msg:

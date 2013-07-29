@@ -34,6 +34,8 @@ def mysql_requirement(_f):
 
 class MySQLdbTester(LimitedTestCase):
     def setUp(self):
+        super(MySQLdbTester, self).setUp()
+
         self._auth = get_database_auth()['MySQLdb']
         self.create_db()
         self.connection = None
@@ -50,6 +52,8 @@ class MySQLdbTester(LimitedTestCase):
         if self.connection:
             self.connection.close()
         self.drop_db()
+
+        super(MySQLdbTester, self).tearDown()
 
     @skip_unless(mysql_requirement)    
     def create_db(self):
