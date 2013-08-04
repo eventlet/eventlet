@@ -1186,7 +1186,7 @@ class TestHttpd(_TestBase):
         # Runs tests.wsgi_test_conntimeout in a separate process.
         testcode_path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
-            'wsgi_te_st_conntimeout.py')
+            'wsgi_test_conntimeout.py')
         output = run_python(testcode_path)
         sections = output.split("SEPERATOR_SENTINEL")
         # first section is empty
