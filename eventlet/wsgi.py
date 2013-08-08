@@ -585,6 +585,7 @@ class Server(BaseHTTPServer.HTTPServer):
             proto.__init__(sock, address, self)
         except socket.timeout:
             # Expected exceptions are not exceptional
+            sock.close()
             if self.debug:
                 # similar to logging "accepted" in server()
                 self.log_message('(%s) timed out %r' % (self.pid, address))
