@@ -233,7 +233,11 @@ class GreenSocket(object):
         return newsock
 
     def makefile(self, *args, **kw):
-        return _fileobject(self.dup(), *args, **kw)
+        dupped = self.dup()
+        res = _fileobject(dupped, *args, **kw)
+        if hasattr(dupped, "_drop"):
+            dupped._drop()
+        return res
 
     def makeGreenFile(self, *args, **kw):
         warnings.warn("makeGreenFile has been deprecated, please use "
@@ -340,6 +344,13 @@ class GreenSocket(object):
     def gettimeout(self):
         return self._timeout
 
+    if "__pypy__" in sys.builtin_module_names:
+        def _reuse(self):
+            self.fd._sock._reuse()
+
+        def _drop(self):
+            self.fd._sock._drop()
+
 
 class _SocketDuckForFd(object):
     """ Class implementing all socket method used by _fileobject in cooperative manner using low level os I/O calls."""
@@ -390,6 +401,13 @@ class _SocketDuckForFd(object):
 
     def __repr__(self):
         return "%s:%d" % (self.__class__.__name__, self._fileno)
+
+    if "__pypy__" in sys.builtin_module_names:
+        def _reuse(self):
+            pass
+
+        def _drop(self):
+            pass
 
 
 def _operationOnClosedFile(*args, **kwargs):
