@@ -1201,6 +1201,17 @@ class TestHttpd(_TestBase):
             self.assertTrue("BOOM" in runlog)
             self.assertFalse("Traceback" in runlog)
 
+    def test_server_socket_timeout(self):
+        self.spawn_server(socket_timeout=0.1)
+        sock = eventlet.connect(('localhost', self.port))
+        sock.send('GET / HTTP/1.1\r\n')
+        eventlet.sleep(0.1)
+        try:
+            read_http(sock)
+            assert False, 'Expected ConnectionClosed exception'
+        except ConnectionClosed:
+            pass
+
 
 def read_headers(sock):
     fd = sock.makefile()

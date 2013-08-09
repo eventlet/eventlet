@@ -31,6 +31,7 @@ _monthname = [None, # Dummy so we can use 1-based month numbers
               "Jan", "Feb", "Mar", "Apr", "May", "Jun",
               "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
+
 def format_date_time(timestamp):
     """Formats a unix timestamp into an HTTP standard string."""
     year, month, day, hh, mm, ss, wd, _y, _z = time.gmtime(timestamp)
@@ -38,10 +39,12 @@ def format_date_time(timestamp):
         _weekdayname[wd], day, _monthname[month], year, hh, mm, ss
     )
 
+
 # Collections of error codes to compare against.  Not all attributes are set
 # on errno module on all platforms, so some are literals :(
 BAD_SOCK = set((errno.EBADF, 10053))
 BROKEN_SOCK = set((errno.EPIPE, errno.ECONNRESET))
+
 
 # special flag return value for apps
 class _AlreadyHandled(object):
@@ -54,7 +57,9 @@ class _AlreadyHandled(object):
 
 ALREADY_HANDLED = _AlreadyHandled()
 
+
 class Input(object):
+
     def __init__(self,
                  rfile,
                  content_length,
@@ -519,8 +524,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         self.connection.close()
 
 
-
 class Server(BaseHTTPServer.HTTPServer):
+
     def __init__(self,
                  socket,
                  address,
@@ -535,7 +540,8 @@ class Server(BaseHTTPServer.HTTPServer):
                  log_output=True,
                  log_format=DEFAULT_LOG_FORMAT,
                  url_length_limit=MAX_REQUEST_LINE,
-                 debug=True):
+                 debug=True,
+                 socket_timeout=None):
 
         self.outstanding_requests = 0
         self.socket = socket
@@ -556,6 +562,7 @@ class Server(BaseHTTPServer.HTTPServer):
         self.log_format = log_format
         self.url_length_limit = url_length_limit
         self.debug = debug
+        self.socket_timeout = socket_timeout
 
     def get_environ(self):
         d = {
@@ -593,6 +600,7 @@ class Server(BaseHTTPServer.HTTPServer):
     def log_message(self, message):
         self.log.write(message + '\n')
 
+
 try:
     import ssl
     ACCEPT_EXCEPTIONS = (socket.error, ssl.SSLError)
@@ -601,6 +609,7 @@ try:
 except ImportError:
     ACCEPT_EXCEPTIONS = (socket.error,)
     ACCEPT_ERRNO = set((errno.EPIPE, errno.EBADF, errno.ECONNRESET))
+
 
 def server(sock, site,
            log=None,
@@ -616,8 +625,9 @@ def server(sock, site,
            log_output=True,
            log_format=DEFAULT_LOG_FORMAT,
            url_length_limit=MAX_REQUEST_LINE,
-           debug=True):
-    """  Start up a wsgi server handling requests from the supplied server
+           debug=True,
+           socket_timeout=None):
+    """Start up a WSGI server handling requests from the supplied server
     socket.  This function loops forever.  The *sock* object will be closed after server exits,
     but the underlying file descriptor will remain open, so if you have a dup() of *sock*,
     it will remain usable.
@@ -638,6 +648,7 @@ def server(sock, site,
     :param log_format: A python format string that is used as the template to generate log lines.  The following values can be formatted into it: client_ip, date_time, request_line, status_code, body_length, wall_seconds.  The default is a good example of how to use it.
     :param url_length_limit: A maximum allowed length of the request url. If exceeded, 414 error is returned.
     :param debug: True if the server should send exception tracebacks to the clients on 500 errors.  If False, the server will respond with empty bodies.
+    :param socket_timeout: Timeout for client connections' socket operations. Default None means wait forever.
     """
     serv = Server(sock, sock.getsockname(),
                   site, log,
@@ -650,7 +661,9 @@ def server(sock, site,
                   log_output=log_output,
                   log_format=log_format,
                   url_length_limit=url_length_limit,
-                  debug=debug)
+                  debug=debug,
+                  socket_timeout=socket_timeout,
+                  )
     if server_event is not None:
         server_event.send(serv)
     if max_size is None:
@@ -676,6 +689,7 @@ def server(sock, site,
         while True:
             try:
                 client_socket = sock.accept()
+                client_socket[0].settimeout(serv.socket_timeout)
                 if debug:
                     serv.log.write("(%s) accepted %r\n" % (
                         serv.pid, client_socket[1]))
