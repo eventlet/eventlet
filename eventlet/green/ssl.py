@@ -136,7 +136,7 @@ class GreenSSLSocket(__ssl.SSLSocket):
         else:
             while True:
                 try:
-                    return socket.sendall(self, buflen, flags)
+                    return socket.sendall(self, data, flags)
                 except orig_socket.error, e:
                     if self.act_non_blocking:
                         raise

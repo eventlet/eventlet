@@ -1,9 +1,17 @@
-from tests import LimitedTestCase, certificate_file, private_key_file, check_idle_cpu_usage
-from tests import skip_if_no_ssl
+import socket
+import warnings
 from unittest import main
+
 import eventlet
 from eventlet import util, greenio
-import socket
+try:
+    from eventlet.green.socket import ssl
+except ImportError:
+    pass
+from tests import (
+    LimitedTestCase, certificate_file, private_key_file, check_idle_cpu_usage,
+    skip_if_no_ssl
+)
 
 
 def listen_ssl_socket(address=('127.0.0.1', 0)):
@@ -16,6 +24,15 @@ def listen_ssl_socket(address=('127.0.0.1', 0)):
 
 
 class SSLTest(LimitedTestCase):
+    def setUp(self):
+        # disabling socket.ssl warnings because we're testing it here
+        warnings.filterwarnings(
+            action='ignore',
+            message='.*socket.ssl.*',
+            category=DeprecationWarning)
+
+        super(SSLTest, self).setUp()
+
     @skip_if_no_ssl
     def test_duplex_response(self):
         def serve(listener):
@@ -133,16 +150,8 @@ class SSLTest(LimitedTestCase):
         check_idle_cpu_usage(0.2, 0.1)
         server_coro.kill()
 
-
-class SocketSSLTest(LimitedTestCase):
     @skip_if_no_ssl
     def test_greensslobject(self):
-        import warnings
-        # disabling socket.ssl warnings because we're testing it here
-        warnings.filterwarnings(action = 'ignore',
-                        message='.*socket.ssl.*',
-                        category=DeprecationWarning)
-
         def serve(listener):
             sock, addr = listener.accept()
             sock.write('content')
@@ -150,11 +159,24 @@ class SocketSSLTest(LimitedTestCase):
             sock.close()
         listener = listen_ssl_socket(('', 0))
         killer = eventlet.spawn(serve, listener)
-        from eventlet.green.socket import ssl
         client = ssl(eventlet.connect(('localhost', listener.getsockname()[1])))
         self.assertEquals(client.read(1024), 'content')
         self.assertEquals(client.read(1024), '')
 
+    @skip_if_no_ssl
+    def test_regression_gh_17(self):
+        def serve(listener):
+            sock, addr = listener.accept()
+
+            # to simulate condition mentioned in GH-17
+            sock._sslobj = None
+            sock.sendall('some data')
+            greenio.shutdown_safe(sock)
+            sock.close()
+
+        listener = listen_ssl_socket(('', 0))
+        killer = eventlet.spawn(serve, listener)
+        client = ssl(eventlet.connect(('localhost', listener.getsockname()[1])))
 
 if __name__ == '__main__':
     main()
