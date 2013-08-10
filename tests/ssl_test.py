@@ -1,9 +1,16 @@
-from tests import LimitedTestCase, certificate_file, private_key_file, check_idle_cpu_usage
-from tests import skip_if_no_ssl
+import socket
 from unittest import main
+
 import eventlet
 from eventlet import util, greenio
-import socket
+try:
+    from eventlet.green.socket import ssl
+except ImportError:
+    pass
+from tests import (
+    LimitedTestCase, certificate_file, private_key_file, check_idle_cpu_usage,
+    skip_if_no_ssl
+)
 
 
 def listen_ssl_socket(address=('127.0.0.1', 0)):
@@ -133,8 +140,6 @@ class SSLTest(LimitedTestCase):
         check_idle_cpu_usage(0.2, 0.1)
         server_coro.kill()
 
-
-class SocketSSLTest(LimitedTestCase):
     @skip_if_no_ssl
     def test_greensslobject(self):
         import warnings
@@ -150,7 +155,6 @@ class SocketSSLTest(LimitedTestCase):
             sock.close()
         listener = listen_ssl_socket(('', 0))
         killer = eventlet.spawn(serve, listener)
-        from eventlet.green.socket import ssl
         client = ssl(eventlet.connect(('localhost', listener.getsockname()[1])))
         self.assertEquals(client.read(1024), 'content')
         self.assertEquals(client.read(1024), '')
