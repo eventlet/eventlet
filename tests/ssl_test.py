@@ -1,4 +1,5 @@
 import socket
+import warnings
 from unittest import main
 
 import eventlet
@@ -23,6 +24,15 @@ def listen_ssl_socket(address=('127.0.0.1', 0)):
 
 
 class SSLTest(LimitedTestCase):
+    def setUp(self):
+        # disabling socket.ssl warnings because we're testing it here
+        warnings.filterwarnings(
+            action='ignore',
+            message='.*socket.ssl.*',
+            category=DeprecationWarning)
+
+        super(SSLTest, self).setUp()
+
     @skip_if_no_ssl
     def test_duplex_response(self):
         def serve(listener):
@@ -142,12 +152,6 @@ class SSLTest(LimitedTestCase):
 
     @skip_if_no_ssl
     def test_greensslobject(self):
-        import warnings
-        # disabling socket.ssl warnings because we're testing it here
-        warnings.filterwarnings(action = 'ignore',
-                        message='.*socket.ssl.*',
-                        category=DeprecationWarning)
-
         def serve(listener):
             sock, addr = listener.accept()
             sock.write('content')
@@ -159,6 +163,20 @@ class SSLTest(LimitedTestCase):
         self.assertEquals(client.read(1024), 'content')
         self.assertEquals(client.read(1024), '')
 
+    @skip_if_no_ssl
+    def test_regression_gh_17(self):
+        def serve(listener):
+            sock, addr = listener.accept()
+
+            # to simulate condition mentioned in GH-17
+            sock._sslobj = None
+            sock.sendall('some data')
+            greenio.shutdown_safe(sock)
+            sock.close()
+
+        listener = listen_ssl_socket(('', 0))
+        killer = eventlet.spawn(serve, listener)
+        client = ssl(eventlet.connect(('localhost', listener.getsockname()[1])))
 
 if __name__ == '__main__':
     main()
