@@ -1,13 +1,13 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!doctype html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 
     <title>Eventlet Networking Library</title>
     <link rel="stylesheet" href="doc/_static/default.css" type="text/css" />
     <link rel="stylesheet" href="doc/_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="https://yandex.st/highlightjs/7.3/styles/default.min.css">
     <link rel="top" title="Eventlet Networking Library" href="" />
   </head>
   <body>
@@ -32,74 +32,125 @@
 <p>Eventlet is a concurrent networking library for Python that allows you to change how you run your code, not how you write it.</p>
 
 <ul>
-<li>It uses epoll or libevent for <a class="reference external" href="http://en.wikipedia.org/wiki/Asynchronous_I/O#Select.28.2Fpoll.29_loops">highly scalable non-blocking I/O</a>.</li>
-<li><a class="reference external" href="http://en.wikipedia.org/wiki/Coroutine">Coroutines</a> ensure that the developer uses a blocking style of programming that is similar to threading, but provide the benefits of non-blocking I/O.</li>
+<li>It uses epoll or kqueue or libevent for <a class="reference external" target="_blank" href="http://en.wikipedia.org/wiki/Asynchronous_I/O#Select.28.2Fpoll.29_loops">highly scalable non-blocking I/O</a>.</li>
+<li><a class="reference external" target="_blank" href="http://en.wikipedia.org/wiki/Coroutine">Coroutines</a> ensure that the developer uses a blocking style of programming that is similar to threading, but provide the benefits of non-blocking I/O.</li>
 <li>The event dispatch is implicit, which means you can easily use Eventlet from the Python interpreter, or as a small part of a larger application.</li>
 </ul>
 
-<p>It's easy to get started using Eventlet, and easy to convert existing applications to use it.  Start off by looking at <a href="doc/examples.html">examples</a>, <a href="doc/design_patterns.html">common design patterns</a>, and the list of the <a href="doc/basic_usage.html">basic API primitives</a>.</p>
+<p>It's easy to get started using Eventlet, and easy to convert existing applications to use it. Start off by looking at <a href="doc/examples.html">examples</a>, <a href="doc/design_patterns.html">common design patterns</a>, and the list of the <a href="doc/basic_usage.html">basic API primitives</a>.</p>
+
+<p>License: MIT.</p>
 
 <h3><a href="doc/">API Documentation</a></h3>
+
 
 <h3>Installation</h3>
 
 <p>To install eventlet, simply:
 <pre>
-easy_install eventlet
+pip install eventlet
 </pre></p>
 
-<p>Alternately, you can download the source tarball from <a href="https://pypi.python.org/pypi/eventlet/">PyPi</a>:
+<p>Alternately, you can download the source tarball:</p>
 <ul>
-<li><a href="https://pypi.python.org/packages/source/e/eventlet/eventlet-0.13.0.tar.gz">eventlet-0.13.0.tar.gz</a></li>
+<li>latest release from <a class="reference external" target="_blank" href="https://pypi.python.org/pypi/eventlet/">PyPi</a>:
+  <a class="reference external" href="https://pypi.python.org/packages/source/e/eventlet/eventlet-0.13.0.tar.gz">eventlet-0.13.0.tar.gz</a></li>
+<li>or <a class="reference external" href="https://github.com/eventlet/eventlet/archive/master.zip">latest development version</a></li>
 </ul>
-</p>
+
 
 <h3>Discussion</h3>
 
-<p><a href="https://lists.secondlife.com/cgi-bin/mailman/listinfo/eventletdev">eventletdev at lists.secondlife.com</a></p>
+<ul>
+<li>
+  <p><a class="reference external" target="_blank" href="https://lists.secondlife.com/cgi-bin/mailman/listinfo/eventletdev">eventletdev at lists.secondlife.com</a></p>
+  <p>This is a low traffic list about using and developing Eventlet. Look through the <a class="reference external" target="_blank" href="https://lists.secondlife.com/pipermail/eventletdev/">archives</a> for some useful information and possible answers to questions.</p>
+</li>
+<li>There's an IRC channel dedicated to Eventlet: <a class="reference external" target="_blank" href="irc://kubrick.freenode.net/#eventlet">#eventlet on freenode</a>.  It's a pretty chill place to hang out!</li>
+<li>We have <a class="reference external" target="_blank" href="https://plus.google.com/communities/102444398246193806164">Eventlet Google+ Community</a>. Join us, +1, share your ideas, report bugs, find new friends or even new job!</li>
+</ul>
 
-<p>This is a relatively low-traffic list about using and developing eventlet.  Look through the <a href="https://lists.secondlife.com/pipermail/eventletdev/">archives</a> for some useful information and possible answers to questions.</p>
-
-<p>There's an IRC channel dedicated to eventlet: <a href="irc://kubrick.freenode.net/#eventlet">#eventlet on freenode</a>.  It's a pretty chill place to hang out!</p>
 
 <h3>Development</h3>
 
-<p><a href="http://bitbucket.org/eventlet/eventlet/">trunk repository</a></p>
+<ul>
+<li><a class="reference external" target="_blank" href="https://bitbucket.org/eventlet/eventlet/">Mercurial on Bitbucket</a></li>
+<li><a class="reference external" target="_blank" href="https://github.com/eventlet/eventlet/">Official Github mirror</a></li>
+</ul>
+<p>Both repositories are equal and kept in sync.
+  You can use whichever you fancy for downloading, forking, reporting issues and submitting pull requests.</p>
 
-<p>We use Mercurial for our source control, hosted by BitBucket.  It's easy to branch off the main repository and contribute patches, tests, and documentation back upstream.</p>
+<h4>Pull request policy</h4>
+<ul>
+  <li>Test is required</li>
+  <li>One commit is strongly preferred, except for very big changes</li>
+  <li>Commit message should follow the following formula:
+<pre>
+subsystem: description of why the change is useful
+
+optional details or links to related issues or websites
+</pre>
+    The <em>why</em> part is very important. Diff already says <em>what</em> you have done. But nobody knows why.
+  </li>
+  <li>Feel free to append yourself into AUTHORS file, sections Thanks To or Contributors.
+</ul>
+<p>If you don't like these rules, raw patches are more than welcome!</p>
+
 
 <h4>Bugs</h4>
 
-<p><a href="http://bitbucket.org/eventlet/eventlet/issues/new/">Bug Report Form</a></p>
+<p>Please be sure to report bugs <a class="reference external" target="_blank" href="http://www.chiark.greenend.org.uk/~sgtatham/bugs.html">as effectively as possible</a>, to ensure that we understand and act on them quickly.</p>
 
-<p>No registration is required.  Please be sure to report bugs <a href="http://www.chiark.greenend.org.uk/~sgtatham/bugs.html">as effectively as possible</a>, to ensure that we understand and act on them quickly.</p>
+<p>You may report bugs via:
+<ol>
+  <li><a class="reference external" target="_blank" href="https://github.com/eventlet/eventlet/issues/new">Github</a></li>
+  <li><a class="reference external" target="_blank" href="https://bitbucket.org/eventlet/eventlet/issues/new/">Bitbucket</a> (no registration is required)</li>
+  <li><a class="reference external" target="_blank" href="mailto:eventletdev@lists.secondlife.com">Email eventletdev@lists.secondlife.com</a></li>
+</ol>
+
 
 <div class="section" id="web-crawler-example">
 <h2>Web Crawler Example<a class="headerlink" href="#web-crawler-example" title="Permalink to this headline">¶</a></h2>
 <p>This is a simple web &#8220;crawler&#8221; that fetches a bunch of urls using a coroutine pool.  It has as much concurrency (i.e. pages being fetched simultaneously) as coroutines in the pool.</p>
 
-<div class="highlight-python"><div class="highlight"><pre><span class="n">urls</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;http://www.google.com/intl/en_ALL/images/logo.gif&quot;</span><span class="p">,</span>
-     <span class="s">&quot;https://wiki.secondlife.com/w/images/secondlife.jpg&quot;</span><span class="p">,</span>
-     <span class="s">&quot;http://us.i1.yimg.com/us.yimg.com/i/ww/beta/y3.gif&quot;</span><span class="p">]</span>
+<pre><code class="language-python">import eventlet
+from eventlet.green import urllib2
 
-<span class="kn">import</span> <span class="nn">eventlet</span>
-<span class="kn">from</span> <span class="nn">eventlet.green</span> <span class="kn">import</span> <span class="n">urllib2</span>
 
-<span class="k">def</span> <span class="nf">fetch</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
+urls = [
+    "http://www.google.com/intl/en_ALL/images/logo.gif",
+    "https://wiki.secondlife.com/w/images/secondlife.jpg",
+    "http://us.i1.yimg.com/us.yimg.com/i/ww/beta/y3.gif",
+]
 
-  <span class="k">return</span> <span class="n">urllib2</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 
-<span class="n">pool</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">GreenPool</span><span class="p">()</span>
+def fetch(url):
+    return urllib2.urlopen(url).read()
 
-<span class="k">for</span> <span class="n">body</span> <span class="ow">in</span> <span class="n">pool</span><span class="o">.</span><span class="n">imap</span><span class="p">(</span><span class="n">fetch</span><span class="p">,</span> <span class="n">urls</span><span class="p">):</span>
-  <span class="k">print</span> <span class="s">&quot;got body&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
-</pre></div>
+
+pool = eventlet.GreenPool()
+
+for body in pool.imap(fetch, urls):
+    print "got body", len(body)
+</code></pre>
+
 
 <h3>Stats</h3>
-<script type="text/javascript" src="http://www.ohloh.net/p/480234/widgets/project_basic_stats.js"></script>
+<p><a class="reference external" target="_blank" href="https://travis-ci.org/eventlet/eventlet"><img alt="Travis build" src="https://travis-ci.org/eventlet/eventlet.png"></a></p>
+
+<!--
+Here we insert Ohloh Project Basic Stats widget.
+<script src="http://www.ohloh.net/p/480234/widgets/project_basic_stats.js"></script>
+
+Unfortunately, they use blocking javascript with document.write() which is a bit unacceptable.
+So instead I inserted the result of javascript write. It's not public API, so it may break in future.
+In case iframe is broken, try visiting script again and copy updated html from there.
+-->
+<iframe src="http://www.ohloh.net/p/480234/widgets/project_basic_stats.html" scrolling="no" marginHeight=0 marginWidth=0 style="height: 225px; width: 350px; border: none;"></iframe>
 </div>
 </div>
 </div>
+
 
 <div class="section" id="contents">
 </div>
@@ -108,23 +159,21 @@ easy_install eventlet
 </div>
 <div class="sphinxsidebar">
 <div class="sphinxsidebarwrapper">
-<h3><a href="">Links</a></h3>
+<h3>Links</h3>
 <ul>
-<li><a class="reference external" href="http://blog.eventlet.net/">Blog</a></li>
 <li><a class="reference external" href="doc/">Documentation</a></li>
-<li><a class="reference external" href="https://lists.secondlife.com/pipermail/eventletdev/">Mailing List Archives</a></li>
-<li><a class="reference external" href="http://eventlet.net/hudson/">Automated Builds</a></li>
-<li><a class="reference external" href="http://bitbucket.org/eventlet/eventlet/issues/new/">Bug Report Form</a></li>
-<li><a class="reference external" href="irc://chat.freenode.net/#eventlet">irc channel</a></li>
+<li><a class="reference external" target="_blank" href="https://plus.google.com/communities/102444398246193806164">Google+ community</a></li>
+<li><a class="reference external" target="_blank" href="https://github.com/eventlet/eventlet/">Eventlet on Github</a></li>
+<li><a class="reference external" target="_blank" href="https://bitbucket.org/eventlet/eventlet/">Eventlet on Bitbucket</a></li>
+<li><a class="reference external" target="_blank" href="https://lists.secondlife.com/pipermail/eventletdev/">Mailing List Archives</a></li>
+<li><a class="reference external" target="_blank" href="http://build.eventlet.net/">Automated Builds</a></li>
+<li><a class="reference external" target="_blank" href="irc://chat.freenode.net/#eventlet">IRC channel</a></li>
+<li><a class="reference external" target="_blank" href="http://blog.eventlet.net/">Blog (archive)</a></li>
 </ul>
         </div>
       </div>
     </div>
-    <div class="related">
-      <h3>Navigation</h3>
-      <ul>
-        <li>.</li>
-      </ul>
-    </div>
+    <script src="//yandex.st/highlightjs/7.3/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
   </body>
 </html>
