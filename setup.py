@@ -19,7 +19,7 @@ setup(
     long_description=open(
         path.join(
             path.dirname(__file__),
-            'README'
+            'README.rst'
         )
     ).read(),
     test_suite='nose.collector',
