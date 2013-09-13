@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>wsgi – WSGI server &mdash; Eventlet 0.14.0.dev documentation</title>
+    <title>wsgi – WSGI server &mdash; Eventlet 0.14.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.14.0.dev',
+        VERSION:     '0.14.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.14.0.dev documentation" href="../index.html" />
+    <link rel="top" title="Eventlet 0.14.0 documentation" href="../index.html" />
     <link rel="up" title="Module Reference" href="../modules.html" />
     <link rel="next" title="eventlet.green.zmq – ØMQ support" href="zmq.html" />
     <link rel="prev" title="websocket – Websocket Server" href="websocket.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="websocket.html" title="websocket – Websocket Server"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.14.0.dev documentation</a> &raquo;</li>
+        <li><a href="../index.html">Eventlet 0.14.0 documentation</a> &raquo;</li>
           <li><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
       </ul>
     </div>  
@@ -75,7 +75,7 @@ server package.  One such package is <a class="reference external" href="http://
 <tt class="docutils literal"><span class="pre">examples/wsgi.py</span></tt>.</p>
 <span class="target" id="module-eventlet.wsgi"></span><dl class="function">
 <dt id="eventlet.wsgi.server">
-<tt class="descclassname">eventlet.wsgi.</tt><tt class="descname">server</tt><big>(</big><em>sock</em>, <em>site</em>, <em>log=None</em>, <em>environ=None</em>, <em>max_size=None</em>, <em>max_http_version='HTTP/1.1'</em>, <em>protocol=&lt;class eventlet.wsgi.HttpProtocol at 0x4887808&gt;</em>, <em>server_event=None</em>, <em>minimum_chunk_size=None</em>, <em>log_x_forwarded_for=True</em>, <em>custom_pool=None</em>, <em>keepalive=True</em>, <em>log_output=True</em>, <em>log_format='%(client_ip)s - - [%(date_time)s] &quot;%(request_line)s&quot; %(status_code)s %(body_length)s %(wall_seconds).6f'</em>, <em>url_length_limit=8192</em>, <em>debug=True</em>, <em>socket_timeout=None</em><big>)</big><a class="headerlink" href="#eventlet.wsgi.server" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">eventlet.wsgi.</tt><tt class="descname">server</tt><big>(</big><em>sock</em>, <em>site</em>, <em>log=None</em>, <em>environ=None</em>, <em>max_size=None</em>, <em>max_http_version='HTTP/1.1'</em>, <em>protocol=&lt;class eventlet.wsgi.HttpProtocol at 0x3f952c0&gt;</em>, <em>server_event=None</em>, <em>minimum_chunk_size=None</em>, <em>log_x_forwarded_for=True</em>, <em>custom_pool=None</em>, <em>keepalive=True</em>, <em>log_output=True</em>, <em>log_format='%(client_ip)s - - [%(date_time)s] &quot;%(request_line)s&quot; %(status_code)s %(body_length)s %(wall_seconds).6f'</em>, <em>url_length_limit=8192</em>, <em>debug=True</em>, <em>socket_timeout=None</em><big>)</big><a class="headerlink" href="#eventlet.wsgi.server" title="Permalink to this definition">¶</a></dt>
 <dd><p>Start up a WSGI server handling requests from the supplied server
 socket.  This function loops forever.  The <em>sock</em> object will be closed after server exits,
 but the underlying file descriptor will remain open, so if you have a dup() of <em>sock</em>,
@@ -93,7 +93,7 @@ it will remain usable.</p>
 <li><strong>max_http_version</strong> &#8211; Set to &#8220;HTTP/1.0&#8221; to make the server pretend it only supports HTTP 1.0.  This can help with applications or clients that don&#8217;t behave properly using HTTP 1.1.</li>
 <li><strong>protocol</strong> &#8211; Protocol class.  Deprecated.</li>
 <li><strong>server_event</strong> &#8211; Used to collect the Server object.  Deprecated.</li>
-<li><strong>minimum_chunk_size</strong> &#8211; Minimum size in bytes for http chunks.  This  can be used to improve performance of applications which yield many small strings, though using it technically violates the WSGI spec.</li>
+<li><strong>minimum_chunk_size</strong> &#8211; Minimum size in bytes for http chunks.  This  can be used to improve performance of applications which yield many small strings, though using it technically violates the WSGI spec. This can be overridden on a per request basis by setting environ[&#8216;eventlet.minimum_write_chunk_size&#8217;].</li>
 <li><strong>log_x_forwarded_for</strong> &#8211; If True (the default), logs the contents of the x-forwarded-for header in addition to the actual client ip address in the &#8216;client_ip&#8217; field of the log line.</li>
 <li><strong>custom_pool</strong> &#8211; A custom GreenPool instance which is used to spawn client green threads.  If this is supplied, max_size is ignored.</li>
 <li><strong>keepalive</strong> &#8211; If set to False, disables keepalives on the server; all connections will be closed after serving one request.</li>
@@ -218,7 +218,7 @@ bandwidth than the actual Content-Length.</p>
         <li class="right" >
           <a href="websocket.html" title="websocket – Websocket Server"
              >previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.14.0.dev documentation</a> &raquo;</li>
+        <li><a href="../index.html">Eventlet 0.14.0 documentation</a> &raquo;</li>
           <li><a href="../modules.html" >Module Reference</a> &raquo;</li> 
       </ul>
     </div>
