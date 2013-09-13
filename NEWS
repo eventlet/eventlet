@@ -1,3 +1,14 @@
+0.14
+====
+* wsgi: handle connection socket timeouts; Thanks to Paul Oppenheim
+* wsgi: close timed out client connections
+* greenio: socket pypy compatibility; Thanks to Alex Gaynor
+* wsgi: env['wsgi.input'] was returning 1 byte strings; Thanks to Eric Urban
+* green.ssl: fix NameError; Github #17; Thanks to Jakub Stasiak
+* websocket: allow "websocket" in lowercase in Upgrade header; Compatibility with current Google Chrome; Thanks to Dmitry Orlov
+* wsgi: allow minimum_chunk_size to be overriden on a per request basis; Thanks to David Goetz
+* wsgi: configurable socket_timeout
+
 0.13
 ====
 * hubs: kqueue support! Thanks to YAMAMOTO Takashi, Edward George
