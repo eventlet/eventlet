@@ -7,14 +7,14 @@ class TestDirectRaise(LimitedTestCase):
     def test_direct_raise_class(self):
         try:
             raise timeout.Timeout
-        except timeout.Timeout, t:
+        except timeout.Timeout as t:
             assert not t.pending, repr(t)
 
     def test_direct_raise_instance(self):
         tm = timeout.Timeout()
         try:
             raise tm
-        except timeout.Timeout, t:
+        except timeout.Timeout as t:
             assert tm is t, (tm, t)
             assert not t.pending, repr(t)
             

@@ -39,7 +39,7 @@ class TestGreenness(unittest.TestCase):
         try:
             urllib2.urlopen('http://127.0.0.1:%s' % self.port)
             assert False, 'should not get there'
-        except urllib2.HTTPError, ex:
+        except urllib2.HTTPError as ex:
             assert ex.code == 501, repr(ex)
         self.assertEqual(self.server.request_count, 1)
 

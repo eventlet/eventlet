@@ -52,7 +52,7 @@ class Hub(poll.Hub):
                 self.register(fileno, new=True)
             else:
                 self.register(fileno, new=False)
-        except IOError, ex:    # ignore EEXIST, #80
+        except IOError as ex:    # ignore EEXIST, #80
             if get_errno(ex) != errno.EEXIST:
                 raise
         return listener

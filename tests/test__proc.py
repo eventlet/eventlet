@@ -304,7 +304,7 @@ class TestStuff(LimitedTestCase):
         b = proc.spawn(lambda : getcurrent().throw(ExpectedError('second')))
         try:
             proc.waitall([a, b])
-        except ExpectedError, ex:
+        except ExpectedError as ex:
             assert 'second' in str(ex), repr(str(ex))
         sleep(0.2)   # sleep to ensure that the other timer is raised
 

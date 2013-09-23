@@ -44,7 +44,7 @@ class TestWebSocket(_TestBase):
         def raiser():
             try:
                 urllib2.urlopen("http://localhost:%s/echo" % self.port)
-            except urllib2.HTTPError, e:
+            except urllib2.HTTPError as e:
                 self.assertEqual(e.code, 400)
                 raise
         self.assertRaises(urllib2.HTTPError, raiser)

@@ -7,7 +7,7 @@ try:
     preserves_excinfo = (distutils.version.LooseVersion(greenlet.__version__)
             >= distutils.version.LooseVersion('0.3.2'))
     greenlet = greenlet.greenlet
-except ImportError, e:
+except ImportError as e:
     raise
     try:
         from py.magic import greenlet
@@ -25,5 +25,5 @@ except ImportError, e:
                 from support.stacklesss import greenlet, getcurrent, GreenletExit
                 preserves_excinfo = False
                 (greenlet, getcurrent, GreenletExit) # silence pyflakes
-            except ImportError, e:
+            except ImportError as e:
                 raise ImportError("Unable to find an implementation of greenlet.")

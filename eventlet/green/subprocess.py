@@ -64,7 +64,7 @@ class Popen(subprocess_orig.Popen):
                 if timeout is not None and time.time() > endtime:
                     raise TimeoutExpired(self.args)
                 eventlet.sleep(check_interval)
-        except OSError, e:
+        except OSError as e:
             if e.errno == errno.ECHILD:
                 # no child process, this happens if the child process
                 # already died and has been cleaned up

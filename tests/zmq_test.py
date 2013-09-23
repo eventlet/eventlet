@@ -52,7 +52,7 @@ class TestUpstreamDownStream(LimitedTestCase):
     def assertRaisesErrno(self, errno, func, *args):
         try:
             func(*args)
-        except zmq.ZMQError, e:
+        except zmq.ZMQError as e:
             self.assertEqual(e.errno, errno, "wrong error raised, expected '%s' \
 got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         else:

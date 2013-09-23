@@ -120,9 +120,9 @@ def resolve(name):
     if rrset is None or time.time() > rrset.expiration:
         try:
             rrset = resolver.query(name)
-        except dns.exception.Timeout, e:
+        except dns.exception.Timeout as e:
             error = (socket.EAI_AGAIN, 'Lookup timed out')
-        except dns.exception.DNSException, e:
+        except dns.exception.DNSException as e:
             error = (socket.EAI_NODATA, 'No address associated with hostname')
         else:
             pass
@@ -147,9 +147,9 @@ def getaliases(host):
 
     try:
         answers = dns.resolver.query(host, 'cname')
-    except dns.exception.Timeout, e:
+    except dns.exception.Timeout as e:
         error = (socket.EAI_AGAIN, 'Lookup timed out')
-    except dns.exception.DNSException, e:
+    except dns.exception.DNSException as e:
         error = (socket.EAI_NODATA, 'No address associated with hostname')
     else:
         for record in answers:
@@ -232,10 +232,10 @@ def getnameinfo(sockaddr, flags):
             if len(rrset) > 1:
                 raise socket.error('sockaddr resolved to multiple addresses')
             host = rrset[0].target.to_text(omit_final_dot=True)
-        except dns.exception.Timeout, e:
+        except dns.exception.Timeout as e:
             if flags & socket.NI_NAMEREQD:
                 raise socket.gaierror((socket.EAI_AGAIN, 'Lookup timed out'))
-        except dns.exception.DNSException, e:
+        except dns.exception.DNSException as e:
             if flags & socket.NI_NAMEREQD:
                 raise socket.gaierror(
                     (socket.EAI_NONAME, 'Name or service not known'))
@@ -246,9 +246,9 @@ def getnameinfo(sockaddr, flags):
                 raise socket.error('sockaddr resolved to multiple addresses')
             if flags & socket.NI_NUMERICHOST:
                 host = rrset[0].address
-        except dns.exception.Timeout, e:
+        except dns.exception.Timeout as e:
             raise socket.gaierror((socket.EAI_AGAIN, 'Lookup timed out'))
-        except dns.exception.DNSException, e:
+        except dns.exception.DNSException as e:
             raise socket.gaierror(
                 (socket.EAI_NODATA, 'No address associated with hostname'))
 
