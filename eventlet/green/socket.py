@@ -15,7 +15,7 @@ greendns = None
 if os.environ.get("EVENTLET_NO_GREENDNS",'').lower() != "yes":
     try:
         from eventlet.support import greendns
-    except ImportError, ex:
+    except ImportError as ex:
         pass
 
 if greendns:
@@ -52,7 +52,7 @@ def create_connection(address,
             sock.connect(sa)
             return sock
 
-        except error, msg:
+        except error as msg:
             if sock is not None:
                 sock.close()
 

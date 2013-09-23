@@ -16,7 +16,7 @@ class TestEvent(LimitedTestCase):
             try:
                 result = e.wait()
                 log.append(('received', result))
-            except Exception, ex:
+            except Exception as ex:
                 log.append(('catched', ex))
         spawn(waiter)
         sleep(0) # let waiter to block on e.wait()

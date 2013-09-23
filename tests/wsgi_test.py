@@ -147,7 +147,7 @@ def read_http(sock):
     fd = sock.makefile()
     try:
         response_line = fd.readline()
-    except socket.error, exc:
+    except socket.error as exc:
         if get_errno(exc) == 10053:
             raise ConnectionClosed
         raise
@@ -643,7 +643,7 @@ class TestHttpd(_TestBase):
         try:
             server_sock_2.accept()
             # shouldn't be able to use this one anymore
-        except socket.error, exc:
+        except socket.error as exc:
             self.assertEqual(get_errno(exc), errno.EBADF)
         self.spawn_server(sock=server_sock)
         sock = eventlet.connect(('localhost', self.port))
@@ -760,7 +760,7 @@ class TestHttpd(_TestBase):
             try:
                 eventlet.connect(('localhost', self.port))
                 self.fail("Didn't expect to connect")
-            except socket.error, exc:
+            except socket.error as exc:
                 self.assertEquals(get_errno(exc), errno.ECONNREFUSED)
 
             self.assert_('Invalid argument' in self.logfile.getvalue(),
@@ -855,7 +855,7 @@ class TestHttpd(_TestBase):
                 errored[0] = 'SSL handshake error caused wsgi.server to exit.'
             except greenthread.greenlet.GreenletExit:
                 pass
-            except Exception, e:
+            except Exception as e:
                 errored[0] = 'SSL handshake error raised exception %s.' % e
         for data in ('', 'GET /non-ssl-request HTTP/1.0\r\n\r\n'):
             srv_sock = eventlet.wrap_ssl(eventlet.listen(('localhost', 0)),
@@ -1217,7 +1217,7 @@ def read_headers(sock):
     fd = sock.makefile()
     try:
         response_line = fd.readline()
-    except socket.error, exc:
+    except socket.error as exc:
         if get_errno(exc) == 10053:
             raise ConnectionClosed
         raise

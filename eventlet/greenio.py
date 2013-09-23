@@ -54,7 +54,7 @@ def socket_accept(descriptor):
     """
     try:
         return descriptor.accept()
-    except socket.error, e:
+    except socket.error as e:
         if get_errno(e) == errno.EWOULDBLOCK:
             return None
         raise
@@ -210,7 +210,7 @@ class GreenSocket(object):
                 try:
                     trampoline(fd, write=True)
                     socket_checkerr(fd)
-                except socket.error, ex:
+                except socket.error as ex:
                     return get_errno(ex)
         else:
             end = time.time() + self.gettimeout()
@@ -223,7 +223,7 @@ class GreenSocket(object):
                     trampoline(fd, write=True, timeout=end - time.time(),
                             timeout_exc=socket.timeout(errno.EAGAIN))
                     socket_checkerr(fd)
-                except socket.error, ex:
+                except socket.error as ex:
                     return get_errno(ex)
 
     def dup(self, *args, **kw):
@@ -251,7 +251,7 @@ class GreenSocket(object):
         while True:
             try:
                 return fd.recv(buflen, flags)
-            except socket.error, e:
+            except socket.error as e:
                 if get_errno(e) in SOCKET_BLOCKING:
                     pass
                 elif get_errno(e) in SOCKET_CLOSED:
@@ -293,7 +293,7 @@ class GreenSocket(object):
         while 1:
             try:
                 total_sent += fd.send(data[total_sent:], flags)
-            except socket.error, e:
+            except socket.error as e:
                 if get_errno(e) not in SOCKET_BLOCKING:
                     raise
 
@@ -369,7 +369,7 @@ class _SocketDuckForFd(object):
             try:
                 data = os.read(self._fileno, buflen)
                 return data
-            except OSError, e:
+            except OSError as e:
                 if get_errno(e) != errno.EAGAIN:
                     raise IOError(*e.args)
             trampoline(self, read=True)
@@ -380,7 +380,7 @@ class _SocketDuckForFd(object):
         fileno = self._fileno
         try:
             total_sent = os_write(fileno, data)
-        except OSError, e:
+        except OSError as e:
             if get_errno(e) != errno.EAGAIN:
                 raise IOError(*e.args)
             total_sent = 0
@@ -388,7 +388,7 @@ class _SocketDuckForFd(object):
             trampoline(self, write=True)
             try:
                 total_sent += os_write(fileno, data[total_sent:])
-            except OSError, e:
+            except OSError as e:
                 if get_errno(e) != errno. EAGAIN:
                     raise IOError(*e.args)
 
@@ -479,7 +479,7 @@ class GreenPipe(_fileobject):
         n = len(data)
         try:
             buf[:n] = data
-        except TypeError, err:
+        except TypeError as err:
             if not isinstance(buf, array.array):
                 raise err
             buf[:n] = array.array('c', data)
@@ -500,7 +500,7 @@ class GreenPipe(_fileobject):
         self.flush()
         try:
             return os.lseek(self.fileno(), 0, 1) - self._get_readahead_len()
-        except OSError, e:
+        except OSError as e:
             raise IOError(*e.args)
 
     def seek(self, offset, whence=0):
@@ -511,7 +511,7 @@ class GreenPipe(_fileobject):
             offset -= self._get_readahead_len()
         try:
             rv = os.lseek(self.fileno(), offset, whence)
-        except OSError, e:
+        except OSError as e:
             raise IOError(*e.args)
         else:
             self._clear_readahead_buf()
@@ -524,7 +524,7 @@ class GreenPipe(_fileobject):
                 size = self.tell()
             try:
                 rv = os.ftruncate(self.fileno(), size)
-            except OSError, e:
+            except OSError as e:
                 raise IOError(*e.args)
             else:
                 self.seek(size) # move position&clear buffer
@@ -533,7 +533,7 @@ class GreenPipe(_fileobject):
     def isatty(self):
         try:
             return os.isatty(self.fileno())
-        except OSError, e:
+        except OSError as e:
             raise IOError(*e.args)
 
 
@@ -572,7 +572,7 @@ def shutdown_safe(sock):
         except TypeError:
             # SSL.Connection
             return sock.shutdown()
-    except socket.error, e:
+    except socket.error as e:
         # we don't care if the socket is already closed;
         # this will often be the case in an http server context
         if get_errno(e) != errno.ENOTCONN:

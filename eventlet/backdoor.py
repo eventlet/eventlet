@@ -85,7 +85,7 @@ def backdoor_server(sock, locals=None):
             while True:
                 socketpair = sock.accept()
                 backdoor(socketpair, locals)
-        except socket.error, e:
+        except socket.error as e:
             # Broken pipe means it was shutdown
             if get_errno(e) != errno.EPIPE:
                 raise

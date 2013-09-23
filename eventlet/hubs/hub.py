@@ -154,7 +154,7 @@ class BaseHub(object):
         for listener in listeners:
             try:
                 listener.cb(fileno)
-            except Exception, e:
+            except Exception as e:
                 self.squelch_generic_exception(sys.exc_info())
 
     def ensure_greenlet(self):
@@ -192,7 +192,7 @@ class BaseHub(object):
         sys.stderr.flush()
         try:
             self.remove_descriptor(fileno)
-        except Exception, e:
+        except Exception as e:
             sys.stderr.write("Exception while removing descriptor! %r\n" % (e,))
             sys.stderr.flush()
 

@@ -119,7 +119,7 @@ def _read_response(id, attribute, input, cp):
         str = _read_lp_hunk(input)
         _prnt(repr(str))
         response = Pickle.loads(str)
-    except (AttributeError, DeadProcess, Pickle.UnpicklingError), e:
+    except (AttributeError, DeadProcess, Pickle.UnpicklingError) as e:
         raise UnrecoverableError(e)
     _prnt("response: %s" % response)
     if response[0] == 'value':
@@ -435,7 +435,7 @@ class Server(object):
     def handle_getattr(self, obj, req):
         try:
             return getattr(obj, req['attribute'])
-        except AttributeError, e:
+        except AttributeError as e:
             if hasattr(obj, "__getitem__"):
                 return obj[req['attribute']]
             else:
@@ -445,7 +445,7 @@ class Server(object):
     def handle_setattr(self, obj, req):
         try:
             return setattr(obj, req['attribute'], req['value'])
-        except AttributeError, e:
+        except AttributeError as e:
             if hasattr(obj, "__setitem__"):
                 return obj.__setitem__(req['attribute'], req['value'])
             else:
@@ -472,7 +472,7 @@ class Server(object):
         #_log("calling %s " % (req['name']))
         try:
             fn = getattr(obj, req['name'])
-        except AttributeError, e:
+        except AttributeError as e:
             if hasattr(obj, "__setitem__"):
                 fn = obj[req['name']]
             else:
@@ -524,7 +524,7 @@ class Server(object):
                         id = int(id)
                         obj = self._objects[id]
                     #_log("id, object: %d %s" % (id, obj))
-                except Exception, e:
+                except Exception as e:
                     #_log("Exception %s" % str(e))
                     pass
                 if obj is None or id is None:
@@ -558,9 +558,9 @@ class Server(object):
                     #_log("objects: %s" % str(self._objects))
                     self.respond(['object', self._next_id])
                     self._next_id += 1
-            except (KeyboardInterrupt, SystemExit), e:
+            except (KeyboardInterrupt, SystemExit) as e:
                 raise e
-            except Exception, e:
+            except Exception as e:
                 self.write_exception(e)
 
     def is_value(self, value):
@@ -629,7 +629,7 @@ def named(name):
         try:
             obj = __import__(toimport)
             break
-        except ImportError, err:
+        except ImportError as err:
             # print 'Import error on %s: %s' % (toimport, err)  # debugging spam
             import_err_strings.append(err.__str__())
             toimport = '.'.join(toimport.split('.')[:-1])

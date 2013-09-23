@@ -140,7 +140,7 @@ def with_timeout(seconds, function, *args, **kwds):
     try:
         try:
             return function(*args, **kwds)
-        except Timeout, ex:
+        except Timeout as ex:
             if ex is timeout and timeout_value is not _NONE:
                 return timeout_value
             raise

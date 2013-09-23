@@ -34,7 +34,7 @@ def get_modules():
         s.connect(('eventlet.net', 80))
         s.close()
         test_modules = test_modules + network_modules
-    except socket.error, e:
+    except socket.error as e:
         print "Skipping network tests"
     
     return test_modules
