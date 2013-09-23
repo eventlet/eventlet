@@ -21,6 +21,6 @@ conn.write('GET / HTTP/1.0\r\n\r\n')
 try:
     for num, line in enumerate(conn):
         print '%3s %r' % (num, line)
-except ConnectionClosed, ex:
+except ConnectionClosed as ex:
     print ex
 

@@ -257,7 +257,7 @@ class TestQueue(LimitedTestCase):
 def store_result(result, func, *args):
     try:
         result.append(func(*args))
-    except Exception, exc:
+    except Exception as exc:
         result.append(exc)
 
 

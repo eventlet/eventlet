@@ -266,7 +266,7 @@ class TestSaranwrap(LimitedTestCase):
         try:
             saranwrap.status(None)
             self.assert_(False)
-        except AttributeError, e:
+        except AttributeError as e:
             pass
 
     @skip_on_windows

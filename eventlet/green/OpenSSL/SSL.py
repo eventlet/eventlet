@@ -61,7 +61,7 @@ class GreenConnection(greenio.GreenSocket):
                            write=True, 
                            timeout=self.gettimeout(), 
                            timeout_exc=socket.timeout)
-            except SysCallError, e:
+            except SysCallError as e:
                 if get_errno(e) == -1 or get_errno(e) > 0:
                     return ''
             

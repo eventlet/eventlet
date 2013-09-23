@@ -383,7 +383,7 @@ class Stress(tests.LimitedTestCase):
         while True:
             try:
                 i = it.next()
-            except StressException, exc:
+            except StressException as exc:
                 i = exc.args[0]
             except StopIteration:
                 break

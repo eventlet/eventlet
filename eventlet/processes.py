@@ -35,7 +35,7 @@ def cooperative_wait(pobj, check_interval=0.01):
             if status >= 0:
                 return status
             api.sleep(check_interval)
-    except OSError, e:
+    except OSError as e:
         if e.errno == errno.ECHILD:
             # no child process, this happens if the child process
             # already died and has been cleaned up, or if you just
@@ -109,7 +109,7 @@ class Process(object):
         try:
             written = self.child_stdin.write(stuff)
             self.child_stdin.flush()
-        except ValueError, e:
+        except ValueError as e:
             ## File was closed
             assert str(e) == 'I/O operation on closed file'
         if written == 0:

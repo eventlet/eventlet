@@ -651,7 +651,7 @@ class wrap_errors(object):
     def __call__(self, *args, **kwargs):
         try:
             return self.func(*args, **kwargs)
-        except self.errors, ex:
+        except self.errors as ex:
             return ex
 
     def __str__(self):

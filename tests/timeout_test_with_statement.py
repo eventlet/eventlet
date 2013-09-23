@@ -32,7 +32,7 @@ class Test(LimitedTestCase):
         try:
             with Timeout(DELAY) as t:
                 sleep(DELAY*2)
-        except Timeout, ex:
+        except Timeout as ex:
             assert ex is t, (ex, t)
         else:
             raise AssertionError('must raise Timeout')
@@ -42,7 +42,7 @@ class Test(LimitedTestCase):
         try:
             with Timeout(DELAY, True) as t:
                 sleep(DELAY*2)
-        except Timeout, ex:
+        except Timeout as ex:
             assert ex is t, (ex, t)
         else:
             raise AssertionError('must raise Timeout')
@@ -52,7 +52,7 @@ class Test(LimitedTestCase):
         try:
             with Timeout(DELAY, IOError("Operation takes way too long")):
                 sleep(DELAY*2)
-        except IOError, ex:
+        except IOError as ex:
             assert str(ex)=="Operation takes way too long", repr(ex)
 
     def test_raising_exception_class(self):
@@ -119,7 +119,7 @@ class Test(LimitedTestCase):
             with Timeout(DELAY*2) as t2:
                 try:
                     sleep(DELAY*3)
-                except Timeout, ex:
+                except Timeout as ex:
                     assert ex is t1, (ex, t1)
                 assert not t1.pending, t1
                 assert t2.pending, t2
@@ -129,7 +129,7 @@ class Test(LimitedTestCase):
             with Timeout(DELAY) as t2:
                 try:
                     sleep(DELAY*3)
-                except Timeout, ex:
+                except Timeout as ex:
                     assert ex is t2, (ex, t2)
                 assert t1.pending, t1
                 assert not t2.pending, t2

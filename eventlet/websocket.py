@@ -109,7 +109,7 @@ class WebSocketWSGI(object):
         sock.sendall(handshake_reply)
         try:
             self.handler(ws)
-        except socket.error, e:
+        except socket.error as e:
             if get_errno(e) not in ACCEPTABLE_CLIENT_ERRORS:
                 raise
         # Make sure we send the closing frame
