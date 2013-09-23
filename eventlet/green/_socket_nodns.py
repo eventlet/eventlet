@@ -52,7 +52,7 @@ class GreenSSLObject(object):
         else:
             try:
                 self.connection.do_handshake()
-            except _SSL.SysCallError, e:
+            except _SSL.SysCallError as e:
                 raise _convert_to_sslerror(e)
 
     def read(self, n=1024):
@@ -62,7 +62,7 @@ class GreenSSLObject(object):
             return self.connection.read(n)
         except _SSL.ZeroReturnError:
             return ''
-        except _SSL.SysCallError, e:
+        except _SSL.SysCallError as e:
             raise _convert_to_sslerror(e)
 
     def write(self, s):
@@ -70,7 +70,7 @@ class GreenSSLObject(object):
         The return value is the number of bytes written. """
         try:
             return self.connection.write(s)
-        except _SSL.SysCallError, e:
+        except _SSL.SysCallError as e:
             raise _convert_to_sslerror(e)
 
     def server(self):

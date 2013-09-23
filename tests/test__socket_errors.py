@@ -16,7 +16,7 @@ class TestSocketErrors(unittest.TestCase):
         try:
             s.connect(('127.0.0.1', port))
             self.fail("Shouldn't have connected")
-        except socket.error, ex:
+        except socket.error as ex:
             code, text = ex.args
             assert code in [111, 61, 10061], (code, text)
             assert 'refused' in text.lower(), (code, text)
@@ -43,7 +43,7 @@ class TestSocketErrors(unittest.TestCase):
             try:
                 cs.recv(1024)
                 self.fail("Should have timed out")
-            except socket.timeout, ex:
+            except socket.timeout as ex:
                 assert hasattr(ex, 'args')
                 assert len(ex.args) == 1
                 assert ex.args[0] == 'timed out'

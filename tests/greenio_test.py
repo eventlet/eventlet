@@ -66,10 +66,10 @@ class TestGreenSocket(LimitedTestCase):
         try:
             gs.connect(('192.0.2.1', 80))
             self.fail("socket.timeout not raised")
-        except socket.timeout, e:
+        except socket.timeout as e:
             self.assert_(hasattr(e, 'args'))
             self.assertEqual(e.args[0], 'timed out')
-        except socket.error, e:
+        except socket.error as e:
             # unreachable is also a valid outcome
             if not get_errno(e) in (errno.EHOSTUNREACH, errno.ENETUNREACH):
                 raise
@@ -84,7 +84,7 @@ class TestGreenSocket(LimitedTestCase):
         try:
             gs.accept()
             self.fail("socket.timeout not raised")
-        except socket.timeout, e:
+        except socket.timeout as e:
             self.assert_(hasattr(e, 'args'))
             self.assertEqual(e.args[0], 'timed out')
 
@@ -120,7 +120,7 @@ class TestGreenSocket(LimitedTestCase):
         try:
             client.recv(8192)
             self.fail("socket.timeout not raised")
-        except socket.timeout, e:
+        except socket.timeout as e:
             self.assert_(hasattr(e, 'args'))
             self.assertEqual(e.args[0], 'timed out')
 
@@ -136,7 +136,7 @@ class TestGreenSocket(LimitedTestCase):
         try:
             gs.recvfrom(8192)
             self.fail("socket.timeout not raised")
-        except socket.timeout, e:
+        except socket.timeout as e:
             self.assert_(hasattr(e, 'args'))
             self.assertEqual(e.args[0], 'timed out')
 
@@ -151,7 +151,7 @@ class TestGreenSocket(LimitedTestCase):
         try:
             gs.recvfrom_into(buf)
             self.fail("socket.timeout not raised")
-        except socket.timeout, e:
+        except socket.timeout as e:
             self.assert_(hasattr(e, 'args'))
             self.assertEqual(e.args[0], 'timed out')
 
@@ -181,7 +181,7 @@ class TestGreenSocket(LimitedTestCase):
         try:
             client.recv_into(buf)
             self.fail("socket.timeout not raised")
-        except socket.timeout, e:
+        except socket.timeout as e:
             self.assert_(hasattr(e, 'args'))
             self.assertEqual(e.args[0], 'timed out')
 
@@ -216,7 +216,7 @@ class TestGreenSocket(LimitedTestCase):
             for x in range(10):
                 total_sent += client.send(msg)
             self.fail("socket.timeout not raised")
-        except socket.timeout, e:
+        except socket.timeout as e:
             self.assert_(hasattr(e, 'args'))
             self.assertEqual(e.args[0], 'timed out')
 
@@ -249,7 +249,7 @@ class TestGreenSocket(LimitedTestCase):
             # want to exceed the size of the OS buffer so it'll block
             client.sendall(msg)
             self.fail("socket.timeout not raised")
-        except socket.timeout, e:
+        except socket.timeout as e:
             self.assert_(hasattr(e, 'args'))
             self.assertEqual(e.args[0], 'timed out')
 
@@ -504,7 +504,7 @@ class TestGreenSocket(LimitedTestCase):
             while True:
                 try:
                     sock.sendall('hello world')
-                except socket.error, e:
+                except socket.error as e:
                     if get_errno(e) == errno.EPIPE:
                         return
                     raise
@@ -519,7 +519,7 @@ class TestGreenSocket(LimitedTestCase):
                 while True:
                     data = client.recv(1024)
                     self.assert_(data)
-            except socket.error, e:
+            except socket.error as e:
                 # we get an EBADF because client is closed in the same process
                 # (but a different greenthread)
                 if get_errno(e) != errno.EBADF:
@@ -553,7 +553,7 @@ class TestGreenSocket(LimitedTestCase):
         try:
             client.recv(1)
             assert False
-        except socket.error, e:
+        except socket.error as e:
             assert get_errno(e) == errno.EAGAIN
 
         client.settimeout(0.05)

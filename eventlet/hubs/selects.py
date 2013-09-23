@@ -20,7 +20,7 @@ class Hub(BaseHub):
         for fd in self.listeners[READ].keys() + self.listeners[WRITE].keys():
             try:
                 select.select([fd], [], [], 0)
-            except select.error, e:
+            except select.error as e:
                 if get_errno(e) in BAD_SOCK:
                     self.remove_descriptor(fd)
 
@@ -33,7 +33,7 @@ class Hub(BaseHub):
             return
         try:
             r, w, er = select.select(readers.keys(), writers.keys(), readers.keys() + writers.keys(), seconds)
-        except select.error, e:
+        except select.error as e:
             if get_errno(e) == errno.EINTR:
                 return
             elif get_errno(e) in BAD_SOCK:
