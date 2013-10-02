@@ -168,11 +168,10 @@ class Proxy(object):
         self._autowrap = autowrap
         self._autowrap_names = autowrap_names
 
-    def __getattr__(self,attr_name):
-        f = getattr(self._obj,attr_name)
+    def __getattr__(self, attr_name):
+        f = getattr(self._obj, attr_name)
         if not hasattr(f, '__call__'):
-            if (isinstance(f, self._autowrap) or
-                attr_name in self._autowrap_names):
+            if isinstance(f, self._autowrap) or attr_name in self._autowrap_names:
                 return Proxy(f, self._autowrap)
             return f
         def doit(*args, **kwargs):
@@ -186,7 +185,7 @@ class Proxy(object):
     # doesn't use getattr to retrieve and therefore have to be defined
     # explicitly
     def __getitem__(self, key):
-        return proxy_call(self._autowrap, self._obj.__getitem__, key)    
+        return proxy_call(self._autowrap, self._obj.__getitem__, key)
     def __setitem__(self, key, value):
         return proxy_call(self._autowrap, self._obj.__setitem__, key, value)
     def __deepcopy__(self, memo=None):
@@ -198,6 +197,11 @@ class Proxy(object):
             return Proxy(proxy_call(self._autowrap, self._obj, *a, **kw))
         else:
             return proxy_call(self._autowrap, self._obj, *a, **kw)
+    def __enter__(self):
+        return proxy_call(self._autowrap, self._obj.__enter__)
+    def __exit__(self, *exc):
+        return proxy_call(self._autowrap, self._obj.__exit__, *exc)
+
     # these don't go through a proxy call, because they're likely to
     # be called often, and are unlikely to be implemented on the
     # wrapped object in such a way that they would block
@@ -260,7 +264,7 @@ def setup():
             execute in main thread.  Check the value of the environment \
             variable EVENTLET_THREADPOOL_SIZE.", RuntimeWarning)
     for i in xrange(_nthreads):
-        t = threading.Thread(target=tworker, 
+        t = threading.Thread(target=tworker,
                              name="tpool_thread_%s" % i)
         t.setDaemon(True)
         t.start()

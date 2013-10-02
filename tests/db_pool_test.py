@@ -1,4 +1,7 @@
-"Test cases for db_pool"
+'''Test cases for db_pool
+'''
+from __future__ import with_statement
+
 import sys
 import os
 import traceback
@@ -638,11 +641,21 @@ class Psycopg2ConnectionPool(object):
         del db
 
 
-class Test01Psycopg2Tpool(Psycopg2ConnectionPool, TpoolConnectionPool, TestCase):
+class TestPsycopg2Base(TestCase):
+    __test__ = False
+
+    def test_cursor_works_as_context_manager(self):
+        with self.connection.cursor() as c:
+            c.execute('select 1')
+            row = c.fetchone()
+            assert row == (1,)
+
+
+class Test01Psycopg2Tpool(Psycopg2ConnectionPool, TpoolConnectionPool, TestPsycopg2Base):
     __test__ = True
 
 
-class Test02Psycopg2Raw(Psycopg2ConnectionPool, RawConnectionPool, TestCase):
+class Test02Psycopg2Raw(Psycopg2ConnectionPool, RawConnectionPool, TestPsycopg2Base):
     __test__ = True
 
 
