@@ -77,29 +77,19 @@ class Popen(subprocess_orig.Popen):
         # don't want to rewrite the original _communicate() method, we
         # just want a version that uses eventlet.green.select.select()
         # instead of select.select().
+        _communicate = new.function(subprocess_orig.Popen._communicate.im_func.func_code,
+                                    globals())
         try:
-            _communicate = new.function(subprocess_orig.Popen._communicate.im_func.func_code,
-                                        globals())
-            try:
-                _communicate_with_select = new.function(
-                    subprocess_orig.Popen._communicate_with_select.im_func.func_code,
-                    globals())
-                _communicate_with_poll = new.function(
-                    subprocess_orig.Popen._communicate_with_poll.im_func.func_code,
-                    globals())
-            except AttributeError:
-                pass
+            _communicate_with_select = new.function(
+                subprocess_orig.Popen._communicate_with_select.im_func.func_code,
+                globals())
+            _communicate_with_poll = new.function(
+                subprocess_orig.Popen._communicate_with_poll.im_func.func_code,
+                globals())
         except AttributeError:
-            # 2.4 only has communicate
-            _communicate = new.function(subprocess_orig.Popen.communicate.im_func.func_code,
-                                        globals())
-            def communicate(self, input=None):
-                return self._communicate(input)
+            pass
 
 # Borrow subprocess.call() and check_call(), but patch them so they reference
 # OUR Popen class rather than subprocess.Popen.
 call = new.function(subprocess_orig.call.func_code, globals())
-try:
-    check_call = new.function(subprocess_orig.check_call.func_code, globals())
-except AttributeError:
-    pass  # check_call added in 2.5
+check_call = new.function(subprocess_orig.check_call.func_code, globals())

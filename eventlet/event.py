@@ -101,7 +101,7 @@ class Event(object):
         >>> evt = event.Event()
         >>> def wait_on():
         ...    retval = evt.wait()
-        ...    print("waited for", retval)
+        ...    print("waited for {0}".format(retval))
         >>> _ = eventlet.spawn(wait_on)
         >>> evt.send('result')
         >>> eventlet.sleep(0)
@@ -134,7 +134,7 @@ class Event(object):
         >>> def waiter():
         ...     print('about to wait')
         ...     result = evt.wait()
-        ...     print('waited for', result)
+        ...     print('waited for {0}'.format(result))
         >>> _ = eventlet.spawn(waiter)
         >>> eventlet.sleep(0)
         about to wait
@@ -170,12 +170,12 @@ class Event(object):
 
     def send_exception(self, *args):
         """Same as :meth:`send`, but sends an exception to waiters.
-        
+
         The arguments to send_exception are the same as the arguments
         to ``raise``.  If a single exception object is passed in, it
         will be re-raised when :meth:`wait` is called, generating a
-        new stacktrace.  
-        
+        new stacktrace.
+
            >>> from eventlet import event
            >>> evt = event.Event()
            >>> evt.send_exception(RuntimeError())
@@ -185,7 +185,7 @@ class Event(object):
              File "eventlet/event.py", line 120, in wait
                current.throw(*self._exc)
            RuntimeError
-        
+
         If it's important to preserve the entire original stack trace,
         you must pass in the entire :func:`sys.exc_info` tuple.
 
@@ -195,7 +195,7 @@ class Event(object):
            ...     raise RuntimeError()
            ... except RuntimeError:
            ...     evt.send_exception(*sys.exc_info())
-           ... 
+           ...
            >>> evt.wait()
            Traceback (most recent call last):
              File "<stdin>", line 1, in <module>
@@ -203,7 +203,7 @@ class Event(object):
                current.throw(*self._exc)
              File "<stdin>", line 2, in <module>
            RuntimeError
-           
+
         Note that doing so stores a traceback object directly on the
         Event object, which may cause reference cycles. See the
         :func:`sys.exc_info` documentation.

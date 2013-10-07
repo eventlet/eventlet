@@ -6,7 +6,7 @@ import linecache
 import inspect
 import warnings
 
-from eventlet.support import greenlets as greenlet, BaseException
+from eventlet.support import greenlets as greenlet
 from eventlet import hubs
 from eventlet import greenthread
 from eventlet import debug
@@ -24,7 +24,7 @@ warnings.warn("eventlet.api is deprecated!  Nearly everything in it has moved "
 def get_hub(*a, **kw):
     warnings.warn("eventlet.api.get_hub has moved to eventlet.hubs.get_hub",
         DeprecationWarning, stacklevel=2)
-    return hubs.get_hub(*a, **kw)    
+    return hubs.get_hub(*a, **kw)
 def get_default_hub(*a, **kw):
     warnings.warn("eventlet.api.get_default_hub has moved to"
         " eventlet.hubs.get_default_hub",
@@ -34,7 +34,7 @@ def use_hub(*a, **kw):
     warnings.warn("eventlet.api.use_hub has moved to eventlet.hubs.use_hub",
         DeprecationWarning, stacklevel=2)
     return hubs.use_hub(*a, **kw)
-    
+
 
 def switch(coro, result=None, exc=None):
     if exc is not None:
@@ -85,7 +85,7 @@ def connect_tcp(address, localaddr=None):
     """
     warnings.warn("""eventlet.api.connect_tcp is deprecated.  Please use eventlet.connect instead.""",
         DeprecationWarning, stacklevel=2)
-        
+
     from eventlet import greenio, util
     desc = greenio.GreenSocket(util.tcp_socket())
     if localaddr is not None:
@@ -111,13 +111,15 @@ call_after_global = greenthread.call_after_global
 class _SilentException(BaseException):
     pass
 
+
 class FakeTimer(object):
     def cancel(self):
         pass
 
+
 class timeout(object):
     """Raise an exception in the block after timeout.
-    
+
     Example::
 
      with timeout(10):
@@ -126,13 +128,12 @@ class timeout(object):
     Assuming code block is yielding (i.e. gives up control to the hub),
     an exception provided in *exc* argument will be raised
     (:class:`~eventlet.api.TimeoutError` if *exc* is omitted)::
-    
+
      try:
          with timeout(10, MySpecialError, error_arg_1):
              urllib2.open('http://example.com')
-     except MySpecialError, e:
+     except MySpecialError as e:
          print "special error received"
-
 
     When *exc* is ``None``, code block is interrupted silently.
     """
@@ -160,10 +161,11 @@ class timeout(object):
         if typ is _SilentException and value in self.throw_args:
             return True
 
+
 with_timeout = greenthread.with_timeout
 
-exc_after = greenthread.exc_after  
-    
+exc_after = greenthread.exc_after
+
 sleep = greenthread.sleep
 
 getcurrent = greenlet.getcurrent

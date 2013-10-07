@@ -161,9 +161,8 @@ def hub_blocking_detection(state=False, resolution=1):
     blocking detector (don't use it in production!).
 
     The *resolution* argument governs how long the SIGALARM timeout
-    waits in seconds.  If on Python 2.6 or later, the implementation
-    uses :func:`signal.setitimer` and can be specified as a
-    floating-point value.  On 2.5 or earlier, 1 second is the minimum.
+    waits in seconds.  The implementation uses :func:`signal.setitimer`
+    and can be specified as a floating-point value.
     The shorter the resolution, the greater the chance of false
     positives.
     """
@@ -171,5 +170,5 @@ def hub_blocking_detection(state=False, resolution=1):
     assert resolution > 0
     hubs.get_hub().debug_blocking = state
     hubs.get_hub().debug_blocking_resolution = resolution
-    if(not state):
+    if not state:
         hubs.get_hub().block_detect_post()
