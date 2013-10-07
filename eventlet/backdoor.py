@@ -4,6 +4,8 @@ from code import InteractiveConsole
 import errno
 import socket
 import sys
+import errno
+import traceback
 
 import eventlet
 from eventlet import hubs
@@ -69,7 +71,12 @@ class SocketConsole(greenlets.greenlet):
     def finalize(self):
         # restore the state of the socket
         self.desc = None
-        print("backdoor closed to %s:%s" % self.hostport)
+        if len(self.hostport) >= 2:
+            host = self.hostport[0]
+            port = self.hostport[1]
+            print("backdoor closed to %s:%s" % (host, port,))
+        else:
+            print('backdoor closed')
 
 
 def backdoor_server(sock, locals=None):
@@ -81,7 +88,16 @@ def backdoor_server(sock, locals=None):
     of the interpreters.  It can be convenient to stick important application
     variables in here.
     """
-    print("backdoor server listening on %s:%s" % sock.getsockname())
+    listening_on = sock.getsockname()
+    if sock.family == socket.AF_INET:
+        #Expand result to IP + port
+        listening_on = '%s:%s' % listening_on
+    elif sock.family == socket.AF_INET6:
+        ip, port, _, _ = listening_on
+        listening_on = '%s:%s' % (ip, port,)
+    # No action needed if sock.family == socket.AF_UNIX
+
+    print("backdoor server listening on %s" % (listening_on,))
     try:
         try:
             while True:
@@ -102,10 +118,16 @@ def backdoor(conn_info, locals=None):
     (such as backdoor_server).
     """
     conn, addr = conn_info
-    host, port = addr
-    print("backdoor to %s:%s" % (host, port))
+    if conn.family == socket.AF_INET:
+        host, port = addr
+        print("backdoor to %s:%s" % (host, port))
+    elif conn.family == socket.AF_INET6:
+        host, port, _, _ = addr
+        print("backdoor to %s:%s" % (host, port))
+    else:
+        print('backdoor opened')
     fl = conn.makefile("rw")
-    console = SocketConsole(fl, (host, port), locals)
+    console = SocketConsole(fl, addr, locals)
     hub = hubs.get_hub()
     hub.schedule_call_global(0, console.switch)
 
