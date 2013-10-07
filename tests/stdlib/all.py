@@ -20,7 +20,7 @@ def assimilate_patched(name):
         modobj = __import__(name, globals(), locals(), ['test_main'])
         restart_hub()
     except ImportError:
-        print "Not importing %s, it doesn't exist in this installation/version of Python" % name
+        print("Not importing %s, it doesn't exist in this installation/version of Python" % name)
         return
     else:
         method_name = name + "_test_main"
@@ -33,7 +33,7 @@ def assimilate_patched(name):
             globals()[method_name] = test_main
             test_main.__name__ = name + '.test_main'
         except AttributeError:
-            print "No test_main for %s, assuming it tests on import" % name
+            print("No test_main for %s, assuming it tests on import" % name)
             
 import all_modules
 

@@ -1,13 +1,17 @@
+from __future__ import print_function
+
 from eventlet import hubs
 from eventlet.support import greenlets as greenlet
 
 __all__ = ['Event']
+
 
 class NOT_USED:
     def __repr__(self):
         return 'NOT_USED'
 
 NOT_USED = NOT_USED()
+
 
 class Event(object):
     """An abstraction where an arbitrary number of coroutines
@@ -97,7 +101,7 @@ class Event(object):
         >>> evt = event.Event()
         >>> def wait_on():
         ...    retval = evt.wait()
-        ...    print "waited for", retval
+        ...    print("waited for", retval)
         >>> _ = eventlet.spawn(wait_on)
         >>> evt.send('result')
         >>> eventlet.sleep(0)
@@ -128,9 +132,9 @@ class Event(object):
         >>> import eventlet
         >>> evt = event.Event()
         >>> def waiter():
-        ...     print 'about to wait'
+        ...     print('about to wait')
         ...     result = evt.wait()
-        ...     print 'waited for', result
+        ...     print('waited for', result)
         >>> _ = eventlet.spawn(waiter)
         >>> eventlet.sleep(0)
         about to wait

@@ -12,19 +12,19 @@ def forward(source, dest):
             x = source.recv()
             if not x:
                 break
-            print 'forwarding %s bytes' % len(x)
+            print('forwarding %s bytes' % len(x))
             dest.write(x)
     finally:
         dest.loseConnection()
 
 def handler(local):
     client = str(local.getHost())
-    print 'accepted connection from %s' % client
+    print('accepted connection from %s' % client)
     remote = GreenClientCreator(reactor, UnbufferedTransport).connectTCP(remote_host, remote_port)
     a = proc.spawn(forward, remote, local)
     b = proc.spawn(forward, local, remote)
     proc.waitall([a, b], trap_errors=True)
-    print 'closed connection to %s' % client
+    print('closed connection to %s' % client)
 
 try:
     local_port, remote_host, remote_port = sys.argv[1:]

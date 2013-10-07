@@ -4,6 +4,7 @@ from eventlet.green import socket
 
 from tests import LimitedTestCase, main
 
+
 class BackdoorTest(LimitedTestCase):
     def test_server(self):
         listener = socket.socket()
@@ -27,8 +28,7 @@ class BackdoorTest(LimitedTestCase):
         serv.kill()
         # wait for the console to discover that it's dead
         eventlet.sleep(0.1)
-        
-        
+
 
 if __name__ == '__main__':
     main()

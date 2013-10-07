@@ -22,6 +22,7 @@ server / client accept() conn - ExplodingConnectionWrap
     V  V  V
 connection makefile() file objects - ExplodingSocketFile <-- these raise
 """
+from __future__ import print_function
 
 import eventlet
 
@@ -52,12 +53,12 @@ class NaughtySocketAcceptWrap(object):
             conn_wrap.unwrap()
 
     def arm(self):
-        print "ca-click"
+        print("ca-click")
         for i in self.conn_reg:
             i.arm()
 
     def __call__(self):
-        print self.__class__.__name__ + ".__call__"
+        print(self.__class__.__name__ + ".__call__")
         conn, addr = self.sock._really_accept()
         self.conn_reg.append(ExplodingConnectionWrap(conn))
         return conn, addr
@@ -80,12 +81,12 @@ class ExplodingConnectionWrap(object):
         del self.conn._really_makefile
 
     def arm(self):
-        print "tick"
+        print("tick")
         for i in self.file_reg:
             i.arm()
 
     def __call__(self, mode='r', bufsize=-1):
-        print self.__class__.__name__ + ".__call__"
+        print(self.__class__.__name__ + ".__call__")
         # file_obj = self.conn._really_makefile(*args, **kwargs)
         file_obj = ExplodingSocketFile(self.conn._sock, mode, bufsize)
         self.file_reg.append(file_obj)
@@ -99,24 +100,24 @@ class ExplodingSocketFile(socket._fileobject):
         self.armed = False
 
     def arm(self):
-        print "beep"
+        print("beep")
         self.armed = True
 
     def _fuse(self):
         if self.armed:
-            print "=== ~* BOOM *~ ==="
+            print("=== ~* BOOM *~ ===")
             raise socket.timeout("timed out")
 
     def readline(self, *args, **kwargs):
-        print self.__class__.__name__ + ".readline"
+        print(self.__class__.__name__ + ".readline")
         self._fuse()
         return super(self.__class__, self).readline(*args, **kwargs)
 
 
 if __name__ == '__main__':
     for debug in (False, True):
-        print "SEPERATOR_SENTINEL"
-        print "debug set to: %s" % debug
+        print("SEPERATOR_SENTINEL")
+        print("debug set to: %s" % debug)
 
         server_sock = eventlet.listen(('localhost', 0))
         server_addr = server_sock.getsockname()
@@ -142,7 +143,7 @@ if __name__ == '__main__':
 
             # let the server socket ops catch up, set bomb
             eventlet.sleep(0)
-            print "arming..."
+            print("arming...")
             sock_wrap.arm()
 
             # req #2 - old conn, post-arm - timeout

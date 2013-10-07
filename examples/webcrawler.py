@@ -19,12 +19,12 @@ urls = [
 
 
 def fetch(url):
-    print "opening", url
+    print("opening", url)
     body = urllib2.urlopen(url).read()
-    print "done with", url
+    print("done with", url)
     return url, body
 
 
 pool = eventlet.GreenPool(200)
 for url, body in pool.imap(fetch, urls):
-    print "got body from", url, "of length", len(body)
+    print("got body from", url, "of length", len(body))

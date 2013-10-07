@@ -10,7 +10,7 @@ from eventlet.twistedutil import join_reactor
 class LineOnlyReceiver(basic.LineOnlyReceiver):
 
     def lineReceived(self, line):
-        print 'received: %r' % line
+        print('received: %r' % line)
         if not line:
             return
         app, context, node = (line + ' ').split(' ', 3) 

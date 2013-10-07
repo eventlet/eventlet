@@ -1,6 +1,6 @@
 '''Test cases for db_pool
 '''
-from __future__ import with_statement
+from __future__ import print_function
 
 import sys
 import os
@@ -430,8 +430,8 @@ class DBConnectionPool(DBTester):
             end = time.time()
             results.append(end-start)
 
-        print "\n%u iterations took an average of %f seconds, (%s) in %s\n" % (
-            iterations, sum(results)/len(results), results, type(self))
+        print("\n%u iterations took an average of %f seconds, (%s) in %s\n" % (
+            iterations, sum(results)/len(results), results, type(self)))
 
     def test_raising_create(self):
         # if the create() method raises an exception the pool should
@@ -515,12 +515,12 @@ def mysql_requirement(_f):
             return True
         except MySQLdb.OperationalError:
             if verbose:
-                print >> sys.stderr, ">> Skipping mysql tests, error when connecting:"
+                print(">> Skipping mysql tests, error when connecting:", file=sys.stderr)
                 traceback.print_exc()
             return False
     except ImportError:
         if verbose:
-            print >> sys.stderr, ">> Skipping mysql tests, MySQLdb not importable"
+            print(">> Skipping mysql tests, MySQLdb not importable", file=sys.stderr)
         return False
 
 
@@ -584,10 +584,10 @@ def postgres_requirement(_f):
             psycopg2.connect(**auth)
             return True
         except psycopg2.OperationalError:
-            print "Skipping postgres tests, error when connecting"
+            print("Skipping postgres tests, error when connecting")
             return False
     except ImportError:
-        print "Skipping postgres tests, psycopg2 not importable"
+        print("Skipping postgres tests, psycopg2 not importable")
         return False
 
 

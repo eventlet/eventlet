@@ -21,7 +21,7 @@ url_regex = re.compile(r'\b(([\w-]+://?|www[.])[^\s()<>]+(?:\([\w\d]+\)|([^[:pun
 
 def fetch(url, outq):
     """Fetch a url and push any urls found into a queue."""
-    print "fetching", url
+    print("fetching", url)
     data = ''
     with eventlet.Timeout(5, False):
         data = urllib2.urlopen(url).read()
@@ -53,5 +53,5 @@ def producer(start_url):
 
 
 seen = producer("http://eventlet.net")
-print "I saw these urls:"
-print "\n".join(seen)
+print("I saw these urls:")
+print("\n".join(seen))

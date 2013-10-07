@@ -35,7 +35,7 @@ def get_modules():
         s.close()
         test_modules = test_modules + network_modules
     except socket.error as e:
-        print "Skipping network tests"
+        print("Skipping network tests")
     
     return test_modules
     

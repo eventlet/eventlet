@@ -394,6 +394,8 @@ class TestDefaultHub(ProcessBase):
         # https://github.com/eventlet/eventlet/issues/38
         # get_hub on windows broken by kqueue
         module_source = r'''
+from __future__ import print_function
+
 # Simulate absence of kqueue even on platforms that support it.
 import select
 try:
