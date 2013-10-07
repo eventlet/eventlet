@@ -88,10 +88,10 @@ def main(db):
         except Exception:
             parse_error += 1
             sys.stderr.write('Failed to parse id=%s\n' % id)
-            print repr(stdout)
+            print(repr(stdout))
             traceback.print_exc()
         else:
-            print id, hub, testname, runs, errors, fails, timeouts
+            print(id, hub, testname, runs, errors, fails, timeouts)
             c.execute('insert into parsed_command_record '
                       '(id, testname, hub, runs, errors, fails, timeouts) '
                       'values (?, ?, ?, ?, ?, ?, ?)',
@@ -101,7 +101,7 @@ def main(db):
 if __name__=='__main__':
     if not sys.argv[1:]:
         latest_db = sorted(glob.glob('results.*.db'), key=lambda f: os.stat(f).st_mtime)[-1]
-        print latest_db
+        print(latest_db)
         sys.argv.append(latest_db)
     for db in sys.argv[1:]:
         main(db)

@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import os
 import sys
 import time
@@ -10,27 +12,29 @@ try:
 except ImportError:
     MySQLdb = False
 
+
 def mysql_requirement(_f):
     """We want to skip tests if using pyevent, MySQLdb is not installed, or if
     there is no database running on the localhost that the auth file grants
     us access to.
-    
+
     This errs on the side of skipping tests if everything is not right, but
     it's better than a million tests failing when you don't care about mysql
     support."""
     if using_pyevent(_f):
         return False
     if MySQLdb is False:
-        print "Skipping mysql tests, MySQLdb not importable"
+        print("Skipping mysql tests, MySQLdb not importable")
         return False
     try:
         auth = get_database_auth()['MySQLdb'].copy()
         MySQLdb.connect(**auth)
         return True
     except MySQLdb.OperationalError:
-        print "Skipping mysql tests, error when connecting:"
+        print("Skipping mysql tests, error when connecting:")
         traceback.print_exc()
         return False
+
 
 class MySQLdbTester(LimitedTestCase):
     def setUp(self):
@@ -55,7 +59,7 @@ class MySQLdbTester(LimitedTestCase):
 
         super(MySQLdbTester, self).tearDown()
 
-    @skip_unless(mysql_requirement)    
+    @skip_unless(mysql_requirement)
     def create_db(self):
         auth = self._auth.copy()
         try:
@@ -122,7 +126,7 @@ class MySQLdbTester(LimitedTestCase):
         rows = cursor.fetchall()
         self.assertEqual(rows, ((1L,),))
         self.assert_cursor_yields(cursor)
-        
+
     def assert_connection_works(self, conn):
         curs = conn.cursor()
         self.assert_cursor_works(curs)
@@ -136,7 +140,7 @@ class MySQLdbTester(LimitedTestCase):
 
     def test_connecting(self):
         self.assert_(self.connection is not None)
-        
+
     def test_connecting_annoyingly(self):
         self.assert_connection_works(MySQLdb.Connect(**self._auth))
         self.assert_connection_works(MySQLdb.Connection(**self._auth))
@@ -214,10 +218,11 @@ class MySQLdbTester(LimitedTestCase):
             curs.execute("delete from gargleblatz where a=314159")
             conn.commit()
 
+
 from tests import patcher_test
 
 class MonkeyPatchTester(patcher_test.ProcessBase):
-    @skip_unless(mysql_requirement)    
+    @skip_unless(mysql_requirement)
     def test_monkey_patching(self):
         output, lines = self.run_script("""
 from eventlet import patcher

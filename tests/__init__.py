@@ -1,4 +1,6 @@
 # package is named tests, not test, so it won't be confused with test in stdlib
+from __future__ import print_function
+
 import errno
 import os
 try:
@@ -34,7 +36,7 @@ def skipped(func):
     except ImportError:
         # no nose, we'll just skip the test ourselves
         def skipme(*a, **k):
-            print "Skipping", func.__name__
+            print(("Skipping {0}".format(func.__name__)))
         skipme.__name__ = func.__name__
         return skipme
 
@@ -264,7 +266,7 @@ def get_database_auth():
         try:
             import simplejson as json
         except ImportError:
-            print "No json implementation, using baked-in db credentials."
+            print("No json implementation, using baked-in db credentials.")
             return retval
 
     if 'EVENTLET_DB_TEST_AUTH' in os.environ:

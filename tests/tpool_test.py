@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import print_function
 
 import itertools
 import random
@@ -111,7 +112,7 @@ class TestTpool(LimitedTestCase):
         self.assertEqual(hash(prox1), hash(prox2))
         proxList = tpool.Proxy([])
         self.assertRaises(TypeError, hash, proxList)
- 
+
     @skip_with_pyevent
     def test_wrap_nonzero(self):
         prox = tpool.Proxy(re)
@@ -148,7 +149,7 @@ class TestTpool(LimitedTestCase):
         for i in prox:
             result.append(i)
         self.assertEquals(range(10), result)
-        
+
     @skip_with_pyevent
     def test_wrap_iterator2(self):
         self.reset_timeout(5)  # might take a while due to imprecise sleeping
@@ -157,7 +158,7 @@ class TestTpool(LimitedTestCase):
             for x in xrange(2):
                 yield x
                 time.sleep(0.001)
-                
+
         counter = [0]
         def tick():
             for i in xrange(20000):
@@ -166,7 +167,7 @@ class TestTpool(LimitedTestCase):
                     eventlet.sleep(0.0001)
                 else:
                     eventlet.sleep()
-                
+
         gt = eventlet.spawn(tick)
         previtem = 0
         for item in tpool.Proxy(foo()):
@@ -269,13 +270,13 @@ class TestTpool(LimitedTestCase):
         x = tpool.Proxy(wrapped, autowrap_names=('__call__',))
         for r in x(3):
             self.assertEquals(3, r)
-            
+
     @skip_with_pyevent
     def test_eventlet_timeout(self):
         def raise_timeout():
             raise eventlet.Timeout()
         self.assertRaises(eventlet.Timeout, tpool.execute, raise_timeout)
-    
+
     @skip_with_pyevent
     def test_tpool_set_num_threads(self):
         tpool.set_num_threads(5)
@@ -291,7 +292,7 @@ class TpoolLongTests(LimitedTestCase):
                 assert_(token is not None)
                 time.sleep(random.random()/200.0)
                 return token
-        
+
         def sender_loop(loopnum):
             obj = tpool.Proxy(Dummy())
             count = 100
@@ -310,7 +311,7 @@ class TpoolLongTests(LimitedTestCase):
         results = list(pile)
         self.assertEquals(len(results), cnt)
         tpool.killall()
-        
+
     @skipped
     def test_benchmark(self):
         """ Benchmark computing the amount of overhead tpool adds to function calls."""
@@ -329,8 +330,8 @@ from eventlet.tpool import execute
         best_tpool = min(results)
 
         tpool_overhead = (best_tpool-best_normal)/iterations
-        print "%s iterations\nTpool overhead is %s seconds per call.  Normal: %s; Tpool: %s" % (
-            iterations, tpool_overhead, best_normal, best_tpool)
+        print("%s iterations\nTpool overhead is %s seconds per call.  Normal: %s; Tpool: %s" % (
+            iterations, tpool_overhead, best_normal, best_tpool))
         tpool.killall()
 
     @skip_with_pyevent

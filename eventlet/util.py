@@ -20,7 +20,7 @@ def g_log(*args):
             ident = '%08X' % (g_id,)
     else:
         ident = 'greenlet-%d' % (g_id,)
-    print >>sys.stderr, '[%s] %s' % (ident, ' '.join(map(str, args)))
+    print('[%s] %s' % (ident, ' '.join(map(str, args))), file=sys.stderr)
 
 
 __original_socket__ = socket.socket

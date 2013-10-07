@@ -38,7 +38,7 @@ case the notification is performed immediatelly:
 >>> try:
 ...     p.link()
 ... except LinkedCompleted:
-...     print 'LinkedCompleted'
+...     print('LinkedCompleted')
 LinkedCompleted
 
 (Without an argument, the link is created to the current greenlet)
@@ -55,7 +55,7 @@ must fail as well; :meth:`~eventlet.proc.Source.link_exception` is useful here:
 >>> try:
 ...     api.sleep(1)
 ... except LinkedFailed:
-...     print 'LinkedFailed'
+...     print('LinkedFailed')
 LinkedFailed
 
 One application of linking is :func:`waitall` function: link to a bunch of
@@ -721,4 +721,5 @@ class Pool(object):
         g = self.linkable_class()
         g.link(lambda *_args: self.semaphore.release())
         return g
+
 

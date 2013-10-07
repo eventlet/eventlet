@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import collections
 import traceback
 import warnings
@@ -8,11 +10,13 @@ from eventlet import hubs
 from eventlet import greenthread
 from eventlet import semaphore as semaphoremod
 
+
 class NOT_USED:
     def __repr__(self):
         return 'NOT_USED'
 
 NOT_USED = NOT_USED()
+
 
 def Event(*a, **kw):
     warnings.warn("The Event class has been moved to the event module! "
@@ -34,11 +38,13 @@ def Semaphore(count):
         DeprecationWarning, stacklevel=2)
     return semaphoremod.Semaphore(count)
 
+
 def BoundedSemaphore(count):
     warnings.warn("The BoundedSemaphore class has moved!  Please "
         "use semaphore.BoundedSemaphore instead.",
         DeprecationWarning, stacklevel=2)
     return semaphoremod.BoundedSemaphore(count)
+
 
 def semaphore(count=0, limit=None):
     warnings.warn("coros.semaphore is deprecated.  Please use either "
@@ -58,7 +64,7 @@ class metaphore(object):
     >>> count = coros.metaphore()
     >>> count.wait()
     >>> def decrementer(count, id):
-    ...     print "%s decrementing" % id
+    ...     print("{0} decrementing".format(id))
     ...     count.dec()
     ...
     >>> _ = eventlet.spawn(decrementer, count, 'A')
@@ -105,6 +111,7 @@ class metaphore(object):
         resume the caller once the count decrements to zero again.
         """
         self.event.wait()
+
 
 def execute(func, *args, **kw):
     """ Executes an operation asynchronously in a new coroutine, returning

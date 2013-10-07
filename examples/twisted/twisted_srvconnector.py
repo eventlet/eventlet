@@ -9,7 +9,7 @@ class NoisySRVConnector(SRVConnector):
 
     def pickServer(self):
         host, port = SRVConnector.pickServer(self)
-        print 'Resolved _%s._%s.%s --> %s:%s' % (self.service, self.protocol, self.domain, host, port)
+        print('Resolved _%s._%s.%s --> %s:%s' % (self.service, self.protocol, self.domain, host, port))
         return host, port
 
 cred = X509Credentials(None, None)
@@ -24,10 +24,10 @@ From-Path: msrps://alice.example.com:9892/98cjs;tcp
 -------49fh$
 """.replace('\n', '\r\n')
 
-print 'Sending:\n%s' % request
+print('Sending:\n%s' % request)
 conn.write(request)
-print 'Received:'
+print('Received:')
 for x in conn:
-    print repr(x)
+    print(repr(x))
     if '-------' in x:
         break

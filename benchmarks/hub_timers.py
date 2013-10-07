@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+from __future__ import print_function
 
 # test timer adds & expires on hubs.hub.BaseHub
 
@@ -38,4 +39,4 @@ hub.prepare_timers()
 
 end = time.time()
 
-print "Duration: %f" % (end-start,)
+print("Duration: %f" % (end-start,))

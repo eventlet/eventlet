@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import collections
 
 from eventlet import queue
@@ -15,8 +17,8 @@ def item_impl(self):
     >>> from eventlet import pools
     >>> pool = pools.TokenPool(max_size=4)
     >>> with pool.item() as obj:
-    ...     print "got token"
-    ...
+    ...     print("got token")
+    ... 
     got token
     >>> pool.free()
     4
@@ -194,3 +196,4 @@ class TokenPool(Pool):
     """
     def create(self):
         return Token()
+

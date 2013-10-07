@@ -1,19 +1,24 @@
 """Benchmark evaluating eventlet's performance at speaking to itself over a localhost socket."""
+from __future__ import print_function
 
 import time
+
 import benchmarks
+
 
 BYTES=1000
 SIZE=1
 CONCURRENCY=50
 TRIES=5
 
+
 def reader(sock):
     expect = BYTES
     while expect > 0:
         d = sock.recv(min(expect, SIZE))
         expect -= len(d)
-            
+
+
 def writer(addr, socket_impl):
     sock = socket_impl(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect(addr)
@@ -22,12 +27,13 @@ def writer(addr, socket_impl):
         d = 'xy' * (max(min(SIZE/2, BYTES-sent), 1))
         sock.sendall(d)
         sent += len(d)
-        
-        
+
+
 def green_accepter(server_sock, pool):
     for i in xrange(CONCURRENCY):
         sock, addr = server_sock.accept()
         pool.spawn_n(reader, sock)
+
 
 def heavy_accepter(server_sock, pool):
     for i in xrange(CONCURRENCY):
@@ -36,11 +42,13 @@ def heavy_accepter(server_sock, pool):
         t.start()
         pool.append(t)
 
+
 import eventlet.green.socket
 import eventlet
 
 from eventlet import debug
 debug.hub_exceptions(True)
+
 
 def launch_green_threads():
     pool = eventlet.GreenPool(CONCURRENCY * 2 + 1)
@@ -52,10 +60,12 @@ def launch_green_threads():
     for i in xrange(CONCURRENCY):
         pool.spawn_n(writer, addr, eventlet.green.socket.socket)
     pool.waitall()
-       
+
+
 import threading
-import socket       
-    
+import socket
+
+
 def launch_heavy_threads():
     threads = []
     server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -77,29 +87,29 @@ if __name__ == "__main__":
     import optparse
     parser = optparse.OptionParser()
     parser.add_option('--compare-threading', action='store_true', dest='threading', default=False)
-    parser.add_option('-b', '--bytes', type='int', dest='bytes', 
+    parser.add_option('-b', '--bytes', type='int', dest='bytes',
                       default=BYTES)
-    parser.add_option('-s', '--size', type='int', dest='size', 
+    parser.add_option('-s', '--size', type='int', dest='size',
                       default=SIZE)
-    parser.add_option('-c', '--concurrency', type='int', dest='concurrency', 
+    parser.add_option('-c', '--concurrency', type='int', dest='concurrency',
                       default=CONCURRENCY)
-    parser.add_option('-t', '--tries', type='int', dest='tries', 
+    parser.add_option('-t', '--tries', type='int', dest='tries',
                       default=TRIES)
 
-    
+
     opts, args = parser.parse_args()
     BYTES=opts.bytes
     SIZE=opts.size
     CONCURRENCY=opts.concurrency
     TRIES=opts.tries
-    
+
     funcs = [launch_green_threads]
     if opts.threading:
         funcs = [launch_green_threads, launch_heavy_threads]
     results = benchmarks.measure_best(TRIES, 3,
                                       lambda: None, lambda: None,
                                       *funcs)
-    print "green:", results[launch_green_threads]
+    print("green:", results[launch_green_threads])
     if opts.threading:
-        print "threads:", results[launch_heavy_threads]
-        print "%", (results[launch_green_threads]-results[launch_heavy_threads])/results[launch_heavy_threads] * 100
+        print("threads:", results[launch_heavy_threads])
+        print("%", (results[launch_green_threads]-results[launch_heavy_threads])/results[launch_heavy_threads] * 100)
