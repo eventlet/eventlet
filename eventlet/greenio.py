@@ -486,10 +486,7 @@ class GreenPipe(_fileobject):
         return n
 
     def _get_readahead_len(self):
-        try:
-            return len(self._rbuf.getvalue()) # StringIO in 2.5
-        except AttributeError:
-            return len(self._rbuf) # str in 2.4
+        return len(self._rbuf.getvalue())
 
     def _clear_readahead_buf(self):
         len = self._get_readahead_len()
