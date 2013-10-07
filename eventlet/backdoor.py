@@ -2,6 +2,7 @@ import socket
 import sys
 import errno
 from code import InteractiveConsole
+import traceback
 
 import eventlet
 from eventlet import hubs
@@ -47,11 +48,15 @@ class SocketConsole(greenlets.greenlet):
         # mangle the socket
         self.desc = FileProxy(desc)
         greenlets.greenlet.__init__(self)
+        #place to store exception if InteractiveConsole terminates
+        self.lastexception = None
 
     def run(self):
         try:
             console = InteractiveConsole(self.locals)
             console.interact()
+        except BaseException as e:
+            self.lastexception = sys.exc_info()
         finally:
             self.switch_out()
             self.finalize()
@@ -67,7 +72,15 @@ class SocketConsole(greenlets.greenlet):
     def finalize(self):
         # restore the state of the socket
         self.desc = None
-        print "backdoor closed to %s:%s" % self.hostport
+        if len(self.hostport) >= 2:
+            host = self.hostport[0]
+            port = self.hostport[1]
+            print "backdoor closed to %s:%s" % (host, port,)
+        else:
+            print 'backdoor closed'
+        
+        if self.lastexception!=None:
+            traceback.print_exception(*self.lastexception)
 
 
 def backdoor_server(sock, locals=None):
@@ -79,7 +92,16 @@ def backdoor_server(sock, locals=None):
     of the interpreters.  It can be convenient to stick important application
     variables in here.
     """
-    print "backdoor server listening on %s:%s" % sock.getsockname()
+    listeningOn = sock.getsockname()
+    if sock.family == socket.AF_INET:
+        #Expand result to IP + port
+        listeningOn = '%s:%s' % listeningOn
+    elif sock.family == socket.AF_INET6:
+        ip, port, _, _ = listeningOn
+        listeningOn = '%s:%s' % (ip, port,)
+    #No action needed if sock.family == socket.AF_UNIX
+    
+    print "backdoor server listening on %s" % listeningOn
     try:
         try:
             while True:
@@ -99,10 +121,16 @@ def backdoor((conn, addr), locals=None):
     handle the console.  This is meant to be called from within an accept loop
     (such as backdoor_server).
     """
-    host, port = addr
-    print "backdoor to %s:%s" % (host, port)
+    if conn.family == socket.AF_INET:
+        host, port = addr
+        print "backdoor to %s:%s" % (host, port)
+    elif conn.family == socket.AF_INET6:
+        host, port, _, _ = addr
+        print "backdoor to %s:%s" % (host, port)
+    else:
+        print 'backdoor opened'
     fl = conn.makefile("rw")
-    console = SocketConsole(fl, (host, port), locals)
+    console = SocketConsole(fl, addr, locals)
     hub = hubs.get_hub()
     hub.schedule_call_global(0, console.switch)
 
