@@ -1,68 +1,31 @@
 import socket
+import sys
 import warnings
-
-def g_log(*args):
-    warnings.warn("eventlet.util.g_log is deprecated because "
-                  "we're pretty sure no one uses it.  "
-                  "Send mail to eventletdev@lists.secondlife.com "
-                  "if you are actually using it.",
-        DeprecationWarning, stacklevel=2)
-    import sys
-    from eventlet.support import greenlets as greenlet
-    g_id = id(greenlet.getcurrent())
-    if g_id is None:
-        if greenlet.getcurrent().parent is None:
-            ident = 'greenlet-main'
-        else:
-            g_id = id(greenlet.getcurrent())
-            if g_id < 0:
-                g_id += 1 + ((sys.maxint + 1) << 1)
-            ident = '%08X' % (g_id,)
-    else:
-        ident = 'greenlet-%d' % (g_id,)
-    print('[%s] %s' % (ident, ' '.join(map(str, args))), file=sys.stderr)
 
 
 __original_socket__ = socket.socket
 def tcp_socket():
-    warnings.warn("eventlet.util.tcp_socket is deprecated."
-        "Please use the standard socket technique for this instead:"
+    warnings.warn("eventlet.util.tcp_socket is deprecated. "
+        "Please use the standard socket technique for this instead: "
         "sock = socket.socket()",
         DeprecationWarning, stacklevel=2)
     s = __original_socket__(socket.AF_INET, socket.SOCK_STREAM)
     return s
 
-try:
-    # if ssl is available, use eventlet.green.ssl for our ssl implementation
-    from eventlet.green import ssl
-    def wrap_ssl(sock, certificate=None, private_key=None, server_side=False):
-        return ssl.wrap_socket(sock,
-            keyfile=private_key, certfile=certificate,
-            server_side=server_side, cert_reqs=ssl.CERT_NONE,
-            ssl_version=ssl.PROTOCOL_SSLv23, ca_certs=None,
-            do_handshake_on_connect=True,
-            suppress_ragged_eofs=True)
-except ImportError:
-    # if ssl is not available, use PyOpenSSL
-    def wrap_ssl(sock, certificate=None, private_key=None, server_side=False):
-        try:
-            from eventlet.green.OpenSSL import SSL
-        except ImportError:
-            raise ImportError("To use SSL with Eventlet, "
-                              "you must install PyOpenSSL or use Python 2.6 or later.")
-        context = SSL.Context(SSL.SSLv23_METHOD)
-        if certificate is not None:
-            context.use_certificate_file(certificate)
-        if private_key is not None:
-            context.use_privatekey_file(private_key)
-        context.set_verify(SSL.VERIFY_NONE, lambda *x: True)
 
-        connection = SSL.Connection(context, sock)
-        if server_side:
-            connection.set_accept_state()
-        else:
-            connection.set_connect_state()
-        return connection
+# if ssl is available, use eventlet.green.ssl for our ssl implementation
+from eventlet.green import ssl
+def wrap_ssl(sock, certificate=None, private_key=None, server_side=False):
+    warnings.warn("eventlet.util.wrap_ssl is deprecated. "
+        "Please use the eventlet.green.ssl.wrap_socket()",
+        DeprecationWarning, stacklevel=2)
+    return ssl.wrap_socket(
+        sock,
+        keyfile=private_key,
+        certfile=certificate,
+        server_side=server_side,
+    )
+
 
 def wrap_socket_with_coroutine_socket(use_thread_pool=None):
     warnings.warn("eventlet.util.wrap_socket_with_coroutine_socket() is now "
@@ -79,12 +42,14 @@ def wrap_pipes_with_coroutine_pipes():
     from eventlet import patcher
     patcher.monkey_patch(all=False, os=True)
 
+
 def wrap_select_with_coroutine_select():
     warnings.warn("eventlet.util.wrap_select_with_coroutine_select() is now "
         "eventlet.patcher.monkey_patch(all=False, select=True)",
         DeprecationWarning, stacklevel=2)
     from eventlet import patcher
     patcher.monkey_patch(all=False, select=True)
+
 
 def wrap_threading_local_with_coro_local():
     """

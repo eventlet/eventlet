@@ -1,18 +1,21 @@
-""" Tests with-statement behavior of Timeout class.  Don't import when
-using Python 2.4. """
+"""Tests with-statement behavior of Timeout class."""
 
-from __future__ import with_statement
 import sys
+import time
 import unittest
 import weakref
-import time
+
 from eventlet import sleep
 from eventlet.timeout import Timeout
 from tests import LimitedTestCase
+
+
 DELAY = 0.01
+
 
 class Error(Exception):
     pass
+
 
 class Test(LimitedTestCase):
     def test_cancellation(self):
@@ -46,7 +49,7 @@ class Test(LimitedTestCase):
             assert ex is t, (ex, t)
         else:
             raise AssertionError('must raise Timeout')
-        
+
     def test_raising_custom_exception(self):
         # You can customize the exception raised:
         try:
@@ -83,7 +86,6 @@ class Test(LimitedTestCase):
             timer.cancel()
             sleep(DELAY*2)
 
-        
     def test_silent_block(self):
         # To silence the exception before exiting the block, pass
         # False as second parameter.

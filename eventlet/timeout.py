@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.from eventlet.support import greenlets as greenlet
 
-from eventlet.support import greenlets as greenlet, BaseException
+from eventlet.support import greenlets as greenlet
 from eventlet.hubs import get_hub
 
 __all__ = ['Timeout',
@@ -84,10 +84,7 @@ class Timeout(BaseException):
             self.timer = None
 
     def __repr__(self):
-        try:
-            classname = self.__class__.__name__
-        except AttributeError: # Python < 2.5
-            classname = 'Timeout'
+        classname = self.__class__.__name__
         if self.pending:
             pending = ' pending'
         else:

@@ -4,7 +4,7 @@ __all__     = __socket.__all__
 __patched__ = ['fromfd', 'socketpair', 'ssl', 'socket']
 
 from eventlet.patcher import slurp_properties
-slurp_properties(__socket, globals(), 
+slurp_properties(__socket, globals(),
     ignore=__patched__, srckeys=dir(__socket))
 
 os = __import__('os')
@@ -87,24 +87,15 @@ class GreenSSLObject(object):
 
 
 try:
-    try:
-        # >= Python 2.6
-        from eventlet.green import ssl as ssl_module
-        sslerror = __socket.sslerror
-        __socket.ssl
-        def ssl(sock, certificate=None, private_key=None):
-            warnings.warn("socket.ssl() is deprecated.  Use ssl.wrap_socket() instead.",
-                          DeprecationWarning, stacklevel=2)
-            return ssl_module.sslwrap_simple(sock, private_key, certificate)
-    except ImportError:
-        # <= Python 2.5 compatibility
-        sslerror = __socket.sslerror
-        __socket.ssl
-        def ssl(sock, certificate=None, private_key=None):
-            from eventlet import util
-            wrapped = util.wrap_ssl(sock, certificate, private_key)
-            return GreenSSLObject(wrapped)
+    from eventlet.green import ssl as ssl_module
+    sslerror = __socket.sslerror
+    __socket.ssl
 except AttributeError:
     # if the real socket module doesn't have the ssl method or sslerror
     # exception, we can't emulate them
     pass
+else:
+    def ssl(sock, certificate=None, private_key=None):
+        warnings.warn("socket.ssl() is deprecated.  Use ssl.wrap_socket() instead.",
+                      DeprecationWarning, stacklevel=2)
+        return ssl_module.sslwrap_simple(sock, private_key, certificate)

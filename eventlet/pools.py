@@ -1,37 +1,12 @@
 from __future__ import print_function
 
 import collections
+from contextlib import contextmanager
 
 from eventlet import queue
 
+
 __all__ = ['Pool', 'TokenPool']
-
-# have to stick this in an exec so it works in 2.4
-try:
-    from contextlib import contextmanager
-    exec('''
-@contextmanager
-def item_impl(self):
-    """ Get an object out of the pool, for use with with statement.
-
-    >>> from eventlet import pools
-    >>> pool = pools.TokenPool(max_size=4)
-    >>> with pool.item() as obj:
-    ...     print("got token")
-    ... 
-    got token
-    >>> pool.free()
-    4
-    """
-    obj = self.get()
-    try:
-        yield obj
-    finally:
-        self.put(obj)
-''')
-except ImportError:
-    item_impl = None
-
 
 
 class Pool(object):
@@ -68,15 +43,6 @@ class Pool(object):
 
         with mypool.item() as thing:
             thing.dostuff()
-
-    If stuck on 2.4, the :meth:`get` and :meth:`put` methods are the preferred
-    nomenclature.  Use a ``finally`` to ensure that nothing is leaked::
-
-        thing = self.pool.get()
-        try:
-            thing.dostuff()
-        finally:
-            self.pool.put(thing)
 
     The maximum size of the pool can be modified at runtime via
     the :meth:`resize` method.
@@ -121,13 +87,29 @@ class Pool(object):
                 created = self.create()
             except:
                 self.current_size -= 1
-                raise                
+                raise
             return created
         self.current_size -= 1 # did not create
         return self.channel.get()
 
-    if item_impl is not None:
-        item = item_impl
+    @contextmanager
+    def item(self):
+        """ Get an object out of the pool, for use with with statement.
+
+        >>> from eventlet import pools
+        >>> pool = pools.TokenPool(max_size=4)
+        >>> with pool.item() as obj:
+        ...     print("got token")
+        ...
+        got token
+        >>> pool.free()
+        4
+        """
+        obj = self.get()
+        try:
+            yield obj
+        finally:
+            self.put(obj)
 
     def put(self, item):
         """Put an item back into the pool, when done.  This may

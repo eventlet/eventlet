@@ -1,18 +1,12 @@
 language: python
 python: 2.7
 env:
-  - TOX_ENV=py25selects
-  - TOX_ENV=py25poll
   - TOX_ENV=py26selects
   - TOX_ENV=py26poll
   - TOX_ENV=py26epolls
   - TOX_ENV=py27selects
   - TOX_ENV=py27poll
   - TOX_ENV=py27epolls
-matrix:
-  allow_failures:
-    - env: TOX_ENV=py25selects
-    - env: TOX_ENV=py25poll
 install:
   - sudo apt-get update -qq
   - sudo apt-get install -qq libssl-dev libmysqlclient-dev libpq-dev

@@ -64,9 +64,9 @@ class metaphore(object):
     >>> count = coros.metaphore()
     >>> count.wait()
     >>> def decrementer(count, id):
-    ...     print("%s decrementing" % id)
+    ...     print("%s decrementing" % (id,))
     ...     count.dec()
-    ... 
+    ...
     >>> _ = eventlet.spawn(decrementer, count, 'A')
     >>> _ = eventlet.spawn(decrementer, count, 'B')
     >>> count.inc(2)
@@ -382,9 +382,9 @@ class Actor(object):
 
         >>> class Greeter(Actor):
         ...     def received(self, (message, evt) ):
-        ...         print("received", message)
+        ...         print("received {0}".format(message))
         ...         if evt: evt.send()
-        ... 
+        ...
         >>> a = Greeter()
 
         This example uses Events to synchronize between the actor and the main
