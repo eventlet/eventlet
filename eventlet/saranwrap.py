@@ -539,7 +539,7 @@ class Server(object):
                 try:
                     handler = getattr(self, handler_name)
                 except AttributeError:
-                    raise BadRequest, request.action()
+                    raise BadRequest(request.action())
 
                 response = handler(obj, request)
 
