@@ -163,7 +163,7 @@ class BoundedSemaphore(Semaphore):
         and is ignored
         """
         if self.counter >= self.original_counter:
-            raise ValueError, "Semaphore released too many times"
+            raise ValueError("Semaphore released too many times")
         return super(BoundedSemaphore, self).release(blocking)
 
 
