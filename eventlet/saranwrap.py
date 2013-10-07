@@ -1,3 +1,4 @@
+from __future__ import print_function
 import cPickle as Pickle
 import os
 import struct
@@ -157,7 +158,7 @@ def _is_local(attribute):
 def _prnt(message):
     global _g_debug_mode
     if _g_debug_mode:
-        print message
+        print(message)
 
 _g_logfile = None
 def _log(message):
@@ -604,12 +605,14 @@ def raise_standard_error():
 
 # test function to make sure print doesn't break the wrapper
 def print_string(str):
-    print str
+    print(str)
+
 
 # test function to make sure printing on stdout doesn't break the
 # wrapper
 def err_string(str):
-    print >>sys.stderr, str
+    print(str, file=sys.stderr)
+
 
 def named(name):
     """Return an object given its name.

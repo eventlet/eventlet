@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from collections import deque
 import sys
 import time
@@ -158,7 +160,7 @@ class BaseConnectionPool(Pool):
             pass # conn is None, or junk
         except:
             if not quiet:
-                print "Connection.close raised: %s" % (sys.exc_info()[1])
+                print("Connection.close raised: %s" % (sys.exc_info()[1]))
 
     def get(self):
         conn = super(BaseConnectionPool, self).get()
@@ -210,7 +212,7 @@ class BaseConnectionPool(Pool):
             except:
                 # we don't care what the exception was, we just know the
                 # connection is dead
-                print "WARNING: connection.rollback raised: %s" % (sys.exc_info()[1])
+                print("WARNING: connection.rollback raised: %s" % (sys.exc_info()[1]))
                 conn = None
 
         if conn is not None:

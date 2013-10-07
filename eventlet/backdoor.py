@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import socket
 import sys
 import errno
@@ -21,10 +23,10 @@ class FileProxy(object):
     def __init__(self, f):
         self.f = f
 
-    def isatty(self): 
+    def isatty(self):
         return True
 
-    def flush(self): 
+    def flush(self):
         pass
 
     def write(self, *a, **kw):
@@ -67,7 +69,7 @@ class SocketConsole(greenlets.greenlet):
     def finalize(self):
         # restore the state of the socket
         self.desc = None
-        print "backdoor closed to %s:%s" % self.hostport
+        print("backdoor closed to %s:%s" % self.hostport)
 
 
 def backdoor_server(sock, locals=None):
@@ -79,7 +81,7 @@ def backdoor_server(sock, locals=None):
     of the interpreters.  It can be convenient to stick important application
     variables in here.
     """
-    print "backdoor server listening on %s:%s" % sock.getsockname()
+    print("backdoor server listening on %s:%s" % sock.getsockname())
     try:
         try:
             while True:
@@ -100,7 +102,7 @@ def backdoor((conn, addr), locals=None):
     (such as backdoor_server).
     """
     host, port = addr
-    print "backdoor to %s:%s" % (host, port)
+    print("backdoor to %s:%s" % (host, port))
     fl = conn.makefile("rw")
     console = SocketConsole(fl, (host, port), locals)
     hub = hubs.get_hub()

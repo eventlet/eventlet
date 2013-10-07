@@ -22,4 +22,4 @@ http://ln.hixie.ch/rss/html
 
 url = 'http://localhost:9010/'
 result = urllib2.urlopen(url, big_list_of_feeds)
-print result.read()
+print(result.read())

@@ -1,17 +1,17 @@
 # Copyright (c) 2009 Denis Bilenko, denis.bilenko at gmail com
 # Copyright (c) 2010 Eventlet Contributors (see AUTHORS)
 # and licensed under the MIT license:
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -22,23 +22,24 @@
 
 """Synchronized queues.
 
-The :mod:`eventlet.queue` module implements multi-producer, multi-consumer 
-queues that work across greenlets, with the API similar to the classes found in 
-the standard :mod:`Queue` and :class:`multiprocessing <multiprocessing.Queue>` 
+The :mod:`eventlet.queue` module implements multi-producer, multi-consumer
+queues that work across greenlets, with the API similar to the classes found in
+the standard :mod:`Queue` and :class:`multiprocessing <multiprocessing.Queue>`
 modules.
 
 A major difference is that queues in this module operate as channels when
 initialized with *maxsize* of zero. In such case, both :meth:`Queue.empty`
-and :meth:`Queue.full` return ``True`` and :meth:`Queue.put` always blocks until 
+and :meth:`Queue.full` return ``True`` and :meth:`Queue.put` always blocks until
 a call to :meth:`Queue.get` retrieves the item.
 
-An interesting difference, made possible because of greenthreads, is 
-that :meth:`Queue.qsize`, :meth:`Queue.empty`, and :meth:`Queue.full` *can* be 
-used as indicators of whether the subsequent :meth:`Queue.get` 
-or :meth:`Queue.put` will not block.  The new methods :meth:`Queue.getting` 
-and :meth:`Queue.putting` report on the number of greenthreads blocking 
+An interesting difference, made possible because of greenthreads, is
+that :meth:`Queue.qsize`, :meth:`Queue.empty`, and :meth:`Queue.full` *can* be
+used as indicators of whether the subsequent :meth:`Queue.get`
+or :meth:`Queue.put` will not block.  The new methods :meth:`Queue.getting`
+and :meth:`Queue.putting` report on the number of greenthreads blocking
 in :meth:`put <Queue.put>` or :meth:`get <Queue.get>` respectively.
 """
+from __future__ import print_function
 
 import sys
 import heapq
@@ -81,7 +82,7 @@ class Waiter(object):
 
     def __str__(self):
         """
-        >>> print Waiter()
+        >>> print(Waiter())
         <Waiter greenlet=None>
         """
         if self.waiting:
@@ -133,8 +134,8 @@ class Waiter(object):
 
 class LightQueue(object):
     """
-    This is a variant of Queue that behaves mostly like the standard 
-    :class:`Queue`.  It differs by not supporting the 
+    This is a variant of Queue that behaves mostly like the standard
+    :class:`Queue`.  It differs by not supporting the
     :meth:`task_done <Queue.task_done>` or :meth:`join <Queue.join>` methods,
     and is a little faster for not having that overhead.
     """
@@ -190,14 +191,14 @@ class LightQueue(object):
             # Maybe wake some stuff up
             self._schedule_unlock()
         self.maxsize = size
-        
+
     def putting(self):
         """Returns the number of greenthreads that are blocked waiting to put
         items into the queue."""
         return len(self.putters)
-        
+
     def getting(self):
-        """Returns the number of greenthreads that are blocked waiting on an 
+        """Returns the number of greenthreads that are blocked waiting on an
         empty queue."""
         return len(self.getters)
 
@@ -357,17 +358,17 @@ class ItemWaiter(Waiter):
     def __init__(self, item):
         Waiter.__init__(self)
         self.item = item
-        
+
 
 class Queue(LightQueue):
     '''Create a queue object with a given maximum size.
 
     If *maxsize* is less than zero or ``None``, the queue size is infinite.
 
-    ``Queue(0)`` is a channel, that is, its :meth:`put` method always blocks 
-    until the item is delivered. (This is unlike the standard :class:`Queue`, 
+    ``Queue(0)`` is a channel, that is, its :meth:`put` method always blocks
+    until the item is delivered. (This is unlike the standard :class:`Queue`,
     where 0 means infinite size).
-    
+
     In all other respects, this Queue class resembled the standard library,
     :class:`Queue`.
     '''
@@ -402,7 +403,7 @@ class Queue(LightQueue):
 
         Raises a :exc:`ValueError` if called more times than there were items placed in the queue.
         '''
-        
+
         if self.unfinished_tasks <= 0:
             raise ValueError('task_done() called too many times')
         self.unfinished_tasks -= 1
@@ -449,4 +450,5 @@ class LifoQueue(Queue):
 
     def _get(self):
         return self.queue.pop()
+
 

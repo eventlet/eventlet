@@ -98,7 +98,7 @@ port = None
 if __name__ == "__main__":
     usage = 'usage: websocket_chat -p pub address -s sub address port number'
     if len (sys.argv) != 6:
-        print usage
+        print(usage)
         sys.exit(1)
 
     pub_addr = sys.argv[2]
@@ -106,22 +106,22 @@ if __name__ == "__main__":
     try:
         port = int(sys.argv[5])
     except ValueError:
-        print "Error port supplied couldn't be converted to int\n", usage
+        print("Error port supplied couldn't be converted to int\n", usage)
         sys.exit(1)
 
     try:
         pub_socket = ctx.socket(zmq.PUB)
         pub_socket.connect(pub_addr)
-        print "Publishing to %s" % pub_addr
+        print("Publishing to %s" % pub_addr)
         sub_socket = ctx.socket(zmq.SUB)
         sub_socket.connect(sub_addr)
         sub_socket.setsockopt(zmq.SUBSCRIBE, "")
-        print "Subscribing to %s" % sub_addr
+        print("Subscribing to %s" % sub_addr)
     except:
-        print "Couldn't create sockets\n", usage
+        print("Couldn't create sockets\n", usage)
         sys.exit(1)
 
     spawn_n(subscribe_and_distribute, sub_socket)
     listener = eventlet.listen(('127.0.0.1', port))
-    print "\nVisit http://localhost:%s/ in your websocket-capable browser.\n" % port
+    print("\nVisit http://localhost:%s/ in your websocket-capable browser.\n" % port)
     wsgi.server(listener, dispatch)

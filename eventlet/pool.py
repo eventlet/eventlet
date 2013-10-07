@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from eventlet import coros, proc, api
 from eventlet.semaphore import Semaphore
 
@@ -26,7 +28,7 @@ class Pool(object):
         discarded.  The return value of :meth:`free` will be negative in this
         situation.
         """
-        max_size_delta = new_max_size - self.max_size 
+        max_size_delta = new_max_size - self.max_size
         self.sem.counter += max_size_delta
         self.max_size = new_max_size
 
@@ -77,7 +79,7 @@ class Pool(object):
         return p
 
     def waitall(self):
-        """ Calling this function blocks until every coroutine 
+        """ Calling this function blocks until every coroutine
         completes its work (i.e. there are 0 running coroutines)."""
         return self.procs.waitall()
 
@@ -87,7 +89,7 @@ class Pool(object):
         """Wait for the next execute in the pool to complete,
         and return the result."""
         return self.results.wait()
-        
+
     def waiting(self):
         """Return the number of coroutines waiting to execute.
         """
@@ -110,7 +112,7 @@ class Pool(object):
 
         >>> pool = Pool()
         >>> def saw(x):
-        ...     print "I saw %s!" % x
+        ...     print("I saw %s!" % x)
         ...
         >>> pool.launch_all(saw, "ABC")
         >>> pool.wait_all()
@@ -130,7 +132,7 @@ class Pool(object):
 
         >>> from eventlet import coros
         >>> pool = coros.CoroutinePool()
-        >>> def saw(x): print "I saw %s!" % x
+        >>> def saw(x): print("I saw %s!" % x)
         ...
         >>> pool.process_all(saw, "DEF")
         I saw D!
@@ -190,11 +192,11 @@ class Pool(object):
         >>> pool = coros.CoroutinePool(max_size=5)
         >>> pausers = [coros.Event() for x in xrange(2)]
         >>> def longtask(evt, desc):
-        ...     print "%s woke up with %s" % (desc, evt.wait())
+        ...     print("%s woke up with %s" % (desc, evt.wait()))
         ...
         >>> pool.launch_all(longtask, zip(pausers, "AB"))
         >>> def quicktask(desc):
-        ...     print "returning %s" % desc
+        ...     print("returning %s" % desc)
         ...     return desc
         ...
 
@@ -202,39 +204,39 @@ class Pool(object):
         items individually to illustrate timing)
 
         >>> step = iter(pool.generate_results(quicktask, string.ascii_lowercase))
-        >>> print step.next()
+        >>> print(step.next())
         returning a
         returning b
         returning c
         a
-        >>> print step.next()
+        >>> print(step.next())
         b
-        >>> print step.next()
+        >>> print(step.next())
         c
-        >>> print step.next()
+        >>> print(step.next())
         returning d
         returning e
         returning f
         d
         >>> pausers[0].send("A")
-        >>> print step.next()
+        >>> print(step.next())
         e
-        >>> print step.next()
+        >>> print(step.next())
         f
-        >>> print step.next()
+        >>> print(step.next())
         A woke up with A
         returning g
         returning h
         returning i
         g
-        >>> print "".join([step.next() for x in xrange(3)])
+        >>> print("".join([step.next() for x in xrange(3)]))
         returning j
         returning k
         returning l
         returning m
         hij
         >>> pausers[1].send("B")
-        >>> print "".join([step.next() for x in xrange(4)])
+        >>> print("".join([step.next() for x in xrange(4)]))
         B woke up with B
         returning n
         returning o
@@ -313,4 +315,5 @@ class Pool(object):
         while finished < index + 1:
             yield q.wait()
             finished += 1
+
 

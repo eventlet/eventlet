@@ -48,7 +48,7 @@ def http_request(method, host, path, headers):
     conn.request(method, path, headers=headers)
     response = conn.getresponse()
     body = response.read()
-    print method, host, path, response.status, response.reason, len(body)
+    print(method, host, path, response.status, response.reason, len(body))
     return format_response(response, body)
 
 def format_response(response, body):
@@ -64,6 +64,6 @@ def format_response(response, body):
 class MyFactory(Factory):
     protocol = LineOnlyReceiver
 
-print __doc__
+print(__doc__)
 reactor.listenTCP(8888, MyFactory())
 reactor.run()

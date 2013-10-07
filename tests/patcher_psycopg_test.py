@@ -49,7 +49,7 @@ class PatchingPsycopg(patcher_test.ProcessBase):
         self.write_to_tempfile("psycopg_patcher", psycopg_test_file)
         output, lines = self.launch_subprocess('psycopg_patcher.py')
         if lines[0].startswith('Psycopg not monkeypatched'):
-            print "Can't test psycopg2 patching; it's not installed."
+            print("Can't test psycopg2 patching; it's not installed.")
             return
         # if there's anything wrong with the test program it'll have a stack trace
         self.assert_(lines[0].startswith('done'), output)
