@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import os
+import six
 import sys
 import time
 import traceback
@@ -132,7 +133,11 @@ class MySQLdbTester(LimitedTestCase):
         self.assert_cursor_works(curs)
 
     def test_module_attributes(self):
-        import MySQLdb as orig
+        if six.PY2:
+            import MySQLdb as orig
+        if six.PY3:
+            import pymysql as orig
+
         for key in dir(orig):
             if key not in ('__author__', '__path__', '__revision__',
                            '__version__', '__loader__'):
@@ -225,8 +230,12 @@ class MonkeyPatchTester(patcher_test.ProcessBase):
     @skip_unless(mysql_requirement)
     def test_monkey_patching(self):
         output, lines = self.run_script("""
+import six
 from eventlet import patcher
-import MySQLdb as m
+if six.PY2:
+    import MySQLdb as m
+if six.PY3:
+    import pymysql as m
 from eventlet.green import MySQLdb as gm
 patcher.monkey_patch(all=True, MySQLdb=True)
 print "mysqltest", ",".join(sorted(patcher.already_patched.keys()))
