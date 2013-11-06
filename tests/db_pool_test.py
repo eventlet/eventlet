@@ -1,9 +1,11 @@
 '''Test cases for db_pool
 '''
+
 from __future__ import print_function
 
 import sys
 import os
+import six
 import traceback
 from unittest import TestCase, main
 
@@ -508,7 +510,10 @@ get_auth = get_database_auth
 def mysql_requirement(_f):
     verbose = os.environ.get('eventlet_test_mysql_verbose')
     try:
-        import MySQLdb
+        if six.PY2:
+            import MySQLdb
+        if six.PY3:
+            import pymysql as MySQLdb
         try:
             auth = get_auth()['MySQLdb'].copy()
             MySQLdb.connect(**auth)
@@ -540,7 +545,10 @@ class MysqlConnectionPool(object):
 
     @skip_unless(mysql_requirement)
     def setUp(self):
-        import MySQLdb
+        if six.PY2:
+            import MySQLdb
+        if six.PY3:
+            import pymysql as MySQLdb
         self._dbmodule = MySQLdb
         self._auth = get_auth()['MySQLdb']
         super(MysqlConnectionPool, self).setUp()
