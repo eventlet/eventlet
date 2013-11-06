@@ -10,6 +10,7 @@ applications to use it.  Start off by looking at the `examples`_,
 .. _common design patterns: http://eventlet.net/doc/design_patterns.html
 .. _basic API primitives: http://eventlet.net/doc/basic_usage.html
 
+
 Quick Example
 ===============
 
@@ -27,24 +28,23 @@ Here's something you can try right on the command line::
 Getting Eventlet
 ==================
 
-The easiest way to get Eventlet is to use easy_install or pip::
+The easiest way to get Eventlet is to use pip::
 
-  easy_install eventlet
   pip install eventlet
 
-The development `tip`_ is available via easy_install as well::
+The development `tip`_ is available as well::
 
-  easy_install 'eventlet==dev'
   pip install 'eventlet==dev'
 
 .. _tip: http://bitbucket.org/eventlet/eventlet/get/tip.zip#egg=eventlet-dev
 
+
 Building the Docs Locally
 =========================
 
-To build a complete set of HTML documentation, you must have Sphinx, which can be found at http://sphinx.pocoo.org/ (or installed with `easy_install sphinx`)
+To build a complete set of HTML documentation, you must have Sphinx, which can be found at http://sphinx.pocoo.org/ (or installed with `pip install Sphinx`)::
 
   cd doc
   make html
-  
+
 The built html files can be found in doc/_build/html afterward.
