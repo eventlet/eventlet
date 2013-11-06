@@ -1,6 +1,8 @@
 import sys
 import imp
 
+import six
+
 __all__ = ['inject', 'import_patched', 'monkey_patch', 'is_monkey_patched']
 
 __exclude = set(('__builtins__', '__file__', '__name__'))
@@ -173,6 +175,8 @@ def original(modname):
     # we're working on don't have many dependencies so we can just do
     # some special-casing here
     deps = {'threading':'thread', 'Queue':'threading'}
+    if six.PY3:
+        deps['threading'] = '_thread'
     if modname in deps:
         dependency = deps[modname]
         saver.save(dependency)
