@@ -17,6 +17,8 @@ import imp
 import os
 import sys
 
+import six
+
 from eventlet import event
 from eventlet import greenio
 from eventlet import greenthread
@@ -117,7 +119,7 @@ def execute(meth,*args, **kwargs):
         if not QUIET:
             traceback.print_exception(c,e,tb)
             traceback.print_stack()
-        raise c,e,tb
+        six.reraise(c, e, tb)
     return rv
 
 

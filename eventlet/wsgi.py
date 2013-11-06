@@ -6,6 +6,8 @@ import traceback
 import types
 import warnings
 
+import six
+
 from eventlet.green import urllib
 from eventlet.green import socket
 from eventlet.green import BaseHTTPServer
@@ -372,7 +374,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 try:
                     if headers_sent:
                         # Re-raise original exception if headers sent
-                        raise exc_info[0], exc_info[1], exc_info[2]
+                        six.reraise(exc_info[0], exc_info[1], exc_info[2])
                 finally:
                     # Avoid dangling circular ref
                     exc_info = None
