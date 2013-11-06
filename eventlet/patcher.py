@@ -26,7 +26,7 @@ class SysModulesSaver(object):
         sys.modules.
         """
         try:
-            for modname, mod in self._saved.iteritems():
+            for modname, mod in six.iteritems(self._saved):
                 if mod is not None:
                     sys.modules[modname] = mod
                 else:

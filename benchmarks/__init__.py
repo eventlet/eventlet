@@ -1,9 +1,12 @@
 import gc
 import timeit
 import random
-    
-def measure_best(repeat, iters, 
-                 common_setup='pass', 
+
+import six
+
+
+def measure_best(repeat, iters,
+                 common_setup='pass',
                  common_cleanup='pass',
                  *funcs):
     funcs = list(funcs)
@@ -16,9 +19,8 @@ def measure_best(repeat, iters,
             t = timeit.Timer(func, setup=common_setup)
             results[func].append(t.timeit(iters))
             common_cleanup()
-    
+
     best_results = {}
-    for func, times in results.iteritems():
+    for func, times in six.iteritems(results):
         best_results[func] = min(times)
     return best_results
-    

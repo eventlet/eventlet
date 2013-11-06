@@ -1,3 +1,5 @@
+import six
+
 __select = __import__('select')
 error = __select.error
 from eventlet.greenthread import getcurrent
@@ -70,7 +72,7 @@ def select(read_list, write_list, error_list, timeout=None):
     if timeout is not None:
         timers.append(hub.schedule_call_global(timeout, on_timeout))
     try:
-        for k, v in ds.iteritems():
+        for k, v in six.iteritems(ds):
             if v.get('read'):
                 listeners.append(hub.add(hub.READ, k, on_read))
             if v.get('write'):
