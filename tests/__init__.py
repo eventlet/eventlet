@@ -1,6 +1,7 @@
 # package is named tests, not test, so it won't be confused with test in stdlib
 from __future__ import print_function
 
+import contextlib
 import errno
 import gc
 import os
@@ -20,6 +21,21 @@ from eventlet import tpool
 
 # convenience for importers
 main = unittest.main
+
+
+@contextlib.contextmanager
+def assert_raises(exc_type):
+    try:
+        yield
+    except exc_type:
+        pass
+    else:
+        name = str(exc_type)
+        try:
+            name = exc_type.__name__
+        except AttributeError:
+            pass
+        assert False, 'Expected exception {0}'.format(name)
 
 
 def skipped(func):
