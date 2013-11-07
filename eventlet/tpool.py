@@ -265,7 +265,7 @@ def setup():
         warnings.warn("Zero threads in tpool.  All tpool.execute calls will\
             execute in main thread.  Check the value of the environment \
             variable EVENTLET_THREADPOOL_SIZE.", RuntimeWarning)
-    for i in xrange(_nthreads):
+    for i in six.moves.range(_nthreads):
         t = threading.Thread(target=tworker,
                              name="tpool_thread_%s" % i)
         t.setDaemon(True)

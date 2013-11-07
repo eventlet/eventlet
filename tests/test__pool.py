@@ -6,6 +6,7 @@ warnings.simplefilter('default', DeprecationWarning)
 from eventlet import event as _event
 from tests import LimitedTestCase
 from unittest import main
+import six
 
 class TestCoroutinePool(LimitedTestCase):
     klass = pool.Pool
@@ -105,7 +106,7 @@ class TestCoroutinePool(LimitedTestCase):
         timer = timeout.Timeout(1, api.TimeoutError)
         try:
             evt = _event.Event()
-            for x in xrange(num_free):
+            for x in six.moves.range(num_free):
                 pool.execute(wait_long_time, evt)
                 # if the pool has fewer free than we expect,
                 # then we'll hit the timeout error
@@ -198,7 +199,7 @@ class TestCoroutinePool(LimitedTestCase):
             return 'ok'
         pool.execute(slow)
         self.assertEquals(pool.wait(), 'ok')
-        
+
     def test_pool_smash(self):
         # The premise is that a coroutine in a Pool tries to get a token out
         # of a token pool but times out before getting the token.  We verify
@@ -288,7 +289,7 @@ class PoolBasicTests(LimitedTestCase):
             
             int_pool = IntPool(max_size=intpool_size)
             pool = self.klass(max_size=pool_size)
-            for ix in xrange(num_executes):
+            for ix in six.moves.range(num_executes):
                 pool.execute(run, int_pool)
             pool.waitall()
             

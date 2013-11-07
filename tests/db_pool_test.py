@@ -135,7 +135,7 @@ class DBConnectionPool(DBTester):
 
     def fill_up_table(self, conn):
         curs = conn.cursor()
-        for i in range(1000):
+        for i in six.moves.range(1000):
             curs.execute('insert into test_table (value_int) values (%s)' % i)
         conn.commit()
 
@@ -421,12 +421,12 @@ class DBConnectionPool(DBTester):
         c = self.connection.cursor()
         self.connection.commit()
         def bench(c):
-            for i in xrange(iterations):
+            for i in six.moves.range(iterations):
                 c.execute('select 1')
 
         bench(c)  # warm-up
         results = []
-        for i in xrange(3):
+        for i in range(3):
             start = time.time()
             bench(c)
             end = time.time()

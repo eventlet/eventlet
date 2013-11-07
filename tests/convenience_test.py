@@ -1,5 +1,7 @@
 import os
 
+import six
+
 import eventlet
 from eventlet import event
 from eventlet.green import socket
@@ -65,7 +67,7 @@ class TestServe(LimitedTestCase):
             hits[0]+=1
         l = eventlet.listen(('localhost', 0))
         gt = eventlet.spawn(eventlet.serve, l, counter)
-        for i in xrange(100):
+        for i in six.moves.range(100):
             client = eventlet.connect(('localhost', l.getsockname()[1]))
             self.assertFalse(client.recv(100))            
         gt.kill()
@@ -100,7 +102,7 @@ class TestServe(LimitedTestCase):
             # verify the client is connected by getting data
             self.assertEquals(s2b('hi'), c.recv(2))
             return c
-        clients = [test_client() for i in xrange(5)]
+        clients = [test_client() for i in range(5)]
         # very next client should not get anything
         x = eventlet.with_timeout(0.01,
             test_client,
