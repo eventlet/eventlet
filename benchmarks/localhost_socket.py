@@ -30,13 +30,13 @@ def writer(addr, socket_impl):
 
 
 def green_accepter(server_sock, pool):
-    for i in xrange(CONCURRENCY):
+    for i in range(CONCURRENCY):
         sock, addr = server_sock.accept()
         pool.spawn_n(reader, sock)
 
 
 def heavy_accepter(server_sock, pool):
-    for i in xrange(CONCURRENCY):
+    for i in range(CONCURRENCY):
         sock, addr = server_sock.accept()
         t = threading.Thread(None, reader, "reader thread", (sock,))
         t.start()
@@ -57,7 +57,7 @@ def launch_green_threads():
     server_sock.listen(50)
     addr = ('localhost', server_sock.getsockname()[1])
     pool.spawn_n(green_accepter, server_sock, pool)
-    for i in xrange(CONCURRENCY):
+    for i in range(CONCURRENCY):
         pool.spawn_n(writer, addr, eventlet.green.socket.socket)
     pool.waitall()
 
@@ -75,7 +75,7 @@ def launch_heavy_threads():
     accepter_thread = threading.Thread(None, heavy_accepter, "accepter thread", (server_sock, threads))
     accepter_thread.start()
     threads.append(accepter_thread)
-    for i in xrange(CONCURRENCY):
+    for i in range(CONCURRENCY):
         client_thread = threading.Thread(None, writer, "writer thread", (addr, socket.socket))
         client_thread.start()
         threads.append(client_thread)

@@ -35,7 +35,7 @@ def count():
 expected = %s
 normal = %s
 p = eventlet.GreenPool()
-for i in xrange(expected*2):
+for i in range(expected*2):
     p.spawn(tpool.execute, count)
 p.waitall()
 assert highwater[0] > 20, "Highwater %%s  <= %%s" %% (highwater[0], normal)

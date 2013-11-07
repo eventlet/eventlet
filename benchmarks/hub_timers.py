@@ -19,7 +19,7 @@ l = []
 def work(n):
     l.append(n)
 
-timeouts = [random.uniform(0, 10) for x in xrange(timer_count)]
+timeouts = [random.uniform(0, 10) for x in range(timer_count)]
 
 hub = get_hub()
 

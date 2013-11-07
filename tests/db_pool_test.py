@@ -421,12 +421,12 @@ class DBConnectionPool(DBTester):
         c = self.connection.cursor()
         self.connection.commit()
         def bench(c):
-            for i in xrange(iterations):
+            for i in range(iterations):
                 c.execute('select 1')
 
         bench(c)  # warm-up
         results = []
-        for i in xrange(3):
+        for i in range(3):
             start = time.time()
             bench(c)
             end = time.time()
