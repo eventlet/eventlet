@@ -1,8 +1,12 @@
 import sys
 import threading
+
+import six
 from twisted.internet.base import DelayedCall as TwistedDelayedCall
+
 from eventlet.support import greenlets as greenlet
 from eventlet.hubs.hub import FdListener, READ, WRITE
+
 
 class DelayedCall(TwistedDelayedCall):
     "fix DelayedCall to behave like eventlet's Timer in some respects"
@@ -32,7 +36,7 @@ class LocalDelayedCall(DelayedCall):
 def callLater(DelayedCallClass, reactor, _seconds, _f, *args, **kw):
     # the same as original but creates fixed DelayedCall instance
     assert callable(_f), "%s is not callable" % _f
-    if not isinstance(_seconds, (int, long, float)):
+    if not isinstance(_seconds, (six.integer_types, float)):
         raise TypeError("Seconds must be int, long, or float, was " + type(_seconds))
     assert sys.maxint >= _seconds >= 0, \
            "%s is not greater than or equal to 0 seconds" % (_seconds,)
@@ -47,7 +51,7 @@ class socket_rwdescriptor(FdListener):
     #implements(IReadWriteDescriptor)
     def __init__(self, evtype, fileno, cb):
         super(socket_rwdescriptor, self).__init__(evtype, fileno, cb)
-        if not isinstance(fileno, (int,long)):
+        if not isinstance(fileno, six.integer_types):
             raise TypeError("Expected int or long, got %s" % type(fileno))
         # Twisted expects fileno to be a callable, not an attribute
         def _fileno():
