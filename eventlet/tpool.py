@@ -25,7 +25,11 @@ from eventlet import greenthread
 from eventlet import patcher
 from eventlet import timeout
 threading = patcher.original('threading')
-Queue_module = patcher.original('Queue')
+if six.PY2:
+    Queue_module = patcher.original('Queue')
+if six.PY3:
+    Queue_module = patcher.original('queue')
+
 Queue = Queue_module.Queue
 Empty = Queue_module.Empty
 
