@@ -8,6 +8,7 @@ import os
 import socket
 from socket import socket as _original_socket
 import sys
+import six
 import time
 import warnings
 
@@ -427,10 +428,10 @@ class GreenPipe(_fileobject):
     - file argument can be descriptor, file name or file object.
     """
     def __init__(self, f, mode='r', bufsize=-1):
-        if not isinstance(f, (basestring, int, file)):
+        if not isinstance(f, (six.string_types, int, file)):
             raise TypeError('f(ile) should be int, str, unicode or file, not %r' % f)
 
-        if isinstance(f, basestring):
+        if isinstance(f, six.string_types):
             f = open(f, mode, 0)
 
         if isinstance(f, int):
