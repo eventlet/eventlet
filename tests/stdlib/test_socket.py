@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import six
+
 from eventlet import patcher
 from eventlet.green import socket
 from eventlet.green import select
@@ -12,7 +14,7 @@ patcher.inject('test.test_socket',
     ('socket', socket),
     ('select', select),
     ('time', time),
-    ('thread', thread),
+    ('_thread', thread) if six.PY3 else ('thread': thread),
     ('threading', threading))
 
 # TODO: fix

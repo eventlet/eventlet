@@ -1,4 +1,6 @@
 """Implements the standard threading module, using greenthreads."""
+import six
+
 from eventlet import patcher
 from eventlet.green import thread
 from eventlet.green import time
@@ -14,7 +16,7 @@ __threadlocal = __orig_threading.local()
 
 patcher.inject('threading',
     globals(),
-    ('thread', thread),
+    ('_thread', thread) if six.PY3 else ('thread', thread),
     ('time', time))
 
 del patcher

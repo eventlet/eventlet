@@ -25,7 +25,7 @@
 
 """This module is API-equivalent to the standard library :mod:`profile` module but it is greenthread-aware as well as thread-aware.  Use this module
 to profile Eventlet-based applications in preference to either :mod:`profile` or :mod:`cProfile`.
-FIXME: No testcases for this module. 
+FIXME: No testcases for this module.
 """
 
 profile_orig = __import__('profile')
@@ -43,7 +43,11 @@ import six
 
 from eventlet import greenthread
 from eventlet import patcher
-thread = patcher.original('thread')  # non-monkeypatched module needed
+# non-monkeypatched module needed
+if six.PY2:
+    thread = patcher.original('thread')
+if six.PY3:
+    thread = patcher.original('_thread')
 
 #This class provides the start() and stop() functions
 class Profile(profile_orig.Profile):
@@ -97,7 +101,7 @@ class Profile(profile_orig.Profile):
         """A hack function to override error checking in parent class.  It
         allows invalid returns (where frames weren't preveiously entered into
         the profiler) which can happen for all the tasklets that suddenly start
-        to get monitored. This means that the time will eventually be attributed 
+        to get monitored. This means that the time will eventually be attributed
         to a call high in the chain, when there is a tasklet switch
         """
         if isinstance(self.cur[-2], Profile.fake_frame):

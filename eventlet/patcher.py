@@ -211,11 +211,16 @@ def monkey_patch(**on):
     module if present; and thread, which patches thread, threading, and Queue.
 
     It's safe to call monkey_patch multiple times.
-    """    
-    accepted_args = set(('os', 'select', 'socket', 
-                         'thread', 'time', 'psycopg', 'MySQLdb'))
+    """
+    if six.PY2:
+        accepted_args = set(('os', 'select', 'socket', 'thread',
+                             'time', 'psycopg', 'MySQLdb'))
+    if six.PY3:
+        accepted_args = set(('os', 'select', 'socket', '_thread',
+                             'time', 'psycopg', 'pymysq'))
+
     default_on = on.pop("all",None)
-    for k in on.iterkeys():
+    for k in on:
         if k not in accepted_args:
             raise TypeError("monkey_patch() got an unexpected "\
                                 "keyword argument %r" % k)
@@ -237,9 +242,16 @@ def monkey_patch(**on):
     if on['socket'] and not already_patched.get('socket'):
         modules_to_patch += _green_socket_modules()
         already_patched['socket'] = True
-    if on['thread'] and not already_patched.get('thread'):
-        modules_to_patch += _green_thread_modules()
-        already_patched['thread'] = True
+    if six.PY2:
+        # python 2 thread
+        if on['thread'] and not already_patched.get('thread'):
+            modules_to_patch += _green_thread_modules()
+            already_patched['thread'] = True
+    if six.PY3:
+        # python 3 thread
+        if on['_thread'] and not already_patched.get('_thread'):
+            modules_to_patch += _green_thread_modules()
+            already_patched['_thread'] = True
     if on['time'] and not already_patched.get('time'):
         modules_to_patch += _green_time_modules()
         already_patched['time'] = True
