@@ -19,13 +19,12 @@ CONNECT_SUCCESS = set((0, errno.EISCONN))
 if sys.platform[:3] == "win":
     CONNECT_ERR.add(errno.WSAEINVAL)   # Bug 67
 
-# Emulate _fileobject class in 3.x implementation
-# Eventually this internal socket structure could be replaced with makefile calls.
-try:
+if six.PY3:
+    from io import IOBase as file
+    _fileobject = socket.SocketIO
+else:
+    # python2x
     _fileobject = socket._fileobject
-except AttributeError:
-    def _fileobject(sock, *args, **kwargs):
-        return _original_socket.makefile(sock, *args, **kwargs)
 
 
 def socket_connect(descriptor, address):
