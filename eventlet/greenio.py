@@ -124,7 +124,7 @@ class GreenSocket(object):
     """
     def __init__(self, family_or_realsock=socket.AF_INET, *args, **kwargs):
         should_set_nonblocking = kwargs.pop('set_nonblocking', True)
-        if isinstance(family_or_realsock, (int, long)):
+        if isinstance(family_or_realsock, six.integer_types):
             fd = _original_socket(family_or_realsock, *args, **kwargs)
         else:
             fd = family_or_realsock

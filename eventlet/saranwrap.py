@@ -4,6 +4,8 @@ import os
 import struct
 import sys
 
+import six
+
 from eventlet.processes import Process, DeadProcess
 from eventlet import pools
 
@@ -572,7 +574,10 @@ class Server(object):
         :return: Returns ``True`` if *value* is a simple serializeable set of
             data.
         """
-        return type(value) in (str,unicode,int,float,long,bool,type(None))
+        if six.PY2:
+            return type(value) in (str, unicode, int, float, long, bool, type(None))
+        if six.PY3:
+            return type(value) in (bytes, str, int, float, bool, type(None))
 
     def respond(self, body):
         _log("responding with: %s" % body)
