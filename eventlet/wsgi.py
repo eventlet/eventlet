@@ -585,10 +585,11 @@ class Server(BaseHTTPServer.HTTPServer):
             d.update(self.environ)
         return d
 
-    def process_request(self, (sock, address)):
+    def process_request(self, sock_params):
         # The actual request handling takes place in __init__, so we need to
         # set minimum_chunk_size before __init__ executes and we don't want to modify
         # class variable
+        sock, address = sock_params
         proto = types.InstanceType(self.protocol)
         if self.minimum_chunk_size is not None:
             proto.minimum_chunk_size = self.minimum_chunk_size
