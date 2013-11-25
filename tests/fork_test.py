@@ -30,7 +30,7 @@ if (pid != 0):
         break
       except (IOError, IndexError):
         eventlet.sleep(0.1)
-    print 'result', result
+    print('result', result)
   finally:
     os.kill(pid, signal.SIGTERM)
 else:

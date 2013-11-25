@@ -64,7 +64,7 @@ def serve(sock, handle, concurrency=1000):
     two arguments: the client socket object, and the client address::
 
         def myhandle(client_sock, client_addr):
-            print "client connected", client_addr
+            print("client connected", client_addr)
 
         eventlet.serve(eventlet.listen(('127.0.0.1', 9999)), myhandle)
 

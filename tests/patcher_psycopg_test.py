@@ -11,7 +11,7 @@ import eventlet
 eventlet.monkey_patch()
 from eventlet import patcher
 if not patcher.is_monkey_patched('psycopg'):
-    print "Psycopg not monkeypatched"
+    print("Psycopg not monkeypatched")
     sys.exit(0)
 
 count = [0]
@@ -32,7 +32,7 @@ f = eventlet.spawn(fetch, 2, 1)
 t = eventlet.spawn(tick, 2, 100)
 f.wait()
 assert count[0] > 100, count[0]
-print "done"
+print("done")
 """
 
 import six

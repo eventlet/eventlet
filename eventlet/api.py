@@ -133,7 +133,7 @@ class timeout(object):
          with timeout(10, MySpecialError, error_arg_1):
              urllib2.open('http://example.com')
      except MySpecialError as e:
-         print "special error received"
+         print("special error received")
 
     When *exc* is ``None``, code block is interrupted silently.
     """
@@ -194,7 +194,7 @@ def named(name):
             obj = __import__(toimport)
             break
         except ImportError as err:
-            # print 'Import error on %s: %s' % (toimport, err)  # debugging spam
+            # print('Import error on %s: %s' % (toimport, err))  # debugging spam
             import_err_strings.append(err.__str__())
             toimport = '.'.join(toimport.split('.')[:-1])
     if obj is None:

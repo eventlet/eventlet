@@ -238,8 +238,8 @@ if six.PY3:
     import pymysql as m
 from eventlet.green import MySQLdb as gm
 patcher.monkey_patch(all=True, MySQLdb=True)
-print "mysqltest", ",".join(sorted(patcher.already_patched.keys()))
-print "connect", m.connect == gm.connect
+print("mysqltest", ",".join(sorted(patcher.already_patched.keys())))
+print("connect", m.connect == gm.connect)
 """)
         self.assertEqual(len(lines), 3)
         self.assertEqual(lines[0].replace("psycopg,", ""),
