@@ -16,7 +16,7 @@ if not patcher.is_monkey_patched('psycopg'):
 
 count = [0]
 def tick(totalseconds, persecond):
-    for i in xrange(totalseconds*persecond):
+    for i in range(totalseconds*persecond):
         count[0] += 1
         eventlet.sleep(1.0/persecond)
         

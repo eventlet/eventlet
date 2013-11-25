@@ -90,10 +90,10 @@ class TestQueue(LimitedTestCase):
         for i in range(5):
             q.put(i)
 
-        self.assertEquals(list(q.queue), range(5))
+        self.assertEquals(list(q.queue), list(range(5)))
         q.resize(1)
         eventlet.sleep(0)
-        self.assertEquals(list(q.queue), range(5))
+        self.assertEquals(list(q.queue), list(range(5)))
 
     def test_resize_to_Unlimited(self):
         q = eventlet.Queue(0)

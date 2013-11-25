@@ -1,9 +1,13 @@
 import sys
 import imp
 
+from eventlet.support import six
+
+
 __all__ = ['inject', 'import_patched', 'monkey_patch', 'is_monkey_patched']
 
 __exclude = set(('__builtins__', '__file__', '__name__'))
+
 
 class SysModulesSaver(object):
     """Class that captures some subset of the current state of
@@ -24,7 +28,7 @@ class SysModulesSaver(object):
         sys.modules.
         """
         try:
-            for modname, mod in self._saved.iteritems():
+            for modname, mod in six.iteritems(self._saved):
                 if mod is not None:
                     sys.modules[modname] = mod
                 else:
@@ -34,7 +38,7 @@ class SysModulesSaver(object):
                         pass
         finally:
             imp.release_lock()
-                
+
 
 def inject(module_name, new_globals, *additional_modules):
     """Base method for "injecting" greened modules into an imported module.  It
@@ -64,9 +68,9 @@ def inject(module_name, new_globals, *additional_modules):
             _green_select_modules() +
             _green_socket_modules() +
             _green_thread_modules() +
-            _green_time_modules()) 
+            _green_time_modules())
             #_green_MySQLdb()) # enable this after a short baking-in period
-    
+
     # after this we are gonna screw with sys.modules, so capture the
     # state of all the modules we're going to mess with, and lock
     saver = SysModulesSaver([name for name, m in additional_modules])
@@ -122,7 +126,7 @@ def patch_function(func, *additional_modules):
             _green_os_modules() +
             _green_select_modules() +
             _green_socket_modules() +
-            _green_thread_modules() + 
+            _green_thread_modules() +
             _green_time_modules())
 
     def patched(*args, **kw):
@@ -155,7 +159,7 @@ def _original_patch_function(func, *module_names):
 
 
 def original(modname):
-    """ This returns an unpatched version of a module; this is useful for 
+    """ This returns an unpatched version of a module; this is useful for
     Eventlet itself (i.e. tpool)."""
     # note that it's not necessary to temporarily install unpatched
     # versions of all patchable modules during the import of the
@@ -172,19 +176,22 @@ def original(modname):
     # some rudimentary dependency checking -- fortunately the modules
     # we're working on don't have many dependencies so we can just do
     # some special-casing here
-    deps = {'threading':'thread', 'Queue':'threading'}
+    if six.PY2:
+        deps = {'threading': 'thread', 'Queue': 'threading'}
+    if six.PY3:
+        deps = {'threading': '_thread', 'queue': 'threading'}
     if modname in deps:
         dependency = deps[modname]
         saver.save(dependency)
         sys.modules[dependency] = original(dependency)
     try:
         real_mod = __import__(modname, {}, {}, modname.split('.')[:-1])
-        if modname == 'Queue' and not hasattr(real_mod, '_threading'):
+        if modname in ('Queue', 'queue') and not hasattr(real_mod, '_threading'):
             # tricky hack: Queue's constructor in <2.7 imports
             # threading on every instantiation; therefore we wrap
             # it so that it always gets the original threading
             real_mod.Queue.__init__ = _original_patch_function(
-                real_mod.Queue.__init__, 
+                real_mod.Queue.__init__,
                 'threading')
         # save a reference to the unpatched module so it doesn't get lost
         sys.modules[original_name] = real_mod
@@ -200,14 +207,14 @@ def monkey_patch(**on):
     The keyword arguments afford some control over which modules are patched.
     If no keyword arguments are supplied, all possible modules are patched.
     If keywords are set to True, only the specified modules are patched.  E.g.,
-    ``monkey_patch(socket=True, select=True)`` patches only the select and 
-    socket modules.  Most arguments patch the single module of the same name 
-    (os, time, select).  The exceptions are socket, which also patches the ssl 
+    ``monkey_patch(socket=True, select=True)`` patches only the select and
+    socket modules.  Most arguments patch the single module of the same name
+    (os, time, select).  The exceptions are socket, which also patches the ssl
     module if present; and thread, which patches thread, threading, and Queue.
 
     It's safe to call monkey_patch multiple times.
-    """    
-    accepted_args = set(('os', 'select', 'socket', 
+    """
+    accepted_args = set(('os', 'select', 'socket',
                          'thread', 'time', 'psycopg', 'MySQLdb'))
     default_on = on.pop("all",None)
     for k in on.iterkeys():
@@ -221,7 +228,7 @@ def monkey_patch(**on):
             # MySQLdb is only on when explicitly patched for the moment
             on.setdefault(modname, False)
         on.setdefault(modname, default_on)
-        
+
     modules_to_patch = []
     if on['os'] and not already_patched.get('os'):
         modules_to_patch += _green_os_modules()
@@ -298,7 +305,10 @@ def _green_thread_modules():
     from eventlet.green import Queue
     from eventlet.green import thread
     from eventlet.green import threading
-    return [('Queue', Queue), ('thread', thread), ('threading', threading)]
+    if six.PY2:
+        return [('Queue', Queue), ('thread', thread), ('threading', threading)]
+    if six.PY3:
+        return [('queue', Queue), ('_thread', thread), ('threading', threading)]
 
 def _green_time_modules():
     from eventlet.green import time
@@ -315,9 +325,9 @@ def _green_MySQLdb():
 def slurp_properties(source, destination, ignore=[], srckeys=None):
     """Copy properties from *source* (assumed to be a module) to
     *destination* (assumed to be a dict).
-    
+
     *ignore* lists properties that should not be thusly copied.
-    *srckeys* is a list of keys to copy, if the source's __all__ is 
+    *srckeys* is a list of keys to copy, if the source's __all__ is
     untrustworthy.
     """
     if srckeys is None:
@@ -325,7 +335,7 @@ def slurp_properties(source, destination, ignore=[], srckeys=None):
     destination.update(dict([(name, getattr(source, name))
                               for name in srckeys
                               if not (
-                                name.startswith('__') or 
+                                name.startswith('__') or
                                 name in ignore)
                             ]))
 

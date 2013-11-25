@@ -1,5 +1,5 @@
 import warnings
-warnings.warn("The proc module is deprecated!  Please use the greenthread " 
+warnings.warn("The proc module is deprecated!  Please use the greenthread "
               "module, or any of the many other Eventlet cross-coroutine "
               "primitives, instead.",
                DeprecationWarning, stacklevel=2)
@@ -630,7 +630,7 @@ class wrap_errors(object):
     def func1(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except (A, B, C), ex:
+        except (A, B, C) as ex:
             return ex
 
     wrap_errors provides a shortcut to write that in one line:

@@ -3,27 +3,30 @@ import os
 import eventlet
 from eventlet import event
 from eventlet.green import socket
+from eventlet.support import six
 from tests import LimitedTestCase, s2b, skip_if_no_ssl
+
 
 certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
 private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
+
 
 class TestServe(LimitedTestCase):
     def setUp(self):
         super(TestServe, self).setUp()
         from eventlet import debug
         debug.hub_exceptions(False)
-        
+
     def tearDown(self):
         super(TestServe, self).tearDown()
         from eventlet import debug
         debug.hub_exceptions(True)
-        
+
     def test_exiting_server(self):
         # tests that the server closes the client sock on handle() exit
         def closer(sock,addr):
             pass
-            
+
         l = eventlet.listen(('localhost', 0))
         gt = eventlet.spawn(eventlet.serve, l, closer)
         client = eventlet.connect(('localhost', l.getsockname()[1]))
@@ -37,7 +40,7 @@ class TestServe(LimitedTestCase):
         def crasher(sock,addr):
             sock.recv(1024)
             0//0
-            
+
         l = eventlet.listen(('localhost', 0))
         gt = eventlet.spawn(eventlet.serve, l, crasher)
         client = eventlet.connect(('localhost', l.getsockname()[1]))
@@ -51,7 +54,7 @@ class TestServe(LimitedTestCase):
             sock.recv(1024)
             sock.close()
             0//0
-            
+
         l = eventlet.listen(('localhost', 0))
         gt = eventlet.spawn(eventlet.serve, l, crasher)
         client = eventlet.connect(('localhost', l.getsockname()[1]))
@@ -65,16 +68,16 @@ class TestServe(LimitedTestCase):
             hits[0]+=1
         l = eventlet.listen(('localhost', 0))
         gt = eventlet.spawn(eventlet.serve, l, counter)
-        for i in xrange(100):
+        for i in six.moves.range(100):
             client = eventlet.connect(('localhost', l.getsockname()[1]))
-            self.assertFalse(client.recv(100))            
+            self.assertFalse(client.recv(100))
         gt.kill()
         self.assertEqual(100, hits[0])
-        
+
     def test_blocking(self):
         l = eventlet.listen(('localhost', 0))
-        x = eventlet.with_timeout(0.01, 
-            eventlet.serve, l, lambda c,a: None, 
+        x = eventlet.with_timeout(0.01,
+            eventlet.serve, l, lambda c,a: None,
             timeout_value="timeout")
         self.assertEqual(x, "timeout")
 
@@ -83,7 +86,7 @@ class TestServe(LimitedTestCase):
             raise eventlet.StopServe()
         l = eventlet.listen(('localhost', 0))
         # connect to trigger a call to stopit
-        gt = eventlet.spawn(eventlet.connect, 
+        gt = eventlet.spawn(eventlet.connect,
             ('localhost', l.getsockname()[1]))
         eventlet.serve(l, stopit)
         gt.wait()
@@ -100,7 +103,7 @@ class TestServe(LimitedTestCase):
             # verify the client is connected by getting data
             self.assertEquals(s2b('hi'), c.recv(2))
             return c
-        clients = [test_client() for i in xrange(5)]
+        clients = [test_client() for i in range(5)]
         # very next client should not get anything
         x = eventlet.with_timeout(0.01,
             test_client,
@@ -120,7 +123,7 @@ class TestServe(LimitedTestCase):
         client = eventlet.wrap_ssl(eventlet.connect(('localhost', port)))
         client.sendall("echo")
         self.assertEquals("echo", client.recv(1024))
-        
+
     def test_socket_reuse(self):
         lsock1 = eventlet.listen(('localhost',0))
         port = lsock1.getsockname()[1]
