@@ -31,7 +31,7 @@ class LineOnlyReceiver(basic.LineOnlyReceiver):
 
     def requestReceived(self, lines):
         request = re.match('^(\w+) http://(.*?)(/.*?) HTTP/1..$', lines[0])
-        #print request.groups()
+        #print(request.groups())
         method, host, path = request.groups()
         headers = dict(x.split(': ', 1) for x in lines[1:])
         def callback(result):

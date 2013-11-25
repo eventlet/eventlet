@@ -219,13 +219,13 @@ class TestSaranwrap(LimitedTestCase):
         prox = saranwrap.wrap(time)
         delme = prox.gmtime(0)
         status_before = saranwrap.status(prox)
-        #print status_before['objects']
+        #print(status_before['objects'])
         del delme
         # need to do an access that doesn't create an object
         # in order to sync up the deleted objects
         prox.ctime(1)
         status_after = saranwrap.status(prox)
-        #print status_after['objects']
+        #print(status_after['objects'])
         self.assertLessThan(status_after['object_count'], status_before['object_count'])
 
     @skip_on_windows
