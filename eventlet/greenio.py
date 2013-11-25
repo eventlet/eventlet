@@ -1,4 +1,4 @@
-from eventlet.support import get_errno
+from eventlet.support import get_errno, six
 from eventlet.hubs import trampoline
 BUFFER_SIZE = 4096
 
@@ -18,13 +18,11 @@ CONNECT_SUCCESS = set((0, errno.EISCONN))
 if sys.platform[:3] == "win":
     CONNECT_ERR.add(errno.WSAEINVAL)   # Bug 67
 
-# Emulate _fileobject class in 3.x implementation
-# Eventually this internal socket structure could be replaced with makefile calls.
-try:
+if six.PY3:
+    from io import IOBase as file
+    _fileobject = socket.SocketIO
+elif six.PY2:
     _fileobject = socket._fileobject
-except AttributeError:
-    def _fileobject(sock, *args, **kwargs):
-        return _original_socket.makefile(sock, *args, **kwargs)
 
 
 def socket_connect(descriptor, address):
@@ -123,7 +121,7 @@ class GreenSocket(object):
     """
     def __init__(self, family_or_realsock=socket.AF_INET, *args, **kwargs):
         should_set_nonblocking = kwargs.pop('set_nonblocking', True)
-        if isinstance(family_or_realsock, (int, long)):
+        if isinstance(family_or_realsock, six.integer_types):
             fd = _original_socket(family_or_realsock, *args, **kwargs)
         else:
             fd = family_or_realsock
@@ -427,10 +425,10 @@ class GreenPipe(_fileobject):
     - file argument can be descriptor, file name or file object.
     """
     def __init__(self, f, mode='r', bufsize=-1):
-        if not isinstance(f, (basestring, int, file)):
+        if not isinstance(f, six.string_types + (int, file)):
             raise TypeError('f(ile) should be int, str, unicode or file, not %r' % f)
 
-        if isinstance(f, basestring):
+        if isinstance(f, six.string_types):
             f = open(f, mode, 0)
 
         if isinstance(f, int):
@@ -467,12 +465,11 @@ class GreenPipe(_fileobject):
                    'write', 'xreadlines', '__iter__', 'writelines']:
             setattr(self, method, _operationOnClosedFile)
 
-    if getattr(file, '__enter__', None):
-        def __enter__(self):
-            return self
+    def __enter__(self):
+        return self
 
-        def __exit__(self, *args):
-            self.close()
+    def __exit__(self, *args):
+        self.close()
 
     def readinto(self, buf):
         data = self.read(len(buf)) # FIXME could it be done without allocating intermediate?

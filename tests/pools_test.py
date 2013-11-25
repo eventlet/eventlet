@@ -3,6 +3,8 @@ from unittest import TestCase, main
 import eventlet
 from eventlet import Queue
 from eventlet import pools
+from eventlet.support import six
+
 
 class IntPool(pools.Pool):
     def create(self):
@@ -111,14 +113,14 @@ class TestIntPool(TestCase):
             def just_put(pool_item, index):
                 self.pool.put(pool_item)
                 queue.put(index)
-            for index in xrange(size + 1):
+            for index in six.moves.range(size + 1):
                 pool_item = self.pool.get()
                 eventlet.spawn(just_put, pool_item, index)
 
-            for _ in range(size+1):
+            for _ in six.moves.range(size+1):
                 x = queue.get()
                 results.append(x)
-            self.assertEqual(sorted(results), range(size + 1))
+            self.assertEqual(sorted(results), list(six.moves.range(size + 1)))
         finally:
             timer.cancel()
 
@@ -137,14 +139,14 @@ class TestIntPool(TestCase):
         # resize larger and assert that there are more free items
         pool.resize(2)
         self.assertEquals(pool.free(), 2)
-        
+
     def test_create_contention(self):
         creates = [0]
         def sleep_create():
             creates[0] += 1
             eventlet.sleep()
             return "slept"
-            
+
         p = pools.Pool(max_size=4, create=sleep_create)
 
         def do_get():
@@ -153,7 +155,7 @@ class TestIntPool(TestCase):
             p.put(x)
 
         gp = eventlet.GreenPool()
-        for i in xrange(100):
+        for i in six.moves.range(100):
             gp.spawn_n(do_get)
         gp.waitall()
         self.assertEquals(creates[0], 4)

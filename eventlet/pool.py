@@ -190,7 +190,7 @@ class Pool(object):
         >>> from eventlet import coros
         >>> import string
         >>> pool = coros.CoroutinePool(max_size=5)
-        >>> pausers = [coros.Event() for x in xrange(2)]
+        >>> pausers = [coros.Event() for x in range(2)]
         >>> def longtask(evt, desc):
         ...     print("%s woke up with %s" % (desc, evt.wait()))
         ...
@@ -229,14 +229,14 @@ class Pool(object):
         returning h
         returning i
         g
-        >>> print("".join([step.next() for x in xrange(3)]))
+        >>> print("".join([step.next() for x in range(3)]))
         returning j
         returning k
         returning l
         returning m
         hij
         >>> pausers[1].send("B")
-        >>> print("".join([step.next() for x in xrange(4)]))
+        >>> print("".join([step.next() for x in range(4)]))
         B woke up with B
         returning n
         returning o

@@ -45,16 +45,20 @@ import sys
 import heapq
 import collections
 import traceback
-from Queue import Full, Empty
 
-
-_NONE = object()
-from eventlet.hubs import get_hub
-from eventlet.greenthread import getcurrent
 from eventlet.event import Event
+from eventlet.greenthread import getcurrent
+from eventlet.hubs import get_hub
+from eventlet.support import six
 from eventlet.timeout import Timeout
 
+
 __all__ = ['Queue', 'PriorityQueue', 'LifoQueue', 'LightQueue', 'Full', 'Empty']
+
+_NONE = object()
+Full = six.moves.queue.Full
+Empty = six.moves.queue.Empty
+
 
 class Waiter(object):
     """A low level synchronization class.
@@ -450,5 +454,3 @@ class LifoQueue(Queue):
 
     def _get(self):
         return self.queue.pop()
-
-

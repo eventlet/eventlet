@@ -2,8 +2,11 @@ __select = __import__('select')
 error = __select.error
 from eventlet.greenthread import getcurrent
 from eventlet.hubs import get_hub
+from eventlet.support import six
+
 
 __patched__ = ['select']
+
 
 def get_fileno(obj):
     # The purpose of this function is to exactly replicate
@@ -13,14 +16,15 @@ def get_fileno(obj):
     try:
         f = obj.fileno
     except AttributeError:
-        if not isinstance(obj, (int, long)):
+        if not isinstance(obj, six.integer_types):
             raise TypeError("Expected int or long, got " + type(obj))
         return obj
     else:
         rv = f()
-        if not isinstance(rv, (int, long)):
+        if not isinstance(rv, six.integer_types):
             raise TypeError("Expected int or long, got " + type(rv))
         return rv
+
 
 def select(read_list, write_list, error_list, timeout=None):
     # error checking like this is required by the stdlib unit tests

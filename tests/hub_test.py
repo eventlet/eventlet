@@ -9,7 +9,8 @@ from eventlet import hubs
 from eventlet.green import socket
 from eventlet.event import Event
 from eventlet.semaphore import Semaphore
-from eventlet.support import greenlets
+from eventlet.support import greenlets, six
+
 
 DELAY = 0.001
 
@@ -26,7 +27,7 @@ class TestTimerCleanup(LimitedTestCase):
         hub = hubs.get_hub()
         stimers = hub.get_timers_count()
         scanceled = hub.timers_canceled
-        for i in xrange(2000):
+        for i in six.moves.range(2000):
             t = hubs.get_hub().schedule_call_global(60, noop)
             t.cancel()
             self.assert_less_than_equal(hub.timers_canceled,
@@ -40,7 +41,7 @@ class TestTimerCleanup(LimitedTestCase):
         hub = hubs.get_hub()
         stimers = hub.get_timers_count()
         scanceled = hub.timers_canceled
-        for i in xrange(2000):
+        for i in six.moves.range(2000):
             t = hubs.get_hub().schedule_call_global(60, noop)
             eventlet.sleep()
             self.assert_less_than_equal(hub.timers_canceled,
@@ -60,7 +61,7 @@ class TestTimerCleanup(LimitedTestCase):
         uncanceled_timers = []
         stimers = hub.get_timers_count()
         scanceled = hub.timers_canceled
-        for i in xrange(1000):
+        for i in six.moves.range(1000):
             # 2/3rds of new timers are uncanceled
             t = hubs.get_hub().schedule_call_global(60, noop)
             t2 = hubs.get_hub().schedule_call_global(60, noop)
@@ -304,7 +305,7 @@ server = eventlet.listen(('localhost', 12345))
 t = eventlet.Timeout(0.01)
 try:
     new_sock, address = server.accept()
-except eventlet.Timeout, t:
+except eventlet.Timeout as t:
     pass
 
 pid = os.fork()
@@ -312,7 +313,7 @@ if not pid:
     t = eventlet.Timeout(0.1)
     try:
         new_sock, address = server.accept()
-    except eventlet.Timeout, t:
+    except eventlet.Timeout as t:
         print "accept blocked"
 
 else:
