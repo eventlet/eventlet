@@ -3,7 +3,7 @@ import traceback
 import event
 import types
 
-from eventlet.support import greenlets as greenlet
+from eventlet.support import greenlets as greenlet, six
 from eventlet.hubs.hub import BaseHub, FdListener, READ, WRITE
 
 
@@ -63,7 +63,7 @@ class Hub(BaseHub):
                 t = getattr(event, '__event_exc')
                 setattr(event, '__event_exc', None)
                 assert getattr(event, '__event_exc') is None
-                raise t[0], t[1], t[2]
+                six.reraise(t[0], t[1], t[2])
 
             if result != 0:
                 return result

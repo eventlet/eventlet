@@ -11,7 +11,8 @@ from eventlet.green import socket
 from eventlet.green import BaseHTTPServer
 from eventlet import greenpool
 from eventlet import greenio
-from eventlet.support import get_errno
+from eventlet.support import get_errno, six
+
 
 DEFAULT_MAX_SIMULTANEOUS_REQUESTS = 1024
 DEFAULT_MAX_HTTP_VERSION = 'HTTP/1.1'
@@ -372,7 +373,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 try:
                     if headers_sent:
                         # Re-raise original exception if headers sent
-                        raise exc_info[0], exc_info[1], exc_info[2]
+                        six.reraise(exc_info[0], exc_info[1], exc_info[2])
                 finally:
                     # Avoid dangling circular ref
                     exc_info = None
@@ -583,10 +584,11 @@ class Server(BaseHTTPServer.HTTPServer):
             d.update(self.environ)
         return d
 
-    def process_request(self, (sock, address)):
+    def process_request(self, sock_params):
         # The actual request handling takes place in __init__, so we need to
         # set minimum_chunk_size before __init__ executes and we don't want to modify
         # class variable
+        sock, address = sock_params
         proto = types.InstanceType(self.protocol)
         if self.minimum_chunk_size is not None:
             proto.minimum_chunk_size = self.minimum_chunk_size

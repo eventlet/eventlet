@@ -23,7 +23,7 @@ def handle(ws):
                 break
             ws.send(m)
     elif ws.path == '/range':
-        for i in xrange(10):
+        for i in range(10):
             ws.send("msg %d" % i)
             eventlet.sleep(0.01)
     elif ws.path == '/error':
