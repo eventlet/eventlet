@@ -221,6 +221,10 @@ class Proxy(object):
         return self._obj.__str__()
     def __len__(self):
         return len(self._obj)
+    # py3
+    def __bool__(self):
+        return bool(self._obj)
+    # py2
     def __nonzero__(self):
         return bool(self._obj)
     def __iter__(self):
@@ -229,6 +233,10 @@ class Proxy(object):
             return self
         else:
             return Proxy(it)
+
+    def __next__(self):
+        return proxy_call(self._autowrap, self._obj.__next__)
+
     def next(self):
         return proxy_call(self._autowrap, self._obj.next)
 

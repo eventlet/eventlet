@@ -335,6 +335,9 @@ class ObjectProxy(Proxy):
         # tack anything on to the return value here because str values are used as data.
         return self.__str__()
 
+    def __bool__(self):
+        return self.__nonzero__()
+
     def __nonzero__(self):
         # bool(obj) is another method that skips __getattribute__.
         # There's no good way to just pass

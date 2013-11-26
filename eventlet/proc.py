@@ -526,6 +526,9 @@ class Proc(Source):
         klass = type(self).__name__
         return '<%s %s>' % (klass, ' '.join(self._repr_helper()))
 
+    def __bool__(self):
+        return self.__nonzero__()
+
     def __nonzero__(self):
         if self.ready():
             # with current _run this does not makes any difference
