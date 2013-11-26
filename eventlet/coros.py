@@ -147,8 +147,13 @@ class Queue(object):
         self.items = collections.deque()
         self._waiters = set()
 
+    # py3
+    def __bool__(self):
+        return len(self.items) > 0
+
+    # py2
     def __nonzero__(self):
-        return len(self.items)>0
+        return len(self.items) > 0
 
     def __len__(self):
         return len(self.items)
@@ -221,8 +226,13 @@ class Channel(object):
         self._waiters = set()
         self._senders = set()
 
+    # py3
+    def __bool__(self):
+        return len(self.items) > 0
+
+    # py2
     def __nonzero__(self):
-        return len(self.items)>0
+        return len(self.items) > 0
 
     def __len__(self):
         return len(self.items)

@@ -95,6 +95,9 @@ class Waiter(object):
             waiting = ''
         return '<%s%s greenlet=%s>' % (type(self).__name__, waiting, self.greenlet)
 
+    def __bool__(self):
+        return self.greenlet is not None
+
     def __nonzero__(self):
         return self.greenlet is not None
 
