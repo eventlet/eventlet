@@ -26,7 +26,7 @@ class Chat:
                     for buddy in self.participants:
                         if buddy is not conn:
                             buddy.sendline('from %s: %s' % (peer, line))
-        except Exception, ex:
+        except Exception as ex:
             print peer, ex
         else:
             print peer, 'connection done'

@@ -273,7 +273,7 @@ class Socket(_Socket):
             while True:
                 try:
                     return _Socket_send(self, msg, flags, copy, track)
-                except ZMQError, e:
+                except ZMQError as e:
                     if e.errno == EAGAIN:
                         self._eventlet_send_event.block()
                     else:
@@ -319,7 +319,7 @@ class Socket(_Socket):
             while True:
                 try:
                     return _Socket_recv(self, flags, copy, track)
-                except ZMQError, e:
+                except ZMQError as e:
                     if e.errno == EAGAIN:
                         self._eventlet_recv_event.block()
                     else:

@@ -237,7 +237,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 return
         except greenio.SSL.ZeroReturnError:
             self.raw_requestline = ''
-        except socket.error, e:
+        except socket.error as e:
             if get_errno(e) not in BAD_SOCK:
                 raise
             self.raw_requestline = ''
@@ -283,7 +283,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             self.server.outstanding_requests += 1
             try:
                 self.handle_one_response()
-            except socket.error, e:
+            except socket.error as e:
                 # Broken pipe, connection reset by peer
                 if get_errno(e) not in BROKEN_SOCK:
                     raise
@@ -518,7 +518,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
     def finish(self):
         try:
             BaseHTTPServer.BaseHTTPRequestHandler.finish(self)
-        except socket.error, e:
+        except socket.error as e:
             # Broken pipe, connection reset by peer
             if get_errno(e) not in BROKEN_SOCK:
                 raise
@@ -703,7 +703,7 @@ def server(sock, site,
                         " call site to use GreenPool instead" % type(pool),
                         DeprecationWarning, stacklevel=2)
                     pool.execute_async(serv.process_request, client_socket)
-            except ACCEPT_EXCEPTIONS, e:
+            except ACCEPT_EXCEPTIONS as e:
                 if get_errno(e) not in ACCEPT_ERRNO:
                     raise
             except (KeyboardInterrupt, SystemExit):
@@ -717,6 +717,6 @@ def server(sock, site,
             # that far we might as well not bother closing sock at
             # all.
             sock.close()
-        except socket.error, e:
+        except socket.error as e:
             if get_errno(e) not in BROKEN_SOCK:
                 traceback.print_exc()

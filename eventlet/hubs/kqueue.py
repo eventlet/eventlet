@@ -74,7 +74,7 @@ class Hub(BaseHub):
             event = self._events[fileno].pop(evtype)
             try:
                 self._delete_events([event])
-            except OSError, e:
+            except OSError as e:
                 pass
 
     def remove_descriptor(self, fileno):
@@ -82,9 +82,9 @@ class Hub(BaseHub):
         try:
             events = self._events.pop(fileno).values()
             self._delete_events(events)
-        except KeyError, e:
+        except KeyError as e:
             pass
-        except OSError, e:
+        except OSError as e:
             pass
 
     def wait(self, seconds=None):
