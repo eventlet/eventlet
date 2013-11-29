@@ -54,7 +54,8 @@ class TestActor(LimitedTestCase):
         # yields, eventually all messages are delivered
         msgs = []
         waiters = []
-        def received( (message, evt) ):
+        def received(received_data):
+            message, evt = received_data
             eventlet.sleep(0)
             msgs.append(message)
             evt.send()
@@ -78,7 +79,8 @@ class TestActor(LimitedTestCase):
 
     def test_raising_received(self):
         msgs = []
-        def received( (message, evt) ):
+        def received(received_data):
+            message, evt = received_data
             evt.send()
             if message == 'fail':
                 raise RuntimeError()
@@ -99,7 +101,8 @@ class TestActor(LimitedTestCase):
     def test_multiple(self):
         self.actor = IncrActor(concurrency=2)
         total = [0]
-        def received( (func, ev, value) ):
+        def received(received_data):
+            func, ev, value = received_data
             func()
             total[0] += value
             ev.send()

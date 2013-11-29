@@ -11,12 +11,12 @@ import eventlet
 eventlet.monkey_patch()
 from eventlet import patcher
 if not patcher.is_monkey_patched('psycopg'):
-    print "Psycopg not monkeypatched"
+    print("Psycopg not monkeypatched")
     sys.exit(0)
 
 count = [0]
 def tick(totalseconds, persecond):
-    for i in xrange(totalseconds*persecond):
+    for i in range(totalseconds*persecond):
         count[0] += 1
         eventlet.sleep(1.0/persecond)
         
@@ -32,8 +32,10 @@ f = eventlet.spawn(fetch, 2, 1)
 t = eventlet.spawn(tick, 2, 100)
 f.wait()
 assert count[0] > 100, count[0]
-print "done"
+print("done")
 """
+
+import six
 
 class PatchingPsycopg(patcher_test.ProcessBase):
     @skip_unless(postgres_requirement)
@@ -44,7 +46,7 @@ class PatchingPsycopg(patcher_test.ProcessBase):
             if isinstance(psycopg_auth,str):
                 dsn = psycopg_auth
             else:
-                dsn = " ".join(["%s=%s" % (k,v) for k,v, in psycopg_auth.iteritems()])
+                dsn = " ".join(["%s=%s" % (k, v) for k, v in six.iteritems(psycopg_auth)])
             os.environ['PSYCOPG_TEST_DSN'] = dsn
         self.write_to_tempfile("psycopg_patcher", psycopg_test_file)
         output, lines = self.launch_subprocess('psycopg_patcher.py')

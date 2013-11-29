@@ -17,13 +17,19 @@ import imp
 import os
 import sys
 
+import six
+
 from eventlet import event
 from eventlet import greenio
 from eventlet import greenthread
 from eventlet import patcher
 from eventlet import timeout
 threading = patcher.original('threading')
-Queue_module = patcher.original('Queue')
+if six.PY2:
+    Queue_module = patcher.original('Queue')
+if six.PY3:
+    Queue_module = patcher.original('queue')
+
 Queue = Queue_module.Queue
 Empty = Queue_module.Empty
 
@@ -117,7 +123,7 @@ def execute(meth,*args, **kwargs):
         if not QUIET:
             traceback.print_exception(c,e,tb)
             traceback.print_stack()
-        raise c,e,tb
+        six.reraise(c, e, tb)
     return rv
 
 
@@ -215,6 +221,10 @@ class Proxy(object):
         return self._obj.__str__()
     def __len__(self):
         return len(self._obj)
+    # py3
+    def __bool__(self):
+        return bool(self._obj)
+    # py2
     def __nonzero__(self):
         return bool(self._obj)
     def __iter__(self):
@@ -223,6 +233,10 @@ class Proxy(object):
             return self
         else:
             return Proxy(it)
+
+    def __next__(self):
+        return proxy_call(self._autowrap, self._obj.__next__)
+
     def next(self):
         return proxy_call(self._autowrap, self._obj.next)
 
@@ -263,7 +277,7 @@ def setup():
         warnings.warn("Zero threads in tpool.  All tpool.execute calls will\
             execute in main thread.  Check the value of the environment \
             variable EVENTLET_THREADPOOL_SIZE.", RuntimeWarning)
-    for i in xrange(_nthreads):
+    for i in range(_nthreads):
         t = threading.Thread(target=tworker,
                              name="tpool_thread_%s" % i)
         t.setDaemon(True)

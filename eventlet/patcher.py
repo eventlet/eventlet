@@ -1,6 +1,8 @@
 import sys
 import imp
 
+import six
+
 __all__ = ['inject', 'import_patched', 'monkey_patch', 'is_monkey_patched']
 
 __exclude = set(('__builtins__', '__file__', '__name__'))
@@ -24,7 +26,7 @@ class SysModulesSaver(object):
         sys.modules.
         """
         try:
-            for modname, mod in self._saved.iteritems():
+            for modname, mod in six.iteritems(self._saved):
                 if mod is not None:
                     sys.modules[modname] = mod
                 else:
@@ -172,14 +174,17 @@ def original(modname):
     # some rudimentary dependency checking -- fortunately the modules
     # we're working on don't have many dependencies so we can just do
     # some special-casing here
-    deps = {'threading':'thread', 'Queue':'threading'}
+    if six.PY2:
+        deps = {'threading': 'thread', 'Queue': 'threading'}
+    if six.PY3:
+        deps = {'threading': '_thread', 'queue': 'threading'}
     if modname in deps:
         dependency = deps[modname]
         saver.save(dependency)
         sys.modules[dependency] = original(dependency)
     try:
         real_mod = __import__(modname, {}, {}, modname.split('.')[:-1])
-        if modname == 'Queue' and not hasattr(real_mod, '_threading'):
+        if modname in ('Queue', 'queue') and not hasattr(real_mod, '_threading'):
             # tricky hack: Queue's constructor in <2.7 imports
             # threading on every instantiation; therefore we wrap
             # it so that it always gets the original threading
@@ -206,11 +211,16 @@ def monkey_patch(**on):
     module if present; and thread, which patches thread, threading, and Queue.
 
     It's safe to call monkey_patch multiple times.
-    """    
-    accepted_args = set(('os', 'select', 'socket', 
-                         'thread', 'time', 'psycopg', 'MySQLdb'))
+    """
+    if six.PY2:
+        accepted_args = set(('os', 'select', 'socket', 'thread',
+                             'time', 'psycopg', 'MySQLdb'))
+    if six.PY3:
+        accepted_args = set(('os', 'select', 'socket', '_thread',
+                             'time', 'psycopg', 'pymysq'))
+
     default_on = on.pop("all",None)
-    for k in on.iterkeys():
+    for k in on:
         if k not in accepted_args:
             raise TypeError("monkey_patch() got an unexpected "\
                                 "keyword argument %r" % k)
@@ -232,9 +242,16 @@ def monkey_patch(**on):
     if on['socket'] and not already_patched.get('socket'):
         modules_to_patch += _green_socket_modules()
         already_patched['socket'] = True
-    if on['thread'] and not already_patched.get('thread'):
-        modules_to_patch += _green_thread_modules()
-        already_patched['thread'] = True
+    if six.PY2:
+        # python 2 thread
+        if on['thread'] and not already_patched.get('thread'):
+            modules_to_patch += _green_thread_modules()
+            already_patched['thread'] = True
+    if six.PY3:
+        # python 3 thread
+        if on['_thread'] and not already_patched.get('_thread'):
+            modules_to_patch += _green_thread_modules()
+            already_patched['_thread'] = True
     if on['time'] and not already_patched.get('time'):
         modules_to_patch += _green_time_modules()
         already_patched['time'] = True
@@ -298,7 +315,10 @@ def _green_thread_modules():
     from eventlet.green import Queue
     from eventlet.green import thread
     from eventlet.green import threading
-    return [('Queue', Queue), ('thread', thread), ('threading', threading)]
+    if six.PY2:
+        return [('Queue', Queue), ('thread', thread), ('threading', threading)]
+    if six.PY3:
+        return [('queue', Queue), ('_thread', thread), ('threading', threading)]
 
 def _green_time_modules():
     from eventlet.green import time

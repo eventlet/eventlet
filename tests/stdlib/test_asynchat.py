@@ -1,3 +1,5 @@
+import six
+
 from eventlet import patcher
 from eventlet.green import asyncore
 from eventlet.green import asynchat
@@ -11,7 +13,7 @@ patcher.inject("test.test_asynchat",
     ('asyncore', asyncore),
     ('asynchat', asynchat),
     ('socket', socket),
-    ('thread', thread),
+    ('_thread', thread) if six.PY3 else ('thread', thread),
     ('threading', threading),
     ('time', time))
     

@@ -45,14 +45,18 @@ import sys
 import heapq
 import collections
 import traceback
-from Queue import Full, Empty
 
+from six.moves import queue
 
 _NONE = object()
 from eventlet.hubs import get_hub
 from eventlet.greenthread import getcurrent
 from eventlet.event import Event
 from eventlet.timeout import Timeout
+
+Full = queue.Full
+Empty = queue.Empty
+
 
 __all__ = ['Queue', 'PriorityQueue', 'LifoQueue', 'LightQueue', 'Full', 'Empty']
 
@@ -90,6 +94,9 @@ class Waiter(object):
         else:
             waiting = ''
         return '<%s%s greenlet=%s>' % (type(self).__name__, waiting, self.greenlet)
+
+    def __bool__(self):
+        return self.greenlet is not None
 
     def __nonzero__(self):
         return self.greenlet is not None

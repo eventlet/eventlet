@@ -4,6 +4,8 @@ import os
 import struct
 import sys
 
+import six
+
 from eventlet.processes import Process, DeadProcess
 from eventlet import pools
 
@@ -333,6 +335,9 @@ class ObjectProxy(Proxy):
         # tack anything on to the return value here because str values are used as data.
         return self.__str__()
 
+    def __bool__(self):
+        return self.__nonzero__()
+
     def __nonzero__(self):
         # bool(obj) is another method that skips __getattribute__.
         # There's no good way to just pass
@@ -572,7 +577,10 @@ class Server(object):
         :return: Returns ``True`` if *value* is a simple serializeable set of
             data.
         """
-        return type(value) in (str,unicode,int,float,long,bool,type(None))
+        if six.PY2:
+            return type(value) in (str, unicode, int, float, long, bool, type(None))
+        if six.PY3:
+            return type(value) in (bytes, str, int, float, bool, type(None))
 
     def respond(self, body):
         _log("responding with: %s" % body)

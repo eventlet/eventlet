@@ -26,7 +26,7 @@ class TestTimerCleanup(LimitedTestCase):
         hub = hubs.get_hub()
         stimers = hub.get_timers_count()
         scanceled = hub.timers_canceled
-        for i in xrange(2000):
+        for i in range(2000):
             t = hubs.get_hub().schedule_call_global(60, noop)
             t.cancel()
             self.assert_less_than_equal(hub.timers_canceled,
@@ -40,7 +40,7 @@ class TestTimerCleanup(LimitedTestCase):
         hub = hubs.get_hub()
         stimers = hub.get_timers_count()
         scanceled = hub.timers_canceled
-        for i in xrange(2000):
+        for i in range(2000):
             t = hubs.get_hub().schedule_call_global(60, noop)
             eventlet.sleep()
             self.assert_less_than_equal(hub.timers_canceled,
@@ -60,7 +60,7 @@ class TestTimerCleanup(LimitedTestCase):
         uncanceled_timers = []
         stimers = hub.get_timers_count()
         scanceled = hub.timers_canceled
-        for i in xrange(1000):
+        for i in range(1000):
             # 2/3rds of new timers are uncanceled
             t = hubs.get_hub().schedule_call_global(60, noop)
             t2 = hubs.get_hub().schedule_call_global(60, noop)
@@ -266,7 +266,7 @@ eventlet.Timeout(0.5)
 try:
    eventlet.listen(("127.0.0.1", 0)).accept()
 except eventlet.Timeout:
-   print "exited correctly"
+   print("exited correctly")
 """)
         fd.close()
         python_path = os.pathsep.join(sys.path + [self.tempdir])
@@ -304,7 +304,7 @@ server = eventlet.listen(('localhost', 12345))
 t = eventlet.Timeout(0.01)
 try:
     new_sock, address = server.accept()
-except eventlet.Timeout, t:
+except eventlet.Timeout as t:
     pass
 
 pid = os.fork()
@@ -312,14 +312,14 @@ if not pid:
     t = eventlet.Timeout(0.1)
     try:
         new_sock, address = server.accept()
-    except eventlet.Timeout, t:
-        print "accept blocked"
+    except eventlet.Timeout as t:
+        print("accept blocked")
 
 else:
     kpid, status = os.wait()
     assert kpid == pid
     assert status == 0
-    print "child died ok"
+    print("child died ok")
 """
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod.py')
@@ -403,7 +403,11 @@ try:
 except AttributeError:
     pass
 
-import __builtin__
+import six
+if six.PY3:
+    import builtins as __builtin__
+if six.PY2:
+    import __builtin__
 original_import = __builtin__.__import__
 
 def fail_import(name, *args, **kwargs):

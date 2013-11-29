@@ -1,4 +1,9 @@
-__MySQLdb = __import__('MySQLdb')
+import six
+
+if six.PY2:
+    __MySQLdb = __import__('MySQLdb')
+if six.PY3:
+    __MySQLdb = __import__('pymysql')
 
 __all__ = __MySQLdb.__all__
 __patched__ = ["connect", "Connect", 'Connection', 'connections']
@@ -9,7 +14,10 @@ slurp_properties(__MySQLdb, globals(),
                        
 from eventlet import tpool
 
-__orig_connections = __import__('MySQLdb.connections').connections
+if six.PY2:
+    __orig_connections = __import__('MySQLdb.connections').connections
+if six.PY3:
+    __orig_connections = __import__('pymysql.connections').connections
 
 def Connection(*args, **kw):
     conn = tpool.execute(__orig_connections.Connection, *args, **kw)
@@ -25,8 +33,12 @@ for var in dir(__orig_connections):
         setattr(connections, var, getattr(__orig_connections, var))
 connections.Connection = Connection
 
-cursors = __import__('MySQLdb.cursors').cursors
-converters = __import__('MySQLdb.converters').converters
+if six.PY2:
+   cursors = __import__('MySQLdb.cursors').cursors
+   converters = __import__('MySQLdb.converters').converters
+if six.PY3:
+   cursors = __import__('pymysql.cursors').cursors
+   converters = __import__('pymysql.converters').converters
 
 # TODO support instantiating cursors.FooCursor objects directly
 # TODO though this is a low priority, it would be nice if we supported

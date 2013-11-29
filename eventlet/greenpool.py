@@ -209,6 +209,9 @@ class GreenPile(object):
     def __iter__(self):
         return self
 
+    def __next__(self):
+        return self.next()
+
     def next(self):
         """Wait for the next result, suspending the current greenthread until it
         is available.  Raises StopIteration when there are no more results."""
@@ -226,6 +229,9 @@ class GreenMap(GreenPile):
     def __init__(self, size_or_pool):
         super(GreenMap, self).__init__(size_or_pool)
         self.waiters = queue.LightQueue(maxsize=self.pool.size)
+
+    def __next__(self):
+        return self.next()
 
     def next(self):
         try:

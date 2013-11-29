@@ -95,12 +95,13 @@ def backdoor_server(sock, locals=None):
         sock.close()
 
 
-def backdoor((conn, addr), locals=None):
+def backdoor(conn_info, locals=None):
     """Sets up an interactive console on a socket with a single connected
     client.  This does not block the caller, as it spawns a new greenlet to
     handle the console.  This is meant to be called from within an accept loop
     (such as backdoor_server).
     """
+    conn, addr = conn_info
     host, port = addr
     print("backdoor to %s:%s" % (host, port))
     fl = conn.makefile("rw")

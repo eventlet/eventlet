@@ -24,10 +24,10 @@ class GreenPool(tests.LimitedTestCase):
     def test_spawn(self):
         p = greenpool.GreenPool(4)
         waiters = []
-        for i in xrange(10):
+        for i in range(10):
             waiters.append(p.spawn(passthru, i))
         results = [waiter.wait() for waiter in waiters]
-        self.assertEquals(results, list(xrange(10)))
+        self.assertEquals(results, list(range(10)))
 
     def test_spawn_n(self):
         p = greenpool.GreenPool(4)
@@ -35,10 +35,10 @@ class GreenPool(tests.LimitedTestCase):
         def do_something(a):
             eventlet.sleep(0.01)
             results_closure.append(a)
-        for i in xrange(10):
+        for i in range(10):
             p.spawn(do_something, i)
         p.waitall()
-        self.assertEquals(results_closure, range(10))
+        self.assertEquals(results_closure, list(range(10)))
         
     def test_waiting(self):
         pool = greenpool.GreenPool(1)
@@ -123,7 +123,7 @@ class GreenPool(tests.LimitedTestCase):
         timer = eventlet.Timeout(1)
         try:
             evt = event.Event()
-            for x in xrange(num_free):
+            for x in range(num_free):
                 pool.spawn(wait_long_time, evt)
                 # if the pool has fewer free than we expect,
                 # then we'll hit the timeout error
@@ -254,8 +254,8 @@ class GreenPool(tests.LimitedTestCase):
 
     def test_imap(self):
         p = greenpool.GreenPool(4)
-        result_list = list(p.imap(passthru, xrange(10)))
-        self.assertEquals(result_list, list(xrange(10)))
+        result_list = list(p.imap(passthru, range(10)))
+        self.assertEquals(result_list, list(range(10)))
         
     def test_empty_imap(self):
         p = greenpool.GreenPool(4)
@@ -264,13 +264,13 @@ class GreenPool(tests.LimitedTestCase):
         
     def test_imap_nonefunc(self):
         p = greenpool.GreenPool(4)
-        result_list = list(p.imap(None, xrange(10)))
-        self.assertEquals(result_list, [(x,) for x in xrange(10)])
+        result_list = list(p.imap(None, range(10)))
+        self.assertEquals(result_list, [(x,) for x in range(10)])
         
     def test_imap_multi_args(self):
         p = greenpool.GreenPool(4)
-        result_list = list(p.imap(passthru2, xrange(10), xrange(10, 20)))
-        self.assertEquals(result_list, list(itertools.izip(xrange(10), xrange(10,20))))
+        result_list = list(p.imap(passthru2, range(10), range(10, 20)))
+        self.assertEquals(result_list, list(itertools.izip(range(10), range(10,20))))
 
     def test_imap_raises(self):
         # testing the case where the function raises an exception;
@@ -282,7 +282,7 @@ class GreenPool(tests.LimitedTestCase):
                 raise RuntimeError("intentional error")
             else:
                 return item
-        it = p.imap(raiser, xrange(10))
+        it = p.imap(raiser, range(10))
         results = []
         while True:
             try:
@@ -295,8 +295,8 @@ class GreenPool(tests.LimitedTestCase):
         
     def test_starmap(self):
         p = greenpool.GreenPool(4)
-        result_list = list(p.starmap(passthru, [(x,) for x in xrange(10)]))
-        self.assertEquals(result_list, range(10))
+        result_list = list(p.starmap(passthru, [(x,) for x in range(10)]))
+        self.assertEquals(result_list, list(range(10)))
 
     def test_waitall_on_nothing(self):
         p = greenpool.GreenPool()
@@ -311,36 +311,36 @@ class GreenPool(tests.LimitedTestCase):
 class GreenPile(tests.LimitedTestCase):
     def test_pile(self):
         p = greenpool.GreenPile(4)
-        for i in xrange(10):
+        for i in range(10):
             p.spawn(passthru, i)
         result_list = list(p)
-        self.assertEquals(result_list, list(xrange(10)))
+        self.assertEquals(result_list, list(range(10)))
         
     def test_pile_spawn_times_out(self):
         p = greenpool.GreenPile(4)
-        for i in xrange(4):
+        for i in range(4):
             p.spawn(passthru, i)
         # now it should be full and this should time out
         eventlet.Timeout(0)
         self.assertRaises(eventlet.Timeout, p.spawn, passthru, "time out")
         # verify that the spawn breakage didn't interrupt the sequence
         # and terminates properly
-        for i in xrange(4,10):
+        for i in range(4,10):
             p.spawn(passthru, i)
-        self.assertEquals(list(p), list(xrange(10)))
+        self.assertEquals(list(p), list(range(10)))
         
     def test_constructing_from_pool(self):
         pool = greenpool.GreenPool(2)
         pile1 = greenpool.GreenPile(pool)
         pile2 = greenpool.GreenPile(pool)
         def bunch_of_work(pile, unique):
-            for i in xrange(10):
+            for i in range(10):
                 pile.spawn(passthru, i + unique)
         eventlet.spawn(bunch_of_work, pile1, 0)
         eventlet.spawn(bunch_of_work, pile2, 100)
         eventlet.sleep(0)
-        self.assertEquals(list(pile2), list(xrange(100,110)))
-        self.assertEquals(list(pile1), list(xrange(10)))
+        self.assertEquals(list(pile2), list(range(100,110)))
+        self.assertEquals(list(pile1), list(range(10)))
 
 
 class StressException(Exception):
@@ -368,7 +368,7 @@ class Stress(tests.LimitedTestCase):
         # checks that piles are strictly ordered
         p = greenpool.GreenPile(concurrency)
         def makework(count, unique):            
-            for i in xrange(count):
+            for i in range(count):
                 token = (unique, i)
                 p.spawn(pressure, token)
         
@@ -409,7 +409,7 @@ class Stress(tests.LimitedTestCase):
         # ordered and consumes a constant amount of memory
         p = greenpool.GreenPool(concurrency)
         count = 1000
-        it = p.imap(passthru, xrange(count))
+        it = p.imap(passthru, range(count))
         latest = -1
         while True:
             try:
@@ -456,7 +456,7 @@ class Stress(tests.LimitedTestCase):
             
             int_pool = IntPool(max_size=intpool_size)
             pool = greenpool.GreenPool(pool_size)
-            for ix in xrange(num_executes):
+            for ix in range(num_executes):
                 pool.spawn(run, int_pool)
             pool.waitall()
             
