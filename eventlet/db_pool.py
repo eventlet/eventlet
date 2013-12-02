@@ -190,7 +190,7 @@ class BaseConnectionPool(Pool):
         wrapped._db_pool_created_at = created_at
         return wrapped
 
-    def put(self, conn):
+    def put(self, conn, cleanup='rollback'):
         created_at = getattr(conn, '_db_pool_created_at', 0)
         now = time.time()
         conn = self._unwrap_connection(conn)
@@ -198,19 +198,19 @@ class BaseConnectionPool(Pool):
         if self._is_expired(now, now, created_at):
             self._safe_close(conn, quiet=False)
             conn = None
-        else:
-            # rollback any uncommitted changes, so that the next client
-            # has a clean slate.  This also pokes the connection to see if
-            # it's dead or None
+        elif cleanup is not None:
+            # by default, call rollback in case the connection is in the middle
+            # of a transaction. However, rollback has performance implications
+            # so optionally do nothing or call something else like ping
             try:
                 if conn:
-                    conn.rollback()
+                    getattr(conn, cleanup)()
             except KeyboardInterrupt:
                 raise
             except:
                 # we don't care what the exception was, we just know the
                 # connection is dead
-                print "WARNING: connection.rollback raised: %s" % (sys.exc_info()[1])
+                print "WARNING: connection.%s raised: %s" % (cleanup, sys.exc_info()[1])
                 conn = None
 
         if conn is not None:
