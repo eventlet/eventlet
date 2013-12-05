@@ -293,41 +293,6 @@ class TestBadFilenos(LimitedTestCase):
         self.assertRaises(ValueError, select.select, [-1], [], [])
 
 
-class TestFork(ProcessBase):
-
-    @skip_with_pyevent
-    def test_fork(self):
-        new_mod = """
-import os
-import eventlet
-server = eventlet.listen(('localhost', 12345))
-t = eventlet.Timeout(0.01)
-try:
-    new_sock, address = server.accept()
-except eventlet.Timeout, t:
-    pass
-
-pid = os.fork()
-if not pid:
-    t = eventlet.Timeout(0.1)
-    try:
-        new_sock, address = server.accept()
-    except eventlet.Timeout, t:
-        print "accept blocked"
-
-else:
-    kpid, status = os.wait()
-    assert kpid == pid
-    assert status == 0
-    print "child died ok"
-"""
-        self.write_to_tempfile("newmod", new_mod)
-        output, lines = self.launch_subprocess('newmod.py')
-        self.assertEqual(len(lines), 3, output)
-        self.assert_("accept blocked" in lines[0])
-        self.assert_("child died ok" in lines[1])
-
-
 class TestDeadRunLoop(LimitedTestCase):
     TEST_TIMEOUT = 2
 
