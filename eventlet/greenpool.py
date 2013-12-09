@@ -1,5 +1,6 @@
 import itertools
 import traceback
+import six
 
 from eventlet import event
 from eventlet import greenthread
@@ -163,7 +164,7 @@ class GreenPool(object):
            for result in pool.imap(worker, open("filename", 'r')):
                print result
         """
-        return self.starmap(function, itertools.izip(*iterables))
+        return self.starmap(function, six.moves.zip(*iterables))
 
 
 def return_stop_iteration():
@@ -209,7 +210,7 @@ class GreenPile(object):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         """Wait for the next result, suspending the current greenthread until it
         is available.  Raises StopIteration when there are no more results."""
         if self.counter == 0 and self.used:
@@ -227,7 +228,7 @@ class GreenMap(GreenPile):
         super(GreenMap, self).__init__(size_or_pool)
         self.waiters = queue.LightQueue(maxsize=self.pool.size)
 
-    def next(self):
+    def __next__(self):
         try:
             val = self.waiters.get().wait()
             if isinstance(val, StopIteration):

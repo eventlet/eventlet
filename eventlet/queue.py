@@ -41,6 +41,7 @@ in :meth:`put <Queue.put>` or :meth:`get <Queue.get>` respectively.
 """
 from __future__ import print_function
 
+import six
 import sys
 import heapq
 import collections
@@ -91,7 +92,7 @@ class Waiter(object):
             waiting = ''
         return '<%s%s greenlet=%s>' % (type(self).__name__, waiting, self.greenlet)
 
-    def __nonzero__(self):
+    def __bool__(self):
         return self.greenlet is not None
 
     @property

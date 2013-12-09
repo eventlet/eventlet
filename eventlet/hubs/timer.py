@@ -1,3 +1,5 @@
+import six
+
 from eventlet.support import greenlets as greenlet
 from eventlet.hubs import get_hub
 
@@ -20,8 +22,8 @@ class Timer(object):
         self.tpl = cb, args, kw
         self.called = False
         if _g_debug:
-            import traceback, cStringIO
-            self.traceback = cStringIO.StringIO()
+            import traceback, six.moves.cStringIO
+            self.traceback = six.moves.cStringIO.StringIO()
             traceback.print_stack(file=self.traceback)
 
     @property

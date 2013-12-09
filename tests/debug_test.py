@@ -1,4 +1,5 @@
 import sys
+import six
 
 import eventlet
 from eventlet import debug
@@ -6,9 +7,9 @@ from tests import LimitedTestCase, main, s2b
 from unittest import TestCase
 
 try:
-    from cStringIO import StringIO
+    from six.moves.cStringIO import StringIO
 except ImportError:
-    from StringIO import StringIO
+    from six.moves.StringIO import StringIO
 
 class TestSpew(TestCase):
     def setUp(self):

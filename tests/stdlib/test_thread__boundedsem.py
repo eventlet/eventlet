@@ -12,7 +12,7 @@ thread.LockType = coros.CappedSemaphore
 
 try:
     import os.path
-    execfile(os.path.join(os.path.dirname(__file__), 'test_thread.py'))
+    exec(compile(open(os.path.join(os.path.dirname(__file__), 'test_thread.py')).read(), os.path.join(os.path.dirname(__file__), 'test_thread.py'), 'exec'))
 finally:
     thread.allocate_lock = original_allocate_lock
     thread.LockType = original_LockType

@@ -6,6 +6,7 @@ import sys
 import os
 import traceback
 from unittest import TestCase, main
+import six
 
 from tests import skipped, skip_unless, skip_with_pyevent, get_database_auth
 from eventlet import event
@@ -419,12 +420,12 @@ class DBConnectionPool(DBTester):
         c = self.connection.cursor()
         self.connection.commit()
         def bench(c):
-            for i in xrange(iterations):
+            for i in six.moves.range(iterations):
                 c.execute('select 1')
 
         bench(c)  # warm-up
         results = []
-        for i in xrange(3):
+        for i in six.moves.range(3):
             start = time.time()
             bench(c)
             end = time.time()

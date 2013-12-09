@@ -22,6 +22,7 @@ from eventlet import websocket
 from eventlet.green import zmq
 from eventlet.hubs import get_hub, use_hub
 from uuid import uuid1
+import six
 
 use_hub('zeromq')
 ctx = zmq.Context()
@@ -54,7 +55,7 @@ def subscribe_and_distribute(sub_socket):
     global participants
     while True:
         msg = sub_socket.recv_pyobj()
-        for ws, name_id in participants.items():
+        for ws, name_id in six.iteritems(participants):
             to_send = name_id.unpack_message(msg)
             if to_send:
                 try:

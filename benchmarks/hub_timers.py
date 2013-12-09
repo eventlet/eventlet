@@ -7,6 +7,8 @@ import sys
 import eventlet
 import random
 import time
+import six
+
 from eventlet.hubs import timer, get_hub
 
 timer_count = 100000
@@ -19,7 +21,7 @@ l = []
 def work(n):
     l.append(n)
 
-timeouts = [random.uniform(0, 10) for x in xrange(timer_count)]
+timeouts = [random.uniform(0, 10) for x in six.moves.range(timer_count)]
 
 hub = get_hub()
 

@@ -2,6 +2,7 @@ import collections
 import errno
 import string
 import struct
+import six
 from socket import error as SocketError
 
 try:
@@ -175,7 +176,7 @@ class WebSocket(object):
 
         As per the dataframing section (5.3) for the websocket spec
         """
-        if isinstance(message, unicode):
+        if isinstance(message, six.text_type):
             message = message.encode('utf-8')
         elif not isinstance(message, str):
             message = str(message)

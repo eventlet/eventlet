@@ -39,7 +39,7 @@ class _QueueLock(object):
         self._holder = None
         self._hub = hubs.get_hub()
 
-    def __nonzero__(self):
+    def __bool__(self):
         return self._count
 
     def __enter__(self):
@@ -85,7 +85,7 @@ class _BlockedThread(object):
         self._wakeupper = None
         self._hub = hubs.get_hub()
 
-    def __nonzero__(self):
+    def __bool__(self):
         return self._blocked_thread is not None
 
     def block(self):

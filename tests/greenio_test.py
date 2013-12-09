@@ -12,7 +12,7 @@ import fcntl
 import os
 import sys
 import tempfile, shutil
-
+import six
 
 def bufsized(sock, size=1):
     """ Resize both send and receive buffers on a socket.
@@ -626,7 +626,7 @@ class TestGreenPipe(LimitedTestCase):
 
         one_line = "12345\n"
         eventlet.spawn(sender, wf, one_line * 5)
-        for i in xrange(5):
+        for i in six.moves.range(5):
             line = rf.readline()
             eventlet.sleep(0.01)
             self.assertEquals(line, one_line)
@@ -668,7 +668,7 @@ class TestGreenPipe(LimitedTestCase):
         r = greenio.GreenPipe(r)
         w = greenio.GreenPipe(w, 'w')
 
-        large_message = "".join([1024 * chr(i) for i in xrange(65)])
+        large_message = "".join([1024 * chr(i) for i in six.moves.range(65)])
 
         def writer():
             w.write(large_message)
@@ -676,7 +676,7 @@ class TestGreenPipe(LimitedTestCase):
 
         gt = eventlet.spawn(writer)
 
-        for i in xrange(65):
+        for i in six.moves.range(65):
             buf = r.read(1024)
             expected = 1024 * chr(i)
             self.assertEquals(buf, expected,
@@ -790,7 +790,7 @@ class TestGreenIoStarvation(LimitedTestCase):
         recvsize = 2 * min_buf_size()
         sendsize = 10000 * recvsize
 
-        results = [[] for i in xrange(5)]
+        results = [[] for i in six.moves.range(5)]
 
         listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
