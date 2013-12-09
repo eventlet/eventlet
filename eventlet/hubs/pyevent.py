@@ -2,6 +2,7 @@ import sys
 import traceback
 import event
 import types
+import six
 
 from eventlet.support import greenlets as greenlet
 from eventlet.hubs.hub import BaseHub, FdListener, READ, WRITE
@@ -63,7 +64,7 @@ class Hub(BaseHub):
                 t = getattr(event, '__event_exc')
                 setattr(event, '__event_exc', None)
                 assert getattr(event, '__event_exc') is None
-                raise t[0], t[1], t[2]
+                raise t[0](t[1]).with_traceback(t[2])
 
             if result != 0:
                 return result
@@ -127,7 +128,7 @@ class Hub(BaseHub):
         listener.cb.delete()
 
     def remove_descriptor(self, fileno):
-        for lcontainer in self.listeners.itervalues():
+        for lcontainer in six.itervalues(self.listeners):
             listener = lcontainer.pop(fileno, None)
             if listener:
                 try:

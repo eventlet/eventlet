@@ -5,6 +5,7 @@ import time
 import traceback
 import types
 import warnings
+import six
 
 from eventlet.green import urllib
 from eventlet.green import socket
@@ -52,7 +53,7 @@ class _AlreadyHandled(object):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         raise StopIteration
 
 ALREADY_HANDLED = _AlreadyHandled()
@@ -354,7 +355,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 _writelines(towrite)
                 length[0] = length[0] + sum(map(len, towrite))
             except UnicodeEncodeError:
-                self.server.log_message("Encountered non-ascii unicode while attempting to write wsgi response: %r" % [x for x in towrite if isinstance(x, unicode)])
+                self.server.log_message("Encountered non-ascii unicode while attempting to write wsgi response: %r" % [x for x in towrite if isinstance(x, six.text_type)])
                 self.server.log_message(traceback.format_exc())
                 _writelines(
                     ["HTTP/1.1 500 Internal Server Error\r\n",
@@ -372,7 +373,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 try:
                     if headers_sent:
                         # Re-raise original exception if headers sent
-                        raise exc_info[0], exc_info[1], exc_info[2]
+                        raise exc_info[0](exc_info[1]).with_traceback(exc_info[2])
                 finally:
                     # Avoid dangling circular ref
                     exc_info = None

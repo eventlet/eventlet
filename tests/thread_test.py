@@ -1,4 +1,6 @@
+import six
 import weakref
+
 from eventlet.green import thread
 from eventlet import greenthread
 from eventlet import event
@@ -102,7 +104,7 @@ class Locals(LimitedTestCase):
             my_local.foo = o
             
         p = eventlet.GreenPool()
-        for i in xrange(100):
+        for i in six.moves.range(100):
             p.spawn(do_something, i)
         p.waitall()
         del p

@@ -3,6 +3,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import six
 
 from tests import LimitedTestCase, main, run_python, skip_with_pyevent
 
@@ -216,7 +217,7 @@ test_monkey_patch_threading = """
 def test_monkey_patch_threading():
     tickcount = [0]
     def tick():
-        for i in xrange(1000):
+        for i in six.moves.range(1000):
             tickcount[0] += 1
             eventlet.sleep()
 
@@ -447,11 +448,11 @@ t2.join()
 """ + self.epilogue)
         output, lines = self.launch_subprocess('newmod')
         self.assertEqual(len(lines), 10, "\n".join(lines))
-        for i in xrange(0, 3):
+        for i in six.moves.range(0, 3):
             self.assertEqual(lines[i], "GreenThread-1", lines[i])
-        for i in xrange(3, 6):
+        for i in six.moves.range(3, 6):
             self.assertEqual(lines[i], "foo", lines[i])
-        for i in xrange(6, 9):
+        for i in six.moves.range(6, 9):
             self.assertEqual(lines[i], "bar", lines[i])
 
     def test_ident(self):

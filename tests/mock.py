@@ -12,6 +12,7 @@
 # Scripts maintained at http://www.voidspace.org.uk/python/index.shtml
 # Comments, suggestions and bug reports welcome.
 
+import six
 
 __all__ = (
     'Mock',
@@ -82,7 +83,7 @@ class Mock(object):
         self.call_count = 0
         self.call_args_list = []
         self.method_calls = []
-        for child in self._children.itervalues():
+        for child in six.itervalues(self._children):
             child.reset_mock()
         if isinstance(self._return_value, Mock):
             self._return_value.reset_mock()

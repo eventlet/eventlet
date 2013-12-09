@@ -1,4 +1,6 @@
 import warnings
+import six
+
 warnings.warn("The proc module is deprecated!  Please use the greenthread " 
               "module, or any of the many other Eventlet cross-coroutine "
               "primitives, instead.",
@@ -205,7 +207,7 @@ def killall(procs, *throw_args, **kwargs):
         throw_args = (ProcExit, )
     wait = kwargs.pop('wait', False)
     if kwargs:
-        raise TypeError('Invalid keyword argument for proc.killall(): %s' % ', '.join(kwargs.keys()))
+        raise TypeError('Invalid keyword argument for proc.killall(): %s' % ', '.join(six.iterkeys(kwargs)))
     for g in procs:
         if not g.dead:
             hubs.get_hub().schedule_call_global(0, g.throw, *throw_args)
@@ -401,7 +403,7 @@ class Source(object):
         self._start_send()
 
     def _start_send(self):
-        hubs.get_hub().schedule_call_global(0, self._do_send, self._value_links.items(), self._value_links)
+        hubs.get_hub().schedule_call_global(0, self._do_send, six.iteritems(self._value_links), self._value_links)
 
     def send_exception(self, *throw_args):
         assert not self.ready(), "%s has been fired already" % self
@@ -410,7 +412,7 @@ class Source(object):
         self._start_send_exception()
 
     def _start_send_exception(self):
-        hubs.get_hub().schedule_call_global(0, self._do_send, self._exception_links.items(), self._exception_links)
+        hubs.get_hub().schedule_call_global(0, self._do_send, six.iteritems(self._exception_links), self._exception_links)
 
     def _do_send(self, links, consult):
         while links:
@@ -526,7 +528,7 @@ class Proc(Source):
         klass = type(self).__name__
         return '<%s %s>' % (klass, ' '.join(self._repr_helper()))
 
-    def __nonzero__(self):
+    def __bool__(self):
         if self.ready():
             # with current _run this does not makes any difference
             # still, let keep it there

@@ -1,5 +1,6 @@
 import os
 import sys
+import six
 from eventlet import patcher
 select = patcher.original('select')
 time = patcher.original('time')
@@ -33,8 +34,8 @@ class Hub(BaseHub):
         self.kqueue.close()
         self._init_kqueue()
         kqueue = self.kqueue
-        events = [e for i in self._events.itervalues()
-                  for e in i.itervalues()]
+        events = [e for i in six.itervalues(self._events)
+                  for e in six.itervalues(i)]
         kqueue.control(events, 0, 0)
 
     def _control(self, events, max_events, timeout):

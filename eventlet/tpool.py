@@ -16,6 +16,7 @@
 import imp
 import os
 import sys
+import six
 
 from eventlet import event
 from eventlet import greenio
@@ -111,13 +112,13 @@ def execute(meth,*args, **kwargs):
     rv = e.wait()
     if isinstance(rv,tuple) \
       and len(rv) == 3 \
-      and isinstance(rv[1],EXC_CLASSES):
+      and isinstance(rv[1], EXC_CLASSES):
         import traceback
         (c,e,tb) = rv
         if not QUIET:
             traceback.print_exception(c,e,tb)
             traceback.print_stack()
-        raise c,e,tb
+        raise c(e).with_traceback(tb)
     return rv
 
 
@@ -215,7 +216,7 @@ class Proxy(object):
         return self._obj.__str__()
     def __len__(self):
         return len(self._obj)
-    def __nonzero__(self):
+    def __bool__(self):
         return bool(self._obj)
     def __iter__(self):
         it = iter(self._obj)
@@ -223,8 +224,8 @@ class Proxy(object):
             return self
         else:
             return Proxy(it)
-    def next(self):
-        return proxy_call(self._autowrap, self._obj.next)
+    def __next__(self):
+        return proxy_call(self._autowrap, six.advance_iterator(self._obj))
 
 
 _nthreads = int(os.environ.get('EVENTLET_THREADPOOL_SIZE', 20))
@@ -263,7 +264,7 @@ def setup():
         warnings.warn("Zero threads in tpool.  All tpool.execute calls will\
             execute in main thread.  Check the value of the environment \
             variable EVENTLET_THREADPOOL_SIZE.", RuntimeWarning)
-    for i in xrange(_nthreads):
+    for i in six.moves.range(_nthreads):
         t = threading.Thread(target=tworker,
                              name="tpool_thread_%s" % i)
         t.setDaemon(True)

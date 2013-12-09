@@ -5,6 +5,7 @@ import errno
 import os
 import socket
 import sys
+import six
 from tests import skipped, LimitedTestCase, skip_with_pyevent, skip_if_no_ssl
 from unittest import main
 
@@ -22,9 +23,9 @@ certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
 private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
 
 try:
-    from cStringIO import StringIO
+    from six.moves.cStringIO import StringIO
 except ImportError:
-    from StringIO import StringIO
+    from six.moves.StringIO import StringIO
 
 
 def hello_world(env, start_response):

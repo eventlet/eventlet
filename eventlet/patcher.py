@@ -1,5 +1,6 @@
 import sys
 import imp
+import six
 
 __all__ = ['inject', 'import_patched', 'monkey_patch', 'is_monkey_patched']
 
@@ -24,7 +25,7 @@ class SysModulesSaver(object):
         sys.modules.
         """
         try:
-            for modname, mod in self._saved.iteritems():
+            for modname, mod in six.iteritems(self._saved):
                 if mod is not None:
                     sys.modules[modname] = mod
                 else:
@@ -210,12 +211,12 @@ def monkey_patch(**on):
     accepted_args = set(('os', 'select', 'socket', 
                          'thread', 'time', 'psycopg', 'MySQLdb'))
     default_on = on.pop("all",None)
-    for k in on.iterkeys():
+    for k in six.iterkeys(on):
         if k not in accepted_args:
             raise TypeError("monkey_patch() got an unexpected "\
                                 "keyword argument %r" % k)
     if default_on is None:
-        default_on = not (True in on.values())
+        default_on = not (True in list(on.values()))
     for modname in accepted_args:
         if modname == 'MySQLdb':
             # MySQLdb is only on when explicitly patched for the moment
@@ -334,4 +335,5 @@ if __name__ == "__main__":
     import sys
     sys.argv.pop(0)
     monkey_patch()
-    execfile(sys.argv[0])
+    exec(compile(open(sys.argv[0]).read(), sys.argv[0], 'exec'))
+

@@ -1,5 +1,7 @@
 from __future__ import print_function
 
+import six
+
 from eventlet import coros, proc, api
 from eventlet.semaphore import Semaphore
 
@@ -253,7 +255,7 @@ class Pool(object):
         # but if we launched no coroutines with that queue as the destination,
         # we could end up waiting a very long time.
         try:
-            index, args = tuples.next()
+            index, args = six.advance_iterator(tuples)
         except StopIteration:
             return
         # From this point forward, 'args' is the current arguments tuple and
@@ -295,7 +297,7 @@ class Pool(object):
                     # which to send() the result.
                     self._execute(q, function, args, {})
                     # We've consumed that args tuple, advance to next.
-                    index, args = tuples.next()
+                    index, args = six.advance_iterator(tuples)
                 # Okay, we've filled up the pool again, yield a result -- which
                 # will probably wait for a coroutine to complete. Although we do
                 # have q.ready(), so we could iterate without waiting, we avoid
@@ -315,5 +317,4 @@ class Pool(object):
         while finished < index + 1:
             yield q.wait()
             finished += 1
-
 
