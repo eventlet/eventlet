@@ -12,6 +12,7 @@ import subprocess
 import sys
 import unittest
 import warnings
+import six
 
 import eventlet
 from eventlet import debug, hubs, tpool

@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import collections
 from contextlib import contextmanager
+import six
 
 from eventlet import queue
 
@@ -71,7 +72,7 @@ class Pool(object):
         if create is not None:
             self.create = create
 
-        for x in xrange(min_size):
+        for x in six.moves.range(min_size):
             self.current_size += 1
             self.free_items.append(self.create())
 

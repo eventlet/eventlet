@@ -20,6 +20,7 @@ from sys import stdout
 import time
 import re
 import gc
+import six
 from tests import skipped, skip_with_pyevent, LimitedTestCase, main
 
 from eventlet import tpool, debug
@@ -144,7 +145,7 @@ class TestTpool(LimitedTestCase):
     @skip_with_pyevent
     def test_wrap_iterator(self):
         self.reset_timeout(2)
-        prox = tpool.Proxy(xrange(10))
+        prox = tpool.Proxy(six.moves.range(10))
         result = []
         for i in prox:
             result.append(i)
@@ -155,13 +156,13 @@ class TestTpool(LimitedTestCase):
         self.reset_timeout(5)  # might take a while due to imprecise sleeping
         def foo():
             import time
-            for x in xrange(2):
+            for x in six.moves.range(2):
                 yield x
                 time.sleep(0.001)
 
         counter = [0]
         def tick():
-            for i in xrange(20000):
+            for i in six.moves.range(20000):
                 counter[0]+=1
                 if counter[0] % 20 == 0:
                     eventlet.sleep(0.0001)
@@ -296,7 +297,7 @@ class TpoolLongTests(LimitedTestCase):
         def sender_loop(loopnum):
             obj = tpool.Proxy(Dummy())
             count = 100
-            for n in xrange(count):
+            for n in six.moves.range(count):
                 eventlet.sleep(random.random()/200.0)
                 now = time.time()
                 token = loopnum * count + n
@@ -306,7 +307,7 @@ class TpoolLongTests(LimitedTestCase):
 
         cnt = 10
         pile = eventlet.GreenPile(cnt)
-        for i in xrange(cnt):
+        for i in six.moves.range(cnt):
             pile.spawn(sender_loop,i)
         results = list(pile)
         self.assertEquals(len(results), cnt)
@@ -339,14 +340,14 @@ from eventlet.tpool import execute
         tpool.execute(noop)  # get it started
         gc.collect()
         initial_objs = len(gc.get_objects())
-        for i in xrange(10):
+        for i in six.moves.range(10):
             self.assertRaises(RuntimeError, tpool.execute, raise_exception)
         gc.collect()
         middle_objs = len(gc.get_objects())
         # some objects will inevitably be created by the previous loop
         # now we test to ensure that running the loop an order of
         # magnitude more doesn't generate additional objects
-        for i in xrange(100):
+        for i in six.moves.range(100):
             self.assertRaises(RuntimeError, tpool.execute, raise_exception)
         first_created = middle_objs - initial_objs
         gc.collect()

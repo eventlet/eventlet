@@ -1,3 +1,4 @@
+import six
 from unittest import TestCase, main
 
 import eventlet
@@ -111,7 +112,7 @@ class TestIntPool(TestCase):
             def just_put(pool_item, index):
                 self.pool.put(pool_item)
                 queue.put(index)
-            for index in xrange(size + 1):
+            for index in six.moves.range(size + 1):
                 pool_item = self.pool.get()
                 eventlet.spawn(just_put, pool_item, index)
 
@@ -153,7 +154,7 @@ class TestIntPool(TestCase):
             p.put(x)
 
         gp = eventlet.GreenPool()
-        for i in xrange(100):
+        for i in six.moves.range(100):
             gp.spawn_n(do_get)
         gp.waitall()
         self.assertEquals(creates[0], 4)

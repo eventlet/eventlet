@@ -1,3 +1,4 @@
+import six
 import eventlet
 import warnings
 warnings.simplefilter('ignore', DeprecationWarning)
@@ -105,7 +106,7 @@ class TestCoroutinePool(LimitedTestCase):
         timer = timeout.Timeout(1, api.TimeoutError)
         try:
             evt = _event.Event()
-            for x in xrange(num_free):
+            for x in six.moves.range(num_free):
                 pool.execute(wait_long_time, evt)
                 # if the pool has fewer free than we expect,
                 # then we'll hit the timeout error
@@ -288,7 +289,7 @@ class PoolBasicTests(LimitedTestCase):
             
             int_pool = IntPool(max_size=intpool_size)
             pool = self.klass(max_size=pool_size)
-            for ix in xrange(num_executes):
+            for ix in six.moves.range(num_executes):
                 pool.execute(run, int_pool)
             pool.waitall()
             

@@ -1,5 +1,6 @@
 import socket
 import errno
+import six
 
 import eventlet
 from eventlet.green import urllib2
@@ -23,7 +24,7 @@ def handle(ws):
                 break
             ws.send(m)
     elif ws.path == '/range':
-        for i in xrange(10):
+        for i in six.moves.range(10):
             ws.send("msg %d" % i)
             eventlet.sleep(0.01)
     elif ws.path == '/error':
