@@ -293,6 +293,34 @@ class TestBadFilenos(LimitedTestCase):
         self.assertRaises(ValueError, select.select, [-1], [], [])
 
 
+class TestFork(ProcessBase):
+
+    def test_fork(self):
+        new_mod = """
+import os
+import eventlet
+import eventlet.hubs
+
+eventlet.hubs.get_hub()  # create the hub *before* forking
+server = eventlet.listen(('localhost', 12345))
+os.fork()
+try:
+    eventlet.Timeout(0.5)
+    new_sock, address = server.accept()
+except eventlet.Timeout:
+    print 'timeout'
+except IOError:
+    print 'ioerror'
+"""
+        self.write_to_tempfile("newmod", new_mod)
+        output, lines = self.launch_subprocess('newmod.py')
+        # after the fork, the parent and child processes will try to
+        # register the same file descriptor when they accept(). if an epoll hub
+        # isn't reset in the child, so that it has its own distinct instance of
+        # epoll in the kernel, there will be a conflict and it'll throw IOError
+        self.assertEqual(output, 'timeout\ntimeout\n')
+
+
 class TestDeadRunLoop(LimitedTestCase):
     TEST_TIMEOUT = 2
 

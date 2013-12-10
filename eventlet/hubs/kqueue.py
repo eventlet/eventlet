@@ -1,11 +1,10 @@
-import os
 import sys
 from eventlet import patcher
 select = patcher.original('select')
 time = patcher.original('time')
 sleep = time.sleep
 
-from eventlet.support import get_errno, clear_sys_exc_info
+from eventlet.support import clear_sys_exc_info
 from eventlet.hubs.hub import BaseHub, READ, WRITE, noop
 
 
@@ -23,29 +22,7 @@ class Hub(BaseHub):
     def __init__(self, clock=time.time):
         super(Hub, self).__init__(clock)
         self._events = {}
-        self._init_kqueue()
-
-    def _init_kqueue(self):
         self.kqueue = select.kqueue()
-        self._pid = os.getpid()
-
-    def _reinit_kqueue(self):
-        self.kqueue.close()
-        self._init_kqueue()
-        kqueue = self.kqueue
-        events = [e for i in self._events.itervalues()
-                  for e in i.itervalues()]
-        kqueue.control(events, 0, 0)
-
-    def _control(self, events, max_events, timeout):
-        try:
-            return self.kqueue.control(events, max_events, timeout)
-        except OSError:
-            # have we forked?
-            if os.getpid() != self._pid:
-                self._reinit_kqueue()
-                return self.kqueue.control(events, max_events, timeout)
-            raise
 
     def add(self, evtype, fileno, cb):
         listener = super(Hub, self).add(evtype, fileno, cb)
@@ -54,7 +31,7 @@ class Hub(BaseHub):
             try:
                 event = select.kevent(fileno,
                                       FILTERS.get(evtype), select.KQ_EV_ADD)
-                self._control([event], 0, 0)
+                self.kqueue.control([event], 0, 0)
                 events[evtype] = event
             except ValueError:
                 super(Hub, self).remove(listener)
@@ -64,7 +41,7 @@ class Hub(BaseHub):
     def _delete_events(self, events):
         del_events = map(lambda e: select.kevent(e.ident, e.filter,
                          select.KQ_EV_DELETE), events)
-        self._control(del_events, 0, 0)
+        self.kqueue.control(del_events, 0, 0)
 
     def remove(self, listener):
         super(Hub, self).remove(listener)
@@ -95,7 +72,7 @@ class Hub(BaseHub):
             if seconds:
                 sleep(seconds)
             return
-        result = self._control([], self.MAX_EVENTS, seconds)
+        result = self.kqueue.control([], self.MAX_EVENTS, seconds)
         SYSTEM_EXCEPTIONS = self.SYSTEM_EXCEPTIONS
         for event in result:
             fileno = event.ident

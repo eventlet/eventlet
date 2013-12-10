@@ -1,5 +1,6 @@
 import sys
 import os
+import eventlet
 from eventlet.support import greenlets as greenlet
 from eventlet import patcher
 
@@ -158,3 +159,9 @@ def trampoline(fd, read=None, write=None, timeout=None,
     finally:
         if t is not None:
             t.cancel()
+
+
+def _del_hub():
+    if hasattr(_threadlocal, 'hub'):
+        del _threadlocal.hub
+eventlet.atfork.register_child_callback(_del_hub)

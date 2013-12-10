@@ -2,6 +2,7 @@ version_info = (0, 15, 0, "dev")
 __version__ = ".".join(map(str, version_info))
 
 try:
+    from eventlet import atfork
     from eventlet import greenthread
     from eventlet import greenpool
     from eventlet import queue
