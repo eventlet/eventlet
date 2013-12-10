@@ -1,4 +1,5 @@
 import os
+import six
 from tests.patcher_test import ProcessBase
 from tests import skip_with_pyevent
 
@@ -24,6 +25,7 @@ class Tpool(ProcessBase):
         new_mod = """from eventlet import tpool
 import eventlet
 import time
+import six
 current = [0]
 highwater = [0]
 def count():
@@ -35,7 +37,7 @@ def count():
 expected = %s
 normal = %s
 p = eventlet.GreenPool()
-for i in xrange(expected*2):
+for i in six.moves.range(expected*2):
     p.spawn(tpool.execute, count)
 p.waitall()
 assert highwater[0] > 20, "Highwater %%s  <= %%s" %% (highwater[0], normal)

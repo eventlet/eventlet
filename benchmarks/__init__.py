@@ -1,6 +1,7 @@
 import gc
 import timeit
 import random
+import six
     
 def measure_best(repeat, iters, 
                  common_setup='pass', 
@@ -9,7 +10,7 @@ def measure_best(repeat, iters,
     funcs = list(funcs)
     results = dict([(f,[]) for f in funcs])
 
-    for i in xrange(repeat):
+    for i in six.moves.range(repeat):
         random.shuffle(funcs)
         for func in funcs:
             gc.collect()

@@ -7,6 +7,9 @@ env:
   - TOX_ENV=py27selects
   - TOX_ENV=py27poll
   - TOX_ENV=py27epolls
+  - TOX_ENV=py33selects
+  - TOX_ENV=py33poll
+  - TOX_ENV=py33epolls
 install:
   - sudo apt-get update -qq
   - sudo apt-get install -qq libssl-dev libmysqlclient-dev libpq-dev

@@ -1,4 +1,5 @@
 import os
+import six
 
 from tests import patcher_test, skip_unless
 from tests import get_database_auth
@@ -7,6 +8,7 @@ from tests.db_pool_test import postgres_requirement
 psycopg_test_file = """
 import os
 import sys
+import six
 import eventlet
 eventlet.monkey_patch()
 from eventlet import patcher
@@ -16,7 +18,7 @@ if not patcher.is_monkey_patched('psycopg'):
 
 count = [0]
 def tick(totalseconds, persecond):
-    for i in xrange(totalseconds*persecond):
+    for i in six.moves.range(totalseconds*persecond):
         count[0] += 1
         eventlet.sleep(1.0/persecond)
         

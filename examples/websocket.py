@@ -5,6 +5,7 @@ from eventlet import websocket
 # demo app
 import os
 import random
+import six
 
 @websocket.WebSocketWSGI
 def handle(ws):
@@ -18,7 +19,7 @@ def handle(ws):
             ws.send(m)
             
     elif ws.path == '/data':
-        for i in xrange(10000):
+        for i in six.moves.range(10000):
             ws.send("0 %s %s\n" % (i, random.random()))
             eventlet.sleep(0.1)
                   
