@@ -97,7 +97,10 @@ class WebSocketWSGI(object):
         return decorator(handler)
 
     def __call__(self, environ, start_response):
-        if not (environ.get('HTTP_CONNECTION') == 'Upgrade' and
+        # XXX: changed from environ.get('HTTP_CONNECTION') == 'Upgrade'
+        # after receiving this header from Mozilla Firefox:
+        # Connection: keep-alive, Upgrade
+        if not ('Upgrade' in environ.get('HTTP_CONNECTION') and
                 environ.get('HTTP_UPGRADE').lower() == 'websocket'):
             # need to check a few more things here for true compliance
             start_response('400 Bad Request', [('Connection', 'close')])
