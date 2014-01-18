@@ -97,7 +97,10 @@ class WebSocketWSGI(object):
         return decorator(handler)
 
     def __call__(self, environ, start_response):
-        if not (environ.get('HTTP_CONNECTION') == 'Upgrade' and
+        http_connection_parts = [
+            part.strip()
+            for part in environ.get('HTTP_CONNECTION', '').lower().split(',')]
+        if not ('upgrade' in http_connection_parts and
                 environ.get('HTTP_UPGRADE').lower() == 'websocket'):
             # need to check a few more things here for true compliance
             start_response('400 Bad Request', [('Connection', 'close')])

@@ -68,25 +68,28 @@ class TestWebSocket(_TestBase):
         self.assertEqual(resp.read(), '')
 
     def test_correct_upgrade_request_13(self):
-        connect = [
+        for http_connection in ['Upgrade', 'UpGrAdE', 'keep-alive, Upgrade']:
+            connect = [
                 "GET /echo HTTP/1.1",
                 "Upgrade: websocket",
-                "Connection: Upgrade",
+                "Connection: %s" % http_connection,
                 "Host: localhost:%s" % self.port,
                 "Origin: http://localhost:%s" % self.port,
                 "Sec-WebSocket-Version: 13",
-                "Sec-WebSocket-Key: d9MXuOzlVQ0h+qRllvSCIg==", ]
-        sock = eventlet.connect(
-            ('localhost', self.port))
+                "Sec-WebSocket-Key: d9MXuOzlVQ0h+qRllvSCIg==",
+            ]
+            sock = eventlet.connect(('localhost', self.port))
 
-        sock.sendall('\r\n'.join(connect) + '\r\n\r\n')
-        result = sock.recv(1024)
-        ## The server responds the correct Websocket handshake
-        self.assertEqual(result,
-                         '\r\n'.join(['HTTP/1.1 101 Switching Protocols',
-                                      'Upgrade: websocket',
-                                      'Connection: Upgrade',
-                                      'Sec-WebSocket-Accept: ywSyWXCPNsDxLrQdQrn5RFNRfBU=\r\n\r\n', ]))
+            sock.sendall('\r\n'.join(connect) + '\r\n\r\n')
+            result = sock.recv(1024)
+            ## The server responds the correct Websocket handshake
+            print('Connection string: %r' % http_connection)
+            self.assertEqual(result, '\r\n'.join([
+                'HTTP/1.1 101 Switching Protocols',
+                'Upgrade: websocket',
+                'Connection: Upgrade',
+                'Sec-WebSocket-Accept: ywSyWXCPNsDxLrQdQrn5RFNRfBU=\r\n\r\n',
+            ]))
 
     def test_send_recv_13(self):
         connect = [
