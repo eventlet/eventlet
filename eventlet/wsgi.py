@@ -225,6 +225,33 @@ class HeadersTooLarge(Exception):
     pass
 
 
+def get_logger(log, debug):
+    if callable(getattr(log, 'info', None)) \
+       and callable(getattr(log, 'debug', None)):
+        return log
+    else:
+        return LoggerFileWrapper(log, debug)
+
+
+class LoggerFileWrapper(object):
+    def __init__(self, log, debug):
+        self.log = log
+        self._debug = debug
+
+    def info(self, msg, *args, **kwargs):
+        self.write(msg, *args)
+
+    def debug(self, msg, *args, **kwargs):
+        if self._debug:
+            self.write(msg, *args)
+
+    def write(self, msg, *args):
+        msg = msg + '\n'
+        if args:
+            msg = msg % args
+        self.log.write(msg)
+
+
 class FileObjectForHeaders(object):
 
     def __init__(self, fp):
@@ -459,7 +486,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             except Exception:
                 self.close_connection = 1
                 tb = traceback.format_exc()
-                self.server.log_message(tb)
+                self.server.log.info(tb)
                 if not headers_sent:
                     err_body = six.b(tb) if self.server.debug else b''
                     start_response("500 Internal Server Error",
@@ -485,7 +512,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 hook(self.environ, *args, **kwargs)
 
             if self.server.log_output:
-                self.server.log_message(self.server.log_format % {
+                self.server.log.info(self.server.log_format % {
                     'client_ip': self.get_client_ip(),
                     'client_port': self.client_address[1],
                     'date_time': self.log_date_time_string(),
@@ -604,9 +631,9 @@ class Server(BaseHTTPServer.HTTPServer):
         self.socket = socket
         self.address = address
         if log:
-            self.log = log
+            self.log = get_logger(log, debug)
         else:
-            self.log = sys.stderr
+            self.log = get_logger(sys.stderr, debug)
         self.app = app
         self.keepalive = keepalive
         self.environ = environ
@@ -660,12 +687,12 @@ class Server(BaseHTTPServer.HTTPServer):
         except socket.timeout:
             # Expected exceptions are not exceptional
             sock.close()
-            if self.debug:
-                # similar to logging "accepted" in server()
-                self.log_message('(%s) timed out %r' % (self.pid, address))
+            # similar to logging "accepted" in server()
+            self.log.debug('(%s) timed out %r' % (self.pid, address))
 
     def log_message(self, message):
-        self.log.write(message + '\n')
+        warnings.warn('server.log_message is deprecated.  Please use server.log.info instead')
+        self.log.info(message)
 
 
 try:
@@ -789,15 +816,14 @@ def server(sock, site,
             if port == ':80':
                 port = ''
 
-        serv.log.write("(%s) wsgi starting up on %s://%s%s/\n" % (
+        serv.log.info("(%s) wsgi starting up on %s://%s%s/" % (
             serv.pid, scheme, host, port))
         while is_accepting:
             try:
                 client_socket = sock.accept()
                 client_socket[0].settimeout(serv.socket_timeout)
-                if debug:
-                    serv.log.write("(%s) accepted %r\n" % (
-                        serv.pid, client_socket[1]))
+                serv.log.debug("(%s) accepted %r" % (
+                    serv.pid, client_socket[1]))
                 try:
                     pool.spawn_n(serv.process_request, client_socket)
                 except AttributeError:
@@ -810,11 +836,11 @@ def server(sock, site,
                 if support.get_errno(e) not in ACCEPT_ERRNO:
                     raise
             except (KeyboardInterrupt, SystemExit):
-                serv.log.write("wsgi exiting\n")
+                serv.log.info("wsgi exiting")
                 break
     finally:
         pool.waitall()
-        serv.log.write("(%s) wsgi exited, is_accepting=%s\n" % (
+        serv.log.info("(%s) wsgi exited, is_accepting=%s" % (
             serv.pid, is_accepting))
         try:
             # NOTE: It's not clear whether we want this to leave the
