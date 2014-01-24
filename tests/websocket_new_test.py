@@ -67,6 +67,21 @@ class TestWebSocket(_TestBase):
         self.assertEqual(resp.getheader('connection'), 'close')
         self.assertEqual(resp.read(), '')
 
+        # No Upgrade now
+        headers = dict(kv.split(': ') for kv in [
+                "Connection: Upgrade",
+                "Host: localhost:%s" % self.port,
+                "Origin: http://localhost:%s" % self.port,
+                "Sec-WebSocket-Version: 13", ])
+        http = httplib.HTTPConnection('localhost', self.port)
+        http.request("GET", "/echo", headers=headers)
+        resp = http.getresponse()
+
+        self.assertEqual(resp.status, 400)
+        self.assertEqual(resp.getheader('connection'), 'close')
+        self.assertEqual(resp.read(), '')
+
+
     def test_correct_upgrade_request_13(self):
         for http_connection in ['Upgrade', 'UpGrAdE', 'keep-alive, Upgrade']:
             connect = [
