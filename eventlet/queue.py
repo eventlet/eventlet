@@ -418,7 +418,8 @@ class Queue(LightQueue):
         that the item was retrieved and all work on it is complete. When the count of
         unfinished tasks drops to zero, :meth:`join` unblocks.
         '''
-        self._cond.wait()
+        if self.unfinished_tasks > 0:
+            self._cond.wait()
 
 
 class PriorityQueue(Queue):

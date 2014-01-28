@@ -253,6 +253,10 @@ class TestQueue(LimitedTestCase):
         assert channel.unfinished_tasks == 0, channel.unfinished_tasks
         gt.wait()
 
+    def test_join_doesnt_block_when_queue_is_already_empty(self):
+        queue = eventlet.Queue()
+        queue.join()
+
 
 def store_result(result, func, *args):
     try:
