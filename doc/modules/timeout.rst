@@ -54,7 +54,7 @@
         timeout = Timeout(1)
         try:
             ...
-        except Timeout, t:
+        except Timeout as t:
             if t is not timeout:
                 raise # not my timeout
 

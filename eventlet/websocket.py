@@ -113,7 +113,7 @@ class WebSocketWSGI(object):
                 ws = self._handle_legacy_request(environ)
             else:
                 raise BadRequest()
-        except BadRequest, e:
+        except BadRequest as e:
             status = e.status
             body = e.body or ''
             headers = e.headers or []
@@ -123,7 +123,7 @@ class WebSocketWSGI(object):
 
         try:
             self.handler(ws)
-        except socket.error, e:
+        except socket.error as e:
             if get_errno(e) not in ACCEPTABLE_CLIENT_ERRORS:
                 raise
         # Make sure we send the closing frame
@@ -186,7 +186,7 @@ class WebSocketWSGI(object):
                     location,
                     response))
         else: #pragma NO COVER
-            raise ValueError("Unknown WebSocket protocol version.") 
+            raise ValueError("Unknown WebSocket protocol version.")
         sock.sendall(handshake_reply)
         return WebSocket(sock, environ, self.protocol_version)
 

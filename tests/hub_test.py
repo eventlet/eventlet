@@ -305,7 +305,7 @@ server = eventlet.listen(('localhost', 12345))
 t = eventlet.Timeout(0.01)
 try:
     new_sock, address = server.accept()
-except eventlet.Timeout, t:
+except eventlet.Timeout as t:
     pass
 
 pid = os.fork()
@@ -313,7 +313,7 @@ if not pid:
     t = eventlet.Timeout(0.1)
     try:
         new_sock, address = server.accept()
-    except eventlet.Timeout, t:
+    except eventlet.Timeout as t:
         print "accept blocked"
 
 else:

@@ -28,7 +28,7 @@ __all__ = ['Timeout',
 
 _NONE = object()
 
-# deriving from BaseException so that "except Exception, e" doesn't catch
+# deriving from BaseException so that "except Exception as e" doesn't catch
 # Timeout exceptions.
 class Timeout(BaseException):
     """Raises *exception* in the current greenthread after *timeout* seconds.
