@@ -10,6 +10,7 @@ from unittest import TestCase, main
 from tests import skipped, skip_unless, skip_with_pyevent, get_database_auth
 from eventlet import event
 from eventlet import db_pool
+from eventlet.support import six
 import eventlet
 
 
