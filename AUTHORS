@@ -90,3 +90,4 @@ Thanks To
 * Eric Urban, fix wsgi.input 1-byte (Bitbucket #150)
 * David Goetz, wsgi: Allow minimum_chunk_size to be overriden on a per request basis
 * Dmitry Orlov, websocket: accept Upgrade: websocket (lowercase)
+* Zhang Hua, profile: accumulate results between runs (Bitbucket #162)

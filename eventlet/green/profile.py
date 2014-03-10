@@ -25,7 +25,7 @@
 
 """This module is API-equivalent to the standard library :mod:`profile` module but it is greenthread-aware as well as thread-aware.  Use this module
 to profile Eventlet-based applications in preference to either :mod:`profile` or :mod:`cProfile`.
-FIXME: No testcases for this module. 
+FIXME: No testcases for this module.
 """
 
 profile_orig = __import__('profile')
@@ -43,9 +43,11 @@ from eventlet import greenthread
 from eventlet import patcher
 thread = patcher.original('thread')  # non-monkeypatched module needed
 
+
 #This class provides the start() and stop() functions
 class Profile(profile_orig.Profile):
     base = profile_orig.Profile
+
     def __init__(self, timer = None, bias=None):
         self.current_tasklet = greenthread.getcurrent()
         self.thread_id = thread.get_ident()
@@ -53,11 +55,14 @@ class Profile(profile_orig.Profile):
         self.sleeping = {}
 
     def __call__(self, *args):
-        "make callable, allowing an instance to be the profiler"
-        r =  self.dispatcher(*args)
+        """make callable, allowing an instance to be the profiler"""
+        r = self.dispatcher(*args)
 
     def _setup(self):
-        self.cur, self.timings, self.current_tasklet = None, {}, greenthread.getcurrent()
+        self._has_setup = True
+        self.cur = None
+        self.timings = {}
+        self.current_tasklet = greenthread.getcurrent()
         self.thread_id = thread.get_ident()
         self.simulate_call("profiler")
 
@@ -77,14 +82,16 @@ class Profile(profile_orig.Profile):
     #special cases for the original run commands, makin sure to
     #clear the timer context.
     def runctx(self, cmd, globals, locals):
-        self._setup()
+        if not getattr(self, "_has_setup", False):
+            self._setup()
         try:
             return profile_orig.Profile.runctx(self, cmd, globals, locals)
         finally:
             self.TallyTimings()
 
     def runcall(self, func, *args, **kw):
-        self._setup()
+        if not getattr(self, "_has_setup", False):
+            self._setup()
         try:
             return profile_orig.Profile.runcall(self, func, *args, **kw)
         finally:
@@ -95,7 +102,7 @@ class Profile(profile_orig.Profile):
         """A hack function to override error checking in parent class.  It
         allows invalid returns (where frames weren't preveiously entered into
         the profiler) which can happen for all the tasklets that suddenly start
-        to get monitored. This means that the time will eventually be attributed 
+        to get monitored. This means that the time will eventually be attributed
         to a call high in the chain, when there is a tasklet switch
         """
         if isinstance(self.cur[-2], Profile.fake_frame):
@@ -149,7 +156,6 @@ class Profile(profile_orig.Profile):
     #Add automatic tasklet detection to the callbacks.
     dispatch = dict([(key, ContextWrap(val)) for key,val in dispatch.iteritems()])
 
-
     def TallyTimings(self):
         oldtimings = self.sleeping
         self.sleeping = {}
@@ -176,7 +182,6 @@ class Profile(profile_orig.Profile):
                     for k1,v1 in v[4].iteritems():
                         callers[k1] = callers.get(k1, 0)+v1
                     self.timings[k] = cc, ns, tt, ct, callers
-
 
     def Unwind(self, cur, timings):
         "A function to unwind a 'cur' frame and tally the results"
@@ -212,6 +217,7 @@ class Profile(profile_orig.Profile):
             cur = rcur
         return cur
 
+
 # run statements shamelessly stolen from profile.py
 def run(statement, filename=None, sort=-1):
     """Run statement under profiler optionally saving results in filename
@@ -233,6 +239,7 @@ def run(statement, filename=None, sort=-1):
         prof.dump_stats(filename)
     else:
         return prof.print_stats(sort)
+
 
 def runctx(statement, globals, locals, filename=None):
     """Run statement under profiler, supplying your own globals and locals,
