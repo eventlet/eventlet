@@ -203,6 +203,7 @@ class FileObjectForHeaders(object):
 class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
     protocol_version = 'HTTP/1.1'
     minimum_chunk_size = MINIMUM_CHUNK_SIZE
+    capitalize_response_headers = True
 
     def setup(self):
         # overriding SocketServer.setup to correctly handle SSL.Connection objects
@@ -378,11 +379,16 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     # Avoid dangling circular ref
                     exc_info = None
 
-            capitalized_headers = [('-'.join([x.capitalize()
-                                              for x in key.split('-')]), value)
-                                   for key, value in response_headers]
+            # Response headers capitalization
+            # CONTent-TYpe: TExt/PlaiN -> Content-Type: TExt/PlaiN
+            # Per HTTP RFC standard, header name is case-insensitive.
+            # Please, fix your client to ignore header case if possible.
+            if self.capitalize_response_headers:
+                response_headers = [
+                    ('-'.join([x.capitalize() for x in key.split('-')]), value)
+                    for key, value in response_headers]
 
-            headers_set[:] = [status, capitalized_headers]
+            headers_set[:] = [status, response_headers]
             return write
 
         try:
@@ -392,9 +398,12 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     or isinstance(getattr(result, '_obj', None), _AlreadyHandled)):
                     self.close_connection = 1
                     return
+
+                # Set content-length if possible
                 if not headers_sent and hasattr(result, '__len__') and \
                         'Content-Length' not in [h for h, _v in headers_set[1]]:
                     headers_set[1].append(('Content-Length', str(sum(map(len, result)))))
+
                 towrite = []
                 towrite_size = 0
                 just_written_size = 0
@@ -544,7 +553,8 @@ class Server(BaseHTTPServer.HTTPServer):
                  log_format=DEFAULT_LOG_FORMAT,
                  url_length_limit=MAX_REQUEST_LINE,
                  debug=True,
-                 socket_timeout=None):
+                 socket_timeout=None,
+                 capitalize_response_headers=True):
 
         self.outstanding_requests = 0
         self.socket = socket
@@ -566,6 +576,14 @@ class Server(BaseHTTPServer.HTTPServer):
         self.url_length_limit = url_length_limit
         self.debug = debug
         self.socket_timeout = socket_timeout
+        self.capitalize_response_headers = capitalize_response_headers
+
+        if not self.capitalize_response_headers:
+            warnings.warn("""capitalize_response_headers is disabled.
+ Please, make sure you know what you are doing.
+ HTTP headers names are case-insensitive per RFC standard.
+ Most likely, you need to fix HTTP parsing in your client software.""",
+                DeprecationWarning, stacklevel=3)
 
     def get_environ(self):
         d = {
@@ -592,6 +610,7 @@ class Server(BaseHTTPServer.HTTPServer):
         proto = types.InstanceType(self.protocol)
         if self.minimum_chunk_size is not None:
             proto.minimum_chunk_size = self.minimum_chunk_size
+        proto.capitalize_response_headers = self.capitalize_response_headers
         try:
             proto.__init__(sock, address, self)
         except socket.timeout:
@@ -630,7 +649,8 @@ def server(sock, site,
            log_format=DEFAULT_LOG_FORMAT,
            url_length_limit=MAX_REQUEST_LINE,
            debug=True,
-           socket_timeout=None):
+           socket_timeout=None,
+           capitalize_response_headers=True):
     """Start up a WSGI server handling requests from the supplied server
     socket.  This function loops forever.  The *sock* object will be closed after server exits,
     but the underlying file descriptor will remain open, so if you have a dup() of *sock*,
@@ -653,6 +673,7 @@ def server(sock, site,
     :param url_length_limit: A maximum allowed length of the request url. If exceeded, 414 error is returned.
     :param debug: True if the server should send exception tracebacks to the clients on 500 errors.  If False, the server will respond with empty bodies.
     :param socket_timeout: Timeout for client connections' socket operations. Default None means wait forever.
+    :param capitalize_response_headers: Normalize response headers' names to Foo-Bar. Default is True.
     """
     serv = Server(sock, sock.getsockname(),
                   site, log,
@@ -667,6 +688,7 @@ def server(sock, site,
                   url_length_limit=url_length_limit,
                   debug=debug,
                   socket_timeout=socket_timeout,
+                  capitalize_response_headers=capitalize_response_headers,
                   )
     if server_event is not None:
         server_event.send(serv)
