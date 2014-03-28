@@ -8,6 +8,7 @@ from eventlet.support import get_errno
 import array
 import errno
 import eventlet
+import gc
 import fcntl
 import os
 import sys
@@ -321,6 +322,7 @@ class TestGreenSocket(LimitedTestCase):
                 conn = conn.makefile('w')
                 conn.write('hello\n')
                 conn.close()
+                gc.collect()
                 self.assertWriteToClosedFileRaises(conn)
             finally:
                 listener.close()
