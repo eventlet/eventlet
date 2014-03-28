@@ -1,3 +1,4 @@
+import gc
 import weakref
 
 from eventlet.green import thread
@@ -109,5 +110,8 @@ class Locals(LimitedTestCase):
             p.spawn(do_something, i)
         p.waitall()
         del p
+        gc.collect()
+        eventlet.sleep(0)
+        gc.collect()
         # at this point all our coros have terminated
         self.assertEqual(len(refs), 1)

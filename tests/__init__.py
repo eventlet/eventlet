@@ -2,6 +2,7 @@
 from __future__ import print_function
 
 import errno
+import gc
 import os
 try:
     import resource
@@ -181,6 +182,8 @@ class LimitedTestCase(unittest.TestCase):
             signal.alarm(self.previous_alarm[1])
 
         tpool.killall()
+        gc.collect()
+        eventlet.sleep(0)
         verify_hub_empty()
 
     def assert_less_than(self, a,b,msg=None):

@@ -13,6 +13,9 @@ except ImportError:
     zmq = {}    # for systems lacking zmq, skips tests instead of barfing
 
 
+RECV_ON_CLOSED_SOCKET_ERRNOS = (zmq.ENOTSUP, zmq.ENOTSOCK)
+
+
 def zmq_supported(_):
     try:
         import zmq
@@ -49,12 +52,20 @@ class TestUpstreamDownStream(LimitedTestCase):
         self.sockets = None
         self.context.destroy(0)
 
-    def assertRaisesErrno(self, errno, func, *args):
+    def assertRaisesErrno(self, errnos, func, *args):
         try:
             func(*args)
         except zmq.ZMQError as e:
-            self.assertEqual(e.errno, errno, "wrong error raised, expected '%s' \
-got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
+            if not hasattr(errnos, '__iter__'):
+                errnos = (errnos,)
+
+            if e.errno not in errnos:
+                raise AssertionError(
+                    "wrong error raised, expected one of ['%s'], got '%s'" % (
+                        ", ".join("%s" % zmq.ZMQError(errno) for errno in errnos),
+                        zmq.ZMQError(e.errno)
+                    ),
+                )
         else:
             self.fail("Function did not raise any error")
 
@@ -92,8 +103,8 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
 
         rep.close()
         req.close()
-        self.assertRaisesErrno(zmq.ENOTSUP, rep.recv)
-        self.assertRaisesErrno(zmq.ENOTSUP, req.send, 'test')
+        self.assertRaisesErrno(RECV_ON_CLOSED_SOCKET_ERRNOS, rep.recv)
+        self.assertRaisesErrno(RECV_ON_CLOSED_SOCKET_ERRNOS, req.send, 'test')
 
     @skip_unless(zmq_supported)
     def test_close_xsocket_raises_enotsup(self):
@@ -101,8 +112,8 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
 
         rep.close()
         req.close()
-        self.assertRaisesErrno(zmq.ENOTSUP, rep.recv)
-        self.assertRaisesErrno(zmq.ENOTSUP, req.send, 'test')
+        self.assertRaisesErrno(RECV_ON_CLOSED_SOCKET_ERRNOS, rep.recv)
+        self.assertRaisesErrno(RECV_ON_CLOSED_SOCKET_ERRNOS, req.send, 'test')
 
     @skip_unless(zmq_supported)
     def test_send_1k_req_rep(self):
@@ -378,7 +389,7 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         done2 = event.Event()
 
         def rx(e):
-            self.assertRaisesErrno(zmq.ENOTSUP, receiver.recv)
+            self.assertRaisesErrno(RECV_ON_CLOSED_SOCKET_ERRNOS, receiver.recv)
             e.send()
 
         spawn(rx, done1)

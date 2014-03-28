@@ -1,5 +1,6 @@
 """Tests with-statement behavior of Timeout class."""
 
+import gc
 import sys
 import time
 import unittest
@@ -109,6 +110,7 @@ class Test(LimitedTestCase):
         with Timeout(DELAY*2, err):
             sleep(DELAY)
         del err
+        gc.collect()
         assert not err_ref(), repr(err_ref())
 
     def test_nested_timeout(self):
