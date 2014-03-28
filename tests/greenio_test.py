@@ -532,7 +532,9 @@ class TestGreenSocket(LimitedTestCase):
 
     def test_invalid_connection(self):
         # find an unused port by creating a socket then closing it
-        port = eventlet.listen(('127.0.0.1', 0)).getsockname()[1]
+        listening_socket = eventlet.listen(('127.0.0.1', 0))
+        port = listening_socket.getsockname()[1]
+        listening_socket.close()
         self.assertRaises(socket.error, eventlet.connect, ('127.0.0.1', port))
 
     def test_zero_timeout_and_back(self):
