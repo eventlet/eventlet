@@ -101,7 +101,7 @@ class Spawn(LimitedTestCase, Asserts):
         gt.wait()
         self.assertEquals(called, [True])
 
-class SpawnAfter(LimitedTestCase, Asserts):
+class SpawnAfter(Spawn):
     def test_basic(self):
         gt = greenthread.spawn_after(0.1, passthru, 20)
         self.assertEquals(gt.wait(), ((20,), {}))
