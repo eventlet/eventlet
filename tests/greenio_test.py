@@ -2,7 +2,7 @@ import socket as _orig_sock
 from tests import LimitedTestCase, skip_with_pyevent, main, skipped, s2b, skip_if, skip_on_windows
 from eventlet import event, greenio, debug
 from eventlet.hubs import get_hub
-from eventlet.green import select, socket, time
+from eventlet.green import select, socket, time, ssl
 from eventlet.support import get_errno
 
 import array
@@ -423,16 +423,11 @@ class TestGreenSocket(LimitedTestCase):
             test_sendall_impl(how_many)
 
     def test_wrap_socket(self):
-        try:
-            import ssl
-        except ImportError:
-            pass  # pre-2.6
-        else:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            sock.bind(('127.0.0.1', 0))
-            sock.listen(50)
-            ssl.wrap_socket(sock)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind(('127.0.0.1', 0))
+        sock.listen(50)
+        ssl.wrap_socket(sock)
 
     def test_timeout_and_final_write(self):
         # This test verifies that a write on a socket that we've
