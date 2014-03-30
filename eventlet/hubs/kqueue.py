@@ -40,7 +40,7 @@ class Hub(BaseHub):
     def _control(self, events, max_events, timeout):
         try:
             return self.kqueue.control(events, max_events, timeout)
-        except OSError:
+        except (OSError, IOError):
             # have we forked?
             if os.getpid() != self._pid:
                 self._reinit_kqueue()
