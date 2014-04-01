@@ -1,6 +1,7 @@
 import os
 import sys
 from eventlet import patcher
+from eventlet.support import six
 select = patcher.original('select')
 time = patcher.original('time')
 sleep = time.sleep
@@ -33,8 +34,8 @@ class Hub(BaseHub):
         self.kqueue.close()
         self._init_kqueue()
         kqueue = self.kqueue
-        events = [e for i in self._events.itervalues()
-                  for e in i.itervalues()]
+        events = [e for i in six.itervalues(self._events)
+                  for e in six.itervalues(i)]
         kqueue.control(events, 0, 0)
 
     def _control(self, events, max_events, timeout):
@@ -64,6 +65,8 @@ class Hub(BaseHub):
     def _delete_events(self, events):
         del_events = map(lambda e: select.kevent(e.ident, e.filter,
                          select.KQ_EV_DELETE), events)
+        if six.PY3:
+            del_events = list(del_events)
         self._control(del_events, 0, 0)
 
     def remove(self, listener):

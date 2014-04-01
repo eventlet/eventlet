@@ -217,7 +217,7 @@ def monkey_patch(**on):
     accepted_args = set(('os', 'select', 'socket',
                          'thread', 'time', 'psycopg', 'MySQLdb'))
     default_on = on.pop("all",None)
-    for k in on.iterkeys():
+    for k in six.iterkeys(on):
         if k not in accepted_args:
             raise TypeError("monkey_patch() got an unexpected "\
                                 "keyword argument %r" % k)
@@ -344,4 +344,6 @@ if __name__ == "__main__":
     import sys
     sys.argv.pop(0)
     monkey_patch()
-    execfile(sys.argv[0])
+    with open(sys.argv[0]) as f:
+        code = compile(f.read(), sys.argv[0], 'exec')
+        exec(code)
