@@ -63,10 +63,9 @@ class Hub(BaseHub):
         return listener
 
     def _delete_events(self, events):
-        del_events = map(lambda e: select.kevent(e.ident, e.filter,
-                         select.KQ_EV_DELETE), events)
-        if six.PY3:
-            del_events = list(del_events)
+        del_events = [select.kevent(e.ident,
+                                    e.filter,
+                                    select.KQ_EV_DELETE) for e in events]
         self._control(del_events, 0, 0)
 
     def remove(self, listener):
