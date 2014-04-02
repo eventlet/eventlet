@@ -189,6 +189,19 @@ class GreenThread(greenlet.greenlet):
         if self._exit_event.ready():
             self._resolve_links()
 
+    def unlink(self, func, *curried_args, **curried_kwargs):
+        """ remove linked function set by :meth:`link`
+
+        Remove successfully return True, otherwise False
+        """
+        if not getattr(self, '_exit_funcs', None):
+            return False
+        try:
+            self._exit_funcs.remove((func, curried_args, curried_kwargs))
+            return True
+        except ValueError:
+            return False
+
     def main(self, function, args, kwargs):
         try:
             result = function(*args, **kwargs)
