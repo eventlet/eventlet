@@ -21,15 +21,20 @@ __all__ = [
 warnings.warn("eventlet.api is deprecated!  Nearly everything in it has moved "
     "to the eventlet module.", DeprecationWarning, stacklevel=2)
 
+
 def get_hub(*a, **kw):
     warnings.warn("eventlet.api.get_hub has moved to eventlet.hubs.get_hub",
         DeprecationWarning, stacklevel=2)
     return hubs.get_hub(*a, **kw)
+
+
 def get_default_hub(*a, **kw):
     warnings.warn("eventlet.api.get_default_hub has moved to"
         " eventlet.hubs.get_default_hub",
         DeprecationWarning, stacklevel=2)
     return hubs.get_default_hub(*a, **kw)
+
+
 def use_hub(*a, **kw):
     warnings.warn("eventlet.api.use_hub has moved to eventlet.hubs.use_hub",
         DeprecationWarning, stacklevel=2)
@@ -58,6 +63,7 @@ def tcp_listener(address, backlog=50):
     util.socket_bind_and_listen(socket, address, backlog=backlog)
     return socket
 
+
 def ssl_listener(address, certificate, private_key):
     """Listen on the given (ip, port) *address* with a TCP socket that
     can do SSL.  Primarily useful for unit tests, don't use in production.
@@ -77,6 +83,7 @@ def ssl_listener(address, certificate, private_key):
     socket.bind(address)
     socket.listen(50)
     return socket
+
 
 def connect_tcp(address, localaddr=None):
     """

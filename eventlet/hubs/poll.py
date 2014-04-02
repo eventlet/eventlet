@@ -13,6 +13,7 @@ EXC_MASK = select.POLLERR | select.POLLHUP
 READ_MASK = select.POLLIN | select.POLLPRI
 WRITE_MASK = select.POLLOUT
 
+
 class Hub(BaseHub):
     def __init__(self, clock=time.time):
         super(Hub, self).__init__(clock)
@@ -27,7 +28,7 @@ class Hub(BaseHub):
         listener = super(Hub, self).add(evtype, fileno, cb)
         self.register(fileno, new=True)
         return listener
-    
+
     def remove(self, listener):
         super(Hub, self).remove(listener)
         self.register(listener.fileno)
@@ -47,7 +48,7 @@ class Hub(BaseHub):
                         self.modify(fileno, mask)
                     except (IOError, OSError):
                         self.poll.register(fileno, mask)
-            else: 
+            else:
                 try:
                     self.poll.unregister(fileno)
                 except (KeyError, IOError, OSError):
@@ -108,7 +109,6 @@ class Hub(BaseHub):
             except:
                 self.squelch_exception(fileno, sys.exc_info())
                 clear_sys_exc_info()
-        
+
         if self.debug_blocking:
             self.block_detect_post()
-
