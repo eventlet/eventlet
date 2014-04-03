@@ -24,7 +24,7 @@ matrix:
 install:
   - sudo apt-get update -qq
   - sudo apt-get install -qq libssl-dev libmysqlclient-dev libpq-dev
-  - pip install tox
+  - pip install --upgrade tox setuptools virtualenv
 before_script:
   - "export EVENTLET_DB_TEST_AUTH='{\"psycopg2\": {\"user\": \"postgres\"}, \"MySQLdb\": {\"passwd\": \"\", \"host\": \"localhost\", \"user\": \"root\"}}'"
 script:
