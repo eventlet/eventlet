@@ -28,4 +28,4 @@ install:
 before_script:
   - "export EVENTLET_DB_TEST_AUTH='{\"psycopg2\": {\"user\": \"postgres\"}, \"MySQLdb\": {\"passwd\": \"\", \"host\": \"localhost\", \"user\": \"root\"}}'"
 script:
-  - tox -e $TOX_ENV
+  - tox -v -v -e $TOX_ENV
