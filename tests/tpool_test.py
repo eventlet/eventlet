@@ -20,7 +20,7 @@ import re
 import time
 
 import eventlet
-from eventlet import tpool
+from eventlet import tpool, debug, event
 from eventlet.support import six
 from tests import LimitedTestCase, skipped, skip_with_pyevent, main
 
@@ -227,6 +227,22 @@ class TestTpool(LimitedTestCase):
     def test_killall(self):
         tpool.killall()
         tpool.setup()
+
+    @skip_with_pyevent
+    def test_killall_remaining_results(self):
+        semaphore = event.Event()
+
+        def native_fun():
+            time.sleep(.5)
+
+        def gt_fun():
+            semaphore.send(None)
+            tpool.execute(native_fun)
+
+        gt = eventlet.spawn(gt_fun)
+        semaphore.wait()
+        tpool.killall()
+        gt.wait()
 
     @skip_with_pyevent
     def test_autowrap(self):
