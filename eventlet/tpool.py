@@ -292,6 +292,16 @@ def killall():
     for thr in _threads:
         thr.join()
     del _threads[:]
+
+    # return any remaining results
+    while not _rspq.empty():
+        try:
+            (e, rv) = _rspq.get(block=False)
+            e.send(rv)
+            e = rv = None
+        except Empty:
+            pass
+
     if _coro is not None:
         greenthread.kill(_coro)
     _rsock.close()
