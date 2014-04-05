@@ -180,7 +180,7 @@ class DBConnectionPool(DBTester):
         self.pool.put(conn2)
 
     def test_visibility_from_other_connections(self):
-        self.pool = self.create_pool(3)
+        self.pool = self.create_pool(max_size=3)
         conn = self.pool.get()
         conn2 = self.pool.get()
         curs = conn.cursor()
@@ -213,7 +213,7 @@ class DBConnectionPool(DBTester):
     def test_two_simultaneous_connections(self):
         # timing-sensitive test, disabled until we come up with a better
         # way to do this
-        self.pool = self.create_pool(2)
+        self.pool = self.create_pool(max_size=2)
         conn = self.pool.get()
         self.set_up_dummy_table(conn)
         self.fill_up_table(conn)
