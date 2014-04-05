@@ -27,6 +27,7 @@ class DBTester(object):
         );""")
         connection.commit()
         cursor.close()
+        connection.close()
 
     def tearDown(self):
         if self.connection:
@@ -629,7 +630,7 @@ class Psycopg2ConnectionPool(object):
         db = conn.cursor()
         db.execute("create database "+dbname)
         db.close()
-        del db
+        conn.close()
 
     def drop_db(self):
         auth = self._auth.copy()
@@ -639,7 +640,7 @@ class Psycopg2ConnectionPool(object):
         db = conn.cursor()
         db.execute("drop database "+self._auth['database'])
         db.close()
-        del db
+        conn.close()
 
 
 class TestPsycopg2Base(TestCase):
