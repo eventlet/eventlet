@@ -23,7 +23,7 @@ matrix:
     - env: TOX_ENV=pypyepolls
 install:
   - sudo apt-get update -qq
-  - sudo apt-get install -qq libssl-dev libmysqlclient-dev libpq-dev
+  - sudo apt-get install -qq libssl-dev libmysqlclient-dev libpq-dev libzmq3-dev
   - pip install --upgrade tox setuptools virtualenv
 before_script:
   - "export EVENTLET_DB_TEST_AUTH='{\"psycopg2\": {\"user\": \"postgres\"}, \"MySQLdb\": {\"passwd\": \"\", \"host\": \"localhost\", \"user\": \"root\"}}'"
