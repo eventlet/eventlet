@@ -1,12 +1,12 @@
 import errno
-import new
 import time
+from types import FunctionType
 
 import eventlet
 from eventlet import greenio
 from eventlet import patcher
-from eventlet.green import os
 from eventlet.green import select
+
 
 patcher.inject('subprocess', globals(), ('select', select))
 subprocess_orig = __import__("subprocess")
@@ -77,13 +77,13 @@ class Popen(subprocess_orig.Popen):
         # don't want to rewrite the original _communicate() method, we
         # just want a version that uses eventlet.green.select.select()
         # instead of select.select().
-        _communicate = new.function(subprocess_orig.Popen._communicate.im_func.func_code,
+        _communicate = FunctionType(subprocess_orig.Popen._communicate.im_func.func_code,
                                     globals())
         try:
-            _communicate_with_select = new.function(
+            _communicate_with_select = FunctionType(
                 subprocess_orig.Popen._communicate_with_select.im_func.func_code,
                 globals())
-            _communicate_with_poll = new.function(
+            _communicate_with_poll = FunctionType(
                 subprocess_orig.Popen._communicate_with_poll.im_func.func_code,
                 globals())
         except AttributeError:
@@ -91,5 +91,5 @@ class Popen(subprocess_orig.Popen):
 
 # Borrow subprocess.call() and check_call(), but patch them so they reference
 # OUR Popen class rather than subprocess.Popen.
-call = new.function(subprocess_orig.call.func_code, globals())
-check_call = new.function(subprocess_orig.check_call.func_code, globals())
+call = FunctionType(subprocess_orig.call.func_code, globals())
+check_call = FunctionType(subprocess_orig.check_call.func_code, globals())
