@@ -391,6 +391,9 @@ class _SocketDuckForFd(object):
                     raise IOError(*e.args)
 
     def __del__(self):
+        self._close()
+
+    def _close(self):
         try:
             os.close(self._fileno)
         except:
@@ -401,11 +404,15 @@ class _SocketDuckForFd(object):
         return "%s:%d" % (self.__class__.__name__, self._fileno)
 
     if "__pypy__" in sys.builtin_module_names:
+        _refcount = 0
+
         def _reuse(self):
-            pass
+            self._refcount += 1
 
         def _drop(self):
-            pass
+            self._refcount -= 1
+            if self._refcount == 0:
+                self._close()
 
 
 def _operationOnClosedFile(*args, **kwargs):

@@ -10,6 +10,7 @@ from unittest import main
 
 from eventlet import greenio
 from eventlet import event
+from eventlet import hubs
 from eventlet.green import socket as greensocket
 from eventlet import wsgi
 from eventlet.support import get_errno
@@ -154,6 +155,7 @@ def read_http(sock):
     if not response_line:
         raise ConnectionClosed(response_line)
 
+
     header_lines = []
     while True:
         line = fd.readline()
@@ -161,6 +163,7 @@ def read_http(sock):
             break
         else:
             header_lines.append(line)
+
     headers = dict()
     for x in header_lines:
         x = x.strip()
@@ -169,6 +172,7 @@ def read_http(sock):
         key, value = x.split(': ', 1)
         assert key.lower() not in headers, "%s header duplicated" % key
         headers[key.lower()] = value
+
 
     if CONTENT_LENGTH in headers:
         num = int(headers[CONTENT_LENGTH])
@@ -255,6 +259,7 @@ class TestHttpd(_TestBase):
         fd.flush()
         read_http(sock)
         fd.close()
+        sock.close()
 
     def test_003_passing_non_int_to_read(self):
         # This should go in greenio_test
@@ -356,6 +361,7 @@ class TestHttpd(_TestBase):
         response_line_test,_,_ = read_http(sock)
         self.assertEqual(response_line_200,response_line_test)
         fd.close()
+        sock.close()
 
     def test_009_chunked_response(self):
         self.site.application = chunked_app
@@ -579,6 +585,7 @@ class TestHttpd(_TestBase):
         response_line, headers, body = read_http(sock)
         self.assert_('connection' in headers)
         self.assertEqual('keep-alive', headers['connection'])
+        sock.close()
 
     def test_019_fieldstorage_compat(self):
         def use_fieldstorage(environ, start_response):
@@ -744,6 +751,7 @@ class TestHttpd(_TestBase):
         self.assert_(header_lines[0].startswith('HTTP/1.1 200 OK'))
         self.assertEquals(fd.read(7), 'testing')
         fd.close()
+        sock.close()
 
     def test_025_accept_errors(self):
         from eventlet import debug
@@ -800,6 +808,7 @@ class TestHttpd(_TestBase):
         read_http(sock)
 
         self.assertEqual(wsgi.HttpProtocol.minimum_chunk_size, start_size)
+        sock.close()
 
     def test_error_in_chunked_closes_connection(self):
         # From http://rhodesmill.org/brandon/2013/chunked-wsgi/
@@ -845,6 +854,7 @@ class TestHttpd(_TestBase):
         fd.write('PUT /a HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\n\r\n10\r\n0123456789abcdef\r\n0\r\n\r\n')
         fd.flush()
         read_http(sock)
+        sock.close()
 
     @skip_if_no_ssl
     def test_028_ssl_handshake_errors(self):
@@ -1357,6 +1367,7 @@ class TestChunkedInput(_TestBase):
         self.assertEquals(read_http(fd)[-1], "this is ch")
 
         self.ping(fd)
+        fd.close()
 
     def test_short_read_with_zero_content_length(self):
         body = self.body()
@@ -1366,6 +1377,7 @@ class TestChunkedInput(_TestBase):
         self.assertEquals(read_http(fd)[-1], "this is ch")
 
         self.ping(fd)
+        fd.close()
 
     def test_short_read(self):
         body = self.body()
@@ -1376,6 +1388,7 @@ class TestChunkedInput(_TestBase):
         self.assertEquals(read_http(fd)[-1], "this is ch")
 
         self.ping(fd)
+        fd.close()
 
     def test_dirt(self):
         body = self.body(dirt="; here is dirt\0bla")
@@ -1386,6 +1399,7 @@ class TestChunkedInput(_TestBase):
         self.assertEquals(read_http(fd)[-1], "pong")
 
         self.ping(fd)
+        fd.close()
 
     def test_chunked_readline(self):
         body = self.body()
@@ -1394,6 +1408,7 @@ class TestChunkedInput(_TestBase):
         fd = self.connect()
         fd.sendall(req)
         self.assertEquals(read_http(fd)[-1], 'this is chunked\nline 2\nline3')
+        fd.close()
 
     def test_chunked_readline_wsgi_override_minimum_chunk_size(self):
 

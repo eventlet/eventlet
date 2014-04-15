@@ -10,16 +10,25 @@ env:
   - TOX_ENV=py33selects
   - TOX_ENV=py33poll
   - TOX_ENV=py33epolls
+  - TOX_ENV=pypyselects
+  - TOX_ENV=pypypoll
+  - TOX_ENV=pypyepolls
 matrix:
   allow_failures:
     - env: TOX_ENV=py33selects
     - env: TOX_ENV=py33poll
     - env: TOX_ENV=py33epolls
+    - env: TOX_ENV=pypyselects
+    - env: TOX_ENV=pypypoll
+    - env: TOX_ENV=pypyepolls
 install:
   - sudo apt-get update -qq
-  - sudo apt-get install -qq libssl-dev libmysqlclient-dev libpq-dev
-  - pip install tox
+  - sudo apt-get install -qq libssl-dev libmysqlclient-dev libpq-dev libzmq3-dev
+  - pip install --upgrade tox setuptools virtualenv
 before_script:
   - "export EVENTLET_DB_TEST_AUTH='{\"psycopg2\": {\"user\": \"postgres\"}, \"MySQLdb\": {\"passwd\": \"\", \"host\": \"localhost\", \"user\": \"root\"}}'"
 script:
-  - tox -e $TOX_ENV
+  - tox -v -v -e $TOX_ENV
+after_failure:
+  - for X in .tox/$TOX_ENV/log/*; do echo "$X\n"; cat "$X"; echo "\n\n"; done;
+  - echo "pip.log\n"; cat $HOME/.pip/pip.log
