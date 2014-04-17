@@ -274,7 +274,7 @@ class GreenPool(tests.LimitedTestCase):
     def test_imap_multi_args(self):
         p = greenpool.GreenPool(4)
         result_list = list(p.imap(passthru2, range(10), range(10, 20)))
-        self.assertEquals(result_list, list(itertools.izip(range(10), range(10,20))))
+        self.assertEquals(result_list, list(zip(range(10), range(10,20))))
 
     def test_imap_raises(self):
         # testing the case where the function raises an exception;

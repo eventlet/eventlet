@@ -451,7 +451,7 @@ class RFC6455WebSocket(WebSocket):
     def _apply_mask(data, mask, length=None, offset=0):
         if length is None:
             length = len(data)
-        cnt = xrange(length)
+        cnt = range(length)
         return ''.join(chr(ord(data[i]) ^ mask[(offset + i) % 4]) for i in cnt)
 
     def _handle_control_frame(self, opcode, data):
