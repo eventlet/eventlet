@@ -1,9 +1,12 @@
-from eventlet.support import greenlets as greenlet
+import traceback
+
+from eventlet.support import greenlets as greenlet, six
 from eventlet.hubs import get_hub
 
 """ If true, captures a stack trace for each timer when constructed.  This is
 useful for debugging leaking timers, to find out where the timer was set up. """
 _g_debug = False
+
 
 class Timer(object):
     def __init__(self, seconds, cb, *args, **kw):
@@ -20,8 +23,7 @@ class Timer(object):
         self.tpl = cb, args, kw
         self.called = False
         if _g_debug:
-            import traceback, cStringIO
-            self.traceback = cStringIO.StringIO()
+            self.traceback = six.StringIO()
             traceback.print_stack(file=self.traceback)
 
     @property
@@ -31,7 +33,7 @@ class Timer(object):
     def __repr__(self):
         secs = getattr(self, 'seconds', None)
         cb, args, kw = getattr(self, 'tpl', (None, None, None))
-        retval =  "Timer(%s, %s, *%s, **%s)" % (
+        retval = "Timer(%s, %s, *%s, **%s)" % (
             secs, cb, args, kw)
         if _g_debug and hasattr(self, 'traceback'):
             retval += '\n' + self.traceback.getvalue()
@@ -74,8 +76,9 @@ class Timer(object):
 
     # No default ordering in 3.x. heapq uses <
     # FIXME should full set be added?
-    def __lt__(self, other): 
-        return id(self)<id(other)
+    def __lt__(self, other):
+        return id(self) < id(other)
+
 
 class LocalTimer(Timer):
 
@@ -100,4 +103,3 @@ class LocalTimer(Timer):
     def cancel(self):
         self.greenlet = None
         Timer.cancel(self)
-

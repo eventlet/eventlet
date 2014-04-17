@@ -1,4 +1,3 @@
-import itertools
 import traceback
 
 from eventlet import event
@@ -6,6 +5,7 @@ from eventlet import greenthread
 from eventlet import queue
 from eventlet import semaphore
 from eventlet.support import greenlets as greenlet
+from eventlet.support import six
 
 __all__ = ['GreenPool', 'GreenPile']
 
@@ -154,16 +154,16 @@ class GreenPool(object):
     def imap(self, function, *iterables):
         """This is the same as :func:`itertools.imap`, and has the same
         concurrency and memory behavior as :meth:`starmap`.
-        
+
         It's quite convenient for, e.g., farming out jobs from a file::
-           
+
            def worker(line):
                return do_something(line)
            pool = GreenPool()
            for result in pool.imap(worker, open("filename", 'r')):
                print result
         """
-        return self.starmap(function, itertools.izip(*iterables))
+        return self.starmap(function, six.moves.zip(*iterables))
 
 
 def return_stop_iteration():

@@ -2,13 +2,10 @@ import sys
 
 import eventlet
 from eventlet import debug
+from eventlet.support import six
 from tests import LimitedTestCase, main, s2b
 from unittest import TestCase
 
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from StringIO import StringIO
 
 class TestSpew(TestCase):
     def setUp(self):
@@ -33,7 +30,7 @@ class TestSpew(TestCase):
         self.failUnlessEqual(self.tracer, None)
 
     def test_line(self):
-        sys.stdout = StringIO()
+        sys.stdout = six.StringIO()
         s = debug.Spew()
         f = sys._getframe()
         s(f, "line", None)
@@ -43,7 +40,7 @@ class TestSpew(TestCase):
         self.failUnless("f=<frame object at" in output)
 
     def test_line_nofile(self):
-        sys.stdout = StringIO()
+        sys.stdout = six.StringIO()
         s = debug.Spew()
         g = globals().copy()
         del g['__file__']
@@ -56,7 +53,7 @@ class TestSpew(TestCase):
 
     def test_line_global(self):
         global GLOBAL_VAR
-        sys.stdout = StringIO()
+        sys.stdout = six.StringIO()
         GLOBAL_VAR = debug.Spew()
         f = sys._getframe()
         GLOBAL_VAR(f, "line", None)
@@ -69,7 +66,7 @@ class TestSpew(TestCase):
         del GLOBAL_VAR
 
     def test_line_novalue(self):
-        sys.stdout = StringIO()
+        sys.stdout = six.StringIO()
         s = debug.Spew(show_values=False)
         f = sys._getframe()
         s(f, "line", None)
@@ -79,7 +76,7 @@ class TestSpew(TestCase):
         self.failIf("f=<frame object at" in output)
 
     def test_line_nooutput(self):
-        sys.stdout = StringIO()
+        sys.stdout = six.StringIO()
         s = debug.Spew(trace_names=['foo'])
         f = sys._getframe()
         s(f, "line", None)
@@ -106,16 +103,16 @@ class TestDebug(LimitedTestCase):
         server = eventlet.listen(('0.0.0.0', 0))
         client = eventlet.connect(('127.0.0.1', server.getsockname()[1]))
         client_2, addr = server.accept()
-        
+
         def hurl(s):
             s.recv(1)
             {}[1]  # keyerror
 
-        fake = StringIO()
+        fake = six.StringIO()
         orig = sys.stderr
         sys.stderr = fake
         try:
-            gt = eventlet.spawn(hurl, client_2)            
+            gt = eventlet.spawn(hurl, client_2)
             eventlet.sleep(0)
             client.send(s2b(' '))
             eventlet.sleep(0)
@@ -127,8 +124,8 @@ class TestDebug(LimitedTestCase):
             self.assertRaises(KeyError, gt.wait)
             debug.hub_exceptions(False)
         # look for the KeyError exception in the traceback
-        self.assert_('KeyError: 1' in fake.getvalue(), 
+        self.assert_('KeyError: 1' in fake.getvalue(),
             "Traceback not in:\n" + fake.getvalue())
-        
+
 if __name__ == "__main__":
     main()

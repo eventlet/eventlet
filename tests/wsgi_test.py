@@ -14,7 +14,7 @@ from eventlet import event
 from eventlet import hubs
 from eventlet.green import socket as greensocket
 from eventlet import wsgi
-from eventlet.support import get_errno
+from eventlet.support import get_errno, six
 
 from tests import find_command, run_python
 
@@ -22,11 +22,6 @@ httplib = eventlet.import_patched('httplib')
 
 certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
 private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
-
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from StringIO import StringIO
 
 
 HttpReadResult = collections.namedtuple(
@@ -205,7 +200,7 @@ def read_http(sock):
 class _TestBase(LimitedTestCase):
     def setUp(self):
         super(_TestBase, self).setUp()
-        self.logfile = StringIO()
+        self.logfile = six.StringIO()
         self.site = Site()
         self.killer = None
         self.set_site()
@@ -635,7 +630,7 @@ class TestHttpd(_TestBase):
         self.assert_('1.2.3.4,5.6.7.8,127.0.0.1' in self.logfile.getvalue())
 
         # turning off the option should work too
-        self.logfile = StringIO()
+        self.logfile = six.StringIO()
         self.spawn_server(log_x_forwarded_for=False)
 
         sock = eventlet.connect(('localhost', self.port))
@@ -777,7 +772,7 @@ class TestHttpd(_TestBase):
         listener = greensocket.socket()
         listener.bind(('localhost', 0))
         # NOT calling listen, to trigger the error
-        self.logfile = StringIO()
+        self.logfile = six.StringIO()
         self.spawn_server(sock=listener)
         old_stderr = sys.stderr
         try:
@@ -1133,7 +1128,7 @@ class TestHttpd(_TestBase):
             sock = eventlet.listen(('::1', 0), family=socket.AF_INET6)
         except (socket.gaierror, socket.error):  # probably no ipv6
             return
-        log = StringIO()
+        log = six.StringIO()
         # first thing the server does is try to log the IP it's bound to
 
         def run_server():
