@@ -20,8 +20,9 @@ class Timer(object):
         self.tpl = cb, args, kw
         self.called = False
         if _g_debug:
-            import traceback, cStringIO
-            self.traceback = cStringIO.StringIO()
+            import traceback
+            from eventlet.support import six
+            self.traceback = six.StringIO()
             traceback.print_stack(file=self.traceback)
 
     @property
@@ -74,7 +75,7 @@ class Timer(object):
 
     # No default ordering in 3.x. heapq uses <
     # FIXME should full set be added?
-    def __lt__(self, other): 
+    def __lt__(self, other):
         return id(self)<id(other)
 
 class LocalTimer(Timer):

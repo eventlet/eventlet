@@ -8,7 +8,8 @@ from unittest import TestCase
 try:
     from cStringIO import StringIO
 except ImportError:
-    from StringIO import StringIO
+    # python 3.3
+    from io import StringIO
 
 class TestSpew(TestCase):
     def setUp(self):
@@ -106,7 +107,7 @@ class TestDebug(LimitedTestCase):
         server = eventlet.listen(('0.0.0.0', 0))
         client = eventlet.connect(('127.0.0.1', server.getsockname()[1]))
         client_2, addr = server.accept()
-        
+
         def hurl(s):
             s.recv(1)
             {}[1]  # keyerror
@@ -115,7 +116,7 @@ class TestDebug(LimitedTestCase):
         orig = sys.stderr
         sys.stderr = fake
         try:
-            gt = eventlet.spawn(hurl, client_2)            
+            gt = eventlet.spawn(hurl, client_2)
             eventlet.sleep(0)
             client.send(s2b(' '))
             eventlet.sleep(0)
@@ -127,8 +128,8 @@ class TestDebug(LimitedTestCase):
             self.assertRaises(KeyError, gt.wait)
             debug.hub_exceptions(False)
         # look for the KeyError exception in the traceback
-        self.assert_('KeyError: 1' in fake.getvalue(), 
+        self.assert_('KeyError: 1' in fake.getvalue(),
             "Traceback not in:\n" + fake.getvalue())
-        
+
 if __name__ == "__main__":
     main()

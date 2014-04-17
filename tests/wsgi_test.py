@@ -24,7 +24,8 @@ private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
 try:
     from cStringIO import StringIO
 except ImportError:
-    from StringIO import StringIO
+    # python 3.3
+    from io import StringIO
 
 
 def hello_world(env, start_response):
