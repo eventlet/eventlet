@@ -53,11 +53,11 @@ assert highwater[0] > 20, "Highwater %%s  <= %%s" %% (highwater[0], normal)
 import eventlet
 import time
 def do():
-    print "should not get here"
+    print("should not get here")
 try:
     tpool.execute(do)
 except AssertionError:
-    print "success"
+    print("success")
 """
         os.environ['EVENTLET_THREADPOOL_SIZE'] = "-1"
         try:
@@ -73,7 +73,7 @@ except AssertionError:
 import eventlet
 import time
 def do():
-    print "ran it"
+    print("ran it")
 tpool.execute(do)
 """
         os.environ['EVENTLET_THREADPOOL_SIZE'] = "0"
@@ -85,7 +85,6 @@ tpool.execute(do)
             self.assert_('Warning' in lines[1] or 'Warning' in lines[0], lines)
         finally:
             del os.environ['EVENTLET_THREADPOOL_SIZE']
-
 
 
 class Hub(ProcessBase):
@@ -104,7 +103,7 @@ class Hub(ProcessBase):
 
     def test_eventlet_hub(self):
         new_mod = """from eventlet import hubs
-print hubs.get_hub()
+print(hubs.get_hub())
 """
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod.py')

@@ -10,14 +10,14 @@ from tests import LimitedTestCase, main, run_python, skip_with_pyevent
 base_module_contents = """
 import socket
 import urllib
-print "base", socket, urllib
+print("base {0} {1}".format(socket, urllib))
 """
 
 patching_module_contents = """
 from eventlet.green import socket
 from eventlet.green import urllib
 from eventlet import patcher
-print 'patcher', socket, urllib
+print('patcher {0} {1}'.format(socket, urllib))
 patcher.inject('base', globals(), ('socket', socket), ('urllib', urllib))
 del patcher
 """
@@ -25,7 +25,7 @@ del patcher
 import_module_contents = """
 import patching
 import socket
-print "importing", patching, socket, patching.socket, patching.urllib
+print("importing {0} {1} {2} {3}".format(patching, socket, patching.socket, patching.urllib))
 """
 
 
@@ -83,7 +83,7 @@ class ImportPatched(ProcessBase):
         new_mod = """
 from eventlet import patcher
 base = patcher.import_patched('base')
-print "newmod", base, base.socket, base.urllib.socket.socket
+print("newmod {0} {1} {2}".format(base, base.socket, base.urllib.socket.socket))
 """
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod.py')
@@ -100,7 +100,7 @@ from eventlet import patcher
 patcher.monkey_patch()
 import socket
 import urllib
-print "newmod", socket.socket, urllib.socket.socket
+print("newmod {0} {1}".format(socket.socket, urllib.socket.socket))
 """
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod.py')
@@ -113,7 +113,7 @@ from eventlet import patcher
 patcher.monkey_patch()
 import eventlet
 eventlet.sleep(0.01)
-print "newmod"
+print("newmod")
 """
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod.py')
@@ -127,7 +127,7 @@ eventlet.sleep(0.01)
 from eventlet import patcher
 patcher.monkey_patch()
 eventlet.sleep(0.01)
-print "newmod"
+print("newmod")
 """
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod.py')
@@ -156,7 +156,7 @@ for mod in [%s]:
     assert patcher.is_monkey_patched(mod), mod
 for mod in [%s]:
     assert not patcher.is_monkey_patched(mod), mod
-print "already_patched", ",".join(sorted(patcher.already_patched.keys()))
+print("already_patched {0}".format(",".join(sorted(patcher.already_patched.keys()))))
 """ % (call, expected_list, not_expected_list)
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod.py')
@@ -227,7 +227,7 @@ def test_monkey_patch_threading():
     eventlet.spawn(tick)
     w1 = eventlet.spawn(do_sleep)
     w1.wait()
-    print tickcount[0]
+    print(tickcount[0])
     assert tickcount[0] > 900
     tpool.killall()
 """
@@ -242,8 +242,8 @@ import eventlet
 from eventlet import patcher
 patcher.monkey_patch()
 from eventlet import tpool
-print "newmod", tpool.execute(len, "hi")
-print "newmod", tpool.execute(len, "hi2")
+print("newmod {0}".format(tpool.execute(len, "hi")))
+print("newmod {0}".format(tpool.execute(len, "hi2")))
 tpool.killall()
 """
         self.write_to_tempfile("newmod", new_mod)
@@ -287,7 +287,7 @@ eventlet.monkey_patch()
 from eventlet.green import subprocess
 
 subprocess.Popen(['true'], stdin=subprocess.PIPE)
-print "done"
+print("done")
 """
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod')
@@ -302,12 +302,12 @@ from eventlet import patcher
 import threading
 _threading = patcher.original('threading')
 def test():
-    print repr(threading.currentThread())
+    print(repr(threading.currentThread()))
 t = _threading.Thread(target=test)
 t.start()
 t.join()
-print len(threading._active)
-print len(_threading._active)
+print(len(threading._active))
+print(len(_threading._active))
 """
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod')
@@ -321,11 +321,11 @@ print len(_threading._active)
 eventlet.monkey_patch()
 import threading
 def test():
-    print repr(threading.currentThread())
+    print(repr(threading.currentThread()))
 t = threading.Thread(target=test)
 t.start()
 t.join()
-print len(threading._active)
+print(len(threading._active))
 """
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod')
@@ -339,9 +339,9 @@ eventlet.monkey_patch()
 from eventlet import tpool
 import threading
 def test():
-    print repr(threading.currentThread())
+    print(repr(threading.currentThread()))
 tpool.execute(test)
-print len(threading._active)
+print(len(threading._active))
 """
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod')
@@ -356,11 +356,11 @@ from eventlet import event
 import threading
 evt = event.Event()
 def test():
-    print repr(threading.currentThread())
+    print(repr(threading.currentThread()))
     evt.send()
 eventlet.spawn_n(test)
 evt.wait()
-print len(threading._active)
+print(len(threading._active))
 """
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod')
@@ -373,10 +373,10 @@ print len(threading._active)
 eventlet.monkey_patch()
 import threading
 def test():
-    print repr(threading.currentThread())
+    print(repr(threading.currentThread()))
 t = eventlet.spawn(test)
 t.wait()
-print len(threading._active)
+print(len(threading._active))
 """
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod')
@@ -399,7 +399,7 @@ class Os(ProcessBase):
 import eventlet
 eventlet.monkey_patch(all=False, os=True)
 process = subprocess.Popen("sleep 0.1 && false", shell=True)
-print process.wait()"""
+print(process.wait())"""
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod')
         self.assertEqual(len(lines), 2, "\n".join(lines))
@@ -425,7 +425,7 @@ t.wait()
         t2 = threading.currentThread()
     eventlet.spawn(test2)
 """ + self.epilogue + """
-print repr(t2)
+print(repr(t2))
 t2.join()
 """)
         output, lines = self.launch_subprocess('newmod')
@@ -434,17 +434,17 @@ t2.join()
 
     def test_name(self):
         self.write_to_tempfile("newmod", self.prologue + """
-    print t.name
-    print t.getName()
-    print t.get_name()
+    print(t.name)
+    print(t.getName())
+    print(t.get_name())
     t.name = 'foo'
-    print t.name
-    print t.getName()
-    print t.get_name()
+    print(t.name)
+    print(t.getName())
+    print(t.get_name())
     t.setName('bar')
-    print t.name
-    print t.getName()
-    print t.get_name()
+    print(t.name)
+    print(t.getName())
+    print(t.get_name())
 """ + self.epilogue)
         output, lines = self.launch_subprocess('newmod')
         self.assertEqual(len(lines), 10, "\n".join(lines))
@@ -457,8 +457,8 @@ t2.join()
 
     def test_ident(self):
         self.write_to_tempfile("newmod", self.prologue + """
-    print id(t._g)
-    print t.ident
+    print(id(t._g))
+    print(t.ident)
 """ + self.epilogue)
         output, lines = self.launch_subprocess('newmod')
         self.assertEqual(len(lines), 3, "\n".join(lines))
@@ -466,8 +466,8 @@ t2.join()
 
     def test_is_alive(self):
         self.write_to_tempfile("newmod", self.prologue + """
-    print t.is_alive()
-    print t.isAlive()
+    print(t.is_alive())
+    print(t.isAlive())
 """ + self.epilogue)
         output, lines = self.launch_subprocess('newmod')
         self.assertEqual(len(lines), 3, "\n".join(lines))
@@ -476,8 +476,8 @@ t2.join()
 
     def test_is_daemon(self):
         self.write_to_tempfile("newmod", self.prologue + """
-    print t.is_daemon()
-    print t.isDaemon()
+    print(t.is_daemon())
+    print(t.isDaemon())
 """ + self.epilogue)
         output, lines = self.launch_subprocess('newmod')
         self.assertEqual(len(lines), 3, "\n".join(lines))

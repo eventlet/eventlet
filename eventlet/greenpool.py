@@ -161,7 +161,7 @@ class GreenPool(object):
                return do_something(line)
            pool = GreenPool()
            for result in pool.imap(worker, open("filename", 'r')):
-               print result
+               print(result)
         """
         return self.starmap(function, six.moves.zip(*iterables))
 

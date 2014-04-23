@@ -131,7 +131,7 @@ def fetch(url):
 pool = eventlet.GreenPool()
 
 for body in pool.imap(fetch, urls):
-    print "got body", len(body)
+    print("got body", len(body))
 </code></pre>
 
 

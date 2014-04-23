@@ -67,8 +67,8 @@ def select(read_list, write_list, error_list, timeout=None):
         # at least once before timed out.  otherwise the following code
         # can time out erroneously.
         #
-        #       s1, s2 = socket.socketpair()
-        #       print select.select([], [s1], [], 0)
+        # s1, s2 = socket.socketpair()
+        # print(select.select([], [s1], [], 0))
         timers.append(hub.schedule_call_global(0, on_timeout2))
 
     if timeout is not None:

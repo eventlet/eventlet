@@ -15,7 +15,7 @@ def start_http_server():
     server_address = ('localhost', 0)
     httpd = BaseHTTPServer.HTTPServer(server_address, QuietHandler)
     sa = httpd.socket.getsockname()
-    #print "Serving HTTP on", sa[0], "port", sa[1], "..."
+    #print("Serving HTTP on", sa[0], "port", sa[1], "...")
     httpd.request_count = 0
     def serve():
         # increment the request_count before handling the request because
@@ -28,7 +28,7 @@ class TestGreenness(unittest.TestCase):
 
     def setUp(self):
         self.gthread, self.server,self.port = start_http_server()
-        #print 'Spawned the server'
+        #print('Spawned the server')
 
     def tearDown(self):
         self.server.server_close()

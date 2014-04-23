@@ -129,11 +129,11 @@ class timeout(object):
     an exception provided in *exc* argument will be raised
     (:class:`~eventlet.api.TimeoutError` if *exc* is omitted)::
 
-     try:
-         with timeout(10, MySpecialError, error_arg_1):
-             urllib2.open('http://example.com')
-     except MySpecialError as e:
-         print "special error received"
+    try:
+        with timeout(10, MySpecialError, error_arg_1):
+            urllib2.open('http://example.com')
+    except MySpecialError as e:
+        print("special error received")
 
     When *exc* is ``None``, code block is interrupted silently.
     """
@@ -194,7 +194,7 @@ def named(name):
             obj = __import__(toimport)
             break
         except ImportError as err:
-            # print 'Import error on %s: %s' % (toimport, err)  # debugging spam
+            # print('Import error on %s: %s' % (toimport, err))  # debugging spam
             import_err_strings.append(err.__str__())
             toimport = '.'.join(toimport.split('.')[:-1])
     if obj is None:
@@ -208,4 +208,3 @@ def named(name):
             raise AttributeError('attribute %r missing from %r (%r) %r.  Import errors: %r' % (
                 seg, obj, dirobj, name, import_err_strings))
     return obj
-

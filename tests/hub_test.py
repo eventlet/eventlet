@@ -267,7 +267,7 @@ eventlet.Timeout(0.5)
 try:
    eventlet.listen(("127.0.0.1", 0)).accept()
 except eventlet.Timeout:
-   print "exited correctly"
+   print("exited correctly")
 """)
         fd.close()
         python_path = os.pathsep.join(sys.path + [self.tempdir])
@@ -314,13 +314,13 @@ if not pid:
     try:
         new_sock, address = server.accept()
     except eventlet.Timeout as t:
-        print "accept blocked"
+        print("accept blocked")
 
 else:
     kpid, status = os.wait()
     assert kpid == pid
     assert status == 0
-    print "child died ok"
+    print("child died ok")
 """
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod.py')

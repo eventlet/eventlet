@@ -1,7 +1,7 @@
 :mod:`wsgi` -- WSGI server
 ===========================
 
-The wsgi module provides a simple and easy way to start an event-driven 
+The wsgi module provides a simple and easy way to start an event-driven
 `WSGI <http://wsgi.org/wsgi/>`_ server.  This can serve as an embedded
 web server in an application, or as the basis for a more full-featured web
 server package.  One such package is `Spawning <http://pypi.python.org/pypi/Spawning/>`_.
@@ -10,11 +10,11 @@ To launch a wsgi server, simply create a socket and call :func:`eventlet.wsgi.se
 
     from eventlet import wsgi
     import eventlet
-    
+
     def hello_world(env, start_response):
         start_response('200 OK', [('Content-Type', 'text/plain')])
         return ['Hello, World!\r\n']
-    
+
     wsgi.server(eventlet.listen(('', 8090)), hello_world)
 
 
@@ -55,14 +55,14 @@ For example::
     import eventlet
 
     def hook(env, arg1, arg2, kwarg3=None, kwarg4=None):
-        print 'Hook called: %s %s %s %s %s' % (env, arg1, arg2, kwarg3, kwarg4)
-    
+        print('Hook called: %s %s %s %s %s' % (env, arg1, arg2, kwarg3, kwarg4))
+
     def hello_world(env, start_response):
         env['eventlet.posthooks'].append(
             (hook, ('arg1', 'arg2'), {'kwarg3': 3, 'kwarg4': 4}))
         start_response('200 OK', [('Content-Type', 'text/plain')])
         return ['Hello, World!\r\n']
-    
+
     wsgi.server(eventlet.listen(('', 8090)), hello_world)
 
 The above code will print the WSGI environment and the other passed function

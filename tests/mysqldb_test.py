@@ -1,10 +1,13 @@
 from __future__ import print_function
 
 import os
-import sys
 import time
 import traceback
-from tests import skipped, skip_unless, using_pyevent, get_database_auth, LimitedTestCase
+from tests import (
+    LimitedTestCase,
+    run_python,
+    skip_unless, using_pyevent, get_database_auth,
+)
 import eventlet
 from eventlet import event
 try:
@@ -219,20 +222,16 @@ class MySQLdbTester(LimitedTestCase):
             conn.commit()
 
 
-from tests import patcher_test
-
-class MonkeyPatchTester(patcher_test.ProcessBase):
+class TestMonkeyPatch(LimitedTestCase):
     @skip_unless(mysql_requirement)
     def test_monkey_patching(self):
-        output, lines = self.run_script("""
-from eventlet import patcher
-import MySQLdb as m
-from eventlet.green import MySQLdb as gm
-patcher.monkey_patch(all=True, MySQLdb=True)
-print "mysqltest", ",".join(sorted(patcher.already_patched.keys()))
-print "connect", m.connect == gm.connect
-""")
-        self.assertEqual(len(lines), 3)
+        testcode_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            'mysqldb_test_monkey_patch.py',
+        )
+        output = run_python(testcode_path)
+        lines = output.splitlines()
+        self.assertEqual(len(lines), 2, output)
         self.assertEqual(lines[0].replace("psycopg,", ""),
                          'mysqltest MySQLdb,os,select,socket,thread,time')
         self.assertEqual(lines[1], "connect True")
