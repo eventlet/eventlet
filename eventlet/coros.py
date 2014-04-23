@@ -150,6 +150,8 @@ class Queue(object):
     def __nonzero__(self):
         return len(self.items)>0
 
+    __bool__ = __nonzero__
+
     def __len__(self):
         return len(self.items)
 
@@ -223,6 +225,8 @@ class Channel(object):
 
     def __nonzero__(self):
         return len(self.items)>0
+
+    __bool__ = __nonzero__
 
     def __len__(self):
         return len(self.items)

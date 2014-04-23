@@ -42,6 +42,8 @@ class _QueueLock(object):
     def __nonzero__(self):
         return self._count
 
+    __bool__ = __nonzero__
+
     def __enter__(self):
         self.acquire()
 
@@ -87,6 +89,8 @@ class _BlockedThread(object):
 
     def __nonzero__(self):
         return self._blocked_thread is not None
+
+    __bool__ = __nonzero__
 
     def block(self):
         if self._blocked_thread is not None:
