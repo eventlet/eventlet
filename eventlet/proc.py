@@ -547,6 +547,8 @@ class Proc(Source):
         if self.greenlet is not None:
             return bool(self.greenlet)
 
+    __bool__ = __nonzero__
+
     @property
     def dead(self):
         return self.ready() or self.greenlet.dead

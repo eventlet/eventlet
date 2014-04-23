@@ -135,8 +135,9 @@ class BaseConnectionPool(Pool):
     def _unwrap_connection(self, conn):
         """ If the connection was wrapped by a subclass of
         BaseConnectionWrapper and is still functional (as determined
-        by the __nonzero__ method), returns the unwrapped connection.
-        If anything goes wrong with this process, returns None.
+        by the __nonzero__, or __bool__ in python3, method), returns
+        the unwrapped connection.  If anything goes wrong with this
+        process, returns None.
         """
         base = None
         try:
@@ -335,6 +336,8 @@ class PooledConnectionWrapper(GenericConnectionWrapper):
 
     def __nonzero__(self):
         return (hasattr(self, '_base') and bool(self._base))
+
+    __bool__ = __nonzero__
 
     def _destroy(self):
         self._pool = None
