@@ -1,5 +1,4 @@
 import os
-import os.path
 import socket
 from unittest import TestCase, main
 import warnings
@@ -45,7 +44,7 @@ class TestApi(TestCase):
                 conn, addr = listenfd.accept()
                 fd = conn.makefile(mode='w')
                 conn.close()
-                fd.write('hello\n')
+                fd.write(b'hello\n')
                 fd.close()
             finally:
                 listenfd.close()
@@ -56,7 +55,7 @@ class TestApi(TestCase):
         client = eventlet.connect(('127.0.0.1', server.getsockname()[1]))
         fd = client.makefile()
         client.close()
-        assert fd.readline() == 'hello\n'
+        assert fd.readline() == b'hello\n'
 
         assert fd.read() == ''
         fd.close()
@@ -68,7 +67,7 @@ class TestApi(TestCase):
         def accept_once(listenfd):
             try:
                 conn, addr = listenfd.accept()
-                conn.write('hello\r\n')
+                conn.write(b'hello\r\n')
                 greenio.shutdown_safe(conn)
                 conn.close()
             finally:
@@ -84,7 +83,7 @@ class TestApi(TestCase):
         client = util.wrap_ssl(raw_client)
         fd = socket._fileobject(client, 'rb', 8192)
 
-        assert fd.readline() == 'hello\r\n'
+        assert fd.readline() == b'hello\r\n'
         try:
             self.assertEquals('', fd.read(10))
         except greenio.SSL.ZeroReturnError:
@@ -92,13 +91,13 @@ class TestApi(TestCase):
             pass
         greenio.shutdown_safe(client)
         client.close()
-        
+
         check_hub()
 
     def test_001_trampoline_timeout(self):
-        from eventlet import coros
         server_sock = eventlet.listen(('127.0.0.1', 0))
         bound_port = server_sock.getsockname()[1]
+
         def server(sock):
             client, addr = sock.accept()
             api.sleep(0.1)
@@ -108,7 +107,7 @@ class TestApi(TestCase):
             desc = eventlet.connect(('127.0.0.1', bound_port))
             api.trampoline(desc, read=True, write=False, timeout=0.001)
         except api.TimeoutError:
-            pass # test passed
+            pass  # test passed
         else:
             assert False, "Didn't timeout"
 
@@ -120,6 +119,7 @@ class TestApi(TestCase):
         bound_port = server.getsockname()[1]
 
         done = [False]
+
         def client_closer(sock):
             while True:
                 (conn, addr) = sock.accept()
@@ -154,11 +154,11 @@ class TestApi(TestCase):
     def test_naming_missing_class(self):
         self.assertRaises(
             ImportError, api.named, 'this_name_should_hopefully_not_exist.Foo')
-        
-        
+
     def test_killing_dormant(self):
         DELAY = 0.1
         state = []
+
         def test():
             try:
                 state.append('start')
@@ -176,7 +176,7 @@ class TestApi(TestCase):
         self.assertEquals(state, ['start'])
         api.kill(g)
         # will not get there, unless switching is explicitly scheduled by kill
-        self.assertEquals(state,['start', 'except'])
+        self.assertEquals(state, ['start', 'except'])
         api.sleep(DELAY)
         self.assertEquals(state, ['start', 'except', 'finished'])
 
@@ -192,4 +192,3 @@ class Foo(object):
 
 if __name__ == '__main__':
     main()
-

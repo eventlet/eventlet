@@ -16,7 +16,7 @@ from tests import (
 
 def listen_ssl_socket(address=('127.0.0.1', 0)):
     sock = util.wrap_ssl(socket.socket(), certificate_file,
-          private_key_file, True)
+                         private_key_file, True)
     sock.bind(address)
     sock.listen(50)
 
@@ -37,25 +37,25 @@ class SSLTest(LimitedTestCase):
     def test_duplex_response(self):
         def serve(listener):
             sock, addr = listener.accept()
-            stuff = sock.read(8192)
-            sock.write('response')
+            sock.read(8192)
+            sock.write(b'response')
 
         sock = listen_ssl_socket()
 
         server_coro = eventlet.spawn(serve, sock)
 
         client = util.wrap_ssl(eventlet.connect(('127.0.0.1', sock.getsockname()[1])))
-        client.write('line 1\r\nline 2\r\n\r\n')
-        self.assertEquals(client.read(8192), 'response')
+        client.write(b'line 1\r\nline 2\r\n\r\n')
+        self.assertEquals(client.read(8192), b'response')
         server_coro.wait()
 
     @skip_if_no_ssl
     def test_ssl_close(self):
         def serve(listener):
             sock, addr = listener.accept()
-            stuff = sock.read(8192)
+            sock.read(8192)
             try:
-                self.assertEquals("", sock.read(8192))
+                self.assertEquals(b"", sock.read(8192))
             except greenio.SSL.ZeroReturnError:
                 pass
 
@@ -65,7 +65,7 @@ class SSLTest(LimitedTestCase):
 
         raw_client = eventlet.connect(('127.0.0.1', sock.getsockname()[1]))
         client = util.wrap_ssl(raw_client)
-        client.write('X')
+        client.write(b'X')
         greenio.shutdown_safe(client)
         client.close()
         server_coro.wait()
@@ -74,14 +74,14 @@ class SSLTest(LimitedTestCase):
     def test_ssl_connect(self):
         def serve(listener):
             sock, addr = listener.accept()
-            stuff = sock.read(8192)
+            sock.read(8192)
         sock = listen_ssl_socket()
         server_coro = eventlet.spawn(serve, sock)
 
         raw_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         ssl_client = util.wrap_ssl(raw_client)
         ssl_client.connect(('127.0.0.1', sock.getsockname()[1]))
-        ssl_client.write('abc')
+        ssl_client.write(b'abc')
         greenio.shutdown_safe(ssl_client)
         ssl_client.close()
         server_coro.wait()
@@ -90,24 +90,24 @@ class SSLTest(LimitedTestCase):
     def test_ssl_unwrap(self):
         def serve():
             sock, addr = listener.accept()
-            self.assertEquals(sock.recv(6), 'before')
+            self.assertEquals(sock.recv(6), b'before')
             sock_ssl = util.wrap_ssl(sock, certificate_file, private_key_file,
                                      server_side=True)
             sock_ssl.do_handshake()
-            self.assertEquals(sock_ssl.read(6), 'during')
+            self.assertEquals(sock_ssl.read(6), b'during')
             sock2 = sock_ssl.unwrap()
-            self.assertEquals(sock2.recv(5), 'after')
+            self.assertEquals(sock2.recv(5), b'after')
             sock2.close()
 
         listener = eventlet.listen(('127.0.0.1', 0))
         server_coro = eventlet.spawn(serve)
         client = eventlet.connect((listener.getsockname()))
-        client.send('before')
+        client.send(b'before')
         client_ssl = util.wrap_ssl(client)
         client_ssl.do_handshake()
-        client_ssl.write('during')
+        client_ssl.write(b'during')
         client2 = client_ssl.unwrap()
-        client2.send('after')
+        client2.send(b'after')
         server_coro.wait()
 
     @skip_if_no_ssl
@@ -131,11 +131,11 @@ class SSLTest(LimitedTestCase):
         def serve(listener):
             conn, _ = listener.accept()
             conn.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, BUFFER_SIZE)
-            self.assertEqual(conn.read(8), 'request')
-            conn.write('response')
+            self.assertEqual(conn.read(8), b'request')
+            conn.write(b'response')
 
             stage_1.wait()
-            conn.sendall('x' * SENDALL_SIZE)
+            conn.sendall(b'x' * SENDALL_SIZE)
 
         server_sock = listen_ssl_socket()
         server_coro = eventlet.spawn(serve, server_sock)
@@ -143,8 +143,8 @@ class SSLTest(LimitedTestCase):
         client_sock = eventlet.connect(server_sock.getsockname())
         client_sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFFER_SIZE)
         client = util.wrap_ssl(client_sock)
-        client.write('request')
-        self.assertEqual(client.read(8), 'response')
+        client.write(b'request')
+        self.assertEqual(client.read(8), b'response')
         stage_1.send()
 
         check_idle_cpu_usage(0.2, 0.1)
@@ -154,14 +154,14 @@ class SSLTest(LimitedTestCase):
     def test_greensslobject(self):
         def serve(listener):
             sock, addr = listener.accept()
-            sock.write('content')
+            sock.write(b'content')
             greenio.shutdown_safe(sock)
             sock.close()
         listener = listen_ssl_socket(('', 0))
-        killer = eventlet.spawn(serve, listener)
+        eventlet.spawn(serve, listener)
         client = ssl(eventlet.connect(('localhost', listener.getsockname()[1])))
-        self.assertEquals(client.read(1024), 'content')
-        self.assertEquals(client.read(1024), '')
+        self.assertEquals(client.read(1024), b'content')
+        self.assertEquals(client.read(1024), b'')
 
     @skip_if_no_ssl
     def test_regression_gh_17(self):
@@ -170,13 +170,13 @@ class SSLTest(LimitedTestCase):
 
             # to simulate condition mentioned in GH-17
             sock._sslobj = None
-            sock.sendall('some data')
+            sock.sendall(b'some data')
             greenio.shutdown_safe(sock)
             sock.close()
 
         listener = listen_ssl_socket(('', 0))
-        killer = eventlet.spawn(serve, listener)
-        client = ssl(eventlet.connect(('localhost', listener.getsockname()[1])))
+        eventlet.spawn(serve, listener)
+        ssl(eventlet.connect(('localhost', listener.getsockname()[1])))
 
 if __name__ == '__main__':
     main()

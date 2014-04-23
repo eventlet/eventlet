@@ -1,13 +1,13 @@
 from __future__ import print_function
 
+from code import InteractiveConsole
+import errno
 import socket
 import sys
-import errno
-from code import InteractiveConsole
 
 import eventlet
 from eventlet import hubs
-from eventlet.support import greenlets, get_errno
+from eventlet.support import greenlets, get_errno, six
 
 try:
     sys.ps1
@@ -29,12 +29,14 @@ class FileProxy(object):
     def flush(self):
         pass
 
-    def write(self, *a, **kw):
-        self.f.write(*a, **kw)
+    def write(self, data, *a, **kw):
+        data = six.b(data)
+        self.f.write(data, *a, **kw)
         self.f.flush()
 
     def readline(self, *a):
-        return self.f.readline(*a).replace('\r\n', '\n')
+        line = self.f.readline(*a).replace(b'\r\n', b'\n')
+        return six.u(line)
 
     def __getattr__(self, attr):
         return getattr(self.f, attr)

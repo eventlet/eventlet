@@ -1,15 +1,15 @@
-from eventlet.support import get_errno, six
-from eventlet.hubs import trampoline
-BUFFER_SIZE = 4096
-
 import array
 import errno
 import os
-import socket
 from socket import socket as _original_socket
+import socket
 import sys
 import time
 import warnings
+
+from eventlet.support import get_errno, six
+from eventlet.hubs import trampoline
+BUFFER_SIZE = 4096
 
 __all__ = ['GreenSocket', 'GreenPipe', 'shutdown_safe']
 
@@ -178,7 +178,7 @@ class GreenSocket(object):
                 set_nonblocking(client)
                 return type(self)(client), addr
             trampoline(fd, read=True, timeout=self.gettimeout(),
-                timeout_exc=socket.timeout("timed out"))
+                       timeout_exc=socket.timeout("timed out"))
 
     def connect(self, address):
         if self.act_non_blocking:
@@ -196,7 +196,7 @@ class GreenSocket(object):
                 if time.time() >= end:
                     raise socket.timeout("timed out")
                 trampoline(fd, write=True, timeout=end - time.time(),
-                        timeout_exc=socket.timeout("timed out"))
+                           timeout_exc=socket.timeout("timed out"))
                 socket_checkerr(fd)
 
     def connect_ex(self, address):
@@ -219,7 +219,7 @@ class GreenSocket(object):
                     if time.time() >= end:
                         raise socket.timeout(errno.EAGAIN)
                     trampoline(fd, write=True, timeout=end - time.time(),
-                            timeout_exc=socket.timeout(errno.EAGAIN))
+                               timeout_exc=socket.timeout(errno.EAGAIN))
                     socket_checkerr(fd)
                 except socket.error as ex:
                     return get_errno(ex)
@@ -239,7 +239,7 @@ class GreenSocket(object):
 
     def makeGreenFile(self, *args, **kw):
         warnings.warn("makeGreenFile has been deprecated, please use "
-            "makefile instead", DeprecationWarning, stacklevel=2)
+                      "makefile instead", DeprecationWarning, stacklevel=2)
         return self.makefile(*args, **kw)
 
     def recv(self, buflen, flags=0):
@@ -256,7 +256,8 @@ class GreenSocket(object):
                     return ''
                 else:
                     raise
-            trampoline(fd,
+            trampoline(
+                fd,
                 read=True,
                 timeout=self.gettimeout(),
                 timeout_exc=socket.timeout("timed out"))
@@ -264,19 +265,19 @@ class GreenSocket(object):
     def recvfrom(self, *args):
         if not self.act_non_blocking:
             trampoline(self.fd, read=True, timeout=self.gettimeout(),
-                    timeout_exc=socket.timeout("timed out"))
+                       timeout_exc=socket.timeout("timed out"))
         return self.fd.recvfrom(*args)
 
     def recvfrom_into(self, *args):
         if not self.act_non_blocking:
             trampoline(self.fd, read=True, timeout=self.gettimeout(),
-                    timeout_exc=socket.timeout("timed out"))
+                       timeout_exc=socket.timeout("timed out"))
         return self.fd.recvfrom_into(*args)
 
     def recv_into(self, *args):
         if not self.act_non_blocking:
             trampoline(self.fd, read=True, timeout=self.gettimeout(),
-                    timeout_exc=socket.timeout("timed out"))
+                       timeout_exc=socket.timeout("timed out"))
         return self.fd.recv_into(*args)
 
     def send(self, data, flags=0):
@@ -287,7 +288,6 @@ class GreenSocket(object):
         # blocking socket behavior - sends all, blocks if the buffer is full
         total_sent = 0
         len_data = len(data)
-
         while 1:
             try:
                 total_sent += fd.send(data[total_sent:], flags)
@@ -299,7 +299,7 @@ class GreenSocket(object):
                 break
 
             trampoline(self.fd, write=True, timeout=self.gettimeout(),
-                    timeout_exc=socket.timeout("timed out"))
+                       timeout_exc=socket.timeout("timed out"))
 
         return total_sent
 
@@ -467,9 +467,10 @@ class GreenPipe(_fileobject):
 
     def close(self):
         super(GreenPipe, self).close()
-        for method in ['fileno', 'flush', 'isatty', 'next', 'read', 'readinto',
-                   'readline', 'readlines', 'seek', 'tell', 'truncate',
-                   'write', 'xreadlines', '__iter__', 'writelines']:
+        for method in [
+                'fileno', 'flush', 'isatty', 'next', 'read', 'readinto',
+                'readline', 'readlines', 'seek', 'tell', 'truncate',
+                'write', 'xreadlines', '__iter__', 'writelines']:
             setattr(self, method, _operationOnClosedFile)
 
     def __enter__(self):
@@ -479,7 +480,7 @@ class GreenPipe(_fileobject):
         self.close()
 
     def readinto(self, buf):
-        data = self.read(len(buf)) # FIXME could it be done without allocating intermediate?
+        data = self.read(len(buf))  # FIXME could it be done without allocating intermediate?
         n = len(data)
         try:
             buf[:n] = data
@@ -506,9 +507,9 @@ class GreenPipe(_fileobject):
 
     def seek(self, offset, whence=0):
         self.flush()
-        if whence == 1 and offset == 0: # tell synonym
+        if whence == 1 and offset == 0:  # tell synonym
             return self.tell()
-        if whence == 1: # adjust offset by what is read ahead
+        if whence == 1:  # adjust offset by what is read ahead
             offset -= self._get_readahead_len()
         try:
             rv = os.lseek(self.fileno(), offset, whence)
@@ -518,7 +519,7 @@ class GreenPipe(_fileobject):
             self._clear_readahead_buf()
             return rv
 
-    if getattr(file, "truncate", None): # not all OSes implement truncate
+    if getattr(file, "truncate", None):  # not all OSes implement truncate
         def truncate(self, size=-1):
             self.flush()
             if size == -1:
@@ -528,7 +529,7 @@ class GreenPipe(_fileobject):
             except OSError as e:
                 raise IOError(*e.args)
             else:
-                self.seek(size) # move position&clear buffer
+                self.seek(size)  # move position&clear buffer
                 return rv
 
     def isatty(self):

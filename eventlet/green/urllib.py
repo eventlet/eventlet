@@ -11,11 +11,11 @@ try:
     to_patch.append(('ssl', ssl))
 except ImportError:
     pass
-    
+
 patcher.inject('urllib', globals(), *to_patch)
 
-# patch a bunch of things that have imports inside the 
-# function body; this is lame and hacky but I don't feel 
+# patch a bunch of things that have imports inside the
+# function body; this is lame and hacky but I don't feel
 # too bad because urllib is a hacky pile of junk that no
 # one should be using anyhow
 URLopener.open_http = patcher.patch_function(URLopener.open_http, ('httplib', httplib))

@@ -33,9 +33,9 @@ def handle_request(s, raise_on_timeout):
             return
     #print('handle_request - accepted')
     res = conn.recv(100)
-    assert res == 'hello', repr(res)
+    assert res == b'hello', repr(res)
     #print('handle_request - recvd %r' % res)
-    res = conn.send('bye')
+    res = conn.send(b'bye')
     #print('handle_request - sent %r' % res)
     #print('handle_request - conn refcount: %s' % sys.getrefcount(conn))
     #conn.close()
@@ -46,10 +46,10 @@ def make_request(port):
     s = socket.socket()
     s.connect(('localhost', port))
     #print('make_request - connected')
-    res = s.send('hello')
+    res = s.send(b'hello')
     #print('make_request - sent %s' % res)
     res = s.recv(100)
-    assert res == 'bye', repr(res)
+    assert res == b'bye', repr(res)
     #print('make_request - recvd %r' % res)
     #s.close()
 
@@ -59,7 +59,7 @@ def run_interaction(run_client):
     start_new_thread(handle_request, (s, run_client))
     if run_client:
         start_new_thread(make_request, (port,))
-    sleep(0.1+SOCKET_TIMEOUT)
+    sleep(0.1 + SOCKET_TIMEOUT)
     #print(sys.getrefcount(s.fd))
     #s.close()
     return weakref.ref(s.fd)
@@ -74,7 +74,7 @@ def run_and_check(run_client):
         for x in gc.get_referrers(w()):
             print(pformat(x))
             for y in gc.get_referrers(x):
-                print('-', pformat(y))
+                print('- {0}'.format(pformat(y)))
         raise AssertionError('server should be dead by now')
 
 
@@ -82,10 +82,11 @@ def test_clean_exit():
     run_and_check(True)
     run_and_check(True)
 
+
 def test_timeout_exit():
     run_and_check(False)
     run_and_check(False)
 
+
 if __name__=='__main__':
     unittest.main()
-

@@ -4,9 +4,11 @@ from eventlet import coros, proc, api
 from eventlet.semaphore import Semaphore
 
 import warnings
-warnings.warn("The pool module is deprecated.  Please use the "
-        "eventlet.GreenPool and eventlet.GreenPile classes instead.",
-        DeprecationWarning, stacklevel=2)
+warnings.warn(
+    "The pool module is deprecated.  Please use the "
+    "eventlet.GreenPool and eventlet.GreenPile classes instead.",
+    DeprecationWarning, stacklevel=2)
+
 
 class Pool(object):
     def __init__(self, min_size=0, max_size=4, track_events=False):
@@ -315,5 +317,3 @@ class Pool(object):
         while finished < index + 1:
             yield q.wait()
             finished += 1
-
-

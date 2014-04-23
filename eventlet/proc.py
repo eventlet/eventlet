@@ -1,9 +1,3 @@
-import warnings
-warnings.warn("The proc module is deprecated!  Please use the greenthread "
-              "module, or any of the many other Eventlet cross-coroutine "
-              "primitives, instead.",
-               DeprecationWarning, stacklevel=2)
-
 """
 This module provides means to spawn, kill and link coroutines. Linking means
 subscribing to the coroutine's result, either in form of return value or
@@ -63,7 +57,16 @@ coroutines and wait for all them to complete. Such a function is provided by
 this module.
 """
 import sys
+
 from eventlet import api, coros, hubs
+from eventlet.support import six
+
+import warnings
+warnings.warn(
+    "The proc module is deprecated!  Please use the greenthread "
+    "module, or any of the many other Eventlet cross-coroutine "
+    "primitives, instead.",
+    DeprecationWarning, stacklevel=2)
 
 __all__ = ['LinkedExited',
            'LinkedFailed',
@@ -91,10 +94,12 @@ class LinkedExited(Exception):
             msg = self.msg % self.name
         Exception.__init__(self, msg)
 
+
 class LinkedCompleted(LinkedExited):
     """Raised when a linked proc finishes the execution cleanly"""
 
     msg = "%r completed successfully"
+
 
 class LinkedFailed(LinkedExited):
     """Raised when a linked proc dies because of unhandled exception"""
@@ -104,11 +109,13 @@ class LinkedFailed(LinkedExited):
         msg = self.msg % (name, typ.__name__)
         LinkedExited.__init__(self, name, msg)
 
+
 class LinkedKilled(LinkedFailed):
     """Raised when a linked proc dies because of unhandled GreenletExit
     (i.e. it was killed)
     """
     msg = """%r was killed with %s"""
+
 
 def getLinkedFailed(name, typ, value=None, tb=None):
     if issubclass(typ, api.GreenletExit):
@@ -137,6 +144,7 @@ class Link(object):
     def __exit__(self, *args):
         self.cancel()
 
+
 class LinkToEvent(Link):
 
     def __call__(self, source):
@@ -147,6 +155,7 @@ class LinkToEvent(Link):
         else:
             self.listener.send_exception(*source.exc_info())
 
+
 class LinkToGreenlet(Link):
 
     def __call__(self, source):
@@ -154,6 +163,7 @@ class LinkToGreenlet(Link):
             self.listener.throw(LinkedCompleted(source.name))
         else:
             self.listener.throw(getLinkedFailed(source.name, *source.exc_info()))
+
 
 class LinkToCallable(Link):
 
@@ -291,7 +301,7 @@ class Source(object):
         if self.value is not _NOT_USED:
             if self._exc is None:
                 res = repr(self.value)
-                if len(res)>50:
+                if len(res) > 50:
                     res = res[:50]+'...'
                 result.append('result=%s' % res)
             else:
@@ -315,14 +325,14 @@ class Source(object):
     def exc_info(self):
         if not self._exc:
             return (None, None, None)
-        elif len(self._exc)==3:
+        elif len(self._exc) == 3:
             return self._exc
-        elif len(self._exc)==1:
+        elif len(self._exc) == 1:
             if isinstance(self._exc[0], type):
                 return self._exc[0], None, None
             else:
                 return self._exc[0].__class__, self._exc[0], None
-        elif len(self._exc)==2:
+        elif len(self._exc) == 2:
             return self._exc[0], self._exc[1], None
         else:
             return self._exc
@@ -401,7 +411,8 @@ class Source(object):
         self._start_send()
 
     def _start_send(self):
-        hubs.get_hub().schedule_call_global(0, self._do_send, self._value_links.items(), self._value_links)
+        links_items = list(six.iteritems(self._value_links))
+        hubs.get_hub().schedule_call_global(0, self._do_send, links_items, self._value_links)
 
     def send_exception(self, *throw_args):
         assert not self.ready(), "%s has been fired already" % self
@@ -410,7 +421,8 @@ class Source(object):
         self._start_send_exception()
 
     def _start_send_exception(self):
-        hubs.get_hub().schedule_call_global(0, self._do_send, self._exception_links.items(), self._exception_links)
+        links_items = list(six.iteritems(self._exception_links))
+        hubs.get_hub().schedule_call_global(0, self._do_send, links_items, self._exception_links)
 
     def _do_send(self, links, consult):
         while links:
@@ -443,7 +455,7 @@ class Source(object):
         if timeout is not None:
             timer = api.timeout(timeout, *throw_args)
             timer.__enter__()
-            if timeout==0:
+            if timeout == 0:
                 if timer.__exit__(None, None, None):
                     return
                 else:
@@ -565,7 +577,7 @@ class Proc(Source):
             result = function(*args, **kwargs)
         except:
             self.send_exception(*sys.exc_info())
-            raise # let mainloop log the exception
+            raise  # let mainloop log the exception
         else:
             self.send(result)
 
@@ -603,21 +615,23 @@ class Proc(Source):
 
 spawn = Proc.spawn
 
+
 def spawn_link(function, *args, **kwargs):
     p = spawn(function, *args, **kwargs)
     p.link()
     return p
+
 
 def spawn_link_value(function, *args, **kwargs):
     p = spawn(function, *args, **kwargs)
     p.link_value()
     return p
 
+
 def spawn_link_exception(function, *args, **kwargs):
     p = spawn(function, *args, **kwargs)
     p.link_exception()
     return p
-
 
 
 class wrap_errors(object):
