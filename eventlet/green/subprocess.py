@@ -6,6 +6,7 @@ import eventlet
 from eventlet import greenio
 from eventlet import patcher
 from eventlet.green import select
+from eventlet.support import six
 
 
 patcher.inject('subprocess', globals(), ('select', select))
@@ -77,19 +78,23 @@ class Popen(subprocess_orig.Popen):
         # don't want to rewrite the original _communicate() method, we
         # just want a version that uses eventlet.green.select.select()
         # instead of select.select().
-        _communicate = FunctionType(subprocess_orig.Popen._communicate.im_func.func_code,
-                                    globals())
+        _communicate = FunctionType(
+            six.get_function_code(six.get_unbound_function(
+                subprocess_orig.Popen._communicate)),
+            globals())
         try:
             _communicate_with_select = FunctionType(
-                subprocess_orig.Popen._communicate_with_select.im_func.func_code,
+                six.get_function_code(six.get_unbound_function(
+                    subprocess_orig.Popen._communicate_with_select)),
                 globals())
             _communicate_with_poll = FunctionType(
-                subprocess_orig.Popen._communicate_with_poll.im_func.func_code,
+                six.get_function_code(six.get_unbound_function(
+                    subprocess_orig.Popen._communicate_with_poll)),
                 globals())
         except AttributeError:
             pass
 
 # Borrow subprocess.call() and check_call(), but patch them so they reference
 # OUR Popen class rather than subprocess.Popen.
-call = FunctionType(subprocess_orig.call.func_code, globals())
-check_call = FunctionType(subprocess_orig.check_call.func_code, globals())
+call = FunctionType(six.get_function_code(subprocess_orig.call), globals())
+check_call = FunctionType(six.get_function_code(subprocess_orig.check_call), globals())

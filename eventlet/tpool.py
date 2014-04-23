@@ -220,6 +220,7 @@ class Proxy(object):
         return len(self._obj)
     def __nonzero__(self):
         return bool(self._obj)
+    __bool__ = __nonzero__
     def __iter__(self):
         it = iter(self._obj)
         if it == self._obj:

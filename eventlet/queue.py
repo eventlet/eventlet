@@ -98,6 +98,8 @@ class Waiter(object):
     def __nonzero__(self):
         return self.greenlet is not None
 
+    __bool__ = __nonzero__
+
     @property
     def waiting(self):
         return self.greenlet is not None
