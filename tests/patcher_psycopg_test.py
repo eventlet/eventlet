@@ -19,9 +19,9 @@ def tick(totalseconds, persecond):
     for i in range(totalseconds*persecond):
         count[0] += 1
         eventlet.sleep(1.0/persecond)
-        
+
 dsn = os.environ['PSYCOPG_TEST_DSN']
-import psycopg2    
+import psycopg2
 def fetch(num, secs):
     conn = psycopg2.connect(dsn)
     cur = conn.cursor()
@@ -35,16 +35,17 @@ assert count[0] > 100, count[0]
 print("done")
 """
 
+
 class PatchingPsycopg(patcher_test.ProcessBase):
     @skip_unless(postgres_requirement)
     def test_psycopg_patched(self):
         if 'PSYCOPG_TEST_DSN' not in os.environ:
             # construct a non-json dsn for the subprocess
             psycopg_auth = get_database_auth()['psycopg2']
-            if isinstance(psycopg_auth,str):
+            if isinstance(psycopg_auth, str):
                 dsn = psycopg_auth
             else:
-                dsn = " ".join(["%s=%s" % (k,v) for k,v, in psycopg_auth.iteritems()])
+                dsn = " ".join(["%s=%s" % (k, v) for k, v in psycopg_auth.iteritems()])
             os.environ['PSYCOPG_TEST_DSN'] = dsn
         self.write_to_tempfile("psycopg_patcher", psycopg_test_file)
         output, lines = self.launch_subprocess('psycopg_patcher.py')
@@ -53,4 +54,3 @@ class PatchingPsycopg(patcher_test.ProcessBase):
             return
         # if there's anything wrong with the test program it'll have a stack trace
         self.assert_(lines[0].startswith('done'), output)
-

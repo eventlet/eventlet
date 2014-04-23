@@ -3,13 +3,14 @@ from __future__ import print_function
 import os
 import time
 import traceback
+
+import eventlet
+from eventlet import event
 from tests import (
     LimitedTestCase,
     run_python,
     skip_unless, using_pyevent, get_database_auth,
 )
-import eventlet
-from eventlet import event
 try:
     from eventlet.green import MySQLdb
 except ImportError:
@@ -39,9 +40,9 @@ def mysql_requirement(_f):
         return False
 
 
-class MySQLdbTester(LimitedTestCase):
+class TestMySQLdb(LimitedTestCase):
     def setUp(self):
-        super(MySQLdbTester, self).setUp()
+        super(TestMySQLdb, self).setUp()
 
         self._auth = get_database_auth()['MySQLdb']
         self.create_db()
@@ -60,7 +61,7 @@ class MySQLdbTester(LimitedTestCase):
             self.connection.close()
         self.drop_db()
 
-        super(MySQLdbTester, self).tearDown()
+        super(TestMySQLdb, self).tearDown()
 
     @skip_unless(mysql_requirement)
     def create_db(self):
@@ -113,6 +114,7 @@ class MySQLdbTester(LimitedTestCase):
 
     def assert_cursor_yields(self, curs):
         counter = [0]
+
         def tick():
             while True:
                 counter[0] += 1
@@ -183,6 +185,7 @@ class MySQLdbTester(LimitedTestCase):
         results = []
         SHORT_QUERY = "select * from test_table"
         evt = event.Event()
+
         def a_query():
             self.assert_cursor_works(curs)
             curs.execute(SHORT_QUERY)

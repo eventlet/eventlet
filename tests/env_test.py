@@ -2,6 +2,7 @@ import os
 from tests.patcher_test import ProcessBase
 from tests import skip_with_pyevent
 
+
 class Socket(ProcessBase):
     def test_patched_thread(self):
         new_mod = """from eventlet.green import socket
@@ -15,6 +16,7 @@ socket.getaddrinfo('localhost', 80)
             self.assertEqual(len(lines), 1, lines)
         finally:
             del os.environ['EVENTLET_TPOOL_DNS']
+
 
 class Tpool(ProcessBase):
     @skip_with_pyevent

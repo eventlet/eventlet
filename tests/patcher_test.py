@@ -1,6 +1,5 @@
 import os
 import shutil
-import subprocess
 import sys
 import tempfile
 
@@ -134,7 +133,6 @@ print("newmod")
         self.assertEqual(len(lines), 2, repr(output))
         self.assert_(lines[0].startswith('newmod'), repr(output))
 
-
     def test_typeerror(self):
         new_mod = """
 from eventlet import patcher
@@ -144,7 +142,6 @@ patcher.monkey_patch(finagle=True)
         output, lines = self.launch_subprocess('newmod.py')
         self.assert_(lines[-2].startswith('TypeError'), repr(output))
         self.assert_('finagle' in lines[-2], repr(output))
-
 
     def assert_boolean_logic(self, call, expected, not_expected=''):
         expected_list = ", ".join(['"%s"' % x for x in expected.split(',') if len(x)])
@@ -167,54 +164,52 @@ print("already_patched {0}".format(",".join(sorted(patcher.already_patched.keys(
         patched_modules = patched_modules.replace("psycopg,", "")
         # ditto for MySQLdb
         patched_modules = patched_modules.replace("MySQLdb,", "")
-        self.assertEqual(patched_modules, expected,
-                         "Logic:%s\nExpected: %s != %s" %(call, expected,
-                                                          patched_modules))
+        self.assertEqual(
+            patched_modules, expected,
+            "Logic:%s\nExpected: %s != %s" % (call, expected, patched_modules))
 
     def test_boolean(self):
         self.assert_boolean_logic("patcher.monkey_patch()",
-                                         'os,select,socket,thread,time')
+                                  'os,select,socket,thread,time')
 
     def test_boolean_all(self):
         self.assert_boolean_logic("patcher.monkey_patch(all=True)",
-                                         'os,select,socket,thread,time')
+                                  'os,select,socket,thread,time')
 
     def test_boolean_all_single(self):
         self.assert_boolean_logic("patcher.monkey_patch(all=True, socket=True)",
-                                         'os,select,socket,thread,time')
+                                  'os,select,socket,thread,time')
 
     def test_boolean_all_negative(self):
-        self.assert_boolean_logic("patcher.monkey_patch(all=False, "\
-                                      "socket=False, select=True)",
-                                         'select')
+        self.assert_boolean_logic(
+            "patcher.monkey_patch(all=False, socket=False, select=True)",
+            'select')
 
     def test_boolean_single(self):
         self.assert_boolean_logic("patcher.monkey_patch(socket=True)",
-                                         'socket')
+                                  'socket')
 
     def test_boolean_double(self):
-        self.assert_boolean_logic("patcher.monkey_patch(socket=True,"\
-                                      " select=True)",
-                                         'select,socket')
+        self.assert_boolean_logic("patcher.monkey_patch(socket=True, select=True)",
+                                  'select,socket')
 
     def test_boolean_negative(self):
         self.assert_boolean_logic("patcher.monkey_patch(socket=False)",
-                                         'os,select,thread,time')
+                                  'os,select,thread,time')
 
     def test_boolean_negative2(self):
-        self.assert_boolean_logic("patcher.monkey_patch(socket=False,"\
-                                      "time=False)",
-                                         'os,select,thread')
+        self.assert_boolean_logic("patcher.monkey_patch(socket=False, time=False)",
+                                  'os,select,thread')
 
     def test_conflicting_specifications(self):
-        self.assert_boolean_logic("patcher.monkey_patch(socket=False, "\
-                                      "select=True)",
-                                         'select')
+        self.assert_boolean_logic("patcher.monkey_patch(socket=False, select=True)",
+                                  'select')
 
 
 test_monkey_patch_threading = """
 def test_monkey_patch_threading():
     tickcount = [0]
+
     def tick():
         from eventlet.support import six
         for i in six.moves.range(1000):
@@ -232,8 +227,9 @@ def test_monkey_patch_threading():
     tpool.killall()
 """
 
+
 class Tpool(ProcessBase):
-    TEST_TIMEOUT=3
+    TEST_TIMEOUT = 3
 
     @skip_with_pyevent
     def test_simple(self):

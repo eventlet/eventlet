@@ -1,17 +1,18 @@
 """This test checks that socket instances (not GreenSockets but underlying sockets)
 are not leaked by the hub.
 """
-import sys
-import unittest
+import gc
 from pprint import pformat
+import unittest
+import weakref
+
 from eventlet.support import clear_sys_exc_info
 from eventlet.green import socket
 from eventlet.green.thread import start_new_thread
 from eventlet.green.time import sleep
-import weakref
-import gc
 
 SOCKET_TIMEOUT = 0.1
+
 
 def init_server():
     s = socket.socket()
@@ -20,6 +21,7 @@ def init_server():
     s.bind(('localhost', 0))
     s.listen(5)
     return s, s.getsockname()[1]
+
 
 def handle_request(s, raise_on_timeout):
     try:
@@ -51,6 +53,7 @@ def make_request(port):
     #print('make_request - recvd %r' % res)
     #s.close()
 
+
 def run_interaction(run_client):
     s, port = init_server()
     start_new_thread(handle_request, (s, run_client))
@@ -60,6 +63,7 @@ def run_interaction(run_client):
     #print(sys.getrefcount(s.fd))
     #s.close()
     return weakref.ref(s.fd)
+
 
 def run_and_check(run_client):
     w = run_interaction(run_client=run_client)

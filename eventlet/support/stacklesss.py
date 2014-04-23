@@ -80,5 +80,5 @@ def emulate():
     main_coro = greenlet()
     tasklet_to_greenlet[caller] = main_coro
     main_coro.t = caller
-    del main_coro.switch  ## It's already running
+    del main_coro.switch  # It's already running
     coro_args[main_coro] = None

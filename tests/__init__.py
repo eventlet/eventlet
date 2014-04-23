@@ -15,21 +15,24 @@ import unittest
 import warnings
 
 import eventlet
-from eventlet import debug, hubs, tpool
+from eventlet import tpool
 
 
 # convenience for importers
 main = unittest.main
 
+
 def s2b(s):
     """portable way to convert string to bytes. In 3.x socket.send and recv require bytes"""
     return s.encode()
+
 
 def skipped(func):
     """ Decorator that marks a function as skipped.  Uses nose's SkipTest exception
     if installed.  Without nose, this will count skipped tests as passing tests."""
     try:
         from nose.plugins.skip import SkipTest
+
         def skipme(*a, **k):
             raise SkipTest()
         skipme.__name__ = func.__name__
@@ -107,8 +110,8 @@ def skip_with_pyevent(func):
 
 def skip_on_windows(func):
     """ Decorator that skips a test on Windows."""
-    import sys
     return skip_if(sys.platform.startswith('win'))(func)
+
 
 def skip_if_no_itimer(func):
     """ Decorator that skips a test if the `itimer` module isn't found """
@@ -186,19 +189,19 @@ class LimitedTestCase(unittest.TestCase):
         eventlet.sleep(0)
         verify_hub_empty()
 
-    def assert_less_than(self, a,b,msg=None):
+    def assert_less_than(self, a, b, msg=None):
         if msg:
-            self.assert_(a<b, msg)
+            self.assert_(a < b, msg)
         else:
-            self.assert_(a<b, "%s not less than %s" % (a,b))
+            self.assert_(a < b, "%s not less than %s" % (a, b))
 
     assertLessThan = assert_less_than
 
-    def assert_less_than_equal(self, a,b,msg=None):
+    def assert_less_than_equal(self, a, b, msg=None):
         if msg:
-            self.assert_(a<=b, msg)
+            self.assert_(a <= b, msg)
         else:
-            self.assert_(a<=b, "%s not less than or equal to %s" % (a,b))
+            self.assert_(a <= b, "%s not less than or equal to %s" % (a, b))
 
     assertLessThanEqual = assert_less_than_equal
 
@@ -236,6 +239,7 @@ def find_command(command):
             return p
     raise IOError(errno.ENOENT, 'Command not found: %r' % command)
 
+
 def silence_warnings(func):
     def wrapper(*args, **kw):
         warnings.simplefilter('ignore', DeprecationWarning)
@@ -261,8 +265,10 @@ def get_database_auth():
     connect function.
     """
     import os
-    retval = {'MySQLdb':{'host': 'localhost','user': 'root','passwd': ''},
-              'psycopg2':{'user':'test'}}
+    retval = {
+        'MySQLdb': {'host': 'localhost', 'user': 'root', 'passwd': ''},
+        'psycopg2': {'user': 'test'},
+    }
     try:
         import json
     except ImportError:
@@ -283,9 +289,10 @@ def get_database_auth():
             # Have to convert unicode objects to str objects because
             # mysqldb is dum. Using a doubly-nested list comprehension
             # because we know that the structure is a two-level dict.
-            return dict([(str(modname), dict([(str(k), str(v))
-                                       for k, v in connectargs.items()]))
-                         for modname, connectargs in auth_utf8.items()])
+            return dict(
+                [(str(modname), dict(
+                    [(str(k), str(v)) for k, v in connectargs.items()]))
+                 for modname, connectargs in auth_utf8.items()])
         except IOError:
             pass
     return retval

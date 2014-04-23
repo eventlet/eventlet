@@ -122,8 +122,8 @@ class timeout(object):
 
     Example::
 
-     with timeout(10):
-         urllib2.open('http://example.com')
+    with timeout(10):
+        urllib2.open('http://example.com')
 
     Assuming code block is yielding (i.e. gives up control to the hub),
     an exception provided in *exc* argument will be raised

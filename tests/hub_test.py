@@ -252,7 +252,6 @@ class TestSuspend(LimitedTestCase):
     TEST_TIMEOUT = 3
 
     def test_suspend_doesnt_crash(self):
-        import errno
         import os
         import shutil
         import signal

@@ -1,10 +1,10 @@
 import sys
+from unittest import TestCase
 
-import eventlet
 from eventlet import debug
 from eventlet.support import six
 from tests import LimitedTestCase, main, s2b
-from unittest import TestCase
+import eventlet
 
 
 class TestSpew(TestCase):
@@ -34,7 +34,7 @@ class TestSpew(TestCase):
         s = debug.Spew()
         f = sys._getframe()
         s(f, "line", None)
-        lineno = f.f_lineno - 1 # -1 here since we called with frame f in the line above
+        lineno = f.f_lineno - 1  # -1 here since we called with frame f in the line above
         output = sys.stdout.getvalue()
         self.failUnless("%s:%i" % (__name__, lineno) in output, "Didn't find line %i in %s" % (lineno, output))
         self.failUnless("f=<frame object at" in output)
@@ -57,7 +57,7 @@ class TestSpew(TestCase):
         GLOBAL_VAR = debug.Spew()
         f = sys._getframe()
         GLOBAL_VAR(f, "line", None)
-        lineno = f.f_lineno - 1 # -1 here since we called with frame f in the line above
+        lineno = f.f_lineno - 1  # -1 here since we called with frame f in the line above
         output = sys.stdout.getvalue()
         self.failUnless("%s:%i" % (__name__, lineno) in output, "Didn't find line %i in %s" % (lineno, output))
         self.failUnless("f=<frame object at" in output)
@@ -70,7 +70,7 @@ class TestSpew(TestCase):
         s = debug.Spew(show_values=False)
         f = sys._getframe()
         s(f, "line", None)
-        lineno = f.f_lineno - 1 # -1 here since we called with frame f in the line above
+        lineno = f.f_lineno - 1  # -1 here since we called with frame f in the line above
         output = sys.stdout.getvalue()
         self.failUnless("%s:%i" % (__name__, lineno) in output, "Didn't find line %i in %s" % (lineno, output))
         self.failIf("f=<frame object at" in output)
@@ -80,7 +80,6 @@ class TestSpew(TestCase):
         s = debug.Spew(trace_names=['foo'])
         f = sys._getframe()
         s(f, "line", None)
-        lineno = f.f_lineno - 1 # -1 here since we called with frame f in the line above
         output = sys.stdout.getvalue()
         self.failUnlessEqual(output, "")
 

@@ -2,9 +2,9 @@ from __future__ import with_statement
 
 import os
 
+from eventlet import greenio
 from tests import LimitedTestCase
 
-from eventlet import greenio
 
 class TestGreenPipeWithStatement(LimitedTestCase):
     def test_pipe_context(self):
