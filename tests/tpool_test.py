@@ -14,17 +14,15 @@
 # limitations under the License.
 from __future__ import print_function
 
-import itertools
-import random
-from sys import stdout
-import time
-import re
 import gc
-from tests import skipped, skip_with_pyevent, LimitedTestCase, main
+import random
+import re
+import time
 
-from eventlet import tpool, debug
-from eventlet.support import six
 import eventlet
+from eventlet import tpool
+from eventlet.support import six
+from tests import LimitedTestCase, skipped, skip_with_pyevent, main
 
 
 one = 1
@@ -68,8 +66,10 @@ class TestTpool(LimitedTestCase):
     @skip_with_pyevent
     def test_wrap_uniterable(self):
         prox = tpool.Proxy([])
+
         def index():
             prox[0]
+
         def key():
             prox['a']
 
@@ -78,7 +78,7 @@ class TestTpool(LimitedTestCase):
 
     @skip_with_pyevent
     def test_wrap_dict(self):
-        my_object = {'a':1}
+        my_object = {'a': 1}
         prox = tpool.Proxy(my_object)
         self.assertEqual('a', prox.keys()[0])
         self.assertEqual(1, prox['a'])
@@ -111,9 +111,9 @@ class TestTpool(LimitedTestCase):
     def test_wrap_hash(self):
         prox1 = tpool.Proxy(''+'A')
         prox2 = tpool.Proxy('A'+'')
-        self.assert_(prox1=='A')
-        self.assert_('A'==prox2)
-        #self.assert_(prox1==prox2) FIXME - could __eq__ unwrap rhs if it is other proxy?
+        self.assert_(prox1 == 'A')
+        self.assert_('A' == prox2)
+        #self.assert_(prox1 == prox2) FIXME - could __eq__ unwrap rhs if it is other proxy?
         self.assertEqual(hash(prox1), hash(prox2))
         proxList = tpool.Proxy([])
         self.assertRaises(TypeError, hash, proxList)
@@ -130,19 +130,19 @@ class TestTpool(LimitedTestCase):
     def test_multiple_wraps(self):
         prox1 = tpool.Proxy(re)
         prox2 = tpool.Proxy(re)
-        x1 = prox1.compile('.')
+        prox1.compile('.')
         x2 = prox1.compile('.')
         del x2
-        x3 = prox2.compile('.')
+        prox2.compile('.')
 
     @skip_with_pyevent
     def test_wrap_getitem(self):
-        prox = tpool.Proxy([0,1,2])
+        prox = tpool.Proxy([0, 1, 2])
         self.assertEqual(prox[0], 0)
 
     @skip_with_pyevent
     def test_wrap_setitem(self):
-        prox = tpool.Proxy([0,1,2])
+        prox = tpool.Proxy([0, 1, 2])
         prox[1] = 2
         self.assertEqual(prox[1], 2)
 
@@ -153,11 +153,12 @@ class TestTpool(LimitedTestCase):
         result = []
         for i in prox:
             result.append(i)
-        self.assertEquals(list(range(10)), result)
+        self.assertEqual(list(range(10)), result)
 
     @skip_with_pyevent
     def test_wrap_iterator2(self):
         self.reset_timeout(5)  # might take a while due to imprecise sleeping
+
         def foo():
             import time
             for x in range(2):
@@ -165,9 +166,10 @@ class TestTpool(LimitedTestCase):
                 time.sleep(0.001)
 
         counter = [0]
+
         def tick():
             for i in six.moves.range(20000):
-                counter[0]+=1
+                counter[0] += 1
                 if counter[0] % 20 == 0:
                     eventlet.sleep(0.0001)
                 else:
@@ -185,6 +187,7 @@ class TestTpool(LimitedTestCase):
     @skip_with_pyevent
     def test_raising_exceptions(self):
         prox = tpool.Proxy(re)
+
         def nofunc():
             prox.never_name_a_function_like_this()
         self.assertRaises(AttributeError, nofunc)
@@ -197,8 +200,8 @@ class TestTpool(LimitedTestCase):
     def test_variable_and_keyword_arguments_with_function_calls(self):
         import optparse
         parser = tpool.Proxy(optparse.OptionParser())
-        z = parser.add_option('-n', action='store', type='string', dest='n')
-        opts,args = parser.parse_args(["-nfoo"])
+        parser.add_option('-n', action='store', type='string', dest='n')
+        opts, args = parser.parse_args(["-nfoo"])
         self.assertEqual(opts.n, 'foo')
 
     @skip_with_pyevent
@@ -207,11 +210,11 @@ class TestTpool(LimitedTestCase):
         prox = tpool.Proxy(tpool_test)
 
         pile = eventlet.GreenPile(4)
-        pile.spawn(lambda: self.assertEquals(prox.one, 1))
-        pile.spawn(lambda: self.assertEquals(prox.two, 2))
-        pile.spawn(lambda: self.assertEquals(prox.three, 3))
+        pile.spawn(lambda: self.assertEqual(prox.one, 1))
+        pile.spawn(lambda: self.assertEqual(prox.two, 2))
+        pile.spawn(lambda: self.assertEqual(prox.three, 3))
         results = list(pile)
-        self.assertEquals(len(results), 3)
+        self.assertEqual(len(results), 3)
 
     @skip_with_pyevent
     def test_timeout(self):
@@ -227,7 +230,7 @@ class TestTpool(LimitedTestCase):
 
     @skip_with_pyevent
     def test_autowrap(self):
-        x = tpool.Proxy({'a':1, 'b':2}, autowrap=(int,))
+        x = tpool.Proxy({'a': 1, 'b': 2}, autowrap=(int,))
         self.assert_(isinstance(x.get('a'), tpool.Proxy))
         self.assert_(not isinstance(x.items(), tpool.Proxy))
         # attributes as well as callables
@@ -238,7 +241,7 @@ class TestTpool(LimitedTestCase):
 
     @skip_with_pyevent
     def test_autowrap_names(self):
-        x = tpool.Proxy({'a':1, 'b':2}, autowrap_names=('get',))
+        x = tpool.Proxy({'a': 1, 'b': 2}, autowrap_names=('get',))
         self.assert_(isinstance(x.get('a'), tpool.Proxy))
         self.assert_(not isinstance(x.items(), tpool.Proxy))
         from tests import tpool_test
@@ -259,11 +262,11 @@ class TestTpool(LimitedTestCase):
         def wrapped(arg):
             return arg
         x = tpool.Proxy(wrapped)
-        self.assertEquals(4, x(4))
+        self.assertEqual(4, x(4))
         # verify that it wraps return values if specified
         x = tpool.Proxy(wrapped, autowrap_names=('__call__',))
         self.assert_(isinstance(x(4), tpool.Proxy))
-        self.assertEquals("4", str(x(4)))
+        self.assertEqual("4", str(x(4)))
 
     @skip_with_pyevent
     def test_callable_iterator(self):
@@ -274,7 +277,7 @@ class TestTpool(LimitedTestCase):
 
         x = tpool.Proxy(wrapped, autowrap_names=('__call__',))
         for r in x(3):
-            self.assertEquals(3, r)
+            self.assertEqual(3, r)
 
     @skip_with_pyevent
     def test_eventlet_timeout(self):
@@ -285,15 +288,18 @@ class TestTpool(LimitedTestCase):
     @skip_with_pyevent
     def test_tpool_set_num_threads(self):
         tpool.set_num_threads(5)
-        self.assertEquals(5, tpool._nthreads)
+        self.assertEqual(5, tpool._nthreads)
+
 
 class TpoolLongTests(LimitedTestCase):
-    TEST_TIMEOUT=60
+    TEST_TIMEOUT = 60
+
     @skip_with_pyevent
     def test_a_buncha_stuff(self):
         assert_ = self.assert_
+
         class Dummy(object):
-            def foo(self,when,token=None):
+            def foo(self, when, token=None):
                 assert_(token is not None)
                 time.sleep(random.random()/200.0)
                 return token
@@ -305,16 +311,16 @@ class TpoolLongTests(LimitedTestCase):
                 eventlet.sleep(random.random()/200.0)
                 now = time.time()
                 token = loopnum * count + n
-                rv = obj.foo(now,token=token)
-                self.assertEquals(token, rv)
+                rv = obj.foo(now, token=token)
+                self.assertEqual(token, rv)
                 eventlet.sleep(random.random()/200.0)
 
         cnt = 10
         pile = eventlet.GreenPile(cnt)
         for i in six.moves.range(cnt):
-            pile.spawn(sender_loop,i)
+            pile.spawn(sender_loop, i)
         results = list(pile)
-        self.assertEquals(len(results), cnt)
+        self.assertEqual(len(results), cnt)
         tpool.killall()
 
     @skipped

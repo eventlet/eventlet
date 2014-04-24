@@ -1,12 +1,12 @@
 from __future__ import with_statement
 import sys
 
+import tests
 from tests import LimitedTestCase, main, skip_with_pyevent, skip_if_no_itimer, skip_unless
 from tests.patcher_test import ProcessBase
 import time
 import eventlet
 from eventlet import hubs
-from eventlet.green import socket
 from eventlet.event import Event
 from eventlet.semaphore import Semaphore
 from eventlet.support import greenlets, six
@@ -108,7 +108,7 @@ class TestScheduleCall(LimitedTestCase):
         hubs.get_hub().schedule_call_global(DELAY, lst.append, 2)
         while len(lst) < 3:
             eventlet.sleep(DELAY)
-        self.assertEquals(lst, [1, 2, 3])
+        self.assertEqual(lst, [1, 2, 3])
 
 
 class TestDebug(LimitedTestCase):
@@ -250,6 +250,8 @@ class TestHubBlockingDetector(LimitedTestCase):
 
 class TestSuspend(LimitedTestCase):
     TEST_TIMEOUT = 3
+    longMessage = True
+    maxDiff = None
 
     def test_suspend_doesnt_crash(self):
         import os
@@ -279,8 +281,8 @@ except eventlet.Timeout:
         os.kill(p.pid, signal.SIGSTOP)  # suspend and resume to generate EINTR
         os.kill(p.pid, signal.SIGCONT)
         output, _ = p.communicate()
-        lines = [l for l in output.split("\n") if l]
-        self.assert_("exited correctly" in lines[-1])
+        lines = output.decode('utf-8', 'replace').splitlines()
+        self.assert_("exited correctly" in lines[-1], output)
         shutil.rmtree(self.tempdir)
 
 
@@ -293,39 +295,13 @@ class TestBadFilenos(LimitedTestCase):
         self.assertRaises(ValueError, select.select, [-1], [], [])
 
 
-class TestFork(ProcessBase):
+class TestFork(LimitedTestCase):
 
     @skip_with_pyevent
     def test_fork(self):
-        new_mod = """
-import os
-import eventlet
-server = eventlet.listen(('localhost', 12345))
-t = eventlet.Timeout(0.01)
-try:
-    new_sock, address = server.accept()
-except eventlet.Timeout as t:
-    pass
-
-pid = os.fork()
-if not pid:
-    t = eventlet.Timeout(0.1)
-    try:
-        new_sock, address = server.accept()
-    except eventlet.Timeout as t:
-        print("accept blocked")
-
-else:
-    kpid, status = os.wait()
-    assert kpid == pid
-    assert status == 0
-    print("child died ok")
-"""
-        self.write_to_tempfile("newmod", new_mod)
-        output, lines = self.launch_subprocess('newmod.py')
-        self.assertEqual(len(lines), 3, output)
-        self.assert_("accept blocked" in lines[0])
-        self.assert_("child died ok" in lines[1])
+        output = tests.run_python('tests/hub_test_fork.py')
+        lines = output.splitlines()
+        self.assertEqual(lines, ["accept blocked", "child died ok"], output)
 
 
 class TestDeadRunLoop(LimitedTestCase):

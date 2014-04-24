@@ -16,6 +16,7 @@
 import imp
 import os
 import sys
+import traceback
 
 from eventlet import event, greenio, greenthread, patcher, timeout
 from eventlet.support import six
@@ -32,11 +33,12 @@ Empty = Queue_module.Empty
 
 __all__ = ['execute', 'Proxy', 'killall']
 
-QUIET=True
+QUIET = True
 
 _rfile = _wfile = None
 
 _bytetosend = ' '.encode()
+
 
 def _signal_t2e():
     _wfile.write(_bytetosend)
@@ -45,9 +47,10 @@ def _signal_t2e():
 _reqq = None
 _rspq = None
 
+
 def tpool_trampoline():
     global _rspq
-    while(True):
+    while True:
         try:
             _c = _rfile.read(1)
             assert _c
@@ -55,7 +58,7 @@ def tpool_trampoline():
             break  # will be raised when pipe is closed
         while not _rspq.empty():
             try:
-                (e,rv) = _rspq.get(block=False)
+                (e, rv) = _rspq.get(block=False)
                 e.send(rv)
                 e = rv = None
             except Empty:
@@ -65,31 +68,32 @@ def tpool_trampoline():
 SYS_EXCS = (KeyboardInterrupt, SystemExit)
 EXC_CLASSES = (Exception, timeout.Timeout)
 
+
 def tworker():
     global _rspq
     while(True):
         try:
             msg = _reqq.get()
         except AttributeError:
-            return # can't get anything off of a dud queue
+            return  # can't get anything off of a dud queue
         if msg is None:
             return
-        (e,meth,args,kwargs) = msg
+        (e, meth, args, kwargs) = msg
         rv = None
         try:
-            rv = meth(*args,**kwargs)
+            rv = meth(*args, **kwargs)
         except SYS_EXCS:
             raise
         except EXC_CLASSES:
             rv = sys.exc_info()
         # test_leakage_from_tracebacks verifies that the use of
         # exc_info does not lead to memory leaks
-        _rspq.put((e,rv))
+        _rspq.put((e, rv))
         msg = meth = args = kwargs = e = rv = None
         _signal_t2e()
 
 
-def execute(meth,*args, **kwargs):
+def execute(meth, *args, **kwargs):
     """
     Execute *meth* in a Python thread, blocking the current coroutine/
     greenthread until the method completes.
@@ -109,16 +113,15 @@ def execute(meth,*args, **kwargs):
         return meth(*args, **kwargs)
 
     e = event.Event()
-    _reqq.put((e,meth,args,kwargs))
+    _reqq.put((e, meth, args, kwargs))
 
     rv = e.wait()
-    if isinstance(rv,tuple) \
-      and len(rv) == 3 \
-      and isinstance(rv[1],EXC_CLASSES):
-        import traceback
-        (c,e,tb) = rv
+    if isinstance(rv, tuple) \
+            and len(rv) == 3 \
+            and isinstance(rv[1], EXC_CLASSES):
+        (c, e, tb) = rv
         if not QUIET:
-            traceback.print_exception(c,e,tb)
+            traceback.print_exception(c, e, tb)
             traceback.print_stack()
         six.reraise(c, e, tb)
     return rv
@@ -136,14 +139,15 @@ def proxy_call(autowrap, f, *args, **kwargs):
     that don't need to be called in a separate thread, but which return objects
     that should be Proxy wrapped.
     """
-    if kwargs.pop('nonblocking',False):
+    if kwargs.pop('nonblocking', False):
         rv = f(*args, **kwargs)
     else:
-        rv = execute(f,*args,**kwargs)
+        rv = execute(f, *args, **kwargs)
     if isinstance(rv, autowrap):
         return Proxy(rv, autowrap)
     else:
         return rv
+
 
 class Proxy(object):
     """
@@ -166,7 +170,7 @@ class Proxy(object):
     of strings, which represent the names of attributes that should be
     wrapped in Proxy objects when accessed.
     """
-    def __init__(self, obj,autowrap=(), autowrap_names=()):
+    def __init__(self, obj, autowrap=(), autowrap_names=()):
         self._obj = obj
         self._autowrap = autowrap
         self._autowrap_names = autowrap_names
@@ -177,6 +181,7 @@ class Proxy(object):
             if isinstance(f, self._autowrap) or attr_name in self._autowrap_names:
                 return Proxy(f, self._autowrap)
             return f
+
         def doit(*args, **kwargs):
             result = proxy_call(self._autowrap, f, *args, **kwargs)
             if attr_name in self._autowrap_names and not isinstance(result, Proxy):
@@ -189,19 +194,25 @@ class Proxy(object):
     # explicitly
     def __getitem__(self, key):
         return proxy_call(self._autowrap, self._obj.__getitem__, key)
+
     def __setitem__(self, key, value):
         return proxy_call(self._autowrap, self._obj.__setitem__, key, value)
+
     def __deepcopy__(self, memo=None):
         return proxy_call(self._autowrap, self._obj.__deepcopy__, memo)
+
     def __copy__(self, memo=None):
         return proxy_call(self._autowrap, self._obj.__copy__, memo)
+
     def __call__(self, *a, **kw):
         if '__call__' in self._autowrap_names:
             return Proxy(proxy_call(self._autowrap, self._obj, *a, **kw))
         else:
             return proxy_call(self._autowrap, self._obj, *a, **kw)
+
     def __enter__(self):
         return proxy_call(self._autowrap, self._obj.__enter__)
+
     def __exit__(self, *exc):
         return proxy_call(self._autowrap, self._obj.__exit__, *exc)
 
@@ -210,31 +221,43 @@ class Proxy(object):
     # wrapped object in such a way that they would block
     def __eq__(self, rhs):
         return self._obj == rhs
+
     def __hash__(self):
         return self._obj.__hash__()
+
     def __repr__(self):
         return self._obj.__repr__()
+
     def __str__(self):
         return self._obj.__str__()
+
     def __len__(self):
         return len(self._obj)
+
     def __nonzero__(self):
         return bool(self._obj)
+    # Python3
     __bool__ = __nonzero__
+
     def __iter__(self):
         it = iter(self._obj)
         if it == self._obj:
             return self
         else:
             return Proxy(it)
+
     def next(self):
         return proxy_call(self._autowrap, self._obj.next)
+    # Python3
+    __next__ = next
 
 
 _nthreads = int(os.environ.get('EVENTLET_THREADPOOL_SIZE', 20))
 _threads = []
 _coro = None
 _setup_already = False
+
+
 def setup():
     global _rfile, _wfile, _threads, _coro, _setup_already, _rspq, _reqq
     if _setup_already:
@@ -257,7 +280,7 @@ def setup():
         csock.connect(('localhost', sock.getsockname()[1]))
         nsock, addr = sock.accept()
         _rfile = greenio.GreenSocket(csock).makefile('rb', 0)
-        _wfile = nsock.makefile('wb',0)
+        _wfile = nsock.makefile('wb', 0)
 
     _reqq = Queue(maxsize=-1)
     _rspq = Queue(maxsize=-1)
@@ -294,6 +317,7 @@ def killall():
     _wfile = None
     _rspq = None
     _setup_already = False
+
 
 def set_num_threads(nthreads):
     global _nthreads

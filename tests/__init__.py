@@ -22,11 +22,6 @@ from eventlet import tpool
 main = unittest.main
 
 
-def s2b(s):
-    """portable way to convert string to bytes. In 3.x socket.send and recv require bytes"""
-    return s.encode()
-
-
 def skipped(func):
     """ Decorator that marks a function as skipped.  Uses nose's SkipTest exception
     if installed.  Without nose, this will count skipped tests as passing tests."""

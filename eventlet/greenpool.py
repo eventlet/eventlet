@@ -11,6 +11,7 @@ __all__ = ['GreenPool', 'GreenPile']
 
 DEBUG = True
 
+
 class GreenPool(object):
     """The GreenPool class is a pool of green threads.
     """
@@ -102,7 +103,8 @@ class GreenPool(object):
             self._spawn_n_impl(function, args, kwargs, None)
         else:
             self.sem.acquire()
-            g = greenthread.spawn_n(self._spawn_n_impl,
+            g = greenthread.spawn_n(
+                self._spawn_n_impl,
                 function, args, kwargs, True)
             if not self.coroutines_running:
                 self.no_coros_running = event.Event()
@@ -111,8 +113,8 @@ class GreenPool(object):
     def waitall(self):
         """Waits until all greenthreads in the pool are finished working."""
         assert greenthread.getcurrent() not in self.coroutines_running, \
-                          "Calling waitall() from within one of the "\
-                          "GreenPool's greenthreads will never terminate."
+            "Calling waitall() from within one of the " \
+            "GreenPool's greenthreads will never terminate."
         if self.running():
             self.no_coros_running.wait()
 
@@ -197,7 +199,7 @@ class GreenPile(object):
     def spawn(self, func, *args, **kw):
         """Runs *func* in its own green thread, with the result available by
         iterating over the GreenPile object."""
-        self.used =  True
+        self.used = True
         self.counter += 1
         try:
             gt = self.pool.spawn(func, *args, **kw)
@@ -218,6 +220,8 @@ class GreenPile(object):
             return self.waiters.get().wait()
         finally:
             self.counter -= 1
+    __next__ = next
+
 
 # this is identical to GreenPile but it blocks on spawn if the results
 # aren't consumed, and it doesn't generate its own StopIteration exception,
@@ -236,3 +240,4 @@ class GreenMap(GreenPile):
                 return val
         finally:
             self.counter -= 1
+    __next__ = next

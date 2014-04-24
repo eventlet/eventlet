@@ -3,7 +3,7 @@ from unittest import TestCase
 
 from eventlet import debug
 from eventlet.support import six
-from tests import LimitedTestCase, main, s2b
+from tests import LimitedTestCase, main
 import eventlet
 
 
@@ -113,7 +113,7 @@ class TestDebug(LimitedTestCase):
         try:
             gt = eventlet.spawn(hurl, client_2)
             eventlet.sleep(0)
-            client.send(s2b(' '))
+            client.send(b' ')
             eventlet.sleep(0)
             # allow the "hurl" greenlet to trigger the KeyError
             # not sure why the extra context switch is needed
@@ -124,7 +124,7 @@ class TestDebug(LimitedTestCase):
             debug.hub_exceptions(False)
         # look for the KeyError exception in the traceback
         self.assert_('KeyError: 1' in fake.getvalue(),
-            "Traceback not in:\n" + fake.getvalue())
+                     "Traceback not in:\n" + fake.getvalue())
 
 if __name__ == "__main__":
     main()

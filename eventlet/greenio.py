@@ -9,10 +9,10 @@ import warnings
 
 from eventlet.support import get_errno, six
 from eventlet.hubs import trampoline
-BUFFER_SIZE = 4096
 
 __all__ = ['GreenSocket', 'GreenPipe', 'shutdown_safe']
 
+BUFFER_SIZE = 4096
 CONNECT_ERR = set((errno.EINPROGRESS, errno.EALREADY, errno.EWOULDBLOCK))
 CONNECT_SUCCESS = set((0, errno.EISCONN))
 if sys.platform[:3] == "win":

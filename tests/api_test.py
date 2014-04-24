@@ -4,12 +4,12 @@ from unittest import TestCase, main
 import warnings
 
 import eventlet
+from eventlet import greenio, util, hubs, greenthread, spawn
+from tests import skip_if_no_ssl
+
 warnings.simplefilter('ignore', DeprecationWarning)
 from eventlet import api
 warnings.simplefilter('default', DeprecationWarning)
-from eventlet import greenio, util, hubs, greenthread, spawn
-
-from tests import skip_if_no_ssl
 
 
 def check_hub():
@@ -57,7 +57,7 @@ class TestApi(TestCase):
         client.close()
         assert fd.readline() == b'hello\n'
 
-        assert fd.read() == ''
+        assert fd.read() == b''
         fd.close()
 
         check_hub()
@@ -85,7 +85,7 @@ class TestApi(TestCase):
 
         assert fd.readline() == b'hello\r\n'
         try:
-            self.assertEquals('', fd.read(10))
+            self.assertEqual(b'', fd.read(10))
         except greenio.SSL.ZeroReturnError:
             # if it's a GreenSSL object it'll do this
             pass
@@ -147,9 +147,7 @@ class TestApi(TestCase):
 
     def test_named(self):
         named_foo = api.named('tests.api_test.Foo')
-        self.assertEquals(
-            named_foo.__name__,
-            "Foo")
+        self.assertEqual(named_foo.__name__, "Foo")
 
     def test_naming_missing_class(self):
         self.assertRaises(
@@ -171,19 +169,25 @@ class TestApi(TestCase):
             # thus after the function's done, the control will go to the parent
             api.sleep(0)
             state.append('finished')
+
         g = api.spawn(test)
-        api.sleep(DELAY/2)
-        self.assertEquals(state, ['start'])
+        api.sleep(DELAY / 2)
+        self.assertEqual(state, ['start'])
         api.kill(g)
         # will not get there, unless switching is explicitly scheduled by kill
-        self.assertEquals(state, ['start', 'except'])
+        self.assertEqual(state, ['start', 'except'])
         api.sleep(DELAY)
-        self.assertEquals(state, ['start', 'except', 'finished'])
+        self.assertEqual(state, ['start', 'except', 'finished'])
 
     def test_nested_with_timeout(self):
         def func():
             return api.with_timeout(0.2, api.sleep, 2, timeout_value=1)
-        self.assertRaises(api.TimeoutError, api.with_timeout, 0.1, func)
+
+        try:
+            api.with_timeout(0.1, func)
+            self.fail(u'Expected api.TimeoutError')
+        except api.TimeoutError:
+            pass
 
 
 class Foo(object):

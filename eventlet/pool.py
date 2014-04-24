@@ -2,6 +2,7 @@ from __future__ import print_function
 
 from eventlet import coros, proc, api
 from eventlet.semaphore import Semaphore
+from eventlet.support import six
 
 import warnings
 warnings.warn(
@@ -190,6 +191,7 @@ class Pool(object):
         millions of items.)
 
         >>> from eventlet import coros
+        >>> from eventlet.support import six
         >>> import string
         >>> pool = coros.CoroutinePool(max_size=5)
         >>> pausers = [coros.Event() for x in range(2)]
@@ -206,39 +208,39 @@ class Pool(object):
         items individually to illustrate timing)
 
         >>> step = iter(pool.generate_results(quicktask, string.ascii_lowercase))
-        >>> print(step.next())
+        >>> print(six.next(step))
         returning a
         returning b
         returning c
         a
-        >>> print(step.next())
+        >>> print(six.next(step))
         b
-        >>> print(step.next())
+        >>> print(six.next(step))
         c
-        >>> print(step.next())
+        >>> print(six.next(step))
         returning d
         returning e
         returning f
         d
         >>> pausers[0].send("A")
-        >>> print(step.next())
+        >>> print(six.next(step))
         e
-        >>> print(step.next())
+        >>> print(six.next(step))
         f
-        >>> print(step.next())
+        >>> print(six.next(step))
         A woke up with A
         returning g
         returning h
         returning i
         g
-        >>> print("".join([step.next() for x in range(3)]))
+        >>> print("".join([six.next(step) for x in range(3)]))
         returning j
         returning k
         returning l
         returning m
         hij
         >>> pausers[1].send("B")
-        >>> print("".join([step.next() for x in range(4)]))
+        >>> print("".join([six.next(step) for x in range(4)]))
         B woke up with B
         returning n
         returning o
@@ -255,7 +257,7 @@ class Pool(object):
         # but if we launched no coroutines with that queue as the destination,
         # we could end up waiting a very long time.
         try:
-            index, args = tuples.next()
+            index, args = six.next(tuples)
         except StopIteration:
             return
         # From this point forward, 'args' is the current arguments tuple and
@@ -297,7 +299,7 @@ class Pool(object):
                     # which to send() the result.
                     self._execute(q, function, args, {})
                     # We've consumed that args tuple, advance to next.
-                    index, args = tuples.next()
+                    index, args = six.next(tuples)
                 # Okay, we've filled up the pool again, yield a result -- which
                 # will probably wait for a coroutine to complete. Although we do
                 # have q.ready(), so we could iterate without waiting, we avoid

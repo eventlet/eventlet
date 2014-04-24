@@ -122,14 +122,18 @@ class TestMySQLdb(LimitedTestCase):
         gt = eventlet.spawn(tick)
         curs.execute("select 1")
         rows = curs.fetchall()
-        self.assertEqual(rows, ((1L,),))
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(len(rows[0]), 1)
+        self.assertEqual(rows[0][0], 1)
         self.assert_(counter[0] > 0, counter[0])
         gt.kill()
 
     def assert_cursor_works(self, cursor):
         cursor.execute("select 1")
         rows = cursor.fetchall()
-        self.assertEqual(rows, ((1L,),))
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(len(rows[0]), 1)
+        self.assertEqual(rows[0][0], 1)
         self.assert_cursor_yields(cursor)
 
     def assert_connection_works(self, conn):

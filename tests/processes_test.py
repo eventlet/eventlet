@@ -20,7 +20,7 @@ class TestEchoPool(LimitedTestCase):
             result = proc.read()
         finally:
             self.pool.put(proc)
-        self.assertEquals(result, 'hello\n')
+        self.assertEqual(result, 'hello\n')
 
     @skip_on_windows
     def test_read_eof(self):
@@ -34,7 +34,7 @@ class TestEchoPool(LimitedTestCase):
     @skip_on_windows    
     def test_empty_echo(self):
         p = processes.Process('echo', ['-n'])
-        self.assertEquals('', p.read())
+        self.assertEqual('', p.read())
         self.assertRaises(processes.DeadProcess, p.read)
             
 
@@ -56,7 +56,7 @@ class TestCatPool(LimitedTestCase):
         finally:
             self.pool.put(proc)
 
-        self.assertEquals(result, 'goodbye')
+        self.assertEqual(result, 'goodbye')
 
     @skip_on_windows
     def test_write_to_dead(self):
@@ -95,7 +95,7 @@ class TestDyingProcessesLeavePool(LimitedTestCase):
         try:
             try:
                 result = proc.read()
-                self.assertEquals(result, 'hello\n')
+                self.assertEqual(result, 'hello\n')
                 result = proc.read()
             except processes.DeadProcess:
                 pass

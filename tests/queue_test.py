@@ -14,12 +14,12 @@ class TestQueue(LimitedTestCase):
     def test_send_first(self):
         q = eventlet.Queue()
         q.put('hi')
-        self.assertEquals(q.get(), 'hi')
+        self.assertEqual(q.get(), 'hi')
 
     def test_send_last(self):
         q = eventlet.Queue()
         def waiter(q):
-            self.assertEquals(q.get(), 'hi2')
+            self.assertEqual(q.get(), 'hi2')
 
         gt = eventlet.spawn(eventlet.with_timeout, 0.1, waiter, q)
         eventlet.sleep(0)
@@ -41,12 +41,12 @@ class TestQueue(LimitedTestCase):
 
         gt = eventlet.spawn(putter, q)
         eventlet.sleep(0)
-        self.assertEquals(results, ['a', 'b'])
-        self.assertEquals(q.get(), 'a')
+        self.assertEqual(results, ['a', 'b'])
+        self.assertEqual(q.get(), 'a')
         eventlet.sleep(0)
-        self.assertEquals(results, ['a', 'b', 'c'])
-        self.assertEquals(q.get(), 'b')
-        self.assertEquals(q.get(), 'c')
+        self.assertEqual(results, ['a', 'b', 'c'])
+        self.assertEqual(q.get(), 'b')
+        self.assertEqual(q.get(), 'c')
         gt.wait()
 
     def test_zero_max_size(self):
@@ -64,8 +64,8 @@ class TestQueue(LimitedTestCase):
         eventlet.sleep(0)
         self.assert_(not evt.ready())
         gt2 = eventlet.spawn(receiver, q)
-        self.assertEquals(gt2.wait(),'hi')
-        self.assertEquals(evt.wait(),'done')
+        self.assertEqual(gt2.wait(),'hi')
+        self.assertEqual(evt.wait(),'done')
         gt.wait()
 
     def test_resize_up(self):
@@ -90,10 +90,10 @@ class TestQueue(LimitedTestCase):
         for i in range(5):
             q.put(i)
 
-        self.assertEquals(list(q.queue), list(range(5)))
+        self.assertEqual(list(q.queue), list(range(5)))
         q.resize(1)
         eventlet.sleep(0)
-        self.assertEquals(list(q.queue), list(range(5)))
+        self.assertEqual(list(q.queue), list(range(5)))
 
     def test_resize_to_Unlimited(self):
         q = eventlet.Queue(0)
@@ -127,21 +127,21 @@ class TestQueue(LimitedTestCase):
         results = set()
         for i, gt in enumerate(gts):
             results.add(gt.wait())
-        self.assertEquals(results, set(sendings))
+        self.assertEqual(results, set(sendings))
 
     def test_waiters_that_cancel(self):
         q = eventlet.Queue()
 
         gt = eventlet.spawn(do_bail, q)
-        self.assertEquals(gt.wait(), 'timed out')
+        self.assertEqual(gt.wait(), 'timed out')
 
         q.put('hi')
-        self.assertEquals(q.get(), 'hi')
+        self.assertEqual(q.get(), 'hi')
 
     def test_getting_before_sending(self):
         q = eventlet.Queue()
         gt = eventlet.spawn(q.put, 'sent')
-        self.assertEquals(q.get(), 'sent')
+        self.assertEqual(q.get(), 'sent')
         gt.wait()
 
     def test_two_waiters_one_dies(self):
@@ -153,8 +153,8 @@ class TestQueue(LimitedTestCase):
         waiting = eventlet.spawn(waiter, q)
         eventlet.sleep(0)
         q.put('hi')
-        self.assertEquals(dying.wait(), 'timed out')
-        self.assertEquals(waiting.wait(), 'hi')
+        self.assertEqual(dying.wait(), 'timed out')
+        self.assertEqual(waiting.wait(), 'hi')
 
     def test_two_bogus_waiters(self):
         q = eventlet.Queue()
@@ -162,20 +162,20 @@ class TestQueue(LimitedTestCase):
         gt2 = eventlet.spawn(do_bail, q)
         eventlet.sleep(0)
         q.put('sent')
-        self.assertEquals(gt1.wait(), 'timed out')
-        self.assertEquals(gt2.wait(), 'timed out')
-        self.assertEquals(q.get(), 'sent')
+        self.assertEqual(gt1.wait(), 'timed out')
+        self.assertEqual(gt2.wait(), 'timed out')
+        self.assertEqual(q.get(), 'sent')
                 
     def test_waiting(self):
         q = eventlet.Queue()
         gt1 = eventlet.spawn(q.get)
         eventlet.sleep(0)
-        self.assertEquals(1, q.getting())
+        self.assertEqual(1, q.getting())
         q.put('hi')
         eventlet.sleep(0)
-        self.assertEquals(0, q.getting())
-        self.assertEquals('hi', gt1.wait())
-        self.assertEquals(0, q.getting())
+        self.assertEqual(0, q.getting())
+        self.assertEqual('hi', gt1.wait())
+        self.assertEqual(0, q.getting())
 
     def test_channel_send(self):
         channel = eventlet.Queue(0)
@@ -222,7 +222,7 @@ class TestQueue(LimitedTestCase):
         w2 = eventlet.spawn(c.get)
         w3 = eventlet.spawn(c.get)
         eventlet.sleep(0)
-        self.assertEquals(c.getting(), 3)
+        self.assertEqual(c.getting(), 3)
         s1 = eventlet.spawn(c.put, 1)
         s2 = eventlet.spawn(c.put, 2)
         s3 = eventlet.spawn(c.put, 3)
@@ -230,10 +230,10 @@ class TestQueue(LimitedTestCase):
         s1.wait()
         s2.wait()
         s3.wait()
-        self.assertEquals(c.getting(), 0)
+        self.assertEqual(c.getting(), 0)
         # NOTE: we don't guarantee that waiters are served in order
         results = sorted([w1.wait(), w2.wait(), w3.wait()])
-        self.assertEquals(results, [1,2,3])
+        self.assertEqual(results, [1,2,3])
         
     def test_channel_sender_timing_out(self):
         from eventlet import queue

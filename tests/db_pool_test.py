@@ -265,19 +265,19 @@ class DBConnectionPool(DBTester):
         conn = self.pool._unwrap_connection(self.connection)
         self.assert_(not isinstance(conn, db_pool.GenericConnectionWrapper))
 
-        self.assertEquals(None, self.pool._unwrap_connection(None))
-        self.assertEquals(None, self.pool._unwrap_connection(1))
+        self.assertEqual(None, self.pool._unwrap_connection(None))
+        self.assertEqual(None, self.pool._unwrap_connection(1))
 
         # testing duck typing here -- as long as the connection has a
         # _base attribute, it should be unwrappable
         x = Mock()
         x._base = 'hi'
-        self.assertEquals('hi', self.pool._unwrap_connection(x))
+        self.assertEqual('hi', self.pool._unwrap_connection(x))
         conn.close()
 
     def test_safe_close(self):
         self.pool._safe_close(self.connection, quiet=True)
-        self.assertEquals(len(self.pool.free_items), 1)
+        self.assertEqual(len(self.pool.free_items), 1)
 
         self.pool._safe_close(None)
         self.pool._safe_close(1)
@@ -301,7 +301,7 @@ class DBConnectionPool(DBTester):
         self.pool = self.create_pool(max_size=2, max_idle=0)
         self.connection = self.pool.get()
         self.connection.close()
-        self.assertEquals(len(self.pool.free_items), 0)
+        self.assertEqual(len(self.pool.free_items), 0)
 
     def test_zero_max_age(self):
         self.pool.put(self.connection)
@@ -309,7 +309,7 @@ class DBConnectionPool(DBTester):
         self.pool = self.create_pool(max_size=2, max_age=0)
         self.connection = self.pool.get()
         self.connection.close()
-        self.assertEquals(len(self.pool.free_items), 0)
+        self.assertEqual(len(self.pool.free_items), 0)
 
     @skipped
     def test_max_idle(self):
@@ -320,19 +320,19 @@ class DBConnectionPool(DBTester):
         self.pool = self.create_pool(max_size=2, max_idle=0.02)
         self.connection = self.pool.get()
         self.connection.close()
-        self.assertEquals(len(self.pool.free_items), 1)
+        self.assertEqual(len(self.pool.free_items), 1)
         eventlet.sleep(0.01)  # not long enough to trigger the idle timeout
-        self.assertEquals(len(self.pool.free_items), 1)
+        self.assertEqual(len(self.pool.free_items), 1)
         self.connection = self.pool.get()
         self.connection.close()
-        self.assertEquals(len(self.pool.free_items), 1)
+        self.assertEqual(len(self.pool.free_items), 1)
         eventlet.sleep(0.01)  # idle timeout should have fired but done nothing
-        self.assertEquals(len(self.pool.free_items), 1)
+        self.assertEqual(len(self.pool.free_items), 1)
         self.connection = self.pool.get()
         self.connection.close()
-        self.assertEquals(len(self.pool.free_items), 1)
+        self.assertEqual(len(self.pool.free_items), 1)
         eventlet.sleep(0.03) # long enough to trigger idle timeout for real
-        self.assertEquals(len(self.pool.free_items), 0)
+        self.assertEqual(len(self.pool.free_items), 0)
 
     @skipped
     def test_max_idle_many(self):
@@ -344,11 +344,11 @@ class DBConnectionPool(DBTester):
         self.connection, conn2 = self.pool.get(), self.pool.get()
         self.connection.close()
         eventlet.sleep(0.01)
-        self.assertEquals(len(self.pool.free_items), 1)
+        self.assertEqual(len(self.pool.free_items), 1)
         conn2.close()
-        self.assertEquals(len(self.pool.free_items), 2)
+        self.assertEqual(len(self.pool.free_items), 2)
         eventlet.sleep(0.02)  # trigger cleanup of conn1 but not conn2
-        self.assertEquals(len(self.pool.free_items), 1)
+        self.assertEqual(len(self.pool.free_items), 1)
 
     @skipped
     def test_max_age(self):
@@ -359,14 +359,14 @@ class DBConnectionPool(DBTester):
         self.pool = self.create_pool(max_size=2, max_age=0.05)
         self.connection = self.pool.get()
         self.connection.close()
-        self.assertEquals(len(self.pool.free_items), 1)
+        self.assertEqual(len(self.pool.free_items), 1)
         eventlet.sleep(0.01)  # not long enough to trigger the age timeout
-        self.assertEquals(len(self.pool.free_items), 1)
+        self.assertEqual(len(self.pool.free_items), 1)
         self.connection = self.pool.get()
         self.connection.close()
-        self.assertEquals(len(self.pool.free_items), 1)
+        self.assertEqual(len(self.pool.free_items), 1)
         eventlet.sleep(0.05) # long enough to trigger age timeout
-        self.assertEquals(len(self.pool.free_items), 0)
+        self.assertEqual(len(self.pool.free_items), 0)
 
     @skipped
     def test_max_age_many(self):
@@ -377,13 +377,13 @@ class DBConnectionPool(DBTester):
         self.pool = self.create_pool(max_size=2, max_age=0.15)
         self.connection, conn2 = self.pool.get(), self.pool.get()
         self.connection.close()
-        self.assertEquals(len(self.pool.free_items), 1)
+        self.assertEqual(len(self.pool.free_items), 1)
         eventlet.sleep(0)  # not long enough to trigger the age timeout
-        self.assertEquals(len(self.pool.free_items), 1)
+        self.assertEqual(len(self.pool.free_items), 1)
         eventlet.sleep(0.2) # long enough to trigger age timeout
-        self.assertEquals(len(self.pool.free_items), 0)
+        self.assertEqual(len(self.pool.free_items), 0)
         conn2.close()  # should not be added to the free items
-        self.assertEquals(len(self.pool.free_items), 0)
+        self.assertEqual(len(self.pool.free_items), 0)
 
     def test_waiters_get_woken(self):
         # verify that when there's someone waiting on an empty pool
@@ -394,8 +394,8 @@ class DBConnectionPool(DBTester):
         self.pool = self.create_pool(max_size=1, max_age=0)
 
         self.connection = self.pool.get()
-        self.assertEquals(self.pool.free(), 0)
-        self.assertEquals(self.pool.waiting(), 0)
+        self.assertEqual(self.pool.free(), 0)
+        self.assertEqual(self.pool.waiting(), 0)
         e = event.Event()
         def retrieve(pool, ev):
             c = pool.get()
@@ -403,14 +403,14 @@ class DBConnectionPool(DBTester):
         eventlet.spawn(retrieve, self.pool, e)
         eventlet.sleep(0) # these two sleeps should advance the retrieve
         eventlet.sleep(0) # coroutine until it's waiting in get()
-        self.assertEquals(self.pool.free(), 0)
-        self.assertEquals(self.pool.waiting(), 1)
+        self.assertEqual(self.pool.free(), 0)
+        self.assertEqual(self.pool.waiting(), 1)
         self.pool.put(self.connection)
         timer = eventlet.Timeout(1)
         conn = e.wait()
         timer.cancel()
-        self.assertEquals(self.pool.free(), 0)
-        self.assertEquals(self.pool.waiting(), 0)
+        self.assertEqual(self.pool.free(), 0)
+        self.assertEqual(self.pool.waiting(), 0)
         self.pool.put(conn)
 
     @skipped
@@ -440,7 +440,7 @@ class DBConnectionPool(DBTester):
         # not lose any connections
         self.pool = self.create_pool(max_size=1, module=RaisingDBModule())
         self.assertRaises(RuntimeError, self.pool.get)
-        self.assertEquals(self.pool.free(), 1)
+        self.assertEqual(self.pool.free(), 1)
 
 
 class DummyConnection(object):

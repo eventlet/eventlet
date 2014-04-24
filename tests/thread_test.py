@@ -84,16 +84,16 @@ class Locals(LimitedTestCase):
 
         my_local = Caller()
         my_local.foo = "foo1"
-        self.assertEquals("foo1", my_local.callme())
+        self.assertEqual("foo1", my_local.callme())
 
         def do_something():
             my_local.foo = "foo2"
-            self.assertEquals("foo2", my_local.callme())
+            self.assertEqual("foo2", my_local.callme())
 
         eventlet.spawn(do_something).wait()
 
         my_local.foo = "foo3"
-        self.assertEquals("foo3", my_local.callme())
+        self.assertEqual("foo3", my_local.callme())
 
     def test_no_leaking(self):
         refs = weakref.WeakKeyDictionary()

@@ -46,7 +46,7 @@ class SSLTest(LimitedTestCase):
 
         client = util.wrap_ssl(eventlet.connect(('127.0.0.1', sock.getsockname()[1])))
         client.write(b'line 1\r\nline 2\r\n\r\n')
-        self.assertEquals(client.read(8192), b'response')
+        self.assertEqual(client.read(8192), b'response')
         server_coro.wait()
 
     @skip_if_no_ssl
@@ -55,7 +55,7 @@ class SSLTest(LimitedTestCase):
             sock, addr = listener.accept()
             sock.read(8192)
             try:
-                self.assertEquals(b"", sock.read(8192))
+                self.assertEqual(b"", sock.read(8192))
             except greenio.SSL.ZeroReturnError:
                 pass
 
@@ -90,13 +90,13 @@ class SSLTest(LimitedTestCase):
     def test_ssl_unwrap(self):
         def serve():
             sock, addr = listener.accept()
-            self.assertEquals(sock.recv(6), b'before')
+            self.assertEqual(sock.recv(6), b'before')
             sock_ssl = util.wrap_ssl(sock, certificate_file, private_key_file,
                                      server_side=True)
             sock_ssl.do_handshake()
-            self.assertEquals(sock_ssl.read(6), b'during')
+            self.assertEqual(sock_ssl.read(6), b'during')
             sock2 = sock_ssl.unwrap()
-            self.assertEquals(sock2.recv(5), b'after')
+            self.assertEqual(sock2.recv(5), b'after')
             sock2.close()
 
         listener = eventlet.listen(('127.0.0.1', 0))
@@ -160,8 +160,8 @@ class SSLTest(LimitedTestCase):
         listener = listen_ssl_socket(('', 0))
         eventlet.spawn(serve, listener)
         client = ssl(eventlet.connect(('localhost', listener.getsockname()[1])))
-        self.assertEquals(client.read(1024), b'content')
-        self.assertEquals(client.read(1024), b'')
+        self.assertEqual(client.read(1024), b'content')
+        self.assertEqual(client.read(1024), b'')
 
     @skip_if_no_ssl
     def test_regression_gh_17(self):

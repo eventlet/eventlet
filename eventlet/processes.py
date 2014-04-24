@@ -1,22 +1,21 @@
 import warnings
 warnings.warn("eventlet.processes is deprecated in favor of "
- "eventlet.green.subprocess, which is API-compatible with the standard "
- " library subprocess module.",
-    DeprecationWarning, stacklevel=2)
-
+              "eventlet.green.subprocess, which is API-compatible with the standard "
+              " library subprocess module.",
+              DeprecationWarning, stacklevel=2)
 
 import errno
 import os
-import popen2
 import signal
 
-from eventlet import api
-from eventlet import pools
-from eventlet import greenio
+import eventlet
+from eventlet import greenio, pools
+from eventlet.green import subprocess
 
 
 class DeadProcess(RuntimeError):
     pass
+
 
 def cooperative_wait(pobj, check_interval=0.01):
     """ Waits for a child process to exit, returning the status
@@ -34,7 +33,7 @@ def cooperative_wait(pobj, check_interval=0.01):
             status = pobj.poll()
             if status >= 0:
                 return status
-            api.sleep(check_interval)
+            eventlet.sleep(check_interval)
     except OSError as e:
         if e.errno == errno.ECHILD:
             # no child process, this happens if the child process
@@ -48,7 +47,8 @@ def cooperative_wait(pobj, check_interval=0.01):
 class Process(object):
     """Construct Process objects, then call read, and write on them."""
     process_number = 0
-    def __init__(self, command, args, dead_callback=lambda:None):
+
+    def __init__(self, command, args, dead_callback=None):
         self.process_number = self.process_number + 1
         Process.process_number = self.process_number
         self.command = command
@@ -59,14 +59,20 @@ class Process(object):
     def run(self):
         self.dead = False
         self.started = False
-        self.popen4 = None
+        self.proc = None
 
-        ## We use popen4 so that read() will read from either stdout or stderr
-        self.popen4 = popen2.Popen4([self.command] + self.args)
-        child_stdout_stderr = self.popen4.fromchild
-        child_stdin = self.popen4.tochild
-        self.child_stdout_stderr = greenio.GreenPipe(child_stdout_stderr, child_stdout_stderr.mode, 0)
-        self.child_stdin = greenio.GreenPipe(child_stdin, child_stdin.mode, 0)
+        args = [self.command]
+        args.extend(self.args)
+        self.proc = subprocess.Popen(
+            args=args,
+            shell=False,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            close_fds=True,
+        )
+        self.child_stdout_stderr = self.proc.stdout
+        self.child_stdin = self.proc.stdin
 
         self.sendall = self.child_stdin.write
         self.send = self.child_stdin.write
@@ -75,7 +81,7 @@ class Process(object):
         self._read_first_result = False
 
     def wait(self):
-        return cooperative_wait(self.popen4)
+        return cooperative_wait(self.proc)
 
     def dead_callback(self):
         self.wait()
@@ -128,13 +134,13 @@ class Process(object):
         self.child_stdin.close()
 
     def kill(self, sig=None):
-        if sig == None:
+        if sig is None:
             sig = signal.SIGTERM
         pid = self.getpid()
         os.kill(pid, sig)
 
     def getpid(self):
-        return self.popen4.pid
+        return self.proc.pid
 
 
 class ProcessPool(pools.Pool):
@@ -157,7 +163,7 @@ class ProcessPool(pools.Pool):
 
     def put(self, item):
         if not item.dead:
-            if item.popen4.poll() != -1:
+            if item.proc.poll() != -1:
                 item.dead_callback()
             else:
                 pools.Pool.put(self, item)

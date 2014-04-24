@@ -18,11 +18,11 @@ class BackdoorTest(LimitedTestCase):
         f.readline()  # build info
         f.readline()  # help info
         self.assert_(b'InteractiveConsole' in f.readline())
-        self.assertEquals(b'>>> ', f.read(4))
+        self.assertEqual(b'>>> ', f.read(4))
         f.write(b'print("hi")\n')
         f.flush()
-        self.assertEquals(b'hi\n', f.readline())
-        self.assertEquals(b'>>> ', f.read(4))
+        self.assertEqual(b'hi\n', f.readline())
+        self.assertEqual(b'>>> ', f.read(4))
         f.close()
         client.close()
         serv.kill()

@@ -1,12 +1,9 @@
 from __future__ import with_statement
 
-from eventlet import event, spawn, sleep, patcher, semaphore
-from eventlet.hubs import get_hub, _threadlocal, use_hub
+from eventlet import event, spawn, sleep, semaphore
 from nose.tools import *
-from tests import check_idle_cpu_usage, mock, LimitedTestCase, using_pyevent, skip_unless
-from unittest import TestCase
+from tests import check_idle_cpu_usage, LimitedTestCase, using_pyevent, skip_unless
 
-from threading import Thread
 try:
     from eventlet.green import zmq
 except ImportError:
@@ -197,7 +194,7 @@ class TestUpstreamDownStream(LimitedTestCase):
 
         def tx(sock):
             for i in range(1, 1001):
-                msg = "sub%s %s" % ([2,1][i % 2], i)
+                msg = "sub%s %s" % ([2, 1][i % 2], i)
                 sock.send(msg)
                 sleep()
             sock.send('sub1 LAST')
@@ -312,7 +309,6 @@ class TestUpstreamDownStream(LimitedTestCase):
         for evt in done_evts:
             self.assertEqual(evt.wait(), 0)
 
-
     @skip_unless(zmq_supported)
     def test_send_during_recv_multipart(self):
         sender, receiver, port = self.create_bound_pair(zmq.XREQ, zmq.XREQ)
@@ -349,14 +345,12 @@ class TestUpstreamDownStream(LimitedTestCase):
             final_i = done_evts[i].wait()
             self.assertEqual(final_i, 0)
 
-
     # Need someway to ensure a thread is blocked on send... This isn't working
     @skip_unless(zmq_supported)
     def test_recv_during_send(self):
         sender, receiver, port = self.create_bound_pair(zmq.XREQ, zmq.XREQ)
         sleep()
 
-        num_recvs = 30
         done = event.Event()
 
         try:
@@ -480,12 +474,12 @@ class TestQueueLock(LimitedTestCase):
         spawn(lock, 3)
         sleep()
 
-        self.assertEquals(results, [])
+        self.assertEqual(results, [])
         q.release()
         s.acquire()
         s.acquire()
         s.acquire()
-        self.assertEquals(results, [1,2,3])
+        self.assertEqual(results, [1, 2, 3])
 
     @skip_unless(zmq_supported)
     def test_count(self):
@@ -520,6 +514,7 @@ class TestQueueLock(LimitedTestCase):
 
         s = semaphore.Semaphore(0)
         results = []
+
         def lock(x):
             with q:
                 results.append(x)
@@ -527,15 +522,15 @@ class TestQueueLock(LimitedTestCase):
 
         spawn(lock, 1)
         sleep()
-        self.assertEquals(results, [])
+        self.assertEqual(results, [])
         q.release()
         sleep()
-        self.assertEquals(results, [])
+        self.assertEqual(results, [])
         self.assertTrue(q)
         q.release()
 
         s.acquire()
-        self.assertEquals(results, [1])
+        self.assertEqual(results, [1])
 
 
 class TestBlockedThread(LimitedTestCase):

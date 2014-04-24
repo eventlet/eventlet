@@ -447,7 +447,7 @@ class TestHttpd(_TestBase):
         sock = eventlet.wrap_ssl(sock)
         sock.write('POST /foo HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\nContent-length:3\r\n\r\nabc')
         result = sock.read(8192)
-        self.assertEquals(result[-3:], 'abc')
+        self.assertEqual(result[-3:], 'abc')
 
     @skip_if_no_ssl
     def test_013_empty_return(self):
@@ -467,7 +467,7 @@ class TestHttpd(_TestBase):
         sock = eventlet.wrap_ssl(sock)
         sock.write('GET /foo HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
         result = sock.read(8192)
-        self.assertEquals(result[-4:], '\r\n\r\n')
+        self.assertEqual(result[-4:], '\r\n\r\n')
 
     def test_014_chunked_post(self):
         self.site.application = chunked_post
@@ -544,7 +544,7 @@ class TestHttpd(_TestBase):
                 break
             else:
                 header_lines.append(line)
-        self.assertEquals(1, len(
+        self.assertEqual(1, len(
             [l for l in header_lines if l.lower().startswith('content-length')]))
 
     @skip_if_no_ssl
@@ -748,8 +748,8 @@ class TestHttpd(_TestBase):
         fd.write('PUT / HTTP/1.1\r\nHost: localhost\r\nContent-length: 1025\r\nExpect: 100-continue\r\n\r\n')
         fd.flush()
         result = read_http(sock)
-        self.assertEquals(result.status, 'HTTP/1.1 417 Expectation Failed')
-        self.assertEquals(result.body, 'failure')
+        self.assertEqual(result.status, 'HTTP/1.1 417 Expectation Failed')
+        self.assertEqual(result.body, 'failure')
         fd.write('PUT / HTTP/1.1\r\nHost: localhost\r\nContent-length: 7\r\nExpect: 100-continue\r\n\r\ntesting')
         fd.flush()
         header_lines = []
@@ -768,7 +768,7 @@ class TestHttpd(_TestBase):
             else:
                 header_lines.append(line)
         self.assert_(header_lines[0].startswith('HTTP/1.1 200 OK'))
-        self.assertEquals(fd.read(7), 'testing')
+        self.assertEqual(fd.read(7), 'testing')
         fd.close()
         sock.close()
 
@@ -787,7 +787,7 @@ class TestHttpd(_TestBase):
                 eventlet.connect(('localhost', self.port))
                 self.fail("Didn't expect to connect")
             except socket.error as exc:
-                self.assertEquals(get_errno(exc), errno.ECONNREFUSED)
+                self.assertEqual(get_errno(exc), errno.ECONNREFUSED)
 
             self.assert_('Invalid argument' in self.logfile.getvalue(),
                          self.logfile.getvalue())
@@ -815,7 +815,7 @@ class TestHttpd(_TestBase):
         result = read_http(sock)
         self.assertEqual(result.headers_lower['connection'], 'close')
         self.assertNotEqual(result.headers_lower.get('transfer-encoding'), 'chunked')
-        self.assertEquals(result.body, "thisischunked")
+        self.assertEqual(result.body, "thisischunked")
 
     def test_minimum_chunk_size_parameter_leaves_httpprotocol_class_member_intact(self):
         start_size = wsgi.HttpProtocol.minimum_chunk_size
@@ -922,11 +922,11 @@ class TestHttpd(_TestBase):
         posthook2_count = [0]
 
         def posthook1(env, value, multiplier=1):
-            self.assertEquals(env['local.test'], 'test_029_posthooks')
+            self.assertEqual(env['local.test'], 'test_029_posthooks')
             posthook1_count[0] += value * multiplier
 
         def posthook2(env, value, divisor=1):
-            self.assertEquals(env['local.test'], 'test_029_posthooks')
+            self.assertEqual(env['local.test'], 'test_029_posthooks')
             posthook2_count[0] += value / divisor
 
         def one_posthook_app(env, start_response):
@@ -944,11 +944,11 @@ class TestHttpd(_TestBase):
         fp = sock.makefile('rw')
         fp.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
         fp.flush()
-        self.assertEquals(fp.readline(), 'HTTP/1.1 200 OK\r\n')
+        self.assertEqual(fp.readline(), 'HTTP/1.1 200 OK\r\n')
         fp.close()
         sock.close()
-        self.assertEquals(posthook1_count[0], 6)
-        self.assertEquals(posthook2_count[0], 0)
+        self.assertEqual(posthook1_count[0], 6)
+        self.assertEqual(posthook2_count[0], 0)
 
         def two_posthook_app(env, start_response):
             env['local.test'] = 'test_029_posthooks'
@@ -967,11 +967,11 @@ class TestHttpd(_TestBase):
         fp = sock.makefile('rw')
         fp.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
         fp.flush()
-        self.assertEquals(fp.readline(), 'HTTP/1.1 200 OK\r\n')
+        self.assertEqual(fp.readline(), 'HTTP/1.1 200 OK\r\n')
         fp.close()
         sock.close()
-        self.assertEquals(posthook1_count[0], 26)
-        self.assertEquals(posthook2_count[0], 25)
+        self.assertEqual(posthook1_count[0], 26)
+        self.assertEqual(posthook2_count[0], 25)
 
     def test_030_reject_long_header_lines(self):
         sock = eventlet.connect(('localhost', self.port))
@@ -981,7 +981,7 @@ class TestHttpd(_TestBase):
         fd.write(request)
         fd.flush()
         result = read_http(sock)
-        self.assertEquals(result.status, 'HTTP/1.0 400 Header Line Too Long')
+        self.assertEqual(result.status, 'HTTP/1.0 400 Header Line Too Long')
         fd.close()
 
     def test_031_reject_large_headers(self):
@@ -992,7 +992,7 @@ class TestHttpd(_TestBase):
         fd.write(request)
         fd.flush()
         result = read_http(sock)
-        self.assertEquals(result.status, 'HTTP/1.0 400 Headers Too Large')
+        self.assertEqual(result.status, 'HTTP/1.0 400 Headers Too Large')
         fd.close()
 
     def test_032_wsgi_input_as_iterable(self):
@@ -1019,9 +1019,9 @@ class TestHttpd(_TestBase):
         fd.write(request)
         fd.flush()
         result = read_http(sock)
-        self.assertEquals(result.body, upload_data)
+        self.assertEqual(result.body, upload_data)
         fd.close()
-        self.assertEquals(g[0], 1)
+        self.assertEqual(g[0], 1)
 
     def test_zero_length_chunked_response(self):
         def zero_chunked_app(env, start_response):
@@ -1400,7 +1400,7 @@ class TestChunkedInput(_TestBase):
 
     def ping(self, fd):
         fd.sendall("GET /ping HTTP/1.1\r\n\r\n")
-        self.assertEquals(read_http(fd).body, "pong")
+        self.assertEqual(read_http(fd).body, "pong")
 
     def test_short_read_with_content_length(self):
         body = self.body()
@@ -1408,7 +1408,7 @@ class TestChunkedInput(_TestBase):
 
         fd = self.connect()
         fd.sendall(req)
-        self.assertEquals(read_http(fd).body, "this is ch")
+        self.assertEqual(read_http(fd).body, "this is ch")
 
         self.ping(fd)
         fd.close()
@@ -1418,7 +1418,7 @@ class TestChunkedInput(_TestBase):
         req = "POST /short-read HTTP/1.1\r\ntransfer-encoding: Chunked\r\nContent-Length:0\r\n\r\n" + body
         fd = self.connect()
         fd.sendall(req)
-        self.assertEquals(read_http(fd).body, "this is ch")
+        self.assertEqual(read_http(fd).body, "this is ch")
 
         self.ping(fd)
         fd.close()
@@ -1429,7 +1429,7 @@ class TestChunkedInput(_TestBase):
 
         fd = self.connect()
         fd.sendall(req)
-        self.assertEquals(read_http(fd).body, "this is ch")
+        self.assertEqual(read_http(fd).body, "this is ch")
 
         self.ping(fd)
         fd.close()
@@ -1440,7 +1440,7 @@ class TestChunkedInput(_TestBase):
 
         fd = self.connect()
         fd.sendall(req)
-        self.assertEquals(read_http(fd).body, "pong")
+        self.assertEqual(read_http(fd).body, "pong")
 
         self.ping(fd)
         fd.close()
@@ -1451,7 +1451,7 @@ class TestChunkedInput(_TestBase):
 
         fd = self.connect()
         fd.sendall(req)
-        self.assertEquals(read_http(fd).body, 'this is chunked\nline 2\nline3')
+        self.assertEqual(read_http(fd).body, 'this is chunked\nline 2\nline3')
         fd.close()
 
     def test_chunked_readline_wsgi_override_minimum_chunk_size(self):
@@ -1466,7 +1466,7 @@ class TestChunkedInput(_TestBase):
                 resp_so_far += one_byte
                 if resp_so_far.endswith('\r\n\r\n'):
                     break
-            self.assertEquals(fd.recv(1), ' ')
+            self.assertEqual(fd.recv(1), ' ')
         try:
             with eventlet.Timeout(.1):
                 fd.recv(1)
@@ -1477,7 +1477,7 @@ class TestChunkedInput(_TestBase):
         self.yield_next_space = True
 
         with eventlet.Timeout(.1):
-            self.assertEquals(fd.recv(1), ' ')
+            self.assertEqual(fd.recv(1), ' ')
 
     def test_chunked_readline_wsgi_not_override_minimum_chunk_size(self):
 
@@ -1492,7 +1492,7 @@ class TestChunkedInput(_TestBase):
                     resp_so_far += one_byte
                     if resp_so_far.endswith('\r\n\r\n'):
                         break
-                self.assertEquals(fd.recv(1), ' ')
+                self.assertEqual(fd.recv(1), ' ')
         except eventlet.Timeout:
             pass
         else:
