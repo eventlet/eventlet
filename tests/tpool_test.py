@@ -80,7 +80,7 @@ class TestTpool(LimitedTestCase):
     def test_wrap_dict(self):
         my_object = {'a': 1}
         prox = tpool.Proxy(my_object)
-        self.assertEqual('a', prox.keys()[0])
+        self.assertEqual('a', list(prox.keys())[0])
         self.assertEqual(1, prox['a'])
         self.assertEqual(str(my_object), str(prox))
         self.assertEqual(repr(my_object), repr(prox))

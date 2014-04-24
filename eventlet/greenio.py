@@ -1,4 +1,3 @@
-import array
 import errno
 import os
 from socket import socket as _original_socket
@@ -60,12 +59,12 @@ def socket_accept(descriptor):
 
 if sys.platform[:3] == "win":
     # winsock sometimes throws ENOTCONN
-    SOCKET_BLOCKING = set((errno.EWOULDBLOCK,))
+    SOCKET_BLOCKING = set((errno.EAGAIN, errno.EWOULDBLOCK,))
     SOCKET_CLOSED = set((errno.ECONNRESET, errno.ENOTCONN, errno.ESHUTDOWN))
 else:
     # oddly, on linux/darwin, an unconnected socket is expected to block,
     # so we treat ENOTCONN the same as EWOULDBLOCK
-    SOCKET_BLOCKING = set((errno.EWOULDBLOCK, errno.ENOTCONN))
+    SOCKET_BLOCKING = set((errno.EAGAIN, errno.EWOULDBLOCK, errno.ENOTCONN))
     SOCKET_CLOSED = set((errno.ECONNRESET, errno.ESHUTDOWN, errno.EPIPE))
 
 
@@ -351,7 +350,11 @@ class GreenSocket(object):
 
 
 class _SocketDuckForFd(object):
-    """ Class implementing all socket method used by _fileobject in cooperative manner using low level os I/O calls."""
+    """Class implementing all socket method used by _fileobject
+    in cooperative manner using low level os I/O calls.
+    """
+    _refcount = 0
+
     def __init__(self, fileno):
         self._fileno = fileno
 
@@ -368,9 +371,25 @@ class _SocketDuckForFd(object):
                 data = os.read(self._fileno, buflen)
                 return data
             except OSError as e:
-                if get_errno(e) != errno.EAGAIN:
+                if get_errno(e) not in SOCKET_BLOCKING:
                     raise IOError(*e.args)
             trampoline(self, read=True)
+
+    def recv_into(self, buf, nbytes=0, flags=0):
+        if nbytes == 0:
+            nbytes = len(buf)
+        data = self.recv(nbytes)
+        buf[:nbytes] = data
+        return len(data)
+
+    def send(self, data):
+        while True:
+            try:
+                os.write(self._fileno, data)
+            except OSError as e:
+                if get_errno(e) not in SOCKET_BLOCKING:
+                    raise IOError(*e.args)
+            trampoline(self, write=True)
 
     def sendall(self, data):
         len_data = len(data)
@@ -397,22 +416,22 @@ class _SocketDuckForFd(object):
         try:
             os.close(self._fileno)
         except:
-            # os.close may fail if __init__ didn't complete (i.e file dscriptor passed to popen was invalid
+            # os.close may fail if __init__ didn't complete
+            # (i.e file dscriptor passed to popen was invalid
             pass
 
     def __repr__(self):
         return "%s:%d" % (self.__class__.__name__, self._fileno)
 
-    if "__pypy__" in sys.builtin_module_names:
-        _refcount = 0
+    def _reuse(self):
+        self._refcount += 1
 
-        def _reuse(self):
-            self._refcount += 1
-
-        def _drop(self):
-            self._refcount -= 1
-            if self._refcount == 0:
-                self._close()
+    def _drop(self):
+        self._refcount -= 1
+        if self._refcount == 0:
+            self._close()
+    # Python3
+    _decref_socketios = _drop
 
 
 def _operationOnClosedFile(*args, **kwargs):
@@ -449,7 +468,7 @@ class GreenPipe(_fileobject):
             self._name = f.name
             f.close()
 
-        super(GreenPipe, self).__init__(_SocketDuckForFd(fileno), mode, bufsize)
+        super(GreenPipe, self).__init__(_SocketDuckForFd(fileno), mode)
         set_nonblocking(self)
         self.softspace = 0
 
@@ -470,7 +489,7 @@ class GreenPipe(_fileobject):
         for method in [
                 'fileno', 'flush', 'isatty', 'next', 'read', 'readinto',
                 'readline', 'readlines', 'seek', 'tell', 'truncate',
-                'write', 'xreadlines', '__iter__', 'writelines']:
+                'write', 'xreadlines', '__iter__', '__next__', 'writelines']:
             setattr(self, method, _operationOnClosedFile)
 
     def __enter__(self):
@@ -478,17 +497,6 @@ class GreenPipe(_fileobject):
 
     def __exit__(self, *args):
         self.close()
-
-    def readinto(self, buf):
-        data = self.read(len(buf))  # FIXME could it be done without allocating intermediate?
-        n = len(data)
-        try:
-            buf[:n] = data
-        except TypeError as err:
-            if not isinstance(buf, array.array):
-                raise err
-            buf[:n] = array.array('c', data)
-        return n
 
     def _get_readahead_len(self):
         return len(self._rbuf.getvalue())

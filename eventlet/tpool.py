@@ -21,39 +21,38 @@ import traceback
 from eventlet import event, greenio, greenthread, patcher, timeout
 from eventlet.support import six
 
+__all__ = ['execute', 'Proxy', 'killall', 'set_num_threads']
 
+
+EXC_CLASSES = (Exception, timeout.Timeout)
+SYS_EXCS = (GeneratorExit, KeyboardInterrupt, SystemExit)
+
+QUIET = True
+
+socket = patcher.original('socket')
 threading = patcher.original('threading')
 if six.PY2:
     Queue_module = patcher.original('Queue')
 if six.PY3:
     Queue_module = patcher.original('queue')
 
-Queue = Queue_module.Queue
 Empty = Queue_module.Empty
-
-__all__ = ['execute', 'Proxy', 'killall']
-
-QUIET = True
-
-_rfile = _wfile = None
+Queue = Queue_module.Queue
 
 _bytetosend = ' '.encode()
-
-
-def _signal_t2e():
-    _wfile.write(_bytetosend)
-    _wfile.flush()
-
-
-_reqq = None
-_rspq = None
+_coro = None
+_nthreads = int(os.environ.get('EVENTLET_THREADPOOL_SIZE', 20))
+_reqq = _rspq = None
+_rsock = _wsock = None
+_setup_already = False
+_threads = []
 
 
 def tpool_trampoline():
     global _rspq
     while True:
         try:
-            _c = _rfile.read(1)
+            _c = _rsock.recv(1)
             assert _c
         except ValueError:
             break  # will be raised when pipe is closed
@@ -66,13 +65,9 @@ def tpool_trampoline():
                 pass
 
 
-SYS_EXCS = (KeyboardInterrupt, SystemExit)
-EXC_CLASSES = (Exception, timeout.Timeout)
-
-
 def tworker():
     global _rspq
-    while(True):
+    while True:
         try:
             msg = _reqq.get()
         except AttributeError:
@@ -91,7 +86,7 @@ def tworker():
         # exc_info does not lead to memory leaks
         _rspq.put((e, rv))
         msg = meth = args = kwargs = e = rv = None
-        _signal_t2e()
+        _wsock.sendall(_bytetosend)
 
 
 def execute(meth, *args, **kwargs):
@@ -248,40 +243,25 @@ class Proxy(object):
             return Proxy(it)
 
     def next(self):
-        return proxy_call(self._autowrap, self._obj.next)
+        return proxy_call(self._autowrap, next, self._obj)
     # Python3
     __next__ = next
 
 
-_nthreads = int(os.environ.get('EVENTLET_THREADPOOL_SIZE', 20))
-_threads = []
-_coro = None
-_setup_already = False
-
-
 def setup():
-    global _rfile, _wfile, _threads, _coro, _setup_already, _rspq, _reqq
+    global _rsock, _wsock, _threads, _coro, _setup_already, _rspq, _reqq
     if _setup_already:
         return
     else:
         _setup_already = True
-    try:
-        _rpipe, _wpipe = os.pipe()
-        _wfile = greenio.GreenPipe(_wpipe, 'wb', 0)
-        _rfile = greenio.GreenPipe(_rpipe, 'rb', 0)
-    except (ImportError, NotImplementedError):
-        # This is Windows compatibility -- use a socket instead of a pipe because
-        # pipes don't really exist on Windows.
-        import socket
-        from eventlet import util
-        sock = util.__original_socket__(socket.AF_INET, socket.SOCK_STREAM)
-        sock.bind(('localhost', 0))
-        sock.listen(50)
-        csock = util.__original_socket__(socket.AF_INET, socket.SOCK_STREAM)
-        csock.connect(('localhost', sock.getsockname()[1]))
-        nsock, addr = sock.accept()
-        _rfile = greenio.GreenSocket(csock).makefile('rb', 0)
-        _wfile = nsock.makefile('wb', 0)
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(('', 0))
+    sock.listen(1)
+    csock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    csock.connect(sock.getsockname())
+    _wsock, _addr = sock.accept()
+    _rsock = greenio.GreenSocket(csock)
 
     _reqq = Queue(maxsize=-1)
     _rspq = Queue(maxsize=-1)
@@ -302,7 +282,7 @@ def setup():
 
 
 def killall():
-    global _setup_already, _rspq, _rfile, _wfile
+    global _setup_already, _rspq, _rsock, _wsock
     if not _setup_already:
         return
     for thr in _threads:
@@ -312,10 +292,10 @@ def killall():
     del _threads[:]
     if _coro is not None:
         greenthread.kill(_coro)
-    _rfile.close()
-    _wfile.close()
-    _rfile = None
-    _wfile = None
+    _rsock.close()
+    _wsock.close()
+    _rsock = None
+    _wsock = None
     _rspq = None
     _setup_already = False
 
