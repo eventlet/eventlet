@@ -1,6 +1,7 @@
 language: python
 python: 2.7
 env:
+  - TOX_ENV=pep8
   - TOX_ENV=py26selects
   - TOX_ENV=py26poll
   - TOX_ENV=py26epolls
@@ -15,6 +16,7 @@ env:
   - TOX_ENV=pypyepolls
 matrix:
   allow_failures:
+    - env: TOX_ENV=pep8
     - env: TOX_ENV=py33selects
     - env: TOX_ENV=py33poll
     - env: TOX_ENV=py33epolls
