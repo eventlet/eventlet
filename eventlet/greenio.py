@@ -344,10 +344,10 @@ class GreenSocket(object):
 
     if "__pypy__" in sys.builtin_module_names:
         def _reuse(self):
-            self.fd._sock._reuse()
+            getattr(self.fd, '_sock', self.fd)._reuse()
 
         def _drop(self):
-            self.fd._sock._drop()
+            getattr(self.fd, '_sock', self.fd)._drop()
 
 
 class _SocketDuckForFd(object):
