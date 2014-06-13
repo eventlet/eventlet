@@ -7,7 +7,7 @@ import os
 import traceback
 from unittest import TestCase, main
 
-from tests import skipped, skip_unless, skip_with_pyevent, get_database_auth
+from tests import mock, skipped, skip_unless, skip_with_pyevent, get_database_auth
 from eventlet import event
 from eventlet import db_pool
 from eventlet.support import six
@@ -16,6 +16,7 @@ import eventlet
 
 class DBTester(object):
     __test__ = False  # so that nose doesn't try to execute this directly
+
     def setUp(self):
         self.create_db()
         self.connection = None
@@ -58,6 +59,7 @@ class Mock(object):
 
 class DBConnectionPool(DBTester):
     __test__ = False  # so that nose doesn't try to execute this directly
+
     def setUp(self):
         super(DBConnectionPool, self).setUp()
         self.pool = self.create_pool()
@@ -148,6 +150,7 @@ class DBConnectionPool(DBTester):
         results = []
         SHORT_QUERY = "select * from test_table"
         evt = event.Event()
+
         def a_query():
             self.assert_cursor_works(curs)
             curs.execute(SHORT_QUERY)
@@ -228,12 +231,14 @@ class DBConnectionPool(DBTester):
         SHORT_QUERY = "select * from test_table where row_id <= 20"
 
         evt = event.Event()
+
         def long_running_query():
             self.assert_cursor_works(curs)
             curs.execute(LONG_QUERY)
             results.append(1)
             evt.send()
         evt2 = event.Event()
+
         def short_running_query():
             self.assert_cursor_works(curs2)
             curs2.execute(SHORT_QUERY)
@@ -284,12 +289,14 @@ class DBConnectionPool(DBTester):
 
         # now we're really going for 100% coverage
         x = Mock()
+
         def fail():
             raise KeyboardInterrupt()
         x.close = fail
         self.assertRaises(KeyboardInterrupt, self.pool._safe_close, x)
 
         x = Mock()
+
         def fail2():
             raise RuntimeError("if this line has been printed, the test succeeded")
         x.close = fail2
@@ -331,7 +338,7 @@ class DBConnectionPool(DBTester):
         self.connection = self.pool.get()
         self.connection.close()
         self.assertEqual(len(self.pool.free_items), 1)
-        eventlet.sleep(0.03) # long enough to trigger idle timeout for real
+        eventlet.sleep(0.03)  # long enough to trigger idle timeout for real
         self.assertEqual(len(self.pool.free_items), 0)
 
     @skipped
@@ -365,7 +372,7 @@ class DBConnectionPool(DBTester):
         self.connection = self.pool.get()
         self.connection.close()
         self.assertEqual(len(self.pool.free_items), 1)
-        eventlet.sleep(0.05) # long enough to trigger age timeout
+        eventlet.sleep(0.05)  # long enough to trigger age timeout
         self.assertEqual(len(self.pool.free_items), 0)
 
     @skipped
@@ -380,7 +387,7 @@ class DBConnectionPool(DBTester):
         self.assertEqual(len(self.pool.free_items), 1)
         eventlet.sleep(0)  # not long enough to trigger the age timeout
         self.assertEqual(len(self.pool.free_items), 1)
-        eventlet.sleep(0.2) # long enough to trigger age timeout
+        eventlet.sleep(0.2)  # long enough to trigger age timeout
         self.assertEqual(len(self.pool.free_items), 0)
         conn2.close()  # should not be added to the free items
         self.assertEqual(len(self.pool.free_items), 0)
@@ -397,12 +404,13 @@ class DBConnectionPool(DBTester):
         self.assertEqual(self.pool.free(), 0)
         self.assertEqual(self.pool.waiting(), 0)
         e = event.Event()
+
         def retrieve(pool, ev):
             c = pool.get()
             ev.send(c)
         eventlet.spawn(retrieve, self.pool, e)
-        eventlet.sleep(0) # these two sleeps should advance the retrieve
-        eventlet.sleep(0) # coroutine until it's waiting in get()
+        eventlet.sleep(0)  # these two sleeps should advance the retrieve
+        eventlet.sleep(0)  # coroutine until it's waiting in get()
         self.assertEqual(self.pool.free(), 0)
         self.assertEqual(self.pool.waiting(), 1)
         self.pool.put(self.connection)
@@ -420,6 +428,7 @@ class DBConnectionPool(DBTester):
         iterations = 20000
         c = self.connection.cursor()
         self.connection.commit()
+
         def bench(c):
             for i in six.moves.range(iterations):
                 c.execute('select 1')
@@ -459,16 +468,17 @@ class RaisingDBModule(object):
 
 class TpoolConnectionPool(DBConnectionPool):
     __test__ = False  # so that nose doesn't try to execute this directly
+
     def create_pool(self, min_size=0, max_size=1, max_idle=10, max_age=10,
                     connect_timeout=0.5, module=None):
         if module is None:
             module = self._dbmodule
-        return db_pool.TpooledConnectionPool(module,
+        return db_pool.TpooledConnectionPool(
+            module,
             min_size=min_size, max_size=max_size,
             max_idle=max_idle, max_age=max_age,
-            connect_timeout = connect_timeout,
+            connect_timeout=connect_timeout,
             **self._auth)
-
 
     @skip_with_pyevent
     def setUp(self):
@@ -480,14 +490,15 @@ class TpoolConnectionPool(DBConnectionPool):
         tpool.killall()
 
 
-
 class RawConnectionPool(DBConnectionPool):
     __test__ = False  # so that nose doesn't try to execute this directly
+
     def create_pool(self, min_size=0, max_size=1, max_idle=10, max_age=10,
                     connect_timeout=0.5, module=None):
         if module is None:
             module = self._dbmodule
-        return db_pool.RawConnectionPool(module,
+        return db_pool.RawConnectionPool(
+            module,
             min_size=min_size, max_size=max_size,
             max_idle=max_idle, max_age=max_age,
             connect_timeout=connect_timeout,
@@ -497,11 +508,51 @@ class RawConnectionPool(DBConnectionPool):
 class TestRawConnectionPool(TestCase):
     def test_issue_125(self):
         # pool = self.create_pool(min_size=3, max_size=5)
-        pool = db_pool.RawConnectionPool(DummyDBModule(),
+        pool = db_pool.RawConnectionPool(
+            DummyDBModule(),
             dsn="dbname=test user=jessica port=5433",
             min_size=3, max_size=5)
         conn = pool.get()
         pool.put(conn)
+
+    def test_custom_cleanup_ok(self):
+        cleanup_mock = mock.Mock()
+        pool = db_pool.RawConnectionPool(DummyDBModule(), cleanup=cleanup_mock)
+        conn = pool.get()
+        pool.put(conn)
+        assert cleanup_mock.call_count == 1
+
+        with pool.item() as conn:
+            pass
+        assert cleanup_mock.call_count == 2
+
+    def test_custom_cleanup_arg_error(self):
+        cleanup_mock = mock.Mock(side_effect=NotImplementedError)
+        pool = db_pool.RawConnectionPool(DummyDBModule())
+        conn = pool.get()
+        pool.put(conn, cleanup=cleanup_mock)
+        assert cleanup_mock.call_count == 1
+
+        with pool.item(cleanup=cleanup_mock):
+            pass
+        assert cleanup_mock.call_count == 2
+
+    def test_custom_cleanup_fatal(self):
+        state = [0]
+
+        def cleanup(conn):
+            state[0] += 1
+            raise KeyboardInterrupt
+
+        pool = db_pool.RawConnectionPool(DummyDBModule(), cleanup=cleanup)
+        conn = pool.get()
+        try:
+            pool.put(conn)
+        except KeyboardInterrupt:
+            pass
+        else:
+            assert False, 'Expected KeyboardInterrupt'
+        assert state[0] == 1
 
 
 get_auth = get_database_auth

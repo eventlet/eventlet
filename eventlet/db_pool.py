@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 from collections import deque
+from contextlib import contextmanager
 import sys
 import time
 
@@ -11,16 +12,24 @@ from eventlet.hubs.timer import Timer
 from eventlet.greenthread import GreenThread
 
 
+_MISSING = object()
+
+
 class ConnectTimeout(Exception):
     pass
 
 
+def cleanup_rollback(conn):
+    conn.rollback()
+
+
 class BaseConnectionPool(Pool):
     def __init__(self, db_module,
-                       min_size = 0, max_size = 4,
-                       max_idle = 10, max_age = 30,
-                       connect_timeout = 5,
-                       *args, **kwargs):
+                 min_size=0, max_size=4,
+                 max_idle=10, max_age=30,
+                 connect_timeout=5,
+                 cleanup=cleanup_rollback,
+                 *args, **kwargs):
         """
         Constructs a pool with at least *min_size* connections and at most
         *max_size* connections.  Uses *db_module* to construct new connections.
@@ -49,19 +58,20 @@ class BaseConnectionPool(Pool):
         self.max_age = max_age
         self.connect_timeout = connect_timeout
         self._expiration_timer = None
+        self.cleanup = cleanup
         super(BaseConnectionPool, self).__init__(min_size=min_size,
                                                  max_size=max_size,
                                                  order_as_stack=True)
 
     def _schedule_expiration(self):
-        """ Sets up a timer that will call _expire_old_connections when the
+        """Sets up a timer that will call _expire_old_connections when the
         oldest connection currently in the free pool is ready to expire.  This
         is the earliest possible time that a connection could expire, thus, the
         timer will be running as infrequently as possible without missing a
         possible expiration.
 
         If this function is called when a timer is already scheduled, it does
-       nothing.
+        nothing.
 
         If max_age or max_idle is 0, _schedule_expiration likewise does nothing.
         """
@@ -70,8 +80,8 @@ class BaseConnectionPool(Pool):
             # on put
             return
 
-        if ( self._expiration_timer is not None
-             and not getattr(self._expiration_timer, 'called', False)):
+        if (self._expiration_timer is not None
+                and not getattr(self._expiration_timer, 'called', False)):
             # the next timer is already scheduled
             return
 
@@ -97,7 +107,7 @@ class BaseConnectionPool(Pool):
             self._expiration_timer.schedule()
 
     def _expire_old_connections(self, now):
-        """ Iterates through the open connections contained in the pool, closing
+        """Iterates through the open connections contained in the pool, closing
         ones that have remained idle for longer than max_idle seconds, or have
         been in existence for longer than max_age seconds.
 
@@ -124,16 +134,16 @@ class BaseConnectionPool(Pool):
             self._safe_close(conn, quiet=True)
 
     def _is_expired(self, now, last_used, created_at):
-        """ Returns true and closes the connection if it's expired."""
-        if ( self.max_idle <= 0
-             or self.max_age <= 0
-             or now - last_used > self.max_idle
-             or now - created_at > self.max_age ):
+        """Returns true and closes the connection if it's expired.
+        """
+        if (self.max_idle <= 0 or self.max_age <= 0
+                or now - last_used > self.max_idle
+                or now - created_at > self.max_age):
             return True
         return False
 
     def _unwrap_connection(self, conn):
-        """ If the connection was wrapped by a subclass of
+        """If the connection was wrapped by a subclass of
         BaseConnectionWrapper and is still functional (as determined
         by the __nonzero__, or __bool__ in python3, method), returns
         the unwrapped connection.  If anything goes wrong with this
@@ -150,16 +160,15 @@ class BaseConnectionPool(Pool):
             pass
         return base
 
-    def _safe_close(self, conn, quiet = False):
-        """ Closes the (already unwrapped) connection, squelching any
-        exceptions."""
+    def _safe_close(self, conn, quiet=False):
+        """Closes the (already unwrapped) connection, squelching any
+        exceptions.
+        """
         try:
             conn.close()
-        except (KeyboardInterrupt, SystemExit):
-            raise
         except AttributeError:
-            pass # conn is None, or junk
-        except:
+            pass  # conn is None, or junk
+        except Exception:
             if not quiet:
                 print("Connection.close raised: %s" % (sys.exc_info()[1]))
 
@@ -193,7 +202,7 @@ class BaseConnectionPool(Pool):
         wrapped._db_pool_created_at = created_at
         return wrapped
 
-    def put(self, conn):
+    def put(self, conn, cleanup=_MISSING):
         created_at = getattr(conn, '_db_pool_created_at', 0)
         now = time.time()
         conn = self._unwrap_connection(conn)
@@ -201,35 +210,46 @@ class BaseConnectionPool(Pool):
         if self._is_expired(now, now, created_at):
             self._safe_close(conn, quiet=False)
             conn = None
-        else:
-            # rollback any uncommitted changes, so that the next client
-            # has a clean slate.  This also pokes the connection to see if
-            # it's dead or None
+        elif cleanup is not None:
+            if cleanup is _MISSING:
+                cleanup = self.cleanup
+            # by default, call rollback in case the connection is in the middle
+            # of a transaction. However, rollback has performance implications
+            # so optionally do nothing or call something else like ping
             try:
                 if conn:
-                    conn.rollback()
-            except KeyboardInterrupt:
-                raise
-            except:
+                    cleanup(conn)
+            except Exception as e:
                 # we don't care what the exception was, we just know the
                 # connection is dead
-                print("WARNING: connection.rollback raised: %s" % (sys.exc_info()[1]))
+                print("WARNING: cleanup %s raised: %s" % (cleanup, e))
                 conn = None
+            except:
+                conn = None
+                raise
 
         if conn is not None:
-            super(BaseConnectionPool, self).put( (now, created_at, conn) )
+            super(BaseConnectionPool, self).put((now, created_at, conn))
         else:
             # wake up any waiters with a flag value that indicates
             # they need to manufacture a connection
-              if self.waiting() > 0:
-                  super(BaseConnectionPool, self).put(None)
-              else:
-                  # no waiters -- just change the size
-                  self.current_size -= 1
+            if self.waiting() > 0:
+                super(BaseConnectionPool, self).put(None)
+            else:
+                # no waiters -- just change the size
+                self.current_size -= 1
         self._schedule_expiration()
 
+    @contextmanager
+    def item(self, cleanup=_MISSING):
+        conn = self.get()
+        try:
+            yield conn
+        finally:
+            self.put(conn, cleanup=cleanup)
+
     def clear(self):
-        """ Close all connections that this pool still holds a reference to,
+        """Close all connections that this pool still holds a reference to,
         and removes all references to them.
         """
         if self._expiration_timer:
@@ -250,8 +270,8 @@ class TpooledConnectionPool(BaseConnectionPool):
     """
     def create(self):
         now = time.time()
-        return now, now, self.connect(self._db_module,
-            self.connect_timeout, *self._args, **self._kwargs)
+        return now, now, self.connect(
+            self._db_module, self.connect_timeout, *self._args, **self._kwargs)
 
     @classmethod
     def connect(cls, db_module, connect_timeout, *args, **kw):
@@ -269,8 +289,8 @@ class RawConnectionPool(BaseConnectionPool):
     """
     def create(self):
         now = time.time()
-        return now, now, self.connect(self._db_module,
-            self.connect_timeout, *self._args, **self._kwargs)
+        return now, now, self.connect(
+            self._db_module, self.connect_timeout, *self._args, **self._kwargs)
 
     @classmethod
     def connect(cls, db_module, connect_timeout, *args, **kw):
@@ -288,20 +308,27 @@ ConnectionPool = TpooledConnectionPool
 class GenericConnectionWrapper(object):
     def __init__(self, baseconn):
         self._base = baseconn
+
+    # Proxy all method calls to self._base
+    # FIXME: remove repetition; options to consider:
+    # * for name in (...):
+    #     setattr(class, name, lambda self, *a, **kw: getattr(self._base, name)(*a, **kw))
+    # * def __getattr__(self, name): if name in (...): return getattr(self._base, name)
+    # * other?
     def __enter__(self): return self._base.__enter__()
     def __exit__(self, exc, value, tb): return self._base.__exit__(exc, value, tb)
     def __repr__(self): return self._base.__repr__()
     def affected_rows(self): return self._base.affected_rows()
-    def autocommit(self,*args, **kwargs): return self._base.autocommit(*args, **kwargs)
+    def autocommit(self, *args, **kwargs): return self._base.autocommit(*args, **kwargs)
     def begin(self): return self._base.begin()
-    def change_user(self,*args, **kwargs): return self._base.change_user(*args, **kwargs)
-    def character_set_name(self,*args, **kwargs): return self._base.character_set_name(*args, **kwargs)
-    def close(self,*args, **kwargs): return self._base.close(*args, **kwargs)
-    def commit(self,*args, **kwargs): return self._base.commit(*args, **kwargs)
+    def change_user(self, *args, **kwargs): return self._base.change_user(*args, **kwargs)
+    def character_set_name(self, *args, **kwargs): return self._base.character_set_name(*args, **kwargs)
+    def close(self, *args, **kwargs): return self._base.close(*args, **kwargs)
+    def commit(self, *args, **kwargs): return self._base.commit(*args, **kwargs)
     def cursor(self, *args, **kwargs): return self._base.cursor(*args, **kwargs)
-    def dump_debug_info(self,*args, **kwargs): return self._base.dump_debug_info(*args, **kwargs)
-    def errno(self,*args, **kwargs): return self._base.errno(*args, **kwargs)
-    def error(self,*args, **kwargs): return self._base.error(*args, **kwargs)
+    def dump_debug_info(self, *args, **kwargs): return self._base.dump_debug_info(*args, **kwargs)
+    def errno(self, *args, **kwargs): return self._base.errno(*args, **kwargs)
+    def error(self, *args, **kwargs): return self._base.error(*args, **kwargs)
     def errorhandler(self, *args, **kwargs): return self._base.errorhandler(*args, **kwargs)
     def insert_id(self, *args, **kwargs): return self._base.insert_id(*args, **kwargs)
     def literal(self, *args, **kwargs): return self._base.literal(*args, **kwargs)
@@ -309,23 +336,23 @@ class GenericConnectionWrapper(object):
     def set_sql_mode(self, *args, **kwargs): return self._base.set_sql_mode(*args, **kwargs)
     def show_warnings(self): return self._base.show_warnings()
     def warning_count(self): return self._base.warning_count()
-    def ping(self,*args, **kwargs): return self._base.ping(*args, **kwargs)
-    def query(self,*args, **kwargs): return self._base.query(*args, **kwargs)
-    def rollback(self,*args, **kwargs): return self._base.rollback(*args, **kwargs)
-    def select_db(self,*args, **kwargs): return self._base.select_db(*args, **kwargs)
-    def set_server_option(self,*args, **kwargs): return self._base.set_server_option(*args, **kwargs)
-    def server_capabilities(self,*args, **kwargs): return self._base.server_capabilities(*args, **kwargs)
-    def shutdown(self,*args, **kwargs): return self._base.shutdown(*args, **kwargs)
-    def sqlstate(self,*args, **kwargs): return self._base.sqlstate(*args, **kwargs)
+    def ping(self, *args, **kwargs): return self._base.ping(*args, **kwargs)
+    def query(self, *args, **kwargs): return self._base.query(*args, **kwargs)
+    def rollback(self, *args, **kwargs): return self._base.rollback(*args, **kwargs)
+    def select_db(self, *args, **kwargs): return self._base.select_db(*args, **kwargs)
+    def set_server_option(self, *args, **kwargs): return self._base.set_server_option(*args, **kwargs)
+    def server_capabilities(self, *args, **kwargs): return self._base.server_capabilities(*args, **kwargs)
+    def shutdown(self, *args, **kwargs): return self._base.shutdown(*args, **kwargs)
+    def sqlstate(self, *args, **kwargs): return self._base.sqlstate(*args, **kwargs)
     def stat(self, *args, **kwargs): return self._base.stat(*args, **kwargs)
-    def store_result(self,*args, **kwargs): return self._base.store_result(*args, **kwargs)
-    def string_literal(self,*args, **kwargs): return self._base.string_literal(*args, **kwargs)
-    def thread_id(self,*args, **kwargs): return self._base.thread_id(*args, **kwargs)
-    def use_result(self,*args, **kwargs): return self._base.use_result(*args, **kwargs)
+    def store_result(self, *args, **kwargs): return self._base.store_result(*args, **kwargs)
+    def string_literal(self, *args, **kwargs): return self._base.string_literal(*args, **kwargs)
+    def thread_id(self, *args, **kwargs): return self._base.thread_id(*args, **kwargs)
+    def use_result(self, *args, **kwargs): return self._base.use_result(*args, **kwargs)
 
 
 class PooledConnectionWrapper(GenericConnectionWrapper):
-    """ A connection wrapper where:
+    """A connection wrapper where:
     - the close method returns the connection to the pool instead of closing it directly
     - ``bool(conn)`` returns a reasonable value
     - returns itself to the pool if it gets garbage collected
@@ -347,7 +374,7 @@ class PooledConnectionWrapper(GenericConnectionWrapper):
             pass
 
     def close(self):
-        """ Return the connection to the pool, and remove the
+        """Return the connection to the pool, and remove the
         reference to it so that you can't use it again through this
         wrapper object.
         """
@@ -362,17 +389,18 @@ class PooledConnectionWrapper(GenericConnectionWrapper):
 
 
 class DatabaseConnector(object):
-    """\
+    """
     This is an object which will maintain a collection of database
-connection pools on a per-host basis."""
+    connection pools on a per-host basis.
+    """
     def __init__(self, module, credentials,
                  conn_pool=None, *args, **kwargs):
-        """\
-        constructor
+        """constructor
         *module*
             Database module to use.
         *credentials*
-            Mapping of hostname to connect arguments (e.g. username and password)"""
+            Mapping of hostname to connect arguments (e.g. username and password)
+        """
         assert(module)
         self._conn_pool_class = conn_pool
         if self._conn_pool_class is None:
@@ -390,15 +418,16 @@ connection pools on a per-host basis."""
             return self._credentials.get('default', None)
 
     def get(self, host, dbname):
-        """ Returns a ConnectionPool to the target host and schema. """
+        """Returns a ConnectionPool to the target host and schema.
+        """
         key = (host, dbname)
         if key not in self._databases:
             new_kwargs = self._kwargs.copy()
             new_kwargs['db'] = dbname
             new_kwargs['host'] = host
             new_kwargs.update(self.credentials_for(host))
-            dbpool = self._conn_pool_class(self._module,
-                *self._args, **new_kwargs)
+            dbpool = self._conn_pool_class(
+                self._module, *self._args, **new_kwargs)
             self._databases[key] = dbpool
 
         return self._databases[key]
