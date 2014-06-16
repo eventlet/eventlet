@@ -5,6 +5,7 @@ import types
 
 from eventlet.support import greenlets as greenlet, six
 from eventlet.hubs.hub import BaseHub, FdListener, READ, WRITE
+from eventlet.support import six
 
 
 class event_wrapper(object):
@@ -127,7 +128,7 @@ class Hub(BaseHub):
         listener.cb.delete()
 
     def remove_descriptor(self, fileno):
-        for lcontainer in self.listeners.itervalues():
+        for lcontainer in six.itervalues(self.listeners):
             listener = lcontainer.pop(fileno, None)
             if listener:
                 try:

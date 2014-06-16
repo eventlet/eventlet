@@ -19,7 +19,7 @@ import eventlet
 from eventlet import semaphore
 from eventlet import wsgi
 from eventlet.green import socket
-from eventlet.support import get_errno
+from eventlet.support import get_errno, six
 
 # Python 2's utf8 decoding is more lenient than we'd like
 # In order to pass autobahn's testsuite we need stricter validation
@@ -288,11 +288,11 @@ class WebSocket(object):
 
         As per the dataframing section (5.3) for the websocket spec
         """
-        if isinstance(message, unicode):
+        if isinstance(message, six.text_type):
             message = message.encode('utf-8')
-        elif not isinstance(message, str):
-            message = str(message)
-        packed = "\x00%s\xFF" % message
+        elif not isinstance(message, six.binary_type):
+            message = b'%s' % (message,)
+        packed = b"\x00%s\xFF" % message
         return packed
 
     def _parse_messages(self):
@@ -363,7 +363,7 @@ class WebSocket(object):
         """Sends the closing frame to the client, if required."""
         if self.version == 76 and not self.websocket_closed:
             try:
-                self.socket.sendall("\xff\x00")
+                self.socket.sendall(b"\xff\x00")
             except SocketError:
                 # Sometimes, like when the remote side cuts off the connection,
                 # we don't care about this.
@@ -578,7 +578,7 @@ class RFC6455WebSocket(WebSocket):
     def _pack_message(message, masked=False,
                       continuation=False, final=True, control_code=None):
         is_text = False
-        if isinstance(message, unicode):
+        if isinstance(message, six.text_type):
             message = message.encode('utf-8')
             is_text = True
         length = len(message)
@@ -634,7 +634,7 @@ class RFC6455WebSocket(WebSocket):
         if self.version in (8, 13) and not self.websocket_closed:
             if close_data is not None:
                 status, msg = close_data
-                if isinstance(msg, unicode):
+                if isinstance(msg, six.text_type):
                     msg = msg.encode('utf-8')
                 data = struct.pack('!H', status) + msg
             else:

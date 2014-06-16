@@ -93,7 +93,7 @@ class ExplodingConnectionWrap(object):
         return file_obj
 
 
-class ExplodingSocketFile(socket._fileobject):
+class ExplodingSocketFile(eventlet.greenio._fileobject):
 
     def __init__(self, sock, mode='rb', bufsize=-1, close=False):
         super(self.__class__, self).__init__(sock, mode, bufsize, close)
@@ -137,7 +137,7 @@ if __name__ == '__main__':
             sock1 = eventlet.connect(server_addr)
             sock1.settimeout(0.1)
             fd1 = sock1.makefile('rw')
-            fd1.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+            fd1.write(b'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
             fd1.flush()
             tests.wsgi_test.read_http(sock1)
 
@@ -147,7 +147,7 @@ if __name__ == '__main__':
             sock_wrap.arm()
 
             # req #2 - old conn, post-arm - timeout
-            fd1.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+            fd1.write(b'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
             fd1.flush()
             try:
                 tests.wsgi_test.read_http(sock1)

@@ -8,9 +8,8 @@ try:
     from eventlet.green import zmq
 except ImportError:
     zmq = {}    # for systems lacking zmq, skips tests instead of barfing
-
-
-RECV_ON_CLOSED_SOCKET_ERRNOS = (zmq.ENOTSUP, zmq.ENOTSOCK)
+else:
+    RECV_ON_CLOSED_SOCKET_ERRNOS = (zmq.ENOTSUP, zmq.ENOTSOCK)
 
 
 def zmq_supported(_):
@@ -90,9 +89,9 @@ class TestUpstreamDownStream(LimitedTestCase):
             done.send('done')
 
         spawn(rx)
-        req.send('test')
+        req.send(b'test')
         done.wait()
-        self.assertEqual(msg['res'], 'test')
+        self.assertEqual(msg['res'], b'test')
 
     @skip_unless(zmq_supported)
     def test_close_socket_raises_enotsup(self):
@@ -101,7 +100,7 @@ class TestUpstreamDownStream(LimitedTestCase):
         rep.close()
         req.close()
         self.assertRaisesErrno(RECV_ON_CLOSED_SOCKET_ERRNOS, rep.recv)
-        self.assertRaisesErrno(RECV_ON_CLOSED_SOCKET_ERRNOS, req.send, 'test')
+        self.assertRaisesErrno(RECV_ON_CLOSED_SOCKET_ERRNOS, req.send, b'test')
 
     @skip_unless(zmq_supported)
     def test_close_xsocket_raises_enotsup(self):
@@ -110,7 +109,7 @@ class TestUpstreamDownStream(LimitedTestCase):
         rep.close()
         req.close()
         self.assertRaisesErrno(RECV_ON_CLOSED_SOCKET_ERRNOS, rep.recv)
-        self.assertRaisesErrno(RECV_ON_CLOSED_SOCKET_ERRNOS, req.send, 'test')
+        self.assertRaisesErrno(RECV_ON_CLOSED_SOCKET_ERRNOS, req.send, b'test')
 
     @skip_unless(zmq_supported)
     def test_send_1k_req_rep(self):
@@ -120,19 +119,19 @@ class TestUpstreamDownStream(LimitedTestCase):
 
         def tx():
             tx_i = 0
-            req.send(str(tx_i))
-            while req.recv() != 'done':
+            req.send(str(tx_i).encode())
+            while req.recv() != b'done':
                 tx_i += 1
-                req.send(str(tx_i))
+                req.send(str(tx_i).encode())
             done.send(0)
 
         def rx():
             while True:
                 rx_i = rep.recv()
-                if rx_i == "1000":
-                    rep.send('done')
+                if rx_i == b"1000":
+                    rep.send(b'done')
                     break
-                rep.send('i')
+                rep.send(b'i')
         spawn(tx)
         spawn(rx)
         final_i = done.wait()
@@ -149,12 +148,12 @@ class TestUpstreamDownStream(LimitedTestCase):
             tx_i = 0
             while tx_i <= 1000:
                 tx_i += 1
-                down.send(str(tx_i))
+                down.send(str(tx_i).encode())
 
         def rx():
             while True:
                 rx_i = up.recv()
-                if rx_i == "1000":
+                if rx_i == b"1000":
                     done.send(0)
                     break
         spawn(tx)
@@ -171,9 +170,9 @@ class TestUpstreamDownStream(LimitedTestCase):
         addr = 'tcp://127.0.0.1:%s' % port
         sub1.connect(addr)
         sub2.connect(addr)
-        sub_all.setsockopt(zmq.SUBSCRIBE, '')
-        sub1.setsockopt(zmq.SUBSCRIBE, 'sub1')
-        sub2.setsockopt(zmq.SUBSCRIBE, 'sub2')
+        sub_all.setsockopt(zmq.SUBSCRIBE, b'')
+        sub1.setsockopt(zmq.SUBSCRIBE, b'sub1')
+        sub2.setsockopt(zmq.SUBSCRIBE, b'sub2')
 
         sub_all_done = event.Event()
         sub1_done = event.Event()
@@ -186,7 +185,7 @@ class TestUpstreamDownStream(LimitedTestCase):
             while count < msg_count:
                 msg = sock.recv()
                 sleep()
-                if 'LAST' in msg:
+                if b'LAST' in msg:
                     break
                 count += 1
 
@@ -194,11 +193,11 @@ class TestUpstreamDownStream(LimitedTestCase):
 
         def tx(sock):
             for i in range(1, 1001):
-                msg = "sub%s %s" % ([2, 1][i % 2], i)
+                msg = ("sub%s %s" % ([2, 1][i % 2], i)).encode()
                 sock.send(msg)
                 sleep()
-            sock.send('sub1 LAST')
-            sock.send('sub2 LAST')
+            sock.send(b'sub1 LAST')
+            sock.send(b'sub2 LAST')
 
         spawn(rx, sub_all, sub_all_done)
         spawn(rx, sub1, sub1_done)
@@ -214,35 +213,35 @@ class TestUpstreamDownStream(LimitedTestCase):
     @skip_unless(zmq_supported)
     def test_change_subscription(self):
         pub, sub, port = self.create_bound_pair(zmq.PUB, zmq.SUB)
-        sub.setsockopt(zmq.SUBSCRIBE, 'test')
+        sub.setsockopt(zmq.SUBSCRIBE, b'test')
 
         sleep(0.2)
         sub_done = event.Event()
 
         def rx(sock, done_evt):
             count = 0
-            sub = 'test'
+            sub = b'test'
             while True:
                 msg = sock.recv()
                 sleep()
-                if 'DONE' in msg:
+                if b'DONE' in msg:
                     break
-                if 'LAST' in msg and sub == 'test':
-                    sock.setsockopt(zmq.UNSUBSCRIBE, 'test')
-                    sock.setsockopt(zmq.SUBSCRIBE, 'done')
-                    sub = 'done'
+                if b'LAST' in msg and sub == b'test':
+                    sock.setsockopt(zmq.UNSUBSCRIBE, b'test')
+                    sock.setsockopt(zmq.SUBSCRIBE, b'done')
+                    sub = b'done'
                 count += 1
             done_evt.send(count)
 
         def tx(sock):
             for i in range(1, 101):
-                msg = "test %s" % i
+                msg = ("test %s" % i).encode()
                 if i != 50:
                     sock.send(msg)
                 else:
-                    sock.send('test LAST')
+                    sock.send(b'test LAST')
                 sleep()
-            sock.send('done DONE')
+            sock.send(b'done DONE')
 
         spawn(rx, sub, sub_done)
         spawn(tx, pub)
@@ -253,20 +252,20 @@ class TestUpstreamDownStream(LimitedTestCase):
     @skip_unless(zmq_supported)
     def test_recv_multipart_bug68(self):
         req, rep, port = self.create_bound_pair(zmq.REQ, zmq.REP)
-        msg = ['']
+        msg = [b'']
         req.send_multipart(msg)
         recieved_msg = rep.recv_multipart()
         self.assertEqual(recieved_msg, msg)
 
         # Send a message back the other way
-        msg2 = [""]
+        msg2 = [b""]
         rep.send_multipart(msg2, copy=False)
         # When receiving a copy it's a zmq.core.message.Message you get back
         recieved_msg = req.recv_multipart(copy=False)
         # So it needs to be converted to a string
         # I'm calling str(m) consciously here; Message has a .data attribute
         # but it's private __str__ appears to be the way to go
-        self.assertEqual([str(m) for m in recieved_msg], msg2)
+        self.assertEqual([m.bytes for m in recieved_msg], msg2)
 
     @skip_unless(zmq_supported)
     def test_recv_noblock_bug76(self):
@@ -289,20 +288,20 @@ class TestUpstreamDownStream(LimitedTestCase):
         def tx():
             tx_i = 0
             while tx_i <= 1000:
-                sender.send(str(tx_i))
+                sender.send(str(tx_i).encode())
                 tx_i += 1
 
         def rx():
             while True:
                 rx_i = receiver.recv()
-                if rx_i == "1000":
+                if rx_i == b"1000":
                     for i in range(num_recvs):
-                        receiver.send('done%d' % i)
+                        receiver.send(('done%d' % i).encode())
                     sleep()
                     return
 
         for i in range(num_recvs):
-            spawn(slow_rx, done_evts[i], "done%d" % i)
+            spawn(slow_rx, done_evts[i], ("done%d" % i).encode())
 
         spawn(tx)
         spawn(rx)
@@ -324,20 +323,22 @@ class TestUpstreamDownStream(LimitedTestCase):
         def tx():
             tx_i = 0
             while tx_i <= 1000:
-                sender.send_multipart([str(tx_i), '1', '2', '3'])
+                sender.send_multipart([str(tx_i).encode(), b'1', b'2', b'3'])
                 tx_i += 1
 
         def rx():
             while True:
                 rx_i = receiver.recv_multipart()
-                if rx_i == ["1000", '1', '2', '3']:
+                if rx_i == [b"1000", b'1', b'2', b'3']:
                     for i in range(num_recvs):
-                        receiver.send_multipart(['done%d' % i, 'a', 'b', 'c'])
+                        receiver.send_multipart([
+                            ('done%d' % i).encode(), b'a', b'b', b'c'])
                     sleep()
                     return
 
         for i in range(num_recvs):
-            spawn(slow_rx, done_evts[i], ["done%d" % i, 'a', 'b', 'c'])
+            spawn(slow_rx, done_evts[i], [
+                ("done%d" % i).encode(), b'a', b'b', b'c'])
 
         spawn(tx)
         spawn(rx)
@@ -367,7 +368,7 @@ class TestUpstreamDownStream(LimitedTestCase):
         def tx():
             tx_i = 0
             while tx_i <= 1000:
-                sender.send(str(tx_i))
+                sender.send(str(tx_i).encode())
                 tx_i += 1
             done.send(0)
 
@@ -405,7 +406,7 @@ class TestUpstreamDownStream(LimitedTestCase):
         self.assertEqual(len(sock_map), 1)
         events = sock1.getsockopt(zmq.EVENTS)
         self.assertEqual(events & zmq.POLLOUT, zmq.POLLOUT)
-        sock1.send('')
+        sock1.send(b'')
 
         poll_in = zmq.Poller()
         poll_in.register(sock2, zmq.POLLIN)
@@ -440,16 +441,16 @@ class TestUpstreamDownStream(LimitedTestCase):
         Same https://bitbucket.org/eventlet/eventlet/issue/128
         """
         pub, sub, _port = self.create_bound_pair(zmq.PUB, zmq.SUB)
-        sub.setsockopt(zmq.SUBSCRIBE, "")
+        sub.setsockopt(zmq.SUBSCRIBE, b"")
         sleep()
-        pub.send('test_send')
+        pub.send(b'test_send')
         check_idle_cpu_usage(0.2, 0.1)
 
         sender, receiver, _port = self.create_bound_pair(zmq.DEALER, zmq.DEALER)
         sleep()
-        sender.send('test_recv')
+        sender.send(b'test_recv')
         msg = receiver.recv()
-        self.assertEqual(msg, 'test_recv')
+        self.assertEqual(msg, b'test_recv')
         check_idle_cpu_usage(0.2, 0.1)
 
 

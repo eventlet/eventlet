@@ -3,7 +3,10 @@ from eventlet import patcher
 from eventlet.green import socket
 from eventlet.green import select
 from eventlet.green import threading
-patcher.inject('SocketServer',
+from eventlet.support import six
+
+patcher.inject(
+    'SocketServer' if six.PY2 else 'socketserver',
     globals(),
     ('socket', socket),
     ('select', select),

@@ -13,6 +13,11 @@ except ImportError:
     pass
 
 patcher.inject('urllib', globals(), *to_patch)
+try:
+    URLopener
+except NameError:
+    patcher.inject('urllib.request', globals(), *to_patch)
+
 
 # patch a bunch of things that have imports inside the
 # function body; this is lame and hacky but I don't feel

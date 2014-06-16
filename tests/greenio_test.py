@@ -62,11 +62,11 @@ class TestGreenSocket(LimitedTestCase):
             # 2.x socket._fileobjects are odd: writes don't check
             # whether the socket is closed or not, and you get an
             # AttributeError during flush if it is closed
-            fd.write('a')
+            fd.write(b'a')
             self.assertRaises(Exception, fd.flush)
         else:
             # 3.x io write to closed file-like pbject raises ValueError
-            self.assertRaises(ValueError, fd.write, 'a')
+            self.assertRaises(ValueError, fd.write, b'a')
 
     def test_connect_timeout(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -453,7 +453,7 @@ class TestGreenSocket(LimitedTestCase):
             wrap_wfile = s2.makefile('w')
 
             eventlet.sleep(0.02)
-            wrap_wfile.write('hi')
+            wrap_wfile.write(b'hi')
             s2.close()
             evt.send(b'sent via event')
 
@@ -632,7 +632,7 @@ class TestGreenPipe(LimitedTestCase):
                 f.write(ch)
             f.close()
 
-        one_line = "12345\n"
+        one_line = b"12345\n"
         eventlet.spawn(sender, wf, one_line * 5)
         for i in range(5):
             line = rf.readline()
@@ -652,10 +652,10 @@ class TestGreenPipe(LimitedTestCase):
         def writer():
             eventlet.sleep(.1)
 
-            w.write('line\n')
+            w.write(b'line\n')
             w.flush()
 
-            w.write('line\r\n')
+            w.write(b'line\r\n')
             w.flush()
 
         gt = eventlet.spawn(writer)
@@ -676,7 +676,7 @@ class TestGreenPipe(LimitedTestCase):
         r = greenio.GreenPipe(r)
         w = greenio.GreenPipe(w, 'w')
 
-        large_message = "".join([1024 * chr(i) for i in range(65)])
+        large_message = b"".join([1024 * chr(i) for i in range(65)])
 
         def writer():
             w.write(large_message)
@@ -698,7 +698,7 @@ class TestGreenPipe(LimitedTestCase):
         self.assertEqual(f.tell(), 0)
         f.seek(0, 2)
         self.assertEqual(f.tell(), 0)
-        f.write('1234567890')
+        f.write(b'1234567890')
         f.seek(0, 2)
         self.assertEqual(f.tell(), 10)
         f.seek(0)
@@ -719,7 +719,7 @@ class TestGreenPipe(LimitedTestCase):
 
     def test_truncate(self):
         f = greenio.GreenPipe(self.tempdir + "/TestFile", 'w+', 1024)
-        f.write('1234567890')
+        f.write(b'1234567890')
         f.truncate(9)
         self.assertEqual(f.tell(), 9)
 

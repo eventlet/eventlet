@@ -42,7 +42,7 @@ class TestApi(TestCase):
         def accept_once(listenfd):
             try:
                 conn, addr = listenfd.accept()
-                fd = conn.makefile(mode='w')
+                fd = conn.makefile(mode='wb')
                 conn.close()
                 fd.write(b'hello\n')
                 fd.close()
@@ -53,7 +53,7 @@ class TestApi(TestCase):
         api.spawn(accept_once, server)
 
         client = eventlet.connect(('127.0.0.1', server.getsockname()[1]))
-        fd = client.makefile()
+        fd = client.makefile('rb')
         client.close()
         assert fd.readline() == b'hello\n'
 

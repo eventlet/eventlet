@@ -40,7 +40,7 @@ class _QueueLock(object):
         self._hub = hubs.get_hub()
 
     def __nonzero__(self):
-        return self._count
+        return bool(self._count)
 
     __bool__ = __nonzero__
 

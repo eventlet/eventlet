@@ -56,6 +56,9 @@ class _AlreadyHandled(object):
     def next(self):
         raise StopIteration
 
+    __next__ = next
+
+
 ALREADY_HANDLED = _AlreadyHandled()
 
 
@@ -144,13 +147,13 @@ class Input(object):
                     if use_readline and data[-1] == "\n":
                         break
                 else:
-                    self.chunk_length = int(rfile.readline().split(";", 1)[0], 16)
+                    self.chunk_length = int(rfile.readline().split(b";", 1)[0], 16)
                     self.position = 0
                     if self.chunk_length == 0:
                         rfile.readline()
         except greenio.SSL.ZeroReturnError:
             pass
-        return ''.join(response)
+        return b''.join(response)
 
     def read(self, length=None):
         if self.chunked_input:
@@ -268,7 +271,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         finally:
             self.rfile = orig_rfile
 
-        content_length = self.headers.getheader('content-length')
+        content_length = self.headers.get('content-length')
         if content_length:
             try:
                 int(content_length)
@@ -356,7 +359,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 _writelines(towrite)
                 length[0] = length[0] + sum(map(len, towrite))
             except UnicodeEncodeError:
-                self.server.log_message("Encountered non-ascii unicode while attempting to write wsgi response: %r" % [x for x in towrite if isinstance(x, unicode)])
+                self.server.log_message("Encountered non-ascii unicode while attempting to write wsgi response: %r" % [x for x in towrite if isinstance(x, six.text_type)])
                 self.server.log_message(traceback.format_exc())
                 _writelines(
                     ["HTTP/1.1 500 Internal Server Error\r\n",
@@ -482,12 +485,15 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         if len(pq) > 1:
             env['QUERY_STRING'] = pq[1]
 
-        if self.headers.typeheader is None:
-            env['CONTENT_TYPE'] = self.headers.type
-        else:
-            env['CONTENT_TYPE'] = self.headers.typeheader
+        ct = self.headers.get('content-type')
+        if ct is None:
+            try:
+                ct = self.headers.type
+            except AttributeError:
+                ct = self.headers.get_content_type()
+        env['CONTENT_TYPE'] = ct
 
-        length = self.headers.getheader('content-length')
+        length = self.headers.get('content-length')
         if length:
             env['CONTENT_LENGTH'] = length
         env['SERVER_PROTOCOL'] = 'HTTP/1.0'
@@ -499,8 +505,14 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         env['REMOTE_PORT'] = str(self.client_address[1])
         env['GATEWAY_INTERFACE'] = 'CGI/1.1'
 
-        for h in self.headers.headers:
-            k, v = h.split(':', 1)
+        try:
+            headers = self.headers.headers
+        except AttributeError:
+            headers = self.headers._headers
+        else:
+            headers = [h.split(':', 1) for h in headers]
+
+        for k, v in headers:
             k = k.replace('-', '_').upper()
             v = v.strip()
             if k in env:
@@ -607,7 +619,7 @@ class Server(BaseHTTPServer.HTTPServer):
         # set minimum_chunk_size before __init__ executes and we don't want to modify
         # class variable
         sock, address = sock_params
-        proto = types.InstanceType(self.protocol)
+        proto = new(self.protocol)
         if self.minimum_chunk_size is not None:
             proto.minimum_chunk_size = self.minimum_chunk_size
         proto.capitalize_response_headers = self.capitalize_response_headers
@@ -622,6 +634,12 @@ class Server(BaseHTTPServer.HTTPServer):
 
     def log_message(self, message):
         self.log.write(message + '\n')
+
+
+try:
+    new = types.InstanceType
+except AttributeError:
+    new = lambda cls: cls.__new__(cls)
 
 
 try:
