@@ -9,7 +9,7 @@ from eventlet import hubs
 from eventlet.patcher import slurp_properties
 
 __all__ = os_orig.__all__
-__patched__ = ['fdopen', 'read', 'write', 'wait', 'waitpid']
+__patched__ = ['fdopen', 'read', 'write', 'wait', 'waitpid', 'open']
 
 slurp_properties(os_orig, globals(), 
     ignore=__patched__, srckeys=dir(os_orig))
@@ -40,7 +40,10 @@ def read(fd, n):
             if get_errno(e) == errno.EPIPE:
                 return ''
             raise
-        hubs.trampoline(fd, read=True)
+        try:
+            hubs.trampoline(fd, read=True)
+        except hubs.IOClosed:
+            return ''
 
 __original_write__ = os_orig.write
 def write(fd, st):
@@ -81,4 +84,12 @@ def waitpid(pid, options):
                 return rpid, status
             greenthread.sleep(0.01)
 
-# TODO: open
+__original_open__ = os_orig.open
+def open(file, flags, mode=0777):
+    """ Wrap os.open
+        This behaves identically, but collaborates with
+        the hub's notify_opened protocol.
+    """
+    fd = __original_open__(file, flags, mode)
+    hubs.notify_opened(fd)
+    return fd

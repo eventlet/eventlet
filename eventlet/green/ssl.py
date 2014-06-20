@@ -8,7 +8,7 @@ import errno
 time = __import__('time')
 
 from eventlet.support import get_errno
-from eventlet.hubs import trampoline
+from eventlet.hubs import trampoline, IOClosed
 from eventlet.greenio import set_nonblocking, GreenSocket, SOCKET_CLOSED, CONNECT_ERR, CONNECT_SUCCESS
 orig_socket = __import__('socket')
 socket = orig_socket.socket
@@ -98,8 +98,11 @@ class GreenSSLSocket(__ssl.SSLSocket):
     def read(self, len=1024):
         """Read up to LEN bytes and return them.
         Return zero-length string on EOF."""
-        return self._call_trampolining(
-            super(GreenSSLSocket, self).read, len)
+        try:
+            return self._call_trampolining(
+                super(GreenSSLSocket, self).read, len)
+        except IOClosed:
+            return ''
 
     def send (self, data, flags=0):
         if self._sslobj:
@@ -164,8 +167,11 @@ class GreenSSLSocket(__ssl.SSLSocket):
                     if self.act_non_blocking:
                         raise
                     if get_errno(e) == errno.EWOULDBLOCK:
-                        trampoline(self, read=True,
-                                   timeout=self.gettimeout(), timeout_exc=timeout_exc('timed out'))
+                        try:
+                            trampoline(self, read=True,
+                                       timeout=self.gettimeout(), timeout_exc=timeout_exc('timed out'))
+                        except IOClosed:
+                            return ''
                     if get_errno(e) in SOCKET_CLOSED:
                         return ''
                     raise
