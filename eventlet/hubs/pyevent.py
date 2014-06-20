@@ -97,7 +97,7 @@ class Hub(BaseHub):
         pass  # exists for compatibility with BaseHub
     running = property(_getrunning, _setrunning)
 
-    def add(self, evtype, fileno, real_cb):
+    def add(self, evtype, fileno, real_cb, real_tb, mac):
         # this is stupid: pyevent won't call a callback unless it's a function,
         # so we have to force it to be one here
         if isinstance(real_cb, types.BuiltinMethodType):
@@ -111,7 +111,7 @@ class Hub(BaseHub):
         elif evtype is WRITE:
             evt = event.write(fileno, cb, fileno)
 
-        return super(Hub,self).add(evtype, fileno, evt)
+        return super(Hub,self).add(evtype, fileno, evt, real_tb, mac)
 
     def signal(self, signalnum, handler):
         def wrapper():

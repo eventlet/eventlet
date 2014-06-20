@@ -8,7 +8,7 @@ import time
 import warnings
 
 from eventlet.support import get_errno, six
-from eventlet.hubs import trampoline
+from eventlet.hubs import trampoline, notify_close, notify_opened, IOClosed
 
 __all__ = ['GreenSocket', 'GreenPipe', 'shutdown_safe']
 
@@ -123,6 +123,8 @@ class GreenSocket(object):
         should_set_nonblocking = kwargs.pop('set_nonblocking', True)
         if isinstance(family_or_realsock, six.integer_types):
             fd = _original_socket(family_or_realsock, *args, **kwargs)
+            # Notify the hub that this is a newly-opened socket.
+            notify_opened(fd.fileno())
         else:
             fd = family_or_realsock
 
@@ -152,6 +154,7 @@ class GreenSocket(object):
         self.listen = fd.listen
         self.setsockopt = fd.setsockopt
         self.shutdown = fd.shutdown
+        self.__closed = False
 
     @property
     def _sock(self):
@@ -167,6 +170,18 @@ class GreenSocket(object):
         setattr(self, name, attr)
         return attr
 
+    def _trampoline(self, fd, read=False, write=False, timeout=None, timeout_exc=None):
+        if self.__closed:
+            print >> sys.stderr, "***WARNING: second trampoline of", self, "on", self.fileno()
+            raise IOClosed()
+        try:
+            return trampoline(fd, read=True, timeout=self.gettimeout(),
+                            timeout_exc=socket.timeout("timed out"),
+                            mark_as_closed=self._mark_as_closed)
+        except IOClosed:
+            self._mark_as_closed()
+            raise
+
     def accept(self):
         if self.act_non_blocking:
             return self.fd.accept()
@@ -177,8 +192,24 @@ class GreenSocket(object):
                 client, addr = res
                 set_nonblocking(client)
                 return type(self)(client), addr
-            trampoline(fd, read=True, timeout=self.gettimeout(),
+            self._trampoline(fd, read=True, timeout=self.gettimeout(),
                        timeout_exc=socket.timeout("timed out"))
+
+    def _closed(self):
+        print >> sys.stderr, "Already closed the once", self, self.fd
+
+    def _mark_as_closed(self):
+        print >> sys.stderr, "Marking", self, "as closed"
+        self.close = self._closed
+        self.__closed = True
+
+    def close(self):
+        notify_close(self.fd)
+        self._mark_as_closed()   # Don't do this twice.
+        return self.fd.close()
+
+    def __del__(self):
+        self.close()
 
     def connect(self, address):
         if self.act_non_blocking:
@@ -186,7 +217,11 @@ class GreenSocket(object):
         fd = self.fd
         if self.gettimeout() is None:
             while not socket_connect(fd, address):
-                trampoline(fd, write=True)
+                try:
+                    self._trampoline(fd, write=True)
+                except IOClosed:
+                    print >> sys.stderr, ""
+                    raise socket.error(errno.EBADFD)
                 socket_checkerr(fd)
         else:
             end = time.time() + self.gettimeout()
@@ -195,7 +230,7 @@ class GreenSocket(object):
                     return
                 if time.time() >= end:
                     raise socket.timeout("timed out")
-                trampoline(fd, write=True, timeout=end - time.time(),
+                self._trampoline(fd, write=True, timeout=end - time.time(),
                            timeout_exc=socket.timeout("timed out"))
                 socket_checkerr(fd)
 
@@ -206,10 +241,12 @@ class GreenSocket(object):
         if self.gettimeout() is None:
             while not socket_connect(fd, address):
                 try:
-                    trampoline(fd, write=True)
+                    self._trampoline(fd, write=True)
                     socket_checkerr(fd)
                 except socket.error as ex:
                     return get_errno(ex)
+                except IOClosed:
+                    return errno.EBADFD
         else:
             end = time.time() + self.gettimeout()
             while True:
@@ -218,11 +255,13 @@ class GreenSocket(object):
                         return 0
                     if time.time() >= end:
                         raise socket.timeout(errno.EAGAIN)
-                    trampoline(fd, write=True, timeout=end - time.time(),
+                    self._trampoline(fd, write=True, timeout=end - time.time(),
                                timeout_exc=socket.timeout(errno.EAGAIN))
                     socket_checkerr(fd)
                 except socket.error as ex:
                     return get_errno(ex)
+                except IOClosed:
+                    return errno.EBADFD
 
     def dup(self, *args, **kw):
         sock = self.fd.dup(*args, **kw)
@@ -256,27 +295,30 @@ class GreenSocket(object):
                     return ''
                 else:
                     raise
-            trampoline(
-                fd,
-                read=True,
-                timeout=self.gettimeout(),
-                timeout_exc=socket.timeout("timed out"))
+            try:
+                self._trampoline(
+                    fd,
+                    read=True,
+                    timeout=self.gettimeout(),
+                    timeout_exc=socket.timeout("timed out"))
+            except IOClosed as e:
+                return ''
 
     def recvfrom(self, *args):
         if not self.act_non_blocking:
-            trampoline(self.fd, read=True, timeout=self.gettimeout(),
+            self._trampoline(self.fd, read=True, timeout=self.gettimeout(),
                        timeout_exc=socket.timeout("timed out"))
         return self.fd.recvfrom(*args)
 
     def recvfrom_into(self, *args):
         if not self.act_non_blocking:
-            trampoline(self.fd, read=True, timeout=self.gettimeout(),
+            self._trampoline(self.fd, read=True, timeout=self.gettimeout(),
                        timeout_exc=socket.timeout("timed out"))
         return self.fd.recvfrom_into(*args)
 
     def recv_into(self, *args):
         if not self.act_non_blocking:
-            trampoline(self.fd, read=True, timeout=self.gettimeout(),
+            self._trampoline(self.fd, read=True, timeout=self.gettimeout(),
                        timeout_exc=socket.timeout("timed out"))
         return self.fd.recv_into(*args)
 
@@ -298,8 +340,11 @@ class GreenSocket(object):
             if total_sent == len_data:
                 break
 
-            trampoline(self.fd, write=True, timeout=self.gettimeout(),
-                       timeout_exc=socket.timeout("timed out"))
+            try:
+                self._trampoline(self.fd, write=True, timeout=self.gettimeout(),
+                           timeout_exc=socket.timeout("timed out"))
+            except:
+                raise socket.error(errno.ECONNRESET, 'Connection closed by another thread')
 
         return total_sent
 
@@ -310,7 +355,7 @@ class GreenSocket(object):
             tail += self.send(data[tail:], flags)
 
     def sendto(self, *args):
-        trampoline(self.fd, write=True)
+        self._trampoline(self.fd, write=True)
         return self.fd.sendto(*args)
 
     def setblocking(self, flag):
@@ -354,6 +399,28 @@ class _SocketDuckForFd(object):
     """ Class implementing all socket method used by _fileobject in cooperative manner using low level os I/O calls."""
     def __init__(self, fileno):
         self._fileno = fileno
+        notify_opened(fileno)
+        self.__closed = False
+
+    def _trampoline(self, fd, read=False, write=False, timeout=None, timeout_exc=None):
+        if self.__closed:
+            print >> sys.stderr, "***WARNING: second trampoline of", self, "on", self.fileno()
+            raise IOClosed()
+        try:
+            return trampoline(fd, read=True, timeout=self.gettimeout(),
+                            timeout_exc=socket.timeout("timed out"),
+                            mark_as_closed=self.mark_as_closed)
+        except IOClosed:
+            self._mark_as_closed()
+            raise
+
+    def _closed(self):
+        print >> sys.stderr, "Already closed the once", self, self.fd
+
+    def _mark_as_closed(self):
+        print >> sys.stderr, "Marking", self, "as closed"
+        self.close = self._close = self._closed
+        self.__closed = True
 
     @property
     def _sock(self):
@@ -370,7 +437,7 @@ class _SocketDuckForFd(object):
             except OSError as e:
                 if get_errno(e) != errno.EAGAIN:
                     raise IOError(*e.args)
-            trampoline(self, read=True)
+            self._trampoline(self, read=True)
 
     def sendall(self, data):
         len_data = len(data)
@@ -383,7 +450,7 @@ class _SocketDuckForFd(object):
                 raise IOError(*e.args)
             total_sent = 0
         while total_sent < len_data:
-            trampoline(self, write=True)
+            self._trampoline(self, write=True)
             try:
                 total_sent += os_write(fileno, data[total_sent:])
             except OSError as e:
@@ -391,9 +458,12 @@ class _SocketDuckForFd(object):
                     raise IOError(*e.args)
 
     def __del__(self):
+        print >> sys.stderr, "__del__ closing socket", self
         self._close()
 
     def _close(self):
+        notify_close(self._fileno)
+        self._mark_as_closed()
         try:
             os.close(self._fileno)
         except:
@@ -465,7 +535,15 @@ class GreenPipe(_fileobject):
             self.mode,
             (id(self) < 0) and (sys.maxint + id(self)) or id(self))
 
+    def _closed(self):
+        print >> sys.stderr, "Already closed the once", self, self.fd
+
+    def _mark_as_closed(self):
+        print >> sys.stderr, "Marking", self, "as closed"
+        self.close = self._closed
+
     def close(self):
+        self._mark_as_closed()
         super(GreenPipe, self).close()
         for method in [
                 'fileno', 'flush', 'isatty', 'next', 'read', 'readinto',

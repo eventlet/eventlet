@@ -1,3 +1,4 @@
+import errno
 import heapq
 import math
 import traceback
@@ -20,7 +21,7 @@ else:
         arm_alarm = alarm_signal
 
 from eventlet.support import greenlets as greenlet, clear_sys_exc_info
-from eventlet.hubs import timer
+from eventlet.hubs import timer, IOClosed
 from eventlet import patcher
 time = patcher.original('time')
 
@@ -29,30 +30,49 @@ g_prevent_multiple_readers = True
 READ="read"
 WRITE="write"
 
+
+def closed_callback(fileno):
+    """ Used to de-fang a callback that may be triggered by a loop in BaseHub.wait
+    """
+    print >> sys.stderr, "**** De-fanged callback triggered on already closed filehandle %s" % fileno
+
+
 class FdListener(object):
-    def __init__(self, evtype, fileno, cb):
+    def __init__(self, evtype, fileno, cb, tb, mark_as_closed):
         assert (evtype is READ or evtype is WRITE)
         self.evtype = evtype
         self.fileno = fileno
         self.cb = cb
+        self.tb = tb
+        self.mark_as_closed = mark_as_closed
+        print >> sys.stderr, "*** DEBUG *** creating FDListener for %s on %s at %r" % (evtype, fileno, cb)
     def __repr__(self):
-        return "%s(%r, %r, %r)" % (type(self).__name__, self.evtype, self.fileno, self.cb)
+        return "%s(%r, %r, %r, %r)" % (type(self).__name__, self.evtype, self.fileno,
+                                       self.cb, self.tb)
     __str__ = __repr__
 
+    def defang(self):
+        self.cb = closed_callback
+        if self.mark_as_closed is not None:
+            self.mark_as_closed()
 
-noop = FdListener(READ, 0, lambda x: None)
+
+noop = FdListener(READ, 0, lambda x: None, lambda x: None, None)
+
 
 # in debug mode, track the call site that created the listener
 class DebugListener(FdListener):
-    def __init__(self, evtype, fileno, cb):
+    def __init__(self, evtype, fileno, cb, tb, mark_as_closed):
         self.where_called = traceback.format_stack()
         self.greenlet = greenlet.getcurrent()
-        super(DebugListener, self).__init__(evtype, fileno, cb)
+        super(DebugListener, self).__init__(evtype, fileno, cb, tb, mark_as_closed)
     def __repr__(self):
-        return "DebugListener(%r, %r, %r, %r)\n%sEndDebugFdListener" % (
+        return "DebugListener(%r, %r, %r, %r, %r, %r)\n%sEndDebugFdListener" % (
             self.evtype,
             self.fileno,
             self.cb,
+            self.tb,
+            self.mark_as_closed,
             self.greenlet,
             ''.join(self.where_called))
     __str__ = __repr__
@@ -75,6 +95,7 @@ class BaseHub(object):
     def __init__(self, clock=time.time):
         self.listeners = {READ:{}, WRITE:{}}
         self.secondaries = {READ:{}, WRITE:{}}
+        self.closed = []
 
         self.clock = clock
         self.greenlet = greenlet.greenlet(self.run)
@@ -102,7 +123,7 @@ class BaseHub(object):
             signal.signal(signal.SIGALRM, self._old_signal_handler)
         signal.alarm(0)
 
-    def add(self, evtype, fileno, cb):
+    def add(self, evtype, fileno, cb, tb, mark_as_closed):
         """ Signals an intent to or write a particular file descriptor.
 
         The *evtype* argument is either the constant READ or WRITE.
@@ -111,8 +132,15 @@ class BaseHub(object):
 
         The *cb* argument is the callback which will be called when the file
         is ready for reading/writing.
+
+        The *tb* argument is the throwback used to signal (into the greenlet)
+        that the file was closed.
+
+        The *mark_as_closed* is used in the context of the event hub to
+        prepare a Python object as being closed, pre-empting further
+        close operations from accidentally shutting down the wrong OS thread.
         """
-        listener = self.lclass(evtype, fileno, cb)
+        listener = self.lclass(evtype, fileno, cb, tb, mark_as_closed)
         bucket = self.listeners[evtype]
         if fileno in bucket:
             if g_prevent_multiple_readers:
@@ -122,13 +150,41 @@ class BaseHub(object):
                      "particular socket.  Consider using a pools.Pool. "\
                      "If you do know what you're doing and want to disable "\
                      "this error, call "\
-                     "eventlet.debug.hub_prevent_multiple_readers(False)" % (
-                     evtype, fileno, evtype))
+                     "eventlet.debug.hub_prevent_multiple_readers(False) - MY THREAD=%s; THAT THREAD=%s" % (
+                     evtype, fileno, evtype, cb, bucket[fileno]))
             # store off the second listener in another structure
             self.secondaries[evtype].setdefault(fileno, []).append(listener)
         else:
             bucket[fileno] = listener
         return listener
+
+    def _obsolete(self, fileno):
+        print >> sys.stderr, "_obsolete called for %s" % fileno
+        found = False
+        for evtype, bucket in self.secondaries.items():
+            if fileno in bucket:
+                for listener in bucket[fileno]:
+                    print >> sys.stderr, "%s was in secondary bucket %s, to-close %r" % (fileno, evtype, listener.cb)
+                    listener.defang()
+                    self.closed.append(listener)
+                    found = True
+                del bucket[fileno]
+
+        # For the primary listeners, we actually need to call remove,
+        # which may modify the underlying OS polling objects.
+        for evtype, bucket in self.listeners.items():
+            if fileno in bucket:
+                listener = bucket[fileno]
+                print >> sys.stderr, "%s was in primary bucket %s, to-close %r" % (fileno, evtype, listener.cb)
+                found = True
+                listener.defang()
+                self.closed.append(bucket[fileno])
+                self.remove(listener)
+
+        return found
+
+    def notify_close(self, fileno):
+        print >> sys.stderr, "notify_close called for %s - and ignored" % fileno
 
     def remove(self, listener):
         fileno = listener.fileno
@@ -143,6 +199,20 @@ class BaseHub(object):
             if not sec:
                 del self.secondaries[evtype][fileno]
 
+    def mark_as_reopened(self, fileno):
+        """ If a file descriptor is returned by the OS as the result of some
+            open call (or equivalent), that signals that it might be being
+            recycled.
+
+            Catch the case where the fd was previously in use.
+        """
+        print >> sys.stderr, "Notifying the open of a new FD:", fileno, "in", greenlet.getcurrent()
+        for line in traceback.format_stack():
+            print >> sys.stderr, "    ", line
+        if self._obsolete(fileno):
+            print >> sys.stderr, "... old listeners found for:", fileno
+
+
     def remove_descriptor(self, fileno):
         """ Completely remove all listeners for this fileno.  For internal use
         only."""
@@ -156,6 +226,21 @@ class BaseHub(object):
                 listener.cb(fileno)
             except Exception as e:
                 self.squelch_generic_exception(sys.exc_info())
+
+    def close_one(self):
+        """ Triggered from the main run loop. If a listener's underlying FD was
+            closed somehow, throw an exception back to the trampoline, which should
+            be able to manage it appropriately.
+        """
+        listener = self.closed.pop()
+        print >> sys.stderr, "close_one called for fileno %s - %r" % (listener.fileno, listener.cb)
+        if hasattr(listener, 'where_called'):
+            for lines in listener.where_called:
+                print >> sys.stderr, lines
+        if listener.greenlet.dead:
+            print >> sys.stderr, "************This greenlet is already dead - ignoring"
+        else:
+            listener.tb(IOClosed(errno.ENOTCONN, "Operation on closed file"))
 
     def ensure_greenlet(self):
         if self.greenlet.dead:
@@ -220,6 +305,10 @@ class BaseHub(object):
             self.running = True
             self.stopping = False
             while not self.stopping:
+                if self.closed:
+                    print >> sys.stderr, "*** DEBUG *** closing a fd"
+                    self.close_one()
+                    continue
                 self.prepare_timers()
                 if self.debug_blocking:
                     self.block_detect_pre()

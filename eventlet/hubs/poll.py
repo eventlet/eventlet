@@ -23,8 +23,8 @@ class Hub(BaseHub):
         except AttributeError:
             self.modify = self.poll.register
 
-    def add(self, evtype, fileno, cb):
-        listener = super(Hub, self).add(evtype, fileno, cb)
+    def add(self, evtype, fileno, cb, tb, mac):
+        listener = super(Hub, self).add(evtype, fileno, cb, tb, mac)
         self.register(fileno, new=True)
         return listener
     
@@ -91,24 +91,28 @@ class Hub(BaseHub):
         if self.debug_blocking:
             self.block_detect_pre()
 
+        callbacks = set()
         for fileno, event in presult:
+            if event & READ_MASK:
+                callbacks.add((readers.get(fileno, noop), fileno))
+            if event & WRITE_MASK:
+                callbacks.add((writers.get(fileno, noop), fileno))
+            if event & select.POLLNVAL:
+                self.remove_descriptor(fileno)
+                continue
+            if event & EXC_MASK:
+                callbacks.add((readers.get(fileno, noop), fileno))
+                callbacks.add((writers.get(fileno, noop), fileno))
+
+        for listener, fileno in callbacks:
             try:
-                if event & READ_MASK:
-                    readers.get(fileno, noop).cb(fileno)
-                if event & WRITE_MASK:
-                    writers.get(fileno, noop).cb(fileno)
-                if event & select.POLLNVAL:
-                    self.remove_descriptor(fileno)
-                    continue
-                if event & EXC_MASK:
-                    readers.get(fileno, noop).cb(fileno)
-                    writers.get(fileno, noop).cb(fileno)
+                listener.cb(fileno)
             except SYSTEM_EXCEPTIONS:
                 raise
             except:
                 self.squelch_exception(fileno, sys.exc_info())
                 clear_sys_exc_info()
-        
+
         if self.debug_blocking:
             self.block_detect_post()
 

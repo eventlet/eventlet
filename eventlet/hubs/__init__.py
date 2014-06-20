@@ -119,7 +119,8 @@ from eventlet import timeout
 
 
 def trampoline(fd, read=None, write=None, timeout=None,
-               timeout_exc=timeout.Timeout):
+               timeout_exc=timeout.Timeout,
+               mark_as_closed = None):
     """Suspend the current coroutine until the given socket object or file
     descriptor is ready to *read*, ready to *write*, or the specified
     *timeout* elapses, depending on arguments specified.
@@ -148,9 +149,9 @@ def trampoline(fd, read=None, write=None, timeout=None,
         t = hub.schedule_call_global(timeout, current.throw, timeout_exc)
     try:
         if read:
-            listener = hub.add(hub.READ, fileno, current.switch)
+            listener = hub.add(hub.READ, fileno, current.switch, current.throw, mark_as_closed)
         elif write:
-            listener = hub.add(hub.WRITE, fileno, current.switch)
+            listener = hub.add(hub.WRITE, fileno, current.switch, current.throw, mark_as_closed)
         try:
             return hub.switch()
         finally:
@@ -158,3 +159,27 @@ def trampoline(fd, read=None, write=None, timeout=None,
     finally:
         if t is not None:
             t.cancel()
+
+def notify_close(fd):
+    """
+    A particular file descriptor has been explicitly closed. Register for any
+    waiting listeners to be notified on the next run loop.
+    """
+    hub = get_hub()
+    hub.notify_close(fd)
+
+def notify_opened(fd):
+    """
+    Some file descriptors may be closed 'silently' - that is, by the garbage
+    collector, by an external library, etc. When the OS returns a file descriptor
+    from an open call (or something similar), this may be the only indication we
+    have that the FD has been closed and then recycled.
+    We let the hub know that the old file descriptor is dead; any stuck listeners
+    will be disabled and notified in turn.
+    """
+    hub = get_hub()
+    hub.mark_as_reopened(fd)
+
+
+class IOClosed(IOError):
+    pass

@@ -215,7 +215,7 @@ def monkey_patch(**on):
     It's safe to call monkey_patch multiple times.
     """
     accepted_args = set(('os', 'select', 'socket',
-                         'thread', 'time', 'psycopg', 'MySQLdb'))
+                         'thread', 'time', 'psycopg', 'MySQLdb', '__builtin__'))
     default_on = on.pop("all",None)
     for k in six.iterkeys(on):
         if k not in accepted_args:
@@ -248,6 +248,9 @@ def monkey_patch(**on):
     if on.get('MySQLdb') and not already_patched.get('MySQLdb'):
         modules_to_patch += _green_MySQLdb()
         already_patched['MySQLdb'] = True
+    if on.get('__builtin__') and not already_patched.get('__builtin__'):
+        modules_to_patch += _green_builtins()
+        already_patched['__builtin__'] = True
     if on['psycopg'] and not already_patched.get('psycopg'):
         try:
             from eventlet.support import psycopg2_patcher
@@ -318,6 +321,13 @@ def _green_MySQLdb():
     try:
         from eventlet.green import MySQLdb
         return [('MySQLdb', MySQLdb)]
+    except ImportError:
+        return []
+
+def _green_builtins():
+    try:
+        from eventlet.green import builtin
+        return [('__builtin__', builtin)]
     except ImportError:
         return []
 
