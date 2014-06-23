@@ -146,7 +146,11 @@ def trampoline(fd, read=None, write=None, timeout=None,
     except AttributeError:
         fileno = fd
     if timeout is not None:
-        t = hub.schedule_call_global(timeout, current.throw, timeout_exc)
+        print >> sys.stderr, "*** DEBUG: setting timeout on", current, "of", timeout
+        def _timeout(exc):
+            print >> sys.stderr, "*** DEBUG: Timeout raising on", current
+            current.throw(exc)
+        t = hub.schedule_call_global(timeout, _timeout, timeout_exc)
     try:
         if read:
             listener = hub.add(hub.READ, fileno, current.switch, current.throw, mark_as_closed)

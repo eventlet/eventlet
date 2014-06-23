@@ -45,6 +45,7 @@ class FdListener(object):
         self.cb = cb
         self.tb = tb
         self.mark_as_closed = mark_as_closed
+        self.spent = False
         print >> sys.stderr, "*** DEBUG *** creating FDListener for %s on %s at %r" % (evtype, fileno, cb)
     def __repr__(self):
         return "%s(%r, %r, %r, %r)" % (type(self).__name__, self.evtype, self.fileno,
@@ -55,6 +56,7 @@ class FdListener(object):
         self.cb = closed_callback
         if self.mark_as_closed is not None:
             self.mark_as_closed()
+        self.spent = True
 
 
 noop = FdListener(READ, 0, lambda x: None, lambda x: None, None)
@@ -187,6 +189,10 @@ class BaseHub(object):
         print >> sys.stderr, "notify_close called for %s - and ignored" % fileno
 
     def remove(self, listener):
+        if listener.spent:
+            # trampoline may trigger this in its finally section.
+            print >> sys.stderr, "***DEBUG*** Not removing a listener which is already spent."
+            return
         fileno = listener.fileno
         evtype = listener.evtype
         self.listeners[evtype].pop(fileno, None)
