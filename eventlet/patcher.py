@@ -227,6 +227,8 @@ def monkey_patch(**on):
         if modname == 'MySQLdb':
             # MySQLdb is only on when explicitly patched for the moment
             on.setdefault(modname, False)
+        if modname == '__builtin__':
+            on.setdefault(modname, False)
         on.setdefault(modname, default_on)
 
     modules_to_patch = []
