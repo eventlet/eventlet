@@ -179,9 +179,9 @@ class BaseHub(object):
                 listener = bucket[fileno]
                 print >> sys.stderr, "%s was in primary bucket %s, to-close %r" % (fileno, evtype, listener.cb)
                 found = True
-                listener.defang()
-                self.closed.append(bucket[fileno])
+                self.closed.append(listener)
                 self.remove(listener)
+                listener.defang()
 
         return found
 
@@ -193,6 +193,7 @@ class BaseHub(object):
             # trampoline may trigger this in its finally section.
             print >> sys.stderr, "***DEBUG*** Not removing a listener which is already spent."
             return
+
         fileno = listener.fileno
         evtype = listener.evtype
         self.listeners[evtype].pop(fileno, None)
