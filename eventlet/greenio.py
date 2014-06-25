@@ -171,14 +171,21 @@ class GreenSocket(object):
         return attr
 
     def _trampoline(self, fd, read=False, write=False, timeout=None, timeout_exc=None):
+        """ We need to trampoline via the event hub.
+            We catch any signal back from the hub indicating that the operation we
+            were waiting on was associated with a filehandle that's since been
+            invalidated.
+        """
         if self.__closed:
-            print >> sys.stderr, "***WARNING: second trampoline of", self, "on", self.fileno()
+            # If we did any logging, alerting to a second trampoline attempt on a closed
+            # socket here would be useful.
             raise IOClosed()
         try:
             return trampoline(fd, read=True, timeout=self.gettimeout(),
                             timeout_exc=socket.timeout("timed out"),
                             mark_as_closed=self._mark_as_closed)
         except IOClosed:
+            # This socket's been obsoleted. De-fang it.
             self._mark_as_closed()
             raise
 
@@ -196,11 +203,12 @@ class GreenSocket(object):
                        timeout_exc=socket.timeout("timed out"))
 
     def _closed(self):
-        print >> sys.stderr, "Already closed the once", self, self.fd
+        # Already closed the once
+        pass
 
 
     def _mark_as_closed(self):
-        print >> sys.stderr, "Marking", self, "as closed"
+        """ Mark this socket as being closed """
         self.close = self._closed
         self.__closed = True
 
@@ -221,7 +229,6 @@ class GreenSocket(object):
                 try:
                     self._trampoline(fd, write=True)
                 except IOClosed:
-                    print >> sys.stderr, ""
                     raise socket.error(errno.EBADFD)
                 socket_checkerr(fd)
         else:
@@ -235,6 +242,7 @@ class GreenSocket(object):
                     self._trampoline(fd, write=True, timeout=end - time.time(),
                            timeout_exc=socket.timeout("timed out"))
                 except IOClosed:
+                    # ... we need some workable errno here.
                     raise socket.error(errno.EBADFD)
                 socket_checkerr(fd)
 
@@ -306,6 +314,7 @@ class GreenSocket(object):
                     timeout=self.gettimeout(),
                     timeout_exc=socket.timeout("timed out"))
             except IOClosed as e:
+                # Perhaps we should return '' instead?
                 raise EOFError()
 
     def recvfrom(self, *args):
@@ -408,21 +417,23 @@ class _SocketDuckForFd(object):
 
     def _trampoline(self, fd, read=False, write=False, timeout=None, timeout_exc=None):
         if self.__closed:
-            print >> sys.stderr, "***WARNING: second trampoline of", self, "on", self.fileno()
+            # Don't trampoline if we're already closed.
             raise IOClosed()
         try:
             return trampoline(fd, read=True, timeout=self.gettimeout(),
                             timeout_exc=socket.timeout("timed out"),
                             mark_as_closed=self.mark_as_closed)
         except IOClosed:
+            # Our fileno has been obsoleted. Defang ourselves to
+            # prevent spurious closes.
             self._mark_as_closed()
             raise
 
     def _closed(self):
-        print >> sys.stderr, "Already closed the once", self, self.fd
+        # Don't let anything close the wrong filehandle.
+        pass
 
     def _mark_as_closed(self):
-        print >> sys.stderr, "Marking", self, "as closed"
         self.close = self._close = self._closed
         self.__closed = True
 
@@ -462,7 +473,6 @@ class _SocketDuckForFd(object):
                     raise IOError(*e.args)
 
     def __del__(self):
-        print >> sys.stderr, "__del__ closing socket", self
         self._close()
 
     def _close(self):
@@ -540,10 +550,9 @@ class GreenPipe(_fileobject):
             (id(self) < 0) and (sys.maxint + id(self)) or id(self))
 
     def _closed(self):
-        print >> sys.stderr, "Already closed the once", self, self.fd
+        pass
 
     def _mark_as_closed(self):
-        print >> sys.stderr, "Marking", self, "as closed"
         self.close = self._closed
 
     def close(self):

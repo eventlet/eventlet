@@ -91,6 +91,11 @@ class Hub(BaseHub):
         if self.debug_blocking:
             self.block_detect_pre()
 
+        # Accumulate the listeners to call back to prior to
+        # triggering any of them. This is to keep the set
+        # of callbacks in sync with the events we've just
+        # polled for. It prevents one handler from invalidating
+        # another.
         callbacks = set()
         for fileno, event in presult:
             if event & READ_MASK:

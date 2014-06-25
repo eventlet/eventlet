@@ -146,9 +146,8 @@ def trampoline(fd, read=None, write=None, timeout=None,
     except AttributeError:
         fileno = fd
     if timeout is not None:
-        print >> sys.stderr, "*** DEBUG: setting timeout on", current, "of", timeout
         def _timeout(exc):
-            print >> sys.stderr, "*** DEBUG: Timeout raising on", current
+            # This is only useful to insert debugging
             current.throw(exc)
         t = hub.schedule_call_global(timeout, _timeout, timeout_exc)
     try:

@@ -34,11 +34,25 @@ WRITE="write"
 def closed_callback(fileno):
     """ Used to de-fang a callback that may be triggered by a loop in BaseHub.wait
     """
-    print >> sys.stderr, "**** De-fanged callback triggered on already closed filehandle %s" % fileno
+    # No-op.
+    pass
 
 
 class FdListener(object):
     def __init__(self, evtype, fileno, cb, tb, mark_as_closed):
+        """ The following are required:
+        cb - the standard callback, which will switch into the
+            listening greenlet to indicate that the event waited upon
+            is ready
+        tb - a 'throwback'. This is typically greenlet.throw, used
+            to raise a signal into the target greenlet indicating that
+            an event was obsoleted by its underlying filehandle being
+            repurposed.
+        mark_as_closed - if any listener is obsoleted, this is called
+            (in the context of some other client greenlet) to alert
+            underlying filehandle-wrapping objects that they've been
+            closed.
+        """
         assert (evtype is READ or evtype is WRITE)
         self.evtype = evtype
         self.fileno = fileno
@@ -46,7 +60,7 @@ class FdListener(object):
         self.tb = tb
         self.mark_as_closed = mark_as_closed
         self.spent = False
-        print >> sys.stderr, "*** DEBUG *** creating FDListener for %s on %s at %r" % (evtype, fileno, cb)
+        self.greenlet = greenlet.getcurrent()
     def __repr__(self):
         return "%s(%r, %r, %r, %r)" % (type(self).__name__, self.evtype, self.fileno,
                                        self.cb, self.tb)
@@ -66,7 +80,6 @@ noop = FdListener(READ, 0, lambda x: None, lambda x: None, None)
 class DebugListener(FdListener):
     def __init__(self, evtype, fileno, cb, tb, mark_as_closed):
         self.where_called = traceback.format_stack()
-        self.greenlet = greenlet.getcurrent()
         super(DebugListener, self).__init__(evtype, fileno, cb, tb, mark_as_closed)
     def __repr__(self):
         return "DebugListener(%r, %r, %r, %r, %r, %r)\n%sEndDebugFdListener" % (
@@ -161,15 +174,17 @@ class BaseHub(object):
         return listener
 
     def _obsolete(self, fileno):
-        print >> sys.stderr, "_obsolete called for %s" % fileno
+        """ We've received an indication that 'fileno' has been obsoleted.
+            Any current listeners must be defanged, and notifications to
+            their greenlets queued up to send.
+        """
         found = False
         for evtype, bucket in self.secondaries.items():
             if fileno in bucket:
                 for listener in bucket[fileno]:
-                    print >> sys.stderr, "%s was in secondary bucket %s, to-close %r" % (fileno, evtype, listener.cb)
-                    listener.defang()
-                    self.closed.append(listener)
                     found = True
+                    self.closed.append(listener)
+                    listener.defang()
                 del bucket[fileno]
 
         # For the primary listeners, we actually need to call remove,
@@ -177,7 +192,6 @@ class BaseHub(object):
         for evtype, bucket in self.listeners.items():
             if fileno in bucket:
                 listener = bucket[fileno]
-                print >> sys.stderr, "%s was in primary bucket %s, to-close %r" % (fileno, evtype, listener.cb)
                 found = True
                 self.closed.append(listener)
                 self.remove(listener)
@@ -186,12 +200,15 @@ class BaseHub(object):
         return found
 
     def notify_close(self, fileno):
-        print >> sys.stderr, "notify_close called for %s - and ignored" % fileno
+        """ We might want to do something when a fileno is closed.
+            However, currently it suffices to obsolete listeners only
+            when we detect an old fileno being recycled, on open.
+        """
+        pass
 
     def remove(self, listener):
         if listener.spent:
             # trampoline may trigger this in its finally section.
-            print >> sys.stderr, "***DEBUG*** Not removing a listener which is already spent."
             return
 
         fileno = listener.fileno
@@ -213,11 +230,7 @@ class BaseHub(object):
 
             Catch the case where the fd was previously in use.
         """
-        print >> sys.stderr, "Notifying the open of a new FD:", fileno, "in", greenlet.getcurrent()
-        for line in traceback.format_stack():
-            print >> sys.stderr, "    ", line
-        if self._obsolete(fileno):
-            print >> sys.stderr, "... old listeners found for:", fileno
+        self._obsolete(fileno)
 
 
     def remove_descriptor(self, fileno):
@@ -240,13 +253,8 @@ class BaseHub(object):
             be able to manage it appropriately.
         """
         listener = self.closed.pop()
-        print >> sys.stderr, "close_one called for fileno %s - %r" % (listener.fileno, listener.cb)
-        if hasattr(listener, 'where_called'):
-            for lines in listener.where_called:
-                print >> sys.stderr, lines
-        if listener.greenlet.dead:
-            print >> sys.stderr, "************This greenlet is already dead - ignoring"
-        else:
+        if not listener.greenlet.dead:
+            # There's no point signalling a greenlet that's already dead.
             listener.tb(IOClosed(errno.ENOTCONN, "Operation on closed file"))
 
     def ensure_greenlet(self):
@@ -312,10 +320,9 @@ class BaseHub(object):
             self.running = True
             self.stopping = False
             while not self.stopping:
-                if self.closed:
-                    print >> sys.stderr, "*** DEBUG *** closing a fd"
+                while self.closed:
+                    # We ditch all of these first.
                     self.close_one()
-                    continue
                 self.prepare_timers()
                 if self.debug_blocking:
                     self.block_detect_pre()
