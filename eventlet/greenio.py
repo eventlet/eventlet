@@ -422,7 +422,7 @@ class _SocketDuckForFd(object):
         try:
             return trampoline(fd, read=True, timeout=timeout,
                             timeout_exc=socket.timeout("timed out"),
-                            mark_as_closed=self.mark_as_closed)
+                            mark_as_closed=self._mark_as_closed)
         except IOClosed:
             # Our fileno has been obsoleted. Defang ourselves to
             # prevent spurious closes.
