@@ -227,7 +227,11 @@ class Socket(_Socket):
                 _Socket_getsockopt(self, EVENTS)
 
         hub = hubs.get_hub()
-        self.__dict__['_eventlet_listener'] = hub.add(hub.READ, self.getsockopt(FD), event)
+        self.__dict__['_eventlet_listener'] = hub.add(hub.READ,
+                                                      self.getsockopt(FD),
+                                                      event,
+                                                      lambda _: None,
+                                                      lambda: None)
 
     @_wraps(_Socket.close)
     def close(self, linger=None):

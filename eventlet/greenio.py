@@ -180,8 +180,8 @@ class GreenSocket(object):
             # socket here would be useful.
             raise IOClosed()
         try:
-            return trampoline(fd, read=True, timeout=self.gettimeout(),
-                            timeout_exc=socket.timeout("timed out"),
+            return trampoline(fd, read=read, write=write, timeout=timeout,
+                            timeout_exc=timeout_exc,
                             mark_as_closed=self._mark_as_closed)
         except IOClosed:
             # This socket's been obsoleted. De-fang it.
@@ -423,9 +423,9 @@ class _SocketDuckForFd(object):
             # Don't trampoline if we're already closed.
             raise IOClosed()
         try:
-            return trampoline(fd, read=True, timeout=self.gettimeout(),
-                            timeout_exc=socket.timeout("timed out"),
-                            mark_as_closed=self.mark_as_closed)
+            return trampoline(fd, read=read, write=write, timeout=timeout,
+                            timeout_exc=timeout_exc,
+                            mark_as_closed=self._mark_as_closed)
         except IOClosed:
             # Our fileno has been obsoleted. Defang ourselves to
             # prevent spurious closes.

@@ -193,9 +193,9 @@ class BaseHub(object):
             if fileno in bucket:
                 listener = bucket[fileno]
                 found = True
-                listener.defang()
-                self.closed.append(bucket[fileno])
+                self.closed.append(listener)
                 self.remove(listener)
+                listener.defang()
 
         return found
 
@@ -210,6 +210,7 @@ class BaseHub(object):
         if listener.spent:
             # trampoline may trigger this in its finally section.
             return
+
         fileno = listener.fileno
         evtype = listener.evtype
         self.listeners[evtype].pop(fileno, None)
