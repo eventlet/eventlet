@@ -181,7 +181,7 @@ class GreenSocket(object):
             # socket here would be useful.
             raise IOClosed()
         try:
-            return trampoline(fd, read=True, timeout=self.gettimeout(),
+            return trampoline(fd, read=True, timeout=timeout,
                             timeout_exc=socket.timeout("timed out"),
                             mark_as_closed=self._mark_as_closed)
         except IOClosed:
@@ -420,7 +420,7 @@ class _SocketDuckForFd(object):
             # Don't trampoline if we're already closed.
             raise IOClosed()
         try:
-            return trampoline(fd, read=True, timeout=self.gettimeout(),
+            return trampoline(fd, read=True, timeout=timeout,
                             timeout_exc=socket.timeout("timed out"),
                             mark_as_closed=self.mark_as_closed)
         except IOClosed:
