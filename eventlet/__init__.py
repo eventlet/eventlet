@@ -1,5 +1,5 @@
-version_info = (0, 15, 0)
-__version__ = ".".join(map(str, version_info))
+version_info = (0, 16, 0, 'dev')
+__version__ = '.'.join(map(str, version_info))
 
 try:
     from eventlet import greenthread
