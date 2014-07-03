@@ -1,4 +1,5 @@
 """Implements the standard thread module, using greenthreads."""
+
 from eventlet.support.six.moves import _thread as __thread
 from eventlet.support import greenlets as greenlet
 from eventlet import greenthread
@@ -17,11 +18,18 @@ def _count():
     return __threadcount
 
 
+main_ident = __thread.get_ident()
+main_green = id(greenlet.getcurrent())
+
+
 def get_ident(gr=None):
     if gr is None:
-        return id(greenlet.getcurrent())
+        idt = id(greenlet.getcurrent())
     else:
-        return id(gr)
+        idt = id(gr)
+    if idt == main_green:
+        return main_ident
+    return idt
 
 
 def __thread_body(func, args, kwargs):
@@ -62,6 +70,15 @@ def interrupt_main():
         curr.parent.throw(KeyboardInterrupt())
     else:
         raise KeyboardInterrupt()
+
+try:
+    _set_sentinel = __thread._set_sentinel
+except AttributeError:
+    pass
+try:
+    TIMEOUT_MAX = __thread.TIMEOUT_MAX
+except AttributeError:
+    pass
 
 
 if hasattr(__thread, 'stack_size'):

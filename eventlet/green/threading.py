@@ -3,6 +3,7 @@ from eventlet import patcher
 from eventlet.green import thread
 from eventlet.green import time
 from eventlet.support import greenlets as greenlet
+from eventlet.support import six
 
 __patched__ = ['_start_new_thread', '_allocate_lock', '_get_ident', '_sleep',
                'local', 'stack_size', 'Lock', 'currentThread',
@@ -12,10 +13,16 @@ __orig_threading = patcher.original('threading')
 __threadlocal = __orig_threading.local()
 
 
-patcher.inject('threading',
-    globals(),
-    ('thread', thread),
-    ('time', time))
+if six.PY3:
+    patcher.inject('threading',
+        globals(),
+        ('_thread', thread),
+        ('time', time))
+else:
+    patcher.inject('threading',
+        globals(),
+        ('thread', thread),
+        ('time', time))
 
 del patcher
 
