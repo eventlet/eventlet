@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Basic Usage &mdash; Eventlet 0.14.0 documentation</title>
+    <title>Basic Usage &mdash; Eventlet 0.15.0 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.14.0',
+        VERSION:     '0.15.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.14.0 documentation" href="index.html" />
+    <link rel="top" title="Eventlet 0.15.0 documentation" href="index.html" />
     <link rel="next" title="Design Patterns" href="design_patterns.html" />
     <link rel="prev" title="Eventlet Documentation" href="index.html" /> 
   </head>
@@ -43,7 +43,7 @@
         <li class="right" >
           <a href="index.html" title="Eventlet Documentation"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">Eventlet 0.14.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Eventlet 0.15.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -148,7 +148,7 @@ See <a class="reference internal" href="modules/timeout.html#eventlet.timeout.Ti
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>addr</strong> &#8211; Address of the server to connect to.  For TCP sockets, this is a (host, port) tuple.</li>
-<li><strong>family</strong> &#8211; Socket family, optional.  See <a class="reference external" href="http://docs.python.org/library/socket.html#socket" title="(in Python v2.7)"><tt class="xref py py-mod docutils literal"><span class="pre">socket</span></tt></a> documentation for available families.</li>
+<li><strong>family</strong> &#8211; Socket family, optional.  See <a class="reference external" href="http://docs.python.org/library/socket.html#module-socket" title="(in Python v2.7)"><tt class="xref py py-mod docutils literal"><span class="pre">socket</span></tt></a> documentation for available families.</li>
 <li><strong>bind</strong> &#8211; Local address to bind to, optional.</li>
 </ul>
 </td>
@@ -172,7 +172,7 @@ socket can be used in <a class="reference internal" href="#eventlet.serve" title
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>addr</strong> &#8211; Address to listen on.  For TCP sockets, this is a (host, port)  tuple.</li>
-<li><strong>family</strong> &#8211; Socket family, optional.  See <a class="reference external" href="http://docs.python.org/library/socket.html#socket" title="(in Python v2.7)"><tt class="xref py py-mod docutils literal"><span class="pre">socket</span></tt></a> documentation for available families.</li>
+<li><strong>family</strong> &#8211; Socket family, optional.  See <a class="reference external" href="http://docs.python.org/library/socket.html#module-socket" title="(in Python v2.7)"><tt class="xref py py-mod docutils literal"><span class="pre">socket</span></tt></a> documentation for available families.</li>
 <li><strong>backlog</strong> &#8211; The maximum number of queued connections. Should be at least 1; the maximum value is system-dependent.</li>
 </ul>
 </td>
@@ -189,10 +189,9 @@ socket can be used in <a class="reference internal" href="#eventlet.serve" title
 <tt class="descclassname">eventlet.</tt><tt class="descname">wrap_ssl</tt><big>(</big><em>sock</em>, <em>*a</em>, <em>**kw</em><big>)</big><a class="headerlink" href="#eventlet.wrap_ssl" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convenience function for converting a regular socket into an
 SSL socket.  Has the same interface as <a class="reference external" href="http://docs.python.org/library/ssl.html#ssl.wrap_socket" title="(in Python v2.7)"><tt class="xref py py-func docutils literal"><span class="pre">ssl.wrap_socket()</span></tt></a>,
-but works on 2.5 or earlier, using PyOpenSSL (though note that it
-ignores the <em>cert_reqs</em>, <em>ssl_version</em>, <em>ca_certs</em>,
-<em>do_handshake_on_connect</em>, and <em>suppress_ragged_eofs</em> arguments
-when using PyOpenSSL).</p>
+but can also use PyOpenSSL. Though, note that it ignores the
+<cite>cert_reqs</cite>, <cite>ssl_version</cite>, <cite>ca_certs</cite>, <cite>do_handshake_on_connect</cite>,
+and <cite>suppress_ragged_eofs</cite> arguments when using PyOpenSSL.</p>
 <p>The preferred idiom is to call wrap_ssl directly on the creation
 method, e.g., <tt class="docutils literal"><span class="pre">wrap_ssl(connect(addr))</span></tt> or
 <tt class="docutils literal"><span class="pre">wrap_ssl(listen(addr),</span> <span class="pre">server_side=True)</span></tt>. This way there is
@@ -204,25 +203,25 @@ session.</p>
 <dl class="function">
 <dt id="eventlet.serve">
 <tt class="descclassname">eventlet.</tt><tt class="descname">serve</tt><big>(</big><em>sock</em>, <em>handle</em>, <em>concurrency=1000</em><big>)</big><a class="headerlink" href="#eventlet.serve" title="Permalink to this definition">¶</a></dt>
-<dd><p>Runs a server on the supplied socket.  Calls the function <em>handle</em> in a 
+<dd><p>Runs a server on the supplied socket.  Calls the function <em>handle</em> in a
 separate greenthread for every incoming client connection.  <em>handle</em> takes
 two arguments: the client socket object, and the client address:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">myhandle</span><span class="p">(</span><span class="n">client_sock</span><span class="p">,</span> <span class="n">client_addr</span><span class="p">):</span>
-    <span class="k">print</span> <span class="s">&quot;client connected&quot;</span><span class="p">,</span> <span class="n">client_addr</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&quot;client connected&quot;</span><span class="p">,</span> <span class="n">client_addr</span><span class="p">)</span>
 
 <span class="n">eventlet</span><span class="o">.</span><span class="n">serve</span><span class="p">(</span><span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">9999</span><span class="p">)),</span> <span class="n">myhandle</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Returning from <em>handle</em> closes the client socket.</p>
-<p><tt class="xref py py-func docutils literal"><span class="pre">serve()</span></tt> blocks the calling greenthread; it won&#8217;t return until 
+<p><tt class="xref py py-func docutils literal"><span class="pre">serve()</span></tt> blocks the calling greenthread; it won&#8217;t return until
 the server completes.  If you desire an immediate return,
 spawn a new greenthread for <tt class="xref py py-func docutils literal"><span class="pre">serve()</span></tt>.</p>
-<p>Any uncaught exceptions raised in <em>handle</em> are raised as exceptions 
-from <tt class="xref py py-func docutils literal"><span class="pre">serve()</span></tt>, terminating the server, so be sure to be aware of the 
-exceptions your application can raise.  The return value of <em>handle</em> is 
+<p>Any uncaught exceptions raised in <em>handle</em> are raised as exceptions
+from <tt class="xref py py-func docutils literal"><span class="pre">serve()</span></tt>, terminating the server, so be sure to be aware of the
+exceptions your application can raise.  The return value of <em>handle</em> is
 ignored.</p>
-<p>Raise a <a class="reference internal" href="#eventlet.StopServe" title="eventlet.StopServe"><tt class="xref py py-class docutils literal"><span class="pre">StopServe</span></tt></a> exception to gracefully terminate the 
-server &#8211; that&#8217;s the only way to get the server() function to return rather 
+<p>Raise a <a class="reference internal" href="#eventlet.StopServe" title="eventlet.StopServe"><tt class="xref py py-class docutils literal"><span class="pre">StopServe</span></tt></a> exception to gracefully terminate the
+server &#8211; that&#8217;s the only way to get the server() function to return rather
 than raise.</p>
 <p>The value in <em>concurrency</em> controls the maximum number of
 greenthreads that will be open at any time handling requests.  When
@@ -301,13 +300,13 @@ connections until the existing ones complete.</p>
         <li class="right" >
           <a href="index.html" title="Eventlet Documentation"
              >previous</a> |</li>
-        <li><a href="index.html">Eventlet 0.14.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Eventlet 0.15.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
 
     <div class="footer">
         &copy; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

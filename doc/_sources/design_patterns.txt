@@ -10,22 +10,21 @@ Client Pattern
 
 The canonical client-side example is a web crawler.  This use case is given a list of urls and wants to retrieve their bodies for later processing.  Here is a very simple example::
 
+    import eventlet
+    from eventlet.green import urllib2
 
-  urls = ["http://www.google.com/intl/en_ALL/images/logo.gif",
-         "https://wiki.secondlife.com/w/images/secondlife.jpg",
-         "http://us.i1.yimg.com/us.yimg.com/i/ww/beta/y3.gif"]
-  
-  import eventlet
-  from eventlet.green import urllib2  
+    urls = ["http://www.google.com/intl/en_ALL/images/logo.gif",
+           "https://wiki.secondlife.com/w/images/secondlife.jpg",
+           "http://us.i1.yimg.com/us.yimg.com/i/ww/beta/y3.gif"]
 
-  def fetch(url):
-      return urllib2.urlopen(url).read()
-  
-  pool = eventlet.GreenPool()
-  for body in pool.imap(fetch, urls):
-      print "got body", len(body)
+    def fetch(url):
+        return urllib2.urlopen(url).read()
 
-There is a slightly more complex version of this in the :ref:`web crawler example <web_crawler_example>`.  Here's a tour of the interesting lines in this crawler. 
+    pool = eventlet.GreenPool()
+    for body in pool.imap(fetch, urls):
+        print("got body", len(body))
+
+There is a slightly more complex version of this in the :ref:`web crawler example <web_crawler_example>`.  Here's a tour of the interesting lines in this crawler.
 
 ``from eventlet.green import urllib2`` is how you import a cooperatively-yielding version of urllib2.  It is the same in all respects to the standard version, except that it uses green sockets for its communication.  This is an example of the :ref:`import-green` pattern.
 
@@ -40,15 +39,15 @@ Server Pattern
 --------------------
 
 Here's a simple server-side example, a simple echo server::
-    
+
     import eventlet
-    
+
     def handle(client):
         while True:
             c = client.recv(1)
             if not c: break
             client.sendall(c)
-    
+
     server = eventlet.listen(('0.0.0.0', 6000))
     pool = eventlet.GreenPool(10000)
     while True:
@@ -59,7 +58,7 @@ The file :ref:`echo server example <echo_server_example>` contains a somewhat mo
 
 ``server = eventlet.listen(('0.0.0.0', 6000))`` uses a convenience function to create a listening socket.
 
-``pool = eventlet.GreenPool(10000)`` creates a pool of green threads that could handle ten thousand clients.  
+``pool = eventlet.GreenPool(10000)`` creates a pool of green threads that could handle ten thousand clients.
 
 ``pool.spawn_n(handle, new_sock)`` launches a green thread to handle the new client.  The accept loop doesn't care about the return value of the ``handle`` function, so it uses :meth:`spawn_n <eventlet.greenpool.GreenPool.spawn_n>`, instead of :meth:`spawn <eventlet.greenpool.GreenPool.spawn>`.
 
@@ -74,13 +73,13 @@ Here's a somewhat contrived example: a server that receives POSTs from clients t
 
     import eventlet
     feedparser = eventlet.import_patched('feedparser')
-    
+
     pool = eventlet.GreenPool()
-    
+
     def fetch_title(url):
         d = feedparser.parse(url)
         return d.feed.get('title', '')
-    
+
     def app(environ, start_response):
         pile = eventlet.GreenPile(pool)
         for url in environ['wsgi.input'].readlines():

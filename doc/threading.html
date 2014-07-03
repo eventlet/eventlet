@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Threads &mdash; Eventlet 0.14.0 documentation</title>
+    <title>Threads &mdash; Eventlet 0.15.0 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.14.0',
+        VERSION:     '0.15.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.14.0 documentation" href="index.html" />
+    <link rel="top" title="Eventlet 0.15.0 documentation" href="index.html" />
     <link rel="next" title="Zeromq" href="zeromq.html" />
     <link rel="prev" title="Using SSL With Eventlet" href="ssl.html" /> 
   </head>
@@ -43,7 +43,7 @@
         <li class="right" >
           <a href="ssl.html" title="Using SSL With Eventlet"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">Eventlet 0.14.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Eventlet 0.15.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -65,7 +65,7 @@
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">thread</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">tpool</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">my_func</span><span class="p">(</span><span class="n">starting_ident</span><span class="p">):</span>
-<span class="gp">... </span>    <span class="k">print</span> <span class="s">&quot;running in new thread:&quot;</span><span class="p">,</span> <span class="n">starting_ident</span> <span class="o">!=</span> <span class="n">thread</span><span class="o">.</span><span class="n">get_ident</span><span class="p">()</span>
+<span class="gp">... </span>    <span class="k">print</span><span class="p">(</span><span class="s">&quot;running in new thread:&quot;</span><span class="p">,</span> <span class="n">starting_ident</span> <span class="o">!=</span> <span class="n">thread</span><span class="o">.</span><span class="n">get_ident</span><span class="p">())</span>
 <span class="gp">...</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">tpool</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">my_func</span><span class="p">,</span> <span class="n">thread</span><span class="o">.</span><span class="n">get_ident</span><span class="p">())</span>
 <span class="go">running in new thread: True</span>
@@ -166,13 +166,13 @@ wrapped in Proxy objects when accessed.</p>
         <li class="right" >
           <a href="ssl.html" title="Using SSL With Eventlet"
              >previous</a> |</li>
-        <li><a href="index.html">Eventlet 0.14.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Eventlet 0.15.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
 
     <div class="footer">
         &copy; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

@@ -1,7 +1,7 @@
 Threads
 ========
 
-Eventlet is thread-safe and can be used in conjunction with normal Python threads.  The way this works is that coroutines are confined to their 'parent' Python thread.  It's like each thread contains its own little world of coroutines that can switch between themselves but not between coroutines in other threads.  
+Eventlet is thread-safe and can be used in conjunction with normal Python threads.  The way this works is that coroutines are confined to their 'parent' Python thread.  It's like each thread contains its own little world of coroutines that can switch between themselves but not between coroutines in other threads.
 
 .. image:: /images/threading_illustration.png
 
@@ -19,7 +19,7 @@ The simplest thing to do with :mod:`~eventlet.tpool` is to :func:`~eventlet.tpoo
  >>> import thread
  >>> from eventlet import tpool
  >>> def my_func(starting_ident):
- ...     print "running in new thread:", starting_ident != thread.get_ident()
+ ...     print("running in new thread:", starting_ident != thread.get_ident())
  ...
  >>> tpool.execute(my_func, thread.get_ident())
  running in new thread: True

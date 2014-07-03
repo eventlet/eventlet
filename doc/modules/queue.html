@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>queue – Queue class &mdash; Eventlet 0.14.0 documentation</title>
+    <title>queue – Queue class &mdash; Eventlet 0.15.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.14.0',
+        VERSION:     '0.15.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.14.0 documentation" href="../index.html" />
+    <link rel="top" title="Eventlet 0.15.0 documentation" href="../index.html" />
     <link rel="up" title="Module Reference" href="../modules.html" />
     <link rel="next" title="semaphore – Semaphore classes" href="semaphore.html" />
     <link rel="prev" title="pools - Generic pools of resources" href="pools.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="pools.html" title="pools - Generic pools of resources"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.14.0 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Eventlet 0.15.0 documentation</a> &raquo;</li>
           <li><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
       </ul>
     </div>  
@@ -57,27 +57,27 @@
   <div class="section" id="module-eventlet.queue">
 <span id="queue-queue-class"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">queue</span></tt> &#8211; Queue class<a class="headerlink" href="#module-eventlet.queue" title="Permalink to this headline">¶</a></h1>
 <p>Synchronized queues.</p>
-<p>The <a class="reference internal" href="#module-eventlet.queue" title="eventlet.queue"><tt class="xref py py-mod docutils literal"><span class="pre">eventlet.queue</span></tt></a> module implements multi-producer, multi-consumer 
-queues that work across greenlets, with the API similar to the classes found in 
-the standard <a class="reference external" href="http://docs.python.org/library/queue.html#Queue" title="(in Python v2.7)"><tt class="xref py py-mod docutils literal"><span class="pre">Queue</span></tt></a> and <a class="reference external" href="http://docs.python.org/library/multiprocessing.html#multiprocessing.Queue" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">multiprocessing</span></tt></a> 
+<p>The <a class="reference internal" href="#module-eventlet.queue" title="eventlet.queue"><tt class="xref py py-mod docutils literal"><span class="pre">eventlet.queue</span></tt></a> module implements multi-producer, multi-consumer
+queues that work across greenlets, with the API similar to the classes found in
+the standard <a class="reference external" href="http://docs.python.org/library/queue.html#module-Queue" title="(in Python v2.7)"><tt class="xref py py-mod docutils literal"><span class="pre">Queue</span></tt></a> and <a class="reference external" href="http://docs.python.org/library/multiprocessing.html#multiprocessing.Queue" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">multiprocessing</span></tt></a>
 modules.</p>
 <p>A major difference is that queues in this module operate as channels when
 initialized with <em>maxsize</em> of zero. In such case, both <tt class="xref py py-meth docutils literal"><span class="pre">Queue.empty()</span></tt>
-and <tt class="xref py py-meth docutils literal"><span class="pre">Queue.full()</span></tt> return <tt class="docutils literal"><span class="pre">True</span></tt> and <tt class="xref py py-meth docutils literal"><span class="pre">Queue.put()</span></tt> always blocks until 
+and <tt class="xref py py-meth docutils literal"><span class="pre">Queue.full()</span></tt> return <tt class="docutils literal"><span class="pre">True</span></tt> and <tt class="xref py py-meth docutils literal"><span class="pre">Queue.put()</span></tt> always blocks until
 a call to <tt class="xref py py-meth docutils literal"><span class="pre">Queue.get()</span></tt> retrieves the item.</p>
-<p>An interesting difference, made possible because of greenthreads, is 
-that <tt class="xref py py-meth docutils literal"><span class="pre">Queue.qsize()</span></tt>, <tt class="xref py py-meth docutils literal"><span class="pre">Queue.empty()</span></tt>, and <tt class="xref py py-meth docutils literal"><span class="pre">Queue.full()</span></tt> <em>can</em> be 
-used as indicators of whether the subsequent <tt class="xref py py-meth docutils literal"><span class="pre">Queue.get()</span></tt> 
-or <tt class="xref py py-meth docutils literal"><span class="pre">Queue.put()</span></tt> will not block.  The new methods <tt class="xref py py-meth docutils literal"><span class="pre">Queue.getting()</span></tt> 
-and <tt class="xref py py-meth docutils literal"><span class="pre">Queue.putting()</span></tt> report on the number of greenthreads blocking 
+<p>An interesting difference, made possible because of greenthreads, is
+that <tt class="xref py py-meth docutils literal"><span class="pre">Queue.qsize()</span></tt>, <tt class="xref py py-meth docutils literal"><span class="pre">Queue.empty()</span></tt>, and <tt class="xref py py-meth docutils literal"><span class="pre">Queue.full()</span></tt> <em>can</em> be
+used as indicators of whether the subsequent <tt class="xref py py-meth docutils literal"><span class="pre">Queue.get()</span></tt>
+or <tt class="xref py py-meth docutils literal"><span class="pre">Queue.put()</span></tt> will not block.  The new methods <tt class="xref py py-meth docutils literal"><span class="pre">Queue.getting()</span></tt>
+and <tt class="xref py py-meth docutils literal"><span class="pre">Queue.putting()</span></tt> report on the number of greenthreads blocking
 in <tt class="xref py py-meth docutils literal"><span class="pre">put</span></tt> or <tt class="xref py py-meth docutils literal"><span class="pre">get</span></tt> respectively.</p>
 <dl class="class">
 <dt id="eventlet.queue.Queue">
 <em class="property">class </em><tt class="descclassname">eventlet.queue.</tt><tt class="descname">Queue</tt><big>(</big><em>maxsize=None</em><big>)</big><a class="headerlink" href="#eventlet.queue.Queue" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a queue object with a given maximum size.</p>
 <p>If <em>maxsize</em> is less than zero or <tt class="docutils literal"><span class="pre">None</span></tt>, the queue size is infinite.</p>
-<p><tt class="docutils literal"><span class="pre">Queue(0)</span></tt> is a channel, that is, its <tt class="xref py py-meth docutils literal"><span class="pre">put()</span></tt> method always blocks 
-until the item is delivered. (This is unlike the standard <a class="reference internal" href="#eventlet.queue.Queue" title="eventlet.queue.Queue"><tt class="xref py py-class docutils literal"><span class="pre">Queue</span></tt></a>, 
+<p><tt class="docutils literal"><span class="pre">Queue(0)</span></tt> is a channel, that is, its <tt class="xref py py-meth docutils literal"><span class="pre">put()</span></tt> method always blocks
+until the item is delivered. (This is unlike the standard <a class="reference internal" href="#eventlet.queue.Queue" title="eventlet.queue.Queue"><tt class="xref py py-class docutils literal"><span class="pre">Queue</span></tt></a>,
 where 0 means infinite size).</p>
 <p>In all other respects, this Queue class resembled the standard library,
 <a class="reference internal" href="#eventlet.queue.Queue" title="eventlet.queue.Queue"><tt class="xref py py-class docutils literal"><span class="pre">Queue</span></tt></a>.</p>
@@ -121,8 +121,8 @@ that the processing on the task is complete.</p>
 <dl class="class">
 <dt id="eventlet.queue.LightQueue">
 <em class="property">class </em><tt class="descclassname">eventlet.queue.</tt><tt class="descname">LightQueue</tt><big>(</big><em>maxsize=None</em><big>)</big><a class="headerlink" href="#eventlet.queue.LightQueue" title="Permalink to this definition">¶</a></dt>
-<dd><p>This is a variant of Queue that behaves mostly like the standard 
-<a class="reference internal" href="#eventlet.queue.Queue" title="eventlet.queue.Queue"><tt class="xref py py-class docutils literal"><span class="pre">Queue</span></tt></a>.  It differs by not supporting the 
+<dd><p>This is a variant of Queue that behaves mostly like the standard
+<a class="reference internal" href="#eventlet.queue.Queue" title="eventlet.queue.Queue"><tt class="xref py py-class docutils literal"><span class="pre">Queue</span></tt></a>.  It differs by not supporting the
 <a class="reference internal" href="#eventlet.queue.Queue.task_done" title="eventlet.queue.Queue.task_done"><tt class="xref py py-meth docutils literal"><span class="pre">task_done</span></tt></a> or <a class="reference internal" href="#eventlet.queue.Queue.join" title="eventlet.queue.Queue.join"><tt class="xref py py-meth docutils literal"><span class="pre">join</span></tt></a> methods,
 and is a little faster for not having that overhead.</p>
 <dl class="method">
@@ -161,7 +161,7 @@ raise the <a class="reference internal" href="#eventlet.queue.Empty" title="even
 <dl class="method">
 <dt id="eventlet.queue.LightQueue.getting">
 <tt class="descname">getting</tt><big>(</big><big>)</big><a class="headerlink" href="#eventlet.queue.LightQueue.getting" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the number of greenthreads that are blocked waiting on an 
+<dd><p>Returns the number of greenthreads that are blocked waiting on an
 empty queue.</p>
 </dd></dl>
 
@@ -230,7 +230,7 @@ items into the queue.</p>
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
   <p class="topless"><a href="pools.html"
-                        title="previous chapter"><tt class="docutils literal docutils literal docutils literal docutils literal"><span class="pre">pools</span></tt> - Generic pools of resources</a></p>
+                        title="previous chapter"><tt class="docutils literal"><span class="pre">pools</span></tt> - Generic pools of resources</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="semaphore.html"
                         title="next chapter"><tt class="docutils literal"><span class="pre">semaphore</span></tt> &#8211; Semaphore classes</a></p>
@@ -271,14 +271,14 @@ items into the queue.</p>
         <li class="right" >
           <a href="pools.html" title="pools - Generic pools of resources"
              >previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.14.0 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Eventlet 0.15.0 documentation</a> &raquo;</li>
           <li><a href="../modules.html" >Module Reference</a> &raquo;</li> 
       </ul>
     </div>
 
     <div class="footer">
         &copy; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

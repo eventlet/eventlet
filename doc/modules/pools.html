@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pools - Generic pools of resources &mdash; Eventlet 0.14.0 documentation</title>
+    <title>pools - Generic pools of resources &mdash; Eventlet 0.15.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.14.0',
+        VERSION:     '0.15.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.14.0 documentation" href="../index.html" />
+    <link rel="top" title="Eventlet 0.15.0 documentation" href="../index.html" />
     <link rel="up" title="Module Reference" href="../modules.html" />
     <link rel="next" title="queue – Queue class" href="queue.html" />
     <link rel="prev" title="greenthread – Green Thread Implementation" href="greenthread.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="greenthread.html" title="greenthread – Green Thread Implementation"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.14.0 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Eventlet 0.15.0 documentation</a> &raquo;</li>
           <li><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
       </ul>
     </div>  
@@ -88,15 +88,6 @@ to implement the desired resource:</p>
 that&#8217;s the best way to use it:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">with</span> <span class="n">mypool</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="k">as</span> <span class="n">thing</span><span class="p">:</span>
     <span class="n">thing</span><span class="o">.</span><span class="n">dostuff</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>If stuck on 2.4, the <a class="reference internal" href="#eventlet.pools.Pool.get" title="eventlet.pools.Pool.get"><tt class="xref py py-meth docutils literal"><span class="pre">get()</span></tt></a> and <a class="reference internal" href="#eventlet.pools.Pool.put" title="eventlet.pools.Pool.put"><tt class="xref py py-meth docutils literal"><span class="pre">put()</span></tt></a> methods are the preferred
-nomenclature.  Use a <tt class="docutils literal"><span class="pre">finally</span></tt> to ensure that nothing is leaked:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">thing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
-<span class="k">try</span><span class="p">:</span>
-    <span class="n">thing</span><span class="o">.</span><span class="n">dostuff</span><span class="p">()</span>
-<span class="k">finally</span><span class="p">:</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">thing</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The maximum size of the pool can be modified at runtime via
@@ -145,7 +136,7 @@ cause the calling greenthread to block.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">pools</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pool</span> <span class="o">=</span> <span class="n">pools</span><span class="o">.</span><span class="n">TokenPool</span><span class="p">(</span><span class="n">max_size</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">pool</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="k">as</span> <span class="n">obj</span><span class="p">:</span>
-<span class="gp">... </span>    <span class="k">print</span> <span class="s">&quot;got token&quot;</span>
+<span class="gp">... </span>    <span class="k">print</span><span class="p">(</span><span class="s">&quot;got token&quot;</span><span class="p">)</span>
 <span class="gp">...</span>
 <span class="go">got token</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pool</span><span class="o">.</span><span class="n">free</span><span class="p">()</span>
@@ -198,7 +189,7 @@ limited resource.</p>
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
   <p class="topless"><a href="greenthread.html"
-                        title="previous chapter"><tt class="docutils literal docutils literal docutils literal docutils literal"><span class="pre">greenthread</span></tt> &#8211; Green Thread Implementation</a></p>
+                        title="previous chapter"><tt class="docutils literal"><span class="pre">greenthread</span></tt> &#8211; Green Thread Implementation</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="queue.html"
                         title="next chapter"><tt class="docutils literal"><span class="pre">queue</span></tt> &#8211; Queue class</a></p>
@@ -239,14 +230,14 @@ limited resource.</p>
         <li class="right" >
           <a href="greenthread.html" title="greenthread – Green Thread Implementation"
              >previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.14.0 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Eventlet 0.15.0 documentation</a> &raquo;</li>
           <li><a href="../modules.html" >Module Reference</a> &raquo;</li> 
       </ul>
     </div>
 
     <div class="footer">
         &copy; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

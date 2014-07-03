@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Examples &mdash; Eventlet 0.14.0 documentation</title>
+    <title>Examples &mdash; Eventlet 0.15.0 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.14.0',
+        VERSION:     '0.15.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.14.0 documentation" href="index.html" />
+    <link rel="top" title="Eventlet 0.15.0 documentation" href="index.html" />
     <link rel="next" title="Using SSL With Eventlet" href="ssl.html" />
     <link rel="prev" title="Greening The World" href="patching.html" /> 
   </head>
@@ -43,7 +43,7 @@
         <li class="right" >
           <a href="patching.html" title="Greening The World"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">Eventlet 0.14.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Eventlet 0.15.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -79,15 +79,15 @@
 
 
 <span class="k">def</span> <span class="nf">fetch</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
-    <span class="k">print</span> <span class="s">&quot;opening&quot;</span><span class="p">,</span> <span class="n">url</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&quot;opening&quot;</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
     <span class="n">body</span> <span class="o">=</span> <span class="n">urllib2</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-    <span class="k">print</span> <span class="s">&quot;done with&quot;</span><span class="p">,</span> <span class="n">url</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&quot;done with&quot;</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">url</span><span class="p">,</span> <span class="n">body</span>
 
 
 <span class="n">pool</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">GreenPool</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">url</span><span class="p">,</span> <span class="n">body</span> <span class="ow">in</span> <span class="n">pool</span><span class="o">.</span><span class="n">imap</span><span class="p">(</span><span class="n">fetch</span><span class="p">,</span> <span class="n">urls</span><span class="p">):</span>
-    <span class="k">print</span> <span class="s">&quot;got body from&quot;</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="s">&quot;of length&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&quot;got body from&quot;</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="s">&quot;of length&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">body</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -129,27 +129,28 @@
 <span class="sd">You terminate your connection by terminating telnet (typically Ctrl-]</span>
 <span class="sd">and then &#39;quit&#39;)</span>
 <span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span>
 
 <span class="kn">import</span> <span class="nn">eventlet</span>
 
 <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="n">fd</span><span class="p">):</span>
-    <span class="k">print</span> <span class="s">&quot;client connected&quot;</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&quot;client connected&quot;</span><span class="p">)</span>
     <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
         <span class="c"># pass through every non-eof line</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">fd</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">x</span><span class="p">:</span> <span class="k">break</span>
         <span class="n">fd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">fd</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
-        <span class="k">print</span> <span class="s">&quot;echoed&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span>
-    <span class="k">print</span> <span class="s">&quot;client disconnected&quot;</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&quot;echoed&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s">&#39; &#39;</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&quot;client disconnected&quot;</span><span class="p">)</span>
 
-<span class="k">print</span> <span class="s">&quot;server socket listening on port 6000&quot;</span>
+<span class="k">print</span><span class="p">(</span><span class="s">&quot;server socket listening on port 6000&quot;</span><span class="p">)</span>
 <span class="n">server</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s">&#39;0.0.0.0&#39;</span><span class="p">,</span> <span class="mi">6000</span><span class="p">))</span>
 <span class="n">pool</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">GreenPool</span><span class="p">()</span>
 <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">new_sock</span><span class="p">,</span> <span class="n">address</span> <span class="o">=</span> <span class="n">server</span><span class="o">.</span><span class="n">accept</span><span class="p">()</span>
-        <span class="k">print</span> <span class="s">&quot;accepted&quot;</span><span class="p">,</span> <span class="n">address</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&quot;accepted&quot;</span><span class="p">,</span> <span class="n">address</span><span class="p">)</span>
         <span class="n">pool</span><span class="o">.</span><span class="n">spawn_n</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">new_sock</span><span class="o">.</span><span class="n">makefile</span><span class="p">(</span><span class="s">&#39;rw&#39;</span><span class="p">))</span>
     <span class="k">except</span> <span class="p">(</span><span class="ne">SystemExit</span><span class="p">,</span> <span class="ne">KeyboardInterrupt</span><span class="p">):</span>
         <span class="k">break</span>
@@ -163,16 +164,20 @@
 
 <span class="sd">Demonstrates how to use the eventlet.green.socket module.</span>
 <span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span>
+
 <span class="kn">import</span> <span class="nn">eventlet</span>
 <span class="kn">from</span> <span class="nn">eventlet.green</span> <span class="kn">import</span> <span class="n">socket</span>
+
 
 <span class="k">def</span> <span class="nf">geturl</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
     <span class="n">c</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">()</span>
     <span class="n">ip</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">gethostbyname</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
     <span class="n">c</span><span class="o">.</span><span class="n">connect</span><span class="p">((</span><span class="n">ip</span><span class="p">,</span> <span class="mi">80</span><span class="p">))</span>
-    <span class="k">print</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s"> connected&#39;</span> <span class="o">%</span> <span class="n">url</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> connected&#39;</span> <span class="o">%</span> <span class="n">url</span><span class="p">)</span>
     <span class="n">c</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="s">&#39;GET /</span><span class="se">\r\n\r\n</span><span class="s">&#39;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">c</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">1024</span><span class="p">)</span>
+
 
 <span class="n">urls</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;www.google.com&#39;</span><span class="p">,</span> <span class="s">&#39;www.yandex.ru&#39;</span><span class="p">,</span> <span class="s">&#39;www.python.org&#39;</span><span class="p">]</span>
 <span class="n">pile</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">GreenPile</span><span class="p">()</span>
@@ -182,7 +187,7 @@
 <span class="c"># note that the pile acts as a collection of return values from the functions</span>
 <span class="c"># if any exceptions are raised by the function they&#39;ll get raised here</span>
 <span class="k">for</span> <span class="n">url</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">urls</span><span class="p">,</span> <span class="n">pile</span><span class="p">):</span>
-    <span class="k">print</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="nb">repr</span><span class="p">(</span><span class="n">result</span><span class="p">)[:</span><span class="mi">50</span><span class="p">])</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="nb">repr</span><span class="p">(</span><span class="n">result</span><span class="p">)[:</span><span class="mi">50</span><span class="p">]))</span>
 </pre></div>
 </div>
 </div>
@@ -200,34 +205,34 @@ messages to all participants, not just the sender.</p>
 <span class="k">def</span> <span class="nf">read_chat_forever</span><span class="p">(</span><span class="n">writer</span><span class="p">,</span> <span class="n">reader</span><span class="p">):</span>
     <span class="n">line</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
     <span class="k">while</span> <span class="n">line</span><span class="p">:</span>
-        <span class="k">print</span> <span class="s">&quot;Chat:&quot;</span><span class="p">,</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&quot;Chat:&quot;</span><span class="p">,</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">participants</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">p</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">writer</span><span class="p">:</span> <span class="c"># Don&#39;t echo</span>
                     <span class="n">p</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
                     <span class="n">p</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
-            <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="c"># ignore broken pipes, they just mean the participant</span>
                 <span class="c"># closed its connection already</span>
                 <span class="k">if</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">32</span><span class="p">:</span>
                     <span class="k">raise</span>
         <span class="n">line</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
     <span class="n">participants</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">writer</span><span class="p">)</span>
-    <span class="k">print</span> <span class="s">&quot;Participant left chat.&quot;</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&quot;Participant left chat.&quot;</span><span class="p">)</span>
 
 <span class="k">try</span><span class="p">:</span>
-    <span class="k">print</span> <span class="s">&quot;ChatServer starting up on port </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">PORT</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&quot;ChatServer starting up on port </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">PORT</span><span class="p">)</span>
     <span class="n">server</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s">&#39;0.0.0.0&#39;</span><span class="p">,</span> <span class="n">PORT</span><span class="p">))</span>
     <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
         <span class="n">new_connection</span><span class="p">,</span> <span class="n">address</span> <span class="o">=</span> <span class="n">server</span><span class="o">.</span><span class="n">accept</span><span class="p">()</span>
-        <span class="k">print</span> <span class="s">&quot;Participant joined chat.&quot;</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&quot;Participant joined chat.&quot;</span><span class="p">)</span>
         <span class="n">new_writer</span> <span class="o">=</span> <span class="n">new_connection</span><span class="o">.</span><span class="n">makefile</span><span class="p">(</span><span class="s">&#39;w&#39;</span><span class="p">)</span>
         <span class="n">participants</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">new_writer</span><span class="p">)</span>
         <span class="n">eventlet</span><span class="o">.</span><span class="n">spawn_n</span><span class="p">(</span><span class="n">read_chat_forever</span><span class="p">,</span> 
                          <span class="n">new_writer</span><span class="p">,</span> 
                          <span class="n">new_connection</span><span class="o">.</span><span class="n">makefile</span><span class="p">(</span><span class="s">&#39;r&#39;</span><span class="p">))</span>
 <span class="k">except</span> <span class="p">(</span><span class="ne">KeyboardInterrupt</span><span class="p">,</span> <span class="ne">SystemExit</span><span class="p">):</span>
-    <span class="k">print</span> <span class="s">&quot;ChatServer exiting.&quot;</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&quot;ChatServer exiting.&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -284,7 +289,7 @@ messages to all participants, not just the sender.</p>
 
 <span class="kn">import</span> <span class="nn">eventlet</span>
 <span class="k">def</span> <span class="nf">closed_callback</span><span class="p">():</span>
-    <span class="k">print</span> <span class="s">&quot;called back&quot;</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&quot;called back&quot;</span><span class="p">)</span>
 
 <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">cb</span> <span class="o">=</span> <span class="k">lambda</span><span class="p">:</span> <span class="bp">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Forwards bytes unidirectionally from source to dest&quot;&quot;&quot;</span>
@@ -333,7 +338,7 @@ messages to all participants, not just the sender.</p>
 <span class="k">def</span> <span class="nf">fetch</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">seen</span><span class="p">,</span> <span class="n">pool</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Fetch a url, stick any found urls into the seen set, and</span>
 <span class="sd">    dispatch any new ones to the pool.&quot;&quot;&quot;</span>
-    <span class="k">print</span> <span class="s">&quot;fetching&quot;</span><span class="p">,</span> <span class="n">url</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&quot;fetching&quot;</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
     <span class="n">data</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
     <span class="k">with</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">Timeout</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="bp">False</span><span class="p">):</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">urllib2</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
@@ -356,8 +361,8 @@ messages to all participants, not just the sender.</p>
     <span class="k">return</span> <span class="n">seen</span>
 
 <span class="n">seen</span> <span class="o">=</span> <span class="n">crawl</span><span class="p">(</span><span class="s">&quot;http://eventlet.net&quot;</span><span class="p">)</span>
-<span class="k">print</span> <span class="s">&quot;I saw these urls:&quot;</span>
-<span class="k">print</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">seen</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s">&quot;I saw these urls:&quot;</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">seen</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -388,7 +393,7 @@ messages to all participants, not just the sender.</p>
 
 <span class="k">def</span> <span class="nf">fetch</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">outq</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Fetch a url and push any urls found into a queue.&quot;&quot;&quot;</span>
-    <span class="k">print</span> <span class="s">&quot;fetching&quot;</span><span class="p">,</span> <span class="n">url</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&quot;fetching&quot;</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
     <span class="n">data</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
     <span class="k">with</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">Timeout</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="bp">False</span><span class="p">):</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">urllib2</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
@@ -420,8 +425,8 @@ messages to all participants, not just the sender.</p>
 
 
 <span class="n">seen</span> <span class="o">=</span> <span class="n">producer</span><span class="p">(</span><span class="s">&quot;http://eventlet.net&quot;</span><span class="p">)</span>
-<span class="k">print</span> <span class="s">&quot;I saw these urls:&quot;</span>
-<span class="k">print</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">seen</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s">&quot;I saw these urls:&quot;</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">seen</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -433,14 +438,16 @@ implementation.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">eventlet</span>
 <span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">wsgi</span>
 <span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">websocket</span>
+<span class="kn">from</span> <span class="nn">eventlet.support</span> <span class="kn">import</span> <span class="n">six</span>
 
 <span class="c"># demo app</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">random</span>
 
+
 <span class="nd">@websocket.WebSocketWSGI</span>
 <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="n">ws</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;  This is the websocket handler function.  Note that we </span>
+    <span class="sd">&quot;&quot;&quot;  This is the websocket handler function.  Note that we</span>
 <span class="sd">    can dispatch based on path in here, too.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">ws</span><span class="o">.</span><span class="n">path</span> <span class="o">==</span> <span class="s">&#39;/echo&#39;</span><span class="p">:</span>
         <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
@@ -448,12 +455,12 @@ implementation.</p>
             <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="k">break</span>
             <span class="n">ws</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
-            
+
     <span class="k">elif</span> <span class="n">ws</span><span class="o">.</span><span class="n">path</span> <span class="o">==</span> <span class="s">&#39;/data&#39;</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">10000</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">moves</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">10000</span><span class="p">):</span>
             <span class="n">ws</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">&quot;0 </span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()))</span>
             <span class="n">eventlet</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
-                  
+
 <span class="k">def</span> <span class="nf">dispatch</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; This resolves to the web page or the websocket depending on</span>
 <span class="sd">    the path.&quot;&quot;&quot;</span>
@@ -462,13 +469,13 @@ implementation.</p>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">start_response</span><span class="p">(</span><span class="s">&#39;200 OK&#39;</span><span class="p">,</span> <span class="p">[(</span><span class="s">&#39;content-type&#39;</span><span class="p">,</span> <span class="s">&#39;text/html&#39;</span><span class="p">)])</span>
         <span class="k">return</span> <span class="p">[</span><span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                     <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">),</span> 
+                     <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">),</span>
                      <span class="s">&#39;websocket.html&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">read</span><span class="p">()]</span>
-        
+
 <span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&quot;__main__&quot;</span><span class="p">:</span>
-    <span class="c"># run an example app from the command line            </span>
+    <span class="c"># run an example app from the command line</span>
     <span class="n">listener</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">7000</span><span class="p">))</span>
-    <span class="k">print</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">Visit http://localhost:7000/ in your websocket-capable browser.</span><span class="se">\n</span><span class="s">&quot;</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">Visit http://localhost:7000/ in your websocket-capable browser.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
     <span class="n">wsgi</span><span class="o">.</span><span class="n">server</span><span class="p">(</span><span class="n">listener</span><span class="p">,</span> <span class="n">dispatch</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -512,7 +519,7 @@ implementation.</p>
 <span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="c"># run an example app from the command line            </span>
     <span class="n">listener</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="n">PORT</span><span class="p">))</span>
-    <span class="k">print</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">Visit http://localhost:7000/ in your websocket-capable browser.</span><span class="se">\n</span><span class="s">&quot;</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">Visit http://localhost:7000/ in your websocket-capable browser.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
     <span class="n">wsgi</span><span class="o">.</span><span class="n">server</span><span class="p">(</span><span class="n">listener</span><span class="p">,</span> <span class="n">dispatch</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -586,13 +593,13 @@ implementation.</p>
         <li class="right" >
           <a href="patching.html" title="Greening The World"
              >previous</a> |</li>
-        <li><a href="index.html">Eventlet 0.14.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Eventlet 0.15.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
 
     <div class="footer">
         &copy; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

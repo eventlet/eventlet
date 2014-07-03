@@ -10,9 +10,9 @@ In either case, the the ``green`` modules handle SSL sockets transparently, just
     bodies = [coros.execute(urllib2.urlopen, url)
          for url in ("https://secondlife.com","https://google.com")]
     for b in bodies:
-        print b.wait().read()
- 
- 
+        print(b.wait().read())
+
+
 With Python 2.6
 ----------------
 
@@ -34,7 +34,7 @@ Here's an example of a server::
 
     from eventlet.green import socket
     from eventlet.green.OpenSSL import SSL
-    
+
     # insecure context, only for example purposes
     context = SSL.Context(SSL.SSLv23_METHOD)
     context.set_verify(SSL.VERIFY_NONE, lambda *x: True))
@@ -42,15 +42,15 @@ Here's an example of a server::
     # create underlying green socket and wrap it in ssl
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     connection = SSL.Connection(context, sock)
-    
+
     # configure as server
     connection.set_accept_state()
     connection.bind(('127.0.0.1', 80443))
     connection.listen(50)
-    
+
     # accept one client connection then close up shop
     client_conn, addr = connection.accept()
-    print client_conn.read(100)
+    print(client_conn.read(100))
     client_conn.shutdown()
     client_conn.close()
     connection.close()
