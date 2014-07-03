@@ -1,3 +1,17 @@
+0.15
+====
+* Python3 compatibility -- **not ready yet**; Thanks to Astrum Kuo, Davanum Srinivas, Jakub Stasiak, Victor Sergeyev
+* coros: remove Actor which was deprecated in 2010-01
+* saranwrap: remove saranwrap which was deprecated in 2010-02
+* PyPy compatibility fixes; Thanks to Dmitriy Kruglyak, Jakub Stasiak
+* green.profile: accumulate results between runs; Thanks to Zhang Hua
+* greenthread: add .unlink() method; Thanks to Astrum Kuo
+* packaging: Generate universal wheels; Thanks to Jakub Stasiak
+* queue: Make join not wait if there are no unfinished tasks; Thanks to Jakub Stasiak
+* tpool: proxy __enter__, __exit__ fixes Bitbucket-158; Thanks to Eric Urban
+* websockets: Add websockets13 support; handle lack of Upgrade header; Thanks to Edward George
+* wsgi: capitalize_response_headers option
+
 0.14
 ====
 * wsgi: handle connection socket timeouts; Thanks to Paul Oppenheim
