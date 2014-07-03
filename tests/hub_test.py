@@ -209,9 +209,6 @@ class TestExceptionInGreenthread(LimitedTestCase):
 class TestHubSelection(LimitedTestCase):
 
     def test_explicit_hub(self):
-        if getattr(hubs.get_hub(), 'uses_twisted_reactor', None):
-            # doesn't work with twisted
-            return
         oldhub = hubs.get_hub()
         try:
             hubs.use_hub(Foo)

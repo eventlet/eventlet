@@ -2,8 +2,8 @@ Eventlet is a concurrent networking library for Python that allows you to change
 
 It uses epoll or libevent for highly scalable non-blocking I/O.  Coroutines ensure that the developer uses a blocking style of programming that is similar to threading, but provide the benefits of non-blocking I/O.  The event dispatch is implicit, which means you can easily use Eventlet from the Python interpreter, or as a small part of a larger application.
 
-It's easy to get started using Eventlet, and easy to convert existing 
-applications to use it.  Start off by looking at the `examples`_, 
+It's easy to get started using Eventlet, and easy to convert existing
+applications to use it.  Start off by looking at the `examples`_,
 `common design patterns`_, and the list of `basic API primitives`_.
 
 .. _examples: http://eventlet.net/doc/examples.html
@@ -17,7 +17,7 @@ Quick Example
 Here's something you can try right on the command line::
 
     % python
-    >>> import eventlet 
+    >>> import eventlet
     >>> from eventlet.green import urllib2
     >>> gt = eventlet.spawn(urllib2.urlopen, 'http://eventlet.net')
     >>> gt2 = eventlet.spawn(urllib2.urlopen, 'http://secondlife.com')
@@ -48,3 +48,17 @@ To build a complete set of HTML documentation, you must have Sphinx, which can b
   make html
 
 The built html files can be found in doc/_build/html afterward.
+
+
+Twisted
+=======
+
+Eventlet had Twisted hub in the past, but community interest to this integration has dropped over time,
+now it is not supported, so with apologies for any inconvenience we discontinue Twisted integration.
+
+If you have a project that uses Eventlet with Twisted, your options are:
+
+* use last working release eventlet==0.14
+* start a new project with only Twisted hub code, identify and fix problems. As of eventlet 0.13,
+`EVENTLET_HUB` environment variable can point to external modules.
+* fork Eventlet, revert Twisted removal, identify and fix problems. This work may be merged back into main project.

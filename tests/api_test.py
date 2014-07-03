@@ -17,10 +17,8 @@ def check_hub():
     for nm in 'get_readers', 'get_writers':
         dct = getattr(hub, nm)()
         assert not dct, "hub.%s not empty: %s" % (nm, dct)
-    # Stop the runloop (unless it's twistedhub which does not support that)
-    if not getattr(hub, 'uses_twisted_reactor', None):
-        hub.abort(True)
-        assert not hub.running
+    hub.abort(True)
+    assert not hub.running
 
 
 class TestApi(TestCase):

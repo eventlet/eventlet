@@ -1,6 +1,7 @@
 0.16.0 (not released yet)
 =========================
 
+* hubs: drop Twisted support
 * removed deprecated modules: api, most of coros, pool, proc, processes and util
 * improved Python 3 compatibility (including patch by raylu)
 
