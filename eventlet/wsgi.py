@@ -268,7 +268,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         finally:
             self.rfile = orig_rfile
 
-        content_length = self.headers.getheader('content-length')
+        content_length = self.headers.get('content-length')
         if content_length:
             try:
                 int(content_length)
@@ -482,12 +482,15 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         if len(pq) > 1:
             env['QUERY_STRING'] = pq[1]
 
-        if self.headers.typeheader is None:
-            env['CONTENT_TYPE'] = self.headers.type
-        else:
-            env['CONTENT_TYPE'] = self.headers.typeheader
+        ct = self.headers.get('content-type')
+        if ct is None:
+            try:
+                ct = self.headers.type
+            except AttributeError:
+                ct = self.headers.get_content_type()
+        env['CONTENT_TYPE'] = ct
 
-        length = self.headers.getheader('content-length')
+        length = self.headers.get('content-length')
         if length:
             env['CONTENT_LENGTH'] = length
         env['SERVER_PROTOCOL'] = 'HTTP/1.0'
@@ -499,8 +502,14 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         env['REMOTE_PORT'] = str(self.client_address[1])
         env['GATEWAY_INTERFACE'] = 'CGI/1.1'
 
-        for h in self.headers.headers:
-            k, v = h.split(':', 1)
+        try:
+            headers = self.headers.headers
+        except AttributeError:
+            headers = self.headers._headers
+        else:
+            headers = [h.split(':', 1) for h in headers]
+
+        for k, v in headers:
             k = k.replace('-', '_').upper()
             v = v.strip()
             if k in env:
