@@ -144,13 +144,13 @@ class Input(object):
                     if use_readline and data[-1] == "\n":
                         break
                 else:
-                    self.chunk_length = int(rfile.readline().split(";", 1)[0], 16)
+                    self.chunk_length = int(rfile.readline().split(b";", 1)[0], 16)
                     self.position = 0
                     if self.chunk_length == 0:
                         rfile.readline()
         except greenio.SSL.ZeroReturnError:
             pass
-        return ''.join(response)
+        return b''.join(response)
 
     def read(self, length=None):
         if self.chunked_input:

@@ -291,8 +291,8 @@ class WebSocket(object):
         if isinstance(message, six.text_type):
             message = message.encode('utf-8')
         elif not isinstance(message, six.binary_type):
-            message = str(message)
-        packed = "\x00%s\xFF" % message
+            message = b'%s' % (message,)
+        packed = b"\x00%s\xFF" % message
         return packed
 
     def _parse_messages(self):
@@ -363,7 +363,7 @@ class WebSocket(object):
         """Sends the closing frame to the client, if required."""
         if self.version == 76 and not self.websocket_closed:
             try:
-                self.socket.sendall("\xff\x00")
+                self.socket.sendall(b"\xff\x00")
             except SocketError:
                 # Sometimes, like when the remote side cuts off the connection,
                 # we don't care about this.
