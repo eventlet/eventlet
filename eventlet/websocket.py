@@ -19,7 +19,7 @@ import eventlet
 from eventlet import semaphore
 from eventlet import wsgi
 from eventlet.green import socket
-from eventlet.support import get_errno
+from eventlet.support import get_errno, six
 
 # Python 2's utf8 decoding is more lenient than we'd like
 # In order to pass autobahn's testsuite we need stricter validation
@@ -288,9 +288,9 @@ class WebSocket(object):
 
         As per the dataframing section (5.3) for the websocket spec
         """
-        if isinstance(message, unicode):
+        if isinstance(message, six.text_type):
             message = message.encode('utf-8')
-        elif not isinstance(message, str):
+        elif not isinstance(message, six.binary_type):
             message = str(message)
         packed = "\x00%s\xFF" % message
         return packed
@@ -578,7 +578,7 @@ class RFC6455WebSocket(WebSocket):
     def _pack_message(message, masked=False,
                       continuation=False, final=True, control_code=None):
         is_text = False
-        if isinstance(message, unicode):
+        if isinstance(message, six.text_type):
             message = message.encode('utf-8')
             is_text = True
         length = len(message)
@@ -634,7 +634,7 @@ class RFC6455WebSocket(WebSocket):
         if self.version in (8, 13) and not self.websocket_closed:
             if close_data is not None:
                 status, msg = close_data
-                if isinstance(msg, unicode):
+                if isinstance(msg, six.text_type):
                     msg = msg.encode('utf-8')
                 data = struct.pack('!H', status) + msg
             else:

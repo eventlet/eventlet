@@ -1,6 +1,6 @@
 import sys
 import os
-from eventlet.support import greenlets as greenlet
+from eventlet.support import greenlets as greenlet, six
 from eventlet import patcher
 
 try:
@@ -77,7 +77,7 @@ def use_hub(mod=None):
         mod = get_default_hub()
     if hasattr(_threadlocal, 'hub'):
         del _threadlocal.hub
-    if isinstance(mod, str):
+    if isinstance(mod, six.string_types):
         assert mod.strip(), "Need to specify a hub"
         if '.' in mod or ':' in mod:
             modulename, _, classname = mod.strip().partition(':')
