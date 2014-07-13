@@ -1,13 +1,13 @@
-import socket
 import errno
+import socket
 
 import eventlet
-from eventlet.green import urllib2
-from eventlet.green import httplib
-from eventlet.websocket import WebSocket, WebSocketWSGI
-from eventlet import wsgi
 from eventlet import event
 from eventlet import greenio
+from eventlet import wsgi
+from eventlet.green import httplib
+from eventlet.green import urllib2
+from eventlet.websocket import WebSocket, WebSocketWSGI
 
 from tests import mock, LimitedTestCase, certificate_file, private_key_file
 from tests import skip_if_no_ssl
@@ -34,6 +34,7 @@ def handle(ws):
 
 wsapp = WebSocketWSGI(handle)
 
+
 class TestWebSocket(_TestBase):
     TEST_TIMEOUT = 5
 
@@ -51,12 +52,12 @@ class TestWebSocket(_TestBase):
 
     def test_incomplete_headers_75(self):
         headers = dict(kv.split(': ') for kv in [
-                "Upgrade: WebSocket",
-                # NOTE: intentionally no connection header
-                "Host: localhost:%s" % self.port,
-                "Origin: http://localhost:%s" % self.port,
-                "WebSocket-Protocol: ws",
-                ])
+            "Upgrade: WebSocket",
+            # NOTE: intentionally no connection header
+            "Host: localhost:%s" % self.port,
+            "Origin: http://localhost:%s" % self.port,
+            "WebSocket-Protocol: ws",
+        ])
         http = httplib.HTTPConnection('localhost', self.port)
         http.request("GET", "/echo", headers=headers)
         resp = http.getresponse()
@@ -68,12 +69,12 @@ class TestWebSocket(_TestBase):
     def test_incomplete_headers_76(self):
         # First test: Missing Connection:
         headers = dict(kv.split(': ') for kv in [
-                "Upgrade: WebSocket",
-                # NOTE: intentionally no connection header
-                "Host: localhost:%s" % self.port,
-                "Origin: http://localhost:%s" % self.port,
-                "Sec-WebSocket-Protocol: ws",
-                ])
+            "Upgrade: WebSocket",
+            # NOTE: intentionally no connection header
+            "Host: localhost:%s" % self.port,
+            "Origin: http://localhost:%s" % self.port,
+            "Sec-WebSocket-Protocol: ws",
+        ])
         http = httplib.HTTPConnection('localhost', self.port)
         http.request("GET", "/echo", headers=headers)
         resp = http.getresponse()
@@ -84,14 +85,14 @@ class TestWebSocket(_TestBase):
 
         # Now, miss off key2
         headers = dict(kv.split(': ') for kv in [
-                "Upgrade: WebSocket",
-                "Connection: Upgrade",
-                "Host: localhost:%s" % self.port,
-                "Origin: http://localhost:%s" % self.port,
-                "Sec-WebSocket-Protocol: ws",
-                "Sec-WebSocket-Key1: 4 @1  46546xW%0l 1 5",
-                # NOTE: Intentionally no Key2 header
-                ])
+            "Upgrade: WebSocket",
+            "Connection: Upgrade",
+            "Host: localhost:%s" % self.port,
+            "Origin: http://localhost:%s" % self.port,
+            "Sec-WebSocket-Protocol: ws",
+            "Sec-WebSocket-Key1: 4 @1  46546xW%0l 1 5",
+            # NOTE: Intentionally no Key2 header
+        ])
         http = httplib.HTTPConnection('localhost', self.port)
         http.request("GET", "/echo", headers=headers)
         resp = http.getresponse()
@@ -102,19 +103,19 @@ class TestWebSocket(_TestBase):
 
     def test_correct_upgrade_request_75(self):
         connect = [
-                "GET /echo HTTP/1.1",
-                "Upgrade: WebSocket",
-                "Connection: Upgrade",
-                "Host: localhost:%s" % self.port,
-                "Origin: http://localhost:%s" % self.port,
-                "WebSocket-Protocol: ws",
-                ]
+            "GET /echo HTTP/1.1",
+            "Upgrade: WebSocket",
+            "Connection: Upgrade",
+            "Host: localhost:%s" % self.port,
+            "Origin: http://localhost:%s" % self.port,
+            "WebSocket-Protocol: ws",
+        ]
         sock = eventlet.connect(
             ('localhost', self.port))
 
         sock.sendall('\r\n'.join(connect) + '\r\n\r\n')
         result = sock.recv(1024)
-        ## The server responds the correct Websocket handshake
+        # The server responds the correct Websocket handshake
         self.assertEqual(result,
                          '\r\n'.join(['HTTP/1.1 101 Web Socket Protocol Handshake',
                                       'Upgrade: WebSocket',
@@ -124,21 +125,21 @@ class TestWebSocket(_TestBase):
 
     def test_correct_upgrade_request_76(self):
         connect = [
-                "GET /echo HTTP/1.1",
-                "Upgrade: WebSocket",
-                "Connection: Upgrade",
-                "Host: localhost:%s" % self.port,
-                "Origin: http://localhost:%s" % self.port,
-                "Sec-WebSocket-Protocol: ws",
-                "Sec-WebSocket-Key1: 4 @1  46546xW%0l 1 5",
-                "Sec-WebSocket-Key2: 12998 5 Y3 1  .P00",
-                ]
+            "GET /echo HTTP/1.1",
+            "Upgrade: WebSocket",
+            "Connection: Upgrade",
+            "Host: localhost:%s" % self.port,
+            "Origin: http://localhost:%s" % self.port,
+            "Sec-WebSocket-Protocol: ws",
+            "Sec-WebSocket-Key1: 4 @1  46546xW%0l 1 5",
+            "Sec-WebSocket-Key2: 12998 5 Y3 1  .P00",
+        ]
         sock = eventlet.connect(
             ('localhost', self.port))
 
         sock.sendall('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U')
         result = sock.recv(1024)
-        ## The server responds the correct Websocket handshake
+        # The server responds the correct Websocket handshake
         self.assertEqual(result,
                          '\r\n'.join(['HTTP/1.1 101 WebSocket Protocol Handshake',
                                       'Upgrade: WebSocket',
@@ -147,19 +148,18 @@ class TestWebSocket(_TestBase):
                                       'Sec-WebSocket-Protocol: ws',
                                       'Sec-WebSocket-Location: ws://localhost:%s/echo\r\n\r\n8jKS\'y:G*Co,Wxa-' % self.port]))
 
-
     def test_query_string(self):
         # verify that the query string comes out the other side unscathed
         connect = [
-                "GET /echo?query_string HTTP/1.1",
-                "Upgrade: WebSocket",
-                "Connection: Upgrade",
-                "Host: localhost:%s" % self.port,
-                "Origin: http://localhost:%s" % self.port,
-                "Sec-WebSocket-Protocol: ws",
-                "Sec-WebSocket-Key1: 4 @1  46546xW%0l 1 5",
-                "Sec-WebSocket-Key2: 12998 5 Y3 1  .P00",
-                ]
+            "GET /echo?query_string HTTP/1.1",
+            "Upgrade: WebSocket",
+            "Connection: Upgrade",
+            "Host: localhost:%s" % self.port,
+            "Origin: http://localhost:%s" % self.port,
+            "Sec-WebSocket-Protocol: ws",
+            "Sec-WebSocket-Key1: 4 @1  46546xW%0l 1 5",
+            "Sec-WebSocket-Key2: 12998 5 Y3 1  .P00",
+        ]
         sock = eventlet.connect(
             ('localhost', self.port))
 
@@ -176,38 +176,38 @@ class TestWebSocket(_TestBase):
     def test_empty_query_string(self):
         # verify that a single trailing ? doesn't get nuked
         connect = [
-                "GET /echo? HTTP/1.1",
-                "Upgrade: WebSocket",
-                "Connection: Upgrade",
-                "Host: localhost:%s" % self.port,
-                "Origin: http://localhost:%s" % self.port,
-                "Sec-WebSocket-Protocol: ws",
-                "Sec-WebSocket-Key1: 4 @1  46546xW%0l 1 5",
-                "Sec-WebSocket-Key2: 12998 5 Y3 1  .P00",
-                ]
+            "GET /echo? HTTP/1.1",
+            "Upgrade: WebSocket",
+            "Connection: Upgrade",
+            "Host: localhost:%s" % self.port,
+            "Origin: http://localhost:%s" % self.port,
+            "Sec-WebSocket-Protocol: ws",
+            "Sec-WebSocket-Key1: 4 @1  46546xW%0l 1 5",
+            "Sec-WebSocket-Key2: 12998 5 Y3 1  .P00",
+        ]
         sock = eventlet.connect(
             ('localhost', self.port))
 
         sock.sendall('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U')
         result = sock.recv(1024)
-        self.assertEqual(result,
-                         '\r\n'.join(['HTTP/1.1 101 WebSocket Protocol Handshake',
-                                      'Upgrade: WebSocket',
-                                      'Connection: Upgrade',
-                                      'Sec-WebSocket-Origin: http://localhost:%s' % self.port,
-                                      'Sec-WebSocket-Protocol: ws',
-                                      'Sec-WebSocket-Location: ws://localhost:%s/echo?\r\n\r\n8jKS\'y:G*Co,Wxa-' % self.port]))
-
+        self.assertEqual(result, '\r\n'.join([
+            'HTTP/1.1 101 WebSocket Protocol Handshake',
+            'Upgrade: WebSocket',
+            'Connection: Upgrade',
+            'Sec-WebSocket-Origin: http://localhost:%s' % self.port,
+            'Sec-WebSocket-Protocol: ws',
+            'Sec-WebSocket-Location: ws://localhost:%s/echo?\r\n\r\n8jKS\'y:G*Co,Wxa-' % self.port,
+        ]))
 
     def test_sending_messages_to_websocket_75(self):
         connect = [
-                "GET /echo HTTP/1.1",
-                "Upgrade: WebSocket",
-                "Connection: Upgrade",
-                "Host: localhost:%s" % self.port,
-                "Origin: http://localhost:%s" % self.port,
-                "WebSocket-Protocol: ws",
-                ]
+            "GET /echo HTTP/1.1",
+            "Upgrade: WebSocket",
+            "Connection: Upgrade",
+            "Host: localhost:%s" % self.port,
+            "Origin: http://localhost:%s" % self.port,
+            "WebSocket-Protocol: ws",
+        ]
         sock = eventlet.connect(
             ('localhost', self.port))
 
@@ -227,15 +227,15 @@ class TestWebSocket(_TestBase):
 
     def test_sending_messages_to_websocket_76(self):
         connect = [
-                "GET /echo HTTP/1.1",
-                "Upgrade: WebSocket",
-                "Connection: Upgrade",
-                "Host: localhost:%s" % self.port,
-                "Origin: http://localhost:%s" % self.port,
-                "Sec-WebSocket-Protocol: ws",
-                "Sec-WebSocket-Key1: 4 @1  46546xW%0l 1 5",
-                "Sec-WebSocket-Key2: 12998 5 Y3 1  .P00",
-                ]
+            "GET /echo HTTP/1.1",
+            "Upgrade: WebSocket",
+            "Connection: Upgrade",
+            "Host: localhost:%s" % self.port,
+            "Origin: http://localhost:%s" % self.port,
+            "Sec-WebSocket-Protocol: ws",
+            "Sec-WebSocket-Key1: 4 @1  46546xW%0l 1 5",
+            "Sec-WebSocket-Key2: 12998 5 Y3 1  .P00",
+        ]
         sock = eventlet.connect(
             ('localhost', self.port))
 
@@ -255,13 +255,13 @@ class TestWebSocket(_TestBase):
 
     def test_getting_messages_from_websocket_75(self):
         connect = [
-                "GET /range HTTP/1.1",
-                "Upgrade: WebSocket",
-                "Connection: Upgrade",
-                "Host: localhost:%s" % self.port,
-                "Origin: http://localhost:%s" % self.port,
-                "WebSocket-Protocol: ws",
-                ]
+            "GET /range HTTP/1.1",
+            "Upgrade: WebSocket",
+            "Connection: Upgrade",
+            "Host: localhost:%s" % self.port,
+            "Origin: http://localhost:%s" % self.port,
+            "WebSocket-Protocol: ws",
+        ]
         sock = eventlet.connect(
             ('localhost', self.port))
 
@@ -278,15 +278,15 @@ class TestWebSocket(_TestBase):
 
     def test_getting_messages_from_websocket_76(self):
         connect = [
-                "GET /range HTTP/1.1",
-                "Upgrade: WebSocket",
-                "Connection: Upgrade",
-                "Host: localhost:%s" % self.port,
-                "Origin: http://localhost:%s" % self.port,
-                "Sec-WebSocket-Protocol: ws",
-                "Sec-WebSocket-Key1: 4 @1  46546xW%0l 1 5",
-                "Sec-WebSocket-Key2: 12998 5 Y3 1  .P00",
-                ]
+            "GET /range HTTP/1.1",
+            "Upgrade: WebSocket",
+            "Connection: Upgrade",
+            "Host: localhost:%s" % self.port,
+            "Origin: http://localhost:%s" % self.port,
+            "Sec-WebSocket-Protocol: ws",
+            "Sec-WebSocket-Key1: 4 @1  46546xW%0l 1 5",
+            "Sec-WebSocket-Key2: 12998 5 Y3 1  .P00",
+        ]
         sock = eventlet.connect(
             ('localhost', self.port))
 
@@ -305,6 +305,7 @@ class TestWebSocket(_TestBase):
         error_detected = [False]
         done_with_request = event.Event()
         site = self.site
+
         def error_detector(environ, start_response):
             try:
                 try:
@@ -317,13 +318,13 @@ class TestWebSocket(_TestBase):
         self.site = error_detector
         self.spawn_server()
         connect = [
-                "GET /range HTTP/1.1",
-                "Upgrade: WebSocket",
-                "Connection: Upgrade",
-                "Host: localhost:%s" % self.port,
-                "Origin: http://localhost:%s" % self.port,
-                "WebSocket-Protocol: ws",
-                ]
+            "GET /range HTTP/1.1",
+            "Upgrade: WebSocket",
+            "Connection: Upgrade",
+            "Host: localhost:%s" % self.port,
+            "Origin: http://localhost:%s" % self.port,
+            "WebSocket-Protocol: ws",
+        ]
         sock = eventlet.connect(
             ('localhost', self.port))
         sock.sendall('\r\n'.join(connect) + '\r\n\r\n')
@@ -336,6 +337,7 @@ class TestWebSocket(_TestBase):
         error_detected = [False]
         done_with_request = event.Event()
         site = self.site
+
         def error_detector(environ, start_response):
             try:
                 try:
@@ -348,15 +350,15 @@ class TestWebSocket(_TestBase):
         self.site = error_detector
         self.spawn_server()
         connect = [
-                "GET /range HTTP/1.1",
-                "Upgrade: WebSocket",
-                "Connection: Upgrade",
-                "Host: localhost:%s" % self.port,
-                "Origin: http://localhost:%s" % self.port,
-                "Sec-WebSocket-Protocol: ws",
-                "Sec-WebSocket-Key1: 4 @1  46546xW%0l 1 5",
-                "Sec-WebSocket-Key2: 12998 5 Y3 1  .P00",
-                ]
+            "GET /range HTTP/1.1",
+            "Upgrade: WebSocket",
+            "Connection: Upgrade",
+            "Host: localhost:%s" % self.port,
+            "Origin: http://localhost:%s" % self.port,
+            "Sec-WebSocket-Protocol: ws",
+            "Sec-WebSocket-Key1: 4 @1  46546xW%0l 1 5",
+            "Sec-WebSocket-Key2: 12998 5 Y3 1  .P00",
+        ]
         sock = eventlet.connect(
             ('localhost', self.port))
         sock.sendall('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U')
@@ -369,6 +371,7 @@ class TestWebSocket(_TestBase):
         error_detected = [False]
         done_with_request = event.Event()
         site = self.site
+
         def error_detector(environ, start_response):
             try:
                 try:
@@ -381,20 +384,20 @@ class TestWebSocket(_TestBase):
         self.site = error_detector
         self.spawn_server()
         connect = [
-                "GET /echo HTTP/1.1",
-                "Upgrade: WebSocket",
-                "Connection: Upgrade",
-                "Host: localhost:%s" % self.port,
-                "Origin: http://localhost:%s" % self.port,
-                "Sec-WebSocket-Protocol: ws",
-                "Sec-WebSocket-Key1: 4 @1  46546xW%0l 1 5",
-                "Sec-WebSocket-Key2: 12998 5 Y3 1  .P00",
-                ]
+            "GET /echo HTTP/1.1",
+            "Upgrade: WebSocket",
+            "Connection: Upgrade",
+            "Host: localhost:%s" % self.port,
+            "Origin: http://localhost:%s" % self.port,
+            "Sec-WebSocket-Protocol: ws",
+            "Sec-WebSocket-Key1: 4 @1  46546xW%0l 1 5",
+            "Sec-WebSocket-Key2: 12998 5 Y3 1  .P00",
+        ]
         sock = eventlet.connect(
             ('localhost', self.port))
         sock.sendall('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U')
         resp = sock.recv(1024)  # get the headers
-        sock.sendall('\xff\x00') # "Close the connection" packet.
+        sock.sendall('\xff\x00')  # "Close the connection" packet.
         done_with_request.wait()
         assert not error_detected[0]
 
@@ -402,6 +405,7 @@ class TestWebSocket(_TestBase):
         error_detected = [False]
         done_with_request = event.Event()
         site = self.site
+
         def error_detector(environ, start_response):
             try:
                 try:
@@ -414,34 +418,34 @@ class TestWebSocket(_TestBase):
         self.site = error_detector
         self.spawn_server()
         connect = [
-                "GET /echo HTTP/1.1",
-                "Upgrade: WebSocket",
-                "Connection: Upgrade",
-                "Host: localhost:%s" % self.port,
-                "Origin: http://localhost:%s" % self.port,
-                "Sec-WebSocket-Protocol: ws",
-                "Sec-WebSocket-Key1: 4 @1  46546xW%0l 1 5",
-                "Sec-WebSocket-Key2: 12998 5 Y3 1  .P00",
-                ]
+            "GET /echo HTTP/1.1",
+            "Upgrade: WebSocket",
+            "Connection: Upgrade",
+            "Host: localhost:%s" % self.port,
+            "Origin: http://localhost:%s" % self.port,
+            "Sec-WebSocket-Protocol: ws",
+            "Sec-WebSocket-Key1: 4 @1  46546xW%0l 1 5",
+            "Sec-WebSocket-Key2: 12998 5 Y3 1  .P00",
+        ]
         sock = eventlet.connect(
             ('localhost', self.port))
         sock.sendall('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U')
         resp = sock.recv(1024)  # get the headers
-        sock.sendall('\xef\x00') # Weird packet.
+        sock.sendall('\xef\x00')  # Weird packet.
         done_with_request.wait()
         assert error_detected[0]
 
     def test_server_closing_connect_76(self):
         connect = [
-                "GET / HTTP/1.1",
-                "Upgrade: WebSocket",
-                "Connection: Upgrade",
-                "Host: localhost:%s" % self.port,
-                "Origin: http://localhost:%s" % self.port,
-                "Sec-WebSocket-Protocol: ws",
-                "Sec-WebSocket-Key1: 4 @1  46546xW%0l 1 5",
-                "Sec-WebSocket-Key2: 12998 5 Y3 1  .P00",
-                ]
+            "GET / HTTP/1.1",
+            "Upgrade: WebSocket",
+            "Connection: Upgrade",
+            "Host: localhost:%s" % self.port,
+            "Origin: http://localhost:%s" % self.port,
+            "Sec-WebSocket-Protocol: ws",
+            "Sec-WebSocket-Key1: 4 @1  46546xW%0l 1 5",
+            "Sec-WebSocket-Key2: 12998 5 Y3 1  .P00",
+        ]
         sock = eventlet.connect(
             ('localhost', self.port))
 
@@ -455,6 +459,7 @@ class TestWebSocket(_TestBase):
         error_detected = [False]
         done_with_request = event.Event()
         site = self.site
+
         def error_detector(environ, start_response):
             try:
                 try:
@@ -467,13 +472,13 @@ class TestWebSocket(_TestBase):
         self.site = error_detector
         self.spawn_server()
         connect = [
-                "GET /error HTTP/1.1",
-                "Upgrade: WebSocket",
-                "Connection: Upgrade",
-                "Host: localhost:%s" % self.port,
-                "Origin: http://localhost:%s" % self.port,
-                "WebSocket-Protocol: ws",
-                ]
+            "GET /error HTTP/1.1",
+            "Upgrade: WebSocket",
+            "Connection: Upgrade",
+            "Host: localhost:%s" % self.port,
+            "Origin: http://localhost:%s" % self.port,
+            "WebSocket-Protocol: ws",
+        ]
         sock = eventlet.connect(
             ('localhost', self.port))
         sock.sendall('\r\n'.join(connect) + '\r\n\r\n')
@@ -485,6 +490,7 @@ class TestWebSocket(_TestBase):
         error_detected = [False]
         done_with_request = event.Event()
         site = self.site
+
         def error_detector(environ, start_response):
             try:
                 try:
@@ -497,15 +503,15 @@ class TestWebSocket(_TestBase):
         self.site = error_detector
         self.spawn_server()
         connect = [
-                "GET /error HTTP/1.1",
-                "Upgrade: WebSocket",
-                "Connection: Upgrade",
-                "Host: localhost:%s" % self.port,
-                "Origin: http://localhost:%s" % self.port,
-                "Sec-WebSocket-Protocol: ws",
-                "Sec-WebSocket-Key1: 4 @1  46546xW%0l 1 5",
-                "Sec-WebSocket-Key2: 12998 5 Y3 1  .P00",
-                ]
+            "GET /error HTTP/1.1",
+            "Upgrade: WebSocket",
+            "Connection: Upgrade",
+            "Host: localhost:%s" % self.port,
+            "Origin: http://localhost:%s" % self.port,
+            "Sec-WebSocket-Protocol: ws",
+            "Sec-WebSocket-Key1: 4 @1  46546xW%0l 1 5",
+            "Sec-WebSocket-Key2: 12998 5 Y3 1  .P00",
+        ]
         sock = eventlet.connect(
             ('localhost', self.port))
         sock.sendall('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U')
@@ -526,17 +532,17 @@ class TestWebSocketSSL(_TestBase):
                               server_side=True)
         self.spawn_server(sock=s)
         connect = [
-                "GET /echo HTTP/1.1",
-                "Upgrade: WebSocket",
-                "Connection: Upgrade",
-                "Host: localhost:%s" % self.port,
-                "Origin: http://localhost:%s" % self.port,
-                "Sec-WebSocket-Protocol: ws",
-                "Sec-WebSocket-Key1: 4 @1  46546xW%0l 1 5",
-                "Sec-WebSocket-Key2: 12998 5 Y3 1  .P00",
-                ]
+            "GET /echo HTTP/1.1",
+            "Upgrade: WebSocket",
+            "Connection: Upgrade",
+            "Host: localhost:%s" % self.port,
+            "Origin: http://localhost:%s" % self.port,
+            "Sec-WebSocket-Protocol: ws",
+            "Sec-WebSocket-Key1: 4 @1  46546xW%0l 1 5",
+            "Sec-WebSocket-Key2: 12998 5 Y3 1  .P00",
+        ]
         sock = eventlet.wrap_ssl(eventlet.connect(
-                ('localhost', self.port)))
+            ('localhost', self.port)))
 
         sock.sendall('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U')
         first_resp = sock.recv(1024)
@@ -556,7 +562,6 @@ class TestWebSocketSSL(_TestBase):
         greenio.shutdown_safe(sock)
         sock.close()
         eventlet.sleep(0.01)
-
 
 
 class TestWebSocketObject(LimitedTestCase):
@@ -579,7 +584,6 @@ class TestWebSocketObject(LimitedTestCase):
         self.assertEqual(ws.wait(), None)
         self.assertEqual(ws._buf, '')
         self.assertEqual(len(ws._msgs), 0)
-
 
     def test_send_to_ws(self):
         ws = self.test_ws

@@ -21,14 +21,14 @@ MAX_HEADER_LINE = 8192
 MAX_TOTAL_HEADER_SIZE = 65536
 MINIMUM_CHUNK_SIZE = 4096
 # %(client_port)s is also available
-DEFAULT_LOG_FORMAT= ('%(client_ip)s - - [%(date_time)s] "%(request_line)s"'
-                     ' %(status_code)s %(body_length)s %(wall_seconds).6f')
+DEFAULT_LOG_FORMAT = ('%(client_ip)s - - [%(date_time)s] "%(request_line)s"'
+                      ' %(status_code)s %(body_length)s %(wall_seconds).6f')
 
 __all__ = ['server', 'format_date_time']
 
 # Weekday and month names for HTTP date/time formatting; always English!
 _weekdayname = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-_monthname = [None, # Dummy so we can use 1-based month numbers
+_monthname = [None,  # Dummy so we can use 1-based month numbers
               "Jan", "Feb", "Mar", "Apr", "May", "Jun",
               "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
@@ -85,7 +85,7 @@ class Input(object):
 
     def _do_read(self, reader, length=None):
         if self.wfile is not None:
-            ## 100 Continue
+            # 100 Continue
             self.wfile.write(self.wfile_line)
             self.wfile = None
             self.wfile_line = None
@@ -105,7 +105,7 @@ class Input(object):
 
     def _chunked_read(self, rfile, length=None, use_readline=False):
         if self.wfile is not None:
-            ## 100 Continue
+            # 100 Continue
             self.wfile.write(self.wfile_line)
             self.wfile = None
             self.wfile_line = None
@@ -221,7 +221,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.wfile = socket._fileobject(conn, "wb", self.wbufsize)
             else:
                 # it's a SSLObject, or a martian
-                raise NotImplementedError("wsgi.py doesn't support sockets "\
+                raise NotImplementedError("wsgi.py doesn't support sockets "
                                           "of type %s" % type(conn))
 
     def handle_one_request(self):
@@ -325,13 +325,13 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 client_conn = self.headers.get('Connection', '').lower()
                 send_keep_alive = False
                 if self.close_connection == 0 and \
-                   self.server.keepalive and (client_conn == 'keep-alive' or \
-                    (self.request_version == 'HTTP/1.1' and
-                     not client_conn == 'close')):
+                   self.server.keepalive and (client_conn == 'keep-alive' or
+                                              (self.request_version == 'HTTP/1.1' and
+                                               not client_conn == 'close')):
                         # only send keep-alives back to clients that sent them,
                         # it's redundant for 1.1 connections
-                        send_keep_alive = (client_conn == 'keep-alive')
-                        self.close_connection = 0
+                    send_keep_alive = (client_conn == 'keep-alive')
+                    self.close_connection = 0
                 else:
                     self.close_connection = 1
 
@@ -351,7 +351,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 # end of header writing
 
             if use_chunked[0]:
-                ## Write the chunked encoding
+                # Write the chunked encoding
                 towrite.append("%x\r\n%s\r\n" % (len(data), data))
             else:
                 towrite.append(data)
@@ -359,17 +359,18 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 _writelines(towrite)
                 length[0] = length[0] + sum(map(len, towrite))
             except UnicodeEncodeError:
-                self.server.log_message("Encountered non-ascii unicode while attempting to write wsgi response: %r" % [x for x in towrite if isinstance(x, six.text_type)])
+                self.server.log_message(
+                    "Encountered non-ascii unicode while attempting to write wsgi response: %r" % [x for x in towrite if isinstance(x, six.text_type)])
                 self.server.log_message(traceback.format_exc())
                 _writelines(
                     ["HTTP/1.1 500 Internal Server Error\r\n",
-                    "Connection: close\r\n",
-                    "Content-type: text/plain\r\n",
-                    "Content-length: 98\r\n",
-                    "Date: %s\r\n" % format_date_time(time.time()),
-                    "\r\n",
-                    ("Internal Server Error: wsgi application passed "
-                     "a unicode object to the server instead of a string.")])
+                     "Connection: close\r\n",
+                     "Content-type: text/plain\r\n",
+                     "Content-length: 98\r\n",
+                     "Date: %s\r\n" % format_date_time(time.time()),
+                     "\r\n",
+                     ("Internal Server Error: wsgi application passed "
+                      "a unicode object to the server instead of a string.")])
 
         def start_response(status, response_headers, exc_info=None):
             status_code[0] = status.split()[0]
@@ -398,7 +399,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             try:
                 result = self.application(self.environ, start_response)
                 if (isinstance(result, _AlreadyHandled)
-                    or isinstance(getattr(result, '_obj', None), _AlreadyHandled)):
+                        or isinstance(getattr(result, '_obj', None), _AlreadyHandled)):
                     self.close_connection = 1
                     return
 
@@ -441,9 +442,9 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             if hasattr(result, 'close'):
                 result.close()
             if (self.environ['eventlet.input'].chunked_input or
-                    self.environ['eventlet.input'].position \
+                    self.environ['eventlet.input'].position
                     < self.environ['eventlet.input'].content_length):
-                ## Read and discard body if there was no pending 100-continue
+                # Read and discard body if there was no pending 100-continue
                 if not self.environ['eventlet.input'].wfile:
                     # NOTE: MINIMUM_CHUNK_SIZE is used here for purpose different than chunking.
                     # We use it only cause it's at hand and has reasonable value in terms of
@@ -595,7 +596,7 @@ class Server(BaseHTTPServer.HTTPServer):
  Please, make sure you know what you are doing.
  HTTP headers names are case-insensitive per RFC standard.
  Most likely, you need to fix HTTP parsing in your client software.""",
-                DeprecationWarning, stacklevel=3)
+                          DeprecationWarning, stacklevel=3)
 
     def get_environ(self):
         d = {
@@ -740,10 +741,10 @@ def server(sock, site,
                 try:
                     pool.spawn_n(serv.process_request, client_socket)
                 except AttributeError:
-                    warnings.warn("wsgi's pool should be an instance of " \
-                        "eventlet.greenpool.GreenPool, is %s. Please convert your"\
-                        " call site to use GreenPool instead" % type(pool),
-                        DeprecationWarning, stacklevel=2)
+                    warnings.warn("wsgi's pool should be an instance of "
+                                  "eventlet.greenpool.GreenPool, is %s. Please convert your"
+                                  " call site to use GreenPool instead" % type(pool),
+                                  DeprecationWarning, stacklevel=2)
                     pool.execute_async(serv.process_request, client_socket)
             except ACCEPT_EXCEPTIONS as e:
                 if get_errno(e) not in ACCEPT_ERRNO:

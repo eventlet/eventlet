@@ -11,7 +11,7 @@ from socket import error as SocketError
 
 try:
     from hashlib import md5, sha1
-except ImportError: #pragma NO COVER
+except ImportError:  # pragma NO COVER
     from md5 import md5
     from sha import sha as sha1
 
@@ -72,6 +72,7 @@ class WebSocketWSGI(object):
     function.  Note that the server will log the websocket request at
     the time of closure.
     """
+
     def __init__(self, handler):
         self.handler = handler
         self.protocol_version = None
@@ -171,8 +172,8 @@ class WebSocketWSGI(object):
                                "Connection: Upgrade\r\n"
                                "WebSocket-Origin: %s\r\n"
                                "WebSocket-Location: %s\r\n\r\n" % (
-                    environ.get('HTTP_ORIGIN'),
-                    location))
+                                   environ.get('HTTP_ORIGIN'),
+                                   location))
         elif self.protocol_version == 76:
             handshake_reply = ("HTTP/1.1 101 WebSocket Protocol Handshake\r\n"
                                "Upgrade: WebSocket\r\n"
@@ -181,11 +182,11 @@ class WebSocketWSGI(object):
                                "Sec-WebSocket-Protocol: %s\r\n"
                                "Sec-WebSocket-Location: %s\r\n"
                                "\r\n%s" % (
-                    environ.get('HTTP_ORIGIN'),
-                    environ.get('HTTP_SEC_WEBSOCKET_PROTOCOL', 'default'),
-                    location,
-                    response))
-        else: #pragma NO COVER
+                                   environ.get('HTTP_ORIGIN'),
+                                   environ.get('HTTP_SEC_WEBSOCKET_PROTOCOL', 'default'),
+                                   location,
+                                   response))
+        else:  # pragma NO COVER
             raise ValueError("Unknown WebSocket protocol version.")
         sock.sendall(handshake_reply)
         return WebSocket(sock, environ, self.protocol_version)
@@ -215,7 +216,7 @@ class WebSocketWSGI(object):
                     negotiated_protocol = p
                     break
         #extensions = environ.get('HTTP_SEC_WEBSOCKET_EXTENSIONS', None)
-        #if extensions:
+        # if extensions:
         #    extensions = [i.strip() for i in extensions.split(',')]
 
         key = environ['HTTP_SEC_WEBSOCKET_KEY']
@@ -245,6 +246,7 @@ class WebSocketWSGI(object):
                 spaces += 1
         return int(out) / spaces
 
+
 class WebSocket(object):
     """A websocket object that handles the details of
     serialization/deserialization to the socket.
@@ -264,6 +266,7 @@ class WebSocket(object):
         The full WSGI environment for this request.
 
     """
+
     def __init__(self, sock, environ, version=76):
         """
         :param socket: The eventlet socket
@@ -310,10 +313,10 @@ class WebSocket(object):
             if frame_type == 0:
                 # Normal message.
                 end_idx = buf.find("\xFF")
-                if end_idx == -1: #pragma NO COVER
+                if end_idx == -1:  # pragma NO COVER
                     break
                 msgs.append(buf[1:end_idx].decode('utf-8', 'replace'))
-                buf = buf[end_idx+1:]
+                buf = buf[end_idx + 1:]
             elif frame_type == 255:
                 # Closing handshake.
                 assert ord(buf[1]) == 0, "Unexpected closing handshake: %r" % buf
@@ -367,7 +370,7 @@ class WebSocket(object):
             except SocketError:
                 # Sometimes, like when the remote side cuts off the connection,
                 # we don't care about this.
-                if not ignore_send_errors: #pragma NO COVER
+                if not ignore_send_errors:  # pragma NO COVER
                     raise
             self.websocket_closed = True
 

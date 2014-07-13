@@ -262,9 +262,9 @@ class TestHttpd(_TestBase):
         fd.flush()
         result = fd.read()
         fd.close()
-        ## The server responds with the maximum version it supports
+        # The server responds with the maximum version it supports
         assert result.startswith('HTTP'), result
-        assert result.endswith('hello world')
+        assert result.endswith('hello world'), result
 
     def test_002_keepalive(self):
         sock = eventlet.connect(
@@ -445,7 +445,8 @@ class TestHttpd(_TestBase):
 
         sock = eventlet.connect(('localhost', self.port))
         sock = eventlet.wrap_ssl(sock)
-        sock.write(b'POST /foo HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\nContent-length:3\r\n\r\nabc')
+        sock.write(
+            b'POST /foo HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\nContent-length:3\r\n\r\nabc')
         result = sock.read(8192)
         self.assertEqual(result[-3:], 'abc')
 
@@ -750,7 +751,8 @@ class TestHttpd(_TestBase):
         result = read_http(sock)
         self.assertEqual(result.status, 'HTTP/1.1 417 Expectation Failed')
         self.assertEqual(result.body, 'failure')
-        fd.write(b'PUT / HTTP/1.1\r\nHost: localhost\r\nContent-length: 7\r\nExpect: 100-continue\r\n\r\ntesting')
+        fd.write(
+            b'PUT / HTTP/1.1\r\nHost: localhost\r\nContent-length: 7\r\nExpect: 100-continue\r\n\r\ntesting')
         fd.flush()
         header_lines = []
         while True:
@@ -1448,7 +1450,8 @@ class TestChunkedInput(_TestBase):
 
     def test_chunked_readline(self):
         body = self.body()
-        req = "POST /lines HTTP/1.1\r\nContent-Length: %s\r\ntransfer-encoding: Chunked\r\n\r\n%s" % (len(body), body)
+        req = "POST /lines HTTP/1.1\r\nContent-Length: %s\r\ntransfer-encoding: Chunked\r\n\r\n%s" % (
+            len(body), body)
 
         fd = self.connect()
         fd.sendall(req.encode())
