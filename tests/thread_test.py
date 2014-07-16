@@ -1,11 +1,11 @@
 import gc
 import weakref
 
-from eventlet.green import thread
-from eventlet import greenthread
-from eventlet import event
 import eventlet
 from eventlet import corolocal
+from eventlet import event
+from eventlet import greenthread
+from eventlet.green import thread
 from eventlet.support import six
 
 from tests import LimitedTestCase, skipped
@@ -29,25 +29,28 @@ class Locals(LimitedTestCase):
         tls = thread._local()
         g_ids = []
         evt = event.Event()
+
         def setter(tls, v):
             g_id = id(greenthread.getcurrent())
             g_ids.append(g_id)
             tls.value = v
             evt.wait()
+
         thread.start_new_thread(setter, args=(tls, 1))
         thread.start_new_thread(setter, args=(tls, 2))
         eventlet.sleep()
         objs = object.__getattribute__(tls, "__objs")
-        self.failUnlessEqual(sorted(g_ids), sorted(objs.keys()))
-        self.failUnlessEqual(objs[g_ids[0]]['value'], 1)
-        self.failUnlessEqual(objs[g_ids[1]]['value'], 2)
-        self.failUnlessRaises(AttributeError, lambda: tls.value)
+        assert sorted(g_ids) == sorted(objs.keys())
+        assert objs[g_ids[0]]['value'] == 1
+        assert objs[g_ids[1]]['value'] == 2
+        assert getattr(tls, 'value', None) is None
         evt.send("done")
         eventlet.sleep()
 
     def test_assignment(self):
         my_local = corolocal.local()
         my_local.a = 1
+
         def do_something():
             my_local.b = 2
             self.assertEqual(my_local.b, 2)
@@ -56,23 +59,25 @@ class Locals(LimitedTestCase):
                 self.fail()
             except AttributeError:
                 pass
+
         eventlet.spawn(do_something).wait()
         self.assertEqual(my_local.a, 1)
 
     def test_calls_init(self):
         init_args = []
+
         class Init(corolocal.local):
             def __init__(self, *args):
                 init_args.append((args, eventlet.getcurrent()))
 
-        my_local = Init(1,2,3)
-        self.assertEqual(init_args[0][0], (1,2,3))
+        my_local = Init(1, 2, 3)
+        self.assertEqual(init_args[0][0], (1, 2, 3))
         self.assertEqual(init_args[0][1], eventlet.getcurrent())
 
         def do_something():
             my_local.foo = 'bar'
             self.assertEqual(len(init_args), 2, init_args)
-            self.assertEqual(init_args[1][0], (1,2,3))
+            self.assertEqual(init_args[1][0], (1, 2, 3))
             self.assertEqual(init_args[1][1], eventlet.getcurrent())
 
         eventlet.spawn(do_something).wait()
@@ -98,8 +103,10 @@ class Locals(LimitedTestCase):
     def test_no_leaking(self):
         refs = weakref.WeakKeyDictionary()
         my_local = corolocal.local()
+
         class X(object):
             pass
+
         def do_something(i):
             o = X()
             refs[o] = True

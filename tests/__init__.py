@@ -185,18 +185,14 @@ class LimitedTestCase(unittest.TestCase):
         verify_hub_empty()
 
     def assert_less_than(self, a, b, msg=None):
-        if msg:
-            self.assert_(a < b, msg)
-        else:
-            self.assert_(a < b, "%s not less than %s" % (a, b))
+        msg = msg or "%s not less than %s" % (a, b)
+        assert a < b, msg
 
     assertLessThan = assert_less_than
 
     def assert_less_than_equal(self, a, b, msg=None):
-        if msg:
-            self.assert_(a <= b, msg)
-        else:
-            self.assert_(a <= b, "%s not less than or equal to %s" % (a, b))
+        msg = msg or "%s not less than or equal to %s" % (a, b)
+        assert a <= b, msg
 
     assertLessThanEqual = assert_less_than_equal
 

@@ -36,10 +36,10 @@ wsapp = WebSocketWSGI(handle)
 
 class TestWebSocket(_TestBase):
     TEST_TIMEOUT = 5
-    
+
     def set_site(self):
         self.site = wsapp
-    
+
     def test_incorrect_headers(self):
         def raiser():
             try:
@@ -81,7 +81,7 @@ class TestWebSocket(_TestBase):
         self.assertEqual(resp.status, 400)
         self.assertEqual(resp.getheader('connection'), 'close')
         self.assertEqual(resp.read(), '')
-        
+
         # Now, miss off key2
         headers = dict(kv.split(': ') for kv in [
                 "Upgrade: WebSocket",
@@ -146,8 +146,8 @@ class TestWebSocket(_TestBase):
                                       'Sec-WebSocket-Origin: http://localhost:%s' % self.port,
                                       'Sec-WebSocket-Protocol: ws',
                                       'Sec-WebSocket-Location: ws://localhost:%s/echo\r\n\r\n8jKS\'y:G*Co,Wxa-' % self.port]))
-                                      
-                                      
+
+
     def test_query_string(self):
         # verify that the query string comes out the other side unscathed
         connect = [
@@ -197,7 +197,7 @@ class TestWebSocket(_TestBase):
                                       'Sec-WebSocket-Origin: http://localhost:%s' % self.port,
                                       'Sec-WebSocket-Protocol: ws',
                                       'Sec-WebSocket-Location: ws://localhost:%s/echo?\r\n\r\n8jKS\'y:G*Co,Wxa-' % self.port]))
-                                    
+
 
     def test_sending_messages_to_websocket_75(self):
         connect = [
@@ -330,7 +330,7 @@ class TestWebSocket(_TestBase):
         resp = sock.recv(1024)  # get the headers
         sock.close()  # close while the app is running
         done_with_request.wait()
-        self.assert_(not error_detected[0])
+        assert not error_detected[0]
 
     def test_breaking_the_connection_76(self):
         error_detected = [False]
@@ -363,8 +363,8 @@ class TestWebSocket(_TestBase):
         resp = sock.recv(1024)  # get the headers
         sock.close()  # close while the app is running
         done_with_request.wait()
-        self.assert_(not error_detected[0])
-    
+        assert not error_detected[0]
+
     def test_client_closing_connection_76(self):
         error_detected = [False]
         done_with_request = event.Event()
@@ -396,8 +396,8 @@ class TestWebSocket(_TestBase):
         resp = sock.recv(1024)  # get the headers
         sock.sendall('\xff\x00') # "Close the connection" packet.
         done_with_request.wait()
-        self.assert_(not error_detected[0])
-    
+        assert not error_detected[0]
+
     def test_client_invalid_packet_76(self):
         error_detected = [False]
         done_with_request = event.Event()
@@ -429,8 +429,8 @@ class TestWebSocket(_TestBase):
         resp = sock.recv(1024)  # get the headers
         sock.sendall('\xef\x00') # Weird packet.
         done_with_request.wait()
-        self.assert_(error_detected[0])
-    
+        assert error_detected[0]
+
     def test_server_closing_connect_76(self):
         connect = [
                 "GET / HTTP/1.1",
@@ -479,7 +479,7 @@ class TestWebSocket(_TestBase):
         sock.sendall('\r\n'.join(connect) + '\r\n\r\n')
         resp = sock.recv(1024)
         done_with_request.wait()
-        self.assert_(error_detected[0])
+        assert error_detected[0]
 
     def test_app_socket_errors_76(self):
         error_detected = [False]
@@ -511,7 +511,7 @@ class TestWebSocket(_TestBase):
         sock.sendall('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U')
         resp = sock.recv(1024)
         done_with_request.wait()
-        self.assert_(error_detected[0])
+        assert error_detected[0]
 
 
 class TestWebSocketSSL(_TestBase):
@@ -521,7 +521,7 @@ class TestWebSocketSSL(_TestBase):
     @skip_if_no_ssl
     def test_ssl_sending_messages(self):
         s = eventlet.wrap_ssl(eventlet.listen(('localhost', 0)),
-                              certfile=certificate_file, 
+                              certfile=certificate_file,
                               keyfile=private_key_file,
                               server_side=True)
         self.spawn_server(sock=s)
@@ -541,9 +541,9 @@ class TestWebSocketSSL(_TestBase):
         sock.sendall('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U')
         first_resp = sock.recv(1024)
         # make sure it sets the wss: protocol on the location header
-        loc_line = [x for x in first_resp.split("\r\n") 
+        loc_line = [x for x in first_resp.split("\r\n")
                     if x.lower().startswith('sec-websocket-location')][0]
-        self.assert_("wss://localhost" in loc_line, 
+        self.assert_("wss://localhost" in loc_line,
                      "Expecting wss protocol in location: %s" % loc_line)
         sock.sendall('\x00hello\xFF')
         result = sock.recv(1024)
@@ -584,11 +584,11 @@ class TestWebSocketObject(LimitedTestCase):
     def test_send_to_ws(self):
         ws = self.test_ws
         ws.send(u'hello')
-        self.assert_(ws.socket.sendall.called_with("\x00hello\xFF"))
+        assert ws.socket.sendall.called_with("\x00hello\xFF")
         ws.send(10)
-        self.assert_(ws.socket.sendall.called_with("\x0010\xFF"))
+        assert ws.socket.sendall.called_with("\x0010\xFF")
 
     def test_close_ws(self):
         ws = self.test_ws
         ws.close()
-        self.assert_(ws.socket.shutdown.called_with(True))
+        assert ws.socket.shutdown.called_with(True)

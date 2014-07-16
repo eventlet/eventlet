@@ -76,7 +76,7 @@ class TestGreenSocket(LimitedTestCase):
             gs.connect(('192.0.2.1', 80))
             self.fail("socket.timeout not raised")
         except socket.timeout as e:
-            self.assert_(hasattr(e, 'args'))
+            assert hasattr(e, 'args')
             self.assertEqual(e.args[0], 'timed out')
         except socket.error as e:
             # unreachable is also a valid outcome
@@ -94,7 +94,7 @@ class TestGreenSocket(LimitedTestCase):
             gs.accept()
             self.fail("socket.timeout not raised")
         except socket.timeout as e:
-            self.assert_(hasattr(e, 'args'))
+            assert hasattr(e, 'args')
             self.assertEqual(e.args[0], 'timed out')
 
     def test_connect_ex_timeout(self):
@@ -130,7 +130,7 @@ class TestGreenSocket(LimitedTestCase):
             client.recv(8192)
             self.fail("socket.timeout not raised")
         except socket.timeout as e:
-            self.assert_(hasattr(e, 'args'))
+            assert hasattr(e, 'args')
             self.assertEqual(e.args[0], 'timed out')
 
         evt.send()
@@ -146,7 +146,7 @@ class TestGreenSocket(LimitedTestCase):
             gs.recvfrom(8192)
             self.fail("socket.timeout not raised")
         except socket.timeout as e:
-            self.assert_(hasattr(e, 'args'))
+            assert hasattr(e, 'args')
             self.assertEqual(e.args[0], 'timed out')
 
     def test_recvfrom_into_timeout(self):
@@ -161,7 +161,7 @@ class TestGreenSocket(LimitedTestCase):
             gs.recvfrom_into(buf)
             self.fail("socket.timeout not raised")
         except socket.timeout as e:
-            self.assert_(hasattr(e, 'args'))
+            assert hasattr(e, 'args')
             self.assertEqual(e.args[0], 'timed out')
 
     def test_recv_into_timeout(self):
@@ -191,7 +191,7 @@ class TestGreenSocket(LimitedTestCase):
             client.recv_into(buf)
             self.fail("socket.timeout not raised")
         except socket.timeout as e:
-            self.assert_(hasattr(e, 'args'))
+            assert hasattr(e, 'args')
             self.assertEqual(e.args[0], 'timed out')
 
         evt.send()
@@ -226,7 +226,7 @@ class TestGreenSocket(LimitedTestCase):
                 total_sent += client.send(msg)
             self.fail("socket.timeout not raised")
         except socket.timeout as e:
-            self.assert_(hasattr(e, 'args'))
+            assert hasattr(e, 'args')
             self.assertEqual(e.args[0], 'timed out')
 
         evt.send()
@@ -259,7 +259,7 @@ class TestGreenSocket(LimitedTestCase):
             client.sendall(msg)
             self.fail("socket.timeout not raised")
         except socket.timeout as e:
-            self.assert_(hasattr(e, 'args'))
+            assert hasattr(e, 'args')
             self.assertEqual(e.args[0], 'timed out')
 
         evt.send()
@@ -524,7 +524,7 @@ class TestGreenSocket(LimitedTestCase):
             try:
                 while True:
                     data = client.recv(1024)
-                    self.assert_(data)
+                    assert data
             except socket.error as e:
                 # we get an EBADF because client is closed in the same process
                 # (but a different greenthread)
@@ -776,8 +776,8 @@ class TestGreenIoLong(LimitedTestCase):
         client.close()
         server_coro.wait()
         listener.close()
-        self.assert_(len(results1) > 0)
-        self.assert_(len(results2) > 0)
+        assert len(results1) > 0
+        assert len(results2) > 0
         debug.hub_prevent_multiple_readers()
 
     @skipped  # by rdw because it fails but it's not clear how to make it pass

@@ -215,7 +215,7 @@ class TestHubSelection(LimitedTestCase):
         oldhub = hubs.get_hub()
         try:
             hubs.use_hub(Foo)
-            self.assert_(isinstance(hubs.get_hub(), Foo), hubs.get_hub())
+            assert isinstance(hubs.get_hub(), Foo), hubs.get_hub()
         finally:
             hubs._threadlocal.hub = oldhub
 
@@ -282,7 +282,7 @@ except eventlet.Timeout:
         os.kill(p.pid, signal.SIGCONT)
         output, _ = p.communicate()
         lines = output.decode('utf-8', 'replace').splitlines()
-        self.assert_("exited correctly" in lines[-1], output)
+        assert "exited correctly" in lines[-1], output
         shutil.rmtree(self.tempdir)
 
 

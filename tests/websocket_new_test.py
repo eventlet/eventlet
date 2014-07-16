@@ -159,7 +159,7 @@ class TestWebSocket(_TestBase):
         resp = sock.recv(1024)  # get the headers
         sock.close()  # close while the app is running
         done_with_request.wait()
-        self.assert_(not error_detected[0])
+        assert not error_detected[0]
 
     def test_client_closing_connection_13(self):
         error_detected = [False]
@@ -191,7 +191,7 @@ class TestWebSocket(_TestBase):
         closeframe = struct.pack('!BBIH', 1 << 7 | 8, 1 << 7 | 2, 0, 1000)
         sock.sendall(closeframe)  # "Close the connection" packet.
         done_with_request.wait()
-        self.assert_(not error_detected[0])
+        assert not error_detected[0]
 
     def test_client_invalid_packet_13(self):
         error_detected = [False]
@@ -222,4 +222,4 @@ class TestWebSocket(_TestBase):
         resp = sock.recv(1024)  # get the headers
         sock.sendall('\x07\xff') # Weird packet.
         done_with_request.wait()
-        self.assert_(not error_detected[0])
+        assert not error_detected[0]

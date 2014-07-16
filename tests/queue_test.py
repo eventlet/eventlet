@@ -62,7 +62,7 @@ class TestQueue(LimitedTestCase):
         evt = event.Event()
         gt = eventlet.spawn(sender, evt, q)
         eventlet.sleep(0)
-        self.assert_(not evt.ready())
+        assert not evt.ready()
         gt2 = eventlet.spawn(receiver, q)
         self.assertEqual(gt2.wait(),'hi')
         self.assertEqual(evt.wait(),'done')
@@ -77,10 +77,10 @@ class TestQueue(LimitedTestCase):
         evt = event.Event()
         gt = eventlet.spawn(sender, evt, q)
         eventlet.sleep(0)
-        self.assert_(not evt.ready())
+        assert not evt.ready()
         q.resize(1)
         eventlet.sleep(0)
-        self.assert_(evt.ready())
+        assert evt.ready()
         gt.wait()
 
     def test_resize_down(self):
@@ -117,7 +117,7 @@ class TestQueue(LimitedTestCase):
         sendings = ['1', '2', '3', '4']
         gts = [eventlet.spawn(q.get)
                 for x in sendings]
-                
+
         eventlet.sleep(0.01) # get 'em all waiting
 
         q.put(sendings[0])
@@ -165,7 +165,7 @@ class TestQueue(LimitedTestCase):
         self.assertEqual(gt1.wait(), 'timed out')
         self.assertEqual(gt2.wait(), 'timed out')
         self.assertEqual(q.get(), 'sent')
-                
+
     def test_waiting(self):
         q = eventlet.Queue()
         gt1 = eventlet.spawn(q.get)
@@ -234,7 +234,7 @@ class TestQueue(LimitedTestCase):
         # NOTE: we don't guarantee that waiters are served in order
         results = sorted([w1.wait(), w2.wait(), w3.wait()])
         self.assertEqual(results, [1,2,3])
-        
+
     def test_channel_sender_timing_out(self):
         from eventlet import queue
         c = eventlet.Queue(0)

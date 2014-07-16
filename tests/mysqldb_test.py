@@ -125,7 +125,7 @@ class TestMySQLdb(LimitedTestCase):
         self.assertEqual(len(rows), 1)
         self.assertEqual(len(rows[0]), 1)
         self.assertEqual(rows[0][0], 1)
-        self.assert_(counter[0] > 0, counter[0])
+        assert counter[0] > 0, counter[0]
         gt.kill()
 
     def assert_cursor_works(self, cursor):
@@ -145,10 +145,10 @@ class TestMySQLdb(LimitedTestCase):
         for key in dir(orig):
             if key not in ('__author__', '__path__', '__revision__',
                            '__version__', '__loader__'):
-                self.assert_(hasattr(MySQLdb, key), "%s %s" % (key, getattr(orig, key)))
+                assert hasattr(MySQLdb, key), "%s %s" % (key, getattr(orig, key))
 
     def test_connecting(self):
-        self.assert_(self.connection is not None)
+        assert self.connection is not None
 
     def test_connecting_annoyingly(self):
         self.assert_connection_works(MySQLdb.Connect(**self._auth))
@@ -168,7 +168,7 @@ class TestMySQLdb(LimitedTestCase):
         cursor = self.connection.cursor()
         try:
             cursor.execute("garbage blah blah")
-            self.assert_(False)
+            assert False
         except AssertionError:
             raise
         except Exception:

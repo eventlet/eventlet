@@ -68,14 +68,14 @@ class ImportPatched(ProcessBase):
         self.write_to_tempfile("patching", patching_module_contents)
         self.write_to_tempfile("importing", import_module_contents)
         output, lines = self.launch_subprocess('importing.py')
-        self.assert_(lines[0].startswith('patcher'), repr(output))
-        self.assert_(lines[1].startswith('base'), repr(output))
-        self.assert_(lines[2].startswith('importing'), repr(output))
-        self.assert_('eventlet.green.socket' in lines[1], repr(output))
-        self.assert_('eventlet.green.urllib' in lines[1], repr(output))
-        self.assert_('eventlet.green.socket' in lines[2], repr(output))
-        self.assert_('eventlet.green.urllib' in lines[2], repr(output))
-        self.assert_('eventlet.green.httplib' not in lines[2], repr(output))
+        assert lines[0].startswith('patcher'), repr(output)
+        assert lines[1].startswith('base'), repr(output)
+        assert lines[2].startswith('importing'), repr(output)
+        assert 'eventlet.green.socket' in lines[1], repr(output)
+        assert 'eventlet.green.urllib' in lines[1], repr(output)
+        assert 'eventlet.green.socket' in lines[2], repr(output)
+        assert 'eventlet.green.urllib' in lines[2], repr(output)
+        assert 'eventlet.green.httplib' not in lines[2], repr(output)
 
     def test_import_patched_defaults(self):
         self.write_to_tempfile("base", base_module_contents)
@@ -86,10 +86,10 @@ print("newmod {0} {1} {2}".format(base, base.socket, base.urllib.socket.socket))
 """
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod.py')
-        self.assert_(lines[0].startswith('base'), repr(output))
-        self.assert_(lines[1].startswith('newmod'), repr(output))
-        self.assert_('eventlet.green.socket' in lines[1], repr(output))
-        self.assert_('GreenSocket' in lines[1], repr(output))
+        assert lines[0].startswith('base'), repr(output)
+        assert lines[1].startswith('newmod'), repr(output)
+        assert 'eventlet.green.socket' in lines[1], repr(output)
+        assert 'GreenSocket' in lines[1], repr(output)
 
 
 class MonkeyPatch(ProcessBase):
@@ -103,7 +103,7 @@ print("newmod {0} {1}".format(socket.socket, urllib.socket.socket))
 """
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod.py')
-        self.assert_(lines[0].startswith('newmod'), repr(output))
+        assert lines[0].startswith('newmod'), repr(output)
         self.assertEqual(lines[0].count('GreenSocket'), 2, repr(output))
 
     def test_early_patching(self):
@@ -117,7 +117,7 @@ print("newmod")
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod.py')
         self.assertEqual(len(lines), 2, repr(output))
-        self.assert_(lines[0].startswith('newmod'), repr(output))
+        assert lines[0].startswith('newmod'), repr(output)
 
     def test_late_patching(self):
         new_mod = """
@@ -131,7 +131,7 @@ print("newmod")
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod.py')
         self.assertEqual(len(lines), 2, repr(output))
-        self.assert_(lines[0].startswith('newmod'), repr(output))
+        assert lines[0].startswith('newmod'), repr(output)
 
     def test_typeerror(self):
         new_mod = """
@@ -140,8 +140,8 @@ patcher.monkey_patch(finagle=True)
 """
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod.py')
-        self.assert_(lines[-2].startswith('TypeError'), repr(output))
-        self.assert_('finagle' in lines[-2], repr(output))
+        assert lines[-2].startswith('TypeError'), repr(output)
+        assert 'finagle' in lines[-2], repr(output)
 
     def assert_boolean_logic(self, call, expected, not_expected=''):
         expected_list = ", ".join(['"%s"' % x for x in expected.split(',') if len(x)])
@@ -158,7 +158,7 @@ print("already_patched {0}".format(",".join(sorted(patcher.already_patched.keys(
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod.py')
         ap = 'already_patched'
-        self.assert_(lines[0].startswith(ap), repr(output))
+        assert lines[0].startswith(ap), repr(output)
         patched_modules = lines[0][len(ap):].strip()
         # psycopg might or might not be patched based on installed modules
         patched_modules = patched_modules.replace("psycopg,", "")
@@ -245,9 +245,9 @@ tpool.killall()
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod.py')
         self.assertEqual(len(lines), 3, output)
-        self.assert_(lines[0].startswith('newmod'), repr(output))
-        self.assert_('2' in lines[0], repr(output))
-        self.assert_('3' in lines[1], repr(output))
+        assert lines[0].startswith('newmod'), repr(output)
+        assert '2' in lines[0], repr(output)
+        assert '3' in lines[1], repr(output)
 
     @skip_with_pyevent
     def test_unpatched_thread(self):
@@ -308,7 +308,7 @@ print(len(_threading._active))
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod')
         self.assertEqual(len(lines), 4, "\n".join(lines))
-        self.assert_(lines[0].startswith('<Thread'), lines[0])
+        assert lines[0].startswith('<Thread'), lines[0]
         self.assertEqual(lines[1], "1", lines[1])
         self.assertEqual(lines[2], "1", lines[2])
 
@@ -326,7 +326,7 @@ print(len(threading._active))
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod')
         self.assertEqual(len(lines), 3, "\n".join(lines))
-        self.assert_(lines[0].startswith('<_MainThread'), lines[0])
+        assert lines[0].startswith('<_MainThread'), lines[0]
         self.assertEqual(lines[1], "1", lines[1])
 
     def test_tpool(self):
@@ -342,7 +342,7 @@ print(len(threading._active))
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod')
         self.assertEqual(len(lines), 3, "\n".join(lines))
-        self.assert_(lines[0].startswith('<Thread'), lines[0])
+        assert lines[0].startswith('<Thread'), lines[0]
         self.assertEqual(lines[1], "1", lines[1])
 
     def test_greenlet(self):
@@ -361,7 +361,7 @@ print(len(threading._active))
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod')
         self.assertEqual(len(lines), 3, "\n".join(lines))
-        self.assert_(lines[0].startswith('<_MainThread'), lines[0])
+        assert lines[0].startswith('<_MainThread'), lines[0]
         self.assertEqual(lines[1], "1", lines[1])
 
     def test_greenthread(self):
@@ -377,7 +377,7 @@ print(len(threading._active))
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod')
         self.assertEqual(len(lines), 3, "\n".join(lines))
-        self.assert_(lines[0].startswith('<_GreenThread'), lines[0])
+        assert lines[0].startswith('<_GreenThread'), lines[0]
         self.assertEqual(lines[1], "1", lines[1])
 
     def test_keyerror(self):
@@ -426,7 +426,7 @@ t2.join()
 """)
         output, lines = self.launch_subprocess('newmod')
         self.assertEqual(len(lines), 2, "\n".join(lines))
-        self.assert_(lines[0].startswith('<_GreenThread'), lines[0])
+        assert lines[0].startswith('<_GreenThread'), lines[0]
 
     def test_name(self):
         self.write_to_tempfile("newmod", self.prologue + """

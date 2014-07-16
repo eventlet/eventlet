@@ -263,8 +263,8 @@ class TestHttpd(_TestBase):
         result = fd.read()
         fd.close()
         ## The server responds with the maximum version it supports
-        self.assert_(result.startswith('HTTP'), result)
-        self.assert_(result.endswith('hello world'))
+        assert result.startswith('HTTP'), result
+        assert result.endswith('hello world')
 
     def test_002_keepalive(self):
         sock = eventlet.connect(
@@ -388,7 +388,7 @@ class TestHttpd(_TestBase):
         fd = sock.makefile('rw')
         fd.write('GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
         fd.flush()
-        self.assert_('Transfer-Encoding: chunked' in fd.read())
+        assert 'Transfer-Encoding: chunked' in fd.read()
 
     def test_010_no_chunked_http_1_0(self):
         self.site.application = chunked_app
@@ -398,7 +398,7 @@ class TestHttpd(_TestBase):
         fd = sock.makefile('rw')
         fd.write('GET / HTTP/1.0\r\nHost: localhost\r\nConnection: close\r\n\r\n')
         fd.flush()
-        self.assert_('Transfer-Encoding: chunked' not in fd.read())
+        assert 'Transfer-Encoding: chunked' not in fd.read()
 
     def test_011_multiple_chunks(self):
         self.site.application = big_chunks
@@ -415,7 +415,7 @@ class TestHttpd(_TestBase):
                 break
             else:
                 headers += line
-        self.assert_('Transfer-Encoding: chunked' in headers)
+        assert 'Transfer-Encoding: chunked' in headers
         chunks = 0
         chunklen = int(fd.readline(), 16)
         while chunklen:
@@ -423,7 +423,7 @@ class TestHttpd(_TestBase):
             fd.read(chunklen)
             fd.readline()  # CRLF
             chunklen = int(fd.readline(), 16)
-        self.assert_(chunks > 1)
+        assert chunks > 1
         response = fd.read()
         # Require a CRLF to close the message body
         self.assertEqual(response, '\r\n')
@@ -481,7 +481,7 @@ class TestHttpd(_TestBase):
             if fd.readline() == '\r\n':
                 break
         response = fd.read()
-        self.assert_(response == 'oh hai', 'invalid response %s' % response)
+        assert response == 'oh hai', 'invalid response %s' % response
 
         sock = eventlet.connect(('localhost', self.port))
         fd = sock.makefile('rw')
@@ -493,7 +493,7 @@ class TestHttpd(_TestBase):
             if fd.readline() == '\r\n':
                 break
         response = fd.read()
-        self.assert_(response == 'oh hai', 'invalid response %s' % response)
+        assert response == 'oh hai', 'invalid response %s' % response
 
         sock = eventlet.connect(('localhost', self.port))
         fd = sock.makefile('rw')
@@ -505,7 +505,7 @@ class TestHttpd(_TestBase):
             if fd.readline() == '\r\n':
                 break
         response = fd.read(8192)
-        self.assert_(response == 'oh hai', 'invalid response %s' % response)
+        assert response == 'oh hai', 'invalid response %s' % response
 
     def test_015_write(self):
         self.site.application = use_write
@@ -514,15 +514,15 @@ class TestHttpd(_TestBase):
         fd.write('GET /a HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
         fd.flush()
         result1 = read_http(sock)
-        self.assert_('content-length' in result1.headers_lower)
+        assert 'content-length' in result1.headers_lower
 
         sock = eventlet.connect(('localhost', self.port))
         fd = sock.makefile('w')
         fd.write('GET /b HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
         fd.flush()
         result2 = read_http(sock)
-        self.assert_('transfer-encoding' in result2.headers_lower)
-        self.assert_(result2.headers_lower['transfer-encoding'] == 'chunked')
+        assert 'transfer-encoding' in result2.headers_lower
+        assert result2.headers_lower['transfer-encoding'] == 'chunked'
 
     def test_016_repeated_content_length(self):
         """
@@ -580,7 +580,7 @@ class TestHttpd(_TestBase):
         client.close()
 
         success = server_coro.wait()
-        self.assert_(success)
+        assert success
 
     def test_018_http_10_keepalive(self):
         # verify that if an http/1.0 client sends connection: keep-alive
@@ -593,13 +593,13 @@ class TestHttpd(_TestBase):
         fd.flush()
 
         result1 = read_http(sock)
-        self.assert_('connection' in result1.headers_lower)
+        assert 'connection' in result1.headers_lower
         self.assertEqual('keep-alive', result1.headers_lower['connection'])
         # repeat request to verify connection is actually still open
         fd.write('GET / HTTP/1.0\r\nHost: localhost\r\nConnection: keep-alive\r\n\r\n')
         fd.flush()
         result2 = read_http(sock)
-        self.assert_('connection' in result2.headers_lower)
+        assert 'connection' in result2.headers_lower
         self.assertEqual('keep-alive', result2.headers_lower['connection'])
         sock.close()
 
@@ -621,7 +621,7 @@ class TestHttpd(_TestBase):
                  '2\r\noh\r\n'
                  '4\r\n hai\r\n0\r\n\r\n')
         fd.flush()
-        self.assert_('hello!' in fd.read())
+        assert 'hello!' in fd.read()
 
     def test_020_x_forwarded_for(self):
         request_bytes = (
@@ -633,7 +633,7 @@ class TestHttpd(_TestBase):
         sock.sendall(request_bytes)
         sock.recv(1024)
         sock.close()
-        self.assert_('1.2.3.4,5.6.7.8,127.0.0.1' in self.logfile.getvalue())
+        assert '1.2.3.4,5.6.7.8,127.0.0.1' in self.logfile.getvalue()
 
         # turning off the option should work too
         self.logfile = six.StringIO()
@@ -643,9 +643,9 @@ class TestHttpd(_TestBase):
         sock.sendall(request_bytes)
         sock.recv(1024)
         sock.close()
-        self.assert_('1.2.3.4' not in self.logfile.getvalue())
-        self.assert_('5.6.7.8' not in self.logfile.getvalue())
-        self.assert_('127.0.0.1' in self.logfile.getvalue())
+        assert '1.2.3.4' not in self.logfile.getvalue()
+        assert '5.6.7.8' not in self.logfile.getvalue()
+        assert '127.0.0.1' in self.logfile.getvalue()
 
     def test_socket_remains_open(self):
         greenthread.kill(self.killer)
@@ -659,8 +659,8 @@ class TestHttpd(_TestBase):
         fd.flush()
         result = fd.read(1024)
         fd.close()
-        self.assert_(result.startswith('HTTP'), result)
-        self.assert_(result.endswith('hello world'))
+        assert result.startswith('HTTP'), result
+        assert result.endswith('hello world')
 
         # shut down the server and verify the server_socket fd is still open,
         # but the actual socketobject passed in to wsgi.server is closed
@@ -678,8 +678,8 @@ class TestHttpd(_TestBase):
         fd.flush()
         result = fd.read(1024)
         fd.close()
-        self.assert_(result.startswith('HTTP'), result)
-        self.assert_(result.endswith('hello world'))
+        assert result.startswith('HTTP'), result
+        assert result.endswith('hello world')
 
     def test_021_environ_clobbering(self):
         def clobberin_time(environ, start_response):
@@ -701,7 +701,7 @@ class TestHttpd(_TestBase):
                  'Connection: close\r\n'
                  '\r\n\r\n')
         fd.flush()
-        self.assert_('200 OK' in fd.read())
+        assert '200 OK' in fd.read()
 
     def test_022_custom_pool(self):
         # just test that it accepts the parameter for now
@@ -718,8 +718,8 @@ class TestHttpd(_TestBase):
         fd.flush()
         result = fd.read()
         fd.close()
-        self.assert_(result.startswith('HTTP'), result)
-        self.assert_(result.endswith('hello world'))
+        assert result.startswith('HTTP'), result
+        assert result.endswith('hello world')
 
     def test_023_bad_content_length(self):
         sock = eventlet.connect(
@@ -729,9 +729,9 @@ class TestHttpd(_TestBase):
         fd.flush()
         result = fd.read()
         fd.close()
-        self.assert_(result.startswith('HTTP'), result)
-        self.assert_('400 Bad Request' in result)
-        self.assert_('500' not in result)
+        assert result.startswith('HTTP'), result
+        assert '400 Bad Request' in result
+        assert '500' not in result
 
     def test_024_expect_100_continue(self):
         def wsgi_app(environ, start_response):
@@ -759,7 +759,7 @@ class TestHttpd(_TestBase):
                 break
             else:
                 header_lines.append(line)
-        self.assert_(header_lines[0].startswith('HTTP/1.1 100 Continue'))
+        assert header_lines[0].startswith('HTTP/1.1 100 Continue')
         header_lines = []
         while True:
             line = fd.readline()
@@ -767,7 +767,7 @@ class TestHttpd(_TestBase):
                 break
             else:
                 header_lines.append(line)
-        self.assert_(header_lines[0].startswith('HTTP/1.1 200 OK'))
+        assert header_lines[0].startswith('HTTP/1.1 200 OK')
         self.assertEqual(fd.read(7), 'testing')
         fd.close()
         sock.close()
@@ -789,8 +789,8 @@ class TestHttpd(_TestBase):
             except socket.error as exc:
                 self.assertEqual(get_errno(exc), errno.ECONNREFUSED)
 
-            self.assert_('Invalid argument' in self.logfile.getvalue(),
-                         self.logfile.getvalue())
+            log_content = self.logfile.getvalue()
+            assert 'Invalid argument' in log_content, log_content
         finally:
             sys.stderr = old_stderr
         debug.hub_exceptions(False)
@@ -801,7 +801,7 @@ class TestHttpd(_TestBase):
         sock.sendall('GET /yo! HTTP/1.1\r\nHost: localhost\r\n\r\n')
         sock.recv(1024)
         sock.close()
-        self.assert_('\nHI GET /yo! HTTP/1.1 HI\n' in self.logfile.getvalue(), self.logfile.getvalue())
+        assert '\nHI GET /yo! HTTP/1.1 HI\n' in self.logfile.getvalue(), self.logfile.getvalue()
 
     def test_close_chunked_with_1_0_client(self):
         # verify that if we return a generator from our app
@@ -905,14 +905,14 @@ class TestHttpd(_TestBase):
             else:  # close sock prematurely
                 client.close()
             eventlet.sleep(0)  # let context switch back to server
-            self.assert_(not errored[0], errored[0])
+            assert not errored[0], errored[0]
             # make another request to ensure the server's still alive
             try:
                 client = ssl.wrap_socket(eventlet.connect(('localhost', port)))
                 client.write('GET / HTTP/1.0\r\nHost: localhost\r\n\r\n')
                 result = client.read()
-                self.assert_(result.startswith('HTTP'), result)
-                self.assert_(result.endswith('hello world'))
+                assert result.startswith('HTTP'), result
+                assert result.endswith('hello world')
             except ImportError:
                 pass  # TODO: should test with OpenSSL
             greenthread.kill(g)
@@ -1042,7 +1042,7 @@ class TestHttpd(_TestBase):
             headers.append(h)
             if h == '':
                 break
-        self.assert_('Transfer-Encoding: chunked' in ''.join(headers))
+        assert 'Transfer-Encoding: chunked' in ''.join(headers)
         # should only be one chunk of zero size with two blank lines
         # (one terminates the chunk, one terminates the body)
         self.assertEqual(response, ['0', '', ''])
@@ -1091,7 +1091,7 @@ class TestHttpd(_TestBase):
         # the test passes if we successfully get here, and read all the data
         # in spite of the early close
         self.assertEqual(read_content.wait(), 'ok')
-        self.assert_(blew_up[0])
+        assert blew_up[0]
 
     def test_exceptions_close_connection(self):
         def wsgi_app(environ, start_response):
@@ -1104,7 +1104,7 @@ class TestHttpd(_TestBase):
         result = read_http(sock)
         self.assertEqual(result.status, 'HTTP/1.1 500 Internal Server Error')
         self.assertEqual(result.headers_lower['connection'], 'close')
-        self.assert_('transfer-encoding' not in result.headers_lower)
+        assert 'transfer-encoding' not in result.headers_lower
 
     def test_unicode_raises_error(self):
         def wsgi_app(environ, start_response):
@@ -1119,7 +1119,7 @@ class TestHttpd(_TestBase):
         result = read_http(sock)
         self.assertEqual(result.status, 'HTTP/1.1 500 Internal Server Error')
         self.assertEqual(result.headers_lower['connection'], 'close')
-        self.assert_('unicode' in result.body)
+        assert 'unicode' in result.body
 
     def test_path_info_decoding(self):
         def wsgi_app(environ, start_response):
@@ -1133,8 +1133,8 @@ class TestHttpd(_TestBase):
         fd.flush()
         result = read_http(sock)
         self.assertEqual(result.status, 'HTTP/1.1 200 OK')
-        self.assert_('decoded: /a*b@@#3' in result.body)
-        self.assert_('raw: /a*b@%40%233' in result.body)
+        assert 'decoded: /a*b@@#3' in result.body
+        assert 'raw: /a*b@%40%233' in result.body
 
     def test_ipv6(self):
         try:
@@ -1174,7 +1174,7 @@ class TestHttpd(_TestBase):
         self.assertEqual(result1.status, 'HTTP/1.1 500 Internal Server Error')
         self.assertEqual(result1.body, '')
         self.assertEqual(result1.headers_lower['connection'], 'close')
-        self.assert_('transfer-encoding' not in result1.headers_lower)
+        assert 'transfer-encoding' not in result1.headers_lower
 
         # verify traceback when debugging enabled
         self.spawn_server(debug=True)
@@ -1185,11 +1185,11 @@ class TestHttpd(_TestBase):
         fd.flush()
         result2 = read_http(sock)
         self.assertEqual(result2.status, 'HTTP/1.1 500 Internal Server Error')
-        self.assert_('intentional crash' in result2.body)
-        self.assert_('RuntimeError' in result2.body)
-        self.assert_('Traceback' in result2.body)
+        assert 'intentional crash' in result2.body
+        assert 'RuntimeError' in result2.body
+        assert 'Traceback' in result2.body
         self.assertEqual(result2.headers_lower['connection'], 'close')
-        self.assert_('transfer-encoding' not in result2.headers_lower)
+        assert 'transfer-encoding' not in result2.headers_lower
 
     def test_client_disconnect(self):
         """Issue #95 Server must handle disconnect from client in the middle of response
@@ -1315,7 +1315,7 @@ class IterableAlreadyHandledTest(_TestBase):
         fd.flush()
         response_line, headers = read_headers(sock)
         self.assertEqual(response_line, 'HTTP/1.1 200 OK\r\n')
-        self.assert_('connection' not in headers)
+        assert 'connection' not in headers
         fd.write('GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
         fd.flush()
         result = read_http(sock)
@@ -1473,7 +1473,7 @@ class TestChunkedInput(_TestBase):
         except eventlet.Timeout:
             pass
         else:
-            self.assert_(False)
+            assert False
         self.yield_next_space = True
 
         with eventlet.Timeout(.1):
@@ -1496,7 +1496,7 @@ class TestChunkedInput(_TestBase):
         except eventlet.Timeout:
             pass
         else:
-            self.assert_(False)
+            assert False
 
     def test_close_before_finished(self):
         got_signal = []

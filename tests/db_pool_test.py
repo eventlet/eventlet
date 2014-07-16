@@ -74,10 +74,10 @@ class DBConnectionPool(DBTester):
     def assert_cursor_works(self, cursor):
         cursor.execute("select 1")
         rows = cursor.fetchall()
-        self.assert_(rows)
+        assert rows
 
     def test_connecting(self):
-        self.assert_(self.connection is not None)
+        assert self.connection is not None
 
     def test_create_cursor(self):
         cursor = self.connection.cursor()
@@ -92,7 +92,7 @@ class DBConnectionPool(DBTester):
         cursor = self.connection.cursor()
         try:
             cursor.execute("garbage blah blah")
-            self.assert_(False)
+            assert False
         except AssertionError:
             raise
         except Exception:
@@ -101,39 +101,39 @@ class DBConnectionPool(DBTester):
 
     def test_put_none(self):
         # the pool is of size 1, and its only connection is out
-        self.assert_(self.pool.free() == 0)
+        assert self.pool.free() == 0
         self.pool.put(None)
         # ha ha we fooled it into thinking that we had a dead process
-        self.assert_(self.pool.free() == 1)
+        assert self.pool.free() == 1
         conn2 = self.pool.get()
-        self.assert_(conn2 is not None)
-        self.assert_(conn2.cursor)
+        assert conn2 is not None
+        assert conn2.cursor
         self.pool.put(conn2)
 
     def test_close_does_a_put(self):
-        self.assert_(self.pool.free() == 0)
+        assert self.pool.free() == 0
         self.connection.close()
-        self.assert_(self.pool.free() == 1)
+        assert self.pool.free() == 1
         self.assertRaises(AttributeError, self.connection.cursor)
 
     @skipped
     def test_deletion_does_a_put(self):
         # doing a put on del causes some issues if __del__ is called in the
         # main coroutine, so, not doing that for now
-        self.assert_(self.pool.free() == 0)
+        assert self.pool.free() == 0
         self.connection = None
-        self.assert_(self.pool.free() == 1)
+        assert self.pool.free() == 1
 
     def test_put_doesnt_double_wrap(self):
         self.pool.put(self.connection)
         conn = self.pool.get()
-        self.assert_(not isinstance(conn._base, db_pool.PooledConnectionWrapper))
+        assert not isinstance(conn._base, db_pool.PooledConnectionWrapper)
         self.pool.put(conn)
 
     def test_bool(self):
-        self.assert_(self.connection)
+        assert self.connection
         self.connection.close()
-        self.assert_(not self.connection)
+        assert not self.connection
 
     def fill_up_table(self, conn):
         curs = conn.cursor()
@@ -268,7 +268,7 @@ class DBConnectionPool(DBTester):
         self.assert_(isinstance(self.connection,
                                 db_pool.GenericConnectionWrapper))
         conn = self.pool._unwrap_connection(self.connection)
-        self.assert_(not isinstance(conn, db_pool.GenericConnectionWrapper))
+        assert not isinstance(conn, db_pool.GenericConnectionWrapper)
 
         self.assertEqual(None, self.pool._unwrap_connection(None))
         self.assertEqual(None, self.pool._unwrap_connection(1))

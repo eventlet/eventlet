@@ -91,7 +91,7 @@ class TestTpool(LimitedTestCase):
         self.assertEqual(tpool.Proxy, type(prox))
         exp = prox.compile('(.)(.)(.)')
         self.assertEqual(exp.groups, 3)
-        self.assert_(repr(prox.compile))
+        assert repr(prox.compile)
 
     @skip_with_pyevent
     def test_wrap_eq(self):
@@ -100,20 +100,20 @@ class TestTpool(LimitedTestCase):
         exp2 = prox.compile(exp1.pattern)
         self.assertEqual(exp1, exp2)
         exp3 = prox.compile('/')
-        self.assert_(exp1 != exp3)
+        assert exp1 != exp3
 
     @skip_with_pyevent
     def test_wrap_ints(self):
         p = tpool.Proxy(4)
-        self.assert_(p == 4)
+        assert p == 4
 
     @skip_with_pyevent
     def test_wrap_hash(self):
         prox1 = tpool.Proxy(''+'A')
         prox2 = tpool.Proxy('A'+'')
-        self.assert_(prox1 == 'A')
-        self.assert_('A' == prox2)
-        #self.assert_(prox1 == prox2) FIXME - could __eq__ unwrap rhs if it is other proxy?
+        assert prox1 == 'A'
+        assert 'A' == prox2
+        #assert prox1 == prox2 FIXME - could __eq__ unwrap rhs if it is other proxy?
         self.assertEqual(hash(prox1), hash(prox2))
         proxList = tpool.Proxy([])
         self.assertRaises(TypeError, hash, proxList)
@@ -122,9 +122,9 @@ class TestTpool(LimitedTestCase):
     def test_wrap_nonzero(self):
         prox = tpool.Proxy(re)
         exp1 = prox.compile('.')
-        self.assert_(bool(exp1))
+        assert bool(exp1)
         prox2 = tpool.Proxy([1, 2, 3])
-        self.assert_(bool(prox2))
+        assert bool(prox2)
 
     @skip_with_pyevent
     def test_multiple_wraps(self):
@@ -178,10 +178,10 @@ class TestTpool(LimitedTestCase):
         gt = eventlet.spawn(tick)
         previtem = 0
         for item in tpool.Proxy(foo()):
-            self.assert_(item >= previtem)
+            assert item >= previtem
         # make sure the tick happened at least a few times so that we know
         # that our iterations in foo() were actually tpooled
-        self.assert_(counter[0] > 10, counter[0])
+        assert counter[0] > 10, counter[0]
         gt.kill()
 
     @skip_with_pyevent
@@ -231,31 +231,31 @@ class TestTpool(LimitedTestCase):
     @skip_with_pyevent
     def test_autowrap(self):
         x = tpool.Proxy({'a': 1, 'b': 2}, autowrap=(int,))
-        self.assert_(isinstance(x.get('a'), tpool.Proxy))
-        self.assert_(not isinstance(x.items(), tpool.Proxy))
+        assert isinstance(x.get('a'), tpool.Proxy)
+        assert not isinstance(x.items(), tpool.Proxy)
         # attributes as well as callables
         from tests import tpool_test
         x = tpool.Proxy(tpool_test, autowrap=(int,))
-        self.assert_(isinstance(x.one, tpool.Proxy))
-        self.assert_(not isinstance(x.none, tpool.Proxy))
+        assert isinstance(x.one, tpool.Proxy)
+        assert not isinstance(x.none, tpool.Proxy)
 
     @skip_with_pyevent
     def test_autowrap_names(self):
         x = tpool.Proxy({'a': 1, 'b': 2}, autowrap_names=('get',))
-        self.assert_(isinstance(x.get('a'), tpool.Proxy))
-        self.assert_(not isinstance(x.items(), tpool.Proxy))
+        assert isinstance(x.get('a'), tpool.Proxy)
+        assert not isinstance(x.items(), tpool.Proxy)
         from tests import tpool_test
         x = tpool.Proxy(tpool_test, autowrap_names=('one',))
-        self.assert_(isinstance(x.one, tpool.Proxy))
-        self.assert_(not isinstance(x.two, tpool.Proxy))
+        assert isinstance(x.one, tpool.Proxy)
+        assert not isinstance(x.two, tpool.Proxy)
 
     @skip_with_pyevent
     def test_autowrap_both(self):
         from tests import tpool_test
         x = tpool.Proxy(tpool_test, autowrap=(int,), autowrap_names=('one',))
-        self.assert_(isinstance(x.one, tpool.Proxy))
+        assert isinstance(x.one, tpool.Proxy)
         # violating the abstraction to check that we didn't double-wrap
-        self.assert_(not isinstance(x._obj, tpool.Proxy))
+        assert not isinstance(x._obj, tpool.Proxy)
 
     @skip_with_pyevent
     def test_callable(self):
@@ -265,7 +265,7 @@ class TestTpool(LimitedTestCase):
         self.assertEqual(4, x(4))
         # verify that it wraps return values if specified
         x = tpool.Proxy(wrapped, autowrap_names=('__call__',))
-        self.assert_(isinstance(x(4), tpool.Proxy))
+        assert isinstance(x(4), tpool.Proxy)
         self.assertEqual("4", str(x(4)))
 
     @skip_with_pyevent

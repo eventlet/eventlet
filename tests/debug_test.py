@@ -22,12 +22,12 @@ class TestSpew(TestCase):
 
     def test_spew(self):
         debug.spew()
-        self.failUnless(isinstance(self.tracer, debug.Spew))
+        assert isinstance(self.tracer, debug.Spew)
 
     def test_unspew(self):
         debug.spew()
         debug.unspew()
-        self.failUnlessEqual(self.tracer, None)
+        assert self.tracer is None
 
     def test_line(self):
         sys.stdout = six.StringIO()
@@ -36,8 +36,8 @@ class TestSpew(TestCase):
         s(f, "line", None)
         lineno = f.f_lineno - 1  # -1 here since we called with frame f in the line above
         output = sys.stdout.getvalue()
-        self.failUnless("%s:%i" % (__name__, lineno) in output, "Didn't find line %i in %s" % (lineno, output))
-        self.failUnless("f=<frame object at" in output)
+        assert "%s:%i" % (__name__, lineno) in output, "Didn't find line %i in %s" % (lineno, output)
+        assert "f=<frame object at" in output
 
     def test_line_nofile(self):
         sys.stdout = six.StringIO()
@@ -48,8 +48,8 @@ class TestSpew(TestCase):
         lineno = f.f_lineno
         s(f, "line", None)
         output = sys.stdout.getvalue()
-        self.failUnless("[unknown]:%i" % lineno in output, "Didn't find [unknown]:%i in %s" % (lineno, output))
-        self.failUnless("VM instruction #" in output, output)
+        assert "[unknown]:%i" % lineno in output, "Didn't find [unknown]:%i in %s" % (lineno, output)
+        assert "VM instruction #" in output, output
 
     def test_line_global(self):
         global GLOBAL_VAR
@@ -59,10 +59,10 @@ class TestSpew(TestCase):
         GLOBAL_VAR(f, "line", None)
         lineno = f.f_lineno - 1  # -1 here since we called with frame f in the line above
         output = sys.stdout.getvalue()
-        self.failUnless("%s:%i" % (__name__, lineno) in output, "Didn't find line %i in %s" % (lineno, output))
-        self.failUnless("f=<frame object at" in output)
-        self.failUnless("GLOBAL_VAR" in f.f_globals)
-        self.failUnless("GLOBAL_VAR=<eventlet.debug.Spew object at" in output)
+        assert "%s:%i" % (__name__, lineno) in output, "Didn't find line %i in %s" % (lineno, output)
+        assert "f=<frame object at" in output
+        assert "GLOBAL_VAR" in f.f_globals
+        assert "GLOBAL_VAR=<eventlet.debug.Spew object at" in output
         del GLOBAL_VAR
 
     def test_line_novalue(self):
@@ -72,8 +72,8 @@ class TestSpew(TestCase):
         s(f, "line", None)
         lineno = f.f_lineno - 1  # -1 here since we called with frame f in the line above
         output = sys.stdout.getvalue()
-        self.failUnless("%s:%i" % (__name__, lineno) in output, "Didn't find line %i in %s" % (lineno, output))
-        self.failIf("f=<frame object at" in output)
+        assert "%s:%i" % (__name__, lineno) in output, "Didn't find line %i in %s" % (lineno, output)
+        assert "f=<frame object at" not in output
 
     def test_line_nooutput(self):
         sys.stdout = six.StringIO()
@@ -81,7 +81,7 @@ class TestSpew(TestCase):
         f = sys._getframe()
         s(f, "line", None)
         output = sys.stdout.getvalue()
-        self.failUnlessEqual(output, "")
+        assert output == ""
 
 
 class TestDebug(LimitedTestCase):
@@ -123,8 +123,7 @@ class TestDebug(LimitedTestCase):
             self.assertRaises(KeyError, gt.wait)
             debug.hub_exceptions(False)
         # look for the KeyError exception in the traceback
-        self.assert_('KeyError: 1' in fake.getvalue(),
-                     "Traceback not in:\n" + fake.getvalue())
+        assert 'KeyError: 1' in fake.getvalue(), "Traceback not in:\n" + fake.getvalue()
 
 if __name__ == "__main__":
     main()

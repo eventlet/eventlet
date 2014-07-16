@@ -14,10 +14,10 @@ class BackdoorTest(LimitedTestCase):
         client = socket.socket()
         client.connect(('localhost', listener.getsockname()[1]))
         f = client.makefile('rw')
-        self.assert_(b'Python' in f.readline())
+        assert b'Python' in f.readline()
         f.readline()  # build info
         f.readline()  # help info
-        self.assert_(b'InteractiveConsole' in f.readline())
+        assert b'InteractiveConsole' in f.readline()
         self.assertEqual(b'>>> ', f.read(4))
         f.write(b'print("hi")\n')
         f.flush()

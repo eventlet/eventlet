@@ -420,7 +420,7 @@ class Stress(tests.LimitedTestCase):
             if received % 5 == 0:
                 eventlet.sleep(0.0001)
             unique, order = i
-            self.assert_(latest[unique] < order)
+            assert latest[unique] < order
             latest[unique] = order
         for l in latest[1:]:
             self.assertEqual(l, iters - 1)
@@ -449,14 +449,14 @@ class Stress(tests.LimitedTestCase):
             if latest == -1:
                 gc.collect()
                 initial_obj_count = len(gc.get_objects())
-            self.assert_(i > latest)
+            assert i > latest
             latest = i
             if latest % 5 == 0:
                 eventlet.sleep(0.001)
             if latest % 10 == 0:
                 gc.collect()
                 objs_created = len(gc.get_objects()) - initial_obj_count
-                self.assert_(objs_created < 25 * concurrency, objs_created)
+                assert objs_created < 25 * concurrency, objs_created
         # make sure we got to the end
         self.assertEqual(latest, count - 1)
 

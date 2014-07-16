@@ -84,7 +84,7 @@ tpool.execute(do)
             output, lines = self.launch_subprocess('newmod.py')
             self.assertEqual(len(lines), 4, lines)
             self.assertEqual(lines[-2], 'ran it', lines)
-            self.assert_('Warning' in lines[1] or 'Warning' in lines[0], lines)
+            assert 'Warning' in lines[1] or 'Warning' in lines[0], lines
         finally:
             del os.environ['EVENTLET_THREADPOOL_SIZE']
 
@@ -110,5 +110,4 @@ print(hubs.get_hub())
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod.py')
         self.assertEqual(len(lines), 2, "\n".join(lines))
-        self.assert_("selects" in lines[0])
-
+        assert "selects" in lines[0]

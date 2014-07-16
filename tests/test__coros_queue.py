@@ -70,7 +70,7 @@ class TestQueue(LimitedTestCase):
 
         spawn(sender, e1, q)
         sleep(0)
-        self.assert_(not e1.ready())
+        assert not e1.ready()
         spawn(receiver, e2, q)
         self.assertEqual(e2.wait(),'hi')
         self.assertEqual(e1.wait(),'done')
@@ -83,7 +83,7 @@ class TestQueue(LimitedTestCase):
         sendings = ['1', '2', '3', '4']
         gts = [eventlet.spawn(q.wait)
                 for x in sendings]
-                
+
         eventlet.sleep(0.01) # get 'em all waiting
 
         q.send(sendings[0])
@@ -167,7 +167,7 @@ class TestQueue(LimitedTestCase):
         self.assertEqual(e1.wait(), 'timed out')
         self.assertEqual(e2.wait(), 'timed out')
         self.assertEqual(q.wait(), 'sent')
-                
+
     @silence_warnings
     def test_waiting(self):
         def do_wait(q, evt):
