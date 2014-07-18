@@ -24,8 +24,8 @@ class Hub(BaseHub):
         except AttributeError:
             self.modify = self.poll.register
 
-    def add(self, evtype, fileno, cb):
-        listener = super(Hub, self).add(evtype, fileno, cb)
+    def add(self, evtype, fileno, cb, tb, mac):
+        listener = super(Hub, self).add(evtype, fileno, cb, tb, mac)
         self.register(fileno, new=True)
         return listener
 
@@ -92,18 +92,27 @@ class Hub(BaseHub):
         if self.debug_blocking:
             self.block_detect_pre()
 
+        # Accumulate the listeners to call back to prior to
+        # triggering any of them. This is to keep the set
+        # of callbacks in sync with the events we've just
+        # polled for. It prevents one handler from invalidating
+        # another.
+        callbacks = set()
         for fileno, event in presult:
+            if event & READ_MASK:
+                callbacks.add((readers.get(fileno, noop), fileno))
+            if event & WRITE_MASK:
+                callbacks.add((writers.get(fileno, noop), fileno))
+            if event & select.POLLNVAL:
+                self.remove_descriptor(fileno)
+                continue
+            if event & EXC_MASK:
+                callbacks.add((readers.get(fileno, noop), fileno))
+                callbacks.add((writers.get(fileno, noop), fileno))
+
+        for listener, fileno in callbacks:
             try:
-                if event & READ_MASK:
-                    readers.get(fileno, noop).cb(fileno)
-                if event & WRITE_MASK:
-                    writers.get(fileno, noop).cb(fileno)
-                if event & select.POLLNVAL:
-                    self.remove_descriptor(fileno)
-                    continue
-                if event & EXC_MASK:
-                    readers.get(fileno, noop).cb(fileno)
-                    writers.get(fileno, noop).cb(fileno)
+                listener.cb(fileno)
             except SYSTEM_EXCEPTIONS:
                 raise
             except:
