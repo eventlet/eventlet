@@ -118,6 +118,7 @@ class GreenSocket(object):
     Pass False to indicate that socket is already in non-blocking mode
     to save syscalls.
     """
+
     def __init__(self, family_or_realsock=socket.AF_INET, *args, **kwargs):
         should_set_nonblocking = kwargs.pop('set_nonblocking', True)
         if isinstance(family_or_realsock, six.integer_types):
@@ -534,6 +535,7 @@ class GreenPipe(_fileobject):
     - Universal new lines are not supported and newlines property not implementeded
     - file argument can be descriptor, file name or file object.
     """
+
     def __init__(self, f, mode='r', bufsize=-1):
         if not isinstance(f, six.string_types + (int, file)):
             raise TypeError('f(ile) should be int, str, unicode or file, not %r' % f)

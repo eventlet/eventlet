@@ -14,6 +14,7 @@ class TestCoroutinePool(LimitedTestCase):
 
     def test_execute_async(self):
         done = _event.Event()
+
         def some_work():
             done.send()
         pool = self.klass(0, 2)
@@ -22,6 +23,7 @@ class TestCoroutinePool(LimitedTestCase):
 
     def test_execute(self):
         value = 'return value'
+
         def some_work():
             return value
         pool = self.klass(0, 2)
@@ -29,10 +31,12 @@ class TestCoroutinePool(LimitedTestCase):
         self.assertEqual(value, worker.wait())
 
     def test_waiting(self):
-        pool = self.klass(0,1)
+        pool = self.klass(0, 1)
         done = _event.Event()
+
         def consume():
             done.wait()
+
         def waiter(pool):
             evt = pool.execute(consume)
             evt.wait()
@@ -55,6 +59,7 @@ class TestCoroutinePool(LimitedTestCase):
     def test_multiple_coros(self):
         evt = _event.Event()
         results = []
+
         def producer():
             results.append('prod')
             evt.send()
@@ -74,8 +79,10 @@ class TestCoroutinePool(LimitedTestCase):
         # this test verifies that local timers are not fired
         # outside of the context of the execute method
         timer_fired = []
+
         def fire_timer():
             timer_fired.append(True)
+
         def some_work():
             hubs.get_hub().schedule_call_local(0, fire_timer)
         pool = self.klass(0, 2)
@@ -85,7 +92,8 @@ class TestCoroutinePool(LimitedTestCase):
         self.assertEqual(timer_fired, [])
 
     def test_reentrant(self):
-        pool = self.klass(0,1)
+        pool = self.klass(0, 1)
+
         def reenter():
             waiter = pool.execute(lambda a: a, 'reenter')
             self.assertEqual('reenter', waiter.wait())
@@ -94,6 +102,7 @@ class TestCoroutinePool(LimitedTestCase):
         outer_waiter.wait()
 
         evt = _event.Event()
+
         def reenter_async():
             pool.execute_async(lambda a: a, 'reenter')
             evt.send('done')
@@ -127,6 +136,7 @@ class TestCoroutinePool(LimitedTestCase):
     def test_resize(self):
         pool = self.klass(max_size=2)
         evt = _event.Event()
+
         def wait_long_time(e):
             e.wait()
         pool.execute(wait_long_time, evt)
@@ -157,8 +167,10 @@ class TestCoroutinePool(LimitedTestCase):
         # any members
         import sys
         pool = self.klass(min_size=1, max_size=1)
+
         def crash(*args, **kw):
             raise RuntimeError("Whoa")
+
         class FakeFile(object):
             write = crash
 
@@ -195,6 +207,7 @@ class TestCoroutinePool(LimitedTestCase):
 
     def test_track_slow_event(self):
         pool = self.klass(track_events=True)
+
         def slow():
             api.sleep(0.1)
             return 'ok'
@@ -209,6 +222,7 @@ class TestCoroutinePool(LimitedTestCase):
         pool = self.klass(min_size=1, max_size=1)
         tp = pools.TokenPool(max_size=1)
         token = tp.get()  # empty pool
+
         def do_receive(tp):
             timeout.Timeout(0, RuntimeError())
             try:
@@ -245,6 +259,7 @@ class PoolBasicTests(LimitedTestCase):
         p = self.klass(max_size=2)
         self.assertEqual(p.free(), 2)
         r = []
+
         def foo(a):
             r.append(a)
         evt = p.execute(foo, 1)
@@ -254,7 +269,7 @@ class PoolBasicTests(LimitedTestCase):
         api.sleep(0)
         self.assertEqual(p.free(), 2)
 
-        #Once the pool is exhausted, calling an execute forces a yield.
+        # Once the pool is exhausted, calling an execute forces a yield.
 
         p.execute_async(foo, 2)
         self.assertEqual(1, p.free())
@@ -265,9 +280,9 @@ class PoolBasicTests(LimitedTestCase):
         self.assertEqual(r, [1])
 
         p.execute_async(foo, 4)
-        self.assertEqual(r, [1,2,3])
+        self.assertEqual(r, [1, 2, 3])
         api.sleep(0)
-        self.assertEqual(r, [1,2,3,4])
+        self.assertEqual(r, [1, 2, 3, 4])
 
     def test_execute(self):
         p = self.klass()
@@ -276,6 +291,7 @@ class PoolBasicTests(LimitedTestCase):
 
     def test_with_intpool(self):
         from eventlet import pools
+
         class IntPool(pools.Pool):
             def create(self):
                 self.current_integer = getattr(self, 'current_integer', 0) + 1
@@ -301,6 +317,5 @@ class PoolBasicTests(LimitedTestCase):
                 subtest(isize, psize, psize)
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     main()
-

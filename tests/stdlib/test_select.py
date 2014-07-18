@@ -2,7 +2,8 @@ from eventlet import patcher
 from eventlet.green import select
 
 
-patcher.inject('test.test_select',
+patcher.inject(
+    'test.test_select',
     globals(),
     ('select', select))
 

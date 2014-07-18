@@ -4,8 +4,7 @@ import event
 import types
 
 from eventlet.support import greenlets as greenlet, six
-from eventlet.hubs.hub import BaseHub, FdListener, READ, WRITE
-from eventlet.support import six
+from eventlet.hubs.hub import BaseHub, READ, WRITE
 
 
 class event_wrapper(object):
@@ -35,12 +34,13 @@ class event_wrapper(object):
     def pending(self):
         return bool(self.impl and self.impl.pending())
 
+
 class Hub(BaseHub):
 
     SYSTEM_EXCEPTIONS = (KeyboardInterrupt, SystemExit)
 
     def __init__(self):
-        super(Hub,self).__init__()
+        super(Hub, self).__init__()
         event.init()
 
         self.signal_exc_info = None
@@ -112,7 +112,7 @@ class Hub(BaseHub):
         elif evtype is WRITE:
             evt = event.write(fileno, cb, fileno)
 
-        return super(Hub,self).add(evtype, fileno, evt, real_tb, mac)
+        return super(Hub, self).add(evtype, fileno, evt, real_tb, mac)
 
     def signal(self, signalnum, handler):
         def wrapper():
@@ -166,6 +166,7 @@ def _scheduled_call(event_impl, handle, evtype, arg):
         cb(*args, **kwargs)
     finally:
         event_impl.delete()
+
 
 def _scheduled_call_local(event_impl, handle, evtype, arg):
     cb, args, kwargs, caller_greenlet = arg

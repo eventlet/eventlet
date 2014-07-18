@@ -70,16 +70,16 @@ class TestMySQLdb(LimitedTestCase):
             self.drop_db()
         except Exception:
             pass
-        dbname = 'test_%d_%d' % (os.getpid(), int(time.time()*1000))
+        dbname = 'test_%d_%d' % (os.getpid(), int(time.time() * 1000))
         db = MySQLdb.connect(**auth).cursor()
-        db.execute("create database "+dbname)
+        db.execute("create database " + dbname)
         db.close()
         self._auth['db'] = dbname
         del db
 
     def drop_db(self):
         db = MySQLdb.connect(**self._auth).cursor()
-        db.execute("drop database "+self._auth['db'])
+        db.execute("drop database " + self._auth['db'])
         db.close()
         del db
 

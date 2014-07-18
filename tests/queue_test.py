@@ -1,6 +1,7 @@
-from tests import LimitedTestCase, main
 import eventlet
-from eventlet import event
+from eventlet import event, hubs, queue
+from tests import LimitedTestCase, main
+
 
 def do_bail(q):
     eventlet.Timeout(0, RuntimeError())
@@ -10,6 +11,7 @@ def do_bail(q):
     except RuntimeError:
         return 'timed out'
 
+
 class TestQueue(LimitedTestCase):
     def test_send_first(self):
         q = eventlet.Queue()
@@ -18,6 +20,7 @@ class TestQueue(LimitedTestCase):
 
     def test_send_last(self):
         q = eventlet.Queue()
+
         def waiter(q):
             self.assertEqual(q.get(), 'hi2')
 
@@ -51,6 +54,7 @@ class TestQueue(LimitedTestCase):
 
     def test_zero_max_size(self):
         q = eventlet.Queue(0)
+
         def sender(evt, q):
             q.put('hi')
             evt.send('done')
@@ -64,12 +68,13 @@ class TestQueue(LimitedTestCase):
         eventlet.sleep(0)
         assert not evt.ready()
         gt2 = eventlet.spawn(receiver, q)
-        self.assertEqual(gt2.wait(),'hi')
-        self.assertEqual(evt.wait(),'done')
+        self.assertEqual(gt2.wait(), 'hi')
+        self.assertEqual(evt.wait(), 'done')
         gt.wait()
 
     def test_resize_up(self):
         q = eventlet.Queue(0)
+
         def sender(evt, q):
             q.put('hi')
             evt.send('done')
@@ -84,7 +89,6 @@ class TestQueue(LimitedTestCase):
         gt.wait()
 
     def test_resize_down(self):
-        size = 5
         q = eventlet.Queue(5)
 
         for i in range(5):
@@ -97,6 +101,7 @@ class TestQueue(LimitedTestCase):
 
     def test_resize_to_Unlimited(self):
         q = eventlet.Queue(0)
+
         def sender(evt, q):
             q.put('hi')
             evt.send('done')
@@ -115,10 +120,9 @@ class TestQueue(LimitedTestCase):
         q = eventlet.Queue()
 
         sendings = ['1', '2', '3', '4']
-        gts = [eventlet.spawn(q.get)
-                for x in sendings]
+        gts = [eventlet.spawn(q.get) for x in sendings]
 
-        eventlet.sleep(0.01) # get 'em all waiting
+        eventlet.sleep(0.01)  # get 'em all waiting
 
         q.put(sendings[0])
         q.put(sendings[1])
@@ -180,11 +184,12 @@ class TestQueue(LimitedTestCase):
     def test_channel_send(self):
         channel = eventlet.Queue(0)
         events = []
+
         def another_greenlet():
             events.append(channel.get())
             events.append(channel.get())
 
-        gt = eventlet.spawn(another_greenlet)
+        eventlet.spawn(another_greenlet)
 
         events.append('sending')
         channel.put('hello')
@@ -193,7 +198,6 @@ class TestQueue(LimitedTestCase):
         events.append('sent world')
 
         self.assertEqual(['sending', 'hello', 'sent hello', 'world', 'sent world'], events)
-
 
     def test_channel_wait(self):
         channel = eventlet.Queue(0)
@@ -206,7 +210,7 @@ class TestQueue(LimitedTestCase):
             channel.put('world')
             events.append('sent world')
 
-        gt = eventlet.spawn(another_greenlet)
+        eventlet.spawn(another_greenlet)
 
         events.append('waiting')
         events.append(channel.get())
@@ -233,16 +237,14 @@ class TestQueue(LimitedTestCase):
         self.assertEqual(c.getting(), 0)
         # NOTE: we don't guarantee that waiters are served in order
         results = sorted([w1.wait(), w2.wait(), w3.wait()])
-        self.assertEqual(results, [1,2,3])
+        self.assertEqual(results, [1, 2, 3])
 
     def test_channel_sender_timing_out(self):
-        from eventlet import queue
         c = eventlet.Queue(0)
         self.assertRaises(queue.Full, c.put, "hi", timeout=0.001)
         self.assertRaises(queue.Empty, c.get_nowait)
 
     def test_task_done(self):
-        from eventlet import queue, debug
         channel = queue.Queue(0)
         X = object()
         gt = eventlet.spawn(channel.put, X)
@@ -267,7 +269,6 @@ def store_result(result, func, *args):
 
 class TestNoWait(LimitedTestCase):
     def test_put_nowait_simple(self):
-        from eventlet import hubs,queue
         hub = hubs.get_hub()
         result = []
         q = eventlet.Queue(1)
@@ -275,12 +276,11 @@ class TestNoWait(LimitedTestCase):
         hub.schedule_call_global(0, store_result, result, q.put_nowait, 3)
         eventlet.sleep(0)
         eventlet.sleep(0)
-        assert len(result)==2, result
-        assert result[0]==None, result
+        assert len(result) == 2, result
+        assert result[0] is None, result
         assert isinstance(result[1], queue.Full), result
 
     def test_get_nowait_simple(self):
-        from eventlet import hubs,queue
         hub = hubs.get_hub()
         result = []
         q = queue.Queue(1)
@@ -288,13 +288,12 @@ class TestNoWait(LimitedTestCase):
         hub.schedule_call_global(0, store_result, result, q.get_nowait)
         hub.schedule_call_global(0, store_result, result, q.get_nowait)
         eventlet.sleep(0)
-        assert len(result)==2, result
-        assert result[0]==4, result
+        assert len(result) == 2, result
+        assert result[0] == 4, result
         assert isinstance(result[1], queue.Empty), result
 
     # get_nowait must work from the mainloop
     def test_get_nowait_unlock(self):
-        from eventlet import hubs,queue
         hub = hubs.get_hub()
         result = []
         q = queue.Queue(0)
@@ -310,17 +309,16 @@ class TestNoWait(LimitedTestCase):
         assert q.full(), q
         assert result == [5], result
         # TODO add ready to greenthread
-        #assert p.ready(), p
+        # assert p.ready(), p
         assert p.dead, p
         assert q.empty(), q
 
     # put_nowait must work from the mainloop
     def test_put_nowait_unlock(self):
-        from eventlet import hubs,queue
         hub = hubs.get_hub()
         result = []
         q = queue.Queue(0)
-        p = eventlet.spawn(q.get)
+        eventlet.spawn(q.get)
         assert q.empty(), q
         assert q.full(), q
         eventlet.sleep(0)
@@ -328,7 +326,7 @@ class TestNoWait(LimitedTestCase):
         assert q.full(), q
         hub.schedule_call_global(0, store_result, result, q.put_nowait, 10)
         # TODO ready method on greenthread
-        #assert not p.ready(), p
+        # assert not p.ready(), p
         eventlet.sleep(0)
         assert result == [None], result
         # TODO ready method
@@ -337,5 +335,5 @@ class TestNoWait(LimitedTestCase):
         assert q.empty(), q
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     main()

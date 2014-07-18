@@ -1,11 +1,11 @@
 __socket = __import__('socket')
 
-__all__     = __socket.__all__
+__all__ = __socket.__all__
 __patched__ = ['fromfd', 'socketpair', 'ssl', 'socket']
 
 from eventlet.patcher import slurp_properties
 slurp_properties(__socket, globals(),
-    ignore=__patched__, srckeys=dir(__socket))
+                 ignore=__patched__, srckeys=dir(__socket))
 
 os = __import__('os')
 import sys
@@ -18,6 +18,7 @@ from eventlet.greenio import _fileobject
 
 try:
     __original_fromfd__ = __socket.fromfd
+
     def fromfd(*args):
         return socket(__original_fromfd__(*args))
 except AttributeError:
@@ -25,12 +26,12 @@ except AttributeError:
 
 try:
     __original_socketpair__ = __socket.socketpair
+
     def socketpair(*args):
         one, two = __original_socketpair__(*args)
         return socket(one), socket(two)
 except AttributeError:
     pass
-
 
 
 def _convert_to_sslerror(ex):
@@ -41,6 +42,7 @@ def _convert_to_sslerror(ex):
 class GreenSSLObject(object):
     """ Wrapper object around the SSLObjects returned by socket.ssl, which have a
     slightly different interface from SSL.Connection objects. """
+
     def __init__(self, green_ssl_obj):
         """ Should only be called by a 'green' socket.ssl """
         self.connection = green_ssl_obj

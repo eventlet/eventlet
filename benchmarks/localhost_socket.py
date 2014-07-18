@@ -7,10 +7,10 @@ import benchmarks
 from eventlet.support import six
 
 
-BYTES=1000
-SIZE=1
-CONCURRENCY=50
-TRIES=5
+BYTES = 1000
+SIZE = 1
+CONCURRENCY = 50
+TRIES = 5
 
 
 def reader(sock):
@@ -25,7 +25,7 @@ def writer(addr, socket_impl):
     sock.connect(addr)
     sent = 0
     while sent < BYTES:
-        d = 'xy' * (max(min(SIZE/2, BYTES-sent), 1))
+        d = 'xy' * (max(min(SIZE / 2, BYTES - sent), 1))
         sock.sendall(d)
         sent += len(d)
 
@@ -97,12 +97,11 @@ if __name__ == "__main__":
     parser.add_option('-t', '--tries', type='int', dest='tries',
                       default=TRIES)
 
-
     opts, args = parser.parse_args()
-    BYTES=opts.bytes
-    SIZE=opts.size
-    CONCURRENCY=opts.concurrency
-    TRIES=opts.tries
+    BYTES = opts.bytes
+    SIZE = opts.size
+    CONCURRENCY = opts.concurrency
+    TRIES = opts.tries
 
     funcs = [launch_green_threads]
     if opts.threading:
@@ -113,4 +112,4 @@ if __name__ == "__main__":
     print("green:", results[launch_green_threads])
     if opts.threading:
         print("threads:", results[launch_heavy_threads])
-        print("%", (results[launch_green_threads]-results[launch_heavy_threads])/results[launch_heavy_threads] * 100)
+        print("%", (results[launch_green_threads] - results[launch_heavy_threads]) / results[launch_heavy_threads] * 100)

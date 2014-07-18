@@ -439,10 +439,10 @@ class DBConnectionPool(DBTester):
             start = time.time()
             bench(c)
             end = time.time()
-            results.append(end-start)
+            results.append(end - start)
 
         print("\n%u iterations took an average of %f seconds, (%s) in %s\n" % (
-            iterations, sum(results)/len(results), results, type(self)))
+            iterations, sum(results) / len(results), results, type(self)))
 
     def test_raising_create(self):
         # if the create() method raises an exception the pool should
@@ -609,14 +609,14 @@ class MysqlConnectionPool(object):
             pass
         dbname = 'test%s' % os.getpid()
         db = self._dbmodule.connect(**auth).cursor()
-        db.execute("create database "+dbname)
+        db.execute("create database " + dbname)
         db.close()
         self._auth['db'] = dbname
         del db
 
     def drop_db(self):
         db = self._dbmodule.connect(**self._auth).cursor()
-        db.execute("drop database "+self._auth['db'])
+        db.execute("drop database " + self._auth['db'])
         db.close()
         del db
 
@@ -679,7 +679,7 @@ class Psycopg2ConnectionPool(object):
         conn = self._dbmodule.connect(**auth)
         conn.set_isolation_level(0)
         db = conn.cursor()
-        db.execute("create database "+dbname)
+        db.execute("create database " + dbname)
         db.close()
         conn.close()
 
@@ -689,7 +689,7 @@ class Psycopg2ConnectionPool(object):
         conn = self._dbmodule.connect(**auth)
         conn.set_isolation_level(0)
         db = conn.cursor()
-        db.execute("drop database "+self._auth['database'])
+        db.execute("drop database " + self._auth['database'])
         db.close()
         conn.close()
 

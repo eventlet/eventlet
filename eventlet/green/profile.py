@@ -46,11 +46,11 @@ from eventlet.support import six
 thread = patcher.original('thread')  # non-monkeypatched module needed
 
 
-#This class provides the start() and stop() functions
+# This class provides the start() and stop() functions
 class Profile(profile_orig.Profile):
     base = profile_orig.Profile
 
-    def __init__(self, timer = None, bias=None):
+    def __init__(self, timer=None, bias=None):
         self.current_tasklet = greenthread.getcurrent()
         self.thread_id = thread.get_ident()
         self.base.__init__(self, timer, bias)
@@ -68,7 +68,7 @@ class Profile(profile_orig.Profile):
         self.thread_id = thread.get_ident()
         self.simulate_call("profiler")
 
-    def start(self, name = "start"):
+    def start(self, name="start"):
         if getattr(self, "running", False):
             return
         self._setup()
@@ -81,8 +81,8 @@ class Profile(profile_orig.Profile):
         self.running = False
         self.TallyTimings()
 
-    #special cases for the original run commands, makin sure to
-    #clear the timer context.
+    # special cases for the original run commands, makin sure to
+    # clear the timer context.
     def runctx(self, cmd, globals, locals):
         if not getattr(self, "_has_setup", False):
             self._setup()
@@ -99,7 +99,6 @@ class Profile(profile_orig.Profile):
         finally:
             self.TallyTimings()
 
-
     def trace_dispatch_return_extend_back(self, frame, t):
         """A hack function to override error checking in parent class.  It
         allows invalid returns (where frames weren't preveiously entered into
@@ -110,33 +109,32 @@ class Profile(profile_orig.Profile):
         if isinstance(self.cur[-2], Profile.fake_frame):
             return False
             self.trace_dispatch_call(frame, 0)
-        return self.trace_dispatch_return(frame, t);
+        return self.trace_dispatch_return(frame, t)
 
     def trace_dispatch_c_return_extend_back(self, frame, t):
-        #same for c return
+        # same for c return
         if isinstance(self.cur[-2], Profile.fake_frame):
-            return False #ignore bogus returns
+            return False  # ignore bogus returns
             self.trace_dispatch_c_call(frame, 0)
-        return self.trace_dispatch_return(frame,t)
+        return self.trace_dispatch_return(frame, t)
 
-
-    #Add "return safety" to the dispatchers
+    # Add "return safety" to the dispatchers
     dispatch = dict(profile_orig.Profile.dispatch)
     dispatch.update({
         "return": trace_dispatch_return_extend_back,
         "c_return": trace_dispatch_c_return_extend_back,
-        })
+    })
 
     def SwitchTasklet(self, t0, t1, t):
-        #tally the time spent in the old tasklet
+        # tally the time spent in the old tasklet
         pt, it, et, fn, frame, rcur = self.cur
-        cur = (pt, it+t, et, fn, frame, rcur)
+        cur = (pt, it + t, et, fn, frame, rcur)
 
-        #we are switching to a new tasklet, store the old
+        # we are switching to a new tasklet, store the old
         self.sleeping[t0] = cur, self.timings
         self.current_tasklet = t1
 
-        #find the new one
+        # find the new one
         try:
             self.cur, self.timings = self.sleeping.pop(t1)
         except KeyError:
@@ -144,30 +142,29 @@ class Profile(profile_orig.Profile):
             self.simulate_call("profiler")
             self.simulate_call("new_tasklet")
 
-
     def ContextWrap(f):
         @functools.wraps(f)
         def ContextWrapper(self, arg, t):
             current = greenthread.getcurrent()
             if current != self.current_tasklet:
                 self.SwitchTasklet(self.current_tasklet, current, t)
-                t = 0.0 #the time was billed to the previous tasklet
+                t = 0.0  # the time was billed to the previous tasklet
             return f(self, arg, t)
         return ContextWrapper
 
-    #Add automatic tasklet detection to the callbacks.
+    # Add automatic tasklet detection to the callbacks.
     dispatch = dict([(key, ContextWrap(val)) for key, val in six.iteritems(dispatch)])
 
     def TallyTimings(self):
         oldtimings = self.sleeping
         self.sleeping = {}
 
-        #first, unwind the main "cur"
+        # first, unwind the main "cur"
         self.cur = self.Unwind(self.cur, self.timings)
 
-        #we must keep the timings dicts separate for each tasklet, since it contains
-        #the 'ns' item, recursion count of each function in that tasklet.  This is
-        #used in the Unwind dude.
+        # we must keep the timings dicts separate for each tasklet, since it contains
+        # the 'ns' item, recursion count of each function in that tasklet.  This is
+        # used in the Unwind dude.
         for tasklet, (cur, timings) in six.iteritems(oldtimings):
             self.Unwind(cur, timings)
 
@@ -175,23 +172,23 @@ class Profile(profile_orig.Profile):
                 if k not in self.timings:
                     self.timings[k] = v
                 else:
-                    #accumulate all to the self.timings
+                    # accumulate all to the self.timings
                     cc, ns, tt, ct, callers = self.timings[k]
-                    #ns should be 0 after unwinding
-                    cc+=v[0]
-                    tt+=v[2]
-                    ct+=v[3]
+                    # ns should be 0 after unwinding
+                    cc += v[0]
+                    tt += v[2]
+                    ct += v[3]
                     for k1, v1 in six.iteritems(v[4]):
-                        callers[k1] = callers.get(k1, 0)+v1
+                        callers[k1] = callers.get(k1, 0) + v1
                     self.timings[k] = cc, ns, tt, ct, callers
 
     def Unwind(self, cur, timings):
         "A function to unwind a 'cur' frame and tally the results"
         "see profile.trace_dispatch_return() for details"
-        #also see simulate_cmd_complete()
+        # also see simulate_cmd_complete()
         while(cur[-1]):
             rpt, rit, ret, rfn, frame, rcur = cur
-            frame_total = rit+ret
+            frame_total = rit + ret
 
             if rfn in timings:
                 cc, ns, tt, ct, callers = timings[rfn]

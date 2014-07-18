@@ -22,7 +22,7 @@ class FirstSwitch(object):
         self.gr = gr
 
     def __call__(self, *args, **kw):
-        #print("first call", args, kw)
+        # print("first call", args, kw)
         gr = self.gr
         del gr.switch
         run, gr.run = gr.run, None
@@ -46,7 +46,7 @@ class greenlet(object):
         self.switch = FirstSwitch(self)
 
     def switch(self, *args):
-        #print("switch", args)
+        # print("switch", args)
         global caller
         caller = stackless.getcurrent()
         coro_args[self] = args

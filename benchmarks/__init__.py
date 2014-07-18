@@ -5,12 +5,12 @@ import random
 from eventlet.support import six
 
 
-def measure_best(repeat, iters, 
-                 common_setup='pass', 
+def measure_best(repeat, iters,
+                 common_setup='pass',
                  common_cleanup='pass',
                  *funcs):
     funcs = list(funcs)
-    results = dict([(f,[]) for f in funcs])
+    results = dict([(f, []) for f in funcs])
 
     for i in six.moves.range(repeat):
         random.shuffle(funcs)

@@ -116,7 +116,7 @@ class Process(object):
             written = self.child_stdin.write(stuff)
             self.child_stdin.flush()
         except ValueError as e:
-            ## File was closed
+            # File was closed
             assert str(e) == 'I/O operation on closed file'
         if written == 0:
             self.dead_callback()

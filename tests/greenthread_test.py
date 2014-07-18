@@ -3,9 +3,12 @@ from eventlet import greenthread
 from eventlet.support import greenlets as greenlet
 
 _g_results = []
+
+
 def passthru(*args, **kw):
     _g_results.append((args, kw))
     return args, kw
+
 
 def waiter(a):
     greenthread.sleep(0.1)
@@ -19,6 +22,7 @@ class Asserts(object):
         assert gt.dead
         assert not gt
 
+
 class Spawn(LimitedTestCase, Asserts):
     def tearDown(self):
         global _g_results
@@ -27,15 +31,15 @@ class Spawn(LimitedTestCase, Asserts):
 
     def test_simple(self):
         gt = greenthread.spawn(passthru, 1, b=2)
-        self.assertEqual(gt.wait(), ((1,),{'b':2}))
-        self.assertEqual(_g_results, [((1,),{'b':2})])
+        self.assertEqual(gt.wait(), ((1,), {'b': 2}))
+        self.assertEqual(_g_results, [((1,), {'b': 2})])
 
     def test_n(self):
         gt = greenthread.spawn_n(passthru, 2, b=3)
         assert not gt.dead
         greenthread.sleep(0)
         assert gt.dead
-        self.assertEqual(_g_results, [((2,),{'b':3})])
+        self.assertEqual(_g_results, [((2,), {'b': 3})])
 
     def test_kill(self):
         gt = greenthread.spawn(passthru, 6)
@@ -66,6 +70,7 @@ class Spawn(LimitedTestCase, Asserts):
 
     def test_link(self):
         results = []
+
         def link_func(g, *a, **kw):
             results.append(g)
             results.append(a)
@@ -73,10 +78,11 @@ class Spawn(LimitedTestCase, Asserts):
         gt = greenthread.spawn(passthru, 5)
         gt.link(link_func, 4, b=5)
         self.assertEqual(gt.wait(), ((5,), {}))
-        self.assertEqual(results, [gt, (4,), {'b':5}])
+        self.assertEqual(results, [gt, (4,), {'b': 5}])
 
     def test_link_after_exited(self):
         results = []
+
         def link_func(g, *a, **kw):
             results.append(g)
             results.append(a)
@@ -84,7 +90,7 @@ class Spawn(LimitedTestCase, Asserts):
         gt = greenthread.spawn(passthru, 5)
         self.assertEqual(gt.wait(), ((5,), {}))
         gt.link(link_func, 4, b=5)
-        self.assertEqual(results, [gt, (4,), {'b':5}])
+        self.assertEqual(results, [gt, (4,), {'b': 5}])
 
     def test_link_relinks(self):
         # test that linking in a linked func doesn't cause infinite recursion.
@@ -100,6 +106,7 @@ class Spawn(LimitedTestCase, Asserts):
         gt.link(link_func)
         gt.wait()
         self.assertEqual(called, [True])
+
 
 class SpawnAfter(Spawn):
     def test_basic(self):
@@ -122,6 +129,7 @@ class SpawnAfter(Spawn):
         greenthread.sleep(0)
         gt.kill()
         self.assert_dead(gt)
+
 
 class SpawnAfterLocal(LimitedTestCase, Asserts):
     def setUp(self):

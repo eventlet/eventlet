@@ -31,27 +31,27 @@ def handle_request(s, raise_on_timeout):
             raise
         else:
             return
-    #print('handle_request - accepted')
+    # print('handle_request - accepted')
     res = conn.recv(100)
     assert res == b'hello', repr(res)
-    #print('handle_request - recvd %r' % res)
+    # print('handle_request - recvd %r' % res)
     res = conn.send(b'bye')
-    #print('handle_request - sent %r' % res)
-    #print('handle_request - conn refcount: %s' % sys.getrefcount(conn))
-    #conn.close()
+    # print('handle_request - sent %r' % res)
+    # print('handle_request - conn refcount: %s' % sys.getrefcount(conn))
+    # conn.close()
 
 
 def make_request(port):
-    #print('make_request')
+    # print('make_request')
     s = socket.socket()
     s.connect(('localhost', port))
-    #print('make_request - connected')
+    # print('make_request - connected')
     res = s.send(b'hello')
-    #print('make_request - sent %s' % res)
+    # print('make_request - sent %s' % res)
     res = s.recv(100)
     assert res == b'bye', repr(res)
-    #print('make_request - recvd %r' % res)
-    #s.close()
+    # print('make_request - recvd %r' % res)
+    # s.close()
 
 
 def run_interaction(run_client):
@@ -60,8 +60,8 @@ def run_interaction(run_client):
     if run_client:
         start_new_thread(make_request, (port,))
     sleep(0.1 + SOCKET_TIMEOUT)
-    #print(sys.getrefcount(s.fd))
-    #s.close()
+    # print(sys.getrefcount(s.fd))
+    # s.close()
     return weakref.ref(s.fd)
 
 
@@ -88,5 +88,5 @@ def test_timeout_exit():
     run_and_check(False)
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     unittest.main()

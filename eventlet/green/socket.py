@@ -4,15 +4,15 @@ from eventlet.hubs import get_hub
 __import__('eventlet.green._socket_nodns')
 __socket = sys.modules['eventlet.green._socket_nodns']
 
-__all__     = __socket.__all__
-__patched__ = __socket.__patched__ + ['gethostbyname', 'getaddrinfo', 'create_connection',]
+__all__ = __socket.__all__
+__patched__ = __socket.__patched__ + ['gethostbyname', 'getaddrinfo', 'create_connection', ]
 
 from eventlet.patcher import slurp_properties
 slurp_properties(__socket, globals(), srckeys=dir(__socket))
 
 
 greendns = None
-if os.environ.get("EVENTLET_NO_GREENDNS",'').lower() != "yes":
+if os.environ.get("EVENTLET_NO_GREENDNS", '').lower() != "yes":
     try:
         from eventlet.support import greendns
     except ImportError as ex:
@@ -25,8 +25,9 @@ if greendns:
     getnameinfo = greendns.getnameinfo
     __patched__ = __patched__ + ['gethostbyname_ex', 'getnameinfo']
 
-def create_connection(address, 
-                      timeout=_GLOBAL_DEFAULT_TIMEOUT, 
+
+def create_connection(address,
+                      timeout=_GLOBAL_DEFAULT_TIMEOUT,
                       source_address=None):
     """Connect to *address* and return the socket object.
 
@@ -57,5 +58,3 @@ def create_connection(address,
                 sock.close()
 
     raise error(msg)
-
-

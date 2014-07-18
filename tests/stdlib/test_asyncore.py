@@ -7,6 +7,7 @@ from eventlet.green import time
 
 patcher.inject("test.test_asyncore", globals())
 
+
 def new_closeall_check(self, usedefault):
     # Check that close_all() closes everything in a given map
 
@@ -38,7 +39,7 @@ def new_closeall_check(self, usedefault):
 
     for c in l:
         self.assertEqual(c.socket.closed, True)
-        
+
 HelperFunctionTests.closeall_check = new_closeall_check
 
 try:

@@ -2,7 +2,8 @@ from eventlet import patcher
 from eventlet.green import socket
 from eventlet.green import urllib2
 
-patcher.inject('test.test_urllib2',
+patcher.inject(
+    'test.test_urllib2',
     globals(),
     ('socket', socket),
     ('urllib2', urllib2))

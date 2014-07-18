@@ -2,7 +2,6 @@ import eventlet
 from eventlet.green import subprocess
 import eventlet.patcher
 from nose.plugins.skip import SkipTest
-import os
 import sys
 import time
 original_subprocess = eventlet.patcher.original('subprocess')
@@ -22,7 +21,7 @@ def test_subprocess_wait():
     except subprocess.TimeoutExpired:
         ok = True
     tdiff = time.time() - t1
-    assert ok == True, 'did not raise subprocess.TimeoutExpired'
+    assert ok, 'did not raise subprocess.TimeoutExpired'
     assert 0.1 <= tdiff <= 0.2, 'did not stop within allowed time'
 
 

@@ -244,7 +244,7 @@ class GreenPool(tests.LimitedTestCase):
         eventlet.sleep(0)
         self.assertEqual(p.free(), 2)
 
-        #Once the pool is exhausted, spawning forces a yield.
+        # Once the pool is exhausted, spawning forces a yield.
         p.spawn_n(foo, 2)
         self.assertEqual(1, p.free())
         self.assertEqual(r, [1])

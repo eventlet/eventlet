@@ -11,6 +11,6 @@ try:
     TestTLS_FTPClass.test_data_connection = lambda *a, **kw: None
 except (AttributeError, NameError):
     pass
-    
+
 if __name__ == "__main__":
     test_main()

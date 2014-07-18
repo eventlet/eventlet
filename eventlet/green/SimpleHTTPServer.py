@@ -2,10 +2,11 @@ from eventlet import patcher
 from eventlet.green import BaseHTTPServer
 from eventlet.green import urllib
 
-patcher.inject('SimpleHTTPServer',
+patcher.inject(
+    'SimpleHTTPServer',
     globals(),
     ('BaseHTTPServer', BaseHTTPServer),
-    ('urllib',  urllib))
+    ('urllib', urllib))
 
 del patcher
 

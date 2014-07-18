@@ -13,7 +13,7 @@ class LineOnlyReceiver(basic.LineOnlyReceiver):
         print('received: %r' % line)
         if not line:
             return
-        app, context, node = (line + ' ').split(' ', 3) 
+        app, context, node = (line + ' ').split(' ', 3)
         context = {'u' : 'users', 'g': 'global'}.get(context, context)
         d = deferToGreenThread(client._get, app, node, globaltree=context=='global')
         def callback(result):

@@ -1,8 +1,9 @@
 import eventlet
 from eventlet.green import socket
 
-PORT=3001
+PORT = 3001
 participants = set()
+
 
 def read_chat_forever(writer, reader):
     line = reader.readline()
@@ -10,7 +11,7 @@ def read_chat_forever(writer, reader):
         print("Chat:", line.strip())
         for p in participants:
             try:
-                if p is not writer: # Don't echo
+                if p is not writer:  # Don't echo
                     p.write(line)
                     p.flush()
             except socket.error as e:
@@ -30,8 +31,8 @@ try:
         print("Participant joined chat.")
         new_writer = new_connection.makefile('w')
         participants.add(new_writer)
-        eventlet.spawn_n(read_chat_forever, 
-                         new_writer, 
+        eventlet.spawn_n(read_chat_forever,
+                         new_writer,
                          new_connection.makefile('r'))
 except (KeyboardInterrupt, SystemExit):
     print("ChatServer exiting.")

@@ -66,6 +66,7 @@ def interrupt_main():
 
 if hasattr(__thread, 'stack_size'):
     __original_stack_size__ = __thread.stack_size
+
     def stack_size(size=None):
         if size is None:
             return __original_stack_size__()

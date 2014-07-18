@@ -12,7 +12,8 @@ __orig_threading = patcher.original('threading')
 __threadlocal = __orig_threading.local()
 
 
-patcher.inject('threading',
+patcher.inject(
+    'threading',
     globals(),
     ('thread', thread),
     ('time', time))
@@ -21,9 +22,12 @@ del patcher
 
 
 _count = 1
+
+
 class _GreenThread(object):
     """Wrapper for GreenThread objects to provide Thread-like attributes
     and methods"""
+
     def __init__(self, g):
         global _count
         self._g = g
@@ -61,6 +65,7 @@ class _GreenThread(object):
 
 __threading = None
 
+
 def _fixup_thread(t):
     # Some third-party packages (lockfile) will try to patch the
     # threading.Thread class with a get_name attribute if it doesn't
@@ -73,7 +78,7 @@ def _fixup_thread(t):
         __threading = __import__('threading')
 
     if (hasattr(__threading.Thread, 'get_name') and
-        not hasattr(t, 'get_name')):
+            not hasattr(t, 'get_name')):
         t.get_name = t.getName
     return t
 
@@ -88,7 +93,7 @@ def current_thread():
         active = __threadlocal.active
     except AttributeError:
         active = __threadlocal.active = {}
-    
+
     try:
         t = active[id(g)]
     except KeyError:

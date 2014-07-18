@@ -147,7 +147,7 @@ class LightQueue(object):
     """
 
     def __init__(self, maxsize=None):
-        if maxsize is None or maxsize < 0: #None is not comparable in 3.x
+        if maxsize is None or maxsize < 0:  # None is not comparable in 3.x
             self.maxsize = None
         else:
             self.maxsize = maxsize
@@ -193,7 +193,7 @@ class LightQueue(object):
         """Resizes the queue's maximum size.
 
         If the size is increased, and there are putters waiting, they may be woken up."""
-        if self.maxsize is not None and (size is None or size > self.maxsize): # None is not comparable in 3.x
+        if self.maxsize is not None and (size is None or size > self.maxsize):  # None is not comparable in 3.x
             # Maybe wake some stuff up
             self._schedule_unlock()
         self.maxsize = size
@@ -217,7 +217,7 @@ class LightQueue(object):
 
         ``Queue(None)`` is never full.
         """
-        return self.maxsize is not None and self.qsize() >= self.maxsize # None is not comparable in 3.x
+        return self.maxsize is not None and self.qsize() >= self.maxsize  # None is not comparable in 3.x
 
     def put(self, item, block=True, timeout=None):
         """Put an item into the queue.
@@ -335,7 +335,7 @@ class LightQueue(object):
                         getter = self.getters.pop()
                         if getter:
                             item = putter.item
-                            putter.item = _NONE # this makes greenlet calling put() not to call _put() again
+                            putter.item = _NONE  # this makes greenlet calling put() not to call _put() again
                             self._put(item)
                             item = self._get()
                             getter.switch(item)
@@ -348,7 +348,7 @@ class LightQueue(object):
                 else:
                     break
         finally:
-            self._event_unlock = None # QQQ maybe it's possible to obtain this info from libevent?
+            self._event_unlock = None  # QQQ maybe it's possible to obtain this info from libevent?
             # i.e. whether this event is pending _OR_ currently executing
         # testcase: 2 greenlets: while True: q.put(q.get()) - nothing else has a change to execute
         # to avoid this, schedule unlock with timer(0, ...) once in a while
@@ -378,6 +378,7 @@ class Queue(LightQueue):
     In all other respects, this Queue class resembled the standard library,
     :class:`Queue`.
     '''
+
     def __init__(self, maxsize=None):
         LightQueue.__init__(self, maxsize)
         self.unfinished_tasks = 0

@@ -1,5 +1,5 @@
 """This is a recursive web crawler.  Don't go pointing this at random sites;
-it doesn't respect robots.txt and it is pretty brutal about how quickly it 
+it doesn't respect robots.txt and it is pretty brutal about how quickly it
 fetches pages.
 
 The code for this is very short; this is perhaps a good indication
@@ -34,9 +34,10 @@ def fetch(url, seen, pool):
             # while this seems stack-recursive, it's actually not:
             # spawned greenthreads start their own stacks
             pool.spawn_n(fetch, new_url, seen, pool)
-            
+
+
 def crawl(start_url):
-    """Recursively crawl starting from *start_url*.  Returns a set of 
+    """Recursively crawl starting from *start_url*.  Returns a set of
     urls that were found."""
     pool = eventlet.GreenPool()
     seen = set()

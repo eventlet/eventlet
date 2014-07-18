@@ -40,6 +40,7 @@ class Event(object):
     """
     _result = None
     _exc = None
+
     def __init__(self):
         self._waiters = set()
         self.reset()

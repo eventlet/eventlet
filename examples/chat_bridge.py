@@ -2,10 +2,10 @@ import sys
 from zmq import FORWARDER, PUB, SUB, SUBSCRIBE
 from zmq.devices import Device
 
-        
+
 if __name__ == "__main__":
     usage = 'usage: chat_bridge sub_address pub_address'
-    if len (sys.argv) != 3:
+    if len(sys.argv) != 3:
         print(usage)
         sys.exit(1)
 

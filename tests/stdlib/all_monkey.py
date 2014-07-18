@@ -3,6 +3,7 @@ eventlet.sleep(0)
 from eventlet import patcher
 patcher.monkey_patch()
 
+
 def assimilate_real(name):
     print("Assimilating", name)
     try:

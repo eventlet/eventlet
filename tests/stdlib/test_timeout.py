@@ -2,7 +2,8 @@ from eventlet import patcher
 from eventlet.green import socket
 from eventlet.green import time
 
-patcher.inject('test.test_timeout',
+patcher.inject(
+    'test.test_timeout',
     globals(),
     ('socket', socket),
     ('time', time))

@@ -166,6 +166,7 @@ class Proxy(object):
     of strings, which represent the names of attributes that should be
     wrapped in Proxy objects when accessed.
     """
+
     def __init__(self, obj, autowrap=(), autowrap_names=()):
         self._obj = obj
         self._autowrap = autowrap

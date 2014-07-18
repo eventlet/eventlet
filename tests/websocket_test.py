@@ -116,12 +116,13 @@ class TestWebSocket(_TestBase):
         sock.sendall('\r\n'.join(connect) + '\r\n\r\n')
         result = sock.recv(1024)
         # The server responds the correct Websocket handshake
-        self.assertEqual(result,
-                         '\r\n'.join(['HTTP/1.1 101 Web Socket Protocol Handshake',
-                                      'Upgrade: WebSocket',
-                                      'Connection: Upgrade',
-                                      'WebSocket-Origin: http://localhost:%s' % self.port,
-                                      'WebSocket-Location: ws://localhost:%s/echo\r\n\r\n' % self.port]))
+        self.assertEqual(result, '\r\n'.join([
+            'HTTP/1.1 101 Web Socket Protocol Handshake',
+            'Upgrade: WebSocket',
+            'Connection: Upgrade',
+            'WebSocket-Origin: http://localhost:%s' % self.port,
+            'WebSocket-Location: ws://localhost:%s/echo\r\n\r\n' % self.port,
+        ]))
 
     def test_correct_upgrade_request_76(self):
         connect = [
@@ -140,13 +141,14 @@ class TestWebSocket(_TestBase):
         sock.sendall('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U')
         result = sock.recv(1024)
         # The server responds the correct Websocket handshake
-        self.assertEqual(result,
-                         '\r\n'.join(['HTTP/1.1 101 WebSocket Protocol Handshake',
-                                      'Upgrade: WebSocket',
-                                      'Connection: Upgrade',
-                                      'Sec-WebSocket-Origin: http://localhost:%s' % self.port,
-                                      'Sec-WebSocket-Protocol: ws',
-                                      'Sec-WebSocket-Location: ws://localhost:%s/echo\r\n\r\n8jKS\'y:G*Co,Wxa-' % self.port]))
+        self.assertEqual(result, '\r\n'.join([
+            'HTTP/1.1 101 WebSocket Protocol Handshake',
+            'Upgrade: WebSocket',
+            'Connection: Upgrade',
+            'Sec-WebSocket-Origin: http://localhost:%s' % self.port,
+            'Sec-WebSocket-Protocol: ws',
+            'Sec-WebSocket-Location: ws://localhost:%s/echo\r\n\r\n8jKS\'y:G*Co,Wxa-' % self.port,
+        ]))
 
     def test_query_string(self):
         # verify that the query string comes out the other side unscathed
@@ -165,13 +167,14 @@ class TestWebSocket(_TestBase):
 
         sock.sendall('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U')
         result = sock.recv(1024)
-        self.assertEqual(result,
-                         '\r\n'.join(['HTTP/1.1 101 WebSocket Protocol Handshake',
-                                      'Upgrade: WebSocket',
-                                      'Connection: Upgrade',
-                                      'Sec-WebSocket-Origin: http://localhost:%s' % self.port,
-                                      'Sec-WebSocket-Protocol: ws',
-                                      'Sec-WebSocket-Location: ws://localhost:%s/echo?query_string\r\n\r\n8jKS\'y:G*Co,Wxa-' % self.port]))
+        self.assertEqual(result, '\r\n'.join([
+            'HTTP/1.1 101 WebSocket Protocol Handshake',
+            'Upgrade: WebSocket',
+            'Connection: Upgrade',
+            'Sec-WebSocket-Origin: http://localhost:%s' % self.port,
+            'Sec-WebSocket-Protocol: ws',
+            'Sec-WebSocket-Location: ws://localhost:%s/echo?query_string\r\n\r\n8jKS\'y:G*Co,Wxa-' % self.port,
+        ]))
 
     def test_empty_query_string(self):
         # verify that a single trailing ? doesn't get nuked
@@ -212,7 +215,7 @@ class TestWebSocket(_TestBase):
             ('localhost', self.port))
 
         sock.sendall('\r\n'.join(connect) + '\r\n\r\n')
-        first_resp = sock.recv(1024)
+        sock.recv(1024)
         sock.sendall('\x00hello\xFF')
         result = sock.recv(1024)
         self.assertEqual(result, '\x00hello\xff')
@@ -240,7 +243,7 @@ class TestWebSocket(_TestBase):
             ('localhost', self.port))
 
         sock.sendall('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U')
-        first_resp = sock.recv(1024)
+        sock.recv(1024)
         sock.sendall('\x00hello\xFF')
         result = sock.recv(1024)
         self.assertEqual(result, '\x00hello\xff')
@@ -328,7 +331,7 @@ class TestWebSocket(_TestBase):
         sock = eventlet.connect(
             ('localhost', self.port))
         sock.sendall('\r\n'.join(connect) + '\r\n\r\n')
-        resp = sock.recv(1024)  # get the headers
+        sock.recv(1024)  # get the headers
         sock.close()  # close while the app is running
         done_with_request.wait()
         assert not error_detected[0]
@@ -362,7 +365,7 @@ class TestWebSocket(_TestBase):
         sock = eventlet.connect(
             ('localhost', self.port))
         sock.sendall('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U')
-        resp = sock.recv(1024)  # get the headers
+        sock.recv(1024)  # get the headers
         sock.close()  # close while the app is running
         done_with_request.wait()
         assert not error_detected[0]
@@ -396,7 +399,7 @@ class TestWebSocket(_TestBase):
         sock = eventlet.connect(
             ('localhost', self.port))
         sock.sendall('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U')
-        resp = sock.recv(1024)  # get the headers
+        sock.recv(1024)  # get the headers
         sock.sendall('\xff\x00')  # "Close the connection" packet.
         done_with_request.wait()
         assert not error_detected[0]
@@ -430,7 +433,7 @@ class TestWebSocket(_TestBase):
         sock = eventlet.connect(
             ('localhost', self.port))
         sock.sendall('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U')
-        resp = sock.recv(1024)  # get the headers
+        sock.recv(1024)  # get the headers
         sock.sendall('\xef\x00')  # Weird packet.
         done_with_request.wait()
         assert error_detected[0]
@@ -482,7 +485,7 @@ class TestWebSocket(_TestBase):
         sock = eventlet.connect(
             ('localhost', self.port))
         sock.sendall('\r\n'.join(connect) + '\r\n\r\n')
-        resp = sock.recv(1024)
+        sock.recv(1024)
         done_with_request.wait()
         assert error_detected[0]
 
@@ -515,7 +518,7 @@ class TestWebSocket(_TestBase):
         sock = eventlet.connect(
             ('localhost', self.port))
         sock.sendall('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U')
-        resp = sock.recv(1024)
+        sock.recv(1024)
         done_with_request.wait()
         assert error_detected[0]
 

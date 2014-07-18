@@ -14,9 +14,10 @@ except ImportError:
     pr.UnbufferedTransport = None
     pr.GreenTransport = None
     pr.GreenClientCreator = lambda *a, **k: None
+
     class reactor(object):
         pass
-    
+
 from eventlet import spawn, sleep, with_timeout, spawn_after
 from eventlet.coros import Event
 
@@ -25,7 +26,7 @@ try:
 except SyntaxError:
     socket = None
 
-DELAY=0.01
+DELAY = 0.01
 
 if socket is not None:
     def setup_server_socket(self, delay=DELAY, port=0):
@@ -34,10 +35,11 @@ if socket is not None:
         s.bind(('127.0.0.1', port))
         port = s.getsockname()[1]
         s.listen(5)
-        s.settimeout(delay*3)
+        s.settimeout(delay * 3)
+
         def serve():
             conn, addr = s.accept()
-            conn.settimeout(delay+1)
+            conn.settimeout(delay + 1)
             try:
                 hello = conn.makefile().readline()[:-2]
             except socket.timeout:
@@ -46,9 +48,10 @@ if socket is not None:
             sleep(delay)
             conn.sendall('BYE')
             sleep(delay)
-            #conn.close()
+            # conn.close()
         spawn(serve)
         return port
+
 
 def setup_server_SpawnFactory(self, delay=DELAY, port=0):
     def handle(conn):
@@ -65,19 +68,21 @@ def setup_server_SpawnFactory(self, delay=DELAY, port=0):
     port = reactor.listenTCP(0, pr.SpawnFactory(handle, LineOnlyReceiverTransport))
     return port.getHost().port
 
+
 class TestCase(unittest.TestCase):
     transportBufferSize = None
 
     @property
     def connector(self):
         return pr.GreenClientCreator(reactor, self.gtransportClass, self.transportBufferSize)
-    
+
     @requires_twisted
     def setUp(self):
         port = self.setup_server()
         self.conn = self.connector.connectTCP('127.0.0.1', port)
         if self.transportBufferSize is not None:
             self.assertEqual(self.transportBufferSize, self.conn.transport.bufferSize)
+
 
 class TestUnbufferedTransport(TestCase):
     gtransportClass = pr.UnbufferedTransport
@@ -95,9 +100,11 @@ class TestUnbufferedTransport(TestCase):
         self.conn.write('iterator\r\n')
         self.assertEqual('you said iterator. BYE', ''.join(self.conn))
 
+
 class TestUnbufferedTransport_bufsize1(TestUnbufferedTransport):
     transportBufferSize = 1
     setup_server = setup_server_SpawnFactory
+
 
 class TestGreenTransport(TestUnbufferedTransport):
     gtransportClass = pr.GreenTransport
@@ -138,16 +145,17 @@ class TestGreenTransport(TestUnbufferedTransport):
     def test_pause_producing(self):
         self.conn.pauseProducing()
         self.conn.write('hi\r\n')
-        result = with_timeout(DELAY*10, self.conn.read, timeout_value='timed out')
+        result = with_timeout(DELAY * 10, self.conn.read, timeout_value='timed out')
         self.assertEqual('timed out', result)
 
     @requires_twisted
     def test_pauseresume_producing(self):
         self.conn.pauseProducing()
-        spawn_after(DELAY*5, self.conn.resumeProducing)
+        spawn_after(DELAY * 5, self.conn.resumeProducing)
         self.conn.write('hi\r\n')
-        result = with_timeout(DELAY*10, self.conn.read, timeout_value='timed out')
+        result = with_timeout(DELAY * 10, self.conn.read, timeout_value='timed out')
         self.assertEqual('you said hi. BYE', result)
+
 
 class TestGreenTransport_bufsize1(TestGreenTransport):
     transportBufferSize = 1
@@ -155,14 +163,14 @@ class TestGreenTransport_bufsize1(TestGreenTransport):
 # class TestGreenTransportError(TestCase):
 #     setup_server = setup_server_SpawnFactory
 #     gtransportClass = pr.GreenTransport
-# 
+#
 #     def test_read_error(self):
 #         self.conn.write('hello\r\n')
-#         sleep(DELAY*1.5) # make sure the rest of data arrives
+# sleep(DELAY*1.5) # make sure the rest of data arrives
 #         try:
 #             1//0
 #         except:
-#             #self.conn.loseConnection(failure.Failure()) # does not work, why?
+# self.conn.loseConnection(failure.Failure()) # does not work, why?
 #             spawn(self.conn._queue.send_exception, *sys.exc_info())
 #         self.assertEqual(self.conn.read(9), 'you said ')
 #         self.assertEqual(self.conn.read(7), 'hello. ')
@@ -170,15 +178,15 @@ class TestGreenTransport_bufsize1(TestGreenTransport):
 #         self.assertRaises(ZeroDivisionError, self.conn.read, 9)
 #         self.assertEqual(self.conn.read(1), '')
 #         self.assertEqual(self.conn.read(1), '')
-# 
+#
 #     def test_recv_error(self):
 #         self.conn.write('hello')
 #         self.assertEqual('you said hello. ', self.conn.recv())
-#         sleep(DELAY*1.5) # make sure the rest of data arrives
+# sleep(DELAY*1.5) # make sure the rest of data arrives
 #         try:
 #             1//0
 #         except:
-#             #self.conn.loseConnection(failure.Failure()) # does not work, why?
+# self.conn.loseConnection(failure.Failure()) # does not work, why?
 #             spawn(self.conn._queue.send_exception, *sys.exc_info())
 #         self.assertEqual('BYE', self.conn.recv())
 #         self.assertRaises(ZeroDivisionError, self.conn.recv, 9)
@@ -212,6 +220,7 @@ class TestTLSError(unittest.TestCase):
         from gnutls.errors import GNUTLSError
         cred = X509Credentials(None, None)
         ev = Event()
+
         def handle(conn):
             ev.send("handle must not be called")
         s = reactor.listenTLS(0, pr.SpawnFactory(handle, LineOnlyReceiverTransport), cred)
@@ -221,15 +230,16 @@ class TestTLSError(unittest.TestCase):
         except GNUTLSError:
             pass
         assert ev.poll() is None, repr(ev.poll())
-        
+
 try:
     import gnutls.interfaces.twisted
 except ImportError:
     del TestTLSError
 
+
 @requires_twisted
 def main():
     unittest.main()
 
-if __name__=='__main__':
+if __name__ == '__main__':
     main()

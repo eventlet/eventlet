@@ -302,7 +302,7 @@ class Source(object):
             if self._exc is None:
                 res = repr(self.value)
                 if len(res) > 50:
-                    res = res[:50]+'...'
+                    res = res[:50] + '...'
                 result.append('result=%s' % res)
             else:
                 result.append('raised=%s' % (self._exc, ))
@@ -737,5 +737,3 @@ class Pool(object):
         g = self.linkable_class()
         g.link(lambda *_args: self.semaphore.release())
         return g
-
-

@@ -3,9 +3,9 @@ import struct
 
 import eventlet
 from eventlet import event
+from eventlet import websocket
 from eventlet.green import httplib
 from eventlet.green import socket
-from eventlet import websocket
 
 from tests.wsgi_test import _TestBase
 
@@ -43,7 +43,8 @@ class TestWebSocket(_TestBase):
             # NOTE: intentionally no connection header
             "Host: localhost:%s" % self.port,
             "Origin: http://localhost:%s" % self.port,
-            "Sec-WebSocket-Version: 13", ])
+            "Sec-WebSocket-Version: 13",
+        ])
         http = httplib.HTTPConnection('localhost', self.port)
         http.request("GET", "/echo", headers=headers)
         resp = http.getresponse()
@@ -58,7 +59,8 @@ class TestWebSocket(_TestBase):
             "Connection: Upgrade",
             "Host: localhost:%s" % self.port,
             "Origin: http://localhost:%s" % self.port,
-            "Sec-WebSocket-Version: 13", ])
+            "Sec-WebSocket-Version: 13",
+        ])
         http = httplib.HTTPConnection('localhost', self.port)
         http.request("GET", "/echo", headers=headers)
         resp = http.getresponse()
@@ -72,7 +74,8 @@ class TestWebSocket(_TestBase):
             "Connection: Upgrade",
             "Host: localhost:%s" % self.port,
             "Origin: http://localhost:%s" % self.port,
-            "Sec-WebSocket-Version: 13", ])
+            "Sec-WebSocket-Version: 13",
+        ])
         http = httplib.HTTPConnection('localhost', self.port)
         http.request("GET", "/echo", headers=headers)
         resp = http.getresponse()
@@ -113,12 +116,13 @@ class TestWebSocket(_TestBase):
             "Host: localhost:%s" % self.port,
             "Origin: http://localhost:%s" % self.port,
             "Sec-WebSocket-Version: 13",
-            "Sec-WebSocket-Key: d9MXuOzlVQ0h+qRllvSCIg==", ]
+            "Sec-WebSocket-Key: d9MXuOzlVQ0h+qRllvSCIg==",
+        ]
         sock = eventlet.connect(
             ('localhost', self.port))
 
         sock.sendall('\r\n'.join(connect) + '\r\n\r\n')
-        first_resp = sock.recv(1024)
+        sock.recv(1024)
         ws = websocket.RFC6455WebSocket(sock, {}, client=True)
         ws.send('hello')
         assert ws.wait() == 'hello'
@@ -152,11 +156,12 @@ class TestWebSocket(_TestBase):
             "Host: localhost:%s" % self.port,
             "Origin: http://localhost:%s" % self.port,
             "Sec-WebSocket-Version: 13",
-            "Sec-WebSocket-Key: d9MXuOzlVQ0h+qRllvSCIg==", ]
+            "Sec-WebSocket-Key: d9MXuOzlVQ0h+qRllvSCIg==",
+        ]
         sock = eventlet.connect(
             ('localhost', self.port))
         sock.sendall('\r\n'.join(connect) + '\r\n\r\n')
-        resp = sock.recv(1024)  # get the headers
+        sock.recv(1024)  # get the headers
         sock.close()  # close while the app is running
         done_with_request.wait()
         assert not error_detected[0]
@@ -184,11 +189,12 @@ class TestWebSocket(_TestBase):
             "Host: localhost:%s" % self.port,
             "Origin: http://localhost:%s" % self.port,
             "Sec-WebSocket-Version: 13",
-            "Sec-WebSocket-Key: d9MXuOzlVQ0h+qRllvSCIg==", ]
+            "Sec-WebSocket-Key: d9MXuOzlVQ0h+qRllvSCIg==",
+        ]
         sock = eventlet.connect(
             ('localhost', self.port))
         sock.sendall('\r\n'.join(connect) + '\r\n\r\n')
-        resp = sock.recv(1024)  # get the headers
+        sock.recv(1024)  # get the headers
         closeframe = struct.pack('!BBIH', 1 << 7 | 8, 1 << 7 | 2, 0, 1000)
         sock.sendall(closeframe)  # "Close the connection" packet.
         done_with_request.wait()
@@ -217,11 +223,12 @@ class TestWebSocket(_TestBase):
             "Host: localhost:%s" % self.port,
             "Origin: http://localhost:%s" % self.port,
             "Sec-WebSocket-Version: 13",
-            "Sec-WebSocket-Key: d9MXuOzlVQ0h+qRllvSCIg==", ]
+            "Sec-WebSocket-Key: d9MXuOzlVQ0h+qRllvSCIg==",
+        ]
         sock = eventlet.connect(
             ('localhost', self.port))
         sock.sendall('\r\n'.join(connect) + '\r\n\r\n')
-        resp = sock.recv(1024)  # get the headers
+        sock.recv(1024)  # get the headers
         sock.sendall('\x07\xff')  # Weird packet.
         done_with_request.wait()
         assert not error_detected[0]

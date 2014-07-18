@@ -30,6 +30,8 @@ _NONE = object()
 
 # deriving from BaseException so that "except Exception as e" doesn't catch
 # Timeout exceptions.
+
+
 class Timeout(BaseException):
     """Raises *exception* in the current greenthread after *timeout* seconds.
 
@@ -54,13 +56,13 @@ class Timeout(BaseException):
         it should not be called explicitly, unless the timer has been
         canceled."""
         assert not self.pending, \
-               '%r is already started; to restart it, cancel it first' % self
-        if self.seconds is None: # "fake" timeout (never expires)
+            '%r is already started; to restart it, cancel it first' % self
+        if self.seconds is None:  # "fake" timeout (never expires)
             self.timer = None
-        elif self.exception is None or isinstance(self.exception, bool): # timeout that raises self
+        elif self.exception is None or isinstance(self.exception, bool):  # timeout that raises self
             self.timer = get_hub().schedule_call_global(
                 self.seconds, greenlet.getcurrent().throw, self)
-        else: # regular timeout with user-provided exception
+        else:  # regular timeout with user-provided exception
             self.timer = get_hub().schedule_call_global(
                 self.seconds, greenlet.getcurrent().throw, self.exception)
         return self

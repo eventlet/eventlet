@@ -1,13 +1,13 @@
-import sys
 import errno
-import signal
+import sys
+
 from eventlet import patcher
 select = patcher.original('select')
 time = patcher.original('time')
 sleep = time.sleep
 
+from eventlet.hubs.hub import BaseHub, READ, WRITE, noop
 from eventlet.support import get_errno, clear_sys_exc_info
-from eventlet.hubs.hub import BaseHub, READ, WRITE, noop, alarm_handler
 
 EXC_MASK = select.POLLERR | select.POLLHUP
 READ_MASK = select.POLLIN | select.POLLPRI

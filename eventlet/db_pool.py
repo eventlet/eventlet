@@ -268,6 +268,7 @@ class TpooledConnectionPool(BaseConnectionPool):
     """A pool which gives out :class:`~eventlet.tpool.Proxy`-based database
     connections.
     """
+
     def create(self):
         now = time.time()
         return now, now, self.connect(
@@ -287,6 +288,7 @@ class TpooledConnectionPool(BaseConnectionPool):
 class RawConnectionPool(BaseConnectionPool):
     """A pool which gives out plain database connections.
     """
+
     def create(self):
         now = time.time()
         return now, now, self.connect(
@@ -316,38 +318,71 @@ class GenericConnectionWrapper(object):
     # * def __getattr__(self, name): if name in (...): return getattr(self._base, name)
     # * other?
     def __enter__(self): return self._base.__enter__()
+
     def __exit__(self, exc, value, tb): return self._base.__exit__(exc, value, tb)
+
     def __repr__(self): return self._base.__repr__()
+
     def affected_rows(self): return self._base.affected_rows()
+
     def autocommit(self, *args, **kwargs): return self._base.autocommit(*args, **kwargs)
+
     def begin(self): return self._base.begin()
+
     def change_user(self, *args, **kwargs): return self._base.change_user(*args, **kwargs)
+
     def character_set_name(self, *args, **kwargs): return self._base.character_set_name(*args, **kwargs)
+
     def close(self, *args, **kwargs): return self._base.close(*args, **kwargs)
+
     def commit(self, *args, **kwargs): return self._base.commit(*args, **kwargs)
+
     def cursor(self, *args, **kwargs): return self._base.cursor(*args, **kwargs)
+
     def dump_debug_info(self, *args, **kwargs): return self._base.dump_debug_info(*args, **kwargs)
+
     def errno(self, *args, **kwargs): return self._base.errno(*args, **kwargs)
+
     def error(self, *args, **kwargs): return self._base.error(*args, **kwargs)
+
     def errorhandler(self, *args, **kwargs): return self._base.errorhandler(*args, **kwargs)
+
     def insert_id(self, *args, **kwargs): return self._base.insert_id(*args, **kwargs)
+
     def literal(self, *args, **kwargs): return self._base.literal(*args, **kwargs)
+
     def set_character_set(self, *args, **kwargs): return self._base.set_character_set(*args, **kwargs)
+
     def set_sql_mode(self, *args, **kwargs): return self._base.set_sql_mode(*args, **kwargs)
+
     def show_warnings(self): return self._base.show_warnings()
+
     def warning_count(self): return self._base.warning_count()
+
     def ping(self, *args, **kwargs): return self._base.ping(*args, **kwargs)
+
     def query(self, *args, **kwargs): return self._base.query(*args, **kwargs)
+
     def rollback(self, *args, **kwargs): return self._base.rollback(*args, **kwargs)
+
     def select_db(self, *args, **kwargs): return self._base.select_db(*args, **kwargs)
+
     def set_server_option(self, *args, **kwargs): return self._base.set_server_option(*args, **kwargs)
+
     def server_capabilities(self, *args, **kwargs): return self._base.server_capabilities(*args, **kwargs)
+
     def shutdown(self, *args, **kwargs): return self._base.shutdown(*args, **kwargs)
+
     def sqlstate(self, *args, **kwargs): return self._base.sqlstate(*args, **kwargs)
+
     def stat(self, *args, **kwargs): return self._base.stat(*args, **kwargs)
+
     def store_result(self, *args, **kwargs): return self._base.store_result(*args, **kwargs)
+
     def string_literal(self, *args, **kwargs): return self._base.string_literal(*args, **kwargs)
+
     def thread_id(self, *args, **kwargs): return self._base.thread_id(*args, **kwargs)
+
     def use_result(self, *args, **kwargs): return self._base.use_result(*args, **kwargs)
 
 
@@ -357,6 +392,7 @@ class PooledConnectionWrapper(GenericConnectionWrapper):
     - ``bool(conn)`` returns a reasonable value
     - returns itself to the pool if it gets garbage collected
     """
+
     def __init__(self, baseconn, pool):
         super(PooledConnectionWrapper, self).__init__(baseconn)
         self._pool = pool
@@ -385,7 +421,7 @@ class PooledConnectionWrapper(GenericConnectionWrapper):
     def __del__(self):
         return  # this causes some issues if __del__ is called in the
                 # main coroutine, so for now this is disabled
-        #self.close()
+        # self.close()
 
 
 class DatabaseConnector(object):
@@ -393,6 +429,7 @@ class DatabaseConnector(object):
     This is an object which will maintain a collection of database
     connection pools on a per-host basis.
     """
+
     def __init__(self, module, credentials,
                  conn_pool=None, *args, **kwargs):
         """constructor
@@ -408,7 +445,8 @@ class DatabaseConnector(object):
         self._module = module
         self._args = args
         self._kwargs = kwargs
-        self._credentials = credentials  # this is a map of hostname to username/password
+        # this is a map of hostname to username/password
+        self._credentials = credentials
         self._databases = {}
 
     def credentials_for(self, host):

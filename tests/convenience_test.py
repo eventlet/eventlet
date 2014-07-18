@@ -36,7 +36,7 @@ class TestServe(LimitedTestCase):
         # tests that the server closes the client sock on handle() exception
         def crasher(sock, addr):
             sock.recv(1024)
-            0//0
+            0 // 0
 
         l = eventlet.listen(('localhost', 0))
         gt = eventlet.spawn(eventlet.serve, l, crasher)
@@ -50,7 +50,7 @@ class TestServe(LimitedTestCase):
         def crasher(sock, addr):
             sock.recv(1024)
             sock.close()
-            0//0
+            0 // 0
 
         l = eventlet.listen(('localhost', 0))
         gt = eventlet.spawn(eventlet.serve, l, crasher)

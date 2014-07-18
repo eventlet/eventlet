@@ -1,14 +1,17 @@
-""" This is an incredibly simple port forwarder from port 7000 to 22 on 
-localhost.  It calls a callback function when the socket is closed, to 
+""" This is an incredibly simple port forwarder from port 7000 to 22 on
+localhost.  It calls a callback function when the socket is closed, to
 demonstrate one way that you could start to do interesting things by
 starting from a simple framework like this.
 """
 
 import eventlet
+
+
 def closed_callback():
     print("called back")
 
-def forward(source, dest, cb = lambda: None):
+
+def forward(source, dest, cb=lambda: None):
     """Forwards bytes unidirectionally from source to dest"""
     while True:
         d = source.recv(32384)

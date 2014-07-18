@@ -1,7 +1,8 @@
 from eventlet import patcher
 from eventlet.green import os
 
-patcher.inject('test.test_os',
+patcher.inject(
+    'test.test_os',
     globals(),
     ('os', os))
 

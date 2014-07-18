@@ -2,10 +2,12 @@ import eventlet
 from eventlet import event
 from tests import LimitedTestCase
 
+
 class TestEvent(LimitedTestCase):
     def test_waiting_for_event(self):
         evt = event.Event()
         value = 'some stuff'
+
         def send_to_event():
             evt.send(value)
         eventlet.spawn_n(send_to_event)
@@ -19,8 +21,8 @@ class TestEvent(LimitedTestCase):
 
     def _test_multiple_waiters(self, exception):
         evt = event.Event()
-        value = 'some stuff'
         results = []
+
         def wait_on_event(i_am_done):
             evt.wait()
             results.append(True)
@@ -48,6 +50,7 @@ class TestEvent(LimitedTestCase):
         self.assertRaises(AssertionError, evt.reset)
 
         value = 'some stuff'
+
         def send_to_event():
             evt.send(value)
         eventlet.spawn_n(send_to_event)
@@ -61,6 +64,7 @@ class TestEvent(LimitedTestCase):
 
         # reset and everything should be happy
         evt.reset()
+
         def send_to_event2():
             evt.send(value2)
         eventlet.spawn_n(send_to_event2)
@@ -75,4 +79,3 @@ class TestEvent(LimitedTestCase):
         # shouldn't see the RuntimeError again
         eventlet.Timeout(0.001)
         self.assertRaises(eventlet.Timeout, evt.wait)
-

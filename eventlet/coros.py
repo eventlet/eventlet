@@ -20,34 +20,38 @@ NOT_USED = NOT_USED()
 
 def Event(*a, **kw):
     warnings.warn("The Event class has been moved to the event module! "
-                   "Please construct event.Event objects instead.",
-                   DeprecationWarning, stacklevel=2)
+                  "Please construct event.Event objects instead.",
+                  DeprecationWarning, stacklevel=2)
     return _event.Event(*a, **kw)
 
 
 def event(*a, **kw):
-    warnings.warn("The event class has been capitalized and moved!  Please "
+    warnings.warn(
+        "The event class has been capitalized and moved!  Please "
         "construct event.Event objects instead.",
         DeprecationWarning, stacklevel=2)
     return _event.Event(*a, **kw)
 
 
 def Semaphore(count):
-    warnings.warn("The Semaphore class has moved!  Please "
+    warnings.warn(
+        "The Semaphore class has moved!  Please "
         "use semaphore.Semaphore instead.",
         DeprecationWarning, stacklevel=2)
     return semaphoremod.Semaphore(count)
 
 
 def BoundedSemaphore(count):
-    warnings.warn("The BoundedSemaphore class has moved!  Please "
+    warnings.warn(
+        "The BoundedSemaphore class has moved!  Please "
         "use semaphore.BoundedSemaphore instead.",
         DeprecationWarning, stacklevel=2)
     return semaphoremod.BoundedSemaphore(count)
 
 
 def semaphore(count=0, limit=None):
-    warnings.warn("coros.semaphore is deprecated.  Please use either "
+    warnings.warn(
+        "coros.semaphore is deprecated.  Please use either "
         "semaphore.Semaphore or semaphore.BoundedSemaphore instead.",
         DeprecationWarning, stacklevel=2)
     if limit is None:
@@ -74,6 +78,7 @@ class metaphore(object):
     A decrementing
     B decrementing
     """
+
     def __init__(self):
         self.counter = 0
         self.event = _event.Event()
@@ -126,13 +131,15 @@ def execute(func, *args, **kw):
     >>> evt.wait()
     ('foo', 1)
     """
-    warnings.warn("Coros.execute is deprecated.  Please use eventlet.spawn "
+    warnings.warn(
+        "Coros.execute is deprecated.  Please use eventlet.spawn "
         "instead.", DeprecationWarning, stacklevel=2)
     return greenthread.spawn(func, *args, **kw)
 
 
 def CoroutinePool(*args, **kwargs):
-    warnings.warn("CoroutinePool is deprecated.  Please use "
+    warnings.warn(
+        "CoroutinePool is deprecated.  Please use "
         "eventlet.GreenPool instead.", DeprecationWarning, stacklevel=2)
     from eventlet.pool import Pool
     return Pool(*args, **kwargs)
@@ -141,14 +148,15 @@ def CoroutinePool(*args, **kwargs):
 class Queue(object):
 
     def __init__(self):
-        warnings.warn("coros.Queue is deprecated.  Please use "
+        warnings.warn(
+            "coros.Queue is deprecated.  Please use "
             "eventlet.queue.Queue instead.",
             DeprecationWarning, stacklevel=2)
         self.items = collections.deque()
         self._waiters = set()
 
     def __nonzero__(self):
-        return len(self.items)>0
+        return len(self.items) > 0
 
     __bool__ = __nonzero__
 
@@ -215,7 +223,8 @@ class Queue(object):
 class Channel(object):
 
     def __init__(self, max_size=0):
-        warnings.warn("coros.Channel is deprecated.  Please use "
+        warnings.warn(
+            "coros.Channel is deprecated.  Please use "
             "eventlet.queue.Queue(0) instead.",
             DeprecationWarning, stacklevel=2)
         self.max_size = max_size
@@ -224,7 +233,7 @@ class Channel(object):
         self._senders = set()
 
     def __nonzero__(self):
-        return len(self.items)>0
+        return len(self.items) > 0
 
     __bool__ = __nonzero__
 

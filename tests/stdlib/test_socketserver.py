@@ -11,7 +11,8 @@ from eventlet.green import threading
 from test import test_support
 test_support.use_resources = ['network']
 
-patcher.inject('test.test_socketserver',
+patcher.inject(
+    'test.test_socketserver',
     globals(),
     ('SocketServer', SocketServer),
     ('socket', socket),

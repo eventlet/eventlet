@@ -109,11 +109,11 @@ class TestTpool(LimitedTestCase):
 
     @skip_with_pyevent
     def test_wrap_hash(self):
-        prox1 = tpool.Proxy(''+'A')
-        prox2 = tpool.Proxy('A'+'')
+        prox1 = tpool.Proxy('' + 'A')
+        prox2 = tpool.Proxy('A' + '')
         assert prox1 == 'A'
         assert 'A' == prox2
-        #assert prox1 == prox2 FIXME - could __eq__ unwrap rhs if it is other proxy?
+        # assert prox1 == prox2 FIXME - could __eq__ unwrap rhs if it is other proxy?
         self.assertEqual(hash(prox1), hash(prox2))
         proxList = tpool.Proxy([])
         self.assertRaises(TypeError, hash, proxList)
@@ -301,19 +301,19 @@ class TpoolLongTests(LimitedTestCase):
         class Dummy(object):
             def foo(self, when, token=None):
                 assert_(token is not None)
-                time.sleep(random.random()/200.0)
+                time.sleep(random.random() / 200.0)
                 return token
 
         def sender_loop(loopnum):
             obj = tpool.Proxy(Dummy())
             count = 100
             for n in six.moves.range(count):
-                eventlet.sleep(random.random()/200.0)
+                eventlet.sleep(random.random() / 200.0)
                 now = time.time()
                 token = loopnum * count + n
                 rv = obj.foo(now, token=token)
                 self.assertEqual(token, rv)
-                eventlet.sleep(random.random()/200.0)
+                eventlet.sleep(random.random() / 200.0)
 
         cnt = 10
         pile = eventlet.GreenPile(cnt)
@@ -340,7 +340,7 @@ from eventlet.tpool import execute
         results = t.repeat(repeat=3, number=iterations)
         best_tpool = min(results)
 
-        tpool_overhead = (best_tpool-best_normal)/iterations
+        tpool_overhead = (best_tpool - best_normal) / iterations
         print("%s iterations\nTpool overhead is %s seconds per call.  Normal: %s; Tpool: %s" % (
             iterations, tpool_overhead, best_normal, best_tpool))
         tpool.killall()

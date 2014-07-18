@@ -399,7 +399,7 @@ print(process.wait())"""
         self.write_to_tempfile("newmod", new_mod)
         output, lines = self.launch_subprocess('newmod')
         self.assertEqual(len(lines), 2, "\n".join(lines))
-        self.assertEqual('1',  lines[0], repr(output))
+        self.assertEqual('1', lines[0], repr(output))
 
 
 class GreenThreadWrapper(ProcessBase):

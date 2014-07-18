@@ -15,6 +15,7 @@ DEBUG = True
 class GreenPool(object):
     """The GreenPool class is a pool of green threads.
     """
+
     def __init__(self, size=1000):
         self.size = size
         self.coroutines_running = set()
@@ -187,6 +188,7 @@ class GreenPile(object):
     than the one which is calling spawn.  The iterator will exit early in that
     situation.
     """
+
     def __init__(self, size_or_pool=1000):
         if isinstance(size_or_pool, GreenPool):
             self.pool = size_or_pool

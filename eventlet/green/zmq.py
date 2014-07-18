@@ -33,6 +33,7 @@ class _QueueLock(object):
     is called, the threads are awoken in the order they blocked,
     one at a time. This lock can be required recursively by the same
     thread."""
+
     def __init__(self):
         self._waiters = deque()
         self._count = 0
@@ -118,6 +119,7 @@ class _BlockedThread(object):
             return True
         return False
 
+
 class Context(__zmq__.Context):
     """Subclass of :class:`zmq.core.context.Context`
     """
@@ -132,6 +134,7 @@ class Context(__zmq__.Context):
         if self.closed:
             raise ZMQError(ENOTSUP)
         return Socket(self, socket_type)
+
 
 def _wraps(source_fn):
     """A decorator that copies the __name__ and __doc__ from the given
@@ -191,6 +194,7 @@ _Socket_send_multipart = _Socket.send_multipart
 _Socket_recv_multipart = _Socket.recv_multipart
 _Socket_getsockopt = _Socket.getsockopt
 
+
 class Socket(_Socket):
     """Green version of :class:`zmq.core.socket.Socket
 
@@ -206,6 +210,7 @@ class Socket(_Socket):
         * send_multipart
         * recv_multipart
     """
+
     def __init__(self, context, socket_type):
         super(Socket, self).__init__(context, socket_type)
 
@@ -291,7 +296,6 @@ class Socket(_Socket):
                     # make the socket ready to recv. Wake the next
                     # receiver. (Could check EVENTS for POLLIN here)
                     self._eventlet_recv_event.wake()
-
 
     @_wraps(_Socket.send_multipart)
     def send_multipart(self, msg_parts, flags=0, copy=True, track=False):

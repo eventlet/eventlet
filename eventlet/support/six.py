@@ -110,7 +110,7 @@ class MovedModule(_LazyDescr):
         # well if this MovedModule is for an module that is unavailable on this
         # machine (like winreg on Unix systems). Thus, we pretend __file__ and
         # __name__ don't exist if the module hasn't been loaded yet. See issues
-        # #51 and #53.
+        # 51 and #53.
         if attr in ("__file__", "__name__") and self.mod not in sys.modules:
             raise AttributeError
         _module = self._resolve()
@@ -157,7 +157,6 @@ class MovedAttribute(_LazyDescr):
     def _resolve(self):
         module = _import_module(self.mod)
         return getattr(module, self.attr)
-
 
 
 class _MovedItems(_LazyModule):
@@ -477,13 +476,16 @@ def iterkeys(d, **kw):
     """Return an iterator over the keys of a dictionary."""
     return iter(getattr(d, _iterkeys)(**kw))
 
+
 def itervalues(d, **kw):
     """Return an iterator over the values of a dictionary."""
     return iter(getattr(d, _itervalues)(**kw))
 
+
 def iteritems(d, **kw):
     """Return an iterator over the (key, value) pairs of a dictionary."""
     return iter(getattr(d, _iteritems)(**kw))
+
 
 def iterlists(d, **kw):
     """Return an iterator over the (key, [values]) pairs of a dictionary."""
@@ -493,6 +495,7 @@ def iterlists(d, **kw):
 if PY3:
     def b(s):
         return s.encode("latin-1")
+
     def u(s):
         return s
     unichr = chr
@@ -512,14 +515,18 @@ else:
     def b(s):
         return s
     # Workaround for standalone backslash
+
     def u(s):
         return unicode(s.replace(r'\\', r'\\\\'), "unicode_escape")
     unichr = unichr
     int2byte = chr
+
     def byte2int(bs):
         return ord(bs[0])
+
     def indexbytes(buf, i):
         return ord(buf[i])
+
     def iterbytes(buf):
         return (ord(byte) for byte in buf)
     import StringIO
@@ -530,7 +537,6 @@ _add_doc(u, """Text literal""")
 
 if PY3:
     exec_ = getattr(moves.builtins, "exec")
-
 
     def reraise(tp, value, tb=None):
         if value.__traceback__ is not tb:
@@ -550,7 +556,6 @@ else:
             _locs_ = _globs_
         exec("""exec _code_ in _globs_, _locs_""")
 
-
     exec_("""def reraise(tp, value, tb=None):
     raise tp, value, tb
 """)
@@ -563,6 +568,7 @@ if print_ is None:
         fp = kwargs.pop("file", sys.stdout)
         if fp is None:
             return
+
         def write(data):
             if not isinstance(data, basestring):
                 data = str(data)
@@ -617,6 +623,7 @@ _add_doc(reraise, """Reraise an exception.""")
 def with_metaclass(meta, *bases):
     """Create a base class with a metaclass."""
     return meta("NewBase", bases, {})
+
 
 def add_metaclass(metaclass):
     """Class decorator for creating a class with a metaclass."""

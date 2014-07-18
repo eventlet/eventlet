@@ -7,7 +7,8 @@ from eventlet.green import time
 from eventlet.green import thread
 from eventlet.green import threading
 
-patcher.inject('test.test_socket',
+patcher.inject(
+    'test.test_socket',
     globals(),
     ('socket', socket),
     ('select', select),

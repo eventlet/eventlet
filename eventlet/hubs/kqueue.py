@@ -6,7 +6,7 @@ select = patcher.original('select')
 time = patcher.original('time')
 sleep = time.sleep
 
-from eventlet.support import get_errno, clear_sys_exc_info
+from eventlet.support import clear_sys_exc_info
 from eventlet.hubs.hub import BaseHub, READ, WRITE, noop
 
 
@@ -53,8 +53,7 @@ class Hub(BaseHub):
         events = self._events.setdefault(fileno, {})
         if evtype not in events:
             try:
-                event = select.kevent(fileno,
-                                      FILTERS.get(evtype), select.KQ_EV_ADD)
+                event = select.kevent(fileno, FILTERS.get(evtype), select.KQ_EV_ADD)
                 self._control([event], 0, 0)
                 events[evtype] = event
             except ValueError:
@@ -63,8 +62,10 @@ class Hub(BaseHub):
         return listener
 
     def _delete_events(self, events):
-        del_events = [select.kevent(e.ident, e.filter, select.KQ_EV_DELETE)
-            for e in events]
+        del_events = [
+            select.kevent(e.ident, e.filter, select.KQ_EV_DELETE)
+            for e in events
+        ]
         self._control(del_events, 0, 0)
 
     def remove(self, listener):
@@ -75,7 +76,7 @@ class Hub(BaseHub):
             event = self._events[fileno].pop(evtype)
             try:
                 self._delete_events([event])
-            except OSError as e:
+            except OSError:
                 pass
 
     def remove_descriptor(self, fileno):
@@ -83,9 +84,9 @@ class Hub(BaseHub):
         try:
             events = self._events.pop(fileno).values()
             self._delete_events(events)
-        except KeyError as e:
+        except KeyError:
             pass
-        except OSError as e:
+        except OSError:
             pass
 
     def wait(self, seconds=None):

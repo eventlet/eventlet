@@ -4,6 +4,7 @@ from twisted.internet.base import DelayedCall as TwistedDelayedCall
 from eventlet.support import greenlets as greenlet
 from eventlet.hubs.hub import FdListener, READ, WRITE
 
+
 class DelayedCall(TwistedDelayedCall):
     "fix DelayedCall to behave like eventlet's Timer in some respects"
 
@@ -12,6 +13,7 @@ class DelayedCall(TwistedDelayedCall):
             self.cancelled = True
             return
         return TwistedDelayedCall.cancel(self)
+
 
 class LocalDelayedCall(DelayedCall):
 
@@ -29,6 +31,7 @@ class LocalDelayedCall(DelayedCall):
 
     cancelled = property(_get_cancelled, _set_cancelled)
 
+
 def callLater(DelayedCallClass, reactor, _seconds, _f, *args, **kw):
     # the same as original but creates fixed DelayedCall instance
     assert callable(_f), "%s is not callable" % _f
@@ -43,13 +46,15 @@ def callLater(DelayedCallClass, reactor, _seconds, _f, *args, **kw):
     reactor._newTimedCalls.append(tple)
     return tple
 
+
 class socket_rwdescriptor(FdListener):
-    #implements(IReadWriteDescriptor)
+    # implements(IReadWriteDescriptor)
     def __init__(self, evtype, fileno, cb):
         super(socket_rwdescriptor, self).__init__(evtype, fileno, cb)
-        if not isinstance(fileno, (int,long)):
+        if not isinstance(fileno, (int, long)):
             raise TypeError("Expected int or long, got %s" % type(fileno))
         # Twisted expects fileno to be a callable, not an attribute
+
         def _fileno():
             return fileno
         self.fileno = _fileno
@@ -131,6 +136,7 @@ class BaseTwistedHub(object):
 
     def schedule_call_local(self, seconds, func, *args, **kwargs):
         from twisted.internet import reactor
+
         def call_if_greenlet_alive(*args1, **kwargs1):
             if timer.greenlet.dead:
                 return
@@ -166,7 +172,6 @@ class BaseTwistedHub(object):
         from twisted.internet import reactor
         return reactor.getWriters()
 
-
     def get_timers_count(self):
         from twisted.internet import reactor
         return len(reactor.getDelayedCalls())
@@ -191,7 +196,7 @@ class TwistedHub(BaseTwistedHub):
     installSignalHandlers = False
 
     def __init__(self):
-        assert Hub.state==0, ('%s hub can only be instantiated once'%type(self).__name__,
+        assert Hub.state == 0, ('%s hub can only be instantiated once' % type(self).__name__,
                               Hub.state)
         Hub.state = 1
         make_twisted_threadpool_daemonic() # otherwise the program
@@ -253,9 +258,11 @@ class TwistedHub(BaseTwistedHub):
 
 Hub = TwistedHub
 
+
 class DaemonicThread(threading.Thread):
     def _set_daemon(self):
         return True
+
 
 def make_twisted_threadpool_daemonic():
     from twisted.python.threadpool import ThreadPool

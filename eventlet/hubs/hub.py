@@ -1,10 +1,9 @@
 import errno
 import heapq
 import math
-import traceback
 import signal
 import sys
-import warnings
+import traceback
 
 arm_alarm = None
 if hasattr(signal, 'setitimer'):
@@ -20,15 +19,15 @@ else:
             signal.alarm(math.ceil(seconds))
         arm_alarm = alarm_signal
 
-from eventlet.support import greenlets as greenlet, clear_sys_exc_info
-from eventlet.hubs import timer, IOClosed
 from eventlet import patcher
+from eventlet.hubs import timer, IOClosed
+from eventlet.support import greenlets as greenlet, clear_sys_exc_info
 time = patcher.original('time')
 
 g_prevent_multiple_readers = True
 
-READ="read"
-WRITE="write"
+READ = "read"
+WRITE = "write"
 
 
 def closed_callback(fileno):
@@ -39,6 +38,7 @@ def closed_callback(fileno):
 
 
 class FdListener(object):
+
     def __init__(self, evtype, fileno, cb, tb, mark_as_closed):
         """ The following are required:
         cb - the standard callback, which will switch into the
@@ -61,6 +61,7 @@ class FdListener(object):
         self.mark_as_closed = mark_as_closed
         self.spent = False
         self.greenlet = greenlet.getcurrent()
+
     def __repr__(self):
         return "%s(%r, %r, %r, %r)" % (type(self).__name__, self.evtype, self.fileno,
                                        self.cb, self.tb)
@@ -77,10 +78,15 @@ noop = FdListener(READ, 0, lambda x: None, lambda x: None, None)
 
 
 # in debug mode, track the call site that created the listener
+
+
 class DebugListener(FdListener):
+
     def __init__(self, evtype, fileno, cb, tb, mark_as_closed):
         self.where_called = traceback.format_stack()
+        self.greenlet = greenlet.getcurrent()
         super(DebugListener, self).__init__(evtype, fileno, cb, tb, mark_as_closed)
+
     def __repr__(self):
         return "DebugListener(%r, %r, %r, %r, %r, %r)\n%sEndDebugFdListener" % (
             self.evtype,
@@ -108,8 +114,8 @@ class BaseHub(object):
     WRITE = WRITE
 
     def __init__(self, clock=time.time):
-        self.listeners = {READ:{}, WRITE:{}}
-        self.secondaries = {READ:{}, WRITE:{}}
+        self.listeners = {READ: {}, WRITE: {}}
+        self.secondaries = {READ: {}, WRITE: {}}
         self.closed = []
 
         self.clock = clock
@@ -134,7 +140,7 @@ class BaseHub(object):
 
     def block_detect_post(self):
         if (hasattr(self, "_old_signal_handler") and
-            self._old_signal_handler):
+                self._old_signal_handler):
             signal.signal(signal.SIGALRM, self._old_signal_handler)
         signal.alarm(0)
 
@@ -159,14 +165,15 @@ class BaseHub(object):
         bucket = self.listeners[evtype]
         if fileno in bucket:
             if g_prevent_multiple_readers:
-                raise RuntimeError("Second simultaneous %s on fileno %s "\
-                     "detected.  Unless you really know what you're doing, "\
-                     "make sure that only one greenthread can %s any "\
-                     "particular socket.  Consider using a pools.Pool. "\
-                     "If you do know what you're doing and want to disable "\
-                     "this error, call "\
-                     "eventlet.debug.hub_prevent_multiple_readers(False) - MY THREAD=%s; THAT THREAD=%s" % (
-                     evtype, fileno, evtype, cb, bucket[fileno]))
+                raise RuntimeError(
+                    "Second simultaneous %s on fileno %s "
+                    "detected.  Unless you really know what you're doing, "
+                    "make sure that only one greenthread can %s any "
+                    "particular socket.  Consider using a pools.Pool. "
+                    "If you do know what you're doing and want to disable "
+                    "this error, call "
+                    "eventlet.debug.hub_prevent_multiple_readers(False) - MY THREAD=%s; THAT THREAD=%s" % (
+                    evtype, fileno, evtype, cb, bucket[fileno]))
             # store off the second listener in another structure
             self.secondaries[evtype].setdefault(fileno, []).append(listener)
         else:
@@ -232,7 +239,6 @@ class BaseHub(object):
         """
         self._obsolete(fileno)
 
-
     def remove_descriptor(self, fileno):
         """ Completely remove all listeners for this fileno.  For internal use
         only."""
@@ -244,7 +250,7 @@ class BaseHub(object):
         for listener in listeners:
             try:
                 listener.cb(fileno)
-            except Exception as e:
+            except Exception:
                 self.squelch_generic_exception(sys.exc_info())
 
     def close_one(self):
@@ -386,7 +392,7 @@ class BaseHub(object):
     def timer_canceled(self, timer):
         self.timers_canceled += 1
         len_timers = len(self.timers) + len(self.next_timers)
-        if len_timers > 1000 and len_timers/2 <= self.timers_canceled:
+        if len_timers > 1000 and len_timers / 2 <= self.timers_canceled:
             self.timers_canceled = 0
             self.timers = [t for t in self.timers if not t[1].called]
             self.next_timers = [t for t in self.next_timers if not t[1].called]

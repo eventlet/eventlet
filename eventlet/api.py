@@ -18,25 +18,29 @@ __all__ = [
     'ssl_listener', 'tcp_listener', 'trampoline',
     'unspew', 'use_hub', 'with_timeout', 'timeout']
 
-warnings.warn("eventlet.api is deprecated!  Nearly everything in it has moved "
+warnings.warn(
+    "eventlet.api is deprecated!  Nearly everything in it has moved "
     "to the eventlet module.", DeprecationWarning, stacklevel=2)
 
 
 def get_hub(*a, **kw):
-    warnings.warn("eventlet.api.get_hub has moved to eventlet.hubs.get_hub",
+    warnings.warn(
+        "eventlet.api.get_hub has moved to eventlet.hubs.get_hub",
         DeprecationWarning, stacklevel=2)
     return hubs.get_hub(*a, **kw)
 
 
 def get_default_hub(*a, **kw):
-    warnings.warn("eventlet.api.get_default_hub has moved to"
+    warnings.warn(
+        "eventlet.api.get_default_hub has moved to"
         " eventlet.hubs.get_default_hub",
         DeprecationWarning, stacklevel=2)
     return hubs.get_default_hub(*a, **kw)
 
 
 def use_hub(*a, **kw):
-    warnings.warn("eventlet.api.use_hub has moved to eventlet.hubs.use_hub",
+    warnings.warn(
+        "eventlet.api.use_hub has moved to eventlet.hubs.use_hub",
         DeprecationWarning, stacklevel=2)
     return hubs.use_hub(*a, **kw)
 
@@ -55,7 +59,8 @@ def tcp_listener(address, backlog=50):
     socket object on which one should call ``accept()`` to accept a connection
     on the newly bound socket.
     """
-    warnings.warn("""eventlet.api.tcp_listener is deprecated.  Please use eventlet.listen instead.""",
+    warnings.warn(
+        """eventlet.api.tcp_listener is deprecated.  Please use eventlet.listen instead.""",
         DeprecationWarning, stacklevel=2)
 
     from eventlet import greenio, util
@@ -74,8 +79,9 @@ def ssl_listener(address, certificate, private_key):
     Returns a socket object on which one should call ``accept()`` to
     accept a connection on the newly bound socket.
     """
-    warnings.warn("""eventlet.api.ssl_listener is deprecated.  Please use eventlet.wrap_ssl(eventlet.listen()) instead.""",
-        DeprecationWarning, stacklevel=2)
+    warnings.warn("""eventlet.api.ssl_listener is deprecated.  Please use eventlet.wrap_ssl(eventlet.listen(
+        )) instead.""",
+                  DeprecationWarning, stacklevel=2)
     from eventlet import util
     import socket
 
@@ -90,7 +96,8 @@ def connect_tcp(address, localaddr=None):
     Create a TCP connection to address ``(host, port)`` and return the socket.
     Optionally, bind to localaddr ``(host, port)`` first.
     """
-    warnings.warn("""eventlet.api.connect_tcp is deprecated.  Please use eventlet.connect instead.""",
+    warnings.warn(
+        """eventlet.api.connect_tcp is deprecated.  Please use eventlet.connect instead.""",
         DeprecationWarning, stacklevel=2)
 
     from eventlet import greenio, util

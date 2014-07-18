@@ -261,7 +261,7 @@ class TestSuspend(LimitedTestCase):
         import sys
         import tempfile
         self.tempdir = tempfile.mkdtemp('test_suspend')
-        filename = os.path.join(self.tempdir,  'test_suspend.py')
+        filename = os.path.join(self.tempdir, 'test_suspend.py')
         fd = open(filename, "w")
         fd.write("""import eventlet
 eventlet.Timeout(0.5)

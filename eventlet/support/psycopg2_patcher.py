@@ -5,17 +5,17 @@ Use `make_psycopg_green()` to enable eventlet support in Psycopg.
 
 # Copyright (C) 2010 Daniele Varrazzo <daniele.varrazzo@gmail.com>
 # and licensed under the MIT license:
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -29,6 +29,7 @@ from psycopg2 import extensions
 
 from eventlet.hubs import trampoline
 
+
 def make_psycopg_green():
     """Configure Psycopg to be used with eventlet in non-blocking way."""
     if not hasattr(extensions, 'set_wait_callback'):
@@ -37,6 +38,7 @@ def make_psycopg_green():
             % psycopg2.__version__)
 
     extensions.set_wait_callback(eventlet_wait_callback)
+
 
 def eventlet_wait_callback(conn, timeout=-1):
     """A wait callback useful to allow eventlet to work with Psycopg."""

@@ -20,6 +20,7 @@ if getattr(subprocess_orig, 'TimeoutExpired', None) is None:
         """This exception is raised when the timeout expires while waiting for
         a child process.
         """
+
         def __init__(self, cmd, output=None):
             self.cmd = cmd
             self.output = output

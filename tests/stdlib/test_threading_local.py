@@ -7,11 +7,12 @@ from eventlet.green import time
 from eventlet import hubs
 hubs.get_hub()
 
-patcher.inject('test.test_threading_local',
+patcher.inject(
+    'test.test_threading_local',
     globals(),
     ('time', time),
     ('thread', thread),
     ('threading', threading))
-    
+
 if __name__ == '__main__':
     test_main()

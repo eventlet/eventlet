@@ -32,6 +32,7 @@ from eventlet.hubs.poll import READ, WRITE
 # NOTE: we rely on the fact that the epoll flag constants
 # are identical in value to the poll constants
 
+
 class Hub(poll.Hub):
     def __init__(self, clock=time.time):
         BaseHub.__init__(self, clock)

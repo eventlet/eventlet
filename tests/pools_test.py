@@ -22,12 +22,12 @@ class TestIntPool(TestCase):
         # If you do a get, you should ALWAYS do a put, probably like this:
         # try:
         #     thing = self.pool.get()
-        #     # do stuff
+        # do stuff
         # finally:
         #     self.pool.put(thing)
 
         # with self.pool.some_api_name() as thing:
-        #     # do stuff
+        # do stuff
         self.assertEqual(self.pool.get(), 1)
         self.assertEqual(self.pool.get(), 2)
         self.assertEqual(self.pool.get(), 3)
@@ -42,6 +42,7 @@ class TestIntPool(TestCase):
 
     def test_exhaustion(self):
         waiter = Queue(0)
+
         def consumer():
             gotten = None
             try:
@@ -66,6 +67,7 @@ class TestIntPool(TestCase):
 
     def test_blocks_on_pool(self):
         waiter = Queue(0)
+
         def greedy():
             self.pool.get()
             self.pool.get()
@@ -83,13 +85,13 @@ class TestIntPool(TestCase):
         # no one should be waiting yet.
         self.assertEqual(self.pool.waiting(), 0)
 
-        ## Wait for greedy
+        # Wait for greedy
         eventlet.sleep(0)
 
-        ## Greedy should be blocking on the last get
+        # Greedy should be blocking on the last get
         self.assertEqual(self.pool.waiting(), 1)
 
-        ## Send will never be called, so balance should be 0.
+        # Send will never be called, so balance should be 0.
         self.assertFalse(not waiter.full())
 
         eventlet.kill(killable)
@@ -110,6 +112,7 @@ class TestIntPool(TestCase):
             self.pool = IntPool(min_size=0, max_size=size)
             queue = Queue()
             results = []
+
             def just_put(pool_item, index):
                 self.pool.put(pool_item)
                 queue.put(index)
@@ -117,7 +120,7 @@ class TestIntPool(TestCase):
                 pool_item = self.pool.get()
                 eventlet.spawn(just_put, pool_item, index)
 
-            for _ in six.moves.range(size+1):
+            for _ in six.moves.range(size + 1):
                 x = queue.get()
                 results.append(x)
             self.assertEqual(sorted(results), list(six.moves.range(size + 1)))
@@ -142,6 +145,7 @@ class TestIntPool(TestCase):
 
     def test_create_contention(self):
         creates = [0]
+
         def sleep_create():
             creates[0] += 1
             eventlet.sleep()
@@ -163,28 +167,31 @@ class TestIntPool(TestCase):
 
 class TestAbstract(TestCase):
     mode = 'static'
+
     def test_abstract(self):
-        ## Going for 100% coverage here
-        ## A Pool cannot be used without overriding create()
+        # Going for 100% coverage here
+        # A Pool cannot be used without overriding create()
         pool = pools.Pool()
         self.assertRaises(NotImplementedError, pool.get)
 
 
 class TestIntPool2(TestCase):
     mode = 'static'
+
     def setUp(self):
         self.pool = IntPool(min_size=3, max_size=3)
 
     def test_something(self):
         self.assertEqual(len(self.pool.free_items), 3)
-        ## Cover the clause in get where we get from the free list instead of creating
-        ## an item on get
+        # Cover the clause in get where we get from the free list instead of creating
+        # an item on get
         gotten = self.pool.get()
         self.assertEqual(gotten, 1)
 
 
 class TestOrderAsStack(TestCase):
     mode = 'static'
+
     def setUp(self):
         self.pool = IntPool(max_size=3, order_as_stack=True)
 
@@ -204,6 +211,7 @@ class RaisePool(pools.Pool):
 
 class TestCreateRaises(TestCase):
     mode = 'static'
+
     def setUp(self):
         self.pool = RaisePool(max_size=3)
 
@@ -222,4 +230,3 @@ class TestTookTooLong(Exception):
 
 if __name__ == '__main__':
     main()
-

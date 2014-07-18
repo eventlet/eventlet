@@ -14,7 +14,8 @@ def get_errno(exc):
     """
 
     try:
-        if exc.errno is not None: return exc.errno
+        if exc.errno is not None:
+            return exc.errno
     except AttributeError:
         pass
     try:

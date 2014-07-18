@@ -6,6 +6,7 @@ Many of these tests make connections to external servers, and all.py tries to sk
 from eventlet import debug
 debug.hub_prevent_multiple_readers(False)
 
+
 def restart_hub():
     from eventlet import hubs
     hub = hubs.get_hub()
@@ -14,6 +15,7 @@ def restart_hub():
     if hub_shortname != 'pyevent':
         hub.abort()
         hubs.use_hub(hub_shortname)
+
 
 def assimilate_patched(name):
     try:
@@ -26,6 +28,7 @@ def assimilate_patched(name):
         method_name = name + "_test_main"
         try:
             test_method = modobj.test_main
+
             def test_main():
                 restart_hub()
                 test_method()
@@ -34,7 +37,7 @@ def assimilate_patched(name):
             test_main.__name__ = name + '.test_main'
         except AttributeError:
             print("No test_main for %s, assuming it tests on import" % name)
-            
+
 import all_modules
 
 for m in all_modules.get_modules():

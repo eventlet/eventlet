@@ -11,8 +11,10 @@ from tests import LimitedTestCase, skipped, silence_warnings
 
 DELAY = 0.01
 
+
 class ExpectedError(Exception):
     pass
+
 
 class TestLink_Signal(LimitedTestCase):
 
@@ -27,7 +29,7 @@ class TestLink_Signal(LimitedTestCase):
         self.assertRaises(Timeout, s.wait, 0.001)
         s.send(1)
         assert not q1.ready()
-        assert s.wait()==1
+        assert s.wait() == 1
         sleep(0)
         assert q1.ready()
         s.link_exception(q2)
@@ -35,7 +37,7 @@ class TestLink_Signal(LimitedTestCase):
         assert not q2.ready()
         sleep(0)
         assert q3.ready()
-        assert s.wait()==1
+        assert s.wait() == 1
 
     @silence_warnings
     def test_send_exception(self):
@@ -58,7 +60,7 @@ class TestLink_Signal(LimitedTestCase):
 class TestProc(LimitedTestCase):
 
     def test_proc(self):
-        p = proc.spawn(lambda : 100)
+        p = proc.spawn(lambda: 100)
         receiver = proc.spawn(sleep, 1)
         p.link(receiver)
         self.assertRaises(proc.LinkedCompleted, receiver.wait)
@@ -67,7 +69,7 @@ class TestProc(LimitedTestCase):
         self.assertRaises(proc.LinkedCompleted, receiver2.wait)
 
     def test_event(self):
-        p = proc.spawn(lambda : 100)
+        p = proc.spawn(lambda: 100)
         event = _event.Event()
         p.link(event)
         self.assertEqual(event.wait(), 100)
@@ -78,7 +80,7 @@ class TestProc(LimitedTestCase):
             self.assertEqual(event2.wait(), 100)
 
     def test_current(self):
-        p = proc.spawn(lambda : 100)
+        p = proc.spawn(lambda: 100)
         p.link()
         self.assertRaises(proc.LinkedCompleted, sleep, 0.1)
 
@@ -97,6 +99,7 @@ class TestCase(LimitedTestCase):
         self.link(p, event)
 
         proc_flag = []
+
         def receiver():
             sleep(DELAY)
             proc_flag.append('finished')
@@ -128,6 +131,7 @@ class TestCase(LimitedTestCase):
         link(event)
 
         proc_finished_flag = []
+
         def myproc():
             sleep(10)
             proc_finished_flag.append('finished')
@@ -154,10 +158,10 @@ class TestReturn_link(TestCase):
         def return25():
             return 25
         p = self.p = proc.spawn(return25)
-        self._test_return(p, True, 25, proc.LinkedCompleted, lambda : sleep(0))
+        self._test_return(p, True, 25, proc.LinkedCompleted, lambda: sleep(0))
         # repeating the same with dead process
         for _ in range(3):
-            self._test_return(p, False, 25, proc.LinkedCompleted, lambda : sleep(0))
+            self._test_return(p, False, 25, proc.LinkedCompleted, lambda: sleep(0))
 
     def _test_return(self, p, first_time, result, kill_exc_type, action):
         event, receiver, proc_flag, queue, callback_flag = self.set_links(p, first_time, kill_exc_type)
@@ -166,9 +170,9 @@ class TestReturn_link(TestCase):
         xxxxx = self.set_links_timeout(p.link_exception)
 
         try:
-            sleep(DELAY*2)
+            sleep(DELAY * 2)
         except kill_exc_type:
-             assert first_time, 'raising here only first time'
+            assert first_time, 'raising here only first time'
         else:
             assert not first_time, 'Should not raise LinkedKilled here after first time'
 
@@ -185,6 +189,7 @@ class TestReturn_link(TestCase):
 
         self.check_timed_out(*xxxxx)
 
+
 class TestReturn_link_value(TestReturn_link):
     sync = False
     link_method = 'link_value'
@@ -200,7 +205,7 @@ class TestRaise_link(TestCase):
         try:
             sleep(DELAY)
         except kill_exc_type:
-             assert first_time, 'raising here only first time'
+            assert first_time, 'raising here only first time'
         else:
             assert not first_time, 'Should not raise LinkedKilled here after first time'
 
@@ -218,7 +223,7 @@ class TestRaise_link(TestCase):
 
     @silence_warnings
     def test_raise(self):
-        p = self.p = proc.spawn(lambda : getcurrent().throw(ExpectedError('test_raise')))
+        p = self.p = proc.spawn(lambda: getcurrent().throw(ExpectedError('test_raise')))
         self._test_raise(p, True, proc.LinkedFailed)
         # repeating the same with dead process
         for _ in range(3):
@@ -232,7 +237,7 @@ class TestRaise_link(TestCase):
         try:
             sleep(DELAY)
         except kill_exc_type:
-             assert first_time, 'raising here only first time'
+            assert first_time, 'raising here only first time'
         else:
             assert not first_time, 'Should not raise LinkedKilled here after first time'
 
@@ -257,6 +262,7 @@ class TestRaise_link(TestCase):
         for _ in range(3):
             self._test_kill(p, False, proc.LinkedKilled)
 
+
 class TestRaise_link_exception(TestRaise_link):
     link_method = 'link_exception'
 
@@ -264,9 +270,9 @@ class TestRaise_link_exception(TestRaise_link):
 class TestStuff(LimitedTestCase):
 
     def test_wait_noerrors(self):
-        x = proc.spawn(lambda : 1)
-        y = proc.spawn(lambda : 2)
-        z = proc.spawn(lambda : 3)
+        x = proc.spawn(lambda: 1)
+        y = proc.spawn(lambda: 2)
+        z = proc.spawn(lambda: 3)
         self.assertEqual(proc.waitall([x, y, z]), [1, 2, 3])
         e = _event.Event()
         x.link(e)
@@ -284,8 +290,8 @@ class TestStuff(LimitedTestCase):
             sleep(DELAY)
             return 1
         x = proc.spawn(x)
-        z = proc.spawn(lambda : 3)
-        y = proc.spawn(lambda : getcurrent().throw(ExpectedError('test_wait_error')))
+        z = proc.spawn(lambda: 3)
+        y = proc.spawn(lambda: getcurrent().throw(ExpectedError('test_wait_error')))
         y.link(x)
         x.link(y)
         y.link(z)
@@ -301,7 +307,7 @@ class TestStuff(LimitedTestCase):
             sleep(0.1)
             raise ExpectedError('first')
         a = proc.spawn(first)
-        b = proc.spawn(lambda : getcurrent().throw(ExpectedError('second')))
+        b = proc.spawn(lambda: getcurrent().throw(ExpectedError('second')))
         try:
             proc.waitall([a, b])
         except ExpectedError as ex:
@@ -313,52 +319,58 @@ class TestStuff(LimitedTestCase):
         # it should not prevent the other listeners from being called
         # also, all of the errors should be logged, check the output
         # manually that they are
-        p = proc.spawn(lambda : 5)
+        p = proc.spawn(lambda: 5)
         results = []
+
         def listener1(*args):
             results.append(10)
             raise ExpectedError('listener1')
+
         def listener2(*args):
             results.append(20)
             raise ExpectedError('listener2')
+
         def listener3(*args):
             raise ExpectedError('listener3')
         p.link(listener1)
         p.link(listener2)
         p.link(listener3)
-        sleep(DELAY*10)
+        sleep(DELAY * 10)
         assert results in [[10, 20], [20, 10]], results
 
-        p = proc.spawn(lambda : getcurrent().throw(ExpectedError('test_multiple_listeners_error')))
+        p = proc.spawn(lambda: getcurrent().throw(ExpectedError('test_multiple_listeners_error')))
         results = []
         p.link(listener1)
         p.link(listener2)
         p.link(listener3)
-        sleep(DELAY*10)
+        sleep(DELAY * 10)
         assert results in [[10, 20], [20, 10]], results
 
     def _test_multiple_listeners_error_unlink(self, p):
         # notification must not happen after unlink even
         # though notification process has been already started
         results = []
+
         def listener1(*args):
             p.unlink(listener2)
             results.append(5)
             raise ExpectedError('listener1')
+
         def listener2(*args):
             p.unlink(listener1)
             results.append(5)
             raise ExpectedError('listener2')
+
         def listener3(*args):
             raise ExpectedError('listener3')
         p.link(listener1)
         p.link(listener2)
         p.link(listener3)
-        sleep(DELAY*10)
+        sleep(DELAY * 10)
         assert results == [5], results
 
     def test_multiple_listeners_error_unlink_Proc(self):
-        p = proc.spawn(lambda : 5)
+        p = proc.spawn(lambda: 5)
         self._test_multiple_listeners_error_unlink(p)
 
     def test_multiple_listeners_error_unlink_Source(self):
@@ -368,6 +380,7 @@ class TestStuff(LimitedTestCase):
 
     def test_killing_unlinked(self):
         e = _event.Event()
+
         def func():
             try:
                 raise ExpectedError('test_killing_unlinked')
@@ -380,9 +393,9 @@ class TestStuff(LimitedTestCase):
             except ExpectedError:
                 pass
         finally:
-            p.unlink() # this disables LinkedCompleted that otherwise would be raised by the next line
+            p.unlink()  # this disables LinkedCompleted that otherwise would be raised by the next line
         sleep(DELAY)
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     unittest.main()

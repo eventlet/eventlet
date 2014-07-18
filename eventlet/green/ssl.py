@@ -12,7 +12,7 @@ from eventlet.hubs import trampoline, IOClosed
 from eventlet.greenio import set_nonblocking, GreenSocket, SOCKET_CLOSED, CONNECT_ERR, CONNECT_SUCCESS
 orig_socket = __import__('socket')
 socket = orig_socket.socket
-if sys.version_info >= (2,7):
+if sys.version_info >= (2, 7):
     has_ciphers = True
     timeout_exc = SSLError
 else:
@@ -21,7 +21,9 @@ else:
 
 __patched__ = ['SSLSocket', 'wrap_socket', 'sslwrap_simple']
 
+
 class GreenSSLSocket(__ssl.SSLSocket):
+
     """ This is a green version of the SSLSocket class from the ssl module added
     in 2.6.  For documentation on it, please see the Python standard
     documentation.
@@ -37,6 +39,7 @@ class GreenSSLSocket(__ssl.SSLSocket):
     """
     # we are inheriting from SSLSocket because its constructor calls
     # do_handshake whose behavior we wish to override
+
     def __init__(self, sock, *args, **kw):
         if not isinstance(sock, GreenSocket):
             sock = GreenSocket(sock)
@@ -104,7 +107,7 @@ class GreenSSLSocket(__ssl.SSLSocket):
         except IOClosed:
             return ''
 
-    def send (self, data, flags=0):
+    def send(self, data, flags=0):
         if self._sslobj:
             return self._call_trampolining(
                 super(GreenSSLSocket, self).send, data, flags)
@@ -112,7 +115,7 @@ class GreenSSLSocket(__ssl.SSLSocket):
             trampoline(self, write=True, timeout_exc=timeout_exc('timed out'))
             return socket.send(self, data, flags)
 
-    def sendto (self, data, addr, flags=0):
+    def sendto(self, data, addr, flags=0):
         # *NOTE: gross, copied code from ssl.py becase it's not factored well enough to be used as-is
         if self._sslobj:
             raise ValueError("sendto not allowed on instances of %s" %
@@ -121,7 +124,7 @@ class GreenSSLSocket(__ssl.SSLSocket):
             trampoline(self, write=True, timeout_exc=timeout_exc('timed out'))
             return socket.sendto(self, data, addr, flags)
 
-    def sendall (self, data, flags=0):
+    def sendall(self, data, flags=0):
         # *NOTE: gross, copied code from ssl.py becase it's not factored well enough to be used as-is
         if self._sslobj:
             if flags != 0:
@@ -176,25 +179,24 @@ class GreenSSLSocket(__ssl.SSLSocket):
                         return ''
                     raise
 
-
-    def recv_into (self, buffer, nbytes=None, flags=0):
+    def recv_into(self, buffer, nbytes=None, flags=0):
         if not self.act_non_blocking:
             trampoline(self, read=True, timeout=self.gettimeout(), timeout_exc=timeout_exc('timed out'))
         return super(GreenSSLSocket, self).recv_into(buffer, nbytes, flags)
 
-    def recvfrom (self, addr, buflen=1024, flags=0):
+    def recvfrom(self, addr, buflen=1024, flags=0):
         if not self.act_non_blocking:
             trampoline(self, read=True, timeout=self.gettimeout(), timeout_exc=timeout_exc('timed out'))
         return super(GreenSSLSocket, self).recvfrom(addr, buflen, flags)
 
-    def recvfrom_into (self, buffer, nbytes=None, flags=0):
+    def recvfrom_into(self, buffer, nbytes=None, flags=0):
         if not self.act_non_blocking:
             trampoline(self, read=True, timeout=self.gettimeout(), timeout_exc=timeout_exc('timed out'))
         return super(GreenSSLSocket, self).recvfrom_into(buffer, nbytes, flags)
 
     def unwrap(self):
         return GreenSocket(self._call_trampolining(
-                super(GreenSSLSocket, self).unwrap))
+            super(GreenSSLSocket, self).unwrap))
 
     def do_handshake(self):
         """Perform a TLS/SSL handshake."""
@@ -227,14 +229,13 @@ class GreenSSLSocket(__ssl.SSLSocket):
                     except orig_socket.error as exc:
                         if get_errno(exc) in CONNECT_ERR:
                             trampoline(self, write=True,
-                                       timeout=end-time.time(), timeout_exc=timeout_exc('timed out'))
+                                       timeout=end - time.time(), timeout_exc=timeout_exc('timed out'))
                         elif get_errno(exc) in CONNECT_SUCCESS:
                             return
                         else:
                             raise
                     if time.time() >= end:
                         raise timeout_exc('timed out')
-
 
     def connect(self, addr):
         """Connects to remote ADDR, and then wraps the connection in
@@ -272,23 +273,25 @@ class GreenSSLSocket(__ssl.SSLSocket):
                     if get_errno(e) != errno.EWOULDBLOCK:
                         raise
                     trampoline(self, read=True, timeout=self.gettimeout(),
-                                   timeout_exc=timeout_exc('timed out'))
+                               timeout_exc=timeout_exc('timed out'))
 
-        new_ssl = type(self)(newsock,
-                          keyfile=self.keyfile,
-                          certfile=self.certfile,
-                          server_side=True,
-                          cert_reqs=self.cert_reqs,
-                          ssl_version=self.ssl_version,
-                          ca_certs=self.ca_certs,
-                          do_handshake_on_connect=self.do_handshake_on_connect,
-                          suppress_ragged_eofs=self.suppress_ragged_eofs)
+        new_ssl = type(self)(
+            newsock,
+            keyfile=self.keyfile,
+            certfile=self.certfile,
+            server_side=True,
+            cert_reqs=self.cert_reqs,
+            ssl_version=self.ssl_version,
+            ca_certs=self.ca_certs,
+            do_handshake_on_connect=self.do_handshake_on_connect,
+            suppress_ragged_eofs=self.suppress_ragged_eofs)
         return (new_ssl, addr)
 
     def dup(self):
         raise NotImplementedError("Can't dup an ssl object")
 
 SSLSocket = GreenSSLSocket
+
 
 def wrap_socket(sock, *a, **kw):
     return GreenSSLSocket(sock, *a, **kw)

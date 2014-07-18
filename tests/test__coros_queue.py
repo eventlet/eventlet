@@ -22,6 +22,7 @@ class TestQueue(LimitedTestCase):
     @silence_warnings
     def test_send_last(self):
         q = coros.queue()
+
         def waiter(q):
             timer = eventlet.Timeout(0.1)
             self.assertEqual(q.wait(), 'hi2')
@@ -57,6 +58,7 @@ class TestQueue(LimitedTestCase):
     @silence_warnings
     def test_zero_max_size(self):
         q = coros.queue(0)
+
         def sender(evt, q):
             q.send('hi')
             evt.send('done')
@@ -72,8 +74,8 @@ class TestQueue(LimitedTestCase):
         sleep(0)
         assert not e1.ready()
         spawn(receiver, e2, q)
-        self.assertEqual(e2.wait(),'hi')
-        self.assertEqual(e1.wait(),'done')
+        self.assertEqual(e2.wait(), 'hi')
+        self.assertEqual(e1.wait(), 'done')
 
     @silence_warnings
     def test_multiple_waiters(self):
@@ -82,9 +84,9 @@ class TestQueue(LimitedTestCase):
 
         sendings = ['1', '2', '3', '4']
         gts = [eventlet.spawn(q.wait)
-                for x in sendings]
+               for x in sendings]
 
-        eventlet.sleep(0.01) # get 'em all waiting
+        eventlet.sleep(0.01)  # get 'em all waiting
 
         q.send(sendings[0])
         q.send(sendings[1])
@@ -107,7 +109,6 @@ class TestQueue(LimitedTestCase):
             except RuntimeError:
                 evt.send('timed out')
 
-
         evt = Event()
         spawn(do_receive, q, evt)
         self.assertEqual(evt.wait(), 'timed out')
@@ -129,6 +130,7 @@ class TestQueue(LimitedTestCase):
     def test_two_waiters_one_dies(self):
         def waiter(q, evt):
             evt.send(q.wait())
+
         def do_receive(q, evt):
             eventlet.Timeout(0, RuntimeError())
             try:
@@ -209,7 +211,6 @@ class TestChannel(LimitedTestCase):
 
         self.assertEqual(['sending', 'hello', 'sent hello', 'world', 'sent world'], events)
 
-
     @silence_warnings
     def test_wait(self):
         sleep(0.1)
@@ -252,7 +253,7 @@ class TestChannel(LimitedTestCase):
         s3.wait()
         # NOTE: we don't guarantee that waiters are served in order
         results = sorted([w1.wait(), w2.wait(), w3.wait()])
-        self.assertEqual(results, [1,2,3])
+        self.assertEqual(results, [1, 2, 3])
 
-if __name__=='__main__':
+if __name__ == '__main__':
     main()

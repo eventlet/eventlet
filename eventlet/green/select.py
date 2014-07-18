@@ -39,7 +39,7 @@ def select(read_list, write_list, error_list, timeout=None):
     assert hub.greenlet is not current, 'do not call blocking functions from the mainloop'
     ds = {}
     for r in read_list:
-        ds[get_fileno(r)] = {'read' : r}
+        ds[get_fileno(r)] = {'read': r}
     for w in write_list:
         ds.setdefault(get_fileno(w), {})['write'] = w
     for e in error_list:

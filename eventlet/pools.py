@@ -54,6 +54,7 @@ class Pool(object):
     greenthread calling :meth:`get` to cooperatively yield until an item
     is :meth:`put` in.
     """
+
     def __init__(self, min_size=0, max_size=4, order_as_stack=False, create=None):
         """*order_as_stack* governs the ordering of the items in the free pool.
         If ``False`` (the default), the free items collection (of items that
@@ -89,7 +90,7 @@ class Pool(object):
                 self.current_size -= 1
                 raise
             return created
-        self.current_size -= 1 # did not create
+        self.current_size -= 1  # did not create
         return self.channel.get()
 
     @contextmanager
@@ -176,6 +177,6 @@ class TokenPool(Pool):
     that the coroutine which holds the token has a right to consume some
     limited resource.
     """
+
     def create(self):
         return Token()
-

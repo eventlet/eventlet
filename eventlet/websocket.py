@@ -3,11 +3,11 @@ import codecs
 import collections
 import errno
 from random import Random
+from socket import error as SocketError
 import string
 import struct
 import sys
 import time
-from socket import error as SocketError
 
 try:
     from hashlib import md5, sha1
@@ -15,7 +15,6 @@ except ImportError:  # pragma NO COVER
     from md5 import md5
     from sha import sha as sha1
 
-import eventlet
 from eventlet import semaphore
 from eventlet import wsgi
 from eventlet.green import socket
@@ -215,7 +214,7 @@ class WebSocketWSGI(object):
                 if p in self.supported_protocols:
                     negotiated_protocol = p
                     break
-        #extensions = environ.get('HTTP_SEC_WEBSOCKET_EXTENSIONS', None)
+        # extensions = environ.get('HTTP_SEC_WEBSOCKET_EXTENSIONS', None)
         # if extensions:
         #    extensions = [i.strip() for i in extensions.split(',')]
 

@@ -12,6 +12,7 @@ __all__ = ['getcurrent', 'sleep', 'spawn', 'spawn_n', 'spawn_after', 'spawn_afte
 
 getcurrent = greenlet.getcurrent
 
+
 def sleep(seconds=0):
     """Yield control to another eligible coroutine until at least *seconds* have
     elapsed.
@@ -109,7 +110,8 @@ def spawn_after_local(seconds, func, *args, **kwargs):
 
 
 def call_after_global(seconds, func, *args, **kwargs):
-    warnings.warn("call_after_global is renamed to spawn_after, which"
+    warnings.warn(
+        "call_after_global is renamed to spawn_after, which"
         "has the same signature and semantics (plus a bit extra).  Please do a"
         " quick search-and-replace on your codebase, thanks!",
         DeprecationWarning, stacklevel=2)
@@ -117,7 +119,8 @@ def call_after_global(seconds, func, *args, **kwargs):
 
 
 def call_after_local(seconds, function, *args, **kwargs):
-    warnings.warn("call_after_local is renamed to spawn_after_local, which"
+    warnings.warn(
+        "call_after_local is renamed to spawn_after_local, which"
         "has the same signature and semantics (plus a bit extra).",
         DeprecationWarning, stacklevel=2)
     hub = hubs.get_hub()
@@ -142,6 +145,7 @@ def exc_after(seconds, *throw_args):
 TimeoutError = timeout.Timeout
 with_timeout = timeout.with_timeout
 
+
 def _spawn_n(seconds, func, args, kwargs):
     hub = hubs.get_hub()
     g = greenlet.greenlet(func, parent=hub.greenlet)
@@ -154,6 +158,7 @@ class GreenThread(greenlet.greenlet):
     property of being able to retrieve the return value of the main function.
     Do not construct GreenThread objects directly; call :func:`spawn` to get one.
     """
+
     def __init__(self, parent):
         greenlet.greenlet.__init__(self, self.main, parent)
         self._exit_event = event.Event()
@@ -239,12 +244,14 @@ class GreenThread(greenlet.greenlet):
         to :class:`greenlet.GreenletExit`)."""
         return cancel(self, *throw_args)
 
+
 def cancel(g, *throw_args):
     """Like :func:`kill`, but only terminates the greenthread if it hasn't
     already started execution.  If the grenthread has already started
     execution, :func:`cancel` has no effect."""
     if not g:
         kill(g, *throw_args)
+
 
 def kill(g, *throw_args):
     """Terminates the target greenthread by raising an exception into it.

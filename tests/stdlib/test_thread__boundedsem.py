@@ -2,6 +2,7 @@
 from eventlet import coros
 from eventlet.green import thread
 
+
 def allocate_lock():
     return coros.semaphore(1, 9999)
 

@@ -3,7 +3,8 @@ from eventlet.green import select
 from eventlet.green import socket
 from eventlet.green import time
 
-patcher.inject("asyncore",
+patcher.inject(
+    "asyncore",
     globals(),
     ('select', select),
     ('socket', socket),

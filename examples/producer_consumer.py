@@ -1,12 +1,12 @@
 """This is a recursive web crawler.  Don't go pointing this at random sites;
-it doesn't respect robots.txt and it is pretty brutal about how quickly it 
+it doesn't respect robots.txt and it is pretty brutal about how quickly it
 fetches pages.
 
-This is a kind of "producer/consumer" example; the fetch function produces 
-jobs, and the GreenPool itself is the consumer, farming out work concurrently.  
+This is a kind of "producer/consumer" example; the fetch function produces
+jobs, and the GreenPool itself is the consumer, farming out work concurrently.
 It's easier to write it this way rather than writing a standard consumer loop;
 GreenPool handles any exceptions raised and arranges so that there's a set
-number of "workers", so you don't have to write that tedious management code 
+number of "workers", so you don't have to write that tedious management code
 yourself.
 """
 from __future__ import with_statement
@@ -29,16 +29,16 @@ def fetch(url, outq):
         new_url = url_match.group(0)
         outq.put(new_url)
 
-            
+
 def producer(start_url):
-    """Recursively crawl starting from *start_url*.  Returns a set of 
+    """Recursively crawl starting from *start_url*.  Returns a set of
     urls that were found."""
     pool = eventlet.GreenPool()
     seen = set()
     q = eventlet.Queue()
     q.put(start_url)
     # keep looping if there are new urls, or workers that may produce more urls
-    while True: 
+    while True:
         while not q.empty():
             url = q.get()
             # limit requests to eventlet.net so we don't crash all over the internet
@@ -48,7 +48,7 @@ def producer(start_url):
         pool.waitall()
         if q.empty():
             break
-        
+
     return seen
 
 

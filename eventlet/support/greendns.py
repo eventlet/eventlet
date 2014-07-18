@@ -34,6 +34,8 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import struct
+import sys
 
 from eventlet import patcher
 from eventlet.green import _socket_nodns
@@ -45,23 +47,28 @@ dns = patcher.import_patched('dns',
                              time=time,
                              select=select)
 for pkg in ('dns.query', 'dns.exception', 'dns.inet', 'dns.message',
-            'dns.rdatatype','dns.resolver', 'dns.reversename'):
-   setattr(dns, pkg.split('.')[1], patcher.import_patched(pkg,
-                                                          socket=_socket_nodns,
-                                                          time=time,
-                                                          select=select))
+            'dns.rdatatype', 'dns.resolver', 'dns.reversename'):
+    setattr(dns, pkg.split('.')[1], patcher.import_patched(
+        pkg,
+        socket=_socket_nodns,
+        time=time,
+        select=select))
 
 socket = _socket_nodns
 
 DNS_QUERY_TIMEOUT = 10.0
 
+
 #
 # Resolver instance used to perfrom DNS lookups.
 #
 class FakeAnswer(list):
-   expiration = 0
+    expiration = 0
+
+
 class FakeRecord(object):
-   pass
+    pass
+
 
 class ResolverProxy(object):
     def __init__(self, *args, **kwargs):
@@ -94,7 +101,7 @@ class ResolverProxy(object):
 
     def query(self, *args, **kwargs):
         if self._resolver is None:
-            self._resolver = dns.resolver.Resolver(filename = self._filename)
+            self._resolver = dns.resolver.Resolver(filename=self._filename)
             self._resolver.cache = dns.resolver.Cache()
 
         query = args[0]
@@ -111,7 +118,8 @@ class ResolverProxy(object):
 #
 # cache
 #
-resolver  = ResolverProxy(dev=True)
+resolver = ResolverProxy(dev=True)
+
 
 def resolve(name):
     error = None
@@ -120,13 +128,13 @@ def resolve(name):
     if rrset is None or time.time() > rrset.expiration:
         try:
             rrset = resolver.query(name)
-        except dns.exception.Timeout as e:
+        except dns.exception.Timeout:
             error = (socket.EAI_AGAIN, 'Lookup timed out')
-        except dns.exception.DNSException as e:
+        except dns.exception.DNSException:
             error = (socket.EAI_NODATA, 'No address associated with hostname')
         else:
             pass
-            #responses.insert(name, rrset)
+            # responses.insert(name, rrset)
 
     if error:
         if rrset is None:
@@ -134,6 +142,8 @@ def resolve(name):
         else:
             sys.stderr.write('DNS error: %r %r\n' % (name, error))
     return rrset
+
+
 #
 # methods
 #
@@ -147,9 +157,9 @@ def getaliases(host):
 
     try:
         answers = dns.resolver.query(host, 'cname')
-    except dns.exception.Timeout as e:
+    except dns.exception.Timeout:
         error = (socket.EAI_AGAIN, 'Lookup timed out')
-    except dns.exception.DNSException as e:
+    except dns.exception.DNSException:
         error = (socket.EAI_NODATA, 'No address associated with hostname')
     else:
         for record in answers:
@@ -159,6 +169,7 @@ def getaliases(host):
         sys.stderr.write('DNS error: %r %r\n' % (host, error))
 
     return cnames
+
 
 def getaddrinfo(host, port, family=0, socktype=0, proto=0, flags=0):
     """Replacement for Python's socket.getaddrinfo.
@@ -178,6 +189,7 @@ def getaddrinfo(host, port, family=0, socktype=0, proto=0, flags=0):
         value.append((socket.AF_INET, socktype, proto, '', (rr.address, port)))
     return value
 
+
 def gethostbyname(hostname):
     """Replacement for Python's socket.gethostbyname.
 
@@ -188,6 +200,7 @@ def gethostbyname(hostname):
 
     rrset = resolve(hostname)
     return rrset[0].address
+
 
 def gethostbyname_ex(hostname):
     """Replacement for Python's socket.gethostbyname_ex.
@@ -203,6 +216,7 @@ def gethostbyname_ex(hostname):
     for rr in rrset:
         addrs.append(rr.address)
     return (hostname, [], addrs)
+
 
 def getnameinfo(sockaddr, flags):
     """Replacement for Python's socket.getnameinfo.
@@ -227,15 +241,15 @@ def getnameinfo(sockaddr, flags):
 
     if is_ipv4_addr(host):
         try:
-            rrset =	resolver.query(
+            rrset = resolver.query(
                 dns.reversename.from_address(host), dns.rdatatype.PTR)
             if len(rrset) > 1:
                 raise socket.error('sockaddr resolved to multiple addresses')
             host = rrset[0].target.to_text(omit_final_dot=True)
-        except dns.exception.Timeout as e:
+        except dns.exception.Timeout:
             if flags & socket.NI_NAMEREQD:
                 raise socket.gaierror((socket.EAI_AGAIN, 'Lookup timed out'))
-        except dns.exception.DNSException as e:
+        except dns.exception.DNSException:
             if flags & socket.NI_NAMEREQD:
                 raise socket.gaierror(
                     (socket.EAI_NONAME, 'Name or service not known'))
@@ -246,9 +260,9 @@ def getnameinfo(sockaddr, flags):
                 raise socket.error('sockaddr resolved to multiple addresses')
             if flags & socket.NI_NUMERICHOST:
                 host = rrset[0].address
-        except dns.exception.Timeout as e:
+        except dns.exception.Timeout:
             raise socket.gaierror((socket.EAI_AGAIN, 'Lookup timed out'))
-        except dns.exception.DNSException as e:
+        except dns.exception.DNSException:
             raise socket.gaierror(
                 (socket.EAI_NODATA, 'No address associated with hostname'))
 
@@ -272,6 +286,7 @@ def is_ipv4_addr(host):
         return True
     return False
 
+
 def _net_read(sock, count, expiration):
     """coro friendly replacement for dns.query._net_write
     Read the specified number of bytes from sock.  Keep trying until we
@@ -284,7 +299,7 @@ def _net_read(sock, count, expiration):
         try:
             n = sock.recv(count)
         except socket.timeout:
-            ## Q: Do we also need to catch coro.CoroutineSocketWake and pass?
+            # Q: Do we also need to catch coro.CoroutineSocketWake and pass?
             if expiration - time.time() <= 0.0:
                 raise dns.exception.Timeout
         if n == '':
@@ -292,6 +307,7 @@ def _net_read(sock, count, expiration):
         count = count - len(n)
         s = s + n
     return s
+
 
 def _net_write(sock, data, expiration):
     """coro friendly replacement for dns.query._net_write
@@ -305,13 +321,13 @@ def _net_write(sock, data, expiration):
         try:
             current += sock.send(data[current:])
         except socket.timeout:
-            ## Q: Do we also need to catch coro.CoroutineSocketWake and pass?
+            # Q: Do we also need to catch coro.CoroutineSocketWake and pass?
             if expiration - time.time() <= 0.0:
                 raise dns.exception.Timeout
 
-def udp(
-    q, where, timeout=DNS_QUERY_TIMEOUT, port=53, af=None, source=None,
-    source_port=0, ignore_unexpected=False):
+
+def udp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53, af=None, source=None,
+        source_port=0, ignore_unexpected=False):
     """coro friendly replacement for dns.query.udp
     Return the response obtained after sending a query via UDP.
 
@@ -362,14 +378,14 @@ def udp(
         try:
             s.sendto(wire, destination)
         except socket.timeout:
-            ## Q: Do we also need to catch coro.CoroutineSocketWake and pass?
+            # Q: Do we also need to catch coro.CoroutineSocketWake and pass?
             if expiration - time.time() <= 0.0:
                 raise dns.exception.Timeout
         while 1:
             try:
                 (wire, from_address) = s.recvfrom(65535)
             except socket.timeout:
-                ## Q: Do we also need to catch coro.CoroutineSocketWake and pass?
+                # Q: Do we also need to catch coro.CoroutineSocketWake and pass?
                 if expiration - time.time() <= 0.0:
                     raise dns.exception.Timeout
             if from_address == destination:
@@ -377,7 +393,7 @@ def udp(
             if not ignore_unexpected:
                 raise dns.query.UnexpectedSource(
                     'got a response from %s instead of %s'
-                        % (from_address, destination))
+                    % (from_address, destination))
     finally:
         s.close()
 
@@ -386,8 +402,9 @@ def udp(
         raise dns.query.BadResponse()
     return r
 
+
 def tcp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
-   af=None, source=None, source_port=0):
+        af=None, source=None, source_port=0):
     """coro friendly replacement for dns.query.tcp
     Return the response obtained after sending a query via TCP.
 
@@ -434,7 +451,7 @@ def tcp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
         try:
             s.connect(destination)
         except socket.timeout:
-            ## Q: Do we also need to catch coro.CoroutineSocketWake and pass?
+            # Q: Do we also need to catch coro.CoroutineSocketWake and pass?
             if expiration - time.time() <= 0.0:
                 raise dns.exception.Timeout
 
@@ -454,10 +471,10 @@ def tcp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
         raise dns.query.BadResponse()
     return r
 
+
 def reset():
-   resolver.clear()
+    resolver.clear()
 
 # Install our coro-friendly replacements for the tcp and udp query methods.
 dns.query.tcp = tcp
 dns.query.udp = udp
-

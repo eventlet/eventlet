@@ -9,23 +9,24 @@ try:
 except ImportError:
     pass
 
+
 class Test(unittest.TestCase):
     @requires_twisted
     def test_block_on_success(self):
         from twisted.internet import reactor
         d = reactor.resolver.getHostByName('www.google.com')
         ip = block_on(d)
-        assert len(ip.split('.'))==4, ip
+        assert len(ip.split('.')) == 4, ip
         ip2 = block_on(d)
         assert ip == ip2, (ip, ip2)
 
-    @requires_twisted 
+    @requires_twisted
     def test_block_on_fail(self):
         from twisted.internet import reactor
         d = reactor.resolver.getHostByName('xxx')
         self.assertRaises(DNSLookupError, block_on, d)
 
-    @requires_twisted 
+    @requires_twisted
     def test_block_on_already_succeed(self):
         d = defer.succeed('hey corotwine')
         res = block_on(d)
@@ -36,6 +37,6 @@ class Test(unittest.TestCase):
         d = defer.fail(Failure(ZeroDivisionError()))
         self.assertRaises(ZeroDivisionError, block_on, d)
 
-if __name__=='__main__':
+if __name__ == '__main__':
     unittest.main()
 

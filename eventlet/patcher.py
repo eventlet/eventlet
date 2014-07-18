@@ -1,5 +1,5 @@
-import sys
 import imp
+import sys
 
 from eventlet.support import six
 
@@ -13,6 +13,7 @@ class SysModulesSaver(object):
     """Class that captures some subset of the current state of
     sys.modules.  Pass in an iterator of module names to the
     constructor."""
+
     def __init__(self, module_names=()):
         self._saved = {}
         imp.acquire_lock()
@@ -69,7 +70,7 @@ def inject(module_name, new_globals, *additional_modules):
             _green_socket_modules() +
             _green_thread_modules() +
             _green_time_modules())
-            #_green_MySQLdb()) # enable this after a short baking-in period
+            # _green_MySQLdb()) # enable this after a short baking-in period
 
     # after this we are gonna screw with sys.modules, so capture the
     # state of all the modules we're going to mess with, and lock
@@ -81,22 +82,22 @@ def inject(module_name, new_globals, *additional_modules):
     for name, mod in additional_modules:
         sys.modules[name] = mod
 
-    ## Remove the old module from sys.modules and reimport it while
-    ## the specified modules are in place
+    # Remove the old module from sys.modules and reimport it while
+    # the specified modules are in place
     sys.modules.pop(module_name, None)
     try:
         module = __import__(module_name, {}, {}, module_name.split('.')[:-1])
 
         if new_globals is not None:
-            ## Update the given globals dictionary with everything from this new module
+            # Update the given globals dictionary with everything from this new module
             for name in dir(module):
                 if name not in __exclude:
                     new_globals[name] = getattr(module, name)
 
-        ## Keep a reference to the new module to prevent it from dying
+        # Keep a reference to the new module to prevent it from dying
         sys.modules[patched_name] = module
     finally:
-        saver.restore()  ## Put the original modules back
+        saver.restore()  # Put the original modules back
 
     return module
 
@@ -139,6 +140,7 @@ def patch_function(func, *additional_modules):
         finally:
             saver.restore()
     return patched
+
 
 def _original_patch_function(func, *module_names):
     """Kind of the contrapositive of patch_function: decorates a
@@ -201,6 +203,8 @@ def original(modname):
     return sys.modules[original_name]
 
 already_patched = {}
+
+
 def monkey_patch(**on):
     """Globally patches certain system modules to be greenthread-friendly.
 
@@ -216,11 +220,11 @@ def monkey_patch(**on):
     """
     accepted_args = set(('os', 'select', 'socket',
                          'thread', 'time', 'psycopg', 'MySQLdb', '__builtin__'))
-    default_on = on.pop("all",None)
+    default_on = on.pop("all", None)
     for k in six.iterkeys(on):
         if k not in accepted_args:
-            raise TypeError("monkey_patch() got an unexpected "\
-                                "keyword argument %r" % k)
+            raise TypeError("monkey_patch() got an unexpected "
+                            "keyword argument %r" % k)
     if default_on is None:
         default_on = not (True in on.values())
     for modname in accepted_args:
@@ -279,6 +283,7 @@ def monkey_patch(**on):
     finally:
         imp.release_lock()
 
+
 def is_monkey_patched(module):
     """Returns True if the given module is monkeypatched currently, False if
     not.  *module* can be either the module itself or its name.
@@ -288,15 +293,18 @@ def is_monkey_patched(module):
     import_patched), this might not be correct about that particular
     module."""
     return module in already_patched or \
-           getattr(module, '__name__', None) in already_patched
+        getattr(module, '__name__', None) in already_patched
+
 
 def _green_os_modules():
     from eventlet.green import os
     return [('os', os)]
 
+
 def _green_select_modules():
     from eventlet.green import select
     return [('select', select)]
+
 
 def _green_socket_modules():
     from eventlet.green import socket
@@ -305,6 +313,7 @@ def _green_socket_modules():
         return [('socket', socket), ('ssl', ssl)]
     except ImportError:
         return [('socket', socket)]
+
 
 def _green_thread_modules():
     from eventlet.green import Queue
@@ -315,9 +324,11 @@ def _green_thread_modules():
     if six.PY3:
         return [('queue', Queue), ('_thread', thread), ('threading', threading)]
 
+
 def _green_time_modules():
     from eventlet.green import time
     return [('time', time)]
+
 
 def _green_MySQLdb():
     try:
@@ -325,6 +336,7 @@ def _green_MySQLdb():
         return [('MySQLdb', MySQLdb)]
     except ImportError:
         return []
+
 
 def _green_builtins():
     try:
@@ -344,16 +356,14 @@ def slurp_properties(source, destination, ignore=[], srckeys=None):
     """
     if srckeys is None:
         srckeys = source.__all__
-    destination.update(dict([(name, getattr(source, name))
-                              for name in srckeys
-                              if not (
-                                name.startswith('__') or
-                                name in ignore)
-                            ]))
+    destination.update(dict([
+        (name, getattr(source, name))
+        for name in srckeys
+        if not (name.startswith('__') or name in ignore)
+    ]))
 
 
 if __name__ == "__main__":
-    import sys
     sys.argv.pop(0)
     monkey_patch()
     with open(sys.argv[0]) as f:

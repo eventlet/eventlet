@@ -24,6 +24,7 @@ def handle(ws):
             ws.send("0 %s %s\n" % (i, random.random()))
             eventlet.sleep(0.1)
 
+
 def dispatch(environ, start_response):
     """ This resolves to the web page or the websocket depending on
     the path."""

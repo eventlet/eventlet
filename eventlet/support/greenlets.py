@@ -24,6 +24,6 @@ except ImportError as e:
             try:
                 from support.stacklesss import greenlet, getcurrent, GreenletExit
                 preserves_excinfo = False
-                (greenlet, getcurrent, GreenletExit) # silence pyflakes
+                (greenlet, getcurrent, GreenletExit)  # silence pyflakes
             except ImportError as e:
                 raise ImportError("Unable to find an implementation of greenlet.")
