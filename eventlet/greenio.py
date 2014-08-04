@@ -505,27 +505,27 @@ class GreenPipe(_fileobject):
         len = self._get_readahead_len()
         if len > 0:
             self.read(len)
+    if six.PY2:
+        def tell(self):
+            self.flush()
+            try:
+                return os.lseek(self.fileno(), 0, 1) - self._get_readahead_len()
+            except OSError as e:
+                raise IOError(*e.args)
 
-    def tell(self):
-        self.flush()
-        try:
-            return os.lseek(self.fileno(), 0, 1) - self._get_readahead_len()
-        except OSError as e:
-            raise IOError(*e.args)
-
-    def seek(self, offset, whence=0):
-        self.flush()
-        if whence == 1 and offset == 0:  # tell synonym
-            return self.tell()
-        if whence == 1:  # adjust offset by what is read ahead
-            offset -= self._get_readahead_len()
-        try:
-            rv = os.lseek(self.fileno(), offset, whence)
-        except OSError as e:
-            raise IOError(*e.args)
-        else:
-            self._clear_readahead_buf()
-            return rv
+        def seek(self, offset, whence=0):
+            self.flush()
+            if whence == 1 and offset == 0:  # tell synonym
+                return self.tell()
+            if whence == 1:  # adjust offset by what is read ahead
+                offset -= self._get_readahead_len()
+            try:
+                rv = os.lseek(self.fileno(), offset, whence)
+            except OSError as e:
+                raise IOError(*e.args)
+            else:
+                self._clear_readahead_buf()
+                return rv
 
     if getattr(file, "truncate", None):  # not all OSes implement truncate
         def truncate(self, size=-1):
