@@ -210,19 +210,17 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
     def setup(self):
         # overriding SocketServer.setup to correctly handle SSL.Connection objects
-        conn = self.connection = self.request
         try:
-            self.rfile = conn.makefile('rb', self.rbufsize)
-            self.wfile = conn.makefile('wb', self.wbufsize)
+            BaseHTTPServer.BaseHTTPRequestHandler.setup(self)
         except (AttributeError, NotImplementedError):
-            if hasattr(conn, 'send') and hasattr(conn, 'recv'):
+            if hasattr(self.connection, 'send') and hasattr(self.connection, 'recv'):
                 # it's an SSL.Connection
-                self.rfile = socket._fileobject(conn, "rb", self.rbufsize)
-                self.wfile = socket._fileobject(conn, "wb", self.wbufsize)
+                self.rfile = socket._fileobject(self.connection, "rb", self.rbufsize)
+                self.wfile = socket._fileobject(self.connection, "wb", self.wbufsize)
             else:
                 # it's a SSLObject, or a martian
                 raise NotImplementedError("wsgi.py doesn't support sockets "
-                                          "of type %s" % type(conn))
+                                          "of type %s" % type(self.connection))
 
     def handle_one_request(self):
         if self.server.max_http_version:
@@ -559,6 +557,7 @@ class Server(BaseHTTPServer.HTTPServer):
                  environ=None,
                  max_http_version=None,
                  protocol=HttpProtocol,
+                 disable_nagle_algorithm=False,
                  minimum_chunk_size=None,
                  log_x_forwarded_for=True,
                  keepalive=True,
@@ -582,6 +581,7 @@ class Server(BaseHTTPServer.HTTPServer):
         self.max_http_version = max_http_version
         self.protocol = protocol
         self.pid = os.getpid()
+        self.disable_nagle_algorithm = disable_nagle_algorithm
         self.minimum_chunk_size = minimum_chunk_size
         self.log_x_forwarded_for = log_x_forwarded_for
         self.log_output = log_output
@@ -617,10 +617,14 @@ class Server(BaseHTTPServer.HTTPServer):
 
     def process_request(self, sock_params):
         # The actual request handling takes place in __init__, so we need to
-        # set minimum_chunk_size before __init__ executes and we don't want to modify
-        # class variable
+        # set various options that HttpProtocol and ancestors use before __init__ executes
+        # since we don't want to modify the class
         sock, address = sock_params
         proto = new(self.protocol)
+        if self.socket_timeout is not None:
+            proto.timeout = self.socket_timeout
+        if self.disable_nagle_algorithm:
+            proto.disable_nagle_algorithm = True
         if self.minimum_chunk_size is not None:
             proto.minimum_chunk_size = self.minimum_chunk_size
         proto.capitalize_response_headers = self.capitalize_response_headers
@@ -660,6 +664,7 @@ def server(sock, site,
            max_http_version=DEFAULT_MAX_HTTP_VERSION,
            protocol=HttpProtocol,
            server_event=None,
+           disable_nagle_algorithm=False,
            minimum_chunk_size=None,
            log_x_forwarded_for=True,
            custom_pool=None,
@@ -683,6 +688,7 @@ def server(sock, site,
     :param max_http_version: Set to "HTTP/1.0" to make the server pretend it only supports HTTP 1.0.  This can help with applications or clients that don't behave properly using HTTP 1.1.
     :param protocol: Protocol class.  Deprecated.
     :param server_event: Used to collect the Server object.  Deprecated.
+    :param disable_nagle_algorithm: If True, sets TCP_NODELAY on the socket.
     :param minimum_chunk_size: Minimum size in bytes for http chunks.  This  can be used to improve performance of applications which yield many small strings, though using it technically violates the WSGI spec. This can be overridden on a per request basis by setting environ['eventlet.minimum_write_chunk_size'].
     :param log_x_forwarded_for: If True (the default), logs the contents of the x-forwarded-for header in addition to the actual client ip address in the 'client_ip' field of the log line.
     :param custom_pool: A custom GreenPool instance which is used to spawn client green threads.  If this is supplied, max_size is ignored.
@@ -699,6 +705,7 @@ def server(sock, site,
                   environ=environ,
                   max_http_version=max_http_version,
                   protocol=protocol,
+                  disable_nagle_algorithm=disable_nagle_algorithm,
                   minimum_chunk_size=minimum_chunk_size,
                   log_x_forwarded_for=log_x_forwarded_for,
                   keepalive=keepalive,
@@ -734,7 +741,6 @@ def server(sock, site,
         while True:
             try:
                 client_socket = sock.accept()
-                client_socket[0].settimeout(serv.socket_timeout)
                 if debug:
                     serv.log.write("(%s) accepted %r\n" % (
                         serv.pid, client_socket[1]))
