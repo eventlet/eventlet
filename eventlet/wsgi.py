@@ -6,13 +6,13 @@ import traceback
 import types
 import warnings
 
-from eventlet.green import urllib
-from eventlet.green import socket
-from eventlet.green import BaseHTTPServer
-from eventlet import greenpool
 from eventlet import greenio
+from eventlet import greenpool
+from eventlet.green import BaseHTTPServer
+from eventlet.green import socket
+from eventlet.green import urllib
+from eventlet.hubs import trampoline
 from eventlet.support import get_errno, six
-
 
 DEFAULT_MAX_SIMULTANEOUS_REQUESTS = 1024
 DEFAULT_MAX_HTTP_VERSION = 'HTTP/1.1'
@@ -467,6 +467,18 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     'wall_seconds': finish - start,
                 })
 
+    def handle(self):
+        """Handle multiple requests if necessary."""
+        self.close_connection = 1
+
+        self.handle_one_request()
+        while not self.close_connection:
+            try:
+                trampoline(self.connection, read=True, timeout=self.server.keepalive_timeout, timeout_exc=socket.timeout("timed out"))
+            except socket.error:
+                break
+            self.handle_one_request()
+
     def get_client_ip(self):
         client_ip = self.client_address[0]
         if self.server.log_x_forwarded_for:
@@ -562,6 +574,7 @@ class Server(BaseHTTPServer.HTTPServer):
                  minimum_chunk_size=None,
                  log_x_forwarded_for=True,
                  keepalive=True,
+                 keepalive_timeout=None,
                  log_output=True,
                  log_format=DEFAULT_LOG_FORMAT,
                  url_length_limit=MAX_REQUEST_LINE,
@@ -578,6 +591,7 @@ class Server(BaseHTTPServer.HTTPServer):
             self.log = sys.stderr
         self.app = app
         self.keepalive = keepalive
+        self.keepalive_timeout = keepalive_timeout
         self.environ = environ
         self.max_http_version = max_http_version
         self.protocol = protocol
@@ -664,6 +678,7 @@ def server(sock, site,
            log_x_forwarded_for=True,
            custom_pool=None,
            keepalive=True,
+           keepalive_timeout=None,
            log_output=True,
            log_format=DEFAULT_LOG_FORMAT,
            url_length_limit=MAX_REQUEST_LINE,
@@ -687,6 +702,7 @@ def server(sock, site,
     :param log_x_forwarded_for: If True (the default), logs the contents of the x-forwarded-for header in addition to the actual client ip address in the 'client_ip' field of the log line.
     :param custom_pool: A custom GreenPool instance which is used to spawn client green threads.  If this is supplied, max_size is ignored.
     :param keepalive: If set to False, disables keepalives on the server; all connections will be closed after serving one request.
+    :param keepalive_timeout: If keepalive is enabled, how many seconds to keep an idle connection alive.
     :param log_output: A Boolean indicating if the server will log data or not.
     :param log_format: A python format string that is used as the template to generate log lines.  The following values can be formatted into it: client_ip, date_time, request_line, status_code, body_length, wall_seconds.  The default is a good example of how to use it.
     :param url_length_limit: A maximum allowed length of the request url. If exceeded, 414 error is returned.
@@ -702,6 +718,7 @@ def server(sock, site,
                   minimum_chunk_size=minimum_chunk_size,
                   log_x_forwarded_for=log_x_forwarded_for,
                   keepalive=keepalive,
+                  keepalive_timeout=keepalive_timeout,
                   log_output=log_output,
                   log_format=log_format,
                   url_length_limit=url_length_limit,
