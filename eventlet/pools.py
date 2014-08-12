@@ -75,22 +75,33 @@ class Pool(object):
             self.current_size += 1
             self.free_items.append(self.create())
 
+    def _safe_create(self):
+        try:
+            return self.create()
+        except Exception as e:
+            if not self.waiting():
+                self.current_size -= 1
+                raise
+            else:
+                # put will cause a greenlet switch which destroys the
+                # exception info, so we have to raise the exception explicitly
+                self.put(None)
+                raise e
+
     def get(self):
         """Return an item from the pool, when one is available.  This may
         cause the calling greenthread to block.
         """
         if self.free_items:
-            return self.free_items.popleft()
-        self.current_size += 1
-        if self.current_size <= self.max_size:
-            try:
-                created = self.create()
-            except:
-                self.current_size -= 1
-                raise
-            return created
-        self.current_size -= 1 # did not create
-        return self.channel.get()
+            item = self.free_items.popleft()
+        elif self.current_size < self.max_size:
+            self.current_size += 1
+            item = self._safe_create()
+        else:
+            item = self.channel.get()
+            if item is None:
+                item = self._safe_create()
+        return item
 
     @contextmanager
     def item(self):

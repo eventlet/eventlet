@@ -175,19 +175,6 @@ class BaseConnectionPool(Pool):
     def get(self):
         conn = super(BaseConnectionPool, self).get()
 
-        # None is a flag value that means that put got called with
-        # something it couldn't use
-        if conn is None:
-            try:
-                conn = self.create()
-            except Exception:
-                # unconditionally increase the free pool because
-                # even if there are waiters, doing a full put
-                # would incur a greenlib switch and thus lose the
-                # exception stack
-                self.current_size -= 1
-                raise
-
         # if the call to get() draws from the free pool, it will come
         # back as a tuple
         if isinstance(conn, tuple):
