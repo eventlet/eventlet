@@ -7,7 +7,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Index &mdash; Eventlet 0.15.0 documentation</title>
+    <title>Index &mdash; Eventlet 0.15.1 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.15.0',
+        VERSION:     '0.15.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.15.0 documentation" href="index.html" /> 
+    <link rel="top" title="Eventlet 0.15.1 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Eventlet 0.15.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Eventlet 0.15.1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -61,6 +61,7 @@
  | <a href="#J"><strong>J</strong></a>
  | <a href="#K"><strong>K</strong></a>
  | <a href="#L"><strong>L</strong></a>
+ | <a href="#M"><strong>M</strong></a>
  | <a href="#N"><strong>N</strong></a>
  | <a href="#P"><strong>P</strong></a>
  | <a href="#Q"><strong>Q</strong></a>
@@ -123,10 +124,18 @@
   <dt><a href="modules/db_pool.html#eventlet.db_pool.BaseConnectionPool">BaseConnectionPool (class in eventlet.db_pool)</a>
   </dt>
 
+      
+  <dt><a href="modules/db_pool.html#eventlet.db_pool.GenericConnectionWrapper.begin">begin() (eventlet.db_pool.GenericConnectionWrapper method)</a>
+  </dt>
+
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="modules/db_pool.html#eventlet.db_pool.GenericConnectionWrapper.begin">begin() (eventlet.db_pool.GenericConnectionWrapper method)</a>
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.bind">bind() (eventlet.green.zmq.Socket method)</a>
+  </dt>
+
+      
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.bind_to_random_port">bind_to_random_port() (eventlet.green.zmq.Socket method)</a>
   </dt>
 
       
@@ -172,6 +181,10 @@
   </dt>
 
       
+  <dt><a href="modules/db_pool.html#eventlet.db_pool.cleanup_rollback">cleanup_rollback() (in module eventlet.db_pool)</a>
+  </dt>
+
+      
   <dt><a href="modules/db_pool.html#eventlet.db_pool.BaseConnectionPool.clear">clear() (eventlet.db_pool.BaseConnectionPool method)</a>
   </dt>
 
@@ -182,6 +195,10 @@
       <dd><dl>
         
   <dt><a href="modules/db_pool.html#eventlet.db_pool.PooledConnectionWrapper.close">(eventlet.db_pool.PooledConnectionWrapper method)</a>
+  </dt>
+
+        
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.close">(eventlet.green.zmq.Socket method)</a>
   </dt>
 
         
@@ -205,6 +222,10 @@
   </dt>
 
         
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.connect">(eventlet.green.zmq.Socket method)</a>
+  </dt>
+
+        
   <dt><a href="basic_usage.html#eventlet.connect">(in module eventlet)</a>
   </dt>
 
@@ -215,6 +236,10 @@
 
       
   <dt><a href="modules/db_pool.html#eventlet.db_pool.ConnectTimeout">ConnectTimeout</a>
+  </dt>
+
+      
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Context">Context() (in module eventlet.green.zmq)</a>
   </dt>
 
       
@@ -247,6 +272,10 @@
   <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="modules/db_pool.html#eventlet.db_pool.DatabaseConnector">DatabaseConnector (class in eventlet.db_pool)</a>
+  </dt>
+
+      
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.disconnect">disconnect() (eventlet.green.zmq.Socket method)</a>
   </dt>
 
   </dl></td>
@@ -306,6 +335,10 @@
   </dt>
 
       
+  <dt><a href="modules/zmq.html#module-eventlet.green.zmq">eventlet.green.zmq (module)</a>
+  </dt>
+
+      
   <dt><a href="basic_usage.html#eventlet.GreenPile">eventlet.GreenPile (built-in class)</a>
   </dt>
 
@@ -329,12 +362,12 @@
   <dt><a href="basic_usage.html#eventlet.import_patched">eventlet.import_patched() (built-in function)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="basic_usage.html#eventlet.monkey_patch">eventlet.monkey_patch() (built-in function)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="patching.html#eventlet.patcher.import_patched">eventlet.patcher.import_patched() (built-in function)</a>
   </dt>
@@ -461,6 +494,10 @@
   </dt>
 
         
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.get">(eventlet.green.zmq.Socket method)</a>
+  </dt>
+
+        
   <dt><a href="modules/pools.html#eventlet.pools.Pool.get">(eventlet.pools.Pool method)</a>
   </dt>
 
@@ -478,13 +515,37 @@
   </dt>
 
       
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.get_hwm">get_hwm() (eventlet.green.zmq.Socket method)</a>
+  </dt>
+
+      
   <dt><a href="modules/corolocal.html#eventlet.corolocal.get_ident">get_ident() (in module eventlet.corolocal)</a>
+  </dt>
+
+      
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.get_monitor_socket">get_monitor_socket() (eventlet.green.zmq.Socket method)</a>
+  </dt>
+
+      
+  <dt><a href="modules/queue.html#eventlet.queue.LightQueue.get_nowait">get_nowait() (eventlet.queue.LightQueue method)</a>
   </dt>
 
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="modules/queue.html#eventlet.queue.LightQueue.get_nowait">get_nowait() (eventlet.queue.LightQueue method)</a>
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.get_string">get_string() (eventlet.green.zmq.Socket method)</a>
+  </dt>
+
+      
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.getsockopt">getsockopt() (eventlet.green.zmq.Socket method)</a>
+  </dt>
+
+      
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.getsockopt_string">getsockopt_string() (eventlet.green.zmq.Socket method)</a>
+  </dt>
+
+      
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.getsockopt_unicode">getsockopt_unicode() (eventlet.green.zmq.Socket method)</a>
   </dt>
 
       
@@ -531,6 +592,10 @@
   <dt><a href="modules/debug.html#eventlet.debug.hub_timer_stacks">hub_timer_stacks() (in module eventlet.debug)</a>
   </dt>
 
+      
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.hwm">hwm (eventlet.green.zmq.Socket attribute)</a>
+  </dt>
+
   </dl></td>
 </tr></table>
 
@@ -548,9 +613,15 @@
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="modules/pools.html#eventlet.pools.Pool.item">item() (eventlet.pools.Pool method)</a>
+  <dt><a href="modules/db_pool.html#eventlet.db_pool.BaseConnectionPool.item">item() (eventlet.db_pool.BaseConnectionPool method)</a>
   </dt>
 
+      <dd><dl>
+        
+  <dt><a href="modules/pools.html#eventlet.pools.Pool.item">(eventlet.pools.Pool method)</a>
+  </dt>
+
+      </dl></dd>
   </dl></td>
 </tr></table>
 
@@ -616,6 +687,16 @@
   </dl></td>
 </tr></table>
 
+<h2 id="M">M</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.monitor">monitor() (eventlet.green.zmq.Socket method)</a>
+  </dt>
+
+  </dl></td>
+</tr></table>
+
 <h2 id="N">N</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
@@ -638,6 +719,10 @@
   </dt>
 
       
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.poll">poll() (eventlet.green.zmq.Socket method)</a>
+  </dt>
+
+      
   <dt><a href="modules/pools.html#eventlet.pools.Pool">Pool (class in eventlet.pools)</a>
   </dt>
 
@@ -645,12 +730,12 @@
   <dt><a href="modules/db_pool.html#eventlet.db_pool.PooledConnectionWrapper">PooledConnectionWrapper (class in eventlet.db_pool)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="modules/queue.html#eventlet.queue.PriorityQueue">PriorityQueue (class in eventlet.queue)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="threading.html#eventlet.tpool.Proxy">Proxy (class in eventlet.tpool)</a>
   </dt>
@@ -712,6 +797,32 @@
   </dt>
 
       
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.recv">recv() (eventlet.green.zmq.Socket method)</a>, <a href="modules/zmq.html#eventlet.green.zmq.Socket.recv">[1]</a>
+  </dt>
+
+      
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.recv_json">recv_json() (eventlet.green.zmq.Socket method)</a>
+  </dt>
+
+      
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.recv_multipart">recv_multipart() (eventlet.green.zmq.Socket method)</a>
+  </dt>
+
+      
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.recv_pyobj">recv_pyobj() (eventlet.green.zmq.Socket method)</a>
+  </dt>
+
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.recv_string">recv_string() (eventlet.green.zmq.Socket method)</a>
+  </dt>
+
+      
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.recv_unicode">recv_unicode() (eventlet.green.zmq.Socket method)</a>
+  </dt>
+
+      
   <dt><a href="modules/semaphore.html#eventlet.semaphore.BoundedSemaphore.release">release() (eventlet.semaphore.BoundedSemaphore method)</a>
   </dt>
 
@@ -725,8 +836,6 @@
   </dt>
 
       </dl></dd>
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="modules/greenpool.html#eventlet.greenpool.GreenPool.resize">resize() (eventlet.greenpool.GreenPool method)</a>
   </dt>
@@ -769,12 +878,36 @@
 
       <dd><dl>
         
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.send">(eventlet.green.zmq.Socket method)</a>, <a href="modules/zmq.html#eventlet.green.zmq.Socket.send">[1]</a>
+  </dt>
+
+        
   <dt><a href="modules/websocket.html#eventlet.websocket.WebSocket.send">(eventlet.websocket.WebSocket method)</a>
   </dt>
 
       </dl></dd>
       
   <dt><a href="modules/event.html#eventlet.event.Event.send_exception">send_exception() (eventlet.event.Event method)</a>
+  </dt>
+
+      
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.send_json">send_json() (eventlet.green.zmq.Socket method)</a>
+  </dt>
+
+      
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.send_multipart">send_multipart() (eventlet.green.zmq.Socket method)</a>
+  </dt>
+
+      
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.send_pyobj">send_pyobj() (eventlet.green.zmq.Socket method)</a>
+  </dt>
+
+      
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.send_string">send_string() (eventlet.green.zmq.Socket method)</a>
+  </dt>
+
+      
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.send_unicode">send_unicode() (eventlet.green.zmq.Socket method)</a>
   </dt>
 
       
@@ -790,7 +923,15 @@
   </dt>
 
       
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.set">set() (eventlet.green.zmq.Socket method)</a>
+  </dt>
+
+      
   <dt><a href="modules/db_pool.html#eventlet.db_pool.GenericConnectionWrapper.set_character_set">set_character_set() (eventlet.db_pool.GenericConnectionWrapper method)</a>
+  </dt>
+
+      
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.set_hwm">set_hwm() (eventlet.green.zmq.Socket method)</a>
   </dt>
 
       
@@ -802,6 +943,28 @@
   </dt>
 
       
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.set_string">set_string() (eventlet.green.zmq.Socket method)</a>
+  </dt>
+
+      
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.setsockopt">setsockopt() (eventlet.green.zmq.Socket method)</a>
+  </dt>
+
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.setsockopt_string">setsockopt_string() (eventlet.green.zmq.Socket method)</a>
+  </dt>
+
+      
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.setsockopt_unicode">setsockopt_unicode() (eventlet.green.zmq.Socket method)</a>
+  </dt>
+
+      
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.shadow">shadow() (eventlet.green.zmq.Socket class method)</a>
+  </dt>
+
+      
   <dt><a href="modules/db_pool.html#eventlet.db_pool.GenericConnectionWrapper.show_warnings">show_warnings() (eventlet.db_pool.GenericConnectionWrapper method)</a>
   </dt>
 
@@ -809,10 +972,12 @@
   <dt><a href="modules/db_pool.html#eventlet.db_pool.GenericConnectionWrapper.shutdown">shutdown() (eventlet.db_pool.GenericConnectionWrapper method)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="modules/greenthread.html#eventlet.greenthread.sleep">sleep() (in module eventlet.greenthread)</a>
+  </dt>
+
+      
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket">Socket (class in eventlet.green.zmq)</a>
   </dt>
 
       
@@ -914,15 +1079,23 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="modules/greenthread.html#eventlet.greenthread.GreenThread.unlink">unlink() (eventlet.greenthread.GreenThread method)</a>
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.unbind">unbind() (eventlet.green.zmq.Socket method)</a>
   </dt>
 
       
-  <dt><a href="modules/debug.html#eventlet.debug.unspew">unspew() (in module eventlet.debug)</a>
+  <dt><a href="modules/zmq.html#eventlet.green.zmq.Socket.underlying">underlying (eventlet.green.zmq.Socket attribute)</a>
+  </dt>
+
+      
+  <dt><a href="modules/greenthread.html#eventlet.greenthread.GreenThread.unlink">unlink() (eventlet.greenthread.GreenThread method)</a>
   </dt>
 
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="modules/debug.html#eventlet.debug.unspew">unspew() (in module eventlet.debug)</a>
+  </dt>
+
       
   <dt><a href="modules/db_pool.html#eventlet.db_pool.GenericConnectionWrapper.use_result">use_result() (eventlet.db_pool.GenericConnectionWrapper method)</a>
   </dt>
@@ -1028,7 +1201,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Eventlet 0.15.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Eventlet 0.15.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 

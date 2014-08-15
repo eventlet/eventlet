@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>wsgi – WSGI server &mdash; Eventlet 0.15.0 documentation</title>
+    <title>wsgi – WSGI server &mdash; Eventlet 0.15.1 documentation</title>
     
     <link rel="stylesheet" href="../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.15.0',
+        VERSION:     '0.15.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.15.0 documentation" href="../index.html" />
+    <link rel="top" title="Eventlet 0.15.1 documentation" href="../index.html" />
     <link rel="up" title="Module Reference" href="../modules.html" />
     <link rel="next" title="eventlet.green.zmq – ØMQ support" href="zmq.html" />
     <link rel="prev" title="websocket – Websocket Server" href="websocket.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="websocket.html" title="websocket – Websocket Server"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.15.0 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Eventlet 0.15.1 documentation</a> &raquo;</li>
           <li><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
       </ul>
     </div>  
@@ -75,7 +75,7 @@ server package.  One such package is <a class="reference external" href="http://
 <tt class="docutils literal"><span class="pre">examples/wsgi.py</span></tt>.</p>
 <span class="target" id="module-eventlet.wsgi"></span><dl class="function">
 <dt id="eventlet.wsgi.server">
-<tt class="descclassname">eventlet.wsgi.</tt><tt class="descname">server</tt><big>(</big><em>sock</em>, <em>site</em>, <em>log=None</em>, <em>environ=None</em>, <em>max_size=None</em>, <em>max_http_version='HTTP/1.1'</em>, <em>protocol=&lt;class eventlet.wsgi.HttpProtocol at 0x4b399a8&gt;</em>, <em>server_event=None</em>, <em>minimum_chunk_size=None</em>, <em>log_x_forwarded_for=True</em>, <em>custom_pool=None</em>, <em>keepalive=True</em>, <em>log_output=True</em>, <em>log_format='%(client_ip)s - - [%(date_time)s] &quot;%(request_line)s&quot; %(status_code)s %(body_length)s %(wall_seconds).6f'</em>, <em>url_length_limit=8192</em>, <em>debug=True</em>, <em>socket_timeout=None</em>, <em>capitalize_response_headers=True</em><big>)</big><a class="headerlink" href="#eventlet.wsgi.server" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">eventlet.wsgi.</tt><tt class="descname">server</tt><big>(</big><em>sock</em>, <em>site</em>, <em>log=None</em>, <em>environ=None</em>, <em>max_size=None</em>, <em>max_http_version='HTTP/1.1'</em>, <em>protocol=&lt;class eventlet.wsgi.HttpProtocol at 0x7f88da8c58d8&gt;</em>, <em>server_event=None</em>, <em>minimum_chunk_size=None</em>, <em>log_x_forwarded_for=True</em>, <em>custom_pool=None</em>, <em>keepalive=True</em>, <em>log_output=True</em>, <em>log_format='%(client_ip)s - - [%(date_time)s] &quot;%(request_line)s&quot; %(status_code)s %(body_length)s %(wall_seconds).6f'</em>, <em>url_length_limit=8192</em>, <em>debug=True</em>, <em>socket_timeout=None</em>, <em>capitalize_response_headers=True</em><big>)</big><a class="headerlink" href="#eventlet.wsgi.server" title="Permalink to this definition">¶</a></dt>
 <dd><p>Start up a WSGI server handling requests from the supplied server
 socket.  This function loops forever.  The <em>sock</em> object will be closed after server exits,
 but the underlying file descriptor will remain open, so if you have a dup() of <em>sock</em>,
@@ -219,7 +219,7 @@ bandwidth than the actual Content-Length.</p>
         <li class="right" >
           <a href="websocket.html" title="websocket – Websocket Server"
              >previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.15.0 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Eventlet 0.15.1 documentation</a> &raquo;</li>
           <li><a href="../modules.html" >Module Reference</a> &raquo;</li> 
       </ul>
     </div>
