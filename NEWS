@@ -1,3 +1,8 @@
+0.15.1
+======
+greenio: Fix second simultaneous read (parallel paramiko issue); Thanks to Jan Grant, Michael Kerrin
+db_pool: customizable connection cleanup function; Thanks to Avery Fay
+
 0.15
 ====
 * Python3 compatibility -- **not ready yet**; Thanks to Astrum Kuo, Davanum Srinivas, Jakub Stasiak, Victor Sergeyev

@@ -96,3 +96,4 @@ Thanks To
 * Astrum Kuo, python3 compatibility fixes; greenthread.unlink() method
 * Davanum Srinivas, Python3 compatibility fixes
 * Dmitriy Kruglyak, PyPy 2.3 compatibility fix
+* Jan Grant, Michael Kerrin, second simultaneous read (Github #94)
