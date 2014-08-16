@@ -39,14 +39,15 @@ ACCEPTABLE_CLIENT_ERRORS = set((errno.ECONNRESET, errno.EPIPE))
 
 __all__ = ["WebSocketWSGI", "WebSocket"]
 PROTOCOL_GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
-VALID_CLOSE_STATUS = (range(1000, 1004)
-                      + range(1007, 1012)
+from itertools import chain
+VALID_CLOSE_STATUS = chain(range(1000, 1004),
+                      range(1007, 1012),
                       # 3000-3999: reserved for use by libraries, frameworks,
                       # and applications
-                      + range(3000, 4000)
+                      range(3000, 4000),
                       # 4000-4999: reserved for private use and thus can't
                       # be registered
-                      + range(4000, 5000))
+                      range(4000, 5000))
 
 
 class BadRequest(Exception):
