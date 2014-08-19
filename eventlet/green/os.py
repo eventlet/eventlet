@@ -85,7 +85,7 @@ def waitpid(pid, options):
             greenthread.sleep(0.01)
 
 __original_open__ = os_orig.open
-def open(file, flags, mode=0777):
+def open(file, flags, mode=0o777):
     """ Wrap os.open
         This behaves identically, but collaborates with
         the hub's notify_opened protocol.
