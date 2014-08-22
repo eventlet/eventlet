@@ -202,19 +202,13 @@ class GreenSocket(object):
             self._trampoline(fd, read=True, timeout=self.gettimeout(),
                        timeout_exc=socket.timeout("timed out"))
 
-    def _defanged_close(self):
-        # Already closed the once
-        pass
-
-
     def _mark_as_closed(self):
         """ Mark this socket as being closed """
-        self.close = self._defanged_close
         self._closed = True
 
     def close(self):
         notify_close(self.fd)
-        self._mark_as_closed()   # Don't do this twice.
+        self._mark_as_closed()
         return self.fd.close()
 
     def __del__(self):
@@ -433,12 +427,7 @@ class _SocketDuckForFd(object):
             self._mark_as_closed()
             raise
 
-    def _defanged_close(self):
-        # Don't let anything close the wrong filehandle.
-        pass
-
     def _mark_as_closed(self):
-        self.close = self._close = self._defanged_close
         self._closed = True
 
     @property
@@ -570,14 +559,7 @@ class GreenPipe(_fileobject):
             self.mode,
             (id(self) < 0) and (sys.maxint + id(self)) or id(self))
 
-    def _defanged_close(self):
-        pass
-
-    def _mark_as_closed(self):
-        self.close = self._defanged_close
-
     def close(self):
-        self._mark_as_closed()
         super(GreenPipe, self).close()
         for method in [
                 'fileno', 'flush', 'isatty', 'next', 'read', 'readinto',
