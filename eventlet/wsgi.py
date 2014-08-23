@@ -83,13 +83,33 @@ class Input(object):
         self.chunked_input = chunked_input
         self.chunk_length = -1
 
+        # (optional) headers to send with a "100 Continue" response. Set by
+        # calling set_hundred_continue_respose_headers() on env['wsgi.input']
+        self.hundred_continue_headers = None
+
+    def _send_hundred_continue_response(self):
+        towrite = []
+
+        # 100 Continue status line
+        towrite.append(self.wfile_line)
+
+        # Optional headers
+        if self.hundred_continue_headers is not None:
+            # 100 Continue headers
+            for header in self.hundred_continue_headers:
+                towrite.append('%s: %s\r\n' % header)
+
+        # Blank line
+        towrite.append('\r\n')
+
+        self.wfile.writelines(towrite)
+        self.wfile = None
+        self.wfile_line = None
+
     def _do_read(self, reader, length=None):
         if self.wfile is not None:
-            # 100 Continue
-            self.wfile.write(self.wfile_line)
-            self.wfile = None
-            self.wfile_line = None
-
+            # 100 Continue response
+            self._send_hundred_continue_response()
         if length is None and self.content_length is not None:
             length = self.content_length - self.position
         if length and length > self.content_length - self.position:
@@ -105,10 +125,8 @@ class Input(object):
 
     def _chunked_read(self, rfile, length=None, use_readline=False):
         if self.wfile is not None:
-            # 100 Continue
-            self.wfile.write(self.wfile_line)
-            self.wfile = None
-            self.wfile_line = None
+            # 100 Continue response
+            self._send_hundred_continue_response()
         try:
             if length == 0:
                 return ""
@@ -174,6 +192,18 @@ class Input(object):
 
     def get_socket(self):
         return self.rfile._sock
+
+    def set_hundred_continue_response_headers(self, headers,
+                                              capitalize_response_headers=True):
+        # Response headers capitalization (default)
+        # CONTent-TYpe: TExt/PlaiN -> Content-Type: TExt/PlaiN
+        # Per HTTP RFC standard, header name is case-insensitive.
+        # Please, fix your client to ignore header case if possible.
+        if capitalize_response_headers:
+            headers = [
+                ('-'.join([x.capitalize() for x in key.split('-')]), value)
+                for key, value in headers]
+        self.hundred_continue_headers = headers
 
 
 class HeaderLineTooLong(Exception):
@@ -526,7 +556,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
         if env.get('HTTP_EXPECT') == '100-continue':
             wfile = self.wfile
-            wfile_line = 'HTTP/1.1 100 Continue\r\n\r\n'
+            wfile_line = 'HTTP/1.1 100 Continue\r\n'
         else:
             wfile = None
             wfile_line = None
