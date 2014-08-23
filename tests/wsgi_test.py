@@ -774,6 +774,57 @@ class TestHttpd(_TestBase):
         fd.close()
         sock.close()
 
+    def test_024a_expect_100_continue_with_headers(self):
+        def wsgi_app(environ, start_response):
+            if int(environ['CONTENT_LENGTH']) > 1024:
+                start_response('417 Expectation Failed', [('Content-Length', '7')])
+                return ['failure']
+            else:
+                environ['wsgi.input'].set_hundred_continue_response_headers(
+                    [('Hundred-Continue-Header-1', 'H1'),
+                     ('Hundred-Continue-Header-2', 'H2'),
+                     ('Hundred-Continue-Header-k', 'Hk')])
+                text = environ['wsgi.input'].read()
+                start_response('200 OK', [('Content-Length', str(len(text)))])
+                return [text]
+        self.site.application = wsgi_app
+        sock = eventlet.connect(('localhost', self.port))
+        fd = sock.makefile('rw')
+        fd.write(b'PUT / HTTP/1.1\r\nHost: localhost\r\nContent-length: 1025\r\nExpect: 100-continue\r\n\r\n')
+        fd.flush()
+        result = read_http(sock)
+        self.assertEqual(result.status, 'HTTP/1.1 417 Expectation Failed')
+        self.assertEqual(result.body, 'failure')
+        fd.write(
+            b'PUT / HTTP/1.1\r\nHost: localhost\r\nContent-length: 7\r\nExpect: 100-continue\r\n\r\ntesting')
+        fd.flush()
+        header_lines = []
+        while True:
+            line = fd.readline()
+            if line == '\r\n':
+                break
+            else:
+                header_lines.append(line.strip())
+        assert header_lines[0].startswith('HTTP/1.1 100 Continue')
+        headers = dict((k, v) for k, v in (h.split(': ', 1) for h in header_lines[1:]))
+        assert 'Hundred-Continue-Header-1' in headers
+        assert 'Hundred-Continue-Header-2' in headers
+        assert 'Hundred-Continue-Header-K' in headers
+        self.assertEqual('H1', headers['Hundred-Continue-Header-1'])
+        self.assertEqual('H2', headers['Hundred-Continue-Header-2'])
+        self.assertEqual('Hk', headers['Hundred-Continue-Header-K'])
+        header_lines = []
+        while True:
+            line = fd.readline()
+            if line == '\r\n':
+                break
+            else:
+                header_lines.append(line)
+        assert header_lines[0].startswith('HTTP/1.1 200 OK')
+        self.assertEqual(fd.read(7), 'testing')
+        fd.close()
+        sock.close()
+
     def test_025_accept_errors(self):
         debug.hub_exceptions(True)
         listener = greensocket.socket()
