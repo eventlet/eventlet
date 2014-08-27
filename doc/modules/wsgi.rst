@@ -72,3 +72,44 @@ Post hooks are useful when code needs to be executed after a response has been
 fully sent to the client (or when the client disconnects early). One example is
 for more accurate logging of bandwidth used, as client disconnects use less
 bandwidth than the actual Content-Length.
+
+
+"100 Continue" Response Headers
+-------------------------------
+
+Eventlet's WSGI server supports sending (optional) headers with HTTP "100 Continue"
+provisional responses.  This is useful in such cases where a WSGI server expects
+to complete a PUT request as a single HTTP request/response pair, and also wants to
+communicate back to client as part of the same HTTP transaction.  An example is
+where the HTTP server wants to pass hints back to the client about characteristics
+of data payload it can accept.  As an example, an HTTP server may pass a hint in a
+header the accompanying "100 Continue" response to the client indicating it can or
+cannot accept encrypted data payloads, and thus client can make the encrypted vs
+unencrypted decision before starting to send the data).  
+
+This works well for WSGI servers as the WSGI specification mandates HTTP
+expect/continue mechanism (PEP333).
+
+To define the "100 Continue" response headers, one may call
+:func:`set_hundred_continue_response_header` on :samp:`env['wsgi.input']`
+as shown in the following example::
+
+    from eventlet import wsgi
+    import eventlet
+
+    def wsgi_app(env, start_response):
+        # Define "100 Continue" response headers
+        env['wsgi.input'].set_hundred_continue_response_headers(
+            [('Hundred-Continue-Header-1', 'H1'),
+             ('Hundred-Continue-Header-k', 'Hk')])
+        # The following read() causes "100 Continue" response to
+        # the client.  Headers 'Hundred-Continue-Header-1' and 
+        # 'Hundred-Continue-Header-K' are sent with the response
+        # following the "HTTP/1.1 100 Continue\r\n" status line
+        text = env['wsgi.input'].read()
+        start_response('200 OK', [('Content-Length', str(len(text)))])
+        return [text]
+
+You can find a more elaborate example in the file:
+``tests/wsgi_test.py``, :func:`test_024a_expect_100_continue_with_headers`.
+
