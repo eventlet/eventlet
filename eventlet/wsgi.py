@@ -6,12 +6,13 @@ import traceback
 import types
 import warnings
 
-from eventlet.green import urllib
-from eventlet.green import socket
 from eventlet.green import BaseHTTPServer
-from eventlet import greenpool
+from eventlet.green import socket
+from eventlet.green import urllib
 from eventlet import greenio
-from eventlet.support import get_errno, six
+from eventlet import greenpool
+from eventlet import support
+from eventlet.support import six
 
 
 DEFAULT_MAX_SIMULTANEOUS_REQUESTS = 1024
@@ -273,7 +274,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         except greenio.SSL.ZeroReturnError:
             self.raw_requestline = ''
         except socket.error as e:
-            if get_errno(e) not in BAD_SOCK:
+            if support.get_errno(e) not in BAD_SOCK:
                 raise
             self.raw_requestline = ''
 
@@ -320,7 +321,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.handle_one_response()
             except socket.error as e:
                 # Broken pipe, connection reset by peer
-                if get_errno(e) not in BROKEN_SOCK:
+                if support.get_errno(e) not in BROKEN_SOCK:
                     raise
         finally:
             self.server.outstanding_requests -= 1
@@ -390,7 +391,9 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 length[0] = length[0] + sum(map(len, towrite))
             except UnicodeEncodeError:
                 self.server.log_message(
-                    "Encountered non-ascii unicode while attempting to write wsgi response: %r" % [x for x in towrite if isinstance(x, six.text_type)])
+                    "Encountered non-ascii unicode while attempting to write"
+                    "wsgi response: %r" %
+                    [x for x in towrite if isinstance(x, six.text_type)])
                 self.server.log_message(traceback.format_exc())
                 _writelines(
                     ["HTTP/1.1 500 Internal Server Error\r\n",
@@ -573,7 +576,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             BaseHTTPServer.BaseHTTPRequestHandler.finish(self)
         except socket.error as e:
             # Broken pipe, connection reset by peer
-            if get_errno(e) not in BROKEN_SOCK:
+            if support.get_errno(e) not in BROKEN_SOCK:
                 raise
         greenio.shutdown_safe(self.connection)
         self.connection.close()
@@ -701,28 +704,44 @@ def server(sock, site,
            socket_timeout=None,
            capitalize_response_headers=True):
     """Start up a WSGI server handling requests from the supplied server
-    socket.  This function loops forever.  The *sock* object will be closed after server exits,
-    but the underlying file descriptor will remain open, so if you have a dup() of *sock*,
-    it will remain usable.
+    socket.  This function loops forever.  The *sock* object will be
+    closed after server exits, but the underlying file descriptor will
+    remain open, so if you have a dup() of *sock*, it will remain usable.
 
     :param sock: Server socket, must be already bound to a port and listening.
     :param site: WSGI application function.
-    :param log: File-like object that logs should be written to.  If not specified, sys.stderr is used.
+    :param log: File-like object that logs should be written to.
+                If not specified, sys.stderr is used.
     :param environ: Additional parameters that go into the environ dictionary of every request.
     :param max_size: Maximum number of client connections opened at any time by this server.
-    :param max_http_version: Set to "HTTP/1.0" to make the server pretend it only supports HTTP 1.0.  This can help with applications or clients that don't behave properly using HTTP 1.1.
+    :param max_http_version: Set to "HTTP/1.0" to make the server pretend it only supports HTTP 1.0.
+                This can help with applications or clients that don't behave properly using HTTP 1.1.
     :param protocol: Protocol class.  Deprecated.
     :param server_event: Used to collect the Server object.  Deprecated.
-    :param minimum_chunk_size: Minimum size in bytes for http chunks.  This  can be used to improve performance of applications which yield many small strings, though using it technically violates the WSGI spec. This can be overridden on a per request basis by setting environ['eventlet.minimum_write_chunk_size'].
-    :param log_x_forwarded_for: If True (the default), logs the contents of the x-forwarded-for header in addition to the actual client ip address in the 'client_ip' field of the log line.
-    :param custom_pool: A custom GreenPool instance which is used to spawn client green threads.  If this is supplied, max_size is ignored.
-    :param keepalive: If set to False, disables keepalives on the server; all connections will be closed after serving one request.
+    :param minimum_chunk_size: Minimum size in bytes for http chunks.  This can be used to improve
+                performance of applications which yield many small strings, though
+                using it technically violates the WSGI spec. This can be overridden
+                on a per request basis by setting environ['eventlet.minimum_write_chunk_size'].
+    :param log_x_forwarded_for: If True (the default), logs the contents of the x-forwarded-for
+                header in addition to the actual client ip address in the 'client_ip' field of the
+                log line.
+    :param custom_pool: A custom GreenPool instance which is used to spawn client green threads.
+                If this is supplied, max_size is ignored.
+    :param keepalive: If set to False, disables keepalives on the server; all connections will be
+                closed after serving one request.
     :param log_output: A Boolean indicating if the server will log data or not.
-    :param log_format: A python format string that is used as the template to generate log lines.  The following values can be formatted into it: client_ip, date_time, request_line, status_code, body_length, wall_seconds.  The default is a good example of how to use it.
-    :param url_length_limit: A maximum allowed length of the request url. If exceeded, 414 error is returned.
-    :param debug: True if the server should send exception tracebacks to the clients on 500 errors.  If False, the server will respond with empty bodies.
-    :param socket_timeout: Timeout for client connections' socket operations. Default None means wait forever.
-    :param capitalize_response_headers: Normalize response headers' names to Foo-Bar. Default is True.
+    :param log_format: A python format string that is used as the template to generate log lines.
+                The following values can be formatted into it: client_ip, date_time, request_line,
+                status_code, body_length, wall_seconds.  The default is a good example of how to
+                use it.
+    :param url_length_limit: A maximum allowed length of the request url. If exceeded, 414 error
+                is returned.
+    :param debug: True if the server should send exception tracebacks to the clients on 500 errors.
+                If False, the server will respond with empty bodies.
+    :param socket_timeout: Timeout for client connections' socket operations. Default None means
+                wait forever.
+    :param capitalize_response_headers: Normalize response headers' names to Foo-Bar.
+                Default is True.
     """
     serv = Server(sock, sock.getsockname(),
                   site, log,
@@ -777,7 +796,7 @@ def server(sock, site,
                                   DeprecationWarning, stacklevel=2)
                     pool.execute_async(serv.process_request, client_socket)
             except ACCEPT_EXCEPTIONS as e:
-                if get_errno(e) not in ACCEPT_ERRNO:
+                if support.get_errno(e) not in ACCEPT_ERRNO:
                     raise
             except (KeyboardInterrupt, SystemExit):
                 serv.log.write("wsgi exiting\n")
@@ -791,5 +810,5 @@ def server(sock, site,
             # all.
             sock.close()
         except socket.error as e:
-            if get_errno(e) not in BROKEN_SOCK:
+            if support.get_errno(e) not in BROKEN_SOCK:
                 traceback.print_exc()

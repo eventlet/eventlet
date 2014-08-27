@@ -11,20 +11,18 @@ import unittest
 import eventlet
 from eventlet import debug
 from eventlet import event
-from eventlet import greenio
-from eventlet import greenthread
-from eventlet import tpool
-from eventlet import wsgi
 from eventlet.green import socket as greensocket
 from eventlet.green import ssl
 from eventlet.green import subprocess
-from eventlet.support import get_errno, six
+from eventlet import greenio
+from eventlet import greenthread
+from eventlet import support
+from eventlet.support import six
+from eventlet import tpool
+from eventlet import wsgi
 
-from tests import (
-    LimitedTestCase,
-    skipped, skip_with_pyevent, skip_if_no_ssl,
-    find_command, run_python,
-)
+import tests
+
 
 certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
 private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
@@ -156,7 +154,7 @@ def read_http(sock):
     try:
         response_line = fd.readline().rstrip('\r\n')
     except socket.error as exc:
-        if get_errno(exc) == 10053:
+        if support.get_errno(exc) == 10053:
             raise ConnectionClosed
         raise
     if not response_line:
@@ -203,7 +201,7 @@ def read_http(sock):
     return result
 
 
-class _TestBase(LimitedTestCase):
+class _TestBase(tests.LimitedTestCase):
     def setUp(self):
         super(_TestBase, self).setUp()
         self.logfile = six.StringIO()
@@ -221,7 +219,8 @@ class _TestBase(LimitedTestCase):
         """Spawns a new wsgi server with the given arguments using
         :meth:`spawn_thread`.
 
-        Sets self.port to the port of the server"""
+        Sets self.port to the port of the server
+        """
         new_kwargs = dict(max_size=128,
                           log=self.logfile,
                           site=self.site)
@@ -309,12 +308,12 @@ class TestHttpd(_TestBase):
         self.assertRaises(ConnectionClosed, read_http, sock)
         fd.close()
 
-    @skipped
+    @tests.skipped
     def test_005_run_apachebench(self):
         url = 'http://localhost:12346/'
         # ab is apachebench
         subprocess.call(
-            [find_command('ab'), '-c', '64', '-n', '1024', '-k', url],
+            [tests.find_command('ab'), '-c', '64', '-n', '1024', '-k', url],
             stdout=subprocess.PIPE)
 
     def test_006_reject_long_urls(self):
@@ -428,7 +427,7 @@ class TestHttpd(_TestBase):
         # Require a CRLF to close the message body
         self.assertEqual(response, '\r\n')
 
-    @skip_if_no_ssl
+    @tests.skip_if_no_ssl
     def test_012_ssl_server(self):
         def wsgi_app(environ, start_response):
             start_response('200 OK', {})
@@ -446,11 +445,12 @@ class TestHttpd(_TestBase):
         sock = eventlet.connect(('localhost', self.port))
         sock = eventlet.wrap_ssl(sock)
         sock.write(
-            b'POST /foo HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\nContent-length:3\r\n\r\nabc')
+            b'POST /foo HTTP/1.1\r\nHost: localhost\r\n'
+            b'Connection: close\r\nContent-length:3\r\n\r\nabc')
         result = sock.read(8192)
         self.assertEqual(result[-3:], 'abc')
 
-    @skip_if_no_ssl
+    @tests.skip_if_no_ssl
     def test_013_empty_return(self):
         def wsgi_app(environ, start_response):
             start_response("200 OK", [])
@@ -526,8 +526,7 @@ class TestHttpd(_TestBase):
         assert result2.headers_lower['transfer-encoding'] == 'chunked'
 
     def test_016_repeated_content_length(self):
-        """
-        content-length header was being doubled up if it was set in
+        """content-length header was being doubled up if it was set in
         start_response and could also be inferred from the iterator
         """
         def wsgi_app(environ, start_response):
@@ -548,7 +547,7 @@ class TestHttpd(_TestBase):
         self.assertEqual(1, len(
             [l for l in header_lines if l.lower().startswith('content-length')]))
 
-    @skip_if_no_ssl
+    @tests.skip_if_no_ssl
     def test_017_ssl_zeroreturnerror(self):
 
         def server(sock, site, log):
@@ -557,7 +556,7 @@ class TestHttpd(_TestBase):
                 client_socket = sock.accept()
                 serv.process_request(client_socket)
                 return True
-            except:
+            except Exception:
                 traceback.print_exc()
                 return False
 
@@ -671,7 +670,7 @@ class TestHttpd(_TestBase):
             server_sock_2.accept()
             # shouldn't be able to use this one anymore
         except socket.error as exc:
-            self.assertEqual(get_errno(exc), errno.EBADF)
+            self.assertEqual(support.get_errno(exc), errno.EBADF)
         self.spawn_server(sock=server_sock)
         sock = eventlet.connect(('localhost', self.port))
         fd = sock.makefile('rw')
@@ -706,7 +705,7 @@ class TestHttpd(_TestBase):
 
     def test_022_custom_pool(self):
         # just test that it accepts the parameter for now
-        # TODO: test that it uses the pool and that you can waitall() to
+        # TODO(waitall): test that it uses the pool and that you can waitall() to
         # ensure that all clients finished
         p = eventlet.GreenPool(5)
         self.spawn_server(custom_pool=p)
@@ -746,13 +745,15 @@ class TestHttpd(_TestBase):
         self.site.application = wsgi_app
         sock = eventlet.connect(('localhost', self.port))
         fd = sock.makefile('rw')
-        fd.write(b'PUT / HTTP/1.1\r\nHost: localhost\r\nContent-length: 1025\r\nExpect: 100-continue\r\n\r\n')
+        fd.write(b'PUT / HTTP/1.1\r\nHost: localhost\r\nContent-length: 1025\r\n'
+                 b'Expect: 100-continue\r\n\r\n')
         fd.flush()
         result = read_http(sock)
         self.assertEqual(result.status, 'HTTP/1.1 417 Expectation Failed')
         self.assertEqual(result.body, 'failure')
         fd.write(
-            b'PUT / HTTP/1.1\r\nHost: localhost\r\nContent-length: 7\r\nExpect: 100-continue\r\n\r\ntesting')
+            b'PUT / HTTP/1.1\r\nHost: localhost\r\nContent-length: 7\r\n'
+            b'Expect: 100-continue\r\n\r\ntesting')
         fd.flush()
         header_lines = []
         while True:
@@ -790,13 +791,15 @@ class TestHttpd(_TestBase):
         self.site.application = wsgi_app
         sock = eventlet.connect(('localhost', self.port))
         fd = sock.makefile('rw')
-        fd.write(b'PUT / HTTP/1.1\r\nHost: localhost\r\nContent-length: 1025\r\nExpect: 100-continue\r\n\r\n')
+        fd.write(b'PUT / HTTP/1.1\r\nHost: localhost\r\nContent-length: 1025\r\n'
+                 b'Expect: 100-continue\r\n\r\n')
         fd.flush()
         result = read_http(sock)
         self.assertEqual(result.status, 'HTTP/1.1 417 Expectation Failed')
         self.assertEqual(result.body, 'failure')
         fd.write(
-            b'PUT / HTTP/1.1\r\nHost: localhost\r\nContent-length: 7\r\nExpect: 100-continue\r\n\r\ntesting')
+            b'PUT / HTTP/1.1\r\nHost: localhost\r\nContent-length: 7\r\n'
+            b'Expect: 100-continue\r\n\r\ntesting')
         fd.flush()
         header_lines = []
         while True:
@@ -840,7 +843,7 @@ class TestHttpd(_TestBase):
                 eventlet.connect(('localhost', self.port))
                 self.fail("Didn't expect to connect")
             except socket.error as exc:
-                self.assertEqual(get_errno(exc), errno.ECONNREFUSED)
+                self.assertEqual(support.get_errno(exc), errno.ECONNREFUSED)
 
             log_content = self.logfile.getvalue()
             assert 'Invalid argument' in log_content, log_content
@@ -933,7 +936,7 @@ class TestHttpd(_TestBase):
         read_http(sock)
         sock.close()
 
-    @skip_if_no_ssl
+    @tests.skip_if_no_ssl
     def test_028_ssl_handshake_errors(self):
         errored = [False]
 
@@ -968,7 +971,7 @@ class TestHttpd(_TestBase):
                 assert result.startswith('HTTP'), result
                 assert result.endswith('hello world')
             except ImportError:
-                pass  # TODO: should test with OpenSSL
+                pass  # TODO(openssl): should test with OpenSSL
             greenthread.kill(g)
 
     def test_029_posthooks(self):
@@ -1276,7 +1279,7 @@ class TestHttpd(_TestBase):
         testcode_path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
             'wsgi_test_conntimeout.py')
-        output = run_python(testcode_path)
+        output = tests.run_python(testcode_path)
         sections = output.split(b"SEPERATOR_SENTINEL")
         # first section is empty
         self.assertEqual(3, len(sections), output)
@@ -1327,7 +1330,7 @@ def read_headers(sock):
     try:
         response_line = fd.readline()
     except socket.error as exc:
-        if get_errno(exc) == 10053:
+        if support.get_errno(exc) == 10053:
             raise ConnectionClosed
         raise
     if not response_line:
@@ -1381,7 +1384,7 @@ class IterableAlreadyHandledTest(_TestBase):
 class ProxiedIterableAlreadyHandledTest(IterableAlreadyHandledTest):
     # same thing as the previous test but ensuring that it works with tpooled
     # results as well as regular ones
-    @skip_with_pyevent
+    @tests.skip_with_pyevent
     def get_app(self):
         return tpool.Proxy(super(ProxiedIterableAlreadyHandledTest, self).get_app())
 
@@ -1450,7 +1453,8 @@ class TestChunkedInput(_TestBase):
         return b
 
     def body(self, dirt=None):
-        return self.chunk_encode(["this", " is ", "chunked", "\nline", " 2", "\n", "line3", ""], dirt=dirt)
+        return self.chunk_encode(["this", " is ", "chunked", "\nline",
+                                  " 2", "\n", "line3", ""], dirt=dirt)
 
     def ping(self, fd):
         fd.sendall(b"GET /ping HTTP/1.1\r\n\r\n")
@@ -1458,7 +1462,8 @@ class TestChunkedInput(_TestBase):
 
     def test_short_read_with_content_length(self):
         body = self.body()
-        req = "POST /short-read HTTP/1.1\r\ntransfer-encoding: Chunked\r\nContent-Length:1000\r\n\r\n" + body
+        req = "POST /short-read HTTP/1.1\r\ntransfer-encoding: Chunked\r\n" \
+              "Content-Length:1000\r\n\r\n" + body
 
         fd = self.connect()
         fd.sendall(req.encode())
@@ -1469,7 +1474,8 @@ class TestChunkedInput(_TestBase):
 
     def test_short_read_with_zero_content_length(self):
         body = self.body()
-        req = "POST /short-read HTTP/1.1\r\ntransfer-encoding: Chunked\r\nContent-Length:0\r\n\r\n" + body
+        req = "POST /short-read HTTP/1.1\r\ntransfer-encoding: Chunked\r\n" \
+              "Content-Length:0\r\n\r\n" + body
         fd = self.connect()
         fd.sendall(req.encode())
         self.assertEqual(read_http(fd).body, "this is ch")
@@ -1501,8 +1507,8 @@ class TestChunkedInput(_TestBase):
 
     def test_chunked_readline(self):
         body = self.body()
-        req = "POST /lines HTTP/1.1\r\nContent-Length: %s\r\ntransfer-encoding: Chunked\r\n\r\n%s" % (
-            len(body), body)
+        req = "POST /lines HTTP/1.1\r\nContent-Length: %s\r\n" \
+              "transfer-encoding: Chunked\r\n\r\n%s" % (len(body), body)
 
         fd = self.connect()
         fd.sendall(req.encode())
