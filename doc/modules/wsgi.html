@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>wsgi – WSGI server &mdash; Eventlet 0.15.1 documentation</title>
+    <title>wsgi – WSGI server &mdash; Eventlet 0.15.2 documentation</title>
     
     <link rel="stylesheet" href="../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.15.1',
+        VERSION:     '0.15.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.15.1 documentation" href="../index.html" />
+    <link rel="top" title="Eventlet 0.15.2 documentation" href="../index.html" />
     <link rel="up" title="Module Reference" href="../modules.html" />
     <link rel="next" title="eventlet.green.zmq – ØMQ support" href="zmq.html" />
     <link rel="prev" title="websocket – Websocket Server" href="websocket.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="websocket.html" title="websocket – Websocket Server"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.15.1 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Eventlet 0.15.2 documentation</a> &raquo;</li>
           <li><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
       </ul>
     </div>  
@@ -75,11 +75,11 @@ server package.  One such package is <a class="reference external" href="http://
 <tt class="docutils literal"><span class="pre">examples/wsgi.py</span></tt>.</p>
 <span class="target" id="module-eventlet.wsgi"></span><dl class="function">
 <dt id="eventlet.wsgi.server">
-<tt class="descclassname">eventlet.wsgi.</tt><tt class="descname">server</tt><big>(</big><em>sock</em>, <em>site</em>, <em>log=None</em>, <em>environ=None</em>, <em>max_size=None</em>, <em>max_http_version='HTTP/1.1'</em>, <em>protocol=&lt;class eventlet.wsgi.HttpProtocol at 0x7f88da8c58d8&gt;</em>, <em>server_event=None</em>, <em>minimum_chunk_size=None</em>, <em>log_x_forwarded_for=True</em>, <em>custom_pool=None</em>, <em>keepalive=True</em>, <em>log_output=True</em>, <em>log_format='%(client_ip)s - - [%(date_time)s] &quot;%(request_line)s&quot; %(status_code)s %(body_length)s %(wall_seconds).6f'</em>, <em>url_length_limit=8192</em>, <em>debug=True</em>, <em>socket_timeout=None</em>, <em>capitalize_response_headers=True</em><big>)</big><a class="headerlink" href="#eventlet.wsgi.server" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">eventlet.wsgi.</tt><tt class="descname">server</tt><big>(</big><em>sock</em>, <em>site</em>, <em>log=None</em>, <em>environ=None</em>, <em>max_size=None</em>, <em>max_http_version='HTTP/1.1'</em>, <em>protocol=&lt;class eventlet.wsgi.HttpProtocol at 0x7f4f68192f58&gt;</em>, <em>server_event=None</em>, <em>minimum_chunk_size=None</em>, <em>log_x_forwarded_for=True</em>, <em>custom_pool=None</em>, <em>keepalive=True</em>, <em>log_output=True</em>, <em>log_format='%(client_ip)s - - [%(date_time)s] &quot;%(request_line)s&quot; %(status_code)s %(body_length)s %(wall_seconds).6f'</em>, <em>url_length_limit=8192</em>, <em>debug=True</em>, <em>socket_timeout=None</em>, <em>capitalize_response_headers=True</em><big>)</big><a class="headerlink" href="#eventlet.wsgi.server" title="Permalink to this definition">¶</a></dt>
 <dd><p>Start up a WSGI server handling requests from the supplied server
-socket.  This function loops forever.  The <em>sock</em> object will be closed after server exits,
-but the underlying file descriptor will remain open, so if you have a dup() of <em>sock</em>,
-it will remain usable.</p>
+socket.  This function loops forever.  The <em>sock</em> object will be
+closed after server exits, but the underlying file descriptor will
+remain open, so if you have a dup() of <em>sock</em>, it will remain usable.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -87,22 +87,38 @@ it will remain usable.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>sock</strong> &#8211; Server socket, must be already bound to a port and listening.</li>
 <li><strong>site</strong> &#8211; WSGI application function.</li>
-<li><strong>log</strong> &#8211; File-like object that logs should be written to.  If not specified, sys.stderr is used.</li>
+<li><strong>log</strong> &#8211; File-like object that logs should be written to.
+If not specified, sys.stderr is used.</li>
 <li><strong>environ</strong> &#8211; Additional parameters that go into the environ dictionary of every request.</li>
 <li><strong>max_size</strong> &#8211; Maximum number of client connections opened at any time by this server.</li>
-<li><strong>max_http_version</strong> &#8211; Set to &#8220;HTTP/1.0&#8221; to make the server pretend it only supports HTTP 1.0.  This can help with applications or clients that don&#8217;t behave properly using HTTP 1.1.</li>
+<li><strong>max_http_version</strong> &#8211; Set to &#8220;HTTP/1.0&#8221; to make the server pretend it only supports HTTP 1.0.
+This can help with applications or clients that don&#8217;t behave properly using HTTP 1.1.</li>
 <li><strong>protocol</strong> &#8211; Protocol class.  Deprecated.</li>
 <li><strong>server_event</strong> &#8211; Used to collect the Server object.  Deprecated.</li>
-<li><strong>minimum_chunk_size</strong> &#8211; Minimum size in bytes for http chunks.  This  can be used to improve performance of applications which yield many small strings, though using it technically violates the WSGI spec. This can be overridden on a per request basis by setting environ[&#8216;eventlet.minimum_write_chunk_size&#8217;].</li>
-<li><strong>log_x_forwarded_for</strong> &#8211; If True (the default), logs the contents of the x-forwarded-for header in addition to the actual client ip address in the &#8216;client_ip&#8217; field of the log line.</li>
-<li><strong>custom_pool</strong> &#8211; A custom GreenPool instance which is used to spawn client green threads.  If this is supplied, max_size is ignored.</li>
-<li><strong>keepalive</strong> &#8211; If set to False, disables keepalives on the server; all connections will be closed after serving one request.</li>
+<li><strong>minimum_chunk_size</strong> &#8211; Minimum size in bytes for http chunks.  This can be used to improve
+performance of applications which yield many small strings, though
+using it technically violates the WSGI spec. This can be overridden
+on a per request basis by setting environ[&#8216;eventlet.minimum_write_chunk_size&#8217;].</li>
+<li><strong>log_x_forwarded_for</strong> &#8211; If True (the default), logs the contents of the x-forwarded-for
+header in addition to the actual client ip address in the &#8216;client_ip&#8217; field of the
+log line.</li>
+<li><strong>custom_pool</strong> &#8211; A custom GreenPool instance which is used to spawn client green threads.
+If this is supplied, max_size is ignored.</li>
+<li><strong>keepalive</strong> &#8211; If set to False, disables keepalives on the server; all connections will be
+closed after serving one request.</li>
 <li><strong>log_output</strong> &#8211; A Boolean indicating if the server will log data or not.</li>
-<li><strong>log_format</strong> &#8211; A python format string that is used as the template to generate log lines.  The following values can be formatted into it: client_ip, date_time, request_line, status_code, body_length, wall_seconds.  The default is a good example of how to use it.</li>
-<li><strong>url_length_limit</strong> &#8211; A maximum allowed length of the request url. If exceeded, 414 error is returned.</li>
-<li><strong>debug</strong> &#8211; True if the server should send exception tracebacks to the clients on 500 errors.  If False, the server will respond with empty bodies.</li>
-<li><strong>socket_timeout</strong> &#8211; Timeout for client connections&#8217; socket operations. Default None means wait forever.</li>
-<li><strong>capitalize_response_headers</strong> &#8211; Normalize response headers&#8217; names to Foo-Bar. Default is True.</li>
+<li><strong>log_format</strong> &#8211; A python format string that is used as the template to generate log lines.
+The following values can be formatted into it: client_ip, date_time, request_line,
+status_code, body_length, wall_seconds.  The default is a good example of how to
+use it.</li>
+<li><strong>url_length_limit</strong> &#8211; A maximum allowed length of the request url. If exceeded, 414 error
+is returned.</li>
+<li><strong>debug</strong> &#8211; True if the server should send exception tracebacks to the clients on 500 errors.
+If False, the server will respond with empty bodies.</li>
+<li><strong>socket_timeout</strong> &#8211; Timeout for client connections&#8217; socket operations. Default None means
+wait forever.</li>
+<li><strong>capitalize_response_headers</strong> &#8211; Normalize response headers&#8217; names to Foo-Bar.
+Default is True.</li>
 </ul>
 </td>
 </tr>
@@ -159,6 +175,42 @@ fully sent to the client (or when the client disconnects early). One example is
 for more accurate logging of bandwidth used, as client disconnects use less
 bandwidth than the actual Content-Length.</p>
 </div>
+<div class="section" id="continue-response-headers">
+<h2>&#8220;100 Continue&#8221; Response Headers<a class="headerlink" href="#continue-response-headers" title="Permalink to this headline">¶</a></h2>
+<p>Eventlet&#8217;s WSGI server supports sending (optional) headers with HTTP &#8220;100 Continue&#8221;
+provisional responses.  This is useful in such cases where a WSGI server expects
+to complete a PUT request as a single HTTP request/response pair, and also wants to
+communicate back to client as part of the same HTTP transaction.  An example is
+where the HTTP server wants to pass hints back to the client about characteristics
+of data payload it can accept.  As an example, an HTTP server may pass a hint in a
+header the accompanying &#8220;100 Continue&#8221; response to the client indicating it can or
+cannot accept encrypted data payloads, and thus client can make the encrypted vs
+unencrypted decision before starting to send the data).</p>
+<p>This works well for WSGI servers as the WSGI specification mandates HTTP
+expect/continue mechanism (PEP333).</p>
+<p>To define the &#8220;100 Continue&#8221; response headers, one may call
+<tt class="xref py py-func docutils literal"><span class="pre">set_hundred_continue_response_header()</span></tt> on <tt class="samp docutils literal"><span class="pre">env['wsgi.input']</span></tt>
+as shown in the following example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">wsgi</span>
+<span class="kn">import</span> <span class="nn">eventlet</span>
+
+<span class="k">def</span> <span class="nf">wsgi_app</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+    <span class="c"># Define &quot;100 Continue&quot; response headers</span>
+    <span class="n">env</span><span class="p">[</span><span class="s">&#39;wsgi.input&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_hundred_continue_response_headers</span><span class="p">(</span>
+        <span class="p">[(</span><span class="s">&#39;Hundred-Continue-Header-1&#39;</span><span class="p">,</span> <span class="s">&#39;H1&#39;</span><span class="p">),</span>
+         <span class="p">(</span><span class="s">&#39;Hundred-Continue-Header-k&#39;</span><span class="p">,</span> <span class="s">&#39;Hk&#39;</span><span class="p">)])</span>
+    <span class="c"># The following read() causes &quot;100 Continue&quot; response to</span>
+    <span class="c"># the client.  Headers &#39;Hundred-Continue-Header-1&#39; and</span>
+    <span class="c"># &#39;Hundred-Continue-Header-K&#39; are sent with the response</span>
+    <span class="c"># following the &quot;HTTP/1.1 100 Continue\r\n&quot; status line</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">env</span><span class="p">[</span><span class="s">&#39;wsgi.input&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="n">start_response</span><span class="p">(</span><span class="s">&#39;200 OK&#39;</span><span class="p">,</span> <span class="p">[(</span><span class="s">&#39;Content-Length&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)))])</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">text</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>You can find a more elaborate example in the file:
+<tt class="docutils literal"><span class="pre">tests/wsgi_test.py</span></tt>, <tt class="xref py py-func docutils literal"><span class="pre">test_024a_expect_100_continue_with_headers()</span></tt>.</p>
+</div>
 </div>
 
 
@@ -172,6 +224,7 @@ bandwidth than the actual Content-Length.</p>
 <li><a class="reference internal" href="#"><tt class="docutils literal"><span class="pre">wsgi</span></tt> &#8211; WSGI server</a><ul>
 <li><a class="reference internal" href="#ssl">SSL</a></li>
 <li><a class="reference internal" href="#non-standard-extension-to-support-post-hooks">Non-Standard Extension to Support Post Hooks</a></li>
+<li><a class="reference internal" href="#continue-response-headers">&#8220;100 Continue&#8221; Response Headers</a></li>
 </ul>
 </li>
 </ul>
@@ -219,7 +272,7 @@ bandwidth than the actual Content-Length.</p>
         <li class="right" >
           <a href="websocket.html" title="websocket – Websocket Server"
              >previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.15.1 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Eventlet 0.15.2 documentation</a> &raquo;</li>
           <li><a href="../modules.html" >Module Reference</a> &raquo;</li> 
       </ul>
     </div>

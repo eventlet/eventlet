@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Examples &mdash; Eventlet 0.15.1 documentation</title>
+    <title>Examples &mdash; Eventlet 0.15.2 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.15.1',
+        VERSION:     '0.15.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.15.1 documentation" href="index.html" />
+    <link rel="top" title="Eventlet 0.15.2 documentation" href="index.html" />
     <link rel="next" title="Using SSL With Eventlet" href="ssl.html" />
     <link rel="prev" title="Greening The World" href="patching.html" /> 
   </head>
@@ -43,7 +43,7 @@
         <li class="right" >
           <a href="patching.html" title="Greening The World"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">Eventlet 0.15.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Eventlet 0.15.2 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -104,13 +104,14 @@
 <span class="kn">import</span> <span class="nn">eventlet</span>
 <span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">wsgi</span>
 
+
 <span class="k">def</span> <span class="nf">hello_world</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">env</span><span class="p">[</span><span class="s">&#39;PATH_INFO&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="s">&#39;/&#39;</span><span class="p">:</span>
         <span class="n">start_response</span><span class="p">(</span><span class="s">&#39;404 Not Found&#39;</span><span class="p">,</span> <span class="p">[(</span><span class="s">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="s">&#39;text/plain&#39;</span><span class="p">)])</span>
         <span class="k">return</span> <span class="p">[</span><span class="s">&#39;Not Found</span><span class="se">\r\n</span><span class="s">&#39;</span><span class="p">]</span>
     <span class="n">start_response</span><span class="p">(</span><span class="s">&#39;200 OK&#39;</span><span class="p">,</span> <span class="p">[(</span><span class="s">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="s">&#39;text/plain&#39;</span><span class="p">)])</span>
     <span class="k">return</span> <span class="p">[</span><span class="s">&#39;Hello, World!</span><span class="se">\r\n</span><span class="s">&#39;</span><span class="p">]</span>
-        
+
 <span class="n">wsgi</span><span class="o">.</span><span class="n">server</span><span class="p">(</span><span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="mi">8090</span><span class="p">)),</span> <span class="n">hello_world</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -133,12 +134,14 @@
 
 <span class="kn">import</span> <span class="nn">eventlet</span>
 
+
 <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="n">fd</span><span class="p">):</span>
     <span class="k">print</span><span class="p">(</span><span class="s">&quot;client connected&quot;</span><span class="p">)</span>
     <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
         <span class="c"># pass through every non-eof line</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">fd</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">x</span><span class="p">:</span> <span class="k">break</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">x</span><span class="p">:</span>
+            <span class="k">break</span>
         <span class="n">fd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">fd</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
         <span class="k">print</span><span class="p">(</span><span class="s">&quot;echoed&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s">&#39; &#39;</span><span class="p">)</span>
@@ -199,8 +202,9 @@ messages to all participants, not just the sender.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">eventlet</span>
 <span class="kn">from</span> <span class="nn">eventlet.green</span> <span class="kn">import</span> <span class="n">socket</span>
 
-<span class="n">PORT</span><span class="o">=</span><span class="mi">3001</span>
+<span class="n">PORT</span> <span class="o">=</span> <span class="mi">3001</span>
 <span class="n">participants</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
 
 <span class="k">def</span> <span class="nf">read_chat_forever</span><span class="p">(</span><span class="n">writer</span><span class="p">,</span> <span class="n">reader</span><span class="p">):</span>
     <span class="n">line</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
@@ -208,7 +212,7 @@ messages to all participants, not just the sender.</p>
         <span class="k">print</span><span class="p">(</span><span class="s">&quot;Chat:&quot;</span><span class="p">,</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">participants</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">p</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">writer</span><span class="p">:</span> <span class="c"># Don&#39;t echo</span>
+                <span class="k">if</span> <span class="n">p</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">writer</span><span class="p">:</span>  <span class="c"># Don&#39;t echo</span>
                     <span class="n">p</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
                     <span class="n">p</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
             <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
@@ -228,8 +232,8 @@ messages to all participants, not just the sender.</p>
         <span class="k">print</span><span class="p">(</span><span class="s">&quot;Participant joined chat.&quot;</span><span class="p">)</span>
         <span class="n">new_writer</span> <span class="o">=</span> <span class="n">new_connection</span><span class="o">.</span><span class="n">makefile</span><span class="p">(</span><span class="s">&#39;w&#39;</span><span class="p">)</span>
         <span class="n">participants</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">new_writer</span><span class="p">)</span>
-        <span class="n">eventlet</span><span class="o">.</span><span class="n">spawn_n</span><span class="p">(</span><span class="n">read_chat_forever</span><span class="p">,</span> 
-                         <span class="n">new_writer</span><span class="p">,</span> 
+        <span class="n">eventlet</span><span class="o">.</span><span class="n">spawn_n</span><span class="p">(</span><span class="n">read_chat_forever</span><span class="p">,</span>
+                         <span class="n">new_writer</span><span class="p">,</span>
                          <span class="n">new_connection</span><span class="o">.</span><span class="n">makefile</span><span class="p">(</span><span class="s">&#39;r&#39;</span><span class="p">))</span>
 <span class="k">except</span> <span class="p">(</span><span class="ne">KeyboardInterrupt</span><span class="p">,</span> <span class="ne">SystemExit</span><span class="p">):</span>
     <span class="k">print</span><span class="p">(</span><span class="s">&quot;ChatServer exiting.&quot;</span><span class="p">)</span>
@@ -249,15 +253,17 @@ messages to all participants, not just the sender.</p>
 <span class="c"># the pool provides a safety limit on our concurrency</span>
 <span class="n">pool</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">GreenPool</span><span class="p">()</span>
 
+
 <span class="k">def</span> <span class="nf">fetch_title</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
     <span class="n">d</span> <span class="o">=</span> <span class="n">feedparser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">d</span><span class="o">.</span><span class="n">feed</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;title&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+
 
 <span class="k">def</span> <span class="nf">app</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">environ</span><span class="p">[</span><span class="s">&#39;REQUEST_METHOD&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="s">&#39;POST&#39;</span><span class="p">:</span>
         <span class="n">start_response</span><span class="p">(</span><span class="s">&#39;403 Forbidden&#39;</span><span class="p">,</span> <span class="p">[])</span>
         <span class="k">return</span> <span class="p">[]</span>
-    
+
     <span class="c"># the pile collects the result of a concurrent operation -- in this case,</span>
     <span class="c"># the collection of feed titles</span>
     <span class="n">pile</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">GreenPile</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span>
@@ -265,7 +271,7 @@ messages to all participants, not just the sender.</p>
         <span class="n">url</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">url</span><span class="p">:</span>
             <span class="n">pile</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="n">fetch_title</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
-    <span class="c"># since the pile is an iterator over the results, </span>
+    <span class="c"># since the pile is an iterator over the results,</span>
     <span class="c"># you can use it in all sorts of great Pythonic ways</span>
     <span class="n">titles</span> <span class="o">=</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pile</span><span class="p">)</span>
     <span class="n">start_response</span><span class="p">(</span><span class="s">&#39;200 OK&#39;</span><span class="p">,</span> <span class="p">[(</span><span class="s">&#39;Content-type&#39;</span><span class="p">,</span> <span class="s">&#39;text/plain&#39;</span><span class="p">)])</span>
@@ -281,17 +287,20 @@ messages to all participants, not just the sender.</p>
 <div class="section" id="port-forwarder">
 <span id="forwarder-example"></span><h2>Port Forwarder<a class="headerlink" href="#port-forwarder" title="Permalink to this headline">¶</a></h2>
 <p><tt class="docutils literal"><span class="pre">examples/forwarder.py</span></tt></p>
-<div class="highlight-python"><div class="highlight"><pre><span class="sd">&quot;&quot;&quot; This is an incredibly simple port forwarder from port 7000 to 22 on </span>
-<span class="sd">localhost.  It calls a callback function when the socket is closed, to </span>
+<div class="highlight-python"><div class="highlight"><pre><span class="sd">&quot;&quot;&quot; This is an incredibly simple port forwarder from port 7000 to 22 on</span>
+<span class="sd">localhost.  It calls a callback function when the socket is closed, to</span>
 <span class="sd">demonstrate one way that you could start to do interesting things by</span>
 <span class="sd">starting from a simple framework like this.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">eventlet</span>
+
+
 <span class="k">def</span> <span class="nf">closed_callback</span><span class="p">():</span>
     <span class="k">print</span><span class="p">(</span><span class="s">&quot;called back&quot;</span><span class="p">)</span>
 
-<span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">cb</span> <span class="o">=</span> <span class="k">lambda</span><span class="p">:</span> <span class="bp">None</span><span class="p">):</span>
+
+<span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">cb</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="bp">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Forwards bytes unidirectionally from source to dest&quot;&quot;&quot;</span>
     <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
         <span class="n">d</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">32384</span><span class="p">)</span>
@@ -315,7 +324,7 @@ messages to all participants, not just the sender.</p>
 <p><tt class="docutils literal"><span class="pre">examples/recursive_crawler.py</span></tt></p>
 <p>This is an example recursive web crawler that fetches linked pages from a seed url.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="sd">&quot;&quot;&quot;This is a recursive web crawler.  Don&#39;t go pointing this at random sites;</span>
-<span class="sd">it doesn&#39;t respect robots.txt and it is pretty brutal about how quickly it </span>
+<span class="sd">it doesn&#39;t respect robots.txt and it is pretty brutal about how quickly it</span>
 <span class="sd">fetches pages.</span>
 
 <span class="sd">The code for this is very short; this is perhaps a good indication</span>
@@ -350,9 +359,10 @@ messages to all participants, not just the sender.</p>
             <span class="c"># while this seems stack-recursive, it&#39;s actually not:</span>
             <span class="c"># spawned greenthreads start their own stacks</span>
             <span class="n">pool</span><span class="o">.</span><span class="n">spawn_n</span><span class="p">(</span><span class="n">fetch</span><span class="p">,</span> <span class="n">new_url</span><span class="p">,</span> <span class="n">seen</span><span class="p">,</span> <span class="n">pool</span><span class="p">)</span>
-            
+
+
 <span class="k">def</span> <span class="nf">crawl</span><span class="p">(</span><span class="n">start_url</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Recursively crawl starting from *start_url*.  Returns a set of </span>
+    <span class="sd">&quot;&quot;&quot;Recursively crawl starting from *start_url*.  Returns a set of</span>
 <span class="sd">    urls that were found.&quot;&quot;&quot;</span>
     <span class="n">pool</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">GreenPool</span><span class="p">()</span>
     <span class="n">seen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
@@ -371,14 +381,14 @@ messages to all participants, not just the sender.</p>
 <p><tt class="docutils literal"><span class="pre">examples/producer_consumer.py</span></tt></p>
 <p>This is an example implementation of the producer/consumer pattern as well as being identical in functionality to the recursive web crawler.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="sd">&quot;&quot;&quot;This is a recursive web crawler.  Don&#39;t go pointing this at random sites;</span>
-<span class="sd">it doesn&#39;t respect robots.txt and it is pretty brutal about how quickly it </span>
+<span class="sd">it doesn&#39;t respect robots.txt and it is pretty brutal about how quickly it</span>
 <span class="sd">fetches pages.</span>
 
-<span class="sd">This is a kind of &quot;producer/consumer&quot; example; the fetch function produces </span>
-<span class="sd">jobs, and the GreenPool itself is the consumer, farming out work concurrently.  </span>
+<span class="sd">This is a kind of &quot;producer/consumer&quot; example; the fetch function produces</span>
+<span class="sd">jobs, and the GreenPool itself is the consumer, farming out work concurrently.</span>
 <span class="sd">It&#39;s easier to write it this way rather than writing a standard consumer loop;</span>
 <span class="sd">GreenPool handles any exceptions raised and arranges so that there&#39;s a set</span>
-<span class="sd">number of &quot;workers&quot;, so you don&#39;t have to write that tedious management code </span>
+<span class="sd">number of &quot;workers&quot;, so you don&#39;t have to write that tedious management code</span>
 <span class="sd">yourself.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">with_statement</span>
@@ -401,16 +411,16 @@ messages to all participants, not just the sender.</p>
         <span class="n">new_url</span> <span class="o">=</span> <span class="n">url_match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
         <span class="n">outq</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">new_url</span><span class="p">)</span>
 
-            
+
 <span class="k">def</span> <span class="nf">producer</span><span class="p">(</span><span class="n">start_url</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Recursively crawl starting from *start_url*.  Returns a set of </span>
+    <span class="sd">&quot;&quot;&quot;Recursively crawl starting from *start_url*.  Returns a set of</span>
 <span class="sd">    urls that were found.&quot;&quot;&quot;</span>
     <span class="n">pool</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">GreenPool</span><span class="p">()</span>
     <span class="n">seen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
     <span class="n">q</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">Queue</span><span class="p">()</span>
     <span class="n">q</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">start_url</span><span class="p">)</span>
     <span class="c"># keep looping if there are new urls, or workers that may produce more urls</span>
-    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span> 
+    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
         <span class="k">while</span> <span class="ow">not</span> <span class="n">q</span><span class="o">.</span><span class="n">empty</span><span class="p">():</span>
             <span class="n">url</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
             <span class="c"># limit requests to eventlet.net so we don&#39;t crash all over the internet</span>
@@ -420,7 +430,7 @@ messages to all participants, not just the sender.</p>
         <span class="n">pool</span><span class="o">.</span><span class="n">waitall</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">q</span><span class="o">.</span><span class="n">empty</span><span class="p">():</span>
             <span class="k">break</span>
-        
+
     <span class="k">return</span> <span class="n">seen</span>
 
 
@@ -461,6 +471,7 @@ implementation.</p>
             <span class="n">ws</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">&quot;0 </span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()))</span>
             <span class="n">eventlet</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
 
+
 <span class="k">def</span> <span class="nf">dispatch</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; This resolves to the web page or the websocket depending on</span>
 <span class="sd">    the path.&quot;&quot;&quot;</span>
@@ -494,6 +505,7 @@ implementation.</p>
 
 <span class="n">participants</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
 
+
 <span class="nd">@websocket.WebSocketWSGI</span>
 <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="n">ws</span><span class="p">):</span>
     <span class="n">participants</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ws</span><span class="p">)</span>
@@ -506,7 +518,8 @@ implementation.</p>
                 <span class="n">p</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
     <span class="k">finally</span><span class="p">:</span>
         <span class="n">participants</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">ws</span><span class="p">)</span>
-                  
+
+
 <span class="k">def</span> <span class="nf">dispatch</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Resolves to the web page or the websocket depending on the path.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">environ</span><span class="p">[</span><span class="s">&#39;PATH_INFO&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;/chat&#39;</span><span class="p">:</span>
@@ -515,9 +528,9 @@ implementation.</p>
         <span class="n">start_response</span><span class="p">(</span><span class="s">&#39;200 OK&#39;</span><span class="p">,</span> <span class="p">[(</span><span class="s">&#39;content-type&#39;</span><span class="p">,</span> <span class="s">&#39;text/html&#39;</span><span class="p">)])</span>
         <span class="n">html_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">),</span> <span class="s">&#39;websocket_chat.html&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">[</span><span class="nb">open</span><span class="p">(</span><span class="n">html_path</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span> <span class="o">%</span> <span class="p">{</span><span class="s">&#39;port&#39;</span><span class="p">:</span> <span class="n">PORT</span><span class="p">}]</span>
-        
+
 <span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&quot;__main__&quot;</span><span class="p">:</span>
-    <span class="c"># run an example app from the command line            </span>
+    <span class="c"># run an example app from the command line</span>
     <span class="n">listener</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="n">PORT</span><span class="p">))</span>
     <span class="k">print</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">Visit http://localhost:7000/ in your websocket-capable browser.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
     <span class="n">wsgi</span><span class="o">.</span><span class="n">server</span><span class="p">(</span><span class="n">listener</span><span class="p">,</span> <span class="n">dispatch</span><span class="p">)</span>
@@ -593,7 +606,7 @@ implementation.</p>
         <li class="right" >
           <a href="patching.html" title="Greening The World"
              >previous</a> |</li>
-        <li><a href="index.html">Eventlet 0.15.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Eventlet 0.15.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
 
