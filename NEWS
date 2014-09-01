@@ -1,6 +1,7 @@
 0.15.2
 ======
 greenio: fixed memory leak, introduced in 0.15.1; Thanks to Michael Kerrin, Tushar Gohad
+wsgi: Support optional headers w/ "100 Continue" responses; Thanks to Tushar Gohad
 
 0.15.1
 ======
