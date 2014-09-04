@@ -53,7 +53,8 @@ def create_connection(address,
             sock.connect(sa)
             return sock
 
-        except error as msg:
+        except error as e:
+            msg = e
             if sock is not None:
                 sock.close()
 
