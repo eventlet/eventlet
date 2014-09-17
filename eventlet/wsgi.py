@@ -24,6 +24,7 @@ MINIMUM_CHUNK_SIZE = 4096
 # %(client_port)s is also available
 DEFAULT_LOG_FORMAT = ('%(client_ip)s - - [%(date_time)s] "%(request_line)s"'
                       ' %(status_code)s %(body_length)s %(wall_seconds).6f')
+is_accepting = True
 
 __all__ = ['server', 'format_date_time']
 
@@ -778,7 +779,7 @@ def server(sock, site,
 
         serv.log.write("(%s) wsgi starting up on %s://%s%s/\n" % (
             serv.pid, scheme, host, port))
-        while True:
+        while is_accepting:
             try:
                 client_socket = sock.accept()
                 client_socket[0].settimeout(serv.socket_timeout)
@@ -800,6 +801,9 @@ def server(sock, site,
                 serv.log.write("wsgi exiting\n")
                 break
     finally:
+        pool.waitall()
+        serv.log.write("(%s) wsgi exited, is_accepting=%s\n" % (
+            serv.pid, is_accepting))
         try:
             # NOTE: It's not clear whether we want this to leave the
             # socket open or close it.  Use cases like Spawning want
