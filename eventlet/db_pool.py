@@ -259,6 +259,7 @@ class BaseConnectionPool(Pool):
             # Free items created using min_size>0 are not tuples.
             conn = item[2] if isinstance(item, tuple) else item
             self._safe_close(conn, quiet=True)
+            self.current_size -= 1
 
     def __del__(self):
         self.clear()
