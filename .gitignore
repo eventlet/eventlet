@@ -4,4 +4,6 @@
 .*
 build/
 dist/
+doc/changelog.rst
 venv*
+website-build/

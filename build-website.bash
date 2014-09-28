@@ -3,12 +3,21 @@ set -e
 
 build="$PWD/website-build"
 usage="Builds eventlet.net website static pages into ${build}.
-Requires sphinx-build, git and Github account."
+Requires sphinx-build, git and Github account.
 
+  --no-commit        Just build HTML, skip any git operations."
+
+commit=1
 while [ -n "$1" ]; do
-	# TODO: parse args
-	echo "$usage" >&2
-	exit 1
+    case $1 in
+    --no-commit)
+        commit=0
+        ;;
+    *)
+        echo "$usage" >&2
+        exit 1
+        ;;
+    esac
 	shift
 done
 
@@ -18,7 +27,7 @@ if ! which sphinx-build >/dev/null; then
 	exit 1
 fi
 
-if ! git status >/dev/null; then
+if [ $commit -eq 1 ] && ! git status >/dev/null; then
 	echo "git not found. git and Github account are required to update online documentation." >&2
 	echo "Links: http://git-scm.com/ https://github.com/" >&2
 	exit 1
@@ -40,23 +49,26 @@ cp NEWS doc/changelog.rst
 sphinx-build -b html -d "$build/tmp" -n -q "doc" "$build/doc"
 rm -rf "$build/tmp"
 rm -f "$build/doc/.buildinfo"
+rm -f "doc/changelog.rst"
 
-echo "3. Updating git branch gh-pages"
-source_name=`git rev-parse --abbrev-ref HEAD`
-source_id=`git rev-parse --short HEAD`
-git branch --track gh-pages origin/gh-pages || true
-git checkout gh-pages
-git ls-files -z |xargs -0 rm -f
-rm -rf "doc"
+if [ $commit -eq 1 ]; then
+    echo "3. Updating git branch gh-pages"
+    source_name=`git rev-parse --abbrev-ref HEAD`
+    source_id=`git rev-parse --short HEAD`
+    git branch --track gh-pages origin/gh-pages || true
+    git checkout gh-pages
+    git ls-files -z |xargs -0 rm -f
+    rm -rf "doc"
 
-mv "$build"/* ./
-touch ".nojekyll"
-echo "eventlet.net" >"CNAME"
-rmdir "$build"
+    mv "$build"/* ./
+    touch ".nojekyll"
+    echo "eventlet.net" >"CNAME"
+    rmdir "$build"
 
-echo "4. Commit"
-git add -A
-git status
+    echo "4. Commit"
+    git add -A
+    git status
 
-read -p "Carefully read git status output above, press Enter to continue or Ctrl+C to abort"
-git commit --edit -m "Website built from $source_name $source_id"
+    read -p "Carefully read git status output above, press Enter to continue or Ctrl+C to abort"
+    git commit --edit -m "Website built from $source_name $source_id"
+fi
