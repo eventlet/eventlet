@@ -1,0 +1,9 @@
+# please keep this file sorted
+*.egg*
+*.pyc
+.*
+build/
+dist/
+doc/changelog.rst
+venv*
+website-build/
