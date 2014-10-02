@@ -476,7 +476,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 result.close()
             if (self.environ['eventlet.input'].chunked_input or
                     self.environ['eventlet.input'].position
-                    < self.environ['eventlet.input'].content_length or 0):
+                    < (self.environ['eventlet.input'].content_length or 0)):
                 # Read and discard body if there was no pending 100-continue
                 if not self.environ['eventlet.input'].wfile:
                     # NOTE: MINIMUM_CHUNK_SIZE is used here for purpose different than chunking.
