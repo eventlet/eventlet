@@ -1,15 +1,15 @@
 """Test that BoundedSemaphore with a very high bound is as good as unbounded one"""
-from eventlet import coros
+from eventlet import semaphore
 from eventlet.green import thread
 
 
 def allocate_lock():
-    return coros.semaphore(1, 9999)
+    return semaphore.Semaphore(1, 9999)
 
 original_allocate_lock = thread.allocate_lock
 thread.allocate_lock = allocate_lock
 original_LockType = thread.LockType
-thread.LockType = coros.CappedSemaphore
+thread.LockType = semaphore.CappedSemaphore
 
 try:
     import os.path

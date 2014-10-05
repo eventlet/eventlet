@@ -1,6 +1,6 @@
 import unittest
+from eventlet import spawn, sleep, with_timeout
 from eventlet.event import Event
-from eventlet.api import spawn, sleep, with_timeout
 import eventlet
 from tests import LimitedTestCase
 

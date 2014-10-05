@@ -62,7 +62,7 @@ if __name__=='__main__':
         test()
     elif num==1:
         spawn(test)
-        from eventlet.api import sleep
+        from eventlet import sleep
         print('sleeping..')
         sleep(5)
         print('done sleeping..')

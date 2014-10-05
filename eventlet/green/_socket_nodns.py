@@ -9,7 +9,6 @@ slurp_properties(__socket, globals(),
 
 os = __import__('os')
 import sys
-import warnings
 from eventlet.hubs import get_hub
 from eventlet.greenio import GreenSocket as socket
 from eventlet.greenio import SSL as _SSL  # for exceptions
@@ -86,18 +85,3 @@ class GreenSSLObject(object):
         for debugging purposes; do not parse the content of this string because its
         format can't be parsed unambiguously."""
         return str(self.connection.get_peer_certificate().get_issuer())
-
-
-try:
-    from eventlet.green import ssl as ssl_module
-    sslerror = __socket.sslerror
-    __socket.ssl
-except AttributeError:
-    # if the real socket module doesn't have the ssl method or sslerror
-    # exception, we can't emulate them
-    pass
-else:
-    def ssl(sock, certificate=None, private_key=None):
-        warnings.warn("socket.ssl() is deprecated.  Use ssl.wrap_socket() instead.",
-                      DeprecationWarning, stacklevel=2)
-        return ssl_module.sslwrap_simple(sock, private_key, certificate)

@@ -3,9 +3,9 @@ import warnings
 from unittest import main
 
 import eventlet
-from eventlet import util, greenio
+from eventlet import greenio
 try:
-    from eventlet.green.socket import ssl
+    from eventlet.green import ssl
 except ImportError:
     pass
 from tests import (
@@ -15,8 +15,8 @@ from tests import (
 
 
 def listen_ssl_socket(address=('127.0.0.1', 0)):
-    sock = util.wrap_ssl(socket.socket(), certificate_file,
-                         private_key_file, True)
+    sock = ssl.wrap_socket(
+        socket.socket(), private_key_file, certificate_file, server_side=True)
     sock.bind(address)
     sock.listen(50)
 
@@ -44,7 +44,8 @@ class SSLTest(LimitedTestCase):
 
         server_coro = eventlet.spawn(serve, sock)
 
-        client = util.wrap_ssl(eventlet.connect(('127.0.0.1', sock.getsockname()[1])))
+        client = ssl.wrap_socket(
+            eventlet.connect(('127.0.0.1', sock.getsockname()[1])))
         client.write(b'line 1\r\nline 2\r\n\r\n')
         self.assertEqual(client.read(8192), b'response')
         server_coro.wait()
@@ -64,7 +65,7 @@ class SSLTest(LimitedTestCase):
         server_coro = eventlet.spawn(serve, sock)
 
         raw_client = eventlet.connect(('127.0.0.1', sock.getsockname()[1]))
-        client = util.wrap_ssl(raw_client)
+        client = ssl.wrap_socket(raw_client)
         client.write(b'X')
         greenio.shutdown_safe(client)
         client.close()
@@ -79,7 +80,7 @@ class SSLTest(LimitedTestCase):
         server_coro = eventlet.spawn(serve, sock)
 
         raw_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        ssl_client = util.wrap_ssl(raw_client)
+        ssl_client = ssl.wrap_socket(raw_client)
         ssl_client.connect(('127.0.0.1', sock.getsockname()[1]))
         ssl_client.write(b'abc')
         greenio.shutdown_safe(ssl_client)
@@ -91,8 +92,8 @@ class SSLTest(LimitedTestCase):
         def serve():
             sock, addr = listener.accept()
             self.assertEqual(sock.recv(6), b'before')
-            sock_ssl = util.wrap_ssl(sock, certificate_file, private_key_file,
-                                     server_side=True)
+            sock_ssl = ssl.wrap_socket(sock, private_key_file, certificate_file,
+                                       server_side=True)
             sock_ssl.do_handshake()
             self.assertEqual(sock_ssl.read(6), b'during')
             sock2 = sock_ssl.unwrap()
@@ -103,7 +104,7 @@ class SSLTest(LimitedTestCase):
         server_coro = eventlet.spawn(serve)
         client = eventlet.connect((listener.getsockname()))
         client.send(b'before')
-        client_ssl = util.wrap_ssl(client)
+        client_ssl = ssl.wrap_socket(client)
         client_ssl.do_handshake()
         client_ssl.write(b'during')
         client2 = client_ssl.unwrap()
@@ -142,7 +143,7 @@ class SSLTest(LimitedTestCase):
 
         client_sock = eventlet.connect(server_sock.getsockname())
         client_sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFFER_SIZE)
-        client = util.wrap_ssl(client_sock)
+        client = ssl.wrap_socket(client_sock)
         client.write(b'request')
         self.assertEqual(client.read(8), b'response')
         stage_1.send()
@@ -159,7 +160,8 @@ class SSLTest(LimitedTestCase):
             sock.close()
         listener = listen_ssl_socket(('', 0))
         eventlet.spawn(serve, listener)
-        client = ssl(eventlet.connect(('localhost', listener.getsockname()[1])))
+        client = ssl.wrap_socket(
+            eventlet.connect(('localhost', listener.getsockname()[1])))
         self.assertEqual(client.read(1024), b'content')
         self.assertEqual(client.read(1024), b'')
 
@@ -176,7 +178,7 @@ class SSLTest(LimitedTestCase):
 
         listener = listen_ssl_socket(('', 0))
         eventlet.spawn(serve, listener)
-        ssl(eventlet.connect(('localhost', listener.getsockname()[1])))
+        ssl.wrap_socket(eventlet.connect(('localhost', listener.getsockname()[1])))
 
 if __name__ == '__main__':
     main()

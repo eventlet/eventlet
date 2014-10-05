@@ -8,8 +8,8 @@ from twisted.python import failure
 
 from eventlet import greenthread
 from eventlet import getcurrent
-from eventlet.coros import Queue
 from eventlet.event import Event as BaseEvent
+from eventlet.queue import Queue
 
 
 class ValueQueue(Queue):

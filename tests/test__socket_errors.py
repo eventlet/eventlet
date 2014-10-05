@@ -1,6 +1,5 @@
 import unittest
 import socket as _original_sock
-from eventlet import api
 from eventlet.green import socket
 
 
