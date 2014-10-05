@@ -450,7 +450,7 @@ class TestGreenSocket(LimitedTestCase):
 
         def sender(evt):
             s2, addr = server.accept()
-            wrap_wfile = s2.makefile('w')
+            wrap_wfile = s2.makefile('wb')
 
             eventlet.sleep(0.02)
             wrap_wfile.write(b'hi')
@@ -627,7 +627,7 @@ class TestGreenPipe(LimitedTestCase):
         wf = greenio.GreenPipe(w, 'w', 0)
 
         def sender(f, content):
-            for ch in content:
+            for ch in map(six.int2byte, six.iterbytes(content)):
                 eventlet.sleep(0.0001)
                 f.write(ch)
             f.close()
@@ -638,7 +638,7 @@ class TestGreenPipe(LimitedTestCase):
             line = rf.readline()
             eventlet.sleep(0.01)
             self.assertEqual(line, one_line)
-        self.assertEqual(rf.readline(), '')
+        self.assertEqual(rf.readline(), b'')
 
     def test_pipe_read(self):
         # ensure that 'readline' works properly on GreenPipes when data is not
@@ -663,10 +663,10 @@ class TestGreenPipe(LimitedTestCase):
         eventlet.sleep(0)
 
         line = r.readline()
-        self.assertEqual(line, 'line\n')
+        self.assertEqual(line, b'line\n')
 
         line = r.readline()
-        self.assertEqual(line, 'line\r\n')
+        self.assertEqual(line, b'line\r\n')
 
         gt.wait()
 
@@ -676,7 +676,7 @@ class TestGreenPipe(LimitedTestCase):
         r = greenio.GreenPipe(r)
         w = greenio.GreenPipe(w, 'w')
 
-        large_message = b"".join([1024 * chr(i) for i in range(65)])
+        large_message = b"".join([1024 * six.int2byte(i) for i in range(65)])
 
         def writer():
             w.write(large_message)

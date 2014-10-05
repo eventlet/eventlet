@@ -116,11 +116,11 @@ class Input(object):
         if length and length > self.content_length - self.position:
             length = self.content_length - self.position
         if not length:
-            return ''
+            return b''
         try:
             read = reader(length)
         except greenio.SSL.ZeroReturnError:
-            read = ''
+            read = b''
         self.position += len(read)
         return read
 
@@ -189,7 +189,7 @@ class Input(object):
         return self._do_read(self.rfile.readlines, hint)
 
     def __iter__(self):
-        return iter(self.read, '')
+        return iter(self.read, b'')
 
     def get_socket(self):
         return self.rfile._sock
@@ -226,7 +226,7 @@ class FileObjectForHeaders(object):
         if size < 0:
             sz = MAX_HEADER_LINE
         rv = self.fp.readline(sz)
-        if size < 0 and len(rv) >= MAX_HEADER_LINE:
+        if len(rv) >= MAX_HEADER_LINE:
             raise HeaderLineTooLong()
         self.total_header_size += len(rv)
         if self.total_header_size > MAX_TOTAL_HEADER_SIZE:
@@ -267,8 +267,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             self.raw_requestline = self.rfile.readline(self.server.url_length_limit)
             if len(self.raw_requestline) == self.server.url_length_limit:
                 self.wfile.write(
-                    "HTTP/1.0 414 Request URI Too Long\r\n"
-                    "Connection: close\r\nContent-length: 0\r\n\r\n")
+                    b"HTTP/1.0 414 Request URI Too Long\r\n"
+                    b"Connection: close\r\nContent-length: 0\r\n\r\n")
                 self.close_connection = 1
                 return
         except greenio.SSL.ZeroReturnError:
@@ -289,14 +289,14 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 return
         except HeaderLineTooLong:
             self.wfile.write(
-                "HTTP/1.0 400 Header Line Too Long\r\n"
-                "Connection: close\r\nContent-length: 0\r\n\r\n")
+                b"HTTP/1.0 400 Header Line Too Long\r\n"
+                b"Connection: close\r\nContent-length: 0\r\n\r\n")
             self.close_connection = 1
             return
         except HeadersTooLarge:
             self.wfile.write(
-                "HTTP/1.0 400 Headers Too Large\r\n"
-                "Connection: close\r\nContent-length: 0\r\n\r\n")
+                b"HTTP/1.0 400 Headers Too Large\r\n"
+                b"Connection: close\r\nContent-length: 0\r\n\r\n")
             self.close_connection = 1
             return
         finally:
@@ -308,8 +308,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 int(content_length)
             except ValueError:
                 self.wfile.write(
-                    "HTTP/1.0 400 Bad Request\r\n"
-                    "Connection: close\r\nContent-length: 0\r\n\r\n")
+                    b"HTTP/1.0 400 Bad Request\r\n"
+                    b"Connection: close\r\nContent-length: 0\r\n\r\n")
                 self.close_connection = 1
                 return
 
@@ -345,13 +345,13 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 status, response_headers = headers_set
                 headers_sent.append(1)
                 header_list = [header[0].lower() for header in response_headers]
-                towrite.append('%s %s\r\n' % (self.protocol_version, status))
+                towrite.append(six.b('%s %s\r\n' % (self.protocol_version, status)))
                 for header in response_headers:
-                    towrite.append('%s: %s\r\n' % header)
+                    towrite.append(six.b('%s: %s\r\n' % header))
 
                 # send Date header?
                 if 'date' not in header_list:
-                    towrite.append('Date: %s\r\n' % (format_date_time(time.time()),))
+                    towrite.append(six.b('Date: %s\r\n' % (format_date_time(time.time()),)))
 
                 client_conn = self.headers.get('Connection', '').lower()
                 send_keep_alive = False
@@ -369,21 +369,21 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 if 'content-length' not in header_list:
                     if self.request_version == 'HTTP/1.1':
                         use_chunked[0] = True
-                        towrite.append('Transfer-Encoding: chunked\r\n')
+                        towrite.append(b'Transfer-Encoding: chunked\r\n')
                     elif 'content-length' not in header_list:
                         # client is 1.0 and therefore must read to EOF
                         self.close_connection = 1
 
                 if self.close_connection:
-                    towrite.append('Connection: close\r\n')
+                    towrite.append(b'Connection: close\r\n')
                 elif send_keep_alive:
-                    towrite.append('Connection: keep-alive\r\n')
-                towrite.append('\r\n')
+                    towrite.append(b'Connection: keep-alive\r\n')
+                towrite.append(b'\r\n')
                 # end of header writing
 
             if use_chunked[0]:
                 # Write the chunked encoding
-                towrite.append("%x\r\n%s\r\n" % (len(data), data))
+                towrite.append(six.b("%x" % (len(data),)) + b"\r\n" + data + b"\r\n")
             else:
                 towrite.append(data)
             try:
@@ -450,15 +450,15 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     towrite.append(data)
                     towrite_size += len(data)
                     if towrite_size >= minimum_write_chunk_size:
-                        write(''.join(towrite))
+                        write(b''.join(towrite))
                         towrite = []
                         just_written_size = towrite_size
                         towrite_size = 0
                 if towrite:
                     just_written_size = towrite_size
-                    write(''.join(towrite))
+                    write(b''.join(towrite))
                 if not headers_sent or (use_chunked[0] and just_written_size):
-                    write('')
+                    write(b'')
             except Exception:
                 self.close_connection = 1
                 tb = traceback.format_exc()
@@ -476,7 +476,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 result.close()
             if (self.environ['eventlet.input'].chunked_input or
                     self.environ['eventlet.input'].position
-                    < self.environ['eventlet.input'].content_length):
+                    < self.environ['eventlet.input'].content_length or 0):
                 # Read and discard body if there was no pending 100-continue
                 if not self.environ['eventlet.input'].wfile:
                     # NOTE: MINIMUM_CHUNK_SIZE is used here for purpose different than chunking.

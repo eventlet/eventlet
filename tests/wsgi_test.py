@@ -27,6 +27,13 @@ import tests
 certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
 private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
 
+if six.PY3:
+    def bytes_to_str(b):
+        return b.decode()
+else:
+    def bytes_to_str(b):
+        return b
+
 
 HttpReadResult = collections.namedtuple(
     'HttpReadResult',
@@ -36,17 +43,17 @@ HttpReadResult = collections.namedtuple(
 def hello_world(env, start_response):
     if env['PATH_INFO'] == 'notexist':
         start_response('404 Not Found', [('Content-type', 'text/plain')])
-        return ["not found"]
+        return [b"not found"]
 
     start_response('200 OK', [('Content-type', 'text/plain')])
-    return ["hello world"]
+    return [b"hello world"]
 
 
 def chunked_app(env, start_response):
     start_response('200 OK', [('Content-type', 'text/plain')])
-    yield "this"
-    yield "is"
-    yield "chunked"
+    yield b"this"
+    yield b"is"
+    yield b"chunked"
 
 
 def chunked_fail_app(environ, start_response):
@@ -56,8 +63,8 @@ def chunked_fail_app(environ, start_response):
     start_response('200 OK', headers)
 
     # We start streaming data just fine.
-    yield "The dwarves of yore made mighty spells,"
-    yield "While hammers fell like ringing bells"
+    yield b"The dwarves of yore made mighty spells,"
+    yield b"While hammers fell like ringing bells"
 
     # Then the back-end fails!
     try:
@@ -67,13 +74,13 @@ def chunked_fail_app(environ, start_response):
         return
 
     # So rest of the response data is not available.
-    yield "In places deep, where dark things sleep,"
-    yield "In hollow halls beneath the fells."
+    yield b"In places deep, where dark things sleep,"
+    yield b"In hollow halls beneath the fells."
 
 
 def big_chunks(env, start_response):
     start_response('200 OK', [('Content-type', 'text/plain')])
-    line = 'a' * 8192
+    line = b'a' * 8192
     for x in range(10):
         yield line
 
@@ -150,11 +157,13 @@ class ConnectionClosed(Exception):
 
 
 def read_http(sock):
-    fd = sock.makefile()
+    fd = sock.makefile('rb')
     try:
-        response_line = fd.readline().rstrip('\r\n')
+        response_line = bytes_to_str(fd.readline().rstrip(b'\r\n'))
     except socket.error as exc:
-        if support.get_errno(exc) == 10053:
+        # TODO find out whether 54 is ok here or not, I see it when running tests
+        # on Python 3
+        if support.get_errno(exc) in (10053, 54):
             raise ConnectionClosed
         raise
     if not response_line:
@@ -163,7 +172,7 @@ def read_http(sock):
     header_lines = []
     while True:
         line = fd.readline()
-        if line == '\r\n':
+        if line == b'\r\n':
             break
         else:
             header_lines.append(line)
@@ -174,7 +183,7 @@ def read_http(sock):
         x = x.strip()
         if not x:
             continue
-        key, value = x.split(':', 1)
+        key, value = bytes_to_str(x).split(':', 1)
         key = key.rstrip()
         value = value.lstrip()
         key_lower = key.lower()
@@ -256,20 +265,20 @@ class TestHttpd(_TestBase):
         sock = eventlet.connect(
             ('localhost', self.port))
 
-        fd = sock.makefile('rw')
+        fd = sock.makefile('rwb')
         fd.write(b'GET / HTTP/1.0\r\nHost: localhost\r\n\r\n')
         fd.flush()
         result = fd.read()
         fd.close()
         # The server responds with the maximum version it supports
-        assert result.startswith('HTTP'), result
-        assert result.endswith('hello world'), result
+        assert result.startswith(b'HTTP'), result
+        assert result.endswith(b'hello world'), result
 
     def test_002_keepalive(self):
         sock = eventlet.connect(
             ('localhost', self.port))
 
-        fd = sock.makefile('w')
+        fd = sock.makefile('wb')
         fd.write(b'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
         fd.flush()
         read_http(sock)
@@ -284,7 +293,7 @@ class TestHttpd(_TestBase):
         sock = eventlet.connect(
             ('localhost', self.port))
 
-        fd = sock.makefile('rw')
+        fd = sock.makefile('rwb')
         fd.write(b'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
         fd.flush()
         cancel = eventlet.Timeout(1, RuntimeError)
@@ -296,7 +305,7 @@ class TestHttpd(_TestBase):
         sock = eventlet.connect(
             ('localhost', self.port))
 
-        fd = sock.makefile('w')
+        fd = sock.makefile('wb')
         fd.write(b'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
         fd.flush()
         read_http(sock)
@@ -323,8 +332,8 @@ class TestHttpd(_TestBase):
         for ii in range(3000):
             path_parts.append('path')
         path = '/'.join(path_parts)
-        request = 'GET /%s HTTP/1.0\r\nHost: localhost\r\n\r\n' % path
-        fd = sock.makefile('rw')
+        request = ('GET /%s HTTP/1.0\r\nHost: localhost\r\n\r\n' % path).encode()
+        fd = sock.makefile('rwb')
         fd.write(request)
         fd.flush()
         result = fd.readline()
@@ -352,8 +361,8 @@ class TestHttpd(_TestBase):
             'Content-Length: 3',
             '',
             'a=a'))
-        fd = sock.makefile('w')
-        fd.write(request)
+        fd = sock.makefile('wb')
+        fd.write(request.encode())
         fd.flush()
 
         # send some junk after the actual request
@@ -365,7 +374,7 @@ class TestHttpd(_TestBase):
     def test_008_correctresponse(self):
         sock = eventlet.connect(('localhost', self.port))
 
-        fd = sock.makefile('w')
+        fd = sock.makefile('wb')
         fd.write(b'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
         fd.flush()
         result_200 = read_http(sock)
@@ -384,37 +393,37 @@ class TestHttpd(_TestBase):
         sock = eventlet.connect(
             ('localhost', self.port))
 
-        fd = sock.makefile('rw')
+        fd = sock.makefile('rwb')
         fd.write(b'GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
         fd.flush()
-        assert 'Transfer-Encoding: chunked' in fd.read()
+        assert b'Transfer-Encoding: chunked' in fd.read()
 
     def test_010_no_chunked_http_1_0(self):
         self.site.application = chunked_app
         sock = eventlet.connect(
             ('localhost', self.port))
 
-        fd = sock.makefile('rw')
+        fd = sock.makefile('rwb')
         fd.write(b'GET / HTTP/1.0\r\nHost: localhost\r\nConnection: close\r\n\r\n')
         fd.flush()
-        assert 'Transfer-Encoding: chunked' not in fd.read()
+        assert b'Transfer-Encoding: chunked' not in fd.read()
 
     def test_011_multiple_chunks(self):
         self.site.application = big_chunks
         sock = eventlet.connect(
             ('localhost', self.port))
 
-        fd = sock.makefile('rw')
+        fd = sock.makefile('rwb')
         fd.write(b'GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
         fd.flush()
-        headers = ''
+        headers = b''
         while True:
             line = fd.readline()
-            if line == '\r\n':
+            if line == b'\r\n':
                 break
             else:
                 headers += line
-        assert 'Transfer-Encoding: chunked' in headers
+        assert b'Transfer-Encoding: chunked' in headers
         chunks = 0
         chunklen = int(fd.readline(), 16)
         while chunklen:
@@ -473,52 +482,52 @@ class TestHttpd(_TestBase):
     def test_014_chunked_post(self):
         self.site.application = chunked_post
         sock = eventlet.connect(('localhost', self.port))
-        fd = sock.makefile('rw')
+        fd = sock.makefile('rwb')
         fd.write('PUT /a HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n'
                  'Transfer-Encoding: chunked\r\n\r\n'
                  '2\r\noh\r\n4\r\n hai\r\n0\r\n\r\n'.encode())
         fd.flush()
         while True:
-            if fd.readline() == '\r\n':
+            if fd.readline() == b'\r\n':
                 break
         response = fd.read()
-        assert response == 'oh hai', 'invalid response %s' % response
+        assert response == b'oh hai', 'invalid response %s' % response
 
         sock = eventlet.connect(('localhost', self.port))
-        fd = sock.makefile('rw')
+        fd = sock.makefile('rwb')
         fd.write('PUT /b HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n'
                  'Transfer-Encoding: chunked\r\n\r\n'
                  '2\r\noh\r\n4\r\n hai\r\n0\r\n\r\n'.encode())
         fd.flush()
         while True:
-            if fd.readline() == '\r\n':
+            if fd.readline() == b'\r\n':
                 break
         response = fd.read()
-        assert response == 'oh hai', 'invalid response %s' % response
+        assert response == b'oh hai', 'invalid response %s' % response
 
         sock = eventlet.connect(('localhost', self.port))
-        fd = sock.makefile('rw')
+        fd = sock.makefile('rwb')
         fd.write('PUT /c HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n'
                  'Transfer-Encoding: chunked\r\n\r\n'
                  '2\r\noh\r\n4\r\n hai\r\n0\r\n\r\n'.encode())
         fd.flush()
         while True:
-            if fd.readline() == '\r\n':
+            if fd.readline() == b'\r\n':
                 break
         response = fd.read(8192)
-        assert response == 'oh hai', 'invalid response %s' % response
+        assert response == b'oh hai', 'invalid response %s' % response
 
     def test_015_write(self):
         self.site.application = use_write
         sock = eventlet.connect(('localhost', self.port))
-        fd = sock.makefile('w')
+        fd = sock.makefile('wb')
         fd.write(b'GET /a HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
         fd.flush()
         result1 = read_http(sock)
         assert 'content-length' in result1.headers_lower
 
         sock = eventlet.connect(('localhost', self.port))
-        fd = sock.makefile('w')
+        fd = sock.makefile('wb')
         fd.write(b'GET /b HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
         fd.flush()
         result2 = read_http(sock)
@@ -531,21 +540,21 @@ class TestHttpd(_TestBase):
         """
         def wsgi_app(environ, start_response):
             start_response('200 OK', [('Content-Length', '7')])
-            return ['testing']
+            return [b'testing']
         self.site.application = wsgi_app
         sock = eventlet.connect(('localhost', self.port))
-        fd = sock.makefile('rw')
+        fd = sock.makefile('rwb')
         fd.write(b'GET /a HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
         fd.flush()
         header_lines = []
         while True:
             line = fd.readline()
-            if line == '\r\n':
+            if line == b'\r\n':
                 break
             else:
                 header_lines.append(line)
         self.assertEqual(1, len(
-            [l for l in header_lines if l.lower().startswith('content-length')]))
+            [l for l in header_lines if l.lower().startswith(b'content-length')]))
 
     @tests.skip_if_no_ssl
     def test_017_ssl_zeroreturnerror(self):
@@ -588,7 +597,7 @@ class TestHttpd(_TestBase):
         sock = eventlet.connect(
             ('localhost', self.port))
 
-        fd = sock.makefile('w')
+        fd = sock.makefile('wb')
         fd.write(b'GET / HTTP/1.0\r\nHost: localhost\r\nConnection: keep-alive\r\n\r\n')
         fd.flush()
 
@@ -607,13 +616,13 @@ class TestHttpd(_TestBase):
         def use_fieldstorage(environ, start_response):
             cgi.FieldStorage(fp=environ['wsgi.input'], environ=environ)
             start_response('200 OK', [('Content-type', 'text/plain')])
-            return ['hello!']
+            return [b'hello!']
 
         self.site.application = use_fieldstorage
         sock = eventlet.connect(
             ('localhost', self.port))
 
-        fd = sock.makefile('rw')
+        fd = sock.makefile('rwb')
         fd.write('POST / HTTP/1.1\r\n'
                  'Host: localhost\r\n'
                  'Connection: close\r\n'
@@ -621,7 +630,7 @@ class TestHttpd(_TestBase):
                  '2\r\noh\r\n'
                  '4\r\n hai\r\n0\r\n\r\n'.encode())
         fd.flush()
-        assert 'hello!' in fd.read()
+        assert b'hello!' in fd.read()
 
     def test_020_x_forwarded_for(self):
         request_bytes = (
@@ -654,13 +663,13 @@ class TestHttpd(_TestBase):
         self.spawn_server(sock=server_sock_2)
         # do a single req/response to verify it's up
         sock = eventlet.connect(('localhost', self.port))
-        fd = sock.makefile('rw')
+        fd = sock.makefile('rwb')
         fd.write(b'GET / HTTP/1.0\r\nHost: localhost\r\n\r\n')
         fd.flush()
         result = fd.read(1024)
         fd.close()
-        assert result.startswith('HTTP'), result
-        assert result.endswith('hello world')
+        assert result.startswith(b'HTTP'), result
+        assert result.endswith(b'hello world'), result
 
         # shut down the server and verify the server_socket fd is still open,
         # but the actual socketobject passed in to wsgi.server is closed
@@ -673,13 +682,13 @@ class TestHttpd(_TestBase):
             self.assertEqual(support.get_errno(exc), errno.EBADF)
         self.spawn_server(sock=server_sock)
         sock = eventlet.connect(('localhost', self.port))
-        fd = sock.makefile('rw')
+        fd = sock.makefile('rwb')
         fd.write(b'GET / HTTP/1.0\r\nHost: localhost\r\n\r\n')
         fd.flush()
         result = fd.read(1024)
         fd.close()
-        assert result.startswith('HTTP'), result
-        assert result.endswith('hello world')
+        assert result.startswith(b'HTTP'), result
+        assert result.endswith(b'hello world'), result
 
     def test_021_environ_clobbering(self):
         def clobberin_time(environ, start_response):
@@ -695,13 +704,13 @@ class TestHttpd(_TestBase):
             return []
         self.site.application = clobberin_time
         sock = eventlet.connect(('localhost', self.port))
-        fd = sock.makefile('rw')
+        fd = sock.makefile('rwb')
         fd.write('GET / HTTP/1.1\r\n'
                  'Host: localhost\r\n'
                  'Connection: close\r\n'
                  '\r\n\r\n'.encode())
         fd.flush()
-        assert '200 OK' in fd.read()
+        assert b'200 OK' in fd.read()
 
     def test_022_custom_pool(self):
         # just test that it accepts the parameter for now
@@ -713,44 +722,44 @@ class TestHttpd(_TestBase):
         # this stuff is copied from test_001_server, could be better factored
         sock = eventlet.connect(
             ('localhost', self.port))
-        fd = sock.makefile('rw')
+        fd = sock.makefile('rwb')
         fd.write(b'GET / HTTP/1.0\r\nHost: localhost\r\n\r\n')
         fd.flush()
         result = fd.read()
         fd.close()
-        assert result.startswith('HTTP'), result
-        assert result.endswith('hello world')
+        assert result.startswith(b'HTTP'), result
+        assert result.endswith(b'hello world'), result
 
     def test_023_bad_content_length(self):
         sock = eventlet.connect(
             ('localhost', self.port))
-        fd = sock.makefile('rw')
+        fd = sock.makefile('rwb')
         fd.write(b'GET / HTTP/1.0\r\nHost: localhost\r\nContent-length: argh\r\n\r\n')
         fd.flush()
         result = fd.read()
         fd.close()
-        assert result.startswith('HTTP'), result
-        assert '400 Bad Request' in result
-        assert '500' not in result
+        assert result.startswith(b'HTTP'), result
+        assert b'400 Bad Request' in result, result
+        assert b'500' not in result, result
 
     def test_024_expect_100_continue(self):
         def wsgi_app(environ, start_response):
             if int(environ['CONTENT_LENGTH']) > 1024:
                 start_response('417 Expectation Failed', [('Content-Length', '7')])
-                return ['failure']
+                return [b'failure']
             else:
                 text = environ['wsgi.input'].read()
                 start_response('200 OK', [('Content-Length', str(len(text)))])
                 return [text]
         self.site.application = wsgi_app
         sock = eventlet.connect(('localhost', self.port))
-        fd = sock.makefile('rw')
+        fd = sock.makefile('rwb')
         fd.write(b'PUT / HTTP/1.1\r\nHost: localhost\r\nContent-length: 1025\r\n'
                  b'Expect: 100-continue\r\n\r\n')
         fd.flush()
         result = read_http(sock)
         self.assertEqual(result.status, 'HTTP/1.1 417 Expectation Failed')
-        self.assertEqual(result.body, 'failure')
+        self.assertEqual(result.body, b'failure')
         fd.write(
             b'PUT / HTTP/1.1\r\nHost: localhost\r\nContent-length: 7\r\n'
             b'Expect: 100-continue\r\n\r\ntesting')
@@ -758,7 +767,7 @@ class TestHttpd(_TestBase):
         header_lines = []
         while True:
             line = fd.readline()
-            if line == '\r\n':
+            if line == b'\r\n':
                 break
             else:
                 header_lines.append(line)
@@ -766,12 +775,12 @@ class TestHttpd(_TestBase):
         header_lines = []
         while True:
             line = fd.readline()
-            if line == '\r\n':
+            if line == b'\r\n':
                 break
             else:
                 header_lines.append(line)
         assert header_lines[0].startswith('HTTP/1.1 200 OK')
-        self.assertEqual(fd.read(7), 'testing')
+        assert fd.read(7) == b'testing'
         fd.close()
         sock.close()
 
@@ -871,7 +880,7 @@ class TestHttpd(_TestBase):
         result = read_http(sock)
         self.assertEqual(result.headers_lower['connection'], 'close')
         self.assertNotEqual(result.headers_lower.get('transfer-encoding'), 'chunked')
-        self.assertEqual(result.body, "thisischunked")
+        self.assertEqual(result.body, b"thisischunked")
 
     def test_minimum_chunk_size_parameter_leaves_httpprotocol_class_member_intact(self):
         start_size = wsgi.HttpProtocol.minimum_chunk_size
@@ -902,7 +911,7 @@ class TestHttpd(_TestBase):
         self.assertEqual(result.body, expected_body)
 
         # verify that socket is closed by server
-        self.assertEqual(sock.recv(1), '')
+        self.assertEqual(sock.recv(1), b'')
 
     def test_026_http_10_nokeepalive(self):
         # verify that if an http/1.0 client sends connection: keep-alive
@@ -918,7 +927,7 @@ class TestHttpd(_TestBase):
     def test_027_keepalive_chunked(self):
         self.site.application = chunked_post
         sock = eventlet.connect(('localhost', self.port))
-        fd = sock.makefile('w')
+        fd = sock.makefile('wb')
         common_suffix = (
             b'Host: localhost\r\nTransfer-Encoding: chunked\r\n\r\n' +
             b'10\r\n0123456789abcdef\r\n0\r\n\r\n')
@@ -995,13 +1004,13 @@ class TestHttpd(_TestBase):
                 env['eventlet.posthooks'].append(
                     (posthook1, (2,), {'multiplier': 3}))
                 start_response('200 OK', [('Content-Type', 'text/plain')])
-            yield ''
+            yield b''
         self.site.application = one_posthook_app
         sock = eventlet.connect(('localhost', self.port))
-        fp = sock.makefile('rw')
+        fp = sock.makefile('rwb')
         fp.write(b'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
         fp.flush()
-        self.assertEqual(fp.readline(), 'HTTP/1.1 200 OK\r\n')
+        self.assertEqual(fp.readline(), b'HTTP/1.1 200 OK\r\n')
         fp.close()
         sock.close()
         self.assertEqual(posthook1_count[0], 6)
@@ -1018,13 +1027,13 @@ class TestHttpd(_TestBase):
                 env['eventlet.posthooks'].append(
                     (posthook2, (100,), {'divisor': 4}))
                 start_response('200 OK', [('Content-Type', 'text/plain')])
-            yield ''
+            yield b''
         self.site.application = two_posthook_app
         sock = eventlet.connect(('localhost', self.port))
-        fp = sock.makefile('rw')
+        fp = sock.makefile('rwb')
         fp.write(b'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
         fp.flush()
-        self.assertEqual(fp.readline(), 'HTTP/1.1 200 OK\r\n')
+        self.assertEqual(fp.readline(), b'HTTP/1.1 200 OK\r\n')
         fp.close()
         sock.close()
         self.assertEqual(posthook1_count[0], 26)
@@ -1034,7 +1043,7 @@ class TestHttpd(_TestBase):
         sock = eventlet.connect(('localhost', self.port))
         request = 'GET / HTTP/1.0\r\nHost: localhost\r\nLong: %s\r\n\r\n' % \
             ('a' * 10000)
-        fd = sock.makefile('rw')
+        fd = sock.makefile('rwb')
         fd.write(request.encode())
         fd.flush()
         result = read_http(sock)
@@ -1065,7 +1074,7 @@ class TestHttpd(_TestBase):
                 yield chunk
 
         self.site.application = echo_by_iterating
-        upload_data = '123456789abcdef' * 100
+        upload_data = b'123456789abcdef' * 100
         request = (
             'POST / HTTP/1.0\r\n'
             'Host: localhost\r\n'
@@ -1089,20 +1098,20 @@ class TestHttpd(_TestBase):
         sock = eventlet.connect(
             ('localhost', self.port))
 
-        fd = sock.makefile('rw')
+        fd = sock.makefile('rwb')
         fd.write(b'GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
         fd.flush()
-        response = fd.read().split('\r\n')
+        response = fd.read().split(b'\r\n')
         headers = []
         while True:
             h = response.pop(0)
             headers.append(h)
             if h == '':
                 break
-        assert 'Transfer-Encoding: chunked' in ''.join(headers)
+        assert b'Transfer-Encoding: chunked' in ''.join(headers)
         # should only be one chunk of zero size with two blank lines
         # (one terminates the chunk, one terminates the body)
-        self.assertEqual(response, ['0', '', ''])
+        self.assertEqual(response, [b'0', b'', b''])
 
     def test_configurable_url_length_limit(self):
         self.spawn_server(url_length_limit=20000)
@@ -1110,15 +1119,15 @@ class TestHttpd(_TestBase):
             ('localhost', self.port))
         path = 'x' * 15000
         request = 'GET /%s HTTP/1.0\r\nHost: localhost\r\n\r\n' % path
-        fd = sock.makefile('rw')
-        fd.write(request)
+        fd = sock.makefile('rwb')
+        fd.write(request.encode())
         fd.flush()
         result = fd.readline()
         if result:
             # windows closes the socket before the data is flushed,
             # so we never get anything back
-            status = result.split(' ')[1]
-            self.assertEqual(status, '200')
+            status = result.split(b' ')[1]
+            self.assertEqual(status, b'200')
         fd.close()
 
     def test_aborted_chunked_post(self):
@@ -1130,7 +1139,7 @@ class TestHttpd(_TestBase):
                 content = env['wsgi.input'].read(1024)
             except IOError:
                 blew_up[0] = True
-                content = 'ok'
+                content = b'ok'
             read_content.send(content)
             start_response('200 OK', [('Content-Type', 'text/plain')])
             return [content]
@@ -1147,7 +1156,7 @@ class TestHttpd(_TestBase):
         sock.close()
         # the test passes if we successfully get here, and read all the data
         # in spite of the early close
-        self.assertEqual(read_content.wait(), 'ok')
+        self.assertEqual(read_content.wait(), b'ok')
         assert blew_up[0]
 
     def test_exceptions_close_connection(self):
@@ -1155,7 +1164,7 @@ class TestHttpd(_TestBase):
             raise RuntimeError("intentional error")
         self.site.application = wsgi_app
         sock = eventlet.connect(('localhost', self.port))
-        fd = sock.makefile('rw')
+        fd = sock.makefile('rwb')
         fd.write(b'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
         fd.flush()
         result = read_http(sock)
@@ -1170,13 +1179,13 @@ class TestHttpd(_TestBase):
             yield u"non-encodable unicode: \u0230"
         self.site.application = wsgi_app
         sock = eventlet.connect(('localhost', self.port))
-        fd = sock.makefile('rw')
+        fd = sock.makefile('rwb')
         fd.write(b'GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
         fd.flush()
         result = read_http(sock)
         self.assertEqual(result.status, 'HTTP/1.1 500 Internal Server Error')
         self.assertEqual(result.headers_lower['connection'], 'close')
-        assert 'unicode' in result.body
+        assert b'unicode' in result.body
 
     def test_path_info_decoding(self):
         def wsgi_app(environ, start_response):
@@ -1185,13 +1194,13 @@ class TestHttpd(_TestBase):
             yield "raw: %s" % environ['RAW_PATH_INFO']
         self.site.application = wsgi_app
         sock = eventlet.connect(('localhost', self.port))
-        fd = sock.makefile('rw')
+        fd = sock.makefile('rwb')
         fd.write(b'GET /a*b@%40%233 HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
         fd.flush()
         result = read_http(sock)
         self.assertEqual(result.status, 'HTTP/1.1 200 OK')
-        assert 'decoded: /a*b@@#3' in result.body
-        assert 'raw: /a*b@%40%233' in result.body
+        assert b'decoded: /a*b@@#3' in result.body
+        assert b'raw: /a*b@%40%233' in result.body
 
     def test_ipv6(self):
         try:
@@ -1224,12 +1233,12 @@ class TestHttpd(_TestBase):
         self.site.application = crasher
 
         sock = eventlet.connect(('localhost', self.port))
-        fd = sock.makefile('w')
+        fd = sock.makefile('wb')
         fd.write(b'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
         fd.flush()
         result1 = read_http(sock)
         self.assertEqual(result1.status, 'HTTP/1.1 500 Internal Server Error')
-        self.assertEqual(result1.body, '')
+        self.assertEqual(result1.body, b'')
         self.assertEqual(result1.headers_lower['connection'], 'close')
         assert 'transfer-encoding' not in result1.headers_lower
 
@@ -1237,14 +1246,14 @@ class TestHttpd(_TestBase):
         self.spawn_server(debug=True)
         self.site.application = crasher
         sock = eventlet.connect(('localhost', self.port))
-        fd = sock.makefile('w')
+        fd = sock.makefile('wb')
         fd.write(b'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
         fd.flush()
         result2 = read_http(sock)
         self.assertEqual(result2.status, 'HTTP/1.1 500 Internal Server Error')
-        assert 'intentional crash' in result2.body
-        assert 'RuntimeError' in result2.body
-        assert 'Traceback' in result2.body
+        assert b'intentional crash' in result2.body, result2.body
+        assert b'RuntimeError' in result2.body, result2.body
+        assert b'Traceback' in result2.body, result2.body
         self.assertEqual(result2.headers_lower['connection'], 'close')
         assert 'transfer-encoding' not in result2.headers_lower
 
@@ -1253,7 +1262,7 @@ class TestHttpd(_TestBase):
         """
         def long_response(environ, start_response):
             start_response('200 OK', [('Content-Length', '9876')])
-            yield 'a' * 9876
+            yield b'a' * 9876
 
         server_sock = eventlet.listen(('localhost', 0))
         self.port = server_sock.getsockname()[1]
@@ -1366,7 +1375,7 @@ class IterableAlreadyHandledTest(_TestBase):
         sock = eventlet.connect(
             ('localhost', self.port))
 
-        fd = sock.makefile('rw')
+        fd = sock.makefile('rwb')
         fd.write(b'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
 
         fd.flush()
@@ -1378,7 +1387,7 @@ class IterableAlreadyHandledTest(_TestBase):
         result = read_http(sock)
         self.assertEqual(result.status, 'HTTP/1.1 200 OK')
         self.assertEqual(result.headers_lower.get('transfer-encoding'), 'chunked')
-        self.assertEqual(result.body, '0\r\n\r\n')  # Still coming back chunked
+        self.assertEqual(result.body, b'0\r\n\r\n')  # Still coming back chunked
 
 
 class ProxiedIterableAlreadyHandledTest(IterableAlreadyHandledTest):
@@ -1418,13 +1427,13 @@ class TestChunkedInput(_TestBase):
             self.yield_next_space = False
 
             def response_iter():
-                yield ' '
+                yield b' '
                 num_sleeps = 0
                 while not self.yield_next_space and num_sleeps < 200:
                     eventlet.sleep(.01)
                     num_sleeps += 1
 
-                yield ' '
+                yield b' '
 
             start_response('200 OK',
                            [('Content-Type', 'text/plain'),
@@ -1467,7 +1476,7 @@ class TestChunkedInput(_TestBase):
 
         fd = self.connect()
         fd.sendall(req.encode())
-        self.assertEqual(read_http(fd).body, "this is ch")
+        self.assertEqual(read_http(fd).body, b"this is ch")
 
         self.ping(fd)
         fd.close()
@@ -1478,7 +1487,7 @@ class TestChunkedInput(_TestBase):
               "Content-Length:0\r\n\r\n" + body
         fd = self.connect()
         fd.sendall(req.encode())
-        self.assertEqual(read_http(fd).body, "this is ch")
+        self.assertEqual(read_http(fd).body, b"this is ch")
 
         self.ping(fd)
         fd.close()
@@ -1489,7 +1498,7 @@ class TestChunkedInput(_TestBase):
 
         fd = self.connect()
         fd.sendall(req.encode())
-        self.assertEqual(read_http(fd).body, "this is ch")
+        self.assertEqual(read_http(fd).body, b"this is ch")
 
         self.ping(fd)
         fd.close()
@@ -1500,7 +1509,7 @@ class TestChunkedInput(_TestBase):
 
         fd = self.connect()
         fd.sendall(req.encode())
-        self.assertEqual(read_http(fd).body, "pong")
+        self.assertEqual(read_http(fd).body, b"pong")
 
         self.ping(fd)
         fd.close()
@@ -1512,7 +1521,7 @@ class TestChunkedInput(_TestBase):
 
         fd = self.connect()
         fd.sendall(req.encode())
-        self.assertEqual(read_http(fd).body, 'this is chunked\nline 2\nline3')
+        self.assertEqual(read_http(fd).body, b'this is chunked\nline 2\nline3')
         fd.close()
 
     def test_chunked_readline_wsgi_override_minimum_chunk_size(self):
@@ -1527,7 +1536,7 @@ class TestChunkedInput(_TestBase):
                 resp_so_far += one_byte
                 if resp_so_far.endswith('\r\n\r\n'):
                     break
-            self.assertEqual(fd.recv(1), ' ')
+            self.assertEqual(fd.recv(1), b' ')
         try:
             with eventlet.Timeout(.1):
                 fd.recv(1)
@@ -1538,22 +1547,22 @@ class TestChunkedInput(_TestBase):
         self.yield_next_space = True
 
         with eventlet.Timeout(.1):
-            self.assertEqual(fd.recv(1), ' ')
+            self.assertEqual(fd.recv(1), b' ')
 
     def test_chunked_readline_wsgi_not_override_minimum_chunk_size(self):
 
         fd = self.connect()
         fd.sendall(b"POST /yield_spaces HTTP/1.1\r\nContent-Length: 0\r\n\r\n")
 
-        resp_so_far = ''
+        resp_so_far = b''
         try:
             with eventlet.Timeout(.1):
                 while True:
                     one_byte = fd.recv(1)
                     resp_so_far += one_byte
-                    if resp_so_far.endswith('\r\n\r\n'):
+                    if resp_so_far.endswith(b'\r\n\r\n'):
                         break
-                self.assertEqual(fd.recv(1), ' ')
+                self.assertEqual(fd.recv(1), b' ')
         except eventlet.Timeout:
             pass
         else:

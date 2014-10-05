@@ -1,6 +1,7 @@
 import os
-import socket
 from unittest import TestCase, main
+
+from nose.tools import eq_
 
 import eventlet
 from eventlet import greenio, hubs, greenthread, spawn
@@ -51,9 +52,8 @@ class TestApi(TestCase):
         client = eventlet.connect(('127.0.0.1', server.getsockname()[1]))
         fd = client.makefile('rb')
         client.close()
-        assert fd.readline() == b'hello\n'
-
-        assert fd.read() == b''
+        eq_(fd.readline(), b'hello\n')
+        eq_(fd.read(), b'')
         fd.close()
 
         check_hub()
@@ -80,7 +80,7 @@ class TestApi(TestCase):
 
         raw_client = eventlet.connect(('127.0.0.1', server.getsockname()[1]))
         client = ssl.wrap_socket(raw_client)
-        fd = socket._fileobject(client, 'rb', 8192)
+        fd = client.makefile('rb', 8192)
 
         assert fd.readline() == b'hello\r\n'
         try:

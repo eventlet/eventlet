@@ -3,12 +3,16 @@ import shutil
 import sys
 import tempfile
 
+from eventlet.support import six
 from tests import LimitedTestCase, main, run_python, skip_with_pyevent
 
 
 base_module_contents = """
 import socket
-import urllib
+try:
+    import urllib.request as urllib
+except ImportError:
+    import urllib
 print("base {0} {1}".format(socket, urllib))
 """
 
@@ -45,14 +49,18 @@ class ProcessBase(LimitedTestCase):
         filename = os.path.join(self.tempdir, name)
         if not filename.endswith('.py'):
             filename = filename + '.py'
-        fd = open(filename, "wb")
-        fd.write(contents)
-        fd.close()
+        with open(filename, "w") as fd:
+            fd.write(contents)
 
     def launch_subprocess(self, filename):
         path = os.path.join(self.tempdir, filename)
         output = run_python(path)
-        lines = output.split("\n")
+        if six.PY3:
+            output = output.decode('utf-8')
+            separator = '\n'
+        else:
+            separator = b'\n'
+        lines = output.split(separator)
         return output, lines
 
     def run_script(self, contents, modname=None):
@@ -98,7 +106,10 @@ class MonkeyPatch(ProcessBase):
 from eventlet import patcher
 patcher.monkey_patch()
 import socket
-import urllib
+try:
+    import urllib.request as urllib
+except ImportError:
+    import urllib
 print("newmod {0} {1}".format(socket.socket, urllib.socket.socket))
 """
         self.write_to_tempfile("newmod", new_mod)

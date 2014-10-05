@@ -136,7 +136,7 @@ if __name__ == '__main__':
             # req #1 - normal
             sock1 = eventlet.connect(server_addr)
             sock1.settimeout(0.1)
-            fd1 = sock1.makefile('rw')
+            fd1 = sock1.makefile('rwb')
             fd1.write(b'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
             fd1.flush()
             tests.wsgi_test.read_http(sock1)

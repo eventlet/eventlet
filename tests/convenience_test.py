@@ -125,8 +125,8 @@ class TestServe(LimitedTestCase):
 
         eventlet.spawn(eventlet.serve, server, handle)
         client = eventlet.wrap_ssl(eventlet.connect(('localhost', port)))
-        client.sendall("echo")
-        self.assertEqual("echo", client.recv(1024))
+        client.sendall(b"echo")
+        self.assertEqual(b"echo", client.recv(1024))
 
     def test_socket_reuse(self):
         lsock1 = eventlet.listen(('localhost', 0))

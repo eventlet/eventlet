@@ -7,7 +7,7 @@ import sys
 
 import eventlet
 from eventlet import hubs
-from eventlet.support import greenlets, get_errno, six
+from eventlet.support import greenlets, get_errno
 
 try:
     sys.ps1
@@ -30,13 +30,11 @@ class FileProxy(object):
         pass
 
     def write(self, data, *a, **kw):
-        data = six.b(data)
         self.f.write(data, *a, **kw)
         self.f.flush()
 
     def readline(self, *a):
-        line = self.f.readline(*a).replace(b'\r\n', b'\n')
-        return six.u(line)
+        return self.f.readline(*a).replace('\r\n', '\n')
 
     def __getattr__(self, attr):
         return getattr(self.f, attr)

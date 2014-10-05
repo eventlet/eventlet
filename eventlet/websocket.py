@@ -37,15 +37,17 @@ for _mod in ('wsaccel.utf8validator', 'autobahn.utf8validator'):
 ACCEPTABLE_CLIENT_ERRORS = set((errno.ECONNRESET, errno.EPIPE))
 
 __all__ = ["WebSocketWSGI", "WebSocket"]
-PROTOCOL_GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
-VALID_CLOSE_STATUS = (range(1000, 1004)
-                      + range(1007, 1012)
-                      # 3000-3999: reserved for use by libraries, frameworks,
-                      # and applications
-                      + range(3000, 4000)
-                      # 4000-4999: reserved for private use and thus can't
-                      # be registered
-                      + range(4000, 5000))
+PROTOCOL_GUID = b'258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
+VALID_CLOSE_STATUS = set(
+    list(range(1000, 1004)) +
+    list(range(1007, 1012)) +
+    # 3000-3999: reserved for use by libraries, frameworks,
+    # and applications
+    list(range(3000, 4000)) +
+    # 4000-4999: reserved for private use and thus can't
+    # be registered
+    list(range(4000, 5000))
+)
 
 
 class BadRequest(Exception):
@@ -115,7 +117,7 @@ class WebSocketWSGI(object):
                 raise BadRequest()
         except BadRequest as e:
             status = e.status
-            body = e.body or ''
+            body = e.body or b''
             headers = e.headers or []
             start_response(status,
                            [('Connection', 'close'), ] + headers)
@@ -219,15 +221,14 @@ class WebSocketWSGI(object):
         #    extensions = [i.strip() for i in extensions.split(',')]
 
         key = environ['HTTP_SEC_WEBSOCKET_KEY']
-        response = base64.b64encode(sha1(key + PROTOCOL_GUID).digest())
-        handshake_reply = ["HTTP/1.1 101 Switching Protocols",
-                           "Upgrade: websocket",
-                           "Connection: Upgrade",
-                           "Sec-WebSocket-Accept: %s" % (response, )]
+        response = base64.b64encode(sha1(six.b(key) + PROTOCOL_GUID).digest())
+        handshake_reply = [b"HTTP/1.1 101 Switching Protocols",
+                           b"Upgrade: websocket",
+                           b"Connection: Upgrade",
+                           b"Sec-WebSocket-Accept: " + response]
         if negotiated_protocol:
-            handshake_reply.append("Sec-WebSocket-Protocol: %s"
-                                   % (negotiated_protocol, ))
-        sock.sendall('\r\n'.join(handshake_reply) + '\r\n\r\n')
+            handshake_reply.append(b"Sec-WebSocket-Protocol: " + six.b(negotiated_protocol))
+        sock.sendall(b'\r\n'.join(handshake_reply) + b'\r\n\r\n')
         return RFC6455WebSocket(sock, environ, self.protocol_version,
                                 protocol=negotiated_protocol)
 
@@ -425,7 +426,7 @@ class RFC6455WebSocket(WebSocket):
             return self.decoder.decode(data, final)
 
     def _get_bytes(self, numbytes):
-        data = ''
+        data = b''
         while len(data) < numbytes:
             d = self.socket.recv(numbytes - len(data))
             if not d:
@@ -447,14 +448,14 @@ class RFC6455WebSocket(WebSocket):
             self.data.append(data)
 
         def getvalue(self):
-            return ''.join(self.data)
+            return ('' if self.decoder else b'').join(self.data)
 
     @staticmethod
     def _apply_mask(data, mask, length=None, offset=0):
         if length is None:
             length = len(data)
         cnt = range(length)
-        return ''.join(chr(ord(data[i]) ^ mask[(offset + i) % 4]) for i in cnt)
+        return b''.join(six.int2byte(six.indexbytes(data, i) ^ mask[(offset + i) % 4]) for i in cnt)
 
     def _handle_control_frame(self, opcode, data):
         if opcode == 8:  # connection close
@@ -609,12 +610,13 @@ class RFC6455WebSocket(WebSocket):
             # NOTE: RFC6455 states:
             # A server MUST NOT mask any frames that it sends to the client
             rand = Random(time.time())
-            mask = map(rand.getrandbits, (8, ) * 4)
+            mask = [rand.getrandbits(8) for _ in six.moves.xrange(4)]
             message = RFC6455WebSocket._apply_mask(message, mask, length)
             maskdata = struct.pack('!BBBB', *mask)
         else:
-            maskdata = ''
-        return ''.join((header, lengthdata, maskdata, message))
+            maskdata = b''
+
+        return b''.join((header, lengthdata, maskdata, message))
 
     def wait(self):
         for i in self.iterator:

@@ -1,4 +1,5 @@
 import os
+from eventlet.support import six
 from tests.patcher_test import ProcessBase
 from tests import skip_with_pyevent
 

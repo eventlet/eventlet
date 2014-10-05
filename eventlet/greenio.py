@@ -160,6 +160,15 @@ class GreenSocket(object):
     def _sock(self):
         return self
 
+    if six.PY3:
+        def _get_io_refs(self):
+            return self.fd._io_refs
+
+        def _set_io_refs(self, value):
+            self.fd._io_refs = value
+
+        _io_refs = property(_get_io_refs, _set_io_refs)
+
     # Forward unknown attributes to fd, cache the value for future use.
     # I do not see any simple attribute which could be changed
     # so caching everything in self is fine.
@@ -275,12 +284,16 @@ class GreenSocket(object):
         newsock.settimeout(self.gettimeout())
         return newsock
 
-    def makefile(self, *args, **kw):
-        dupped = self.dup()
-        res = _fileobject(dupped, *args, **kw)
-        if hasattr(dupped, "_drop"):
-            dupped._drop()
-        return res
+    if six.PY3:
+        def makefile(self, *args, **kwargs):
+            return _original_socket.makefile(self, *args, **kwargs)
+    else:
+        def makefile(self, *args, **kwargs):
+            dupped = self.dup()
+            res = _fileobject(dupped, *args, **kwargs)
+            if hasattr(dupped, "_drop"):
+                dupped._drop()
+            return res
 
     def makeGreenFile(self, *args, **kw):
         warnings.warn("makeGreenFile has been deprecated, please use "
@@ -457,11 +470,12 @@ class _SocketDuckForFd(object):
     def send(self, data):
         while True:
             try:
-                os.write(self._fileno, data)
+                return os.write(self._fileno, data)
             except OSError as e:
                 if get_errno(e) not in SOCKET_BLOCKING:
                     raise IOError(*e.args)
-            trampoline(self, write=True)
+                else:
+                    trampoline(self, write=True)
 
     def sendall(self, data):
         len_data = len(data)
