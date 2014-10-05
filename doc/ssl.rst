@@ -6,8 +6,8 @@ Eventlet makes it easy to use non-blocking SSL sockets.  If you're using Python 
 In either case, the the ``green`` modules handle SSL sockets transparently, just like their standard counterparts.  As an example, :mod:`eventlet.green.urllib2` can be used to fetch https urls in as non-blocking a fashion as you please::
 
     from eventlet.green import urllib2
-    from eventlet import coros
-    bodies = [coros.execute(urllib2.urlopen, url)
+    from eventlet import spawn
+    bodies = [spawn(urllib2.urlopen, url)
          for url in ("https://secondlife.com","https://google.com")]
     for b in bodies:
         print(b.wait().read())

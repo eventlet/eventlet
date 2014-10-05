@@ -19,7 +19,7 @@ except ImportError:
         pass
 
 from eventlet import spawn, sleep, with_timeout, spawn_after
-from eventlet.coros import Event
+from eventlet.event import Event
 
 try:
     from eventlet.green import socket

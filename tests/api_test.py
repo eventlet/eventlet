@@ -1,21 +1,17 @@
 import os
 import socket
 from unittest import TestCase, main
-import warnings
 
 import eventlet
-from eventlet import greenio, util, hubs, greenthread, spawn
+from eventlet import greenio, hubs, greenthread, spawn
+from eventlet.green import ssl
 from tests import skip_if_no_ssl
-
-warnings.simplefilter('ignore', DeprecationWarning)
-from eventlet import api
-warnings.simplefilter('default', DeprecationWarning)
 
 
 def check_hub():
     # Clear through the descriptor queue
-    api.sleep(0)
-    api.sleep(0)
+    eventlet.sleep(0)
+    eventlet.sleep(0)
     hub = hubs.get_hub()
     for nm in 'get_readers', 'get_writers':
         dct = getattr(hub, nm)()
@@ -50,7 +46,7 @@ class TestApi(TestCase):
                 listenfd.close()
 
         server = eventlet.listen(('0.0.0.0', 0))
-        api.spawn(accept_once, server)
+        eventlet.spawn_n(accept_once, server)
 
         client = eventlet.connect(('127.0.0.1', server.getsockname()[1]))
         fd = client.makefile('rb')
@@ -74,13 +70,16 @@ class TestApi(TestCase):
                 greenio.shutdown_safe(listenfd)
                 listenfd.close()
 
-        server = api.ssl_listener(('0.0.0.0', 0),
-                                  self.certificate_file,
-                                  self.private_key_file)
-        api.spawn(accept_once, server)
+        server = eventlet.wrap_ssl(
+            eventlet.listen(('0.0.0.0', 0)),
+            self.private_key_file,
+            self.certificate_file,
+            server_side=True
+        )
+        eventlet.spawn_n(accept_once, server)
 
         raw_client = eventlet.connect(('127.0.0.1', server.getsockname()[1]))
-        client = util.wrap_ssl(raw_client)
+        client = ssl.wrap_socket(raw_client)
         fd = socket._fileobject(client, 'rb', 8192)
 
         assert fd.readline() == b'hello\r\n'
@@ -100,13 +99,13 @@ class TestApi(TestCase):
 
         def server(sock):
             client, addr = sock.accept()
-            api.sleep(0.1)
+            eventlet.sleep(0.1)
         server_evt = spawn(server, server_sock)
-        api.sleep(0)
+        eventlet.sleep(0)
         try:
             desc = eventlet.connect(('127.0.0.1', bound_port))
-            api.trampoline(desc, read=True, write=False, timeout=0.001)
-        except api.TimeoutError:
+            hubs.trampoline(desc, read=True, write=False, timeout=0.001)
+        except eventlet.TimeoutError:
             pass  # test passed
         else:
             assert False, "Didn't timeout"
@@ -128,8 +127,8 @@ class TestApi(TestCase):
         def go():
             desc = eventlet.connect(('127.0.0.1', bound_port))
             try:
-                api.trampoline(desc, read=True, timeout=0.1)
-            except api.TimeoutError:
+                hubs.trampoline(desc, read=True, timeout=0.1)
+            except eventlet.TimeoutError:
                 assert False, "Timed out"
 
             server.close()
@@ -138,20 +137,12 @@ class TestApi(TestCase):
 
         greenthread.spawn_after_local(0, go)
 
-        server_coro = api.spawn(client_closer, server)
+        server_coro = eventlet.spawn(client_closer, server)
         while not done[0]:
-            api.sleep(0)
-        api.kill(server_coro)
+            eventlet.sleep(0)
+        eventlet.kill(server_coro)
 
         check_hub()
-
-    def test_named(self):
-        named_foo = api.named('tests.api_test.Foo')
-        self.assertEqual(named_foo.__name__, "Foo")
-
-    def test_naming_missing_class(self):
-        self.assertRaises(
-            ImportError, api.named, 'this_name_should_hopefully_not_exist.Foo')
 
     def test_killing_dormant(self):
         DELAY = 0.1
@@ -160,33 +151,33 @@ class TestApi(TestCase):
         def test():
             try:
                 state.append('start')
-                api.sleep(DELAY)
+                eventlet.sleep(DELAY)
             except:
                 state.append('except')
                 # catching GreenletExit
                 pass
             # when switching to hub, hub makes itself the parent of this greenlet,
             # thus after the function's done, the control will go to the parent
-            api.sleep(0)
+            eventlet.sleep(0)
             state.append('finished')
 
-        g = api.spawn(test)
-        api.sleep(DELAY / 2)
+        g = eventlet.spawn(test)
+        eventlet.sleep(DELAY / 2)
         self.assertEqual(state, ['start'])
-        api.kill(g)
+        eventlet.kill(g)
         # will not get there, unless switching is explicitly scheduled by kill
         self.assertEqual(state, ['start', 'except'])
-        api.sleep(DELAY)
+        eventlet.sleep(DELAY)
         self.assertEqual(state, ['start', 'except', 'finished'])
 
     def test_nested_with_timeout(self):
         def func():
-            return api.with_timeout(0.2, api.sleep, 2, timeout_value=1)
+            return eventlet.with_timeout(0.2, eventlet.sleep, 2, timeout_value=1)
 
         try:
-            api.with_timeout(0.1, func)
-            self.fail(u'Expected api.TimeoutError')
-        except api.TimeoutError:
+            eventlet.with_timeout(0.1, func)
+            self.fail(u'Expected TimeoutError')
+        except eventlet.TimeoutError:
             pass
 
 

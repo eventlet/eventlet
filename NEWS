@@ -1,3 +1,8 @@
+0.16.0 (not released yet)
+=========================
+
+* removed deprecated modules: api, most of coros, pool, proc, processes and util
+
 0.15.2
 ======
 greenio: fixed memory leak, introduced in 0.15.1; Thanks to Michael Kerrin, Tushar Gohad
