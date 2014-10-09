@@ -11,6 +11,9 @@ env:
   - TOX_ENV=py33selects
   - TOX_ENV=py33poll
   - TOX_ENV=py33epolls
+  - TOX_ENV=py34selects
+  - TOX_ENV=py34poll
+  - TOX_ENV=py34epolls
   - TOX_ENV=pypyselects
   - TOX_ENV=pypypoll
   - TOX_ENV=pypyepolls
@@ -21,6 +24,9 @@ matrix:
     - env: TOX_ENV=py33selects
     - env: TOX_ENV=py33poll
     - env: TOX_ENV=py33epolls
+    - env: TOX_ENV=py34selects
+    - env: TOX_ENV=py34poll
+    - env: TOX_ENV=py34epolls
     - env: TOX_ENV=pypyselects
     - env: TOX_ENV=pypypoll
     - env: TOX_ENV=pypyepolls
