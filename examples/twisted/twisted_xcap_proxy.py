@@ -7,6 +7,7 @@ from xcaplib.green import XCAPClient
 from eventlet.twistedutil import deferToGreenThread
 from eventlet.twistedutil import join_reactor
 
+
 class LineOnlyReceiver(basic.LineOnlyReceiver):
 
     def lineReceived(self, line):
@@ -14,14 +15,15 @@ class LineOnlyReceiver(basic.LineOnlyReceiver):
         if not line:
             return
         app, context, node = (line + ' ').split(' ', 3)
-        context = {'u' : 'users', 'g': 'global'}.get(context, context)
-        d = deferToGreenThread(client._get, app, node, globaltree=context=='global')
+        context = {'u': 'users', 'g': 'global'}.get(context, context)
+        d = deferToGreenThread(client._get, app, node, globaltree=context == 'global')
         def callback(result):
             self.transport.write(str(result))
         def errback(error):
             self.transport.write(error.getTraceback())
         d.addCallback(callback)
         d.addErrback(errback)
+
 
 class MyFactory(Factory):
     protocol = LineOnlyReceiver

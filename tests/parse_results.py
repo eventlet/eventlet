@@ -39,7 +39,8 @@ def parse_unittest_output(s):
     num = int(re.search('^Ran (\d+) test.*?$', s, re.M).group(1))
     ok = re.search('^OK$', s, re.M)
     error, fail, timeout = 0, 0, 0
-    failed_match = re.search(r'^FAILED \((?:failures=(?P<f>\d+))?,? ?(?:errors=(?P<e>\d+))?\)$', s, re.M)
+    failed_match = re.search(
+        r'^FAILED \((?:failures=(?P<f>\d+))?,? ?(?:errors=(?P<e>\d+))?\)$', s, re.M)
     ok_match = re.search('^OK$', s, re.M)
     if failed_match:
         assert not ok_match, (ok_match, s)

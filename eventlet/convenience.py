@@ -127,7 +127,8 @@ except ImportError:
         from eventlet.green.OpenSSL import SSL
     except ImportError:
         def wrap_ssl_impl(*a, **kw):
-            raise ImportError("To use SSL with Eventlet, you must install PyOpenSSL or use Python 2.6 or later.")
+            raise ImportError(
+                "To use SSL with Eventlet, you must install PyOpenSSL or use Python 2.6 or later.")
     else:
         def wrap_ssl_impl(sock, keyfile=None, certfile=None, server_side=False,
                           cert_reqs=None, ssl_version=None, ca_certs=None,

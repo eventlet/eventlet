@@ -70,7 +70,7 @@ def inject(module_name, new_globals, *additional_modules):
             _green_socket_modules() +
             _green_thread_modules() +
             _green_time_modules())
-            # _green_MySQLdb()) # enable this after a short baking-in period
+        # _green_MySQLdb()) # enable this after a short baking-in period
 
     # after this we are gonna screw with sys.modules, so capture the
     # state of all the modules we're going to mess with, and lock

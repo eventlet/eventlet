@@ -220,7 +220,8 @@ def verify_hub_empty():
     num_readers = len(hub.get_readers())
     num_writers = len(hub.get_writers())
     num_timers = hub.get_timers_count()
-    assert num_readers == 0 and num_writers == 0, "Readers: %s Writers: %s" % (num_readers, num_writers)
+    assert num_readers == 0 and num_writers == 0, "Readers: %s Writers: %s" % (
+        num_readers, num_writers)
 
 
 def find_command(command):

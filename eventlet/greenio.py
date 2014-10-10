@@ -191,8 +191,8 @@ class GreenSocket(object):
             raise IOClosed()
         try:
             return trampoline(fd, read=read, write=write, timeout=timeout,
-                            timeout_exc=timeout_exc,
-                            mark_as_closed=self._mark_as_closed)
+                              timeout_exc=timeout_exc,
+                              mark_as_closed=self._mark_as_closed)
         except IOClosed:
             # This socket's been obsoleted. De-fang it.
             self._mark_as_closed()
@@ -209,7 +209,7 @@ class GreenSocket(object):
                 set_nonblocking(client)
                 return type(self)(client), addr
             self._trampoline(fd, read=True, timeout=self.gettimeout(),
-                       timeout_exc=socket.timeout("timed out"))
+                             timeout_exc=socket.timeout("timed out"))
 
     def _mark_as_closed(self):
         """ Mark this socket as being closed """
@@ -243,7 +243,7 @@ class GreenSocket(object):
                     raise socket.timeout("timed out")
                 try:
                     self._trampoline(fd, write=True, timeout=end - time.time(),
-                           timeout_exc=socket.timeout("timed out"))
+                                     timeout_exc=socket.timeout("timed out"))
                 except IOClosed:
                     # ... we need some workable errno here.
                     raise socket.error(errno.EBADFD)
@@ -271,7 +271,7 @@ class GreenSocket(object):
                     if time.time() >= end:
                         raise socket.timeout(errno.EAGAIN)
                     self._trampoline(fd, write=True, timeout=end - time.time(),
-                               timeout_exc=socket.timeout(errno.EAGAIN))
+                                     timeout_exc=socket.timeout(errno.EAGAIN))
                     socket_checkerr(fd)
                 except socket.error as ex:
                     return get_errno(ex)
@@ -327,19 +327,19 @@ class GreenSocket(object):
     def recvfrom(self, *args):
         if not self.act_non_blocking:
             self._trampoline(self.fd, read=True, timeout=self.gettimeout(),
-                       timeout_exc=socket.timeout("timed out"))
+                             timeout_exc=socket.timeout("timed out"))
         return self.fd.recvfrom(*args)
 
     def recvfrom_into(self, *args):
         if not self.act_non_blocking:
             self._trampoline(self.fd, read=True, timeout=self.gettimeout(),
-                       timeout_exc=socket.timeout("timed out"))
+                             timeout_exc=socket.timeout("timed out"))
         return self.fd.recvfrom_into(*args)
 
     def recv_into(self, *args):
         if not self.act_non_blocking:
             self._trampoline(self.fd, read=True, timeout=self.gettimeout(),
-                       timeout_exc=socket.timeout("timed out"))
+                             timeout_exc=socket.timeout("timed out"))
         return self.fd.recv_into(*args)
 
     def send(self, data, flags=0):
@@ -362,7 +362,7 @@ class GreenSocket(object):
 
             try:
                 self._trampoline(self.fd, write=True, timeout=self.gettimeout(),
-                           timeout_exc=socket.timeout("timed out"))
+                                 timeout_exc=socket.timeout("timed out"))
             except IOClosed:
                 raise socket.error(errno.ECONNRESET, 'Connection closed by another thread')
 
@@ -432,8 +432,8 @@ class _SocketDuckForFd(object):
             raise IOClosed()
         try:
             return trampoline(fd, read=read, write=write, timeout=timeout,
-                            timeout_exc=timeout_exc,
-                            mark_as_closed=self._mark_as_closed)
+                              timeout_exc=timeout_exc,
+                              mark_as_closed=self._mark_as_closed)
         except IOClosed:
             # Our fileno has been obsoleted. Defang ourselves to
             # prevent spurious closes.

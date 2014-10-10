@@ -6,15 +6,15 @@ import os
 __test__ = False
 _proc_status = '/proc/%d/status' % os.getpid()
 
-_scale = {'kB': 1024.0, 'mB': 1024.0*1024.0,
-          'KB': 1024.0, 'MB': 1024.0*1024.0}
+_scale = {'kB': 1024.0, 'mB': 1024.0 * 1024.0,
+          'KB': 1024.0, 'MB': 1024.0 * 1024.0}
 
 
 def _VmB(VmKey):
     '''Private.
     '''
     global _proc_status, _scale
-     # get pseudo file  /proc/<pid>/status
+    # get pseudo file  /proc/<pid>/status
     try:
         t = open(_proc_status)
         v = t.read()

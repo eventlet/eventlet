@@ -27,7 +27,7 @@ class ValueQueue(Queue):
         Queue and it is an exception, raise it, but keep it in the Queue, so
         that future calls to wait() will raise it again.
         """
-        if self.has_error() and len(self.items)==1:
+        if self.has_error() and len(self.items) == 1:
             # the last item, which is an exception, raise without emptying the Queue
             getcurrent().throw(*self.items[0][1])
         else:
@@ -48,6 +48,7 @@ class Event(BaseEvent):
         if self.ready():
             self.reset()
         return BaseEvent.send_exception(self, *throw_args)
+
 
 class Producer2Event(object):
 
@@ -117,7 +118,7 @@ class GreenTransportBase(object):
             self._disconnected_event.wait()
 
     def __getattr__(self, item):
-        if item=='transport':
+        if item == 'transport':
             raise AttributeError(item)
         if hasattr(self, 'transport'):
             try:
@@ -131,12 +132,12 @@ class GreenTransportBase(object):
 
     def resumeProducing(self):
         self.paused -= 1
-        if self.paused==0:
+        if self.paused == 0:
             self.transport.resumeProducing()
 
     def pauseProducing(self):
         self.paused += 1
-        if self.paused==1:
+        if self.paused == 1:
             self.transport.pauseProducing()
 
     def _init_transport_producer(self):
@@ -229,7 +230,7 @@ class GreenTransport(GreenTransportBase):
             except:
                 if not self._disconnected_event.has_exception():
                     raise
-        if size>=0:
+        if size >= 0:
             result, self._buffer = self._buffer[:size], self._buffer[size:]
         else:
             result, self._buffer = self._buffer, ''
@@ -247,7 +248,7 @@ class GreenTransport(GreenTransportBase):
             try:
                 try:
                     recvd = self._wait()
-                    #print 'received %r' % recvd
+                    # print 'received %r' % recvd
                     self._buffer += recvd
                 except ConnectionDone:
                     pass
@@ -411,4 +412,3 @@ class SpawnFactory(SimpleSpawnFactory):
         for g in self.greenlets:
             results.append(g.wait())
         return results
-

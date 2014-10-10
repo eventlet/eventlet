@@ -58,7 +58,7 @@ class GreenSSLSocket(_original_sslsocket):
         # nonblocking socket handshaking on connect got disabled so let's pretend it's disabled
         # even when it's on
         super(GreenSSLSocket, self).__init__(
-            sock.fd, keyfile, certfile, server_side,cert_reqs, ssl_version,
+            sock.fd, keyfile, certfile, server_side, cert_reqs, ssl_version,
             ca_certs, do_handshake_on_connect and six.PY2, *args, **kw)
 
         # the superclass initializer trashes the methods so we remove
@@ -208,17 +208,20 @@ class GreenSSLSocket(_original_sslsocket):
 
     def recv_into(self, buffer, nbytes=None, flags=0):
         if not self.act_non_blocking:
-            trampoline(self, read=True, timeout=self.gettimeout(), timeout_exc=timeout_exc('timed out'))
+            trampoline(self, read=True, timeout=self.gettimeout(),
+                       timeout_exc=timeout_exc('timed out'))
         return super(GreenSSLSocket, self).recv_into(buffer, nbytes, flags)
 
     def recvfrom(self, addr, buflen=1024, flags=0):
         if not self.act_non_blocking:
-            trampoline(self, read=True, timeout=self.gettimeout(), timeout_exc=timeout_exc('timed out'))
+            trampoline(self, read=True, timeout=self.gettimeout(),
+                       timeout_exc=timeout_exc('timed out'))
         return super(GreenSSLSocket, self).recvfrom(addr, buflen, flags)
 
     def recvfrom_into(self, buffer, nbytes=None, flags=0):
         if not self.act_non_blocking:
-            trampoline(self, read=True, timeout=self.gettimeout(), timeout_exc=timeout_exc('timed out'))
+            trampoline(self, read=True, timeout=self.gettimeout(),
+                       timeout_exc=timeout_exc('timed out'))
         return super(GreenSSLSocket, self).recvfrom_into(buffer, nbytes, flags)
 
     def unwrap(self):

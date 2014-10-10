@@ -38,4 +38,3 @@ class LineOnlyReceiverTransport(GreenTransportBase):
             return self.readline()
         except ConnectionDone:
             raise StopIteration
-

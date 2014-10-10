@@ -73,7 +73,8 @@ def launch_heavy_threads():
     server_sock.bind(('localhost', 0))
     server_sock.listen(50)
     addr = ('localhost', server_sock.getsockname()[1])
-    accepter_thread = threading.Thread(None, heavy_accepter, "accepter thread", (server_sock, threads))
+    accepter_thread = threading.Thread(
+        None, heavy_accepter, "accepter thread", (server_sock, threads))
     accepter_thread.start()
     threads.append(accepter_thread)
     for i in six.moves.range(CONCURRENCY):
@@ -112,4 +113,5 @@ if __name__ == "__main__":
     print("green:", results[launch_green_threads])
     if opts.threading:
         print("threads:", results[launch_heavy_threads])
-        print("%", (results[launch_green_threads] - results[launch_heavy_threads]) / results[launch_heavy_threads] * 100)
+        print("%", (results[launch_green_threads] - results[launch_heavy_threads]
+                    ) / results[launch_heavy_threads] * 100)

@@ -461,8 +461,8 @@ def _check_and_set_parent(parent, value, name, new_name):
     if not _is_instance_mock(value):
         return False
     if ((value._mock_name or value._mock_new_name) or
-        (value._mock_parent is not None) or
-        (value._mock_new_parent is not None)):
+            (value._mock_parent is not None) or
+            (value._mock_new_parent is not None)):
         return False
 
     _parent = parent
@@ -502,10 +502,10 @@ class NonCallableMock(Base):
         return instance
 
     def __init__(
-            self, spec=None, wraps=None, name=None, spec_set=None,
-            parent=None, _spec_state=None, _new_name='', _new_parent=None,
-            **kwargs
-        ):
+        self, spec=None, wraps=None, name=None, spec_set=None,
+        parent=None, _spec_state=None, _new_name='', _new_parent=None,
+        **kwargs
+    ):
         if _new_parent is None:
             _new_parent = parent
 
@@ -768,8 +768,8 @@ class NonCallableMock(Base):
             # property setters go through here
             return object.__setattr__(self, name, value)
         elif (self._spec_set and self._mock_methods is not None and
-            name not in self._mock_methods and
-            name not in self.__dict__):
+              name not in self._mock_methods and
+              name not in self.__dict__):
             raise AttributeError("Mock object has no attribute '%s'" % name)
         elif name in _unsupported_magics:
             msg = 'Attempting to set unsupported magic method %r.' % name
@@ -1018,7 +1018,7 @@ class CallableMixin(Base):
                 ret_val = self.return_value
 
         if (self._mock_wraps is not None and
-             self._mock_return_value is DEFAULT):
+                self._mock_return_value is DEFAULT):
             return self._mock_wraps(*args, **kwargs)
         if ret_val is DEFAULT:
             ret_val = self.return_value
@@ -1110,9 +1110,9 @@ class _patch(object):
     _active_patches = set()
 
     def __init__(
-            self, getter, attribute, new, spec, create,
-            spec_set, autospec, new_callable, kwargs
-        ):
+        self, getter, attribute, new, spec, create,
+        spec_set, autospec, new_callable, kwargs
+    ):
         if new_callable is not None:
             if new is not DEFAULT:
                 raise ValueError(
@@ -1193,7 +1193,7 @@ class _patch(object):
                     return func(*args, **keywargs)
                 except:
                     if (patching not in entered_patchers and
-                        _is_started(patching)):
+                            _is_started(patching)):
                         # the patcher may have been started, but an exception
                         # raised whilst entering one of its additional_patchers
                         entered_patchers.append(patching)
@@ -1252,7 +1252,7 @@ class _patch(object):
         if spec is not None and autospec is not None:
             raise TypeError("Can't specify spec and autospec")
         if ((spec is not None or autospec is not None) and
-            spec_set not in (True, None)):
+                spec_set not in (True, None)):
             raise TypeError("Can't provide explicit spec_set *and* spec or autospec")
 
         original, local = self.get_original()
@@ -1301,7 +1301,7 @@ class _patch(object):
 
             # add a name to mocks
             if (isinstance(Klass, type) and
-                issubclass(Klass, NonCallableMock) and self.attribute):
+                    issubclass(Klass, NonCallableMock) and self.attribute):
                 _kwargs['name'] = self.attribute
 
             _kwargs.update(kwargs)
@@ -1314,7 +1314,7 @@ class _patch(object):
                 if spec_set is not None:
                     this_spec = spec_set
                 if (not _is_list(this_spec) and not
-                    _instance_callable(this_spec)):
+                        _instance_callable(this_spec)):
                     Klass = NonCallableMagicMock
 
                 _kwargs.pop('name')
@@ -1402,10 +1402,10 @@ def _get_target(target):
 
 
 def _patch_object(
-        target, attribute, new=DEFAULT, spec=None,
-        create=False, spec_set=None, autospec=None,
-        new_callable=None, **kwargs
-    ):
+    target, attribute, new=DEFAULT, spec=None,
+    create=False, spec_set=None, autospec=None,
+    new_callable=None, **kwargs
+):
     """
     patch.object(target, attribute, new=DEFAULT, spec=None, create=False,
                  spec_set=None, autospec=None, new_callable=None, **kwargs)
@@ -1479,9 +1479,9 @@ def _patch_multiple(target, spec=None, create=False, spec_set=None,
 
 
 def patch(
-        target, new=DEFAULT, spec=None, create=False,
-        spec_set=None, autospec=None, new_callable=None, **kwargs
-    ):
+    target, new=DEFAULT, spec=None, create=False,
+    spec_set=None, autospec=None, new_callable=None, **kwargs
+):
     """
     `patch` acts as a function decorator, class decorator or a context
     manager. Inside the body of the function or with statement, the `target`
@@ -1611,7 +1611,7 @@ class _patch_dict(object):
         for attr in dir(klass):
             attr_value = getattr(klass, attr)
             if (attr.startswith(patch.TEST_PREFIX) and
-                 hasattr(attr_value, "__call__")):
+                    hasattr(attr_value, "__call__")):
                 decorator = _patch_dict(self.in_dict, self.values, self.clear)
                 decorated = decorator(attr_value)
                 setattr(klass, attr, decorated)

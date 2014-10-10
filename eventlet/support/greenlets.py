@@ -5,7 +5,7 @@ try:
     getcurrent = greenlet.greenlet.getcurrent
     GreenletExit = greenlet.greenlet.GreenletExit
     preserves_excinfo = (distutils.version.LooseVersion(greenlet.__version__)
-            >= distutils.version.LooseVersion('0.3.2'))
+                         >= distutils.version.LooseVersion('0.3.2'))
     greenlet = greenlet.greenlet
 except ImportError as e:
     raise

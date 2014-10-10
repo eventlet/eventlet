@@ -108,7 +108,8 @@ class Waiter(object):
         """Wake up the greenlet that is calling wait() currently (if there is one).
         Can only be called from Hub's greenlet.
         """
-        assert getcurrent() is get_hub().greenlet, "Can only use Waiter.switch method from the mainloop"
+        assert getcurrent() is get_hub(
+        ).greenlet, "Can only use Waiter.switch method from the mainloop"
         if self.greenlet is not None:
             try:
                 self.greenlet.switch(value)
@@ -119,7 +120,8 @@ class Waiter(object):
         """Make greenlet calling wait() wake up (if there is a wait()).
         Can only be called from Hub's greenlet.
         """
-        assert getcurrent() is get_hub().greenlet, "Can only use Waiter.switch method from the mainloop"
+        assert getcurrent() is get_hub(
+        ).greenlet, "Can only use Waiter.switch method from the mainloop"
         if self.greenlet is not None:
             try:
                 self.greenlet.throw(*throw_args)
@@ -335,7 +337,8 @@ class LightQueue(object):
                         getter = self.getters.pop()
                         if getter:
                             item = putter.item
-                            putter.item = _NONE  # this makes greenlet calling put() not to call _put() again
+                            # this makes greenlet calling put() not to call _put() again
+                            putter.item = _NONE
                             self._put(item)
                             item = self._get()
                             getter.switch(item)

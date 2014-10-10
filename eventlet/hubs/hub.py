@@ -173,7 +173,7 @@ class BaseHub(object):
                     "If you do know what you're doing and want to disable "
                     "this error, call "
                     "eventlet.debug.hub_prevent_multiple_readers(False) - MY THREAD=%s; THAT THREAD=%s" % (
-                    evtype, fileno, evtype, cb, bucket[fileno]))
+                        evtype, fileno, evtype, cb, bucket[fileno]))
             # store off the second listener in another structure
             self.secondaries[evtype].setdefault(fileno, []).append(listener)
         else:
@@ -365,7 +365,8 @@ class BaseHub(object):
         if self.running:
             self.stopping = True
         if wait:
-            assert self.greenlet is not greenlet.getcurrent(), "Can't abort with wait from inside the hub's greenlet."
+            assert self.greenlet is not greenlet.getcurrent(
+            ), "Can't abort with wait from inside the hub's greenlet."
             # schedule an immediate timer just so the hub doesn't sleep
             self.schedule_call_global(0, lambda: None)
             # switch to it; when done the hub will switch back to its parent,

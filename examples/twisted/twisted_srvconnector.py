@@ -5,11 +5,13 @@ from gnutls.interfaces.twisted import X509Credentials
 from eventlet.twistedutil.protocol import GreenClientCreator
 from eventlet.twistedutil.protocols.basic import LineOnlyReceiverTransport
 
+
 class NoisySRVConnector(SRVConnector):
 
     def pickServer(self):
         host, port = SRVConnector.pickServer(self)
-        print('Resolved _%s._%s.%s --> %s:%s' % (self.service, self.protocol, self.domain, host, port))
+        print('Resolved _%s._%s.%s --> %s:%s' %
+              (self.service, self.protocol, self.domain, host, port))
         return host, port
 
 cred = X509Credentials(None, None)

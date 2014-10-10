@@ -228,7 +228,7 @@ def getnameinfo(sockaddr, flags):
     except (ValueError, TypeError):
         if not isinstance(sockaddr, tuple):
             del sockaddr  # to pass a stdlib test that is
-                          # hyper-careful about reference counts
+            # hyper-careful about reference counts
             raise TypeError('getnameinfo() argument 1 must be a tuple')
         else:
             # must be ipv6 sockaddr, pretending we don't know how to resolve it

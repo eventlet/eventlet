@@ -74,6 +74,7 @@ if hasattr(__thread, 'stack_size'):
             return __original_stack_size__(size)
         else:
             pass
-            # not going to decrease stack_size, because otherwise other greenlets in this thread will suffer
+            # not going to decrease stack_size, because otherwise other greenlets in
+            # this thread will suffer
 
 from eventlet.corolocal import local as _local

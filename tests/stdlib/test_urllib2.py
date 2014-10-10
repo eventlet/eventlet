@@ -9,8 +9,10 @@ patcher.inject(
     ('urllib2', urllib2))
 
 HandlerTests.test_file = patcher.patch_function(HandlerTests.test_file, ('socket', socket))
-HandlerTests.test_cookie_redirect = patcher.patch_function(HandlerTests.test_cookie_redirect, ('urllib2', urllib2))
-OpenerDirectorTests.test_badly_named_methods = patcher.patch_function(OpenerDirectorTests.test_badly_named_methods, ('urllib2', urllib2))
+HandlerTests.test_cookie_redirect = patcher.patch_function(
+    HandlerTests.test_cookie_redirect, ('urllib2', urllib2))
+OpenerDirectorTests.test_badly_named_methods = patcher.patch_function(
+    OpenerDirectorTests.test_badly_named_methods, ('urllib2', urllib2))
 
 if __name__ == "__main__":
     test_main()

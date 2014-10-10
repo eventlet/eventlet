@@ -18,11 +18,13 @@ __all__ = dir(builtins_orig)
 __patched__ = ['file', 'open']
 
 slurp_properties(builtins_orig, globals(),
-    ignore=__patched__, srckeys=dir(builtins_orig))
+                 ignore=__patched__, srckeys=dir(builtins_orig))
 
 hubs.get_hub()
 
 __original_file = file
+
+
 class file(__original_file):
     def __init__(self, *args, **kwargs):
         super(file, self).__init__(*args, **kwargs)
@@ -30,6 +32,8 @@ class file(__original_file):
 
 __original_open = open
 __opening = False
+
+
 def open(*args):
     global __opening
     result = __original_open(*args)

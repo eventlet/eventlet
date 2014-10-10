@@ -6,6 +6,7 @@ from eventlet.twistedutil import join_reactor
 from eventlet.twistedutil.protocol import GreenClientCreator, SpawnFactory, UnbufferedTransport
 from eventlet import proc
 
+
 def forward(source, dest):
     try:
         while True:
@@ -16,6 +17,7 @@ def forward(source, dest):
             dest.write(x)
     finally:
         dest.loseConnection()
+
 
 def handler(local):
     client = str(local.getHost())

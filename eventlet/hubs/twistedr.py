@@ -38,7 +38,7 @@ def callLater(DelayedCallClass, reactor, _seconds, _f, *args, **kw):
     if not isinstance(_seconds, (int, long, float)):
         raise TypeError("Seconds must be int, long, or float, was " + type(_seconds))
     assert sys.maxint >= _seconds >= 0, \
-           "%s is not greater than or equal to 0 seconds" % (_seconds,)
+        "%s is not greater than or equal to 0 seconds" % (_seconds,)
     tple = DelayedCallClass(reactor.seconds() + _seconds, _f, args, kw,
                             reactor._cancelCallLater,
                             reactor._moveCallLaterSooner,
@@ -109,11 +109,11 @@ class BaseTwistedHub(object):
 
     def switch(self):
         assert greenlet.getcurrent() is not self.greenlet, \
-               "Cannot switch from MAINLOOP to MAINLOOP"
+            "Cannot switch from MAINLOOP to MAINLOOP"
         try:
-           greenlet.getcurrent().parent = self.greenlet
+            greenlet.getcurrent().parent = self.greenlet
         except ValueError:
-           pass
+            pass
         return self.greenlet.switch()
 
     def stop(self):
@@ -197,17 +197,17 @@ class TwistedHub(BaseTwistedHub):
 
     def __init__(self):
         assert Hub.state == 0, ('%s hub can only be instantiated once' % type(self).__name__,
-                              Hub.state)
+                                Hub.state)
         Hub.state = 1
         make_twisted_threadpool_daemonic() # otherwise the program
-                                        # would hang after the main
-                                        # greenlet exited
+        # would hang after the main
+        # greenlet exited
         g = greenlet.greenlet(self.run)
         BaseTwistedHub.__init__(self, g)
 
     def switch(self):
         assert greenlet.getcurrent() is not self.greenlet, \
-               "Cannot switch from MAINLOOP to MAINLOOP"
+            "Cannot switch from MAINLOOP to MAINLOOP"
         if self.greenlet.dead:
             self.greenlet = greenlet.greenlet(self.run)
         try:

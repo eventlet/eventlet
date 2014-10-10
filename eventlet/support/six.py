@@ -262,7 +262,8 @@ del attr
 
 Module_six_moves_urllib_parse._moved_attributes = _urllib_parse_moved_attributes
 
-sys.modules[__name__ + ".moves.urllib_parse"] = sys.modules[__name__ + ".moves.urllib.parse"] = Module_six_moves_urllib_parse(__name__ + ".moves.urllib_parse")
+sys.modules[__name__ + ".moves.urllib_parse"] = sys.modules[__name__ +
+                                                            ".moves.urllib.parse"] = Module_six_moves_urllib_parse(__name__ + ".moves.urllib_parse")
 
 
 class Module_six_moves_urllib_error(_LazyModule):
@@ -280,7 +281,8 @@ del attr
 
 Module_six_moves_urllib_error._moved_attributes = _urllib_error_moved_attributes
 
-sys.modules[__name__ + ".moves.urllib_error"] = sys.modules[__name__ + ".moves.urllib.error"] = Module_six_moves_urllib_error(__name__ + ".moves.urllib.error")
+sys.modules[__name__ + ".moves.urllib_error"] = sys.modules[__name__ +
+                                                            ".moves.urllib.error"] = Module_six_moves_urllib_error(__name__ + ".moves.urllib.error")
 
 
 class Module_six_moves_urllib_request(_LazyModule):
@@ -328,7 +330,8 @@ del attr
 
 Module_six_moves_urllib_request._moved_attributes = _urllib_request_moved_attributes
 
-sys.modules[__name__ + ".moves.urllib_request"] = sys.modules[__name__ + ".moves.urllib.request"] = Module_six_moves_urllib_request(__name__ + ".moves.urllib.request")
+sys.modules[__name__ + ".moves.urllib_request"] = sys.modules[__name__ +
+                                                              ".moves.urllib.request"] = Module_six_moves_urllib_request(__name__ + ".moves.urllib.request")
 
 
 class Module_six_moves_urllib_response(_LazyModule):
@@ -347,7 +350,8 @@ del attr
 
 Module_six_moves_urllib_response._moved_attributes = _urllib_response_moved_attributes
 
-sys.modules[__name__ + ".moves.urllib_response"] = sys.modules[__name__ + ".moves.urllib.response"] = Module_six_moves_urllib_response(__name__ + ".moves.urllib.response")
+sys.modules[__name__ + ".moves.urllib_response"] = sys.modules[__name__ +
+                                                               ".moves.urllib.response"] = Module_six_moves_urllib_response(__name__ + ".moves.urllib.response")
 
 
 class Module_six_moves_urllib_robotparser(_LazyModule):
@@ -363,7 +367,8 @@ del attr
 
 Module_six_moves_urllib_robotparser._moved_attributes = _urllib_robotparser_moved_attributes
 
-sys.modules[__name__ + ".moves.urllib_robotparser"] = sys.modules[__name__ + ".moves.urllib.robotparser"] = Module_six_moves_urllib_robotparser(__name__ + ".moves.urllib.robotparser")
+sys.modules[__name__ + ".moves.urllib_robotparser"] = sys.modules[__name__ +
+                                                                  ".moves.urllib.robotparser"] = Module_six_moves_urllib_robotparser(__name__ + ".moves.urllib.robotparser")
 
 
 class Module_six_moves_urllib(types.ModuleType):
@@ -574,8 +579,8 @@ if print_ is None:
                 data = str(data)
             # If the file has an encoding, encode unicode with it.
             if (isinstance(fp, file) and
-                isinstance(data, unicode) and
-                fp.encoding is not None):
+                    isinstance(data, unicode) and
+                    fp.encoding is not None):
                 errors = getattr(fp, "errors", None)
                 if errors is None:
                     errors = "strict"

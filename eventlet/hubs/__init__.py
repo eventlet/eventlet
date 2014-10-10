@@ -120,7 +120,7 @@ from eventlet import timeout
 
 def trampoline(fd, read=None, write=None, timeout=None,
                timeout_exc=timeout.Timeout,
-               mark_as_closed = None):
+               mark_as_closed=None):
     """Suspend the current coroutine until the given socket object or file
     descriptor is ready to *read*, ready to *write*, or the specified
     *timeout* elapses, depending on arguments specified.
@@ -163,6 +163,7 @@ def trampoline(fd, read=None, write=None, timeout=None,
         if t is not None:
             t.cancel()
 
+
 def notify_close(fd):
     """
     A particular file descriptor has been explicitly closed. Register for any
@@ -170,6 +171,7 @@ def notify_close(fd):
     """
     hub = get_hub()
     hub.notify_close(fd)
+
 
 def notify_opened(fd):
     """

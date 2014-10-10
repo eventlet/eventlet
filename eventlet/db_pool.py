@@ -317,73 +317,107 @@ class GenericConnectionWrapper(object):
     #     setattr(class, name, lambda self, *a, **kw: getattr(self._base, name)(*a, **kw))
     # * def __getattr__(self, name): if name in (...): return getattr(self._base, name)
     # * other?
-    def __enter__(self): return self._base.__enter__()
+    def __enter__(self):
+        return self._base.__enter__()
 
-    def __exit__(self, exc, value, tb): return self._base.__exit__(exc, value, tb)
+    def __exit__(self, exc, value, tb):
+        return self._base.__exit__(exc, value, tb)
 
-    def __repr__(self): return self._base.__repr__()
+    def __repr__(self):
+        return self._base.__repr__()
 
-    def affected_rows(self): return self._base.affected_rows()
+    def affected_rows(self):
+        return self._base.affected_rows()
 
-    def autocommit(self, *args, **kwargs): return self._base.autocommit(*args, **kwargs)
+    def autocommit(self, *args, **kwargs):
+        return self._base.autocommit(*args, **kwargs)
 
-    def begin(self): return self._base.begin()
+    def begin(self):
+        return self._base.begin()
 
-    def change_user(self, *args, **kwargs): return self._base.change_user(*args, **kwargs)
+    def change_user(self, *args, **kwargs):
+        return self._base.change_user(*args, **kwargs)
 
-    def character_set_name(self, *args, **kwargs): return self._base.character_set_name(*args, **kwargs)
+    def character_set_name(self, *args, **kwargs):
+        return self._base.character_set_name(*args, **kwargs)
 
-    def close(self, *args, **kwargs): return self._base.close(*args, **kwargs)
+    def close(self, *args, **kwargs):
+        return self._base.close(*args, **kwargs)
 
-    def commit(self, *args, **kwargs): return self._base.commit(*args, **kwargs)
+    def commit(self, *args, **kwargs):
+        return self._base.commit(*args, **kwargs)
 
-    def cursor(self, *args, **kwargs): return self._base.cursor(*args, **kwargs)
+    def cursor(self, *args, **kwargs):
+        return self._base.cursor(*args, **kwargs)
 
-    def dump_debug_info(self, *args, **kwargs): return self._base.dump_debug_info(*args, **kwargs)
+    def dump_debug_info(self, *args, **kwargs):
+        return self._base.dump_debug_info(*args, **kwargs)
 
-    def errno(self, *args, **kwargs): return self._base.errno(*args, **kwargs)
+    def errno(self, *args, **kwargs):
+        return self._base.errno(*args, **kwargs)
 
-    def error(self, *args, **kwargs): return self._base.error(*args, **kwargs)
+    def error(self, *args, **kwargs):
+        return self._base.error(*args, **kwargs)
 
-    def errorhandler(self, *args, **kwargs): return self._base.errorhandler(*args, **kwargs)
+    def errorhandler(self, *args, **kwargs):
+        return self._base.errorhandler(*args, **kwargs)
 
-    def insert_id(self, *args, **kwargs): return self._base.insert_id(*args, **kwargs)
+    def insert_id(self, *args, **kwargs):
+        return self._base.insert_id(*args, **kwargs)
 
-    def literal(self, *args, **kwargs): return self._base.literal(*args, **kwargs)
+    def literal(self, *args, **kwargs):
+        return self._base.literal(*args, **kwargs)
 
-    def set_character_set(self, *args, **kwargs): return self._base.set_character_set(*args, **kwargs)
+    def set_character_set(self, *args, **kwargs):
+        return self._base.set_character_set(*args, **kwargs)
 
-    def set_sql_mode(self, *args, **kwargs): return self._base.set_sql_mode(*args, **kwargs)
+    def set_sql_mode(self, *args, **kwargs):
+        return self._base.set_sql_mode(*args, **kwargs)
 
-    def show_warnings(self): return self._base.show_warnings()
+    def show_warnings(self):
+        return self._base.show_warnings()
 
-    def warning_count(self): return self._base.warning_count()
+    def warning_count(self):
+        return self._base.warning_count()
 
-    def ping(self, *args, **kwargs): return self._base.ping(*args, **kwargs)
+    def ping(self, *args, **kwargs):
+        return self._base.ping(*args, **kwargs)
 
-    def query(self, *args, **kwargs): return self._base.query(*args, **kwargs)
+    def query(self, *args, **kwargs):
+        return self._base.query(*args, **kwargs)
 
-    def rollback(self, *args, **kwargs): return self._base.rollback(*args, **kwargs)
+    def rollback(self, *args, **kwargs):
+        return self._base.rollback(*args, **kwargs)
 
-    def select_db(self, *args, **kwargs): return self._base.select_db(*args, **kwargs)
+    def select_db(self, *args, **kwargs):
+        return self._base.select_db(*args, **kwargs)
 
-    def set_server_option(self, *args, **kwargs): return self._base.set_server_option(*args, **kwargs)
+    def set_server_option(self, *args, **kwargs):
+        return self._base.set_server_option(*args, **kwargs)
 
-    def server_capabilities(self, *args, **kwargs): return self._base.server_capabilities(*args, **kwargs)
+    def server_capabilities(self, *args, **kwargs):
+        return self._base.server_capabilities(*args, **kwargs)
 
-    def shutdown(self, *args, **kwargs): return self._base.shutdown(*args, **kwargs)
+    def shutdown(self, *args, **kwargs):
+        return self._base.shutdown(*args, **kwargs)
 
-    def sqlstate(self, *args, **kwargs): return self._base.sqlstate(*args, **kwargs)
+    def sqlstate(self, *args, **kwargs):
+        return self._base.sqlstate(*args, **kwargs)
 
-    def stat(self, *args, **kwargs): return self._base.stat(*args, **kwargs)
+    def stat(self, *args, **kwargs):
+        return self._base.stat(*args, **kwargs)
 
-    def store_result(self, *args, **kwargs): return self._base.store_result(*args, **kwargs)
+    def store_result(self, *args, **kwargs):
+        return self._base.store_result(*args, **kwargs)
 
-    def string_literal(self, *args, **kwargs): return self._base.string_literal(*args, **kwargs)
+    def string_literal(self, *args, **kwargs):
+        return self._base.string_literal(*args, **kwargs)
 
-    def thread_id(self, *args, **kwargs): return self._base.thread_id(*args, **kwargs)
+    def thread_id(self, *args, **kwargs):
+        return self._base.thread_id(*args, **kwargs)
 
-    def use_result(self, *args, **kwargs): return self._base.use_result(*args, **kwargs)
+    def use_result(self, *args, **kwargs):
+        return self._base.use_result(*args, **kwargs)
 
 
 class PooledConnectionWrapper(GenericConnectionWrapper):
@@ -420,7 +454,7 @@ class PooledConnectionWrapper(GenericConnectionWrapper):
 
     def __del__(self):
         return  # this causes some issues if __del__ is called in the
-                # main coroutine, so for now this is disabled
+        # main coroutine, so for now this is disabled
         # self.close()
 
 

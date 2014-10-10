@@ -218,7 +218,8 @@ class TestQueue(LimitedTestCase):
 
         self.assertEqual(['waiting', 'sending hello', 'hello', 'sending world', 'world'], events)
         eventlet.sleep(0)
-        self.assertEqual(['waiting', 'sending hello', 'hello', 'sending world', 'world', 'sent world'], events)
+        self.assertEqual(
+            ['waiting', 'sending hello', 'hello', 'sending world', 'world', 'sent world'], events)
 
     def test_channel_waiters(self):
         c = eventlet.Queue(0)
