@@ -17,7 +17,7 @@ from eventlet.green import subprocess
 from eventlet import greenio
 from eventlet import greenthread
 from eventlet import support
-from eventlet.support import six
+from eventlet.support import bytes_to_str, six
 from eventlet import tpool
 from eventlet import wsgi
 
@@ -26,13 +26,6 @@ import tests
 
 certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
 private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
-
-if six.PY3:
-    def bytes_to_str(b):
-        return b.decode()
-else:
-    def bytes_to_str(b):
-        return b
 
 
 HttpReadResult = collections.namedtuple(
@@ -347,7 +340,7 @@ class TestHttpd(_TestBase):
     def test_007_get_arg(self):
         # define a new handler that does a get_arg as well as a read_body
         def new_app(env, start_response):
-            body = env['wsgi.input'].read()
+            body = bytes_to_str(env['wsgi.input'].read())
             a = cgi.parse_qs(body).get('a', [1])[0]
             start_response('200 OK', [('Content-type', 'text/plain')])
             return [six.b('a is %s, body is %s' % (a, body))]
@@ -368,7 +361,7 @@ class TestHttpd(_TestBase):
         # send some junk after the actual request
         fd.write(b'01234567890123456789')
         result = read_http(sock)
-        self.assertEqual(result.body, 'a is a, body is a=a')
+        self.assertEqual(result.body, b'a is a, body is a=a')
         fd.close()
 
     def test_008_correctresponse(self):
@@ -434,7 +427,7 @@ class TestHttpd(_TestBase):
         assert chunks > 1
         response = fd.read()
         # Require a CRLF to close the message body
-        self.assertEqual(response, '\r\n')
+        self.assertEqual(response, b'\r\n')
 
     @tests.skip_if_no_ssl
     def test_012_ssl_server(self):
@@ -771,7 +764,7 @@ class TestHttpd(_TestBase):
                 break
             else:
                 header_lines.append(line)
-        assert header_lines[0].startswith('HTTP/1.1 100 Continue')
+        assert header_lines[0].startswith(b'HTTP/1.1 100 Continue')
         header_lines = []
         while True:
             line = fd.readline()
@@ -779,7 +772,7 @@ class TestHttpd(_TestBase):
                 break
             else:
                 header_lines.append(line)
-        assert header_lines[0].startswith('HTTP/1.1 200 OK')
+        assert header_lines[0].startswith(b'HTTP/1.1 200 OK')
         assert fd.read(7) == b'testing'
         fd.close()
         sock.close()
@@ -788,7 +781,7 @@ class TestHttpd(_TestBase):
         def wsgi_app(environ, start_response):
             if int(environ['CONTENT_LENGTH']) > 1024:
                 start_response('417 Expectation Failed', [('Content-Length', '7')])
-                return ['failure']
+                return [b'failure']
             else:
                 environ['wsgi.input'].set_hundred_continue_response_headers(
                     [('Hundred-Continue-Header-1', 'H1'),
@@ -799,13 +792,13 @@ class TestHttpd(_TestBase):
                 return [text]
         self.site.application = wsgi_app
         sock = eventlet.connect(('localhost', self.port))
-        fd = sock.makefile('rw')
+        fd = sock.makefile('rwb')
         fd.write(b'PUT / HTTP/1.1\r\nHost: localhost\r\nContent-length: 1025\r\n'
                  b'Expect: 100-continue\r\n\r\n')
         fd.flush()
         result = read_http(sock)
         self.assertEqual(result.status, 'HTTP/1.1 417 Expectation Failed')
-        self.assertEqual(result.body, 'failure')
+        self.assertEqual(result.body, b'failure')
         fd.write(
             b'PUT / HTTP/1.1\r\nHost: localhost\r\nContent-length: 7\r\n'
             b'Expect: 100-continue\r\n\r\ntesting')
@@ -813,27 +806,27 @@ class TestHttpd(_TestBase):
         header_lines = []
         while True:
             line = fd.readline()
-            if line == '\r\n':
+            if line == b'\r\n':
                 break
             else:
                 header_lines.append(line.strip())
-        assert header_lines[0].startswith('HTTP/1.1 100 Continue')
-        headers = dict((k, v) for k, v in (h.split(': ', 1) for h in header_lines[1:]))
-        assert 'Hundred-Continue-Header-1' in headers
-        assert 'Hundred-Continue-Header-2' in headers
-        assert 'Hundred-Continue-Header-K' in headers
-        self.assertEqual('H1', headers['Hundred-Continue-Header-1'])
-        self.assertEqual('H2', headers['Hundred-Continue-Header-2'])
-        self.assertEqual('Hk', headers['Hundred-Continue-Header-K'])
+        assert header_lines[0].startswith(b'HTTP/1.1 100 Continue')
+        headers = dict((k, v) for k, v in (h.split(b': ', 1) for h in header_lines[1:]))
+        assert b'Hundred-Continue-Header-1' in headers
+        assert b'Hundred-Continue-Header-2' in headers
+        assert b'Hundred-Continue-Header-K' in headers
+        self.assertEqual(b'H1', headers[b'Hundred-Continue-Header-1'])
+        self.assertEqual(b'H2', headers[b'Hundred-Continue-Header-2'])
+        self.assertEqual(b'Hk', headers[b'Hundred-Continue-Header-K'])
         header_lines = []
         while True:
             line = fd.readline()
-            if line == '\r\n':
+            if line == b'\r\n':
                 break
             else:
                 header_lines.append(line)
-        assert header_lines[0].startswith('HTTP/1.1 200 OK')
-        self.assertEqual(fd.read(7), 'testing')
+        assert header_lines[0].startswith(b'HTTP/1.1 200 OK')
+        self.assertEqual(fd.read(7), b'testing')
         fd.close()
         sock.close()
 
@@ -1079,7 +1072,7 @@ class TestHttpd(_TestBase):
             'POST / HTTP/1.0\r\n'
             'Host: localhost\r\n'
             'Content-Length: %i\r\n\r\n%s'
-        ) % (len(upload_data), upload_data)
+        ) % (len(upload_data), bytes_to_str(upload_data))
         sock = eventlet.connect(('localhost', self.port))
         fd = sock.makefile('rwb')
         fd.write(request.encode())
@@ -1092,7 +1085,7 @@ class TestHttpd(_TestBase):
     def test_zero_length_chunked_response(self):
         def zero_chunked_app(env, start_response):
             start_response('200 OK', [('Content-type', 'text/plain')])
-            yield ""
+            yield b""
 
         self.site.application = zero_chunked_app
         sock = eventlet.connect(
@@ -1106,9 +1099,9 @@ class TestHttpd(_TestBase):
         while True:
             h = response.pop(0)
             headers.append(h)
-            if h == '':
+            if h == b'':
                 break
-        assert b'Transfer-Encoding: chunked' in ''.join(headers)
+        assert b'Transfer-Encoding: chunked' in b''.join(headers), headers
         # should only be one chunk of zero size with two blank lines
         # (one terminates the chunk, one terminates the body)
         self.assertEqual(response, [b'0', b'', b''])
@@ -1190,8 +1183,8 @@ class TestHttpd(_TestBase):
     def test_path_info_decoding(self):
         def wsgi_app(environ, start_response):
             start_response("200 OK", [])
-            yield "decoded: %s" % environ['PATH_INFO']
-            yield "raw: %s" % environ['RAW_PATH_INFO']
+            yield six.b("decoded: %s" % environ['PATH_INFO'])
+            yield six.b("raw: %s" % environ['RAW_PATH_INFO'])
         self.site.application = wsgi_app
         sock = eventlet.connect(('localhost', self.port))
         fd = sock.makefile('rwb')
@@ -1467,7 +1460,7 @@ class TestChunkedInput(_TestBase):
 
     def ping(self, fd):
         fd.sendall(b"GET /ping HTTP/1.1\r\n\r\n")
-        self.assertEqual(read_http(fd).body, "pong")
+        self.assertEqual(read_http(fd).body, b"pong")
 
     def test_short_read_with_content_length(self):
         body = self.body()
@@ -1529,12 +1522,12 @@ class TestChunkedInput(_TestBase):
         fd = self.connect()
         fd.sendall(b"POST /yield_spaces/override_min HTTP/1.1\r\nContent-Length: 0\r\n\r\n")
 
-        resp_so_far = ''
+        resp_so_far = b''
         with eventlet.Timeout(.1):
             while True:
                 one_byte = fd.recv(1)
                 resp_so_far += one_byte
-                if resp_so_far.endswith('\r\n\r\n'):
+                if resp_so_far.endswith(b'\r\n\r\n'):
                     break
             self.assertEqual(fd.recv(1), b' ')
         try:

@@ -100,7 +100,7 @@ class Timeout(BaseException):
 
     def __str__(self):
         """
-        >>> raise Timeout
+        >>> raise Timeout  # doctest: +IGNORE_EXCEPTION_DETAIL
         Traceback (most recent call last):
             ...
         Timeout

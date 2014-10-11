@@ -21,7 +21,7 @@ if getattr(subprocess_orig, 'TimeoutExpired', None) is None:
         a child process.
         """
 
-        def __init__(self, cmd, output=None):
+        def __init__(self, timeout, cmd, output=None):
             self.cmd = cmd
             self.output = output
 
@@ -64,7 +64,7 @@ class Popen(subprocess_orig.Popen):
                 if status is not None:
                     return status
                 if timeout is not None and time.time() > endtime:
-                    raise TimeoutExpired(self.args)
+                    raise TimeoutExpired(self.args, timeout)
                 eventlet.sleep(check_interval)
         except OSError as e:
             if e.errno == errno.ECHILD:

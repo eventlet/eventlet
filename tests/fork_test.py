@@ -8,6 +8,7 @@ import eventlet
 import os
 import sys
 import signal
+from eventlet.support import bytes_to_str, six
 mydir = %r
 signal_file = os.path.join(mydir, "output.txt")
 pid = os.fork()
@@ -30,18 +31,18 @@ if (pid != 0):
         break
       except (IOError, IndexError):
         eventlet.sleep(0.1)
-    print('result {0}'.format(result))
+    print('result {0}'.format(bytes_to_str(result)))
   finally:
     os.kill(pid, signal.SIGTERM)
 else:
   try:
     s = eventlet.listen(('', 0))
     fd = open(signal_file, "wb")
-    fd.write(str(s.getsockname()[1]))
-    fd.write("\\n")
+    fd.write(six.b(str(s.getsockname()[1])))
+    fd.write(b"\\n")
     fd.flush()
     s.accept()
-    fd.write("done")
+    fd.write(b"done")
     fd.flush()
   finally:
     fd.close()

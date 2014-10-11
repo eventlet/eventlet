@@ -99,10 +99,10 @@ class Input(object):
         if self.hundred_continue_headers is not None:
             # 100 Continue headers
             for header in self.hundred_continue_headers:
-                towrite.append('%s: %s\r\n' % header)
+                towrite.append(six.b('%s: %s\r\n' % header))
 
         # Blank line
-        towrite.append('\r\n')
+        towrite.append(b'\r\n')
 
         self.wfile.writelines(towrite)
         self.wfile = None
@@ -558,7 +558,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
         if env.get('HTTP_EXPECT') == '100-continue':
             wfile = self.wfile
-            wfile_line = 'HTTP/1.1 100 Continue\r\n'
+            wfile_line = b'HTTP/1.1 100 Continue\r\n'
         else:
             wfile = None
             wfile_line = None
@@ -579,6 +579,9 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 raise
         greenio.shutdown_safe(self.connection)
         self.connection.close()
+
+    def handle_expect_100(self):
+        return True
 
 
 class Server(BaseHTTPServer.HTTPServer):
