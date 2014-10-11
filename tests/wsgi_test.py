@@ -101,9 +101,9 @@ def chunked_post(env, start_response):
     if env['PATH_INFO'] == '/a':
         return [env['wsgi.input'].read()]
     elif env['PATH_INFO'] == '/b':
-        return [x for x in iter(lambda: env['wsgi.input'].read(4096), '')]
+        return [x for x in iter(lambda: env['wsgi.input'].read(4096), b'')]
     elif env['PATH_INFO'] == '/c':
-        return [x for x in iter(lambda: env['wsgi.input'].read(1), '')]
+        return [x for x in iter(lambda: env['wsgi.input'].read(1), b'')]
 
 
 def already_handled(env, start_response):
@@ -457,13 +457,13 @@ class TestHttpd(_TestBase):
             b'POST /foo HTTP/1.1\r\nHost: localhost\r\n'
             b'Connection: close\r\nContent-length:3\r\n\r\nabc')
         result = sock.read(8192)
-        self.assertEqual(result[-3:], 'abc')
+        self.assertEqual(result[-3:], b'abc')
 
     @tests.skip_if_no_ssl
     def test_013_empty_return(self):
         def wsgi_app(environ, start_response):
             start_response("200 OK", [])
-            return [""]
+            return [b""]
 
         certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
         private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
@@ -477,7 +477,7 @@ class TestHttpd(_TestBase):
         sock = eventlet.wrap_ssl(sock)
         sock.write(b'GET /foo HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
         result = sock.read(8192)
-        self.assertEqual(result[-4:], '\r\n\r\n')
+        self.assertEqual(result[-4:], b'\r\n\r\n')
 
     def test_014_chunked_post(self):
         self.site.application = chunked_post
@@ -1335,7 +1335,7 @@ class TestHttpd(_TestBase):
 
 
 def read_headers(sock):
-    fd = sock.makefile()
+    fd = sock.makefile('rb')
     try:
         response_line = fd.readline()
     except socket.error as exc:
@@ -1348,7 +1348,7 @@ def read_headers(sock):
     header_lines = []
     while True:
         line = fd.readline()
-        if line == '\r\n':
+        if line == b'\r\n':
             break
         else:
             header_lines.append(line)
@@ -1357,10 +1357,10 @@ def read_headers(sock):
         x = x.strip()
         if not x:
             continue
-        key, value = x.split(': ', 1)
+        key, value = x.split(b': ', 1)
         assert key.lower() not in headers, "%s header duplicated" % key
-        headers[key.lower()] = value
-    return response_line, headers
+        headers[bytes_to_str(key.lower())] = bytes_to_str(value)
+    return bytes_to_str(response_line), headers
 
 
 class IterableAlreadyHandledTest(_TestBase):

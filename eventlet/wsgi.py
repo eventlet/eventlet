@@ -132,7 +132,7 @@ class Input(object):
             if length == 0:
                 return ""
 
-            if length < 0:
+            if length and length < 0:
                 length = None
 
             if use_readline:
@@ -464,9 +464,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 tb = traceback.format_exc()
                 self.server.log_message(tb)
                 if not headers_set:
-                    err_body = ""
-                    if(self.server.debug):
-                        err_body = tb
+                    err_body =six.b(tb) if self.server.debug else b''
                     start_response("500 Internal Server Error",
                                    [('Content-type', 'text/plain'),
                                     ('Content-length', len(err_body))])

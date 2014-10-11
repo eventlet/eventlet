@@ -32,3 +32,12 @@ else:
         Exception information is not visible outside of except statements.
         sys.exc_clear became obsolete and removed."""
         pass
+
+if sys.version_info[0] < 3:
+    def bytes_to_str(b, encoding='ascii'):
+        return b
+else:
+    def bytes_to_str(b, encoding='ascii'):
+        return b.decode(encoding)
+
+PY33 = sys.version_info[:2] == (3, 3)

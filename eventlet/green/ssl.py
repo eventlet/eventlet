@@ -7,7 +7,7 @@ import sys
 import errno
 time = __import__('time')
 
-from eventlet.support import get_errno, six
+from eventlet.support import get_errno, PY33, six
 from eventlet.hubs import trampoline, IOClosed
 from eventlet.greenio import set_nonblocking, GreenSocket, SOCKET_CLOSED, CONNECT_ERR, CONNECT_SUCCESS
 orig_socket = __import__('socket')
@@ -281,13 +281,16 @@ class GreenSSLSocket(_original_sslsocket):
         except AttributeError:
             # sslwrap was removed in 3.x and later in 2.7.9
             if six.PY2:
-                self._sslobj = self._context._wrap_socket(self._sock, server_side, ssl_sock=self)
+                sslobj = self._context._wrap_socket(self._sock, server_side, ssl_sock=self)
             else:
-                self._sslobj = self._context._wrap_socket(self, server_side)
+                context = self.context if PY33 else self._context
+                sslobj = context._wrap_socket(self, server_side)
         else:
-            self._sslobj = sslwrap(self._sock, server_side, self.keyfile, self.certfile,
-                                   self.cert_reqs, self.ssl_version,
-                                   self.ca_certs, *([self.ciphers] if has_ciphers else []))
+            sslobj = sslwrap(self._sock, server_side, self.keyfile, self.certfile,
+                             self.cert_reqs, self.ssl_version,
+                             self.ca_certs, *([self.ciphers] if has_ciphers else []))
+
+        self._sslobj = sslobj
         if self.do_handshake_on_connect:
             self.do_handshake()
 
