@@ -34,9 +34,7 @@ __all__ = profile_orig.__all__
 from eventlet.patcher import slurp_properties
 slurp_properties(profile_orig, globals(), srckeys=dir(profile_orig))
 
-import new
 import sys
-import traceback
 import functools
 
 from eventlet import greenthread
@@ -58,7 +56,7 @@ class Profile(profile_orig.Profile):
 
     def __call__(self, *args):
         """make callable, allowing an instance to be the profiler"""
-        r = self.dispatcher(*args)
+        self.dispatcher(*args)
 
     def _setup(self):
         self._has_setup = True
