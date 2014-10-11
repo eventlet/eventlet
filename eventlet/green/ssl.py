@@ -276,8 +276,11 @@ class GreenSSLSocket(_original_sslsocket):
         try:
             sslwrap = _ssl.sslwrap
         except AttributeError:
-            # sslwrap was removed in 2.7.9
-            self._sslobj = self._context._wrap_socket(self, server_side)
+            # sslwrap was removed in 3.x and later in 2.7.9
+            if six.PY2:
+                self._sslobj = self._context._wrap_socket(self._sock, server_side, ssl_sock=self)
+            else:
+                self._sslobj = self._context._wrap_socket(self, server_side)
         else:
             self._sslobj = sslwrap(self._sock, server_side, self.keyfile, self.certfile,
                                    self.cert_reqs, self.ssl_version,
