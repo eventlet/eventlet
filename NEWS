@@ -2,7 +2,7 @@
 =========================
 
 * removed deprecated modules: api, most of coros, pool, proc, processes and util
-* improved Python 3 compatibility
+* improved Python 3 compatibility (including patch by raylu)
 
 0.15.2
 ======
