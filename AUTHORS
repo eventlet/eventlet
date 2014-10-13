@@ -99,3 +99,4 @@ Thanks To
 * Jan Grant, Michael Kerrin, second simultaneous read (Github #94)
 * Simon Jagoe, Python3 octal literal fix
 * Tushar Gohad, wsgi: Support optional headers w/ "100 Continue" responses
+* raylu, fixing operator precedence bug in eventlet.wsgi
