@@ -9,10 +9,12 @@ import socket as _orig_sock
 import sys
 import tempfile
 
+from nose.tools import eq_
+
 from eventlet import event, greenio, debug
 from eventlet.hubs import get_hub
 from eventlet.green import select, socket, time, ssl
-from eventlet.support import get_errno, six
+from eventlet.support import capture_stderr, get_errno, six
 from tests import (
     LimitedTestCase, main,
     skip_with_pyevent, skipped, skip_if, skip_on_windows,
@@ -893,6 +895,22 @@ def test_set_nonblocking():
     greenio.set_nonblocking(sock)
     new_flags = fcntl.fcntl(fileno, fcntl.F_GETFL)
     assert new_flags == (orig_flags | os.O_NONBLOCK)
+
+
+def test_socket_del_fails_gracefully_when_not_fully_initialized():
+    # Regression introduced in da87716714689894f23d0db7b003f26d97031e83, reported in:
+    # * GH #137 https://github.com/eventlet/eventlet/issues/137
+    # * https://bugs.launchpad.net/oslo.messaging/+bug/1369999
+
+    class SocketSubclass(socket.socket):
+
+        def __init__(self):
+            pass
+
+    with capture_stderr() as err:
+        SocketSubclass()
+
+    assert err.getvalue() == ''
 
 
 if __name__ == '__main__':

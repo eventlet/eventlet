@@ -119,6 +119,9 @@ class GreenSocket(object):
     to save syscalls.
     """
 
+    # This placeholder is to prevent __getattr__ from creating an infinite call loop
+    fd = None
+
     def __init__(self, family_or_realsock=socket.AF_INET, *args, **kwargs):
         should_set_nonblocking = kwargs.pop('set_nonblocking', True)
         if isinstance(family_or_realsock, six.integer_types):
@@ -175,6 +178,8 @@ class GreenSocket(object):
     # If we find such attributes - only attributes having __get__ might be cached.
     # For now - I do not want to complicate it.
     def __getattr__(self, name):
+        if self.fd is None:
+            raise AttributeError(name)
         attr = getattr(self.fd, name)
         setattr(self, name, attr)
         return attr
@@ -216,7 +221,10 @@ class GreenSocket(object):
         self._closed = True
 
     def __del__(self):
-        self.close()
+        # This is in case self.close is not assigned yet (currently the constructor does it)
+        close = getattr(self, 'close', None)
+        if close is not None:
+            close()
 
     def connect(self, address):
         if self.act_non_blocking:
