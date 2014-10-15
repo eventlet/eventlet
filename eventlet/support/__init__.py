@@ -1,6 +1,7 @@
 import sys
+from contextlib import contextmanager
 
-from eventlet.support import greenlets
+from eventlet.support import greenlets, six
 
 
 def get_errno(exc):
@@ -41,3 +42,14 @@ else:
         return b.decode(encoding)
 
 PY33 = sys.version_info[:2] == (3, 3)
+
+@contextmanager
+def capture_stderr():
+    stream = six.StringIO()
+    original = sys.stderr
+    try:
+        sys.stderr = stream
+        yield stream
+    finally:
+        sys.stderr = original
+        stream.seek(0)

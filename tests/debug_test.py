@@ -2,7 +2,7 @@ import sys
 from unittest import TestCase
 
 from eventlet import debug
-from eventlet.support import six
+from eventlet.support import capture_stderr, six
 from tests import LimitedTestCase, main
 import eventlet
 
@@ -107,10 +107,7 @@ class TestDebug(LimitedTestCase):
             s.recv(1)
             {}[1]  # keyerror
 
-        fake = six.StringIO()
-        orig = sys.stderr
-        sys.stderr = fake
-        try:
+        with capture_stderr() as fake:
             gt = eventlet.spawn(hurl, client_2)
             eventlet.sleep(0)
             client.send(b' ')
@@ -118,10 +115,8 @@ class TestDebug(LimitedTestCase):
             # allow the "hurl" greenlet to trigger the KeyError
             # not sure why the extra context switch is needed
             eventlet.sleep(0)
-        finally:
-            sys.stderr = orig
-            self.assertRaises(KeyError, gt.wait)
-            debug.hub_exceptions(False)
+        self.assertRaises(KeyError, gt.wait)
+        debug.hub_exceptions(False)
         # look for the KeyError exception in the traceback
         assert 'KeyError: 1' in fake.getvalue(), "Traceback not in:\n" + fake.getvalue()
 

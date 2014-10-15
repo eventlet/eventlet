@@ -17,7 +17,7 @@ from eventlet.green import subprocess
 from eventlet import greenio
 from eventlet import greenthread
 from eventlet import support
-from eventlet.support import bytes_to_str, six
+from eventlet.support import bytes_to_str, capture_stderr, six
 from eventlet import tpool
 from eventlet import wsgi
 
@@ -835,11 +835,8 @@ class TestHttpd(_TestBase):
         listener = greensocket.socket()
         listener.bind(('localhost', 0))
         # NOT calling listen, to trigger the error
-        self.logfile = six.StringIO()
-        self.spawn_server(sock=listener)
-        old_stderr = sys.stderr
-        try:
-            sys.stderr = self.logfile
+        with capture_stderr() as log:
+            self.spawn_server(sock=listener)
             eventlet.sleep(0)  # need to enter server loop
             try:
                 eventlet.connect(('localhost', self.port))
@@ -847,10 +844,8 @@ class TestHttpd(_TestBase):
             except socket.error as exc:
                 self.assertEqual(support.get_errno(exc), errno.ECONNREFUSED)
 
-            log_content = self.logfile.getvalue()
-            assert 'Invalid argument' in log_content, log_content
-        finally:
-            sys.stderr = old_stderr
+        log_content = log.getvalue()
+        assert 'Invalid argument' in log_content, log_content
         debug.hub_exceptions(False)
 
     def test_026_log_format(self):
