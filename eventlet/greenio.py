@@ -215,11 +215,6 @@ class GreenSocket(object):
         """ Mark this socket as being closed """
         self._closed = True
 
-    def close(self):
-        notify_close(self.fd)
-        self._mark_as_closed()
-        return self.fd.close()
-
     def __del__(self):
         self.close()
 
