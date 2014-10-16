@@ -221,12 +221,9 @@ class GreenSocket(object):
         self._closed = True
 
     def __del__(self):
-        try:
-            close = self.close
-        except AttributeError:
-            # In case when our constructor wasn't called or didn't succeed
-            pass
-        else:
+        # This is in case self.close is not assigned yet (currently the constructor does it)
+        close = getattr(self, 'close', None)
+        if close is not None:
             close()
 
     def connect(self, address):
