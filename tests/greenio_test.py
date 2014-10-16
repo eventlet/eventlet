@@ -8,6 +8,7 @@ import shutil
 import socket as _orig_sock
 import sys
 import tempfile
+from unittest import TestCase
 
 from eventlet import event, greenio, debug
 from eventlet.hubs import get_hub
@@ -609,6 +610,38 @@ class TestGreenSocket(LimitedTestCase):
         s1, s2 = socket.socketpair()
         assert select.select([], [s1], [], 0) == ([], [s1], [])
         assert select.select([], [s1], [], 0) == ([], [s1], [])
+
+
+class TestGreenSelect(TestCase):
+    def test_get_fileno(self):
+        class DummySocket(object):
+            def fileno(self):
+                return 123
+        self.assertEqual(123, select.get_fileno(DummySocket()))
+
+    def test_get_fileno_int(self):
+        self.assertEqual(123, select.get_fileno(123))
+
+    def test_get_fileno_typ_error1(self):
+        try:
+            select.get_fileno('foo')
+        except TypeError as ex:
+            expected = 'Expected int or long, got <type \'str\'>'
+            self.assertEqual(expected, str(ex))
+        else:
+            self.fail('Expected TypeError not raised')
+
+    def test_get_fileno_type_error2(self):
+        class DummySocket(object):
+            def fileno(self):
+                return 'foo'
+        try:
+            select.get_fileno(DummySocket())
+        except TypeError as ex:
+            expected = 'Expected int or long, got <type \'str\'>'
+            self.assertEqual(expected, str(ex))
+        else:
+            self.fail('Expected TypeError not raised')
 
 
 class TestGreenPipe(LimitedTestCase):

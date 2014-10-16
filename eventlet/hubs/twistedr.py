@@ -36,7 +36,7 @@ def callLater(DelayedCallClass, reactor, _seconds, _f, *args, **kw):
     # the same as original but creates fixed DelayedCall instance
     assert callable(_f), "%s is not callable" % _f
     if not isinstance(_seconds, (int, long, float)):
-        raise TypeError("Seconds must be int, long, or float, was " + type(_seconds))
+        raise TypeError("Seconds must be int, long, or float, was %s" % type(_seconds))
     assert sys.maxint >= _seconds >= 0, \
         "%s is not greater than or equal to 0 seconds" % (_seconds,)
     tple = DelayedCallClass(reactor.seconds() + _seconds, _f, args, kw,
