@@ -7,7 +7,7 @@ Code talks!  This is a simple web crawler that fetches a bunch of urls concurren
 
     urls = [
         "http://www.google.com/intl/en_ALL/images/logo.gif",
-        "https://wiki.secondlife.com/w/images/secondlife.jpg",
+        "http://python.org/images/python-logo.gif",
         "http://us.i1.yimg.com/us.yimg.com/i/ww/beta/y3.gif",
     ]
 
