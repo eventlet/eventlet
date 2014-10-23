@@ -17,12 +17,12 @@ def get_fileno(obj):
         f = obj.fileno
     except AttributeError:
         if not isinstance(obj, six.integer_types):
-            raise TypeError("Expected int or long, got " + type(obj))
+            raise TypeError("Expected int or long, got %s" % type(obj))
         return obj
     else:
         rv = f()
         if not isinstance(rv, six.integer_types):
-            raise TypeError("Expected int or long, got " + type(rv))
+            raise TypeError("Expected int or long, got %s" % type(rv))
         return rv
 
 
