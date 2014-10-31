@@ -1040,7 +1040,7 @@ class TestHttpd(_TestBase):
 
     def test_031_reject_large_headers(self):
         sock = eventlet.connect(('localhost', self.port))
-        headers = 'Name: Value\r\n' * 5050
+        headers = ('Name: %s\r\n' % ('a' * 7000,)) * 20
         request = 'GET / HTTP/1.0\r\nHost: localhost\r\n%s\r\n\r\n' % headers
         fd = sock.makefile('rwb')
         fd.write(request.encode())
@@ -1309,7 +1309,7 @@ class TestHttpd(_TestBase):
 
         def wsgi_app(environ, start_response):
             start_response('200 oK', [random_case_header])
-            return ['']
+            return [b'']
 
         self.spawn_server(site=wsgi_app, capitalize_response_headers=False)
 
