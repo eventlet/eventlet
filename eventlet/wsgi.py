@@ -710,6 +710,19 @@ def server(sock, site,
     closed after server exits, but the underlying file descriptor will
     remain open, so if you have a dup() of *sock*, it will remain usable.
 
+    .. warning::
+
+        At the moment :func:`server` will always wait for active connections to finish before
+        exiting, even if there's an exception raised inside it
+        (*all* exceptions are handled the same way, including :class:`greenlet.GreenletExit`
+        and those inheriting from `BaseException`).
+
+        While this may not be an issue normally, when it comes to long running HTTP connections
+        (like :mod:`eventlet.websocket`) it will become problematic and calling
+        :meth:`~eventlet.greenthread.GreenThread.wait` on a thread that runs the server may hang,
+        even after using :meth:`~eventlet.greenthread.GreenThread.kill`, as long
+        as there are active connections.
+
     :param sock: Server socket, must be already bound to a port and listening.
     :param site: WSGI application function.
     :param log: File-like object that logs should be written to.

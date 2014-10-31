@@ -9,6 +9,7 @@ from eventlet.support import greenlets as greenlet, six
 import warnings
 
 __all__ = ['getcurrent', 'sleep', 'spawn', 'spawn_n',
+           'kill',
            'spawn_after', 'spawn_after_local', 'GreenThread']
 
 getcurrent = greenlet.getcurrent
