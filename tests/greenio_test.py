@@ -273,7 +273,7 @@ class TestGreenSocket(LimitedTestCase):
             # by closing the socket prior to using the made file
             try:
                 conn, addr = listener.accept()
-                fd = conn.makefile('w')
+                fd = conn.makefile('wb')
                 conn.close()
                 fd.write(b'hello\n')
                 fd.close()
@@ -287,7 +287,7 @@ class TestGreenSocket(LimitedTestCase):
             # by closing the made file and then sending a character
             try:
                 conn, addr = listener.accept()
-                fd = conn.makefile('w')
+                fd = conn.makefile('wb')
                 fd.write(b'hello')
                 fd.close()
                 conn.send(b'\n')
@@ -300,7 +300,7 @@ class TestGreenSocket(LimitedTestCase):
         def did_it_work(server):
             client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             client.connect(('127.0.0.1', server.getsockname()[1]))
-            fd = client.makefile()
+            fd = client.makefile('rb')
             client.close()
             assert fd.readline() == b'hello\n'
             assert fd.read() == b''
@@ -329,7 +329,7 @@ class TestGreenSocket(LimitedTestCase):
             # closing the file object should close everything
             try:
                 conn, addr = listener.accept()
-                conn = conn.makefile('w')
+                conn = conn.makefile('wb')
                 conn.write(b'hello\n')
                 conn.close()
                 gc.collect()
@@ -344,7 +344,7 @@ class TestGreenSocket(LimitedTestCase):
         killer = eventlet.spawn(accept_once, server)
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client.connect(('127.0.0.1', server.getsockname()[1]))
-        fd = client.makefile()
+        fd = client.makefile('rb')
         client.close()
         assert fd.read() == b'hello\n'
         assert fd.read() == b''
@@ -603,7 +603,7 @@ class TestGreenSocket(LimitedTestCase):
     def test_sockopt_interface(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         assert sock.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR) == 0
-        assert sock.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) == '\000'
+        assert sock.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) == b'\000'
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
     def test_socketpair_select(self):
