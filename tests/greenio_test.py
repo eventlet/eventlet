@@ -104,7 +104,7 @@ class TestGreenSocket(LimitedTestCase):
         s.settimeout(0.1)
         gs = greenio.GreenSocket(s)
         e = gs.connect_ex(('192.0.2.1', 80))
-        if not e in (errno.EHOSTUNREACH, errno.ENETUNREACH):
+        if e not in (errno.EHOSTUNREACH, errno.ENETUNREACH):
             self.assertEqual(e, errno.EAGAIN)
 
     def test_recv_timeout(self):

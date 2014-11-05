@@ -465,7 +465,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 tb = traceback.format_exc()
                 self.server.log_message(tb)
                 if not headers_set:
-                    err_body =six.b(tb) if self.server.debug else b''
+                    err_body = six.b(tb) if self.server.debug else b''
                     start_response("500 Internal Server Error",
                                    [('Content-type', 'text/plain'),
                                     ('Content-length', len(err_body))])
