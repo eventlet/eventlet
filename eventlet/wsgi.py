@@ -88,8 +88,9 @@ class Input(object):
         # (optional) headers to send with a "100 Continue" response. Set by
         # calling set_hundred_continue_respose_headers() on env['wsgi.input']
         self.hundred_continue_headers = None
+        self.is_hundred_continue_response_sent = False
 
-    def _send_hundred_continue_response(self):
+    def send_hundred_continue_response(self):
         towrite = []
 
         # 100 Continue status line
@@ -105,13 +106,16 @@ class Input(object):
         towrite.append(b'\r\n')
 
         self.wfile.writelines(towrite)
-        self.wfile = None
-        self.wfile_line = None
+
+        # Reinitialize chunk_length (expect more data)
+        self.chunk_length = -1
 
     def _do_read(self, reader, length=None):
-        if self.wfile is not None:
+        if self.wfile is not None and \
+                not self.is_hundred_continue_response_sent:
             # 100 Continue response
-            self._send_hundred_continue_response()
+            self.send_hundred_continue_response()
+            self.is_hundred_continue_response_sent = True
         if length is None and self.content_length is not None:
             length = self.content_length - self.position
         if length and length > self.content_length - self.position:
@@ -126,9 +130,11 @@ class Input(object):
         return read
 
     def _chunked_read(self, rfile, length=None, use_readline=False):
-        if self.wfile is not None:
+        if self.wfile is not None and \
+                not self.is_hundred_continue_response_sent:
             # 100 Continue response
-            self._send_hundred_continue_response()
+            self.send_hundred_continue_response()
+            self.is_hundred_continue_response_sent = True
         try:
             if length == 0:
                 return ""

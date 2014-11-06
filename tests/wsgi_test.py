@@ -830,6 +830,160 @@ class TestHttpd(_TestBase):
         fd.close()
         sock.close()
 
+    def test_024b_expect_100_continue_with_headers_multiple_chunked(self):
+        def wsgi_app(environ, start_response):
+            environ['wsgi.input'].set_hundred_continue_response_headers(
+                [('Hundred-Continue-Header-1', 'H1'),
+                 ('Hundred-Continue-Header-2', 'H2')])
+            text = environ['wsgi.input'].read()
+
+            environ['wsgi.input'].set_hundred_continue_response_headers(
+                [('Hundred-Continue-Header-3', 'H3')])
+            environ['wsgi.input'].send_hundred_continue_response()
+
+            text += environ['wsgi.input'].read()
+
+            start_response('200 OK', [('Content-Length', str(len(text)))])
+            return [text]
+        self.site.application = wsgi_app
+        sock = eventlet.connect(('localhost', self.port))
+        fd = sock.makefile('rwb')
+        fd.write(b'PUT /a HTTP/1.1\r\n'
+                 b'Host: localhost\r\nConnection: close\r\n'
+                 b'Transfer-Encoding: chunked\r\n'
+                 b'Expect: 100-continue\r\n\r\n')
+        fd.flush()
+
+        # Expect 1st 100-continue response
+        header_lines = []
+        while True:
+            line = fd.readline()
+            if line == b'\r\n':
+                break
+            else:
+                header_lines.append(line.strip())
+        assert header_lines[0].startswith(b'HTTP/1.1 100 Continue')
+        headers = dict((k, v) for k, v in (h.split(b': ', 1)
+                                           for h in header_lines[1:]))
+        assert b'Hundred-Continue-Header-1' in headers
+        assert b'Hundred-Continue-Header-2' in headers
+        self.assertEqual(b'H1', headers[b'Hundred-Continue-Header-1'])
+        self.assertEqual(b'H2', headers[b'Hundred-Continue-Header-2'])
+
+        # Send message 1
+        fd.write(b'5\r\nfirst\r\n8\r\n message\r\n0\r\n\r\n')
+        fd.flush()
+
+        # Expect a 2nd 100-continue response
+        header_lines = []
+        while True:
+            line = fd.readline()
+            if line == b'\r\n':
+                break
+            else:
+                header_lines.append(line.strip())
+        assert header_lines[0].startswith(b'HTTP/1.1 100 Continue')
+        headers = dict((k, v) for k, v in (h.split(b': ', 1)
+                                           for h in header_lines[1:]))
+        assert b'Hundred-Continue-Header-3' in headers
+        self.assertEqual(b'H3', headers[b'Hundred-Continue-Header-3'])
+
+        # Send message 2
+        fd.write(b'8\r\n, second\r\n8\r\n message\r\n0\r\n\r\n')
+        fd.flush()
+
+        # Expect final 200-OK
+        header_lines = []
+        while True:
+            line = fd.readline()
+            if line == b'\r\n':
+                break
+            else:
+                header_lines.append(line.strip())
+        assert header_lines[0].startswith(b'HTTP/1.1 200 OK')
+
+        self.assertEqual(fd.read(29), b'first message, second message')
+        fd.close()
+        sock.close()
+
+    def test_024c_expect_100_continue_with_headers_multiple_nonchunked(self):
+        def wsgi_app(environ, start_response):
+
+            environ['wsgi.input'].set_hundred_continue_response_headers(
+                [('Hundred-Continue-Header-1', 'H1'),
+                 ('Hundred-Continue-Header-2', 'H2')])
+            text = environ['wsgi.input'].read(13)
+
+            environ['wsgi.input'].set_hundred_continue_response_headers(
+                [('Hundred-Continue-Header-3', 'H3')])
+            environ['wsgi.input'].send_hundred_continue_response()
+
+            text += environ['wsgi.input'].read(16)
+
+            start_response('200 OK', [('Content-Length', str(len(text)))])
+            return [text]
+
+        self.site.application = wsgi_app
+        sock = eventlet.connect(('localhost', self.port))
+        fd = sock.makefile('rwb')
+        fd.write(b'PUT /a HTTP/1.1\r\n'
+                 b'Host: localhost\r\nConnection: close\r\n'
+                 b'Content-Length: 29\r\n'
+                 b'Expect: 100-continue\r\n\r\n')
+        fd.flush()
+
+        # Expect 1st 100-continue response
+        header_lines = []
+        while True:
+            line = fd.readline()
+            if line == b'\r\n':
+                break
+            else:
+                header_lines.append(line.strip())
+        assert header_lines[0].startswith(b'HTTP/1.1 100 Continue')
+        headers = dict((k, v) for k, v in (h.split(b': ', 1)
+                                           for h in header_lines[1:]))
+        assert b'Hundred-Continue-Header-1' in headers
+        assert b'Hundred-Continue-Header-2' in headers
+        self.assertEqual(b'H1', headers[b'Hundred-Continue-Header-1'])
+        self.assertEqual(b'H2', headers[b'Hundred-Continue-Header-2'])
+
+        # Send message 1
+        fd.write(b'first message')
+        fd.flush()
+
+        # Expect a 2nd 100-continue response
+        header_lines = []
+        while True:
+            line = fd.readline()
+            if line == b'\r\n':
+                break
+            else:
+                header_lines.append(line.strip())
+        assert header_lines[0].startswith(b'HTTP/1.1 100 Continue')
+        headers = dict((k, v) for k, v in (h.split(b': ', 1)
+                                           for h in header_lines[1:]))
+        assert b'Hundred-Continue-Header-3' in headers
+        self.assertEqual(b'H3', headers[b'Hundred-Continue-Header-3'])
+
+        # Send message 2
+        fd.write(b', second message\r\n')
+        fd.flush()
+
+        # Expect final 200-OK
+        header_lines = []
+        while True:
+            line = fd.readline()
+            if line == b'\r\n':
+                break
+            else:
+                header_lines.append(line.strip())
+        assert header_lines[0].startswith(b'HTTP/1.1 200 OK')
+
+        self.assertEqual(fd.read(29), b'first message, second message')
+        fd.close()
+        sock.close()
+
     def test_025_accept_errors(self):
         debug.hub_exceptions(True)
         listener = greensocket.socket()
