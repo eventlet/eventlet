@@ -69,11 +69,13 @@ class Input(object):
     def __init__(self,
                  rfile,
                  content_length,
+                 sock,
                  wfile=None,
                  wfile_line=None,
                  chunked_input=False):
 
         self.rfile = rfile
+        self._sock = sock
         if content_length is not None:
             content_length = int(content_length)
         self.content_length = content_length
@@ -199,7 +201,7 @@ class Input(object):
         return iter(self.read, b'')
 
     def get_socket(self):
-        return self.rfile._sock
+        return self._sock
 
     def set_hundred_continue_response_headers(self, headers,
                                               capitalize_response_headers=True):
@@ -393,24 +395,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 towrite.append(six.b("%x" % (len(data),)) + b"\r\n" + data + b"\r\n")
             else:
                 towrite.append(data)
-            try:
-                _writelines(towrite)
-                length[0] = length[0] + sum(map(len, towrite))
-            except UnicodeEncodeError:
-                self.server.log_message(
-                    "Encountered non-ascii unicode while attempting to write"
-                    "wsgi response: %r" %
-                    [x for x in towrite if isinstance(x, six.text_type)])
-                self.server.log_message(traceback.format_exc())
-                _writelines(
-                    ["HTTP/1.1 500 Internal Server Error\r\n",
-                     "Connection: close\r\n",
-                     "Content-type: text/plain\r\n",
-                     "Content-length: 98\r\n",
-                     "Date: %s\r\n" % format_date_time(time.time()),
-                     "\r\n",
-                     ("Internal Server Error: wsgi application passed "
-                      "a unicode object to the server instead of a string.")])
+            _writelines(towrite)
+            length[0] = length[0] + sum(map(len, towrite))
 
         def start_response(status, response_headers, exc_info=None):
             status_code[0] = status.split()[0]
@@ -454,6 +440,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 minimum_write_chunk_size = int(self.environ.get(
                     'eventlet.minimum_write_chunk_size', self.minimum_chunk_size))
                 for data in result:
+                    if not isinstance(data, six.binary_type):
+                        raise Exception('The result iterable has to return bytestrings')
                     towrite.append(data)
                     towrite_size += len(data)
                     if towrite_size >= minimum_write_chunk_size:
@@ -470,7 +458,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.close_connection = 1
                 tb = traceback.format_exc()
                 self.server.log_message(tb)
-                if not headers_set:
+                if not headers_sent:
                     err_body =six.b(tb) if self.server.debug else b''
                     start_response("500 Internal Server Error",
                                    [('Content-type', 'text/plain'),
@@ -570,7 +558,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             wfile_line = None
         chunked = env.get('HTTP_TRANSFER_ENCODING', '').lower() == 'chunked'
         env['wsgi.input'] = env['eventlet.input'] = Input(
-            self.rfile, length, wfile=wfile, wfile_line=wfile_line,
+            self.rfile, length, self.connection, wfile=wfile, wfile_line=wfile_line,
             chunked_input=chunked)
         env['eventlet.posthooks'] = []
 

@@ -1,6 +1,6 @@
 """Implements the standard thread module, using greenthreads."""
 from eventlet.support.six.moves import _thread as __thread
-from eventlet.support import greenlets as greenlet
+from eventlet.support import greenlets as greenlet, six
 from eventlet import greenthread
 from eventlet.semaphore import Semaphore as LockType
 
@@ -11,6 +11,16 @@ __patched__ = ['get_ident', 'start_new_thread', 'start_new', 'allocate_lock',
 
 error = __thread.error
 __threadcount = 0
+
+
+if six.PY3:
+    def _set_sentinel():
+        # HACK this is dummy code
+        # TODO possibly reimplement this:
+        # https://hg.python.org/cpython/file/b5e9bc4352e1/Modules/_threadmodule.c#l1203
+        return allocate_lock()
+
+    TIMEOUT_MAX = __thread.TIMEOUT_MAX
 
 
 def _count():
