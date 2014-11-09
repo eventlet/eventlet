@@ -44,6 +44,25 @@ class TestSemaphore(LimitedTestCase):
         sem = semaphore.Semaphore()
         self.assertRaises(ValueError, sem.acquire, blocking=False, timeout=1)
 
+    def test_semaphore_contention(self):
+        g_mutex = semaphore.Semaphore()
+        counts = [0, 0]
+
+        def func1(no):
+            while True:
+                with g_mutex:
+                    counts[no - 1] += 1
+                    eventlet.sleep(0.001)
+
+        t1 = eventlet.spawn(func1, no=1)
+        t2 = eventlet.spawn(func1, no=2)
+
+        eventlet.sleep(0.5)
+        t1.kill()
+        t2.kill()
+
+        self.assertFalse(abs(counts[0] - counts[1]) > 100)
+
 
 if __name__ == '__main__':
     unittest.main()

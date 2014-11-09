@@ -80,7 +80,7 @@ class Semaphore(object):
             raise ValueError("can't specify timeout for non-blocking acquire")
         if not blocking and self.locked():
             return False
-        if self.counter <= 0:
+        if self.counter <= 0 or self._waiters:
             self._waiters.add(greenthread.getcurrent())
             try:
                 if timeout is not None:
@@ -92,6 +92,9 @@ class Semaphore(object):
                     if not ok:
                         return False
                 else:
+                    # If someone else is already in this wait loop, give them
+                    # a chance to get out.
+                    hubs.get_hub().switch()
                     while self.counter <= 0:
                         hubs.get_hub().switch()
             finally:
