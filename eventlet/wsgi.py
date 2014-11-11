@@ -69,11 +69,13 @@ class Input(object):
     def __init__(self,
                  rfile,
                  content_length,
+                 sock,
                  wfile=None,
                  wfile_line=None,
                  chunked_input=False):
 
         self.rfile = rfile
+        self._sock = sock
         if content_length is not None:
             content_length = int(content_length)
         self.content_length = content_length
@@ -199,7 +201,7 @@ class Input(object):
         return iter(self.read, b'')
 
     def get_socket(self):
-        return self.rfile._sock
+        return self._sock
 
     def set_hundred_continue_response_headers(self, headers,
                                               capitalize_response_headers=True):
@@ -570,7 +572,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             wfile_line = None
         chunked = env.get('HTTP_TRANSFER_ENCODING', '').lower() == 'chunked'
         env['wsgi.input'] = env['eventlet.input'] = Input(
-            self.rfile, length, wfile=wfile, wfile_line=wfile_line,
+            self.rfile, length, self.connection, wfile=wfile, wfile_line=wfile_line,
             chunked_input=chunked)
         env['eventlet.posthooks'] = []
 
