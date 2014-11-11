@@ -172,7 +172,8 @@ class BaseHub(object):
                     "particular socket.  Consider using a pools.Pool. "
                     "If you do know what you're doing and want to disable "
                     "this error, call "
-                    "eventlet.debug.hub_prevent_multiple_readers(False) - MY THREAD=%s; THAT THREAD=%s" % (
+                    "eventlet.debug.hub_prevent_multiple_readers(False) - MY THREAD=%s; "
+                    "THAT THREAD=%s" % (
                         evtype, fileno, evtype, cb, bucket[fileno]))
             # store off the second listener in another structure
             self.secondaries[evtype].setdefault(fileno, []).append(listener)

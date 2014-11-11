@@ -256,7 +256,8 @@ class WebSocket(object):
     properties:
 
     path
-        The path value of the request.  This is the same as the WSGI PATH_INFO variable, but more convenient.
+        The path value of the request.  This is the same as the WSGI PATH_INFO variable,
+        but more convenient.
     protocol
         The value of the Websocket-Protocol header.
     origin

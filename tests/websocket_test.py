@@ -169,7 +169,8 @@ class TestWebSocket(_TestBase):
             'Connection: Upgrade',
             'Sec-WebSocket-Origin: http://localhost:%s' % self.port,
             'Sec-WebSocket-Protocol: ws',
-            'Sec-WebSocket-Location: ws://localhost:%s/echo?query_string\r\n\r\n8jKS\'y:G*Co,Wxa-' % self.port,
+            'Sec-WebSocket-Location: '
+            'ws://localhost:%s/echo?query_string\r\n\r\n8jKS\'y:G*Co,Wxa-' % self.port,
         ]))
 
     def test_empty_query_string(self):
