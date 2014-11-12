@@ -21,8 +21,9 @@ if getattr(subprocess_orig, 'TimeoutExpired', None) is None:
         a child process.
         """
 
-        def __init__(self, timeout, cmd, output=None):
+        def __init__(self, cmd, timeout, output=None):
             self.cmd = cmd
+            self.timeout = timeout
             self.output = output
 
         def __str__(self):
