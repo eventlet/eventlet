@@ -6,9 +6,9 @@ from eventlet import event
 from eventlet import greenio
 from eventlet.green import httplib
 from eventlet.support import six
-from eventlet.websocket import WebSocketWSGI
+from eventlet.websocket import WebSocket, WebSocketWSGI
 
-from tests import certificate_file, private_key_file
+from tests import certificate_file, LimitedTestCase, mock, private_key_file
 from tests import skip_if_no_ssl
 from tests.wsgi_test import _TestBase
 
@@ -566,3 +566,37 @@ class TestWebSocketSSL(_TestBase):
         greenio.shutdown_safe(sock)
         sock.close()
         eventlet.sleep(0.01)
+
+
+class TestWebSocketObject(LimitedTestCase):
+
+    def setUp(self):
+        self.mock_socket = s = mock.Mock()
+        self.environ = env = dict(HTTP_ORIGIN='http://localhost', HTTP_WEBSOCKET_PROTOCOL='ws',
+                                  PATH_INFO='test')
+
+        self.test_ws = WebSocket(s, env)
+        super(TestWebSocketObject, self).setUp()
+
+    def test_recieve(self):
+        ws = self.test_ws
+        ws.socket.recv.return_value = b'\x00hello\xFF'
+        self.assertEqual(ws.wait(), 'hello')
+        self.assertEqual(ws._buf, b'')
+        self.assertEqual(len(ws._msgs), 0)
+        ws.socket.recv.return_value = b''
+        self.assertEqual(ws.wait(), None)
+        self.assertEqual(ws._buf, b'')
+        self.assertEqual(len(ws._msgs), 0)
+
+    def test_send_to_ws(self):
+        ws = self.test_ws
+        ws.send(u'hello')
+        assert ws.socket.sendall.called_with("\x00hello\xFF")
+        ws.send(10)
+        assert ws.socket.sendall.called_with("\x0010\xFF")
+
+    def test_close_ws(self):
+        ws = self.test_ws
+        ws.close()
+        assert ws.socket.shutdown.called_with(True)
