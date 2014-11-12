@@ -1,6 +1,13 @@
-""" Convenience module for running standard library tests with nose.  The standard tests are not especially homogeneous, but they mostly expose a test_main method that does the work of selecting which tests to run based on what is supported by the platform.  On its own, Nose would run all possible tests and many would fail; therefore we collect all of the test_main methods here in one module and Nose can run it.  Hopefully in the future the standard tests get rewritten to be more nosey.
+""" Convenience module for running standard library tests with nose.  The standard
+tests are not especially homogeneous, but they mostly expose a test_main method that
+does the work of selecting which tests to run based on what is supported by the
+platform.  On its own, Nose would run all possible tests and many would fail; therefore
+we collect all of the test_main methods here in one module and Nose can run it.
 
-Many of these tests make connections to external servers, and all.py tries to skip these tests rather than failing them, so you can get some work done on a plane.
+Hopefully in the future the standard tests get rewritten to be more nosey.
+
+Many of these tests make connections to external servers, and all.py tries to skip these
+tests rather than failing them, so you can get some work done on a plane.
 """
 
 from eventlet import debug
