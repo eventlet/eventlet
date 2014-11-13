@@ -60,7 +60,7 @@ class TestWebSocket(_TestBase):
 
         self.assertEqual(resp.status, 400)
         self.assertEqual(resp.getheader('connection'), 'close')
-        self.assertEqual(resp.read(), '')
+        self.assertEqual(resp.read(), b'')
 
     def test_incomplete_headers_76(self):
         # First test: Missing Connection:
@@ -77,7 +77,7 @@ class TestWebSocket(_TestBase):
 
         self.assertEqual(resp.status, 400)
         self.assertEqual(resp.getheader('connection'), 'close')
-        self.assertEqual(resp.read(), '')
+        self.assertEqual(resp.read(), b'')
 
         # Now, miss off key2
         headers = dict(kv.split(': ') for kv in [
@@ -95,7 +95,7 @@ class TestWebSocket(_TestBase):
 
         self.assertEqual(resp.status, 400)
         self.assertEqual(resp.getheader('connection'), 'close')
-        self.assertEqual(resp.read(), '')
+        self.assertEqual(resp.read(), b'')
 
     def test_correct_upgrade_request_75(self):
         connect = [
@@ -112,13 +112,13 @@ class TestWebSocket(_TestBase):
         sock.sendall(six.b('\r\n'.join(connect) + '\r\n\r\n'))
         result = sock.recv(1024)
         # The server responds the correct Websocket handshake
-        self.assertEqual(result, '\r\n'.join([
+        self.assertEqual(result, six.b('\r\n'.join([
             'HTTP/1.1 101 Web Socket Protocol Handshake',
             'Upgrade: WebSocket',
             'Connection: Upgrade',
             'WebSocket-Origin: http://localhost:%s' % self.port,
             'WebSocket-Location: ws://localhost:%s/echo\r\n\r\n' % self.port,
-        ]))
+        ])))
 
     def test_correct_upgrade_request_76(self):
         connect = [
@@ -137,14 +137,14 @@ class TestWebSocket(_TestBase):
         sock.sendall(six.b('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U'))
         result = sock.recv(1024)
         # The server responds the correct Websocket handshake
-        self.assertEqual(result, '\r\n'.join([
+        self.assertEqual(result, six.b('\r\n'.join([
             'HTTP/1.1 101 WebSocket Protocol Handshake',
             'Upgrade: WebSocket',
             'Connection: Upgrade',
             'Sec-WebSocket-Origin: http://localhost:%s' % self.port,
             'Sec-WebSocket-Protocol: ws',
             'Sec-WebSocket-Location: ws://localhost:%s/echo\r\n\r\n8jKS\'y:G*Co,Wxa-' % self.port,
-        ]))
+        ])))
 
     def test_query_string(self):
         # verify that the query string comes out the other side unscathed
@@ -163,7 +163,7 @@ class TestWebSocket(_TestBase):
 
         sock.sendall(six.b('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U'))
         result = sock.recv(1024)
-        self.assertEqual(result, '\r\n'.join([
+        self.assertEqual(result, six.b('\r\n'.join([
             'HTTP/1.1 101 WebSocket Protocol Handshake',
             'Upgrade: WebSocket',
             'Connection: Upgrade',
@@ -171,7 +171,7 @@ class TestWebSocket(_TestBase):
             'Sec-WebSocket-Protocol: ws',
             'Sec-WebSocket-Location: '
             'ws://localhost:%s/echo?query_string\r\n\r\n8jKS\'y:G*Co,Wxa-' % self.port,
-        ]))
+        ])))
 
     def test_empty_query_string(self):
         # verify that a single trailing ? doesn't get nuked
@@ -190,14 +190,14 @@ class TestWebSocket(_TestBase):
 
         sock.sendall(six.b('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U'))
         result = sock.recv(1024)
-        self.assertEqual(result, '\r\n'.join([
+        self.assertEqual(result, six.b('\r\n'.join([
             'HTTP/1.1 101 WebSocket Protocol Handshake',
             'Upgrade: WebSocket',
             'Connection: Upgrade',
             'Sec-WebSocket-Origin: http://localhost:%s' % self.port,
             'Sec-WebSocket-Protocol: ws',
             'Sec-WebSocket-Location: ws://localhost:%s/echo?\r\n\r\n8jKS\'y:G*Co,Wxa-' % self.port,
-        ]))
+        ])))
 
     def test_sending_messages_to_websocket_75(self):
         connect = [
@@ -215,7 +215,7 @@ class TestWebSocket(_TestBase):
         sock.recv(1024)
         sock.sendall(b'\x00hello\xFF')
         result = sock.recv(1024)
-        self.assertEqual(result, '\x00hello\xff')
+        self.assertEqual(result, b'\x00hello\xff')
         sock.sendall(b'\x00start')
         eventlet.sleep(0.001)
         sock.sendall(b' end\xff')

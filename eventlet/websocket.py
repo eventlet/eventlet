@@ -172,7 +172,7 @@ class WebSocketWSGI(object):
                 b"HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
                 b"Upgrade: WebSocket\r\n"
                 b"Connection: Upgrade\r\n"
-                b"WebSocket-Origin: " + environ.get('HTTP_ORIGIN') + b"\r\n"
+                b"WebSocket-Origin: " + six.b(environ.get('HTTP_ORIGIN')) + b"\r\n"
                 b"WebSocket-Location: " + six.b(location) + b"\r\n\r\n"
             )
         elif self.protocol_version == 76:
