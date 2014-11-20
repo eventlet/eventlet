@@ -40,3 +40,5 @@ script:
 after_failure:
   - for X in .tox/$TOX_ENV/log/*; do echo "$X\n"; cat "$X"; echo "\n\n"; done
   - echo "pip.log\n"; cat $HOME/.pip/pip.log
+notifications:
+  slack: eventlet-net:OYrQ1JE3hdTD78yQY1yZJnnc
