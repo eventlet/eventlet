@@ -47,6 +47,10 @@ def inject(module_name, new_globals, *additional_modules):
     that the already-imported modules in *additional_modules* are used when
     *module_name* makes its imports.
 
+    **Note:** This function does not create or change any sys.modules item, so
+    if your greened module use code like 'sys.modules["your_module_name"]', you
+    need to update sys.modules by yourself.
+
     *new_globals* is either None or a globals dictionary that gets populated
     with the contents of the *module_name* module.  This is useful when creating
     a "green" version of some other module.
