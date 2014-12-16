@@ -42,8 +42,6 @@ def mysql_requirement(_f):
 
 class TestMySQLdb(LimitedTestCase):
     def setUp(self):
-        super(TestMySQLdb, self).setUp()
-
         self._auth = get_database_auth()['MySQLdb']
         self.create_db()
         self.connection = None
@@ -55,6 +53,8 @@ class TestMySQLdb(LimitedTestCase):
         );""")
         self.connection.commit()
         cursor.close()
+
+        super(TestMySQLdb, self).setUp()
 
     def tearDown(self):
         if self.connection:
