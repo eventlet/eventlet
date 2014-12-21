@@ -283,6 +283,12 @@ def monkey_patch(**on):
     finally:
         imp.release_lock()
 
+    if sys.version_info >= (3, 3):
+        import importlib._bootstrap
+        thread = original('_thread')
+        # importlib must use real thread locks, not eventlet.Semaphore
+        importlib._bootstrap._thread = thread
+
 
 def is_monkey_patched(module):
     """Returns True if the given module is monkeypatched currently, False if

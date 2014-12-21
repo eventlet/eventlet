@@ -2,6 +2,7 @@ import os
 import shutil
 import sys
 import tempfile
+import textwrap
 
 from eventlet.support import six
 from tests import LimitedTestCase, main, run_python, skip_with_pyevent
@@ -491,6 +492,46 @@ t2.join()
         self.assertEqual(lines[0], "True", lines[0])
         self.assertEqual(lines[1], "True", lines[1])
 
+
+class TestImportLock(ProcessBase):
+    def test_importlib(self):
+        new_mod = textwrap.dedent('''
+            import eventlet
+            import sys
+
+            eventlet.monkey_patch()
+            threading = eventlet.patcher.original('threading')
+
+            class ImportInThread(threading.Thread):
+                daemon = True
+
+                def __init__(self):
+                    super(ImportInThread, self).__init__()
+                    self.event = threading.Event()
+
+                def run(self):
+                    self.event.set()
+                    import encodings.idna
+
+            try:
+                del sys.modules['encodings.idna']
+            except KeyError:
+                pass
+
+            # call "import encodings.idna" in a new thread
+            server = ImportInThread()
+            server.start()
+            server.event.wait()
+
+            # call "import encodings.idna" in the main thread
+            import encodings.idna
+
+            print("ok")
+        ''')
+
+        self.write_to_tempfile("newmod", new_mod)
+        output, lines = self.launch_subprocess('newmod.py')
+        self.assertEqual(output.rstrip(), 'ok')
 
 if __name__ == '__main__':
     main()
