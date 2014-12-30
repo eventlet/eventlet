@@ -59,6 +59,7 @@ now it is not supported, so with apologies for any inconvenience we discontinue 
 If you have a project that uses Eventlet with Twisted, your options are:
 
 * use last working release eventlet==0.14
-* start a new project with only Twisted hub code, identify and fix problems. As of eventlet 0.13,
-`EVENTLET_HUB` environment variable can point to external modules.
+* start a new project with only Twisted hub code, identify and fix problems. As of eventlet 0.13, `EVENTLET_HUB` environment variable can point to external modules.
 * fork Eventlet, revert Twisted removal, identify and fix problems. This work may be merged back into main project.
+
+Apologies for any inconvenience.
