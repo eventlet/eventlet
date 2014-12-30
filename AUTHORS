@@ -101,3 +101,13 @@ Thanks To
 * Tushar Gohad, wsgi: Support optional headers w/ "100 Continue" responses
 * raylu, fixing operator precedence bug in eventlet.wsgi
 * Christoph Gysin, PEP 8 conformance
+* Andrey Gubarev
+* Corey Wright
+* Deva
+* Johannes Erdfelt
+* Kevin
+* QthCN
+* Steven Hardy
+* Stuart McLaren
+* Tomaz Muraus
+* Victor Stinner
