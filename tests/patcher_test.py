@@ -492,5 +492,10 @@ t2.join()
         self.assertEqual(lines[1], "True", lines[1])
 
 
+def test_importlib_lock():
+    output = run_python('tests/patcher_test_importlib_lock.py')
+    assert output.rstrip() == b'ok'
+
+
 if __name__ == '__main__':
     main()

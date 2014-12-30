@@ -104,7 +104,7 @@ class TestGreenSocket(LimitedTestCase):
         s.settimeout(0.1)
         gs = greenio.GreenSocket(s)
         e = gs.connect_ex(('192.0.2.1', 80))
-        if not e in (errno.EHOSTUNREACH, errno.ENETUNREACH):
+        if e not in (errno.EHOSTUNREACH, errno.ENETUNREACH):
             self.assertEqual(e, errno.EAGAIN)
 
     def test_recv_timeout(self):
@@ -273,7 +273,7 @@ class TestGreenSocket(LimitedTestCase):
             # by closing the socket prior to using the made file
             try:
                 conn, addr = listener.accept()
-                fd = conn.makefile('w')
+                fd = conn.makefile('wb')
                 conn.close()
                 fd.write(b'hello\n')
                 fd.close()
@@ -287,7 +287,7 @@ class TestGreenSocket(LimitedTestCase):
             # by closing the made file and then sending a character
             try:
                 conn, addr = listener.accept()
-                fd = conn.makefile('w')
+                fd = conn.makefile('wb')
                 fd.write(b'hello')
                 fd.close()
                 conn.send(b'\n')
@@ -300,7 +300,7 @@ class TestGreenSocket(LimitedTestCase):
         def did_it_work(server):
             client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             client.connect(('127.0.0.1', server.getsockname()[1]))
-            fd = client.makefile()
+            fd = client.makefile('rb')
             client.close()
             assert fd.readline() == b'hello\n'
             assert fd.read() == b''
@@ -329,7 +329,7 @@ class TestGreenSocket(LimitedTestCase):
             # closing the file object should close everything
             try:
                 conn, addr = listener.accept()
-                conn = conn.makefile('w')
+                conn = conn.makefile('wb')
                 conn.write(b'hello\n')
                 conn.close()
                 gc.collect()
@@ -344,7 +344,7 @@ class TestGreenSocket(LimitedTestCase):
         killer = eventlet.spawn(accept_once, server)
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client.connect(('127.0.0.1', server.getsockname()[1]))
-        fd = client.makefile()
+        fd = client.makefile('rb')
         client.close()
         assert fd.read() == b'hello\n'
         assert fd.read() == b''
@@ -603,7 +603,7 @@ class TestGreenSocket(LimitedTestCase):
     def test_sockopt_interface(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         assert sock.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR) == 0
-        assert sock.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) == '\000'
+        assert sock.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) == b'\000'
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
     def test_socketpair_select(self):
@@ -611,6 +611,38 @@ class TestGreenSocket(LimitedTestCase):
         s1, s2 = socket.socketpair()
         assert select.select([], [s1], [], 0) == ([], [s1], [])
         assert select.select([], [s1], [], 0) == ([], [s1], [])
+
+
+def test_get_fileno_of_a_socket_works():
+    class DummySocket(object):
+        def fileno(self):
+            return 123
+    assert select.get_fileno(DummySocket()) == 123
+
+
+def test_get_fileno_of_an_int_works():
+    assert select.get_fileno(123) == 123
+
+
+def test_get_fileno_of_wrong_type_fails():
+    try:
+        select.get_fileno('foo')
+    except TypeError as ex:
+        assert str(ex) == 'Expected int or long, got <type \'str\'>'
+    else:
+        assert False, 'Expected TypeError not raised'
+
+
+def test_get_fileno_of_a_socket_with_fileno_returning_wrong_type_fails():
+    class DummySocket(object):
+        def fileno(self):
+            return 'foo'
+    try:
+        select.get_fileno(DummySocket())
+    except TypeError as ex:
+        assert str(ex) == 'Expected int or long, got <type \'str\'>'
+    else:
+        assert False, 'Expected TypeError not raised'
 
 
 class TestGreenPipe(LimitedTestCase):

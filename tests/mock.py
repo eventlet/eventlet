@@ -306,7 +306,7 @@ def _set_signature(mock, original, instance=False):
     src = """def %s(*args, **kwargs):
     _checksig_(*args, **kwargs)
     return mock(*args, **kwargs)""" % name
-    exec (src, context)
+    exec(src, context)
     funcopy = context[name]
     _setup_func(funcopy, mock)
     return funcopy
@@ -336,7 +336,7 @@ def _setup_func(funcopy, mock):
         funcopy.mock_calls = _CallList()
         mock.reset_mock()
         ret = funcopy.return_value
-        if _is_instance_mock(ret) and not ret is mock:
+        if _is_instance_mock(ret) and ret is not mock:
             ret.reset_mock()
 
     funcopy.called = False

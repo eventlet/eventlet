@@ -1,9 +1,18 @@
-0.16.0 (not released yet)
-=========================
+0.16.0
+======
 
+* Fix SSL socket wrapping and Python 2.7.9 compatibility; Thanks to Jakub Stasiak
+* Fix monkey_patch() on Python 3; Thanks to Victor Stinner
+* Fix "maximum recursion depth exceeded in GreenSocket.__del__"; Thanks to Jakub Stasiak
+* db_pool: BaseConnectionPool.clear updates .current_size #139; Thanks to Andrey Gubarev
+* Fix __str__ method on the TimeoutExpired exception class.; Thanks to Tomaz Muraus
 * hubs: drop Twisted support
-* removed deprecated modules: api, most of coros, pool, proc, processes and util
-* improved Python 3 compatibility (including patch by raylu)
+* Removed deprecated modules: api, most of coros, pool, proc, processes and util
+* Improved Python 3 compatibility (including patch by raylu); Thanks to Jakub Stasiak
+* Allow more graceful shutdown of wsgi server; Thanks to Stuart McLaren
+* wsgi.input: Make send_hundred_continue_headers() a public API; Thanks to Tushar Gohad
+* tpool: Windows compatibility, fix ResourceWarning. Thanks to Victor Stinner
+* tests: Fix timers not cleaned up on MySQL test skips; Thanks to Corey Wright
 
 0.15.2
 ======

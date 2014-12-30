@@ -30,7 +30,11 @@ def listen(addr, family=socket.AF_INET, backlog=50):
 
     :param addr: Address to listen on.  For TCP sockets, this is a (host, port)  tuple.
     :param family: Socket family, optional.  See :mod:`socket` documentation for available families.
-    :param backlog: The maximum number of queued connections. Should be at least 1; the maximum value is system-dependent.
+    :param backlog:
+
+        The maximum number of queued connections. Should be at least 1; the maximum
+        value is system-dependent.
+
     :return: The listening green socket object.
     """
     sock = socket.socket(family, socket.SOCK_STREAM)

@@ -20,7 +20,6 @@ env:
 matrix:
   fast_finish: true
   allow_failures:
-    - env: TOX_ENV=pep8
     - env: TOX_ENV=py33selects
     - env: TOX_ENV=py33poll
     - env: TOX_ENV=py33epolls
@@ -41,3 +40,5 @@ script:
 after_failure:
   - for X in .tox/$TOX_ENV/log/*; do echo "$X\n"; cat "$X"; echo "\n\n"; done
   - echo "pip.log\n"; cat $HOME/.pip/pip.log
+notifications:
+  slack: eventlet-net:OYrQ1JE3hdTD78yQY1yZJnnc

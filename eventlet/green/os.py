@@ -98,11 +98,14 @@ def waitpid(pid, options):
 __original_open__ = os_orig.open
 
 
-def open(file, flags, mode=0o777):
+def open(file, flags, mode=0o777, dir_fd=None):
     """ Wrap os.open
         This behaves identically, but collaborates with
         the hub's notify_opened protocol.
     """
-    fd = __original_open__(file, flags, mode)
+    if dir_fd is not None:
+        fd = __original_open__(file, flags, mode, dir_fd=dir_fd)
+    else:
+        fd = __original_open__(file, flags, mode)
     hubs.notify_opened(fd)
     return fd

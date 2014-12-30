@@ -1,14 +1,7 @@
-import sys
 import os
-from eventlet.support import greenlets as greenlet, six
-from eventlet import patcher
 
-try:
-    # try and import pkg_resources ...
-    import pkg_resources
-except ImportError:
-    # ... but do not depend on it
-    pkg_resources = None
+from eventlet import patcher
+from eventlet.support import greenlets as greenlet, six
 
 
 __all__ = ["use_hub", "get_hub", "get_default_hub", "trampoline"]
@@ -86,6 +79,15 @@ def use_hub(mod=None):
                 mod = getattr(mod, classname)
         else:
             found = False
+
+            # setuptools 5.4.1 test_import_patched_defaults fail
+            # https://github.com/eventlet/eventlet/issues/177
+            try:
+                # try and import pkg_resources ...
+                import pkg_resources
+            except ImportError:
+                # ... but do not depend on it
+                pkg_resources = None
             if pkg_resources is not None:
                 for entry in pkg_resources.iter_entry_points(
                         group='eventlet.hubs', name=mod):
@@ -114,6 +116,7 @@ def get_hub():
             use_hub()
         hub = _threadlocal.hub = _threadlocal.Hub()
     return hub
+
 
 from eventlet import timeout
 

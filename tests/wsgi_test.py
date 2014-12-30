@@ -145,8 +145,31 @@ hello world
 """
 
 
+def recvall(socket_):
+    result = b''
+    while True:
+        chunk = socket_.recv()
+        result += chunk
+        if chunk == b'':
+            break
+
+    return result
+
+
 class ConnectionClosed(Exception):
     pass
+
+
+def send_expect_close(sock, buf):
+    # Some tests will induce behavior that causes the remote end to
+    # close the connection before all of the data has been written.
+    # With small kernel buffer sizes, this can cause an EPIPE error.
+    # Since the test expects an early close, this can be ignored.
+    try:
+        sock.sendall(buf)
+    except socket.error as exc:
+        if support.get_errno(exc) != errno.EPIPE:
+            raise
 
 
 def read_http(sock):
@@ -325,10 +348,9 @@ class TestHttpd(_TestBase):
         for ii in range(3000):
             path_parts.append('path')
         path = '/'.join(path_parts)
-        request = ('GET /%s HTTP/1.0\r\nHost: localhost\r\n\r\n' % path).encode()
-        fd = sock.makefile('rwb')
-        fd.write(request)
-        fd.flush()
+        request = 'GET /%s HTTP/1.0\r\nHost: localhost\r\n\r\n' % path
+        send_expect_close(sock, request.encode())
+        fd = sock.makefile('rb')
         result = fd.readline()
         if result:
             # windows closes the socket before the data is flushed,
@@ -449,8 +471,8 @@ class TestHttpd(_TestBase):
         sock.write(
             b'POST /foo HTTP/1.1\r\nHost: localhost\r\n'
             b'Connection: close\r\nContent-length:3\r\n\r\nabc')
-        result = sock.read(8192)
-        self.assertEqual(result[-3:], b'abc')
+        result = recvall(sock)
+        assert result.endswith(b'abc')
 
     @tests.skip_if_no_ssl
     def test_013_empty_return(self):
@@ -469,8 +491,8 @@ class TestHttpd(_TestBase):
         sock = eventlet.connect(('localhost', server_sock.getsockname()[1]))
         sock = eventlet.wrap_ssl(sock)
         sock.write(b'GET /foo HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
-        result = sock.read(8192)
-        self.assertEqual(result[-4:], b'\r\n\r\n')
+        result = recvall(sock)
+        assert result[-4:] == b'\r\n\r\n'
 
     def test_014_chunked_post(self):
         self.site.application = chunked_post
@@ -1118,9 +1140,9 @@ class TestHttpd(_TestBase):
             try:
                 client = ssl.wrap_socket(eventlet.connect(('localhost', port)))
                 client.write(b'GET / HTTP/1.0\r\nHost: localhost\r\n\r\n')
-                result = client.read()
-                assert result.startswith('HTTP'), result
-                assert result.endswith('hello world')
+                result = recvall(client)
+                assert result.startswith(b'HTTP'), result
+                assert result.endswith(b'hello world')
             except ImportError:
                 pass  # TODO(openssl): should test with OpenSSL
             greenthread.kill(g)
@@ -1185,23 +1207,17 @@ class TestHttpd(_TestBase):
         sock = eventlet.connect(('localhost', self.port))
         request = 'GET / HTTP/1.0\r\nHost: localhost\r\nLong: %s\r\n\r\n' % \
             ('a' * 10000)
-        fd = sock.makefile('rwb')
-        fd.write(request.encode())
-        fd.flush()
+        send_expect_close(sock, request.encode())
         result = read_http(sock)
         self.assertEqual(result.status, 'HTTP/1.0 400 Header Line Too Long')
-        fd.close()
 
     def test_031_reject_large_headers(self):
         sock = eventlet.connect(('localhost', self.port))
         headers = ('Name: %s\r\n' % ('a' * 7000,)) * 20
         request = 'GET / HTTP/1.0\r\nHost: localhost\r\n%s\r\n\r\n' % headers
-        fd = sock.makefile('rwb')
-        fd.write(request.encode())
-        fd.flush()
+        send_expect_close(sock, request.encode())
         result = read_http(sock)
         self.assertEqual(result.status, 'HTTP/1.0 400 Headers Too Large')
-        fd.close()
 
     def test_032_wsgi_input_as_iterable(self):
         # https://bitbucket.org/eventlet/eventlet/issue/150

@@ -12,13 +12,16 @@ def test_subprocess_wait():
     # In Python 3.3 subprocess.Popen.wait() method acquired `timeout`
     # argument.
     # RHEL backported it to their Python 2.6 package.
-    p = subprocess.Popen(
-        [sys.executable, "-c", "import time; time.sleep(0.5)"])
+    cmd = [sys.executable, "-c", "import time; time.sleep(0.5)"]
+    p = subprocess.Popen(cmd)
     ok = False
     t1 = time.time()
     try:
         p.wait(timeout=0.1)
-    except subprocess.TimeoutExpired:
+    except subprocess.TimeoutExpired as e:
+        str(e)  # make sure it doesnt throw
+        assert e.cmd == cmd
+        assert e.timeout == 0.1
         ok = True
     tdiff = time.time() - t1
     assert ok, 'did not raise subprocess.TimeoutExpired'

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-"""The :mod:`zmq` module wraps the :class:`Socket` and :class:`Context` found in :mod:`pyzmq <zmq>` to be non blocking
+"""The :mod:`zmq` module wraps the :class:`Socket` and :class:`Context`
+found in :mod:`pyzmq <zmq>` to be non blocking
 """
 
 from __future__ import with_statement

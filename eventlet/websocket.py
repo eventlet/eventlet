@@ -168,25 +168,24 @@ class WebSocketWSGI(object):
         if qs is not None:
             location += '?' + qs
         if self.protocol_version == 75:
-            handshake_reply = ("HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
-                               "Upgrade: WebSocket\r\n"
-                               "Connection: Upgrade\r\n"
-                               "WebSocket-Origin: %s\r\n"
-                               "WebSocket-Location: %s\r\n\r\n" % (
-                                   environ.get('HTTP_ORIGIN'),
-                                   location))
+            handshake_reply = (
+                b"HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
+                b"Upgrade: WebSocket\r\n"
+                b"Connection: Upgrade\r\n"
+                b"WebSocket-Origin: " + six.b(environ.get('HTTP_ORIGIN')) + b"\r\n"
+                b"WebSocket-Location: " + six.b(location) + b"\r\n\r\n"
+            )
         elif self.protocol_version == 76:
-            handshake_reply = ("HTTP/1.1 101 WebSocket Protocol Handshake\r\n"
-                               "Upgrade: WebSocket\r\n"
-                               "Connection: Upgrade\r\n"
-                               "Sec-WebSocket-Origin: %s\r\n"
-                               "Sec-WebSocket-Protocol: %s\r\n"
-                               "Sec-WebSocket-Location: %s\r\n"
-                               "\r\n%s" % (
-                                   environ.get('HTTP_ORIGIN'),
-                                   environ.get('HTTP_SEC_WEBSOCKET_PROTOCOL', 'default'),
-                                   location,
-                                   response))
+            handshake_reply = (
+                b"HTTP/1.1 101 WebSocket Protocol Handshake\r\n"
+                b"Upgrade: WebSocket\r\n"
+                b"Connection: Upgrade\r\n"
+                b"Sec-WebSocket-Origin: " + six.b(environ.get('HTTP_ORIGIN')) + b"\r\n"
+                b"Sec-WebSocket-Protocol: " +
+                six.b(environ.get('HTTP_SEC_WEBSOCKET_PROTOCOL', 'default')) + b"\r\n"
+                b"Sec-WebSocket-Location: " + six.b(location) + b"\r\n"
+                b"\r\n" + response
+            )
         else:  # pragma NO COVER
             raise ValueError("Unknown WebSocket protocol version.")
         sock.sendall(handshake_reply)
@@ -244,7 +243,7 @@ class WebSocketWSGI(object):
                 out += char
             elif char == " ":
                 spaces += 1
-        return int(out) / spaces
+        return int(out) // spaces
 
 
 class WebSocket(object):
@@ -257,7 +256,8 @@ class WebSocket(object):
     properties:
 
     path
-        The path value of the request.  This is the same as the WSGI PATH_INFO variable, but more convenient.
+        The path value of the request.  This is the same as the WSGI PATH_INFO variable,
+        but more convenient.
     protocol
         The value of the Websocket-Protocol header.
     origin
@@ -281,7 +281,7 @@ class WebSocket(object):
         self.environ = environ
         self.version = version
         self.websocket_closed = False
-        self._buf = ""
+        self._buf = b""
         self._msgs = collections.deque()
         self._sendlock = semaphore.Semaphore()
 
@@ -294,8 +294,8 @@ class WebSocket(object):
         if isinstance(message, six.text_type):
             message = message.encode('utf-8')
         elif not isinstance(message, six.binary_type):
-            message = b'%s' % (message,)
-        packed = b"\x00%s\xFF" % message
+            message = six.b(str(message))
+        packed = b"\x00" + message + b"\xFF"
         return packed
 
     def _parse_messages(self):
@@ -309,17 +309,17 @@ class WebSocket(object):
         end_idx = 0
         buf = self._buf
         while buf:
-            frame_type = ord(buf[0])
+            frame_type = six.indexbytes(buf, 0)
             if frame_type == 0:
                 # Normal message.
-                end_idx = buf.find("\xFF")
+                end_idx = buf.find(b"\xFF")
                 if end_idx == -1:  # pragma NO COVER
                     break
                 msgs.append(buf[1:end_idx].decode('utf-8', 'replace'))
                 buf = buf[end_idx + 1:]
             elif frame_type == 255:
                 # Closing handshake.
-                assert ord(buf[1]) == 0, "Unexpected closing handshake: %r" % buf
+                assert six.indexbytes(buf, 1) == 0, "Unexpected closing handshake: %r" % buf
                 self.websocket_closed = True
                 break
             else:
@@ -355,7 +355,7 @@ class WebSocket(object):
                 return None
             # no parsed messages, must mean buf needs more data
             delta = self.socket.recv(8096)
-            if delta == '':
+            if delta == b'':
                 return None
             self._buf += delta
             msgs = self._parse_messages()
