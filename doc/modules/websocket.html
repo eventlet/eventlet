@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>websocket – Websocket Server &mdash; Eventlet 0.15.2 documentation</title>
+    <title>websocket – Websocket Server &mdash; Eventlet 0.16.1 documentation</title>
     
     <link rel="stylesheet" href="../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.15.2',
+        VERSION:     '0.16.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.15.2 documentation" href="../index.html" />
+    <link rel="top" title="Eventlet 0.16.1 documentation" href="../index.html" />
     <link rel="up" title="Module Reference" href="../modules.html" />
     <link rel="next" title="wsgi – WSGI server" href="wsgi.html" />
     <link rel="prev" title="timeout – Universal Timeouts" href="timeout.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="timeout.html" title="timeout – Universal Timeouts"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.15.2 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Eventlet 0.16.1 documentation</a> &raquo;</li>
           <li><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
       </ul>
     </div>  
@@ -70,6 +70,11 @@ coexist with other WSGI applications.</p>
 
 <span class="n">wsgi</span><span class="o">.</span><span class="n">server</span><span class="p">(</span><span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="mi">8090</span><span class="p">)),</span> <span class="n">hello_world</span><span class="p">)</span>
 </pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Please see graceful termination warning in <a class="reference internal" href="wsgi.html#eventlet.wsgi.server" title="eventlet.wsgi.server"><tt class="xref py py-func docutils literal"><span class="pre">server()</span></tt></a>
+documentation</p>
 </div>
 <p>You can find a slightly more elaborate version of this code in the file
 <tt class="docutils literal"><span class="pre">examples/websocket.py</span></tt>.</p>
@@ -106,7 +111,8 @@ and forth with the browser.  Also available are the following
 properties:</p>
 <dl class="docutils">
 <dt>path</dt>
-<dd>The path value of the request.  This is the same as the WSGI PATH_INFO variable, but more convenient.</dd>
+<dd>The path value of the request.  This is the same as the WSGI PATH_INFO variable,
+but more convenient.</dd>
 <dt>protocol</dt>
 <dd>The value of the Websocket-Protocol header.</dd>
 <dt>origin</dt>
@@ -193,7 +199,7 @@ websocket message.</p>
         <li class="right" >
           <a href="timeout.html" title="timeout – Universal Timeouts"
              >previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.15.2 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Eventlet 0.16.1 documentation</a> &raquo;</li>
           <li><a href="../modules.html" >Module Reference</a> &raquo;</li> 
       </ul>
     </div>

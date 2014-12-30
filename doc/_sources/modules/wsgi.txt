@@ -113,3 +113,18 @@ as shown in the following example::
 You can find a more elaborate example in the file:
 ``tests/wsgi_test.py``, :func:`test_024a_expect_100_continue_with_headers`.
 
+
+Per HTTP RFC 7231 (http://tools.ietf.org/html/rfc7231#section-6.2) a client is
+required to be able to process one or more 100 continue responses.  A sample
+use case might be a user protocol where the server may want to use a 100-continue
+response to indicate to a client that it is working on a request and the 
+client should not timeout.
+
+To support multiple 100-continue responses, evenlet wsgi module exports
+the API :func:`send_hundred_continue_response`.
+
+Sample use cases for chunked and non-chunked HTTP scenarios are included
+in the wsgi test case ``tests/wsgi_test.py``,
+:func:`test_024b_expect_100_continue_with_headers_multiple_chunked` and
+:func:`test_024c_expect_100_continue_with_headers_multiple_nonchunked`.
+

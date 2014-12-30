@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>eventlet.green.zmq – ØMQ support &mdash; Eventlet 0.15.2 documentation</title>
+    <title>eventlet.green.zmq – ØMQ support &mdash; Eventlet 0.16.1 documentation</title>
     
     <link rel="stylesheet" href="../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.15.2',
+        VERSION:     '0.16.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.15.2 documentation" href="../index.html" />
+    <link rel="top" title="Eventlet 0.16.1 documentation" href="../index.html" />
     <link rel="up" title="Module Reference" href="../modules.html" />
     <link rel="next" title="Authors" href="../authors.html" />
     <link rel="prev" title="wsgi – WSGI server" href="wsgi.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="wsgi.html" title="wsgi – WSGI server"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.15.2 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Eventlet 0.16.1 documentation</a> &raquo;</li>
           <li><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
       </ul>
     </div>  
@@ -56,7 +56,8 @@
             
   <div class="section" id="module-eventlet.green.zmq">
 <span id="eventlet-green-zmq-omq-support"></span><h1><a class="reference internal" href="#module-eventlet.green.zmq" title="eventlet.green.zmq"><tt class="xref py py-mod docutils literal"><span class="pre">eventlet.green.zmq</span></tt></a> &#8211; ØMQ support<a class="headerlink" href="#module-eventlet.green.zmq" title="Permalink to this headline">¶</a></h1>
-<p>The <a class="reference internal" href="#module-zmq" title="zmq"><tt class="xref py py-mod docutils literal"><span class="pre">zmq</span></tt></a> module wraps the <a class="reference internal" href="#eventlet.green.zmq.Socket" title="eventlet.green.zmq.Socket"><tt class="xref py py-class docutils literal"><span class="pre">Socket</span></tt></a> and <a class="reference internal" href="#eventlet.green.zmq.Context" title="eventlet.green.zmq.Context"><tt class="xref py py-class docutils literal"><span class="pre">Context</span></tt></a> found in <a class="reference internal" href="#module-zmq" title="zmq"><tt class="xref py py-mod docutils literal"><span class="pre">pyzmq</span></tt></a> to be non blocking</p>
+<p>The <a class="reference internal" href="#module-zmq" title="zmq"><tt class="xref py py-mod docutils literal"><span class="pre">zmq</span></tt></a> module wraps the <a class="reference internal" href="#eventlet.green.zmq.Socket" title="eventlet.green.zmq.Socket"><tt class="xref py py-class docutils literal"><span class="pre">Socket</span></tt></a> and <a class="reference internal" href="#eventlet.green.zmq.Context" title="eventlet.green.zmq.Context"><tt class="xref py py-class docutils literal"><span class="pre">Context</span></tt></a>
+found in <a class="reference internal" href="#module-zmq" title="zmq"><tt class="xref py py-mod docutils literal"><span class="pre">pyzmq</span></tt></a> to be non blocking</p>
 <dl class="function">
 <dt id="eventlet.green.zmq.Context">
 <tt class="descclassname">eventlet.green.zmq.</tt><tt class="descname">Context</tt><big>(</big><em>io_threads=1</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.green.zmq.Context" title="Permalink to this definition">¶</a></dt>
@@ -214,6 +215,16 @@ encoded to utf-8 first.</dd>
 </dd></dl>
 
 <dl class="method">
+<dt id="eventlet.green.zmq.Socket.disable_monitor">
+<tt class="descname">disable_monitor</tt><big>(</big><big>)</big><a class="headerlink" href="#eventlet.green.zmq.Socket.disable_monitor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shutdown the PAIR socket (created using get_monitor_socket)
+that is serving socket events.</p>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 14.4.</span></p>
+</div>
+</dd></dl>
+
+<dl class="method">
 <dt id="eventlet.green.zmq.Socket.disconnect">
 <tt class="descname">disconnect</tt><big>(</big><em>addr</em><big>)</big><a class="headerlink" href="#eventlet.green.zmq.Socket.disconnect" title="Permalink to this definition">¶</a></dt>
 <dd><p>Disconnect from a remote 0MQ socket (undoes a call to connect).</p>
@@ -351,7 +362,7 @@ version of libzmq.  Examples include:</p>
 <dt id="eventlet.green.zmq.Socket.hwm">
 <tt class="descname">hwm</tt><a class="headerlink" href="#eventlet.green.zmq.Socket.hwm" title="Permalink to this definition">¶</a></dt>
 <dd><p>get the High Water Mark</p>
-<p>On libzmq â¥ 3, this gets SNDHWM if available, otherwise RCVHWM</p>
+<p>On libzmq ≥ 3, this gets SNDHWM if available, otherwise RCVHWM</p>
 </dd></dl>
 
 <dl class="method">
@@ -363,7 +374,9 @@ See libzmq docs for zmq_monitor for details.</p>
 pyzmq cannot parse monitor messages from libzmq prior to 4.0.</p>
 <dl class="docutils">
 <dt>addr <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
-<dd>The inproc url used for monitoring.</dd>
+<dd>The inproc url used for monitoring. Passing None as
+the addr will cause an existing socket monitor to be
+deregistered.</dd>
 <dt>events <span class="classifier-delimiter">:</span> <span class="classifier">int [default: zmq.EVENT_ALL]</span></dt>
 <dd>The zmq event bitmask for which events will be sent to the monitor.</dd>
 </dl>
@@ -836,7 +849,7 @@ auto generated <a class="reference internal" href="#module-zmq" title="zmq"><tt 
         <li class="right" >
           <a href="wsgi.html" title="wsgi – WSGI server"
              >previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.15.2 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Eventlet 0.16.1 documentation</a> &raquo;</li>
           <li><a href="../modules.html" >Module Reference</a> &raquo;</li> 
       </ul>
     </div>

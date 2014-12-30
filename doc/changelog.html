@@ -1,0 +1,649 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>0.16.1 &mdash; Eventlet 0.16.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.16.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Eventlet 0.16.1 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Eventlet 0.16.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="id1">
+<h1>0.16.1<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>Wheel build 0.16.0 incorrectly shipped removed module eventlet.util.</li>
+</ul>
+</div>
+<div class="section" id="id2">
+<h1>0.16.0<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>Fix SSL socket wrapping and Python 2.7.9 compatibility; Thanks to Jakub Stasiak</li>
+<li>Fix monkey_patch() on Python 3; Thanks to Victor Stinner</li>
+<li>Fix &#8220;maximum recursion depth exceeded in GreenSocket.__del__&#8221;; Thanks to Jakub Stasiak</li>
+<li>db_pool: BaseConnectionPool.clear updates .current_size #139; Thanks to Andrey Gubarev</li>
+<li>Fix __str__ method on the TimeoutExpired exception class.; Thanks to Tomaz Muraus</li>
+<li>hubs: drop Twisted support</li>
+<li>Removed deprecated modules: api, most of coros, pool, proc, processes and util</li>
+<li>Improved Python 3 compatibility (including patch by raylu); Thanks to Jakub Stasiak</li>
+<li>Allow more graceful shutdown of wsgi server; Thanks to Stuart McLaren</li>
+<li>wsgi.input: Make send_hundred_continue_headers() a public API; Thanks to Tushar Gohad</li>
+<li>tpool: Windows compatibility, fix ResourceWarning. Thanks to Victor Stinner</li>
+<li>tests: Fix timers not cleaned up on MySQL test skips; Thanks to Corey Wright</li>
+</ul>
+</div>
+<div class="section" id="id3">
+<h1>0.15.2<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>greenio: fixed memory leak, introduced in 0.15.1; Thanks to Michael Kerrin, Tushar Gohad</li>
+<li>wsgi: Support optional headers w/ &#8220;100 Continue&#8221; responses; Thanks to Tushar Gohad</li>
+</ul>
+</div>
+<div class="section" id="id4">
+<h1>0.15.1<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>greenio: Fix second simultaneous read (parallel paramiko issue); Thanks to Jan Grant, Michael Kerrin</li>
+<li>db_pool: customizable connection cleanup function; Thanks to Avery Fay</li>
+</ul>
+</div>
+<div class="section" id="id5">
+<h1>0.15<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>Python3 compatibility &#8211; <strong>not ready yet</strong>; Thanks to Astrum Kuo, Davanum Srinivas, Jakub Stasiak, Victor Sergeyev</li>
+<li>coros: remove Actor which was deprecated in 2010-01</li>
+<li>saranwrap: remove saranwrap which was deprecated in 2010-02</li>
+<li>PyPy compatibility fixes; Thanks to Dmitriy Kruglyak, Jakub Stasiak</li>
+<li>green.profile: accumulate results between runs; Thanks to Zhang Hua</li>
+<li>greenthread: add .unlink() method; Thanks to Astrum Kuo</li>
+<li>packaging: Generate universal wheels; Thanks to Jakub Stasiak</li>
+<li>queue: Make join not wait if there are no unfinished tasks; Thanks to Jakub Stasiak</li>
+<li>tpool: proxy __enter__, __exit__ fixes Bitbucket-158; Thanks to Eric Urban</li>
+<li>websockets: Add websockets13 support; handle lack of Upgrade header; Thanks to Edward George</li>
+<li>wsgi: capitalize_response_headers option</li>
+</ul>
+</div>
+<div class="section" id="id6">
+<h1>0.14<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>wsgi: handle connection socket timeouts; Thanks to Paul Oppenheim</li>
+<li>wsgi: close timed out client connections</li>
+<li>greenio: socket pypy compatibility; Thanks to Alex Gaynor</li>
+<li>wsgi: env[&#8216;wsgi.input&#8217;] was returning 1 byte strings; Thanks to Eric Urban</li>
+<li>green.ssl: fix NameError; Github #17; Thanks to Jakub Stasiak</li>
+<li>websocket: allow &#8220;websocket&#8221; in lowercase in Upgrade header; Compatibility with current Google Chrome; Thanks to Dmitry Orlov</li>
+<li>wsgi: allow minimum_chunk_size to be overriden on a per request basis; Thanks to David Goetz</li>
+<li>wsgi: configurable socket_timeout</li>
+</ul>
+</div>
+<div class="section" id="id7">
+<h1>0.13<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>hubs: kqueue support! Thanks to YAMAMOTO Takashi, Edward George</li>
+<li>greenio: Fix AttributeError on MacOSX; Bitbucket #136; Thanks to Derk Tegeler</li>
+<li>green: subprocess: Fix subprocess.communicate() block on Python 2.7; Thanks to Edward George</li>
+<li>green: select: ensure that hub can .wait() at least once before timeout; Thanks to YAMAMOTO Takashi</li>
+<li>tpool: single request queue to avoid deadlocks; Bitbucket pull request 31,32; Thanks to Edward George</li>
+<li>zmq: pyzmq 13.x compatibility; Thanks to Edward George</li>
+<li>green: subprocess: Popen.wait() accepts new <cite>timeout</cite> kwarg; Python 3.3 and RHEL 6.1 compatibility</li>
+<li>hubs: EVENTLET_HUB can point to external modules; Thanks to Edward George</li>
+<li>semaphore: support timeout for acquire(); Thanks to Justin Patrin</li>
+<li>support: do not clear sys.exc_info if can be preserved (greenlet &gt;= 0.3.2); Thanks to Edward George</li>
+<li>Travis continous integration; Thanks to Thomas Grainger, Jakub Stasiak</li>
+<li>wsgi: minimum_chunk_size of last Server altered all previous (global variable); Thanks to Jakub Stasiak</li>
+<li>doc: hubs: Point to the correct function in exception message; Thanks to Floris Bruynooghe</li>
+</ul>
+</div>
+<div class="section" id="id8">
+<h1>0.12<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>zmq: Fix 100% busy CPU in idle after .bind(PUB) (thanks to Geoff Salmon)</li>
+<li>greenio: Fix socket.settimeout() did not switch back to blocking mode (thanks to Peter Skirko)</li>
+<li>greenio: socket.dup() made excess fcntl syscalls (thanks to Peter Portante)</li>
+<li>setup: Remove legacy &#8211;without-greenlet option and unused httplib2 dependency (thanks to Thomas Grainger)</li>
+<li>wsgi: environ[REMOTE_PORT], also available in log_format, log accept event (thanks to Peter Portante)</li>
+<li>tests: Support libzmq 3.0 SNDHWM option (thanks to Geoff Salmon)</li>
+</ul>
+</div>
+<div class="section" id="id9">
+<h1>0.11<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>ssl: Fix 100% busy CPU in socket.sendall() (thanks to Raymon Lu)</li>
+<li>zmq: Return linger argument to Socket.close() (thanks to Eric Windisch)</li>
+<li>tests: SSL tests were always skipped due to bug in skip_if_no_ssl decorator</li>
+</ul>
+</div>
+<div class="section" id="id10">
+<h1>0.10<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>greenio: Fix relative seek() (thanks to AlanP)</li>
+<li>db_pool: Fix pool.put() TypeError with min_size &gt; 1 (thanks to Jessica Qi)</li>
+<li>greenthread: Prevent infinite recursion with linking to current greenthread (thanks to Edward George)</li>
+<li>zmq: getsockopt(EVENTS) wakes correct threads (thanks to Eric Windisch)</li>
+<li>wsgi: Handle client disconnect while sending response (thanks to Clay Gerrard)</li>
+<li>hubs: Ensure that new hub greenlet is parent of old one (thanks to Edward George)</li>
+<li>os: Fix waitpid() returning (0, 0) (thanks to Vishvananda Ishaya)</li>
+<li>tpool: Add set_num_threads() method to set the number of tpool threads (thanks to David Ibarra)</li>
+<li>threading, zmq: Fix Python 2.5 support (thanks to Floris Bruynooghe)</li>
+<li>tests: tox configuration for all supported Python versions (thanks to Floris Bruynooghe)</li>
+<li>tests: Fix zmq._QueueLock test in Python2.6</li>
+<li>tests: Fix patcher_test on Darwin (/bin/true issue) (thanks to Edward George)</li>
+<li>tests: Skip SSL tests when not available (thanks to Floris Bruynooghe)</li>
+<li>greenio: Remove deprecated GreenPipe.xreadlines() method, was broken anyway</li>
+</ul>
+</div>
+<div class="section" id="id11">
+<h1>0.9.17<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>ZeroMQ support calling send and recv from multiple greenthreads (thanks to Geoff Salmon)</li>
+<li>SSL: unwrap() sends data, and so it needs trampolining (#104 thanks to Brandon Rhodes)</li>
+<li>hubs.epolls: Fix imports for exception handler (#123 thanks to Johannes Erdfelt)</li>
+<li>db_pool: Fix .clear() when min_size &gt; 0</li>
+<li>db_pool: Add MySQL&#8217;s insert_id() method (thanks to Peter Scott)</li>
+<li>db_pool: Close connections after timeout, fix get-after-close race condition with using TpooledConnectionPool (thanks to Peter Scott)</li>
+<li>threading monkey patch fixes (#115 thanks to Johannes Erdfelt)</li>
+<li>pools: Better accounting of current_size in pools.Pool (#91 thanks to Brett Hoerner)</li>
+<li>wsgi: environ[&#8216;RAW_PATH_INFO&#8217;] with request path as received from client (thanks to dweimer)</li>
+<li>wsgi: log_output flag (thanks to Juan Manuel Garcia)</li>
+<li>wsgi: Limit HTTP header size (thanks to Gregory Holt)</li>
+<li>wsgi: Configurable maximum URL length (thanks to Tomas Sedovic)</li>
+</ul>
+</div>
+<div class="section" id="id12">
+<h1>0.9.16<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>SO_REUSEADDR now correctly set.</li>
+</ul>
+</div>
+<div class="section" id="id13">
+<h1>0.9.15<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>ZeroMQ support without an explicit hub now implemented!  Thanks to Zed Shaw for the patch.</li>
+<li>zmq module supports the NOBLOCK flag, thanks to rfk. (#76)</li>
+<li>eventlet.wsgi has a debug flag which can be set to false to not send tracebacks to the client (per redbo&#8217;s request)</li>
+<li>Recursive GreenPipe madness forestalled by Soren Hansen (#77)</li>
+<li>eventlet.green.ssl no longer busywaits on send()</li>
+<li>EEXIST ignored in epoll hub (#80)</li>
+<li>eventlet.listen&#8217;s behavior on Windows improved, thanks to Nick Vatamaniuc (#83)</li>
+<li>Timeouts raised within tpool.execute are propagated back to the caller (thanks again to redbo for being the squeaky wheel)</li>
+</ul>
+</div>
+<div class="section" id="id14">
+<h1>0.9.14<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>Many fixes to the ZeroMQ hub, which now requires version 2.0.10 or later.  Thanks to Ben Ford.</li>
+<li>ZeroMQ hub no longer depends on pollhub, and thus works on Windows (thanks, Alexey Borzenkov)</li>
+<li>Better handling of connect errors on Windows, thanks again to Alexey Borzenkov.</li>
+<li>More-robust Event delivery, thanks to Malcolm Cleaton</li>
+<li>wsgi.py now distinguishes between an empty query string (&#8220;&#8221;) and a non-existent query string (no entry in environ).</li>
+<li>wsgi.py handles ipv6 correctly (thanks, redbo)</li>
+<li>Better behavior in tpool when you give it nonsensical numbers, thanks to R. Tyler for the nonsense.  :)</li>
+<li>Fixed importing on 2.5 (#73, thanks to Ruijun Luo)</li>
+<li>Hub doesn&#8217;t hold on to invalid fds (#74, thanks to Edward George)</li>
+<li>Documentation for eventlet.green.zmq, courtesy of Ben Ford</li>
+</ul>
+</div>
+<div class="section" id="id15">
+<h1>0.9.13<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>ZeroMQ hub, and eventlet.green.zmq make supersockets green.  Thanks to Ben Ford!</li>
+<li>eventlet.green.MySQLdb added.  It&#8217;s an interface to MySQLdb that uses tpool to make it appear nonblocking</li>
+<li>Greenthread affinity in tpool.  Each greenthread is assigned to the same thread when using tpool, making it easier to work with non-thread-safe libraries.</li>
+<li>Eventlet now depends on greenlet 0.3 or later.</li>
+<li>Fixed a hang when using tpool during an import causes another import.  Thanks to mikepk for tracking that down.</li>
+<li>Improved websocket draft 76 compliance, thanks to Nick V.</li>
+<li>Rare greenthread.kill() bug fixed, which was probably brought about by a bugfix in greenlet 0.3.</li>
+<li>Easy_installing eventlet should no longer print an ImportError about greenlet</li>
+<li>Support for serving up SSL websockets, thanks to chwagssd for reporting #62</li>
+<li>eventlet.wsgi properly sets &#8216;wsgi.url_scheme&#8217; environment variable to &#8216;https&#8217;, and &#8216;HTTPS&#8217; to &#8216;on&#8217; if serving over ssl</li>
+<li>Blocking detector uses setitimer on 2.6 or later, allowing for sub-second block detection, thanks to rtyler.</li>
+<li>Blocking detector is documented now, too</li>
+<li>socket.create_connection properly uses dnspython for nonblocking dns.  Thanks to rtyler.</li>
+<li>Removed EVENTLET_TPOOL_DNS, nobody liked that.  But if you were using it, install dnspython instead.  Thanks to pigmej and gholt.</li>
+<li>Removed _main_wrapper from greenthread, thanks to Ambroff adding keyword arguments to switch() in 0.3!</li>
+</ul>
+</div>
+<div class="section" id="id16">
+<h1>0.9.12<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>Eventlet no longer uses the Twisted hub if Twisted is imported &#8211; you must call eventlet.hubs.use_hub(&#8216;twistedr&#8217;) if you want to use it.  This prevents strange race conditions for those who want to use both Twisted and Eventlet separately.</li>
+<li>Removed circular import in twistedr.py</li>
+<li>Added websocket multi-user chat example</li>
+<li>Not using exec() in green modules anymore.</li>
+<li>eventlet.green.socket now contains all attributes of the stdlib socket module, even those that were left out by bugs.</li>
+<li>Eventlet.wsgi doesn&#8217;t call print anymore, instead uses the logfiles for everything (it used to print exceptions in one place).</li>
+<li>Eventlet.wsgi properly closes the connection when an error is raised</li>
+<li>Better documentation on eventlet.event.Event.send_exception</li>
+<li>Adding websocket.html to tarball so that you can run the examples without checking out the source</li>
+</ul>
+</div>
+<div class="section" id="id17">
+<h1>0.9.10<a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>Greendns: if dnspython is installed, Eventlet will automatically use it to provide non-blocking DNS queries.  Set the environment variable &#8216;EVENTLET_NO_GREENDNS&#8217; if you don&#8217;t want greendns but have dnspython installed.</li>
+<li>Full test suite passes on Python 2.7.</li>
+<li>Tests no longer depend on simplejson for &gt;2.6.</li>
+<li>Potential-bug fixes in patcher (thanks to Schmir, and thanks to Hudson)</li>
+<li>Websockets work with query strings (thanks to mcarter)</li>
+<li>WSGI posthooks that get called after the request completed (thanks to gholt, nice docs, too)</li>
+<li>Blocking detector merged &#8211; use it to detect places where your code is not yielding to the hub for &gt; 1 second.</li>
+<li>tpool.Proxy can wrap callables</li>
+<li>Tweaked Timeout class to do something sensible when True is passed to the constructor</li>
+</ul>
+</div>
+<div class="section" id="id18">
+<h1>0.9.9<a class="headerlink" href="#id18" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>A fix for monkeypatching on systems with psycopg version 2.0.14.</li>
+<li>Improved support for chunked transfers in wsgi, plus a bunch of tests from schmir (ported from gevent by redbo)</li>
+<li>A fix for the twisted hub from Favo Yang</li>
+</ul>
+</div>
+<div class="section" id="id19">
+<h1>0.9.8<a class="headerlink" href="#id19" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>Support for psycopg2&#8217;s asynchronous mode, from Daniele Varrazzo</li>
+<li>websocket module is now part of core Eventlet with 100% unit test coverage thanks to Ben Ford.  See its documentation at <a class="reference external" href="http://eventlet.net/doc/modules/websocket.html">http://eventlet.net/doc/modules/websocket.html</a></li>
+<li>Added wrap_ssl convenience method, meaning that we truly no longer need api or util modules.</li>
+<li>Multiple-reader detection code protects against the common mistake of having multiple greenthreads read from the same socket at the same time, which can be overridden if you know what you&#8217;re doing.</li>
+<li>Cleaner monkey_patch API: the &#8220;all&#8221; keyword is no longer necessary.</li>
+<li>Pool objects have a more convenient constructor &#8211; no more need to subclass</li>
+<li>amajorek&#8217;s reimplementation of GreenPipe</li>
+<li>Many bug fixes, major and minor.</li>
+</ul>
+</div>
+<div class="section" id="id20">
+<h1>0.9.7<a class="headerlink" href="#id20" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>GreenPipe is now a context manager (thanks, quad)</li>
+<li>tpool.Proxy supports iterators properly</li>
+<li>bug fixes in eventlet.green.os (thanks, Benoit)</li>
+<li>much code cleanup from Tavis</li>
+<li>a few more example apps</li>
+<li>multitudinous improvements in Py3k compatibility from amajorek</li>
+</ul>
+</div>
+<div class="section" id="id21">
+<h1>0.9.6<a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>new EVENTLET_HUB environment variable allows you to select a hub without code</li>
+<li>improved GreenSocket and GreenPipe compatibility with stdlib</li>
+<li>bugfixes on GreenSocket and GreenPipe objects</li>
+<li>code coverage increased across the board</li>
+<li>Queue resizing</li>
+<li>internal DeprecationWarnings largely eliminated</li>
+<li>tpool is now reentrant (i.e., can call tpool.execute(tpool.execute(foo)))</li>
+<li>more reliable access to unpatched modules reduces some race conditions when monkeypatching</li>
+<li>completely threading-compatible corolocal implementation, plus tests and enthusiastic adoption</li>
+<li>tests stomp on each others&#8217; toes less</li>
+<li>performance improvements in timers, hubs, greenpool</li>
+<li>Greenlet-aware profile module courtesy of CCP</li>
+<li>support for select26 module&#8217;s epoll</li>
+<li>better PEP-8 compliance and import cleanup</li>
+<li>new eventlet.serve convenience function for easy TCP servers</li>
+</ul>
+</div>
+<div class="section" id="id22">
+<h1>0.9.5<a class="headerlink" href="#id22" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>support psycopg in db_pool</li>
+<li>smart patcher that does the right patching when importing without needing to understand plumbing of patched module</li>
+<li>patcher.monkey_patch() method replacing util.wrap_*</li>
+<li>monkeypatch threading support</li>
+<li>removed api.named</li>
+<li>imported timeout module from gevent, replace exc_after and with_timeout()</li>
+<li>replace call_after with spawn_after; this is so that users don&#8217;t see the Timer class</li>
+<li>added cancel() method to GreenThread to support the semantic of &#8220;abort if not already in the middle of something&#8221;</li>
+<li>eventlet.green.os with patched read() and write(), etc</li>
+<li>moved stuff from wrap_pipes_with_coroutine_pipe into green.os</li>
+<li>eventlet.green.subprocess instead of eventlet.processes</li>
+<li>improve patching docs, explaining more about patcher and why you&#8217;d use eventlet.green</li>
+<li>better documentation on greenpiles</li>
+<li>deprecate api.py completely</li>
+<li>deprecate util.py completely</li>
+<li>deprecate saranwrap</li>
+<li>performance improvements in the hubs</li>
+<li>much better documentation overall</li>
+<li>new convenience functions: eventlet.connect and eventlet.listen.  Thanks, Sergey!</li>
+</ul>
+</div>
+<div class="section" id="id23">
+<h1>0.9.4<a class="headerlink" href="#id23" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>Deprecated coros.Queue and coros.Channel (use queue.Queue instead)</li>
+<li>Added putting and getting methods to queue.Queue.</li>
+<li>Added eventlet.green.Queue which is a greened clone of stdlib Queue, along with stdlib tests.</li>
+<li>Changed __init__.py so that the version number is readable even if greenlet&#8217;s not installed.</li>
+<li>Bugfixes in wsgi, greenpool</li>
+</ul>
+</div>
+<div class="section" id="id24">
+<h1>0.9.3<a class="headerlink" href="#id24" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>Moved primary api module to __init__ from api.  It shouldn&#8217;t be necessary to import eventlet.api anymore; import eventlet should do the same job.</li>
+<li>Proc module deprecated in favor of greenthread</li>
+<li>New module greenthread, with new class GreenThread.</li>
+<li>New GreenPool class that replaces pool.Pool.</li>
+<li>Deprecated proc module (use greenthread module instead)</li>
+<li>tpooled gethostbyname is configurable via environment variable EVENTLET_TPOOL_GETHOSTBYNAME</li>
+<li>Removed greenio.Green_fileobject and refactored the code therein to be more efficient.  Only call makefile() on sockets now; makeGreenFile() is deprecated.  The main loss here is that of the readuntil method.  Also, Green_fileobjects used to be auto-flushing; flush() must be called explicitly now.</li>
+<li>Added epoll support</li>
+<li>Improved documentation across the board.</li>
+<li>New queue module, API-compatible with stdlib Queue</li>
+<li>New debug module, used for enabling verbosity within Eventlet that can help debug applications or Eventlet itself.</li>
+<li>Bugfixes in tpool, green.select, patcher</li>
+<li>Deprecated coros.execute (use eventlet.spawn instead)</li>
+<li>Deprecated coros.semaphore (use semaphore.Semaphore or semaphore.BoundedSemaphore instead)</li>
+<li>Moved coros.BoundedSemaphore to semaphore.BoundedSemaphore</li>
+<li>Moved coros.Semaphore to semaphore.Semaphore</li>
+<li>Moved coros.event to event.Event</li>
+<li>Deprecated api.tcp_listener, api.connect_tcp, api.ssl_listener</li>
+<li>Moved get_hub, use_hub, get_default_hub from eventlet.api to eventlet.hubs</li>
+<li>Renamed libevent hub to pyevent.</li>
+<li>Removed previously-deprecated features tcp_server, GreenSSL, erpc, and trap_errors.</li>
+<li>Removed saranwrap as an option for making db connections nonblocking in db_pool.</li>
+</ul>
+</div>
+<div class="section" id="id25">
+<h1>0.9.2<a class="headerlink" href="#id25" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>Bugfix for wsgi.py where it was improperly expecting the environ variable to be a constant when passed to the application.</li>
+<li>Tpool.py now passes its tests on Windows.</li>
+<li>Fixed minor performance issue in wsgi.</li>
+</ul>
+</div>
+<div class="section" id="id26">
+<h1>0.9.1<a class="headerlink" href="#id26" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>PyOpenSSL is no longer required for Python 2.6: use the eventlet.green.ssl module. 2.5 and 2.4 still require PyOpenSSL.</li>
+<li>Cleaned up the eventlet.green packages and their associated tests, this should result in fewer version-dependent bugs with these modules.</li>
+<li>PyOpenSSL is now fully wrapped in eventlet.green.OpenSSL; using it is therefore more consistent with using other green modules.</li>
+<li>Documentation on using SSL added.</li>
+<li>New green modules: ayncore, asynchat, SimpleHTTPServer, CGIHTTPServer, ftplib.</li>
+<li>Fuller thread/threading compatibility: patching threadlocal with corolocal so coroutines behave even more like threads.</li>
+<li>Improved Windows compatibility for tpool.py</li>
+<li>With-statement compatibility for pools.Pool objects.</li>
+<li>Refactored copyrights in the files, added LICENSE and AUTHORS files.</li>
+<li>Added support for logging x-forwarded-for header in wsgi.</li>
+<li>api.tcp_server is now deprecated, will be removed in a future release.</li>
+<li>Added instructions on how to generate coverage reports to the documentation.</li>
+<li>Renamed GreenFile to Green_fileobject, to better reflect its purpose.</li>
+<li>Deprecated erpc method in tpool.py</li>
+<li>Bug fixes in: wsgi.py, twistedr.py, poll.py, greenio.py, util.py, select.py, processes.py, selects.py</li>
+</ul>
+</div>
+<div class="section" id="id27">
+<h1>0.9.0<a class="headerlink" href="#id27" title="Permalink to this headline">¶</a></h1>
+<ul>
+<li><p class="first">Full-duplex sockets (simultaneous readers and writers in the same process).</p>
+</li>
+<li><dl class="first docutils">
+<dt>Remove modules that distract from the core mission of making it straightforward to write event-driven networking apps:</dt>
+<dd><p class="first last">httpd, httpc, channel, greenlib, httpdate, jsonhttp, logutil</p>
+</dd>
+</dl>
+</li>
+<li><p class="first">Removed test dependency on sqlite, using nose instead.</p>
+</li>
+<li><p class="first">Marked known-broken tests using nose&#8217;s mechanism (most of these are not broken but are simply run in the incorrect context, such as threading-related tests that are incompatible with the libevent hub).</p>
+</li>
+<li><p class="first">Remove copied code from python standard libs (in tests).</p>
+</li>
+<li><p class="first">Added eventlet.patcher which can be used to import &#8220;greened&#8221; modules.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="id28">
+<h1>0.8.16<a class="headerlink" href="#id28" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>GreenSSLObject properly masks ZeroReturnErrors with an empty read; with unit test.</li>
+<li>Fixed 2.6 SSL compatibility issue.</li>
+</ul>
+</div>
+<div class="section" id="id29">
+<h1>0.8.15<a class="headerlink" href="#id29" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>GreenSSL object no longer converts ZeroReturnErrors into empty reads, because that is more compatible with the underlying SSLConnection object.</li>
+<li>Fixed issue caused by SIGCHLD handler in processes.py</li>
+<li>Stopped supporting string exceptions in saranwrap and fixed a few test failures.</li>
+</ul>
+</div>
+<div class="section" id="id30">
+<h1>0.8.14<a class="headerlink" href="#id30" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>Fixed some more Windows compatibility problems, resolving EVT-37 :</li>
+</ul>
+<p><a class="reference external" href="http://jira.secondlife.com/browse/EVT-37">http://jira.secondlife.com/browse/EVT-37</a>
+* waiting() method on Pool class, which was lost when the Pool implementation
+replaced CoroutinePool.</p>
+</div>
+<div class="section" id="id31">
+<h1>0.8.13<a class="headerlink" href="#id31" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>2.6 SSL compatibility patch by Marcus Cavanaugh.</li>
+<li>Added greenlet and pyopenssl as dependencies in setup.py.</li>
+</ul>
+</div>
+<div class="section" id="id32">
+<h1>0.8.12<a class="headerlink" href="#id32" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>The ability to resize() pools of coroutines, which was lost when the</li>
+</ul>
+<p>Pool implementation replaced CoroutinePool.
+* Fixed Cesar&#8217;s issue with SSL connections, and furthermore did a
+complete overhaul of SSL handling in eventlet so that it&#8217;s much closer
+to the behavior of the built-in libraries.  In particular, users of
+GreenSSL sockets must now call shutdown() before close(), exactly
+like SSL.Connection objects.
+* A small patch that makes Eventlet work on Windows.  This is the first
+release of Eventlet that works on Windows.</p>
+</div>
+<div class="section" id="id33">
+<h1>0.8.11<a class="headerlink" href="#id33" title="Permalink to this headline">¶</a></h1>
+<p>Eventlet can now run on top of twisted reactor. Twisted-based hub is enabled automatically if
+twisted.internet.reactor is imported. It is also possible to &#8220;embed&#8221; eventlet into a twisted
+application via eventlet.twistedutil.join_reactor. See the examples for details.</p>
+<p>A new package, eventlet.twistedutil, is added that makes integration of twisted and eventlet
+easier. It has block_on function that allows to wait for a Deferred to fire and it wraps
+twisted&#8217;s Protocol in a synchronous interface. This is similar to and is inspired by Christopher
+Armstrong&#8217;s corotwine library. Thanks to Dan Pascu for reviewing the package.</p>
+<p>Another new package, eventlet.green, was added to provide some of the standard modules
+that are fixed not to block other greenlets. This is an alternative to monkey-patching
+the socket, which is impossible to do if you are running twisted reactor.
+The package includes socket, httplib, urllib2.</p>
+<p>Much of the core functionality has been refactored and cleaned up, including the removal
+of eventlet.greenlib. This means that it is now possible to use plain greenlets without
+modification in eventlet, and the subclasses of greenlet instead of the old
+eventlet.greenlib.GreenletContext. Calling eventlet.api.get_hub().switch() now checks to
+see whether the current greenlet has a &#8220;switch_out&#8221; method and calls it if so, providing the
+same functionality that the GreenletContext.swap_out used to. The swap_in behavior can be
+duplicated by overriding the switch method, and the finalize functionality can be duplicated
+by having a try: finally: block around the greenlet&#8217;s main implementation. The eventlet.backdoor
+module has been ported to this new scheme, although it&#8217;s signature had to change slightly so
+existing code that used the backdoor will have to be modified.</p>
+<p>A number of bugs related to improper scheduling of switch calls has been fixed.
+The fixed functions and classes include api.trampoline, api.sleep, coros.event,
+coros.semaphore, coros.queue.</p>
+<p>Many methods of greenio.GreenSocket were fixed to make its behavior more like that of a regular
+socket. Thanks to Marcin Bachry for fixing GreenSocket.dup to preserve the timeout.</p>
+<p>Added proc module which provides an easy way to subscribe to coroutine&#8217;s results. This makes
+it easy to wait for a single greenlet or for a set of greenlets to complete.</p>
+<p>wsgi.py now supports chunked transfer requests (patch by Mike Barton)</p>
+<p>The following modules were deprecated or removed because they were broken:
+hubs.nginx, hubs.libev, support.pycurls, support.twisteds, cancel method of coros.event class</p>
+<p>The following classes are still present but will be removed in the future version:
+- channel.channel (use coros.Channel)
+- coros.CoroutinePool (use pool.Pool)</p>
+<p>saranwrap.py now correctly closes the child process when the referring object is deleted,
+received some fixes to its detection of child process death, now correctly deals with the in
+keyword, and it is now possible to use coroutines in a non-blocking fashion in the child process.</p>
+<p>Time-based expiry added to db_pool.  This adds the ability to expire connections both by idleness
+and also by total time open.  There is also a connection timeout option.</p>
+<p>A small bug in httpd&#8217;s error method was fixed.</p>
+<p>Python 2.3 is no longer supported.</p>
+<p>A number of tests was added along with a script to run all of them for all the configurations.
+The script generates an html page with the results.</p>
+<p>Thanks to Brian Brunswick for investigation of popen4 badness (eventlet.process)
+Thanks to Marcus Cavanaugh for pointing out some coros.queue(0) bugs.</p>
+<p>The twisted integration as well as many other improvements were funded by AG Projects (<a class="reference external" href="http://ag-projects.com">http://ag-projects.com</a>), thanks!</p>
+</div>
+<div class="section" id="x">
+<h1>0.8.x<a class="headerlink" href="#x" title="Permalink to this headline">¶</a></h1>
+<p>Fix a CPU leak that would cause the poll hub to consume 100% CPU in certain conditions, for example the echoserver example. (Donovan Preston)</p>
+<p>Fix the libev hub to match libev&#8217;s callback signature. (Patch by grugq)</p>
+<p>Add a backlog argument to api.tcp_listener (Patch by grugq)</p>
+</div>
+<div class="section" id="id34">
+<h1>0.7.x<a class="headerlink" href="#id34" title="Permalink to this headline">¶</a></h1>
+<p>Fix a major memory leak when using the libevent or libev hubs. Timers were not being removed from the hub after they fired. (Thanks Agusto Becciu and the grugq). Also, make it possible to call wrap_socket_with_coroutine_socket without using the threadpool to make dns operations non-blocking (Thanks the grugq).</p>
+<p>It&#8217;s now possible to use eventlet&#8217;s SSL client to talk to eventlet&#8217;s SSL server. (Thanks to Ryan Williams)</p>
+<p>Fixed a major CPU leak when using select hub. When adding a descriptor to the hub, entries were made in all three dictionaries, readers, writers, and exc, even if the callback is None. Thus every fd would be passed into all three lists when calling select regardless of whether there was a callback for that event or not. When reading the next request out of a keepalive socket, the socket would come back as ready for writing, the hub would notice the callback is None and ignore it, and then loop as fast as possible consuming CPU.</p>
+</div>
+<div class="section" id="id35">
+<h1>0.6.x<a class="headerlink" href="#id35" title="Permalink to this headline">¶</a></h1>
+<p>Fixes some long-standing bugs where sometimes failures in accept() or connect() would cause the coroutine that was waiting to be double-resumed, most often resulting in SwitchingToDeadGreenlet exceptions as well as weird tuple-unpacking exceptions in the CoroutinePool main loop.</p>
+<p>0.6.1: Added eventlet.tpool.killall. Blocks until all of the threadpool threads have been told to exit and join()ed. Meant to be used to clean up the threadpool on exit or if calling execv. Used by Spawning.</p>
+</div>
+<div class="section" id="id36">
+<h1>0.5.x<a class="headerlink" href="#id36" title="Permalink to this headline">¶</a></h1>
+<p>&#8220;The Pycon 2008 Refactor&#8221;: The first release which incorporates libevent support. Also comes with significant refactoring and code cleanup, especially to the eventlet.wsgi http server. Docstring coverage is much higher and there is new extensive documentation: <a class="reference external" href="http://wiki.secondlife.com/wiki/Eventlet/Documentation">http://wiki.secondlife.com/wiki/Eventlet/Documentation</a></p>
+<p>The point releases of 0.5.x fixed some bugs in the wsgi server, most notably handling of Transfer-Encoding: chunked; previously, it would happily send chunked encoding to clients which asked for HTTP/1.0, which isn&#8217;t legal.</p>
+</div>
+<div class="section" id="id37">
+<h1>0.2<a class="headerlink" href="#id37" title="Permalink to this headline">¶</a></h1>
+<p>Initial re-release of forked linden branch.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">0.16.1</a></li>
+<li><a class="reference internal" href="#id2">0.16.0</a></li>
+<li><a class="reference internal" href="#id3">0.15.2</a></li>
+<li><a class="reference internal" href="#id4">0.15.1</a></li>
+<li><a class="reference internal" href="#id5">0.15</a></li>
+<li><a class="reference internal" href="#id6">0.14</a></li>
+<li><a class="reference internal" href="#id7">0.13</a></li>
+<li><a class="reference internal" href="#id8">0.12</a></li>
+<li><a class="reference internal" href="#id9">0.11</a></li>
+<li><a class="reference internal" href="#id10">0.10</a></li>
+<li><a class="reference internal" href="#id11">0.9.17</a></li>
+<li><a class="reference internal" href="#id12">0.9.16</a></li>
+<li><a class="reference internal" href="#id13">0.9.15</a></li>
+<li><a class="reference internal" href="#id14">0.9.14</a></li>
+<li><a class="reference internal" href="#id15">0.9.13</a></li>
+<li><a class="reference internal" href="#id16">0.9.12</a></li>
+<li><a class="reference internal" href="#id17">0.9.10</a></li>
+<li><a class="reference internal" href="#id18">0.9.9</a></li>
+<li><a class="reference internal" href="#id19">0.9.8</a></li>
+<li><a class="reference internal" href="#id20">0.9.7</a></li>
+<li><a class="reference internal" href="#id21">0.9.6</a></li>
+<li><a class="reference internal" href="#id22">0.9.5</a></li>
+<li><a class="reference internal" href="#id23">0.9.4</a></li>
+<li><a class="reference internal" href="#id24">0.9.3</a></li>
+<li><a class="reference internal" href="#id25">0.9.2</a></li>
+<li><a class="reference internal" href="#id26">0.9.1</a></li>
+<li><a class="reference internal" href="#id27">0.9.0</a></li>
+<li><a class="reference internal" href="#id28">0.8.16</a></li>
+<li><a class="reference internal" href="#id29">0.8.15</a></li>
+<li><a class="reference internal" href="#id30">0.8.14</a></li>
+<li><a class="reference internal" href="#id31">0.8.13</a></li>
+<li><a class="reference internal" href="#id32">0.8.12</a></li>
+<li><a class="reference internal" href="#id33">0.8.11</a></li>
+<li><a class="reference internal" href="#x">0.8.x</a></li>
+<li><a class="reference internal" href="#id34">0.7.x</a></li>
+<li><a class="reference internal" href="#id35">0.6.x</a></li>
+<li><a class="reference internal" href="#id36">0.5.x</a></li>
+<li><a class="reference internal" href="#id37">0.2</a></li>
+</ul>
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/changelog.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Eventlet 0.16.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2005-2010, Eventlet Contributors.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-42952223-1', 'eventlet.net');
+  ga('send', 'pageview');
+</script>
+
+  </body>
+</html>

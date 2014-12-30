@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Eventlet Documentation &mdash; Eventlet 0.15.2 documentation</title>
+    <title>Eventlet Documentation &mdash; Eventlet 0.16.1 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.15.2',
+        VERSION:     '0.16.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.15.2 documentation" href="#" />
+    <link rel="top" title="Eventlet 0.16.1 documentation" href="#" />
     <link rel="next" title="Basic Usage" href="basic_usage.html" /> 
   </head>
   <body>
@@ -39,7 +39,7 @@
         <li class="right" >
           <a href="basic_usage.html" title="Basic Usage"
              accesskey="N">next</a> |</li>
-        <li><a href="#">Eventlet 0.15.2 documentation</a> &raquo;</li> 
+        <li><a href="#">Eventlet 0.16.1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -51,19 +51,21 @@
   <div class="section" id="eventlet-documentation">
 <h1>Eventlet Documentation<a class="headerlink" href="#eventlet-documentation" title="Permalink to this headline">¶</a></h1>
 <p>Code talks!  This is a simple web crawler that fetches a bunch of urls concurrently:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">urls</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;http://www.google.com/intl/en_ALL/images/logo.gif&quot;</span><span class="p">,</span>
-     <span class="s">&quot;https://wiki.secondlife.com/w/images/secondlife.jpg&quot;</span><span class="p">,</span>
-     <span class="s">&quot;http://us.i1.yimg.com/us.yimg.com/i/ww/beta/y3.gif&quot;</span><span class="p">]</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">urls</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s">&quot;http://www.google.com/intl/en_ALL/images/logo.gif&quot;</span><span class="p">,</span>
+    <span class="s">&quot;http://python.org/images/python-logo.gif&quot;</span><span class="p">,</span>
+    <span class="s">&quot;http://us.i1.yimg.com/us.yimg.com/i/ww/beta/y3.gif&quot;</span><span class="p">,</span>
+<span class="p">]</span>
 
 <span class="kn">import</span> <span class="nn">eventlet</span>
 <span class="kn">from</span> <span class="nn">eventlet.green</span> <span class="kn">import</span> <span class="n">urllib2</span>
 
 <span class="k">def</span> <span class="nf">fetch</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
-  <span class="k">return</span> <span class="n">urllib2</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">urllib2</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 
 <span class="n">pool</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">GreenPool</span><span class="p">()</span>
 <span class="k">for</span> <span class="n">body</span> <span class="ow">in</span> <span class="n">pool</span><span class="o">.</span><span class="n">imap</span><span class="p">(</span><span class="n">fetch</span><span class="p">,</span> <span class="n">urls</span><span class="p">):</span>
-  <span class="k">print</span><span class="p">(</span><span class="s">&quot;got body&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">body</span><span class="p">))</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&quot;got body&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">body</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -229,7 +231,7 @@
         <li class="right" >
           <a href="basic_usage.html" title="Basic Usage"
              >next</a> |</li>
-        <li><a href="#">Eventlet 0.15.2 documentation</a> &raquo;</li> 
+        <li><a href="#">Eventlet 0.16.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 

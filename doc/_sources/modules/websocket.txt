@@ -18,6 +18,11 @@ To create a websocket server, simply decorate a handler method with
     
     wsgi.server(eventlet.listen(('', 8090)), hello_world)
 
+.. note::
+
+    Please see graceful termination warning in :func:`~eventlet.wsgi.server`
+    documentation
+
 
 You can find a slightly more elaborate version of this code in the file
 ``examples/websocket.py``.

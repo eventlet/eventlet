@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>queue – Queue class &mdash; Eventlet 0.15.2 documentation</title>
+    <title>queue – Queue class &mdash; Eventlet 0.16.1 documentation</title>
     
     <link rel="stylesheet" href="../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.15.2',
+        VERSION:     '0.16.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.15.2 documentation" href="../index.html" />
+    <link rel="top" title="Eventlet 0.16.1 documentation" href="../index.html" />
     <link rel="up" title="Module Reference" href="../modules.html" />
     <link rel="next" title="semaphore – Semaphore classes" href="semaphore.html" />
     <link rel="prev" title="pools - Generic pools of resources" href="pools.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="pools.html" title="pools - Generic pools of resources"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.15.2 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Eventlet 0.16.1 documentation</a> &raquo;</li>
           <li><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
       </ul>
     </div>  
@@ -95,8 +95,8 @@ unfinished tasks drops to zero, <a class="reference internal" href="#eventlet.qu
 <dt id="eventlet.queue.Queue.task_done">
 <tt class="descname">task_done</tt><big>(</big><big>)</big><a class="headerlink" href="#eventlet.queue.Queue.task_done" title="Permalink to this definition">¶</a></dt>
 <dd><p>Indicate that a formerly enqueued task is complete. Used by queue consumer threads.
-For each <tt class="xref py py-meth docutils literal"><span class="pre">get</span></tt> used to fetch a task, a subsequent call to <a class="reference internal" href="#eventlet.queue.Queue.task_done" title="eventlet.queue.Queue.task_done"><tt class="xref py py-meth docutils literal"><span class="pre">task_done()</span></tt></a> tells the queue
-that the processing on the task is complete.</p>
+For each <tt class="xref py py-meth docutils literal"><span class="pre">get</span></tt> used to fetch a task, a subsequent call to
+<a class="reference internal" href="#eventlet.queue.Queue.task_done" title="eventlet.queue.Queue.task_done"><tt class="xref py py-meth docutils literal"><span class="pre">task_done()</span></tt></a> tells the queue that the processing on the task is complete.</p>
 <p>If a <a class="reference internal" href="#eventlet.queue.Queue.join" title="eventlet.queue.Queue.join"><tt class="xref py py-meth docutils literal"><span class="pre">join()</span></tt></a> is currently blocking, it will resume when all items have been processed
 (meaning that a <a class="reference internal" href="#eventlet.queue.Queue.task_done" title="eventlet.queue.Queue.task_done"><tt class="xref py py-meth docutils literal"><span class="pre">task_done()</span></tt></a> call was received for every item that had been
 <tt class="xref py py-meth docutils literal"><span class="pre">put</span></tt> into the queue).</p>
@@ -271,7 +271,7 @@ items into the queue.</p>
         <li class="right" >
           <a href="pools.html" title="pools - Generic pools of resources"
              >previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.15.2 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Eventlet 0.16.1 documentation</a> &raquo;</li>
           <li><a href="../modules.html" >Module Reference</a> &raquo;</li> 
       </ul>
     </div>

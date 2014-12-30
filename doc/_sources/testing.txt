@@ -21,7 +21,7 @@ Lastly, you can just use nose directly if you want:
 
 That's it!  The output from running nose is the same as unittest's output, if the entire directory was one big test file.
 
-Many tests are skipped based on environmental factors; for example, it makes no sense to test Twisted-specific functionality when Twisted is not installed.  These are printed as S's during execution, and in the summary printed after the tests run it will tell you how many were skipped.
+Many tests are skipped based on environmental factors; for example, it makes no sense to test kqueue-specific functionality when your OS does not support it.  These are printed as S's during execution, and in the summary printed after the tests run it will tell you how many were skipped.
 
 Doctests
 --------

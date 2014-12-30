@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>wsgi – WSGI server &mdash; Eventlet 0.15.2 documentation</title>
+    <title>wsgi – WSGI server &mdash; Eventlet 0.16.1 documentation</title>
     
     <link rel="stylesheet" href="../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.15.2',
+        VERSION:     '0.16.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.15.2 documentation" href="../index.html" />
+    <link rel="top" title="Eventlet 0.16.1 documentation" href="../index.html" />
     <link rel="up" title="Module Reference" href="../modules.html" />
     <link rel="next" title="eventlet.green.zmq – ØMQ support" href="zmq.html" />
     <link rel="prev" title="websocket – Websocket Server" href="websocket.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="websocket.html" title="websocket – Websocket Server"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.15.2 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Eventlet 0.16.1 documentation</a> &raquo;</li>
           <li><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
       </ul>
     </div>  
@@ -75,11 +75,23 @@ server package.  One such package is <a class="reference external" href="http://
 <tt class="docutils literal"><span class="pre">examples/wsgi.py</span></tt>.</p>
 <span class="target" id="module-eventlet.wsgi"></span><dl class="function">
 <dt id="eventlet.wsgi.server">
-<tt class="descclassname">eventlet.wsgi.</tt><tt class="descname">server</tt><big>(</big><em>sock</em>, <em>site</em>, <em>log=None</em>, <em>environ=None</em>, <em>max_size=None</em>, <em>max_http_version='HTTP/1.1'</em>, <em>protocol=&lt;class eventlet.wsgi.HttpProtocol at 0x7f4f68192f58&gt;</em>, <em>server_event=None</em>, <em>minimum_chunk_size=None</em>, <em>log_x_forwarded_for=True</em>, <em>custom_pool=None</em>, <em>keepalive=True</em>, <em>log_output=True</em>, <em>log_format='%(client_ip)s - - [%(date_time)s] &quot;%(request_line)s&quot; %(status_code)s %(body_length)s %(wall_seconds).6f'</em>, <em>url_length_limit=8192</em>, <em>debug=True</em>, <em>socket_timeout=None</em>, <em>capitalize_response_headers=True</em><big>)</big><a class="headerlink" href="#eventlet.wsgi.server" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">eventlet.wsgi.</tt><tt class="descname">server</tt><big>(</big><em>sock</em>, <em>site</em>, <em>log=None</em>, <em>environ=None</em>, <em>max_size=None</em>, <em>max_http_version='HTTP/1.1'</em>, <em>protocol=&lt;class eventlet.wsgi.HttpProtocol at 0x7f8e1d89b2c0&gt;</em>, <em>server_event=None</em>, <em>minimum_chunk_size=None</em>, <em>log_x_forwarded_for=True</em>, <em>custom_pool=None</em>, <em>keepalive=True</em>, <em>log_output=True</em>, <em>log_format='%(client_ip)s - - [%(date_time)s] &quot;%(request_line)s&quot; %(status_code)s %(body_length)s %(wall_seconds).6f'</em>, <em>url_length_limit=8192</em>, <em>debug=True</em>, <em>socket_timeout=None</em>, <em>capitalize_response_headers=True</em><big>)</big><a class="headerlink" href="#eventlet.wsgi.server" title="Permalink to this definition">¶</a></dt>
 <dd><p>Start up a WSGI server handling requests from the supplied server
 socket.  This function loops forever.  The <em>sock</em> object will be
 closed after server exits, but the underlying file descriptor will
 remain open, so if you have a dup() of <em>sock</em>, it will remain usable.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p>At the moment <a class="reference internal" href="#eventlet.wsgi.server" title="eventlet.wsgi.server"><tt class="xref py py-func docutils literal"><span class="pre">server()</span></tt></a> will always wait for active connections to finish before
+exiting, even if there&#8217;s an exception raised inside it
+(<em>all</em> exceptions are handled the same way, including <tt class="xref py py-class docutils literal"><span class="pre">greenlet.GreenletExit</span></tt>
+and those inheriting from <cite>BaseException</cite>).</p>
+<p class="last">While this may not be an issue normally, when it comes to long running HTTP connections
+(like <a class="reference internal" href="websocket.html#module-eventlet.websocket" title="eventlet.websocket"><tt class="xref py py-mod docutils literal"><span class="pre">eventlet.websocket</span></tt></a>) it will become problematic and calling
+<a class="reference internal" href="greenthread.html#eventlet.greenthread.GreenThread.wait" title="eventlet.greenthread.GreenThread.wait"><tt class="xref py py-meth docutils literal"><span class="pre">wait()</span></tt></a> on a thread that runs the server may hang,
+even after using <a class="reference internal" href="greenthread.html#eventlet.greenthread.GreenThread.kill" title="eventlet.greenthread.GreenThread.kill"><tt class="xref py py-meth docutils literal"><span class="pre">kill()</span></tt></a>, as long
+as there are active connections.</p>
+</div>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -210,6 +222,17 @@ as shown in the following example:</p>
 </div>
 <p>You can find a more elaborate example in the file:
 <tt class="docutils literal"><span class="pre">tests/wsgi_test.py</span></tt>, <tt class="xref py py-func docutils literal"><span class="pre">test_024a_expect_100_continue_with_headers()</span></tt>.</p>
+<p>Per HTTP RFC 7231 (<a class="reference external" href="http://tools.ietf.org/html/rfc7231#section-6.2">http://tools.ietf.org/html/rfc7231#section-6.2</a>) a client is
+required to be able to process one or more 100 continue responses.  A sample
+use case might be a user protocol where the server may want to use a 100-continue
+response to indicate to a client that it is working on a request and the
+client should not timeout.</p>
+<p>To support multiple 100-continue responses, evenlet wsgi module exports
+the API <tt class="xref py py-func docutils literal"><span class="pre">send_hundred_continue_response()</span></tt>.</p>
+<p>Sample use cases for chunked and non-chunked HTTP scenarios are included
+in the wsgi test case <tt class="docutils literal"><span class="pre">tests/wsgi_test.py</span></tt>,
+<tt class="xref py py-func docutils literal"><span class="pre">test_024b_expect_100_continue_with_headers_multiple_chunked()</span></tt> and
+<tt class="xref py py-func docutils literal"><span class="pre">test_024c_expect_100_continue_with_headers_multiple_nonchunked()</span></tt>.</p>
 </div>
 </div>
 
@@ -272,7 +295,7 @@ as shown in the following example:</p>
         <li class="right" >
           <a href="websocket.html" title="websocket – Websocket Server"
              >previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.15.2 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Eventlet 0.16.1 documentation</a> &raquo;</li>
           <li><a href="../modules.html" >Module Reference</a> &raquo;</li> 
       </ul>
     </div>

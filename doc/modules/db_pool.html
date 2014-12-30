@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>db_pool – DBAPI 2 database connection pooling &mdash; Eventlet 0.15.2 documentation</title>
+    <title>db_pool – DBAPI 2 database connection pooling &mdash; Eventlet 0.16.1 documentation</title>
     
     <link rel="stylesheet" href="../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.15.2',
+        VERSION:     '0.16.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.15.2 documentation" href="../index.html" />
+    <link rel="top" title="Eventlet 0.16.1 documentation" href="../index.html" />
     <link rel="up" title="Module Reference" href="../modules.html" />
     <link rel="next" title="event – Cross-greenthread primitive" href="event.html" />
     <link rel="prev" title="debug – Debugging tools for Eventlet" href="debug.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="debug.html" title="debug – Debugging tools for Eventlet"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.15.2 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Eventlet 0.16.1 documentation</a> &raquo;</li>
           <li><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
       </ul>
     </div>  
@@ -107,7 +107,7 @@
 <p><em>Caveat: The DatabaseConnector is a bit unfinished, it only suits a subset of use cases.</em></p>
 <span class="target" id="module-eventlet.db_pool"></span><dl class="class">
 <dt id="eventlet.db_pool.BaseConnectionPool">
-<em class="property">class </em><tt class="descclassname">eventlet.db_pool.</tt><tt class="descname">BaseConnectionPool</tt><big>(</big><em>db_module</em>, <em>min_size=0</em>, <em>max_size=4</em>, <em>max_idle=10</em>, <em>max_age=30</em>, <em>connect_timeout=5</em>, <em>cleanup=&lt;function cleanup_rollback at 0x7f4f68983f50&gt;</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.BaseConnectionPool" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">eventlet.db_pool.</tt><tt class="descname">BaseConnectionPool</tt><big>(</big><em>db_module</em>, <em>min_size=0</em>, <em>max_size=4</em>, <em>max_idle=10</em>, <em>max_age=30</em>, <em>connect_timeout=5</em>, <em>cleanup=&lt;function cleanup_rollback at 0x7f8e1d7521b8&gt;</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.BaseConnectionPool" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="method">
 <dt id="eventlet.db_pool.BaseConnectionPool.clear">
 <tt class="descname">clear</tt><big>(</big><big>)</big><a class="headerlink" href="#eventlet.db_pool.BaseConnectionPool.clear" title="Permalink to this definition">¶</a></dt>
@@ -127,7 +127,7 @@ and removes all references to them.</p>
 
 <dl class="method">
 <dt id="eventlet.db_pool.BaseConnectionPool.put">
-<tt class="descname">put</tt><big>(</big><em>conn</em>, <em>cleanup=&lt;object object at 0x7f4f689ba5f0&gt;</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.BaseConnectionPool.put" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">put</tt><big>(</big><em>conn</em>, <em>cleanup=&lt;object object at 0x7f8e1d7d5640&gt;</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.BaseConnectionPool.put" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -340,7 +340,7 @@ wrapper object.</p>
 
 <dl class="class">
 <dt id="eventlet.db_pool.RawConnectionPool">
-<em class="property">class </em><tt class="descclassname">eventlet.db_pool.</tt><tt class="descname">RawConnectionPool</tt><big>(</big><em>db_module</em>, <em>min_size=0</em>, <em>max_size=4</em>, <em>max_idle=10</em>, <em>max_age=30</em>, <em>connect_timeout=5</em>, <em>cleanup=&lt;function cleanup_rollback at 0x7f4f68983f50&gt;</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.RawConnectionPool" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">eventlet.db_pool.</tt><tt class="descname">RawConnectionPool</tt><big>(</big><em>db_module</em>, <em>min_size=0</em>, <em>max_size=4</em>, <em>max_idle=10</em>, <em>max_age=30</em>, <em>connect_timeout=5</em>, <em>cleanup=&lt;function cleanup_rollback at 0x7f8e1d7521b8&gt;</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.RawConnectionPool" title="Permalink to this definition">¶</a></dt>
 <dd><p>A pool which gives out plain database connections.</p>
 <dl class="classmethod">
 <dt id="eventlet.db_pool.RawConnectionPool.connect">
@@ -356,7 +356,7 @@ wrapper object.</p>
 
 <dl class="class">
 <dt id="eventlet.db_pool.TpooledConnectionPool">
-<em class="property">class </em><tt class="descclassname">eventlet.db_pool.</tt><tt class="descname">TpooledConnectionPool</tt><big>(</big><em>db_module</em>, <em>min_size=0</em>, <em>max_size=4</em>, <em>max_idle=10</em>, <em>max_age=30</em>, <em>connect_timeout=5</em>, <em>cleanup=&lt;function cleanup_rollback at 0x7f4f68983f50&gt;</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.TpooledConnectionPool" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">eventlet.db_pool.</tt><tt class="descname">TpooledConnectionPool</tt><big>(</big><em>db_module</em>, <em>min_size=0</em>, <em>max_size=4</em>, <em>max_idle=10</em>, <em>max_age=30</em>, <em>connect_timeout=5</em>, <em>cleanup=&lt;function cleanup_rollback at 0x7f8e1d7521b8&gt;</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.TpooledConnectionPool" title="Permalink to this definition">¶</a></dt>
 <dd><p>A pool which gives out <a class="reference internal" href="../threading.html#eventlet.tpool.Proxy" title="eventlet.tpool.Proxy"><tt class="xref py py-class docutils literal"><span class="pre">Proxy</span></tt></a>-based database
 connections.</p>
 <dl class="classmethod">
@@ -437,7 +437,7 @@ connections.</p>
         <li class="right" >
           <a href="debug.html" title="debug – Debugging tools for Eventlet"
              >previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.15.2 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Eventlet 0.16.1 documentation</a> &raquo;</li>
           <li><a href="../modules.html" >Module Reference</a> &raquo;</li> 
       </ul>
     </div>

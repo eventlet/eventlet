@@ -1,21 +1,25 @@
 Eventlet Documentation
 ====================================
 
-Code talks!  This is a simple web crawler that fetches a bunch of urls concurrently::
+Code talks!  This is a simple web crawler that fetches a bunch of urls concurrently:
 
-    urls = ["http://www.google.com/intl/en_ALL/images/logo.gif",
-         "https://wiki.secondlife.com/w/images/secondlife.jpg",
-         "http://us.i1.yimg.com/us.yimg.com/i/ww/beta/y3.gif"]
+.. code-block:: python
+
+    urls = [
+        "http://www.google.com/intl/en_ALL/images/logo.gif",
+        "http://python.org/images/python-logo.gif",
+        "http://us.i1.yimg.com/us.yimg.com/i/ww/beta/y3.gif",
+    ]
 
     import eventlet
     from eventlet.green import urllib2
 
     def fetch(url):
-      return urllib2.urlopen(url).read()
+        return urllib2.urlopen(url).read()
 
     pool = eventlet.GreenPool()
     for body in pool.imap(fetch, urls):
-      print("got body", len(body))
+        print("got body", len(body))
 
 Contents
 =========

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>greenthread – Green Thread Implementation &mdash; Eventlet 0.15.2 documentation</title>
+    <title>greenthread – Green Thread Implementation &mdash; Eventlet 0.16.1 documentation</title>
     
     <link rel="stylesheet" href="../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.15.2',
+        VERSION:     '0.16.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.15.2 documentation" href="../index.html" />
+    <link rel="top" title="Eventlet 0.16.1 documentation" href="../index.html" />
     <link rel="up" title="Module Reference" href="../modules.html" />
     <link rel="next" title="pools - Generic pools of resources" href="pools.html" />
     <link rel="prev" title="greenpool – Green Thread Pools" href="greenpool.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="greenpool.html" title="greenpool – Green Thread Pools"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.15.2 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Eventlet 0.16.1 documentation</a> &raquo;</li>
           <li><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
       </ul>
     </div>  
@@ -94,6 +94,18 @@ trace; the print can be disabled by calling
 </dd></dl>
 
 <dl class="function">
+<dt id="eventlet.greenthread.kill">
+<tt class="descclassname">eventlet.greenthread.</tt><tt class="descname">kill</tt><big>(</big><em>g</em>, <em>*throw_args</em><big>)</big><a class="headerlink" href="#eventlet.greenthread.kill" title="Permalink to this definition">¶</a></dt>
+<dd><p>Terminates the target greenthread by raising an exception into it.
+Whatever that greenthread might be doing; be it waiting for I/O or another
+primitive, it sees an exception right away.</p>
+<p>By default, this exception is GreenletExit, but a specific exception
+may be specified.  <em>throw_args</em> should be the same as the arguments to
+raise; either an exception instance or an exc_info tuple.</p>
+<p>Calling <a class="reference internal" href="#eventlet.greenthread.kill" title="eventlet.greenthread.kill"><tt class="xref py py-func docutils literal"><span class="pre">kill()</span></tt></a> causes the calling greenthread to cooperatively yield.</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="eventlet.greenthread.spawn_after">
 <tt class="descclassname">eventlet.greenthread.</tt><tt class="descname">spawn_after</tt><big>(</big><em>seconds</em>, <em>func</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.greenthread.spawn_after" title="Permalink to this definition">¶</a></dt>
 <dd><p>Spawns <em>func</em> after <em>seconds</em> have elapsed.  It runs as scheduled even if
@@ -136,7 +148,7 @@ Do not construct GreenThread objects directly; call <a class="reference internal
 <dl class="method">
 <dt id="eventlet.greenthread.GreenThread.cancel">
 <tt class="descname">cancel</tt><big>(</big><em>*throw_args</em><big>)</big><a class="headerlink" href="#eventlet.greenthread.GreenThread.cancel" title="Permalink to this definition">¶</a></dt>
-<dd><p>Kills the greenthread using <a class="reference internal" href="#eventlet.greenthread.GreenThread.kill" title="eventlet.greenthread.GreenThread.kill"><tt class="xref py py-func docutils literal"><span class="pre">kill()</span></tt></a>, but only if it hasn&#8217;t
+<dd><p>Kills the greenthread using <a class="reference internal" href="#eventlet.greenthread.kill" title="eventlet.greenthread.kill"><tt class="xref py py-func docutils literal"><span class="pre">kill()</span></tt></a>, but only if it hasn&#8217;t
 already started running.  After being canceled,
 all calls to <a class="reference internal" href="#eventlet.greenthread.GreenThread.wait" title="eventlet.greenthread.GreenThread.wait"><tt class="xref py py-meth docutils literal"><span class="pre">wait()</span></tt></a> will raise <em>throw_args</em> (which default
 to <tt class="xref py py-class docutils literal"><span class="pre">greenlet.GreenletExit</span></tt>).</p>
@@ -145,7 +157,7 @@ to <tt class="xref py py-class docutils literal"><span class="pre">greenlet.Gree
 <dl class="method">
 <dt id="eventlet.greenthread.GreenThread.kill">
 <tt class="descname">kill</tt><big>(</big><em>*throw_args</em><big>)</big><a class="headerlink" href="#eventlet.greenthread.GreenThread.kill" title="Permalink to this definition">¶</a></dt>
-<dd><p>Kills the greenthread using <a class="reference internal" href="#eventlet.greenthread.GreenThread.kill" title="eventlet.greenthread.GreenThread.kill"><tt class="xref py py-func docutils literal"><span class="pre">kill()</span></tt></a>.  After being killed
+<dd><p>Kills the greenthread using <a class="reference internal" href="#eventlet.greenthread.kill" title="eventlet.greenthread.kill"><tt class="xref py py-func docutils literal"><span class="pre">kill()</span></tt></a>.  After being killed
 all calls to <a class="reference internal" href="#eventlet.greenthread.GreenThread.wait" title="eventlet.greenthread.GreenThread.wait"><tt class="xref py py-meth docutils literal"><span class="pre">wait()</span></tt></a> will raise <em>throw_args</em> (which default
 to <tt class="xref py py-class docutils literal"><span class="pre">greenlet.GreenletExit</span></tt>).</p>
 </dd></dl>
@@ -159,9 +171,9 @@ to <tt class="xref py py-class docutils literal"><span class="pre">greenlet.Gree
 </pre></div>
 </div>
 <p>When the GreenThread finishes its run, it calls <em>func</em> with itself
-and with the <a class="reference external" href="http://en.wikipedia.org/wiki/Currying">curried arguments</a> supplied at link-time.  If the function wants
-to retrieve the result of the GreenThread, it should call wait()
-on its first argument.</p>
+and with the <a class="reference external" href="http://en.wikipedia.org/wiki/Currying">curried arguments</a> supplied
+at link-time.  If the function wants to retrieve the result of the GreenThread,
+it should call wait() on its first argument.</p>
 <p>Note that <em>func</em> is called within execution context of
 the GreenThread, so it is possible to interfere with other linked
 functions by doing things like switching explicitly to another
@@ -238,7 +250,7 @@ greenthread module).</p>
         <li class="right" >
           <a href="greenpool.html" title="greenpool – Green Thread Pools"
              >previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.15.2 documentation</a> &raquo;</li>
+        <li><a href="../index.html">Eventlet 0.16.1 documentation</a> &raquo;</li>
           <li><a href="../modules.html" >Module Reference</a> &raquo;</li> 
       </ul>
     </div>
