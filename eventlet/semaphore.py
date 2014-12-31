@@ -1,4 +1,7 @@
 from __future__ import with_statement
+
+import collections
+
 from eventlet import greenthread
 from eventlet import hubs
 from eventlet.timeout import Timeout
@@ -35,7 +38,7 @@ class Semaphore(object):
         if value < 0:
             raise ValueError("Semaphore must be initialized with a positive "
                              "number, got %s" % value)
-        self._waiters = set()
+        self._waiters = collections.deque()
 
     def __repr__(self):
         params = (self.__class__.__name__, hex(id(self)),
@@ -80,8 +83,12 @@ class Semaphore(object):
             raise ValueError("can't specify timeout for non-blocking acquire")
         if not blocking and self.locked():
             return False
+
+        current_thread = greenthread.getcurrent()
+
         if self.counter <= 0 or self._waiters:
-            self._waiters.add(greenthread.getcurrent())
+            if current_thread not in self._waiters:
+                self._waiters.append(current_thread)
             try:
                 if timeout is not None:
                     ok = False
@@ -94,11 +101,17 @@ class Semaphore(object):
                 else:
                     # If someone else is already in this wait loop, give them
                     # a chance to get out.
-                    hubs.get_hub().switch()
-                    while self.counter <= 0:
+                    while True:
                         hubs.get_hub().switch()
+                        if self.counter > 0:
+                            break
             finally:
-                self._waiters.discard(greenthread.getcurrent())
+                try:
+                    self._waiters.remove(current_thread)
+                except ValueError:
+                    # Fine if its already been dropped.
+                    pass
+
         self.counter -= 1
         return True
 
@@ -120,7 +133,7 @@ class Semaphore(object):
 
     def _do_acquire(self):
         if self._waiters and self.counter > 0:
-            waiter = self._waiters.pop()
+            waiter = self._waiters.popleft()
             waiter.switch()
 
     def __exit__(self, typ, val, tb):
