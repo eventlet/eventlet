@@ -78,6 +78,8 @@ class Semaphore(object):
         When invoked with blocking set to false, do not block. If a call without
         an argument would block, return false immediately; otherwise, do the
         same thing as when called without arguments, and return true.
+
+        Negative timeout means no timeout (blocking).
         """
         if not blocking and timeout is not None:
             raise ValueError("can't specify timeout for non-blocking acquire")
@@ -90,7 +92,7 @@ class Semaphore(object):
             if current_thread not in self._waiters:
                 self._waiters.append(current_thread)
             try:
-                if timeout is not None:
+                if timeout is not None and timeout >= 0:
                     ok = False
                     with Timeout(timeout, False):
                         while self.counter <= 0:
