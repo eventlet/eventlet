@@ -498,3 +498,7 @@ t2.join()
 
 def test_importlib_lock():
     tests.run_isolated('patcher_importlib_lock.py')
+
+
+def test_threading_condition():
+    tests.run_isolated('patcher_threading_condition.py')
