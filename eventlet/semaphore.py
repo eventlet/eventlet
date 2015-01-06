@@ -78,9 +78,18 @@ class Semaphore(object):
         When invoked with blocking set to false, do not block. If a call without
         an argument would block, return false immediately; otherwise, do the
         same thing as when called without arguments, and return true.
+
+        Timeout value must be strictly positive.
         """
-        if not blocking and timeout is not None:
-            raise ValueError("can't specify timeout for non-blocking acquire")
+        if timeout == -1:
+            timeout = None
+        if timeout is not None and timeout < 0:
+            raise ValueError("timeout value must be strictly positive")
+        if not blocking:
+            if timeout is not None:
+                raise ValueError("can't specify timeout "
+                                 "for non-blocking acquire")
+            timeout = 0
         if not blocking and self.locked():
             return False
 
