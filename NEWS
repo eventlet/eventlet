@@ -1,3 +1,8 @@
+0.16.1
+======
+
+* Wheel build 0.16.0 incorrectly shipped removed module eventlet.util.
+
 0.16.0
 ======
 
@@ -16,13 +21,13 @@
 
 0.15.2
 ======
-greenio: fixed memory leak, introduced in 0.15.1; Thanks to Michael Kerrin, Tushar Gohad
-wsgi: Support optional headers w/ "100 Continue" responses; Thanks to Tushar Gohad
+* greenio: fixed memory leak, introduced in 0.15.1; Thanks to Michael Kerrin, Tushar Gohad
+* wsgi: Support optional headers w/ "100 Continue" responses; Thanks to Tushar Gohad
 
 0.15.1
 ======
-greenio: Fix second simultaneous read (parallel paramiko issue); Thanks to Jan Grant, Michael Kerrin
-db_pool: customizable connection cleanup function; Thanks to Avery Fay
+* greenio: Fix second simultaneous read (parallel paramiko issue); Thanks to Jan Grant, Michael Kerrin
+* db_pool: customizable connection cleanup function; Thanks to Avery Fay
 
 0.15
 ====
