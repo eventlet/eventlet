@@ -268,7 +268,7 @@ def get_database_auth():
         try:
             auth_utf8 = json.load(open(f))
             # Have to convert unicode objects to str objects because
-            # mysqldb is dum. Using a doubly-nested list comprehension
+            # mysqldb is dumb. Using a doubly-nested list comprehension
             # because we know that the structure is a two-level dict.
             return dict(
                 [(str(modname), dict(

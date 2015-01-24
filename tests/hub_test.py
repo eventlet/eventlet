@@ -330,7 +330,7 @@ class TestDeadRunLoop(LimitedTestCase):
         with eventlet.Timeout(0.5, self.CustomException()):
             # we now switch to the hub, there should be no existing timers
             # that switch back to this greenlet and so this hub.switch()
-            # call should block indefinately.
+            # call should block indefinitely.
             self.assertRaises(self.CustomException, hub.switch)
 
     def test_parent(self):
@@ -352,7 +352,7 @@ class TestDeadRunLoop(LimitedTestCase):
             # we now switch to the hub which will allow
             # completion of dummyproc.
             # this should return execution back to the runloop and not
-            # this greenlet so that hub.switch() would block indefinately.
+            # this greenlet so that hub.switch() would block indefinitely.
             self.assertRaises(self.CustomException, hub.switch)
         assert g.dead  # sanity check that dummyproc has completed
 

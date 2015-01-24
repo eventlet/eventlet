@@ -19,7 +19,7 @@ def test_subprocess_wait():
     try:
         p.wait(timeout=0.1)
     except subprocess.TimeoutExpired as e:
-        str(e)  # make sure it doesnt throw
+        str(e)  # make sure it doesn't throw
         assert e.cmd == cmd
         assert e.timeout == 0.1
         ok = True
