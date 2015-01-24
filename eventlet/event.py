@@ -109,7 +109,7 @@ class Event(object):
         waited for result
 
         Returns immediately if the event has already
-        occured.
+        occurred.
 
         >>> evt.wait()
         'result'

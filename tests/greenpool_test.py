@@ -202,7 +202,7 @@ class GreenPool(tests.LimitedTestCase):
             timer = eventlet.Timeout(0, RuntimeError())
             try:
                 tp.get()
-                self.fail("Shouldn't have recieved anything from the pool")
+                self.fail("Shouldn't have received anything from the pool")
             except RuntimeError:
                 return 'timed out'
             else:

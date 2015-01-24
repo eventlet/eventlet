@@ -204,7 +204,7 @@ class Socket(_Socket):
         * send
         * recv
         * getsockopt
-    To ensure that the ``zmq.NOBLOCK`` flag is set and that sending or recieving
+    To ensure that the ``zmq.NOBLOCK`` flag is set and that sending or receiving
     is deferred to the hub (using :func:`eventlet.hubs.trampoline`) if a
     ``zmq.EAGAIN`` (retry) error is raised
 
