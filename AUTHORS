@@ -111,3 +111,6 @@ Thanks To
 * Stuart McLaren
 * Tomaz Muraus
 * Victor Stinner
+* ChangBo Guo(gcb), fixing typos in the documentation (GH #194)
+* Marc Abramowitz, fixing the README so it renders correctly on PyPI (GH #183)
+* David Szotten, tidying up tox configuration (GH #180)
