@@ -612,6 +612,12 @@ class TestGreenSocket(LimitedTestCase):
         assert select.select([], [s1], [], 0) == ([], [s1], [])
         assert select.select([], [s1], [], 0) == ([], [s1], [])
 
+    def test_shutdown_safe(self):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.close()
+        # should not raise
+        greenio.shutdown_safe(sock)
+
 
 def test_get_fileno_of_a_socket_works():
     class DummySocket(object):
