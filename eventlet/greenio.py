@@ -591,13 +591,16 @@ class GreenPipe(_fileobject):
         self.close()
 
     def _get_readahead_len(self):
+        # SocketIO doens't expose _rbuf attribute, assuming
+        # readahead buffer len 0
+        if six.PY3:
+            return 0
         return len(self._rbuf.getvalue())
 
     def _clear_readahead_buf(self):
         len = self._get_readahead_len()
         if len > 0:
             self.read(len)
-
     def tell(self):
         self.flush()
         try:
