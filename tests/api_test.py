@@ -17,7 +17,7 @@ def check_hub():
     for nm in 'get_readers', 'get_writers':
         dct = getattr(hub, nm)()
         assert not dct, "hub.%s not empty: %s" % (nm, dct)
-    hub.abort(True)
+    hub.abort(wait=True)
     assert not hub.running
 
 
