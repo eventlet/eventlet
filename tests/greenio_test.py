@@ -630,11 +630,15 @@ def test_get_fileno_of_an_int_works():
     assert select.get_fileno(123) == 123
 
 
+expected_get_fileno_type_error_message = (
+    'Expected int or long, got <%s \'str\'>' % ('type' if six.PY2 else 'class'))
+
+
 def test_get_fileno_of_wrong_type_fails():
     try:
         select.get_fileno('foo')
     except TypeError as ex:
-        assert str(ex) == 'Expected int or long, got <type \'str\'>'
+        assert str(ex) == expected_get_fileno_type_error_message
     else:
         assert False, 'Expected TypeError not raised'
 
@@ -646,7 +650,7 @@ def test_get_fileno_of_a_socket_with_fileno_returning_wrong_type_fails():
     try:
         select.get_fileno(DummySocket())
     except TypeError as ex:
-        assert str(ex) == 'Expected int or long, got <type \'str\'>'
+        assert str(ex) == expected_get_fileno_type_error_message
     else:
         assert False, 'Expected TypeError not raised'
 
@@ -726,7 +730,7 @@ class TestGreenPipe(LimitedTestCase):
 
         for i in range(65):
             buf = r.read(1024)
-            expected = 1024 * chr(i)
+            expected = 1024 * six.int2byte(i)
             self.assertEqual(
                 buf, expected,
                 "expected=%r..%r, found=%r..%r iter=%d"
@@ -734,7 +738,7 @@ class TestGreenPipe(LimitedTestCase):
         gt.wait()
 
     def test_seek_on_buffered_pipe(self):
-        f = greenio.GreenPipe(self.tempdir + "/TestFile", 'w+', 1024)
+        f = greenio.GreenPipe(self.tempdir + "/TestFile", 'wb+', 1024)
         self.assertEqual(f.tell(), 0)
         f.seek(0, 2)
         self.assertEqual(f.tell(), 0)
@@ -743,22 +747,22 @@ class TestGreenPipe(LimitedTestCase):
         self.assertEqual(f.tell(), 10)
         f.seek(0)
         value = f.read(1)
-        self.assertEqual(value, '1')
+        self.assertEqual(value, b'1')
         self.assertEqual(f.tell(), 1)
         value = f.read(1)
-        self.assertEqual(value, '2')
+        self.assertEqual(value, b'2')
         self.assertEqual(f.tell(), 2)
         f.seek(0, 1)
-        self.assertEqual(f.readline(), '34567890')
+        self.assertEqual(f.readline(), b'34567890')
         f.seek(-5, 1)
-        self.assertEqual(f.readline(), '67890')
+        self.assertEqual(f.readline(), b'67890')
         f.seek(0)
-        self.assertEqual(f.readline(), '1234567890')
+        self.assertEqual(f.readline(), b'1234567890')
         f.seek(0, 2)
-        self.assertEqual(f.readline(), '')
+        self.assertEqual(f.readline(), b'')
 
     def test_truncate(self):
-        f = greenio.GreenPipe(self.tempdir + "/TestFile", 'w+', 1024)
+        f = greenio.GreenPipe(self.tempdir + "/TestFile", 'wb+', 1024)
         f.write(b'1234567890')
         f.truncate(9)
         self.assertEqual(f.tell(), 9)
