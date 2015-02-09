@@ -555,14 +555,26 @@ class GreenPipe(_fileobject):
         else:
             fileno = os.dup(f.fileno())
             self._name = f.name
-            if f.mode != mode:
+            if not (
+                    f.mode == mode or
+                    six.PY3 and f.mode == 'rb+' and mode == 'wb+'
+            ):
                 raise ValueError('file.mode %r does not match mode parameter %r' % (f.mode, mode))
             self._name = f.name
             f.close()
 
+        if six.PY3:
+            mode = mode.rstrip('+')
+
         super(GreenPipe, self).__init__(_SocketDuckForFd(fileno), mode)
         set_nonblocking(self)
         self.softspace = 0
+
+    if six.PY3:
+        def write(self, data):
+            while data:
+                sent = _fileobject.write(self, data)
+                data = data[sent:]
 
     @property
     def name(self):
