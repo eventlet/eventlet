@@ -223,8 +223,19 @@ def monkey_patch(**on):
     It's safe to call monkey_patch multiple times.
     """
     accepted_args = set(('os', 'select', 'socket',
-                         'thread', 'time', 'psycopg', 'MySQLdb', '__builtin__'))
+                         'thread', 'time', 'psycopg', 'MySQLdb',
+                         'builtins'))
+    # To make sure only one of them is passed here
+    assert not ('__builtin__' in on and 'builtins' in on)
+    try:
+        b = on.pop('__builtin__')
+    except KeyError:
+        pass
+    else:
+        on['builtins'] = b
+
     default_on = on.pop("all", None)
+
     for k in six.iterkeys(on):
         if k not in accepted_args:
             raise TypeError("monkey_patch() got an unexpected "
@@ -235,7 +246,7 @@ def monkey_patch(**on):
         if modname == 'MySQLdb':
             # MySQLdb is only on when explicitly patched for the moment
             on.setdefault(modname, False)
-        if modname == '__builtin__':
+        if modname == 'builtins':
             on.setdefault(modname, False)
         on.setdefault(modname, default_on)
 
@@ -258,9 +269,9 @@ def monkey_patch(**on):
     if on.get('MySQLdb') and not already_patched.get('MySQLdb'):
         modules_to_patch += _green_MySQLdb()
         already_patched['MySQLdb'] = True
-    if on.get('__builtin__') and not already_patched.get('__builtin__'):
+    if on.get('builtins') and not already_patched.get('builtins'):
         modules_to_patch += _green_builtins()
-        already_patched['__builtin__'] = True
+        already_patched['builtins'] = True
     if on['psycopg'] and not already_patched.get('psycopg'):
         try:
             from eventlet.support import psycopg2_patcher
@@ -351,7 +362,7 @@ def _green_MySQLdb():
 def _green_builtins():
     try:
         from eventlet.green import builtin
-        return [('__builtin__', builtin)]
+        return [('__builtin__' if six.PY2 else 'builtins', builtin)]
     except ImportError:
         return []
 

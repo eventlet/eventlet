@@ -298,7 +298,7 @@ class TestFork(LimitedTestCase):
     def test_fork(self):
         output = tests.run_python('tests/hub_test_fork.py')
         lines = output.splitlines()
-        self.assertEqual(lines, ["accept blocked", "child died ok"], output)
+        self.assertEqual(lines, [b"accept blocked", b"child died ok"], output)
 
 
 class TestDeadRunLoop(LimitedTestCase):
@@ -376,8 +376,9 @@ try:
 except AttributeError:
     pass
 
-import __builtin__
-original_import = __builtin__.__import__
+from eventlet.support.six.moves import builtins
+
+original_import = builtins.__import__
 
 def fail_import(name, *args, **kwargs):
     if 'epoll' in name:
@@ -386,7 +387,7 @@ def fail_import(name, *args, **kwargs):
         print('kqueue tried')
     return original_import(name, *args, **kwargs)
 
-__builtin__.__import__ = fail_import
+builtins.__import__ = fail_import
 
 
 import eventlet.hubs
