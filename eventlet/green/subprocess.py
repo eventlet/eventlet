@@ -1,15 +1,21 @@
 import errno
-import time
+import sys
 from types import FunctionType
 
 import eventlet
 from eventlet import greenio
 from eventlet import patcher
-from eventlet.green import select
+from eventlet.green import select, threading, time
 from eventlet.support import six
 
 
-patcher.inject('subprocess', globals(), ('select', select))
+to_patch = [('select', select), ('threading', threading), ('time', time)]
+
+if sys.version_info > (3, 4):
+    from eventlet.green import selectors
+    to_patch.append(('selectors', selectors))
+
+patcher.inject('subprocess', globals(), *to_patch)
 subprocess_orig = __import__("subprocess")
 
 

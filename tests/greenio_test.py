@@ -667,8 +667,8 @@ class TestGreenPipe(LimitedTestCase):
 
     def test_pipe(self):
         r, w = os.pipe()
-        rf = greenio.GreenPipe(r, 'r')
-        wf = greenio.GreenPipe(w, 'w', 0)
+        rf = greenio.GreenPipe(r, 'rb')
+        wf = greenio.GreenPipe(w, 'wb', 0)
 
         def sender(f, content):
             for ch in map(six.int2byte, six.iterbytes(content)):
@@ -690,8 +690,8 @@ class TestGreenPipe(LimitedTestCase):
         # also ensures that readline() terminates on '\n' and '\r\n'
         r, w = os.pipe()
 
-        r = greenio.GreenPipe(r)
-        w = greenio.GreenPipe(w, 'w')
+        r = greenio.GreenPipe(r, 'rb')
+        w = greenio.GreenPipe(w, 'wb')
 
         def writer():
             eventlet.sleep(.1)
@@ -717,8 +717,8 @@ class TestGreenPipe(LimitedTestCase):
     def test_pipe_writes_large_messages(self):
         r, w = os.pipe()
 
-        r = greenio.GreenPipe(r)
-        w = greenio.GreenPipe(w, 'w')
+        r = greenio.GreenPipe(r, 'rb')
+        w = greenio.GreenPipe(w, 'wb')
 
         large_message = b"".join([1024 * six.int2byte(i) for i in range(65)])
 

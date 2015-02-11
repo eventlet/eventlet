@@ -4,8 +4,15 @@ If either operation blocked the whole script would block and timeout.
 """
 import unittest
 
-from eventlet.green import urllib2, BaseHTTPServer
+from eventlet.green import BaseHTTPServer
 from eventlet import spawn, kill
+from eventlet.support import six
+
+if six.PY2:
+    from eventlet.green.urllib2 import HTTPError, urlopen
+else:
+    from eventlet.green.urllib.request import urlopen
+    from eventlet.green.urllib.error import HTTPError
 
 
 class QuietHandler(BaseHTTPServer.BaseHTTPRequestHandler):
@@ -40,12 +47,12 @@ class TestGreenness(unittest.TestCase):
         self.server.server_close()
         kill(self.gthread)
 
-    def test_urllib2(self):
+    def test_urllib(self):
         self.assertEqual(self.server.request_count, 0)
         try:
-            urllib2.urlopen('http://127.0.0.1:%s' % self.port)
+            urlopen('http://127.0.0.1:%s' % self.port)
             assert False, 'should not get there'
-        except urllib2.HTTPError as ex:
+        except HTTPError as ex:
             assert ex.code == 501, repr(ex)
         self.assertEqual(self.server.request_count, 1)
 

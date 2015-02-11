@@ -1330,11 +1330,24 @@ class TestHttpd(_TestBase):
         self.assertEqual(result.headers_lower['connection'], 'close')
         assert 'transfer-encoding' not in result.headers_lower
 
-    def test_unicode_raises_error(self):
+    def test_unicode_with_only_ascii_characters_works(self):
         def wsgi_app(environ, start_response):
             start_response("200 OK", [])
-            yield u"oh hai"
-            yield u"non-encodable unicode: \u0230"
+            yield b"oh hai, "
+            yield u"xxx"
+        self.site.application = wsgi_app
+        sock = eventlet.connect(('localhost', self.port))
+        fd = sock.makefile('rwb')
+        fd.write(b'GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
+        fd.flush()
+        result = read_http(sock)
+        assert b'xxx' in result.body
+
+    def test_unicode_with_nonascii_characters_raises_error(self):
+        def wsgi_app(environ, start_response):
+            start_response("200 OK", [])
+            yield b"oh hai, "
+            yield u"xxx \u0230"
         self.site.application = wsgi_app
         sock = eventlet.connect(('localhost', self.port))
         fd = sock.makefile('rwb')
@@ -1343,7 +1356,6 @@ class TestHttpd(_TestBase):
         result = read_http(sock)
         self.assertEqual(result.status, 'HTTP/1.1 500 Internal Server Error')
         self.assertEqual(result.headers_lower['connection'], 'close')
-        assert b'unicode' in result.body
 
     def test_path_info_decoding(self):
         def wsgi_app(environ, start_response):
@@ -1454,11 +1466,11 @@ class TestHttpd(_TestBase):
         # (if eventlet stops using file.readline() to read HTTP headers,
         # for instance)
         for runlog in sections[1:]:
-            debug = False if "debug set to: False" in runlog else True
+            debug = False if b"debug set to: False" in runlog else True
             if debug:
-                self.assertTrue("timed out" in runlog)
-            self.assertTrue("BOOM" in runlog)
-            self.assertFalse("Traceback" in runlog)
+                self.assertTrue(b"timed out" in runlog)
+            self.assertTrue(b"BOOM" in runlog)
+            self.assertFalse(b"Traceback" in runlog)
 
     def test_server_socket_timeout(self):
         self.spawn_server(socket_timeout=0.1)
@@ -1743,7 +1755,16 @@ class TestChunkedInput(_TestBase):
             fd = self.connect()
             fd.sendall(req.encode())
             fd.close()
-            eventlet.sleep(0.0)
+
+            eventlet.sleep(0)
+
+            # This is needed because on Python 3 GreenSocket.recv_into is called
+            # rather than recv; recv_into right now (git 5ec3a3c) trampolines to
+            # the hub *before* attempting to read anything from a file descriptor
+            # therefore we need one extra context switch to let it notice closed
+            # socket, die and leave the hub empty
+            if six.PY3:
+                eventlet.sleep(0)
         finally:
             signal.alarm(0)
             signal.signal(signal.SIGALRM, signal.SIG_DFL)

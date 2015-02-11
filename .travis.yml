@@ -20,12 +20,6 @@ env:
 matrix:
   fast_finish: true
   allow_failures:
-    - env: TOX_ENV=py33-selects
-    - env: TOX_ENV=py33-poll
-    - env: TOX_ENV=py33-epolls
-    - env: TOX_ENV=py34-selects
-    - env: TOX_ENV=py34-poll
-    - env: TOX_ENV=py34-epolls
     - env: TOX_ENV=pypy-selects
     - env: TOX_ENV=pypy-poll
     - env: TOX_ENV=pypy-epolls

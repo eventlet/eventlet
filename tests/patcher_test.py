@@ -9,10 +9,7 @@ from tests import LimitedTestCase, main, run_python, skip_with_pyevent
 
 base_module_contents = """
 import socket
-try:
-    import urllib.request as urllib
-except ImportError:
-    import urllib
+import urllib
 print("base {0} {1}".format(socket, urllib))
 """
 
@@ -86,7 +83,14 @@ class ImportPatched(ProcessBase):
         assert 'eventlet.green.httplib' not in lines[2], repr(output)
 
     def test_import_patched_defaults(self):
-        self.write_to_tempfile("base", base_module_contents)
+        self.write_to_tempfile("base", """
+import socket
+try:
+    import urllib.request as urllib
+except ImportError:
+    import urllib
+print("base {0} {1}".format(socket, urllib))""")
+
         new_mod = """
 from eventlet import patcher
 base = patcher.import_patched('base')

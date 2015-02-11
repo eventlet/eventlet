@@ -8,11 +8,12 @@ import warnings
 
 from eventlet.green import BaseHTTPServer
 from eventlet.green import socket
-from eventlet.green import urllib
 from eventlet import greenio
 from eventlet import greenpool
 from eventlet import support
 from eventlet.support import six
+
+from eventlet.support.six.moves import urllib
 
 
 DEFAULT_MAX_SIMULTANEOUS_REQUESTS = 1024
@@ -395,24 +396,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 towrite.append(six.b("%x" % (len(data),)) + b"\r\n" + data + b"\r\n")
             else:
                 towrite.append(data)
-            try:
-                _writelines(towrite)
-                length[0] = length[0] + sum(map(len, towrite))
-            except UnicodeEncodeError:
-                self.server.log_message(
-                    "Encountered non-ascii unicode while attempting to write"
-                    "wsgi response: %r" %
-                    [x for x in towrite if isinstance(x, six.text_type)])
-                self.server.log_message(traceback.format_exc())
-                _writelines(
-                    ["HTTP/1.1 500 Internal Server Error\r\n",
-                     "Connection: close\r\n",
-                     "Content-type: text/plain\r\n",
-                     "Content-length: 98\r\n",
-                     "Date: %s\r\n" % format_date_time(time.time()),
-                     "\r\n",
-                     ("Internal Server Error: wsgi application passed "
-                      "a unicode object to the server instead of a string.")])
+            _writelines(towrite)
+            length[0] = length[0] + sum(map(len, towrite))
 
         def start_response(status, response_headers, exc_info=None):
             status_code[0] = status.split()[0]
@@ -456,6 +441,9 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 minimum_write_chunk_size = int(self.environ.get(
                     'eventlet.minimum_write_chunk_size', self.minimum_chunk_size))
                 for data in result:
+                    if isinstance(data, six.text_type):
+                        data = data.encode('ascii')
+
                     towrite.append(data)
                     towrite_size += len(data)
                     if towrite_size >= minimum_write_chunk_size:
@@ -472,7 +460,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.close_connection = 1
                 tb = traceback.format_exc()
                 self.server.log_message(tb)
-                if not headers_set:
+                if not headers_sent:
                     err_body = six.b(tb) if self.server.debug else b''
                     start_response("500 Internal Server Error",
                                    [('Content-type', 'text/plain'),
@@ -522,7 +510,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
         pq = self.path.split('?', 1)
         env['RAW_PATH_INFO'] = pq[0]
-        env['PATH_INFO'] = urllib.unquote(pq[0])
+        env['PATH_INFO'] = urllib.parse.unquote(pq[0])
         if len(pq) > 1:
             env['QUERY_STRING'] = pq[1]
 

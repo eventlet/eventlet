@@ -25,6 +25,7 @@ connection makefile() file objects - ExplodingSocketFile <-- these raise
 from __future__ import print_function
 
 import eventlet
+from eventlet.support import six
 
 import socket
 import sys
@@ -96,7 +97,8 @@ class ExplodingConnectionWrap(object):
 class ExplodingSocketFile(eventlet.greenio._fileobject):
 
     def __init__(self, sock, mode='rb', bufsize=-1, close=False):
-        super(self.__class__, self).__init__(sock, mode, bufsize, close)
+        args = [bufsize, close] if six.PY2 else []
+        super(self.__class__, self).__init__(sock, mode, *args)
         self.armed = False
 
     def arm(self):
