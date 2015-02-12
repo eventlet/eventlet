@@ -52,5 +52,15 @@ class TestSocketErrors(unittest.TestCase):
             cs.close()
             server.close()
 
+
+def test_create_connection_refused():
+    errno = None
+    try:
+        socket.create_connection(('127.0.0.1', 0))
+    except socket.error as ex:
+        errno = ex.errno
+    assert errno in [111, 61, 10061], 'Expected socket.error ECONNREFUSED, got {0}'.format(errno)
+
+
 if __name__ == '__main__':
     unittest.main()

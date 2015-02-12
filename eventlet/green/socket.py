@@ -1,6 +1,6 @@
 import os
 import sys
-from eventlet.hubs import get_hub
+
 __import__('eventlet.green._socket_nodns')
 __socket = sys.modules['eventlet.green._socket_nodns']
 
@@ -39,7 +39,7 @@ def create_connection(address,
     is used.
     """
 
-    msg = "getaddrinfo returns an empty list"
+    err = "getaddrinfo returns an empty list"
     host, port = address
     for res in getaddrinfo(host, port, 0, SOCK_STREAM):
         af, socktype, proto, canonname, sa = res
@@ -54,8 +54,10 @@ def create_connection(address,
             return sock
 
         except error as e:
-            msg = e
+            err = e
             if sock is not None:
                 sock.close()
 
-    raise error(msg)
+    if not isinstance(err, error):
+        err = error(err)
+    raise err
