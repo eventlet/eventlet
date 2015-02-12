@@ -54,8 +54,8 @@ def create_connection(address,
             return sock
 
         except error as e:
-            msg = e
             if sock is not None:
                 sock.close()
+            raise e
 
     raise error(msg)

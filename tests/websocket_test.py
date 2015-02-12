@@ -41,6 +41,7 @@ class TestWebSocket(_TestBase):
         self.site = wsapp
 
     def test_incorrect_headers(self):
+        print('DEBUGDMC: here')
         http = httplib.HTTPConnection('localhost', self.port)
         http.request("GET", "/echo")
         response = http.getresponse()
