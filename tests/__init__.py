@@ -204,13 +204,23 @@ def check_idle_cpu_usage(duration, allowed_part):
 
 
 def verify_hub_empty():
+
+    def format_listener(listener):
+        return 'Listener %r for greenlet %r with run callback %r' % (
+            listener, listener.greenlet, getattr(listener.greenlet, 'run', None))
+
     from eventlet import hubs
     hub = hubs.get_hub()
-    num_readers = len(hub.get_readers())
-    num_writers = len(hub.get_writers())
+    readers = hub.get_readers()
+    writers = hub.get_writers()
+    num_readers = len(readers)
+    num_writers = len(writers)
     num_timers = hub.get_timers_count()
-    assert num_readers == 0 and num_writers == 0, "Readers: %s Writers: %s" % (
-        num_readers, num_writers)
+    assert num_readers == 0 and num_writers == 0, \
+        "Readers: %s (%d) Writers: %s (%d)" % (
+            ', '.join(map(format_listener, readers)), num_readers,
+            ', '.join(map(format_listener, writers)), num_writers,
+        )
 
 
 def find_command(command):
