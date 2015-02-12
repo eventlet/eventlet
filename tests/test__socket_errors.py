@@ -52,5 +52,13 @@ class TestSocketErrors(unittest.TestCase):
             cs.close()
             server.close()
 
+    def test_create_connection_refused(self):
+        try:
+            s = socket.create_connection(('localhost', 0))
+            self.fail("Shouldn't have connected")
+        except socket.error as ex:
+            assert ex.errno in [111, 61, 10061]
+
+
 if __name__ == '__main__':
     unittest.main()
