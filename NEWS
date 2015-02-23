@@ -1,3 +1,13 @@
+0.17
+====
+* Full Python3 compatibility; Thanks to Jakub Stasiak
+* greendns: IPv6 support, improved handling of /etc/hosts; Thanks to Floris Bruynooghe
+* tpool: make sure we return results during killall; Thanks to David Szotten
+* semaphore: Don't hog a semaphore if someone else is waiting for it; Thanks to Shaun Stanworth
+* green.socket: create_connection() was wrapping all exceptions in socket.error; Thanks to Donagh McCabe
+* Make sure SSL retries are done using the exact same data buffer; Thanks to Lior Neudorfer
+* greenio: shutdown already closed sockets without error; Thanks to David Szotten
+
 0.16.1
 ======
 
