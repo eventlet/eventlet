@@ -37,34 +37,22 @@ import struct
 from eventlet import patcher
 from eventlet.green import _socket_nodns
 from eventlet.green import os
-from eventlet.green import select
 from eventlet.green import time
 from eventlet.support import six
 
 
-dns = patcher.import_patched('dns',
-                             socket=_socket_nodns,
-                             time=time,
-                             select=select)
-for pkg in ('dns.query', 'dns.exception', 'dns.inet', 'dns.message',
-            'dns.rdatatype', 'dns.resolver', 'dns.reversename',
-            'dns.rdataclass', 'dns.name', 'dns.rrset', 'dns.rdtypes',
-            'dns.ipv4', 'dns.ipv6'):
-    setattr(dns, pkg.split('.')[1],
-            patcher.import_patched(pkg, socket=_socket_nodns,
-                                   time=time, select=select))
+dns = patcher.import_patched('dns')
+dns.resolver = patcher.import_patched('dns.resolver')
+
+for pkg in ('dns.entropy', 'dns.inet', 'dns.query'):
+    setattr(dns, pkg.split('.')[1], patcher.import_patched(pkg))
+import dns.rdtypes
 for pkg in ['dns.rdtypes.IN', 'dns.rdtypes.ANY']:
-    setattr(dns.rdtypes, pkg.split('.')[-1],
-            patcher.import_patched(pkg, socket=_socket_nodns,
-                                   time=time, select=select))
+    setattr(dns.rdtypes, pkg.split('.')[-1], patcher.import_patched(pkg))
 for pkg in ['dns.rdtypes.IN.A', 'dns.rdtypes.IN.AAAA']:
-    setattr(dns.rdtypes.IN, pkg.split('.')[-1],
-            patcher.import_patched(pkg, socket=_socket_nodns,
-                                   time=time, select=select))
+    setattr(dns.rdtypes.IN, pkg.split('.')[-1], patcher.import_patched(pkg))
 for pkg in ['dns.rdtypes.ANY.CNAME']:
-    setattr(dns.rdtypes.ANY, pkg.split('.')[-1],
-            patcher.import_patched(pkg, socket=_socket_nodns,
-                                   time=time, select=select))
+    setattr(dns.rdtypes.ANY, pkg.split('.')[-1], patcher.import_patched(pkg))
 
 
 socket = _socket_nodns
