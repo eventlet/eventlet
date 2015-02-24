@@ -27,4 +27,4 @@ if __name__ == '__main__':
     do_import()
 
     thread.join()
-    print('ok')
+    print('pass')

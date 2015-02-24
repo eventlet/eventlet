@@ -1,14 +1,11 @@
 import errno
 import struct
 
-from nose.tools import eq_
-
 import eventlet
 from eventlet import event
 from eventlet import websocket
 from eventlet.green import httplib
 from eventlet.green import socket
-from eventlet import websocket
 from eventlet.support import six
 
 from tests.wsgi_test import _TestBase
@@ -129,11 +126,11 @@ class TestWebSocket(_TestBase):
         sock.recv(1024)
         ws = websocket.RFC6455WebSocket(sock, {}, client=True)
         ws.send(b'hello')
-        eq_(ws.wait(), b'hello')
+        assert ws.wait() == b'hello'
         ws.send(b'hello world!\x01')
         ws.send(u'hello world again!')
-        eq_(ws.wait(), b'hello world!\x01')
-        eq_(ws.wait(), u'hello world again!')
+        assert ws.wait() == b'hello world!\x01'
+        assert ws.wait() == u'hello world again!'
         ws.close()
         eventlet.sleep(0.01)
 

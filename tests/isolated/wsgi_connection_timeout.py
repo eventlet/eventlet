@@ -22,19 +22,26 @@ server / client accept() conn - ExplodingConnectionWrap
     V  V  V
 connection makefile() file objects - ExplodingSocketFile <-- these raise
 """
-from __future__ import print_function
+import socket
 
 import eventlet
 from eventlet.support import six
-
-import socket
-import sys
-
 import tests.wsgi_test
 
 
 # no standard tests in this file, ignore
 __test__ = False
+
+
+TAG_BOOM = "=== ~* BOOM *~ ==="
+
+output_buffer = []
+
+
+class BufferLog(object):
+    @staticmethod
+    def write(s):
+        output_buffer.append(s.rstrip())
 
 
 # This test might make you wince
@@ -54,12 +61,12 @@ class NaughtySocketAcceptWrap(object):
             conn_wrap.unwrap()
 
     def arm(self):
-        print("ca-click")
+        output_buffer.append("ca-click")
         for i in self.conn_reg:
             i.arm()
 
     def __call__(self):
-        print(self.__class__.__name__ + ".__call__")
+        output_buffer.append(self.__class__.__name__ + ".__call__")
         conn, addr = self.sock._really_accept()
         self.conn_reg.append(ExplodingConnectionWrap(conn))
         return conn, addr
@@ -82,12 +89,12 @@ class ExplodingConnectionWrap(object):
         del self.conn._really_makefile
 
     def arm(self):
-        print("tick")
+        output_buffer.append("tick")
         for i in self.file_reg:
             i.arm()
 
     def __call__(self, mode='r', bufsize=-1):
-        print(self.__class__.__name__ + ".__call__")
+        output_buffer.append(self.__class__.__name__ + ".__call__")
         # file_obj = self.conn._really_makefile(*args, **kwargs)
         file_obj = ExplodingSocketFile(self.conn._sock, mode, bufsize)
         self.file_reg.append(file_obj)
@@ -102,65 +109,83 @@ class ExplodingSocketFile(eventlet.greenio._fileobject):
         self.armed = False
 
     def arm(self):
-        print("beep")
+        output_buffer.append("beep")
         self.armed = True
 
     def _fuse(self):
         if self.armed:
-            print("=== ~* BOOM *~ ===")
+            output_buffer.append(TAG_BOOM)
             raise socket.timeout("timed out")
 
     def readline(self, *args, **kwargs):
-        print(self.__class__.__name__ + ".readline")
+        output_buffer.append(self.__class__.__name__ + ".readline")
         self._fuse()
         return super(self.__class__, self).readline(*args, **kwargs)
 
 
-if __name__ == '__main__':
-    for debug in (False, True):
-        print("SEPERATOR_SENTINEL")
-        print("debug set to: %s" % debug)
+def step(debug):
+    output_buffer[:] = []
 
-        server_sock = eventlet.listen(('localhost', 0))
-        server_addr = server_sock.getsockname()
-        sock_wrap = NaughtySocketAcceptWrap(server_sock)
+    server_sock = eventlet.listen(('localhost', 0))
+    server_addr = server_sock.getsockname()
+    sock_wrap = NaughtySocketAcceptWrap(server_sock)
 
-        eventlet.spawn_n(
-            eventlet.wsgi.server,
-            debug=debug,
-            log=sys.stdout,
-            max_size=128,
-            site=tests.wsgi_test.Site(),
-            sock=server_sock,
-        )
+    eventlet.spawn_n(
+        eventlet.wsgi.server,
+        debug=debug,
+        log=BufferLog,
+        max_size=128,
+        site=tests.wsgi_test.Site(),
+        sock=server_sock,
+    )
 
+    try:
+        # req #1 - normal
+        sock1 = eventlet.connect(server_addr)
+        sock1.settimeout(0.1)
+        fd1 = sock1.makefile('rwb')
+        fd1.write(b'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+        fd1.flush()
+        tests.wsgi_test.read_http(sock1)
+
+        # let the server socket ops catch up, set bomb
+        eventlet.sleep(0)
+        output_buffer.append("arming...")
+        sock_wrap.arm()
+
+        # req #2 - old conn, post-arm - timeout
+        fd1.write(b'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+        fd1.flush()
         try:
-            # req #1 - normal
-            sock1 = eventlet.connect(server_addr)
-            sock1.settimeout(0.1)
-            fd1 = sock1.makefile('rwb')
-            fd1.write(b'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
-            fd1.flush()
             tests.wsgi_test.read_http(sock1)
+            assert False, 'Expected ConnectionClosed exception'
+        except tests.wsgi_test.ConnectionClosed:
+            pass
 
-            # let the server socket ops catch up, set bomb
-            eventlet.sleep(0)
-            print("arming...")
-            sock_wrap.arm()
+        fd1.close()
+        sock1.close()
+    finally:
+        # reset streams, then output trapped tracebacks
+        sock_wrap.unwrap()
+    # check output asserts in tests.wsgi_test.TestHttpd
+    # test_143_server_connection_timeout_exception
 
-            # req #2 - old conn, post-arm - timeout
-            fd1.write(b'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
-            fd1.flush()
-            try:
-                tests.wsgi_test.read_http(sock1)
-                assert False, 'Expected ConnectionClosed exception'
-            except tests.wsgi_test.ConnectionClosed:
-                pass
+    return output_buffer[:]
 
-            fd1.close()
-            sock1.close()
-        finally:
-            # reset streams, then output trapped tracebacks
-            sock_wrap.unwrap()
-        # check output asserts in tests.wsgi_test.TestHttpd
-        # test_143_server_connection_timeout_exception
+
+def main():
+    output_normal = step(debug=False)
+    output_debug = step(debug=True)
+
+    assert "timed out" in output_debug[-1], repr(output_debug)
+    # if the BOOM check fails, it's because our timeout didn't happen
+    # (if eventlet stops using file.readline() to read HTTP headers,
+    # for instance)
+    assert TAG_BOOM == output_debug[-2], repr(output_debug)
+    assert TAG_BOOM == output_normal[-1], repr(output_normal)
+    assert "Traceback" not in output_debug, repr(output_debug)
+    assert "Traceback" not in output_normal, repr(output_normal)
+    print("pass")
+
+if __name__ == '__main__':
+    main()

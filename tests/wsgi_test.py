@@ -1455,22 +1455,7 @@ class TestHttpd(_TestBase):
         # Handle connection socket timeouts
         # https://bitbucket.org/eventlet/eventlet/issue/143/
         # Runs tests.wsgi_test_conntimeout in a separate process.
-        testcode_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            'wsgi_test_conntimeout.py')
-        output = tests.run_python(testcode_path)
-        sections = output.split(b"SEPERATOR_SENTINEL")
-        # first section is empty
-        self.assertEqual(3, len(sections), output)
-        # if the "BOOM" check fails, it's because our timeout didn't happen
-        # (if eventlet stops using file.readline() to read HTTP headers,
-        # for instance)
-        for runlog in sections[1:]:
-            debug = False if b"debug set to: False" in runlog else True
-            if debug:
-                self.assertTrue(b"timed out" in runlog)
-            self.assertTrue(b"BOOM" in runlog)
-            self.assertFalse(b"Traceback" in runlog)
+        tests.run_isolated('wsgi_connection_timeout.py')
 
     def test_server_socket_timeout(self):
         self.spawn_server(socket_timeout=0.1)

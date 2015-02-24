@@ -3,7 +3,9 @@ from __future__ import print_function
 
 import contextlib
 import errno
+import functools
 import gc
+import json
 import os
 try:
     import resource
@@ -14,6 +16,8 @@ import subprocess
 import sys
 import unittest
 import warnings
+
+from nose.plugins.skip import SkipTest
 
 import eventlet
 from eventlet import tpool
@@ -38,22 +42,14 @@ def assert_raises(exc_type):
         assert False, 'Expected exception {0}'.format(name)
 
 
-def skipped(func):
-    """ Decorator that marks a function as skipped.  Uses nose's SkipTest exception
-    if installed.  Without nose, this will count skipped tests as passing tests."""
-    try:
-        from nose.plugins.skip import SkipTest
+def skipped(func, *decorator_args):
+    """Decorator that marks a function as skipped.
+    """
+    @functools.wraps(func)
+    def wrapped(*a, **k):
+        raise SkipTest(*decorator_args)
 
-        def skipme(*a, **k):
-            raise SkipTest()
-        skipme.__name__ = func.__name__
-        return skipme
-    except ImportError:
-        # no nose, we'll just skip the test ourselves
-        def skipme(*a, **k):
-            print(("Skipping {0}".format(func.__name__)))
-        skipme.__name__ = func.__name__
-        return skipme
+    return wrapped
 
 
 def skip_if(condition):
@@ -63,16 +59,16 @@ def skip_if(condition):
     should return True to skip the test.
     """
     def skipped_wrapper(func):
+        @functools.wraps(func)
         def wrapped(*a, **kw):
             if isinstance(condition, bool):
                 result = condition
             else:
                 result = condition(func)
             if result:
-                return skipped(func)(*a, **kw)
+                raise SkipTest()
             else:
                 return func(*a, **kw)
-        wrapped.__name__ = func.__name__
         return wrapped
     return skipped_wrapper
 
@@ -84,16 +80,16 @@ def skip_unless(condition):
     should return True if the condition is satisfied.
     """
     def skipped_wrapper(func):
+        @functools.wraps(func)
         def wrapped(*a, **kw):
             if isinstance(condition, bool):
                 result = condition
             else:
                 result = condition(func)
             if not result:
-                return skipped(func)(*a, **kw)
+                raise SkipTest()
             else:
                 return func(*a, **kw)
-        wrapped.__name__ = func.__name__
         return wrapped
     return skipped_wrapper
 
@@ -271,19 +267,10 @@ def get_database_auth():
     ".test_dbauth", which contains a json map of parameters to the
     connect function.
     """
-    import os
     retval = {
         'MySQLdb': {'host': 'localhost', 'user': 'root', 'passwd': ''},
         'psycopg2': {'user': 'test'},
     }
-    try:
-        import json
-    except ImportError:
-        try:
-            import simplejson as json
-        except ImportError:
-            print("No json implementation, using baked-in db credentials.")
-            return retval
 
     if 'EVENTLET_DB_TEST_AUTH' in os.environ:
         return json.loads(os.environ.get('EVENTLET_DB_TEST_AUTH'))
@@ -309,9 +296,9 @@ def run_python(path):
     if not path.endswith('.py'):
         path += '.py'
     path = os.path.abspath(path)
-    dir_ = os.path.dirname(path)
+    src_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     new_env = os.environ.copy()
-    new_env['PYTHONPATH'] = os.pathsep.join(sys.path + [dir_])
+    new_env['PYTHONPATH'] = os.pathsep.join(sys.path + [src_dir])
     p = subprocess.Popen(
         [sys.executable, path],
         env=new_env,
@@ -321,6 +308,17 @@ def run_python(path):
     )
     output, _ = p.communicate()
     return output
+
+
+def run_isolated(path, prefix='tests/isolated/'):
+    output = run_python(prefix + path).rstrip()
+    if output.startswith(b'skip'):
+        parts = output.split(b':', 1)
+        skip_args = []
+        if len(parts) > 1:
+            skip_args.append(parts[1])
+        raise SkipTest(*skip_args)
+    assert output == b'pass', output
 
 
 certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')

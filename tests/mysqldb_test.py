@@ -6,15 +6,12 @@ import traceback
 
 import eventlet
 from eventlet import event
-from tests import (
-    LimitedTestCase,
-    run_python,
-    skip_unless, using_pyevent, get_database_auth,
-)
 try:
     from eventlet.green import MySQLdb
 except ImportError:
     MySQLdb = False
+import tests
+from tests import skip_unless, using_pyevent, get_database_auth
 
 
 def mysql_requirement(_f):
@@ -40,7 +37,7 @@ def mysql_requirement(_f):
         return False
 
 
-class TestMySQLdb(LimitedTestCase):
+class TestMySQLdb(tests.LimitedTestCase):
     def setUp(self):
         self._auth = get_database_auth()['MySQLdb']
         self.create_db()
@@ -229,16 +226,7 @@ class TestMySQLdb(LimitedTestCase):
             conn.commit()
 
 
-class TestMonkeyPatch(LimitedTestCase):
+class TestMonkeyPatch(tests.LimitedTestCase):
     @skip_unless(mysql_requirement)
     def test_monkey_patching(self):
-        testcode_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            'mysqldb_test_monkey_patch.py',
-        )
-        output = run_python(testcode_path)
-        lines = output.splitlines()
-        self.assertEqual(len(lines), 2, output)
-        self.assertEqual(lines[0].replace("psycopg,", ""),
-                         'mysqltest MySQLdb,os,select,socket,thread,time')
-        self.assertEqual(lines[1], "connect True")
+        tests.run_isolated('mysqldb_monkey_patch.py')

@@ -4,7 +4,7 @@ import sys
 import tempfile
 
 from eventlet.support import six
-from tests import LimitedTestCase, main, run_python, skip_with_pyevent
+import tests
 
 
 base_module_contents = """
@@ -29,7 +29,7 @@ print("importing {0} {1} {2} {3}".format(patching, socket, patching.socket, patc
 """
 
 
-class ProcessBase(LimitedTestCase):
+class ProcessBase(tests.LimitedTestCase):
     TEST_TIMEOUT = 3  # starting processes is time-consuming
 
     def setUp(self):
@@ -51,7 +51,7 @@ class ProcessBase(LimitedTestCase):
 
     def launch_subprocess(self, filename):
         path = os.path.join(self.tempdir, filename)
-        output = run_python(path)
+        output = tests.run_python(path)
         if six.PY3:
             output = output.decode('utf-8')
             separator = '\n'
@@ -246,7 +246,7 @@ def test_monkey_patch_threading():
 class Tpool(ProcessBase):
     TEST_TIMEOUT = 3
 
-    @skip_with_pyevent
+    @tests.skip_with_pyevent
     def test_simple(self):
         new_mod = """
 import eventlet
@@ -264,7 +264,7 @@ tpool.killall()
         assert '2' in lines[0], repr(output)
         assert '3' in lines[1], repr(output)
 
-    @skip_with_pyevent
+    @tests.skip_with_pyevent
     def test_unpatched_thread(self):
         new_mod = """import eventlet
 eventlet.monkey_patch(time=False, thread=False)
@@ -277,7 +277,7 @@ import time
         output, lines = self.launch_subprocess('newmod.py')
         self.assertEqual(len(lines), 2, lines)
 
-    @skip_with_pyevent
+    @tests.skip_with_pyevent
     def test_patched_thread(self):
         new_mod = """import eventlet
 eventlet.monkey_patch(time=False, thread=True)
@@ -497,9 +497,4 @@ t2.join()
 
 
 def test_importlib_lock():
-    output = run_python('tests/patcher_test_importlib_lock.py')
-    assert output.rstrip() == b'ok'
-
-
-if __name__ == '__main__':
-    main()
+    tests.run_isolated('patcher_importlib_lock.py')
