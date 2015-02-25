@@ -1,3 +1,7 @@
+0.17.1
+======
+* greendns: fix dns.name import and Python3 compatibility
+
 0.17
 ====
 * Full Python3 compatibility; Thanks to Jakub Stasiak
@@ -10,12 +14,10 @@
 
 0.16.1
 ======
-
 * Wheel build 0.16.0 incorrectly shipped removed module eventlet.util.
 
 0.16.0
 ======
-
 * Fix SSL socket wrapping and Python 2.7.9 compatibility; Thanks to Jakub Stasiak
 * Fix monkey_patch() on Python 3; Thanks to Victor Stinner
 * Fix "maximum recursion depth exceeded in GreenSocket.__del__"; Thanks to Jakub Stasiak
