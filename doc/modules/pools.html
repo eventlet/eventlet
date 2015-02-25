@@ -6,15 +6,15 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pools - Generic pools of resources &mdash; Eventlet 0.16.1 documentation</title>
+    <title>pools - Generic pools of resources &mdash; Eventlet 0.17.2 documentation</title>
     
-    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.16.1',
+        VERSION:     '0.17.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,13 +23,13 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.16.1 documentation" href="../index.html" />
+    <link rel="top" title="Eventlet 0.17.2 documentation" href="../index.html" />
     <link rel="up" title="Module Reference" href="../modules.html" />
     <link rel="next" title="queue – Queue class" href="queue.html" />
     <link rel="prev" title="greenthread – Green Thread Implementation" href="greenthread.html" /> 
   </head>
-  <body>
-    <div class="related">
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -44,21 +44,21 @@
         <li class="right" >
           <a href="greenthread.html" title="greenthread – Green Thread Implementation"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.16.1 documentation</a> &raquo;</li>
-          <li><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.17.2 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
       </ul>
     </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="module-eventlet.pools">
-<span id="pools-generic-pools-of-resources"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">pools</span></tt> - Generic pools of resources<a class="headerlink" href="#module-eventlet.pools" title="Permalink to this headline">¶</a></h1>
+<span id="pools-generic-pools-of-resources"></span><h1><code class="xref py py-mod docutils literal"><span class="pre">pools</span></code> - Generic pools of resources<a class="headerlink" href="#module-eventlet.pools" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="eventlet.pools.Pool">
-<em class="property">class </em><tt class="descclassname">eventlet.pools.</tt><tt class="descname">Pool</tt><big>(</big><em>min_size=0</em>, <em>max_size=4</em>, <em>order_as_stack=False</em>, <em>create=None</em><big>)</big><a class="headerlink" href="#eventlet.pools.Pool" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">eventlet.pools.</code><code class="descname">Pool</code><span class="sig-paren">(</span><em>min_size=0</em>, <em>max_size=4</em>, <em>order_as_stack=False</em>, <em>create=None</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.pools.Pool" title="Permalink to this definition">¶</a></dt>
 <dd><p>Pool class implements resource limitation and construction.</p>
 <p>There are two ways of using Pool: passing a <cite>create</cite> argument or
 subclassing. In either case you must provide a way to create
@@ -72,66 +72,66 @@ the resource.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">http_pool</span> <span class="o">=</span> <span class="n">pools</span><span class="o">.</span><span class="n">Pool</span><span class="p">(</span><span class="n">create</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">httplib2</span><span class="o">.</span><span class="n">Http</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mi">90</span><span class="p">))</span>
 </pre></div>
 </div>
-<p>or <a class="reference external" href="http://docs.python.org/library/functools.html#functools.partial" title="(in Python v2.7)"><tt class="xref py py-func docutils literal"><span class="pre">functools.partial()</span></tt></a>:</p>
+<p>or <a class="reference external" href="http://docs.python.org/library/functools.html#functools.partial" title="(in Python v2.7)"><code class="xref py py-func docutils literal"><span class="pre">functools.partial()</span></code></a>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 <span class="n">http_pool</span> <span class="o">=</span> <span class="n">pools</span><span class="o">.</span><span class="n">Pool</span><span class="p">(</span><span class="n">create</span><span class="o">=</span><span class="n">partial</span><span class="p">(</span><span class="n">httplib2</span><span class="o">.</span><span class="n">Http</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">90</span><span class="p">))</span>
 </pre></div>
 </div>
-<p>When subclassing, define only the <a class="reference internal" href="#eventlet.pools.Pool.create" title="eventlet.pools.Pool.create"><tt class="xref py py-meth docutils literal"><span class="pre">create()</span></tt></a> method
+<p>When subclassing, define only the <a class="reference internal" href="#eventlet.pools.Pool.create" title="eventlet.pools.Pool.create"><code class="xref py py-meth docutils literal"><span class="pre">create()</span></code></a> method
 to implement the desired resource:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">MyPool</span><span class="p">(</span><span class="n">pools</span><span class="o">.</span><span class="n">Pool</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">MyObject</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>If using 2.5 or greater, the <a class="reference internal" href="#eventlet.pools.Pool.item" title="eventlet.pools.Pool.item"><tt class="xref py py-meth docutils literal"><span class="pre">item()</span></tt></a> method acts as a context manager;
+<p>If using 2.5 or greater, the <a class="reference internal" href="#eventlet.pools.Pool.item" title="eventlet.pools.Pool.item"><code class="xref py py-meth docutils literal"><span class="pre">item()</span></code></a> method acts as a context manager;
 that&#8217;s the best way to use it:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">with</span> <span class="n">mypool</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="k">as</span> <span class="n">thing</span><span class="p">:</span>
     <span class="n">thing</span><span class="o">.</span><span class="n">dostuff</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>The maximum size of the pool can be modified at runtime via
-the <a class="reference internal" href="#eventlet.pools.Pool.resize" title="eventlet.pools.Pool.resize"><tt class="xref py py-meth docutils literal"><span class="pre">resize()</span></tt></a> method.</p>
+the <a class="reference internal" href="#eventlet.pools.Pool.resize" title="eventlet.pools.Pool.resize"><code class="xref py py-meth docutils literal"><span class="pre">resize()</span></code></a> method.</p>
 <p>Specifying a non-zero <em>min-size</em> argument pre-populates the pool with
 <em>min_size</em> items.  <em>max-size</em> sets a hard limit to the size of the pool &#8211;
 it cannot contain any more items than <em>max_size</em>, and if there are already
 <em>max_size</em> items &#8216;checked out&#8217; of the pool, the pool will cause any
-greenthread calling <a class="reference internal" href="#eventlet.pools.Pool.get" title="eventlet.pools.Pool.get"><tt class="xref py py-meth docutils literal"><span class="pre">get()</span></tt></a> to cooperatively yield until an item
-is <a class="reference internal" href="#eventlet.pools.Pool.put" title="eventlet.pools.Pool.put"><tt class="xref py py-meth docutils literal"><span class="pre">put()</span></tt></a> in.</p>
+greenthread calling <a class="reference internal" href="#eventlet.pools.Pool.get" title="eventlet.pools.Pool.get"><code class="xref py py-meth docutils literal"><span class="pre">get()</span></code></a> to cooperatively yield until an item
+is <a class="reference internal" href="#eventlet.pools.Pool.put" title="eventlet.pools.Pool.put"><code class="xref py py-meth docutils literal"><span class="pre">put()</span></code></a> in.</p>
 <dl class="method">
 <dt id="eventlet.pools.Pool.create">
-<tt class="descname">create</tt><big>(</big><big>)</big><a class="headerlink" href="#eventlet.pools.Pool.create" title="Permalink to this definition">¶</a></dt>
+<code class="descname">create</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.pools.Pool.create" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a new pool item.  In order for the pool to
 function, either this method must be overriden in a subclass
 or the pool must be constructed with the <cite>create</cite> argument.
 It accepts no arguments and returns a single instance of
 whatever thing the pool is supposed to contain.</p>
-<p>In general, <a class="reference internal" href="#eventlet.pools.Pool.create" title="eventlet.pools.Pool.create"><tt class="xref py py-meth docutils literal"><span class="pre">create()</span></tt></a> is called whenever the pool exceeds its
+<p>In general, <a class="reference internal" href="#eventlet.pools.Pool.create" title="eventlet.pools.Pool.create"><code class="xref py py-meth docutils literal"><span class="pre">create()</span></code></a> is called whenever the pool exceeds its
 previous high-water mark of concurrently-checked-out-items.  In other
 words, in a new pool with <em>min_size</em> of 0, the very first call
-to <a class="reference internal" href="#eventlet.pools.Pool.get" title="eventlet.pools.Pool.get"><tt class="xref py py-meth docutils literal"><span class="pre">get()</span></tt></a> will result in a call to <a class="reference internal" href="#eventlet.pools.Pool.create" title="eventlet.pools.Pool.create"><tt class="xref py py-meth docutils literal"><span class="pre">create()</span></tt></a>.  If the first
-caller calls <a class="reference internal" href="#eventlet.pools.Pool.put" title="eventlet.pools.Pool.put"><tt class="xref py py-meth docutils literal"><span class="pre">put()</span></tt></a> before some other caller calls <a class="reference internal" href="#eventlet.pools.Pool.get" title="eventlet.pools.Pool.get"><tt class="xref py py-meth docutils literal"><span class="pre">get()</span></tt></a>,
-then the first item will be returned, and <a class="reference internal" href="#eventlet.pools.Pool.create" title="eventlet.pools.Pool.create"><tt class="xref py py-meth docutils literal"><span class="pre">create()</span></tt></a> will not be
+to <a class="reference internal" href="#eventlet.pools.Pool.get" title="eventlet.pools.Pool.get"><code class="xref py py-meth docutils literal"><span class="pre">get()</span></code></a> will result in a call to <a class="reference internal" href="#eventlet.pools.Pool.create" title="eventlet.pools.Pool.create"><code class="xref py py-meth docutils literal"><span class="pre">create()</span></code></a>.  If the first
+caller calls <a class="reference internal" href="#eventlet.pools.Pool.put" title="eventlet.pools.Pool.put"><code class="xref py py-meth docutils literal"><span class="pre">put()</span></code></a> before some other caller calls <a class="reference internal" href="#eventlet.pools.Pool.get" title="eventlet.pools.Pool.get"><code class="xref py py-meth docutils literal"><span class="pre">get()</span></code></a>,
+then the first item will be returned, and <a class="reference internal" href="#eventlet.pools.Pool.create" title="eventlet.pools.Pool.create"><code class="xref py py-meth docutils literal"><span class="pre">create()</span></code></a> will not be
 called a second time.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="eventlet.pools.Pool.free">
-<tt class="descname">free</tt><big>(</big><big>)</big><a class="headerlink" href="#eventlet.pools.Pool.free" title="Permalink to this definition">¶</a></dt>
+<code class="descname">free</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.pools.Pool.free" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the number of free items in the pool.  This corresponds
-to the number of <a class="reference internal" href="#eventlet.pools.Pool.get" title="eventlet.pools.Pool.get"><tt class="xref py py-meth docutils literal"><span class="pre">get()</span></tt></a> calls needed to empty the pool.</p>
+to the number of <a class="reference internal" href="#eventlet.pools.Pool.get" title="eventlet.pools.Pool.get"><code class="xref py py-meth docutils literal"><span class="pre">get()</span></code></a> calls needed to empty the pool.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="eventlet.pools.Pool.get">
-<tt class="descname">get</tt><big>(</big><big>)</big><a class="headerlink" href="#eventlet.pools.Pool.get" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.pools.Pool.get" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return an item from the pool, when one is available.  This may
 cause the calling greenthread to block.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="eventlet.pools.Pool.item">
-<tt class="descname">item</tt><big>(</big><em>*args</em>, <em>**kwds</em><big>)</big><a class="headerlink" href="#eventlet.pools.Pool.item" title="Permalink to this definition">¶</a></dt>
+<code class="descname">item</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.pools.Pool.item" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get an object out of the pool, for use with with statement.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">pools</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pool</span> <span class="o">=</span> <span class="n">pools</span><span class="o">.</span><span class="n">TokenPool</span><span class="p">(</span><span class="n">max_size</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
@@ -147,25 +147,25 @@ cause the calling greenthread to block.</p>
 
 <dl class="method">
 <dt id="eventlet.pools.Pool.put">
-<tt class="descname">put</tt><big>(</big><em>item</em><big>)</big><a class="headerlink" href="#eventlet.pools.Pool.put" title="Permalink to this definition">¶</a></dt>
+<code class="descname">put</code><span class="sig-paren">(</span><em>item</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.pools.Pool.put" title="Permalink to this definition">¶</a></dt>
 <dd><p>Put an item back into the pool, when done.  This may
 cause the putting greenthread to block.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="eventlet.pools.Pool.resize">
-<tt class="descname">resize</tt><big>(</big><em>new_size</em><big>)</big><a class="headerlink" href="#eventlet.pools.Pool.resize" title="Permalink to this definition">¶</a></dt>
+<code class="descname">resize</code><span class="sig-paren">(</span><em>new_size</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.pools.Pool.resize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Resize the pool to <em>new_size</em>.</p>
 <p>Adjusting this number does not affect existing items checked out of
 the pool, nor on any greenthreads who are waiting for an item to free
-up.  Some indeterminate number of <a class="reference internal" href="#eventlet.pools.Pool.get" title="eventlet.pools.Pool.get"><tt class="xref py py-meth docutils literal"><span class="pre">get()</span></tt></a>/<a class="reference internal" href="#eventlet.pools.Pool.put" title="eventlet.pools.Pool.put"><tt class="xref py py-meth docutils literal"><span class="pre">put()</span></tt></a>
+up.  Some indeterminate number of <a class="reference internal" href="#eventlet.pools.Pool.get" title="eventlet.pools.Pool.get"><code class="xref py py-meth docutils literal"><span class="pre">get()</span></code></a>/<a class="reference internal" href="#eventlet.pools.Pool.put" title="eventlet.pools.Pool.put"><code class="xref py py-meth docutils literal"><span class="pre">put()</span></code></a>
 cycles will be necessary before the new maximum size truly matches
 the actual operation of the pool.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="eventlet.pools.Pool.waiting">
-<tt class="descname">waiting</tt><big>(</big><big>)</big><a class="headerlink" href="#eventlet.pools.Pool.waiting" title="Permalink to this definition">¶</a></dt>
+<code class="descname">waiting</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.pools.Pool.waiting" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the number of routines waiting for a pool item.</p>
 </dd></dl>
 
@@ -173,7 +173,7 @@ the actual operation of the pool.</p>
 
 <dl class="class">
 <dt id="eventlet.pools.TokenPool">
-<em class="property">class </em><tt class="descclassname">eventlet.pools.</tt><tt class="descname">TokenPool</tt><big>(</big><em>min_size=0</em>, <em>max_size=4</em>, <em>order_as_stack=False</em>, <em>create=None</em><big>)</big><a class="headerlink" href="#eventlet.pools.TokenPool" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">eventlet.pools.</code><code class="descname">TokenPool</code><span class="sig-paren">(</span><em>min_size=0</em>, <em>max_size=4</em>, <em>order_as_stack=False</em>, <em>create=None</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.pools.TokenPool" title="Permalink to this definition">¶</a></dt>
 <dd><p>A pool which gives out tokens (opaque unique objects), which indicate
 that the coroutine which holds the token has a right to consume some
 limited resource.</p>
@@ -185,20 +185,22 @@ limited resource.</p>
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
   <p class="topless"><a href="greenthread.html"
-                        title="previous chapter"><tt class="docutils literal"><span class="pre">greenthread</span></tt> &#8211; Green Thread Implementation</a></p>
+                        title="previous chapter"><code class="docutils literal"><span class="pre">greenthread</span></code> &#8211; Green Thread Implementation</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="queue.html"
-                        title="next chapter"><tt class="docutils literal"><span class="pre">queue</span></tt> &#8211; Queue class</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="../_sources/modules/pools.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+                        title="next chapter"><code class="docutils literal"><span class="pre">queue</span></code> &#8211; Queue class</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/modules/pools.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
       <input type="text" name="q" />
@@ -215,7 +217,7 @@ limited resource.</p>
       </div>
       <div class="clearer"></div>
     </div>
-    <div class="related">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -230,14 +232,14 @@ limited resource.</p>
         <li class="right" >
           <a href="greenthread.html" title="greenthread – Green Thread Implementation"
              >previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.16.1 documentation</a> &raquo;</li>
-          <li><a href="../modules.html" >Module Reference</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.17.2 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &raquo;</li> 
       </ul>
     </div>
 
-    <div class="footer">
+    <div class="footer" role="contentinfo">
         &copy; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

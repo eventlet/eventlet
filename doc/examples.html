@@ -6,15 +6,15 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Examples &mdash; Eventlet 0.16.1 documentation</title>
+    <title>Examples &mdash; Eventlet 0.17.2 documentation</title>
     
-    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.16.1',
+        VERSION:     '0.17.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,12 +23,12 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.16.1 documentation" href="index.html" />
+    <link rel="top" title="Eventlet 0.17.2 documentation" href="index.html" />
     <link rel="next" title="Using SSL With Eventlet" href="ssl.html" />
     <link rel="prev" title="Greening The World" href="patching.html" /> 
   </head>
-  <body>
-    <div class="related">
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -43,21 +43,21 @@
         <li class="right" >
           <a href="patching.html" title="Greening The World"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">Eventlet 0.16.1 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.17.2 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="examples">
 <h1>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h1>
-<p>Here are a bunch of small example programs that use Eventlet.  All of these examples can be found in the <tt class="docutils literal"><span class="pre">examples</span></tt> directory of a source copy of Eventlet.</p>
+<p>Here are a bunch of small example programs that use Eventlet.  All of these examples can be found in the <code class="docutils literal"><span class="pre">examples</span></code> directory of a source copy of Eventlet.</p>
 <div class="section" id="web-crawler">
 <span id="web-crawler-example"></span><h2>Web Crawler<a class="headerlink" href="#web-crawler" title="Permalink to this headline">¶</a></h2>
-<p><tt class="docutils literal"><span class="pre">examples/webcrawler.py</span></tt></p>
+<p><code class="docutils literal"><span class="pre">examples/webcrawler.py</span></code></p>
 <div class="highlight-python"><div class="highlight"><pre><span class="c">#!/usr/bin/env python</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">This is a simple web &quot;crawler&quot; that fetches a bunch of urls using a pool to</span>
@@ -93,7 +93,7 @@
 </div>
 <div class="section" id="wsgi-server">
 <span id="wsgi-server-example"></span><h2>WSGI Server<a class="headerlink" href="#wsgi-server" title="Permalink to this headline">¶</a></h2>
-<p><tt class="docutils literal"><span class="pre">examples/wsgi.py</span></tt></p>
+<p><code class="docutils literal"><span class="pre">examples/wsgi.py</span></code></p>
 <div class="highlight-python"><div class="highlight"><pre><span class="sd">&quot;&quot;&quot;This is a simple example of running a wsgi application with eventlet.</span>
 <span class="sd">For a more fully-featured server which supports multiple processes,</span>
 <span class="sd">multiple threads, and graceful code reloading, see:</span>
@@ -118,7 +118,7 @@
 </div>
 <div class="section" id="echo-server">
 <span id="echo-server-example"></span><h2>Echo Server<a class="headerlink" href="#echo-server" title="Permalink to this headline">¶</a></h2>
-<p><tt class="docutils literal"><span class="pre">examples/echoserver.py</span></tt></p>
+<p><code class="docutils literal"><span class="pre">examples/echoserver.py</span></code></p>
 <div class="highlight-python"><div class="highlight"><pre><span class="c">#! /usr/bin/env python</span>
 <span class="sd">&quot;&quot;&quot;\</span>
 <span class="sd">Simple server that listens on port 6000 and echos back every input to</span>
@@ -162,7 +162,7 @@
 </div>
 <div class="section" id="socket-connect">
 <span id="socket-connect-example"></span><h2>Socket Connect<a class="headerlink" href="#socket-connect" title="Permalink to this headline">¶</a></h2>
-<p><tt class="docutils literal"><span class="pre">examples/connect.py</span></tt></p>
+<p><code class="docutils literal"><span class="pre">examples/connect.py</span></code></p>
 <div class="highlight-python"><div class="highlight"><pre><span class="sd">&quot;&quot;&quot;Spawn multiple workers and collect their results.</span>
 
 <span class="sd">Demonstrates how to use the eventlet.green.socket module.</span>
@@ -196,7 +196,7 @@
 </div>
 <div class="section" id="multi-user-chat-server">
 <span id="chat-server-example"></span><h2>Multi-User Chat Server<a class="headerlink" href="#multi-user-chat-server" title="Permalink to this headline">¶</a></h2>
-<p><tt class="docutils literal"><span class="pre">examples/chat_server.py</span></tt></p>
+<p><code class="docutils literal"><span class="pre">examples/chat_server.py</span></code></p>
 <p>This is a little different from the echo server, in that it broadcasts the
 messages to all participants, not just the sender.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">eventlet</span>
@@ -242,7 +242,7 @@ messages to all participants, not just the sender.</p>
 </div>
 <div class="section" id="feed-scraper">
 <span id="feed-scraper-example"></span><h2>Feed Scraper<a class="headerlink" href="#feed-scraper" title="Permalink to this headline">¶</a></h2>
-<p><tt class="docutils literal"><span class="pre">examples/feedscraper.py</span></tt></p>
+<p><code class="docutils literal"><span class="pre">examples/feedscraper.py</span></code></p>
 <p>This example requires <a class="reference external" href="http://www.feedparser.org/">Feedparser</a> to be installed or on the PYTHONPATH.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="sd">&quot;&quot;&quot;A simple web server that accepts POSTS containing a list of feed urls,</span>
 <span class="sd">and returns the titles of those feeds.</span>
@@ -286,7 +286,7 @@ messages to all participants, not just the sender.</p>
 </div>
 <div class="section" id="port-forwarder">
 <span id="forwarder-example"></span><h2>Port Forwarder<a class="headerlink" href="#port-forwarder" title="Permalink to this headline">¶</a></h2>
-<p><tt class="docutils literal"><span class="pre">examples/forwarder.py</span></tt></p>
+<p><code class="docutils literal"><span class="pre">examples/forwarder.py</span></code></p>
 <div class="highlight-python"><div class="highlight"><pre><span class="sd">&quot;&quot;&quot; This is an incredibly simple port forwarder from port 7000 to 22 on</span>
 <span class="sd">localhost.  It calls a callback function when the socket is closed, to</span>
 <span class="sd">demonstrate one way that you could start to do interesting things by</span>
@@ -321,7 +321,7 @@ messages to all participants, not just the sender.</p>
 </div>
 <div class="section" id="recursive-web-crawler">
 <span id="recursive-crawler-example"></span><h2>Recursive Web Crawler<a class="headerlink" href="#recursive-web-crawler" title="Permalink to this headline">¶</a></h2>
-<p><tt class="docutils literal"><span class="pre">examples/recursive_crawler.py</span></tt></p>
+<p><code class="docutils literal"><span class="pre">examples/recursive_crawler.py</span></code></p>
 <p>This is an example recursive web crawler that fetches linked pages from a seed url.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="sd">&quot;&quot;&quot;This is a recursive web crawler.  Don&#39;t go pointing this at random sites;</span>
 <span class="sd">it doesn&#39;t respect robots.txt and it is pretty brutal about how quickly it</span>
@@ -378,7 +378,7 @@ messages to all participants, not just the sender.</p>
 </div>
 <div class="section" id="producer-consumer-web-crawler">
 <span id="producer-consumer-example"></span><h2>Producer Consumer Web Crawler<a class="headerlink" href="#producer-consumer-web-crawler" title="Permalink to this headline">¶</a></h2>
-<p><tt class="docutils literal"><span class="pre">examples/producer_consumer.py</span></tt></p>
+<p><code class="docutils literal"><span class="pre">examples/producer_consumer.py</span></code></p>
 <p>This is an example implementation of the producer/consumer pattern as well as being identical in functionality to the recursive web crawler.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="sd">&quot;&quot;&quot;This is a recursive web crawler.  Don&#39;t go pointing this at random sites;</span>
 <span class="sd">it doesn&#39;t respect robots.txt and it is pretty brutal about how quickly it</span>
@@ -442,7 +442,7 @@ messages to all participants, not just the sender.</p>
 </div>
 <div class="section" id="websocket-server-example">
 <span id="websocket-example"></span><h2>Websocket Server Example<a class="headerlink" href="#websocket-server-example" title="Permalink to this headline">¶</a></h2>
-<p><tt class="docutils literal"><span class="pre">examples/websocket.py</span></tt></p>
+<p><code class="docutils literal"><span class="pre">examples/websocket.py</span></code></p>
 <p>This exercises some of the features of the websocket server
 implementation.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">eventlet</span>
@@ -493,7 +493,7 @@ implementation.</p>
 </div>
 <div class="section" id="websocket-multi-user-chat-example">
 <span id="websocket-chat-example"></span><h2>Websocket Multi-User Chat Example<a class="headerlink" href="#websocket-multi-user-chat-example" title="Permalink to this headline">¶</a></h2>
-<p><tt class="docutils literal"><span class="pre">examples/websocket_chat.py</span></tt></p>
+<p><code class="docutils literal"><span class="pre">examples/websocket_chat.py</span></code></p>
 <p>This is a mashup of the websocket example and the multi-user chat example, showing how you can do the same sorts of things with websockets that you can do with regular sockets.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">os</span>
 
@@ -543,7 +543,7 @@ implementation.</p>
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
@@ -569,12 +569,14 @@ implementation.</p>
   <h4>Next topic</h4>
   <p class="topless"><a href="ssl.html"
                         title="next chapter">Using SSL With Eventlet</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="_sources/examples.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/examples.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />
@@ -591,7 +593,7 @@ implementation.</p>
       </div>
       <div class="clearer"></div>
     </div>
-    <div class="related">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -606,13 +608,13 @@ implementation.</p>
         <li class="right" >
           <a href="patching.html" title="Greening The World"
              >previous</a> |</li>
-        <li><a href="index.html">Eventlet 0.16.1 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.17.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
 
-    <div class="footer">
+    <div class="footer" role="contentinfo">
         &copy; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

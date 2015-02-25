@@ -6,15 +6,15 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>websocket – Websocket Server &mdash; Eventlet 0.16.1 documentation</title>
+    <title>websocket – Websocket Server &mdash; Eventlet 0.17.2 documentation</title>
     
-    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.16.1',
+        VERSION:     '0.17.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,13 +23,13 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.16.1 documentation" href="../index.html" />
+    <link rel="top" title="Eventlet 0.17.2 documentation" href="../index.html" />
     <link rel="up" title="Module Reference" href="../modules.html" />
     <link rel="next" title="wsgi – WSGI server" href="wsgi.html" />
     <link rel="prev" title="timeout – Universal Timeouts" href="timeout.html" /> 
   </head>
-  <body>
-    <div class="related">
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -44,23 +44,23 @@
         <li class="right" >
           <a href="timeout.html" title="timeout – Universal Timeouts"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.16.1 documentation</a> &raquo;</li>
-          <li><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.17.2 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
       </ul>
     </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="websocket-websocket-server">
-<h1><tt class="xref py py-mod docutils literal"><span class="pre">websocket</span></tt> &#8211; Websocket Server<a class="headerlink" href="#websocket-websocket-server" title="Permalink to this headline">¶</a></h1>
+<h1><code class="xref py py-mod docutils literal"><span class="pre">websocket</span></code> &#8211; Websocket Server<a class="headerlink" href="#websocket-websocket-server" title="Permalink to this headline">¶</a></h1>
 <p>This module provides a simple way to create a <a class="reference external" href="http://dev.w3.org/html5/websockets/">websocket</a> server.  It works with a few
-tweaks in the <a class="reference internal" href="wsgi.html#module-eventlet.wsgi" title="eventlet.wsgi"><tt class="xref py py-mod docutils literal"><span class="pre">wsgi</span></tt></a> module that allow websockets to
+tweaks in the <a class="reference internal" href="wsgi.html#module-eventlet.wsgi" title="eventlet.wsgi"><code class="xref py py-mod docutils literal"><span class="pre">wsgi</span></code></a> module that allow websockets to
 coexist with other WSGI applications.</p>
 <p>To create a websocket server, simply decorate a handler method with
-<tt class="xref py py-class docutils literal"><span class="pre">WebSocketWSGI</span></tt> and use it as a wsgi application:</p>
+<code class="xref py py-class docutils literal"><span class="pre">WebSocketWSGI</span></code> and use it as a wsgi application:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">wsgi</span><span class="p">,</span> <span class="n">websocket</span>
 <span class="kn">import</span> <span class="nn">eventlet</span>
 
@@ -73,19 +73,19 @@ coexist with other WSGI applications.</p>
 </div>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">Please see graceful termination warning in <a class="reference internal" href="wsgi.html#eventlet.wsgi.server" title="eventlet.wsgi.server"><tt class="xref py py-func docutils literal"><span class="pre">server()</span></tt></a>
+<p class="last">Please see graceful termination warning in <a class="reference internal" href="wsgi.html#eventlet.wsgi.server" title="eventlet.wsgi.server"><code class="xref py py-func docutils literal"><span class="pre">server()</span></code></a>
 documentation</p>
 </div>
 <p>You can find a slightly more elaborate version of this code in the file
-<tt class="docutils literal"><span class="pre">examples/websocket.py</span></tt>.</p>
-<p>As of version 0.9.13, eventlet.websocket supports SSL websockets; all that&#8217;s necessary is to use an <a class="reference internal" href="wsgi.html#wsgi-ssl"><em>SSL wsgi server</em></a>.</p>
+<code class="docutils literal"><span class="pre">examples/websocket.py</span></code>.</p>
+<p>As of version 0.9.13, eventlet.websocket supports SSL websockets; all that&#8217;s necessary is to use an <a class="reference internal" href="wsgi.html#wsgi-ssl"><span>SSL wsgi server</span></a>.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">The web socket spec is still under development, and it will be necessary to change the way that this module works in response to spec changes.</p>
 </div>
 <span class="target" id="module-eventlet.websocket"></span><dl class="class">
 <dt id="eventlet.websocket.WebSocketWSGI">
-<em class="property">class </em><tt class="descclassname">eventlet.websocket.</tt><tt class="descname">WebSocketWSGI</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#eventlet.websocket.WebSocketWSGI" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">eventlet.websocket.</code><code class="descname">WebSocketWSGI</code><span class="sig-paren">(</span><em>handler</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.websocket.WebSocketWSGI" title="Permalink to this definition">¶</a></dt>
 <dd><p>Wraps a websocket handler function in a WSGI application.</p>
 <p>Use it like this:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="nd">@websocket.WebSocketWSGI</span>
@@ -95,18 +95,18 @@ documentation</p>
 </pre></div>
 </div>
 <p>The single argument to the function will be an instance of
-<a class="reference internal" href="#eventlet.websocket.WebSocket" title="eventlet.websocket.WebSocket"><tt class="xref py py-class docutils literal"><span class="pre">WebSocket</span></tt></a>.  To close the socket, simply return from the
+<a class="reference internal" href="#eventlet.websocket.WebSocket" title="eventlet.websocket.WebSocket"><code class="xref py py-class docutils literal"><span class="pre">WebSocket</span></code></a>.  To close the socket, simply return from the
 function.  Note that the server will log the websocket request at
 the time of closure.</p>
 </dd></dl>
 
 <dl class="class">
 <dt id="eventlet.websocket.WebSocket">
-<em class="property">class </em><tt class="descclassname">eventlet.websocket.</tt><tt class="descname">WebSocket</tt><big>(</big><em>sock</em>, <em>environ</em>, <em>version=76</em><big>)</big><a class="headerlink" href="#eventlet.websocket.WebSocket" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">eventlet.websocket.</code><code class="descname">WebSocket</code><span class="sig-paren">(</span><em>sock</em>, <em>environ</em>, <em>version=76</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.websocket.WebSocket" title="Permalink to this definition">¶</a></dt>
 <dd><p>A websocket object that handles the details of
 serialization/deserialization to the socket.</p>
-<p>The primary way to interact with a <a class="reference internal" href="#eventlet.websocket.WebSocket" title="eventlet.websocket.WebSocket"><tt class="xref py py-class docutils literal"><span class="pre">WebSocket</span></tt></a> object is to
-call <a class="reference internal" href="#eventlet.websocket.WebSocket.send" title="eventlet.websocket.WebSocket.send"><tt class="xref py py-meth docutils literal"><span class="pre">send()</span></tt></a> and <a class="reference internal" href="#eventlet.websocket.WebSocket.wait" title="eventlet.websocket.WebSocket.wait"><tt class="xref py py-meth docutils literal"><span class="pre">wait()</span></tt></a> in order to pass messages back
+<p>The primary way to interact with a <a class="reference internal" href="#eventlet.websocket.WebSocket" title="eventlet.websocket.WebSocket"><code class="xref py py-class docutils literal"><span class="pre">WebSocket</span></code></a> object is to
+call <a class="reference internal" href="#eventlet.websocket.WebSocket.send" title="eventlet.websocket.WebSocket.send"><code class="xref py py-meth docutils literal"><span class="pre">send()</span></code></a> and <a class="reference internal" href="#eventlet.websocket.WebSocket.wait" title="eventlet.websocket.WebSocket.wait"><code class="xref py py-meth docutils literal"><span class="pre">wait()</span></code></a> in order to pass messages back
 and forth with the browser.  Also available are the following
 properties:</p>
 <dl class="docutils">
@@ -122,14 +122,14 @@ but more convenient.</dd>
 </dl>
 <dl class="method">
 <dt id="eventlet.websocket.WebSocket.close">
-<tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#eventlet.websocket.WebSocket.close" title="Permalink to this definition">¶</a></dt>
+<code class="descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.websocket.WebSocket.close" title="Permalink to this definition">¶</a></dt>
 <dd><p>Forcibly close the websocket; generally it is preferable to
 return from the handler method.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="eventlet.websocket.WebSocket.send">
-<tt class="descname">send</tt><big>(</big><em>message</em><big>)</big><a class="headerlink" href="#eventlet.websocket.WebSocket.send" title="Permalink to this definition">¶</a></dt>
+<code class="descname">send</code><span class="sig-paren">(</span><em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.websocket.WebSocket.send" title="Permalink to this definition">¶</a></dt>
 <dd><p>Send a message to the browser.</p>
 <p><em>message</em> should be convertable to a string; unicode objects should be
 encodable as utf-8.  Raises socket.error with errno of 32
@@ -138,7 +138,7 @@ encodable as utf-8.  Raises socket.error with errno of 32
 
 <dl class="method">
 <dt id="eventlet.websocket.WebSocket.wait">
-<tt class="descname">wait</tt><big>(</big><big>)</big><a class="headerlink" href="#eventlet.websocket.WebSocket.wait" title="Permalink to this definition">¶</a></dt>
+<code class="descname">wait</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.websocket.WebSocket.wait" title="Permalink to this definition">¶</a></dt>
 <dd><p>Waits for and deserializes messages.</p>
 <p>Returns a single message; the oldest not yet processed. If the client
 has already closed the connection, returns None.  This is different
@@ -154,20 +154,22 @@ websocket message.</p>
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
   <p class="topless"><a href="timeout.html"
-                        title="previous chapter"><tt class="docutils literal"><span class="pre">timeout</span></tt> &#8211; Universal Timeouts</a></p>
+                        title="previous chapter"><code class="docutils literal"><span class="pre">timeout</span></code> &#8211; Universal Timeouts</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="wsgi.html"
-                        title="next chapter"><tt class="docutils literal"><span class="pre">wsgi</span></tt> &#8211; WSGI server</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="../_sources/modules/websocket.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+                        title="next chapter"><code class="docutils literal"><span class="pre">wsgi</span></code> &#8211; WSGI server</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/modules/websocket.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
       <input type="text" name="q" />
@@ -184,7 +186,7 @@ websocket message.</p>
       </div>
       <div class="clearer"></div>
     </div>
-    <div class="related">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -199,14 +201,14 @@ websocket message.</p>
         <li class="right" >
           <a href="timeout.html" title="timeout – Universal Timeouts"
              >previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.16.1 documentation</a> &raquo;</li>
-          <li><a href="../modules.html" >Module Reference</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.17.2 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &raquo;</li> 
       </ul>
     </div>
 
-    <div class="footer">
+    <div class="footer" role="contentinfo">
         &copy; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

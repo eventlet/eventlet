@@ -6,15 +6,15 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Authors &mdash; Eventlet 0.16.1 documentation</title>
+    <title>Authors &mdash; Eventlet 0.17.2 documentation</title>
     
-    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.16.1',
+        VERSION:     '0.17.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,12 +23,12 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.16.1 documentation" href="index.html" />
+    <link rel="top" title="Eventlet 0.17.2 documentation" href="index.html" />
     <link rel="next" title="History" href="history.html" />
     <link rel="prev" title="eventlet.green.zmq – ØMQ support" href="modules/zmq.html" /> 
   </head>
-  <body>
-    <div class="related">
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -43,14 +43,14 @@
         <li class="right" >
           <a href="modules/zmq.html" title="eventlet.green.zmq – ØMQ support"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">Eventlet 0.16.1 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.17.2 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="authors">
 <h1>Authors<a class="headerlink" href="#authors" title="Permalink to this headline">¶</a></h1>
@@ -96,6 +96,7 @@
 <li>Jakub Stasiak</li>
 <li>Aldona Majorek</li>
 <li>Victor Sergeyev</li>
+<li>David Szotten</li>
 </ul>
 </div>
 <div class="section" id="linden-lab-contributors">
@@ -159,7 +160,7 @@
 <li>Astrum Kuo, python3 compatibility fixes; greenthread.unlink() method</li>
 <li>Davanum Srinivas, Python3 compatibility fixes</li>
 <li>Dmitriy Kruglyak, PyPy 2.3 compatibility fix</li>
-<li>Jan Grant, Michael Kerrin, second simultaneous read (Github #94)</li>
+<li>Jan Grant, Michael Kerrin, second simultaneous read (GH-94)</li>
 <li>Simon Jagoe, Python3 octal literal fix</li>
 <li>Tushar Gohad, wsgi: Support optional headers w/ &#8220;100 Continue&#8221; responses</li>
 <li>raylu, fixing operator precedence bug in eventlet.wsgi</li>
@@ -174,6 +175,13 @@
 <li>Stuart McLaren</li>
 <li>Tomaz Muraus</li>
 <li>Victor Stinner</li>
+<li>ChangBo Guo(gcb), fixing typos in the documentation (GH-194)</li>
+<li>Marc Abramowitz, fixing the README so it renders correctly on PyPI (GH-183)</li>
+<li>Shaun Stanworth, equal chance to acquire semaphore from different greenthreads (GH-136)</li>
+<li>Lior Neudorfer, Make sure SSL retries are done using the exact same data buffer</li>
+<li>Sean Dague, wsgi: Provide python logging compatibility</li>
+<li>Tim Simmons, Use _socket_nodns and select in dnspython support</li>
+<li>Antonio Cuni, fix fd double close on PyPy</li>
 </ul>
 </div>
 </div>
@@ -182,7 +190,7 @@
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
@@ -198,16 +206,18 @@
 
   <h4>Previous topic</h4>
   <p class="topless"><a href="modules/zmq.html"
-                        title="previous chapter"><tt class="docutils literal"><span class="pre">eventlet.green.zmq</span></tt> &#8211; ØMQ support</a></p>
+                        title="previous chapter"><code class="docutils literal"><span class="pre">eventlet.green.zmq</span></code> &#8211; ØMQ support</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="history.html"
                         title="next chapter">History</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="_sources/authors.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/authors.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />
@@ -224,7 +234,7 @@
       </div>
       <div class="clearer"></div>
     </div>
-    <div class="related">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -239,13 +249,13 @@
         <li class="right" >
           <a href="modules/zmq.html" title="eventlet.green.zmq – ØMQ support"
              >previous</a> |</li>
-        <li><a href="index.html">Eventlet 0.16.1 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.17.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
 
-    <div class="footer">
+    <div class="footer" role="contentinfo">
         &copy; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

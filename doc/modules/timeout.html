@@ -6,15 +6,15 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>timeout – Universal Timeouts &mdash; Eventlet 0.16.1 documentation</title>
+    <title>timeout – Universal Timeouts &mdash; Eventlet 0.17.2 documentation</title>
     
-    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.16.1',
+        VERSION:     '0.17.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,13 +23,13 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.16.1 documentation" href="../index.html" />
+    <link rel="top" title="Eventlet 0.17.2 documentation" href="../index.html" />
     <link rel="up" title="Module Reference" href="../modules.html" />
     <link rel="next" title="websocket – Websocket Server" href="websocket.html" />
     <link rel="prev" title="semaphore – Semaphore classes" href="semaphore.html" /> 
   </head>
-  <body>
-    <div class="related">
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -44,21 +44,21 @@
         <li class="right" >
           <a href="semaphore.html" title="semaphore – Semaphore classes"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.16.1 documentation</a> &raquo;</li>
-          <li><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.17.2 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
       </ul>
     </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="timeout-universal-timeouts">
-<h1><tt class="xref py py-mod docutils literal"><span class="pre">timeout</span></tt> &#8211; Universal Timeouts<a class="headerlink" href="#timeout-universal-timeouts" title="Permalink to this headline">¶</a></h1>
+<h1><code class="xref py py-mod docutils literal"><span class="pre">timeout</span></code> &#8211; Universal Timeouts<a class="headerlink" href="#timeout-universal-timeouts" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="eventlet.timeout.Timeout">
-<em class="property">class </em><tt class="descclassname">eventlet.timeout.</tt><tt class="descname">Timeout</tt><a class="headerlink" href="#eventlet.timeout.Timeout" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">eventlet.timeout.</code><code class="descname">Timeout</code><a class="headerlink" href="#eventlet.timeout.Timeout" title="Permalink to this definition">¶</a></dt>
 <dd><p>Raises <em>exception</em> in the current greenthread after <em>timeout</em> seconds:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">timeout</span> <span class="o">=</span> <span class="n">Timeout</span><span class="p">(</span><span class="n">seconds</span><span class="p">,</span> <span class="n">exception</span><span class="p">)</span>
 <span class="k">try</span><span class="p">:</span>
@@ -67,7 +67,7 @@
     <span class="n">timeout</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>When <em>exception</em> is omitted or <tt class="docutils literal"><span class="pre">None</span></tt>, the <tt class="xref py py-class docutils literal"><span class="pre">Timeout</span></tt> instance
+<p>When <em>exception</em> is omitted or <code class="docutils literal"><span class="pre">None</span></code>, the <code class="xref py py-class docutils literal"><span class="pre">Timeout</span></code> instance
 itself is raised:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">Timeout</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">eventlet</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.2</span><span class="p">)</span>
@@ -76,14 +76,14 @@ itself is raised:</p>
 <span class="gr">Timeout</span>: <span class="n">0.1 seconds</span>
 </pre></div>
 </div>
-<p>You can use the  <tt class="docutils literal"><span class="pre">with</span></tt> statement for additional convenience:</p>
+<p>You can use the  <code class="docutils literal"><span class="pre">with</span></code> statement for additional convenience:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">with</span> <span class="n">Timeout</span><span class="p">(</span><span class="n">seconds</span><span class="p">,</span> <span class="n">exception</span><span class="p">)</span> <span class="k">as</span> <span class="n">timeout</span><span class="p">:</span>
     <span class="k">pass</span> <span class="c"># ... code block ...</span>
 </pre></div>
 </div>
 <p>This is equivalent to the try/finally block in the first example.</p>
-<p>There is an additional feature when using the <tt class="docutils literal"><span class="pre">with</span></tt> statement: if
-<em>exception</em> is <tt class="docutils literal"><span class="pre">False</span></tt>, the timeout is still raised, but the with
+<p>There is an additional feature when using the <code class="docutils literal"><span class="pre">with</span></code> statement: if
+<em>exception</em> is <code class="docutils literal"><span class="pre">False</span></code>, the timeout is still raised, but the with
 statement suppresses it, so the code outside the with-block won&#8217;t see it:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="bp">None</span>
 <span class="k">with</span> <span class="n">Timeout</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="bp">False</span><span class="p">):</span>
@@ -99,7 +99,7 @@ and is only useful if you&#8217;re planning to raise it directly.</p>
 <p>There are two Timeout caveats to be aware of:</p>
 <ul class="simple">
 <li>If the code block in the try/finally or with-block never cooperatively yields, the timeout cannot be raised.  In Eventlet, this should rarely be a problem, but be aware that you cannot time out CPU-only operations with this class.</li>
-<li>If the code block catches and doesn&#8217;t re-raise <tt class="xref py py-class docutils literal"><span class="pre">BaseException</span></tt>  (for example, with <tt class="docutils literal"><span class="pre">except:</span></tt>), then it will catch the Timeout exception, and might not abort as intended.</li>
+<li>If the code block catches and doesn&#8217;t re-raise <code class="xref py py-class docutils literal"><span class="pre">BaseException</span></code>  (for example, with <code class="docutils literal"><span class="pre">except:</span></code>), then it will catch the Timeout exception, and might not abort as intended.</li>
 </ul>
 <p>When catching timeouts, keep in mind that the one you catch may not be the
 one you have set; if you going to silence a timeout, always check that it&#8217;s
@@ -114,17 +114,17 @@ the same instance that you set:</p>
 </div>
 <dl class="method">
 <dt id="eventlet.timeout.eventlet.timeout.Timeout.Timeout.cancel">
-<tt class="descclassname">Timeout.</tt><tt class="descname">cancel</tt><big>(</big><big>)</big><a class="headerlink" href="#eventlet.timeout.eventlet.timeout.Timeout.Timeout.cancel" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">Timeout.</code><code class="descname">cancel</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.timeout.eventlet.timeout.Timeout.Timeout.cancel" title="Permalink to this definition">¶</a></dt>
 <dd><p>If the timeout is pending, cancel it.  If not using
-Timeouts in <tt class="docutils literal"><span class="pre">with</span></tt> statements, always call cancel() in a
-<tt class="docutils literal"><span class="pre">finally</span></tt> after the block of code that is getting timed out.
+Timeouts in <code class="docutils literal"><span class="pre">with</span></code> statements, always call cancel() in a
+<code class="docutils literal"><span class="pre">finally</span></code> after the block of code that is getting timed out.
 If not canceled, the timeout will be raised later on, in some
 unexpected section of the application.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="eventlet.timeout.eventlet.timeout.Timeout.Timeout.pending">
-<tt class="descclassname">Timeout.</tt><tt class="descname">pending</tt><a class="headerlink" href="#eventlet.timeout.eventlet.timeout.Timeout.Timeout.pending" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">Timeout.</code><code class="descname">pending</code><a class="headerlink" href="#eventlet.timeout.eventlet.timeout.Timeout.Timeout.pending" title="Permalink to this definition">¶</a></dt>
 <dd><p>True if the timeout is scheduled to be raised.</p>
 </dd></dl>
 
@@ -132,7 +132,7 @@ unexpected section of the application.</p>
 
 <dl class="function">
 <dt id="eventlet.timeout.with_timeout">
-<tt class="descclassname">eventlet.timeout.</tt><tt class="descname">with_timeout</tt><big>(</big><em>seconds</em>, <em>function</em>, <em>*args</em>, <em>**kwds</em><big>)</big><a class="headerlink" href="#eventlet.timeout.with_timeout" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">eventlet.timeout.</code><code class="descname">with_timeout</code><span class="sig-paren">(</span><em>seconds</em>, <em>function</em>, <em>*args</em>, <em>**kwds</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.timeout.with_timeout" title="Permalink to this definition">¶</a></dt>
 <dd><p>Wrap a call to some (yielding) function with a timeout; if the called
 function fails to return before the timeout, cancel it and return a flag
 value.</p>
@@ -146,15 +146,15 @@ value.</p>
 <li><strong>*args</strong> &#8211; positional arguments to pass to <em>func</em></li>
 <li><strong>**kwds</strong> &#8211; keyword arguments to pass to <em>func</em></li>
 <li><strong>timeout_value</strong> &#8211; value to return if timeout occurs (by default raises
-<tt class="xref py py-class docutils literal"><span class="pre">Timeout</span></tt>)</li>
+<code class="xref py py-class docutils literal"><span class="pre">Timeout</span></code>)</li>
 </ul>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">Value returned by <em>func</em> if <em>func</em> returns before <em>seconds</em>, else
-<em>timeout_value</em> if provided, else raises <tt class="xref py py-class docutils literal"><span class="pre">Timeout</span></tt>.</p>
+<em>timeout_value</em> if provided, else raises <code class="xref py py-class docutils literal"><span class="pre">Timeout</span></code>.</p>
 </td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Raises Timeout:</th><td class="field-body"><p class="first">if <em>func</em> times out and no <tt class="docutils literal"><span class="pre">timeout_value</span></tt> has
+<tr class="field-odd field"><th class="field-name">Raises Timeout:</th><td class="field-body"><p class="first">if <em>func</em> times out and no <code class="docutils literal"><span class="pre">timeout_value</span></code> has
 been provided.</p>
 </td>
 </tr>
@@ -167,8 +167,8 @@ been provided.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">with_timeout</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="n">urllib2</span><span class="o">.</span><span class="n">open</span><span class="p">,</span> <span class="s">&#39;http://www.google.com/&#39;</span><span class="p">,</span> <span class="n">timeout_value</span><span class="o">=</span><span class="s">&quot;&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Here <em>data</em> is either the result of the <tt class="docutils literal"><span class="pre">get()</span></tt> call, or the empty string
-if it took too long to return.  Any exception raised by the <tt class="docutils literal"><span class="pre">get()</span></tt> call
+<p>Here <em>data</em> is either the result of the <code class="docutils literal"><span class="pre">get()</span></code> call, or the empty string
+if it took too long to return.  Any exception raised by the <code class="docutils literal"><span class="pre">get()</span></code> call
 is passed through to the caller.</p>
 </dd></dl>
 
@@ -178,20 +178,22 @@ is passed through to the caller.</p>
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
   <p class="topless"><a href="semaphore.html"
-                        title="previous chapter"><tt class="docutils literal"><span class="pre">semaphore</span></tt> &#8211; Semaphore classes</a></p>
+                        title="previous chapter"><code class="docutils literal"><span class="pre">semaphore</span></code> &#8211; Semaphore classes</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="websocket.html"
-                        title="next chapter"><tt class="docutils literal"><span class="pre">websocket</span></tt> &#8211; Websocket Server</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="../_sources/modules/timeout.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+                        title="next chapter"><code class="docutils literal"><span class="pre">websocket</span></code> &#8211; Websocket Server</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/modules/timeout.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
       <input type="text" name="q" />
@@ -208,7 +210,7 @@ is passed through to the caller.</p>
       </div>
       <div class="clearer"></div>
     </div>
-    <div class="related">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -223,14 +225,14 @@ is passed through to the caller.</p>
         <li class="right" >
           <a href="semaphore.html" title="semaphore – Semaphore classes"
              >previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.16.1 documentation</a> &raquo;</li>
-          <li><a href="../modules.html" >Module Reference</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.17.2 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &raquo;</li> 
       </ul>
     </div>
 
-    <div class="footer">
+    <div class="footer" role="contentinfo">
         &copy; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

@@ -6,15 +6,15 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>db_pool – DBAPI 2 database connection pooling &mdash; Eventlet 0.16.1 documentation</title>
+    <title>db_pool – DBAPI 2 database connection pooling &mdash; Eventlet 0.17.2 documentation</title>
     
-    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.16.1',
+        VERSION:     '0.17.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,13 +23,13 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.16.1 documentation" href="../index.html" />
+    <link rel="top" title="Eventlet 0.17.2 documentation" href="../index.html" />
     <link rel="up" title="Module Reference" href="../modules.html" />
     <link rel="next" title="event – Cross-greenthread primitive" href="event.html" />
     <link rel="prev" title="debug – Debugging tools for Eventlet" href="debug.html" /> 
   </head>
-  <body>
-    <div class="related">
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -44,18 +44,18 @@
         <li class="right" >
           <a href="debug.html" title="debug – Debugging tools for Eventlet"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.16.1 documentation</a> &raquo;</li>
-          <li><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.17.2 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
       </ul>
     </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="db-pool-dbapi-2-database-connection-pooling">
-<h1><tt class="xref py py-mod docutils literal"><span class="pre">db_pool</span></tt> &#8211; DBAPI 2 database connection pooling<a class="headerlink" href="#db-pool-dbapi-2-database-connection-pooling" title="Permalink to this headline">¶</a></h1>
+<h1><code class="xref py py-mod docutils literal"><span class="pre">db_pool</span></code> &#8211; DBAPI 2 database connection pooling<a class="headerlink" href="#db-pool-dbapi-2-database-connection-pooling" title="Permalink to this headline">¶</a></h1>
 <p>The db_pool module is useful for managing database connections.  It provides three primary benefits: cooperative yielding during database operations, concurrency limiting to a database host, and connection reuse.  db_pool is intended to be database-agnostic, compatible with any DB-API 2.0 database module.</p>
 <p><em>It has currently been tested and used with both MySQLdb and psycopg2.</em></p>
 <p>A ConnectionPool object represents a pool of connections open to a particular database.  The arguments to the constructor include the database-software-specific module, the host name, and the credentials required for authentication.  After construction, the ConnectionPool object decides when to create and sever connections with the target database.</p>
@@ -63,7 +63,7 @@
 <span class="gp">&gt;&gt;&gt; </span><span class="n">cp</span> <span class="o">=</span> <span class="n">ConnectionPool</span><span class="p">(</span><span class="n">MySQLdb</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="s">&#39;localhost&#39;</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="s">&#39;root&#39;</span><span class="p">,</span> <span class="n">passwd</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Once you have this pool object, you connect to the database by calling <tt class="xref py py-meth docutils literal"><span class="pre">get()</span></tt> on it:</p>
+<p>Once you have this pool object, you connect to the database by calling <code class="xref py py-meth docutils literal"><span class="pre">get()</span></code> on it:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">conn</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -107,55 +107,55 @@
 <p><em>Caveat: The DatabaseConnector is a bit unfinished, it only suits a subset of use cases.</em></p>
 <span class="target" id="module-eventlet.db_pool"></span><dl class="class">
 <dt id="eventlet.db_pool.BaseConnectionPool">
-<em class="property">class </em><tt class="descclassname">eventlet.db_pool.</tt><tt class="descname">BaseConnectionPool</tt><big>(</big><em>db_module</em>, <em>min_size=0</em>, <em>max_size=4</em>, <em>max_idle=10</em>, <em>max_age=30</em>, <em>connect_timeout=5</em>, <em>cleanup=&lt;function cleanup_rollback at 0x7f8e1d7521b8&gt;</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.BaseConnectionPool" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">eventlet.db_pool.</code><code class="descname">BaseConnectionPool</code><span class="sig-paren">(</span><em>db_module</em>, <em>min_size=0</em>, <em>max_size=4</em>, <em>max_idle=10</em>, <em>max_age=30</em>, <em>connect_timeout=5</em>, <em>cleanup=&lt;function cleanup_rollback&gt;</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.BaseConnectionPool" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="method">
 <dt id="eventlet.db_pool.BaseConnectionPool.clear">
-<tt class="descname">clear</tt><big>(</big><big>)</big><a class="headerlink" href="#eventlet.db_pool.BaseConnectionPool.clear" title="Permalink to this definition">¶</a></dt>
+<code class="descname">clear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.BaseConnectionPool.clear" title="Permalink to this definition">¶</a></dt>
 <dd><p>Close all connections that this pool still holds a reference to,
 and removes all references to them.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.BaseConnectionPool.get">
-<tt class="descname">get</tt><big>(</big><big>)</big><a class="headerlink" href="#eventlet.db_pool.BaseConnectionPool.get" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.BaseConnectionPool.get" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.BaseConnectionPool.item">
-<tt class="descname">item</tt><big>(</big><em>*args</em>, <em>**kwds</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.BaseConnectionPool.item" title="Permalink to this definition">¶</a></dt>
+<code class="descname">item</code><span class="sig-paren">(</span><em>cleanup=&lt;object object&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.BaseConnectionPool.item" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.BaseConnectionPool.put">
-<tt class="descname">put</tt><big>(</big><em>conn</em>, <em>cleanup=&lt;object object at 0x7f8e1d7d5640&gt;</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.BaseConnectionPool.put" title="Permalink to this definition">¶</a></dt>
+<code class="descname">put</code><span class="sig-paren">(</span><em>conn</em>, <em>cleanup=&lt;object object&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.BaseConnectionPool.put" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="exception">
 <dt id="eventlet.db_pool.ConnectTimeout">
-<em class="property">exception </em><tt class="descclassname">eventlet.db_pool.</tt><tt class="descname">ConnectTimeout</tt><a class="headerlink" href="#eventlet.db_pool.ConnectTimeout" title="Permalink to this definition">¶</a></dt>
+<em class="property">exception </em><code class="descclassname">eventlet.db_pool.</code><code class="descname">ConnectTimeout</code><a class="headerlink" href="#eventlet.db_pool.ConnectTimeout" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="eventlet.db_pool.ConnectionPool">
-<tt class="descclassname">eventlet.db_pool.</tt><tt class="descname">ConnectionPool</tt><a class="headerlink" href="#eventlet.db_pool.ConnectionPool" title="Permalink to this definition">¶</a></dt>
-<dd><p>alias of <a class="reference internal" href="#eventlet.db_pool.TpooledConnectionPool" title="eventlet.db_pool.TpooledConnectionPool"><tt class="xref py py-class docutils literal"><span class="pre">TpooledConnectionPool</span></tt></a></p>
+<code class="descclassname">eventlet.db_pool.</code><code class="descname">ConnectionPool</code><a class="headerlink" href="#eventlet.db_pool.ConnectionPool" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#eventlet.db_pool.TpooledConnectionPool" title="eventlet.db_pool.TpooledConnectionPool"><code class="xref py py-class docutils literal"><span class="pre">TpooledConnectionPool</span></code></a></p>
 </dd></dl>
 
 <dl class="class">
 <dt id="eventlet.db_pool.DatabaseConnector">
-<em class="property">class </em><tt class="descclassname">eventlet.db_pool.</tt><tt class="descname">DatabaseConnector</tt><big>(</big><em>module</em>, <em>credentials</em>, <em>conn_pool=None</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.DatabaseConnector" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">eventlet.db_pool.</code><code class="descname">DatabaseConnector</code><span class="sig-paren">(</span><em>module</em>, <em>credentials</em>, <em>conn_pool=None</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.DatabaseConnector" title="Permalink to this definition">¶</a></dt>
 <dd><p>This is an object which will maintain a collection of database
 connection pools on a per-host basis.</p>
 <dl class="method">
 <dt id="eventlet.db_pool.DatabaseConnector.credentials_for">
-<tt class="descname">credentials_for</tt><big>(</big><em>host</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.DatabaseConnector.credentials_for" title="Permalink to this definition">¶</a></dt>
+<code class="descname">credentials_for</code><span class="sig-paren">(</span><em>host</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.DatabaseConnector.credentials_for" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.DatabaseConnector.get">
-<tt class="descname">get</tt><big>(</big><em>host</em>, <em>dbname</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.DatabaseConnector.get" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get</code><span class="sig-paren">(</span><em>host</em>, <em>dbname</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.DatabaseConnector.get" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a ConnectionPool to the target host and schema.</p>
 </dd></dl>
 
@@ -163,174 +163,174 @@ connection pools on a per-host basis.</p>
 
 <dl class="class">
 <dt id="eventlet.db_pool.GenericConnectionWrapper">
-<em class="property">class </em><tt class="descclassname">eventlet.db_pool.</tt><tt class="descname">GenericConnectionWrapper</tt><big>(</big><em>baseconn</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">eventlet.db_pool.</code><code class="descname">GenericConnectionWrapper</code><span class="sig-paren">(</span><em>baseconn</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.affected_rows">
-<tt class="descname">affected_rows</tt><big>(</big><big>)</big><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.affected_rows" title="Permalink to this definition">¶</a></dt>
+<code class="descname">affected_rows</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.affected_rows" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.autocommit">
-<tt class="descname">autocommit</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.autocommit" title="Permalink to this definition">¶</a></dt>
+<code class="descname">autocommit</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.autocommit" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.begin">
-<tt class="descname">begin</tt><big>(</big><big>)</big><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.begin" title="Permalink to this definition">¶</a></dt>
+<code class="descname">begin</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.begin" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.change_user">
-<tt class="descname">change_user</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.change_user" title="Permalink to this definition">¶</a></dt>
+<code class="descname">change_user</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.change_user" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.character_set_name">
-<tt class="descname">character_set_name</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.character_set_name" title="Permalink to this definition">¶</a></dt>
+<code class="descname">character_set_name</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.character_set_name" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.close">
-<tt class="descname">close</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.close" title="Permalink to this definition">¶</a></dt>
+<code class="descname">close</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.close" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.commit">
-<tt class="descname">commit</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.commit" title="Permalink to this definition">¶</a></dt>
+<code class="descname">commit</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.commit" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.cursor">
-<tt class="descname">cursor</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.cursor" title="Permalink to this definition">¶</a></dt>
+<code class="descname">cursor</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.cursor" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.dump_debug_info">
-<tt class="descname">dump_debug_info</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.dump_debug_info" title="Permalink to this definition">¶</a></dt>
+<code class="descname">dump_debug_info</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.dump_debug_info" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.errno">
-<tt class="descname">errno</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.errno" title="Permalink to this definition">¶</a></dt>
+<code class="descname">errno</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.errno" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.error">
-<tt class="descname">error</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.error" title="Permalink to this definition">¶</a></dt>
+<code class="descname">error</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.error" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.errorhandler">
-<tt class="descname">errorhandler</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.errorhandler" title="Permalink to this definition">¶</a></dt>
+<code class="descname">errorhandler</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.errorhandler" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.insert_id">
-<tt class="descname">insert_id</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.insert_id" title="Permalink to this definition">¶</a></dt>
+<code class="descname">insert_id</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.insert_id" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.literal">
-<tt class="descname">literal</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.literal" title="Permalink to this definition">¶</a></dt>
+<code class="descname">literal</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.literal" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.ping">
-<tt class="descname">ping</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.ping" title="Permalink to this definition">¶</a></dt>
+<code class="descname">ping</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.ping" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.query">
-<tt class="descname">query</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.query" title="Permalink to this definition">¶</a></dt>
+<code class="descname">query</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.query" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.rollback">
-<tt class="descname">rollback</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.rollback" title="Permalink to this definition">¶</a></dt>
+<code class="descname">rollback</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.rollback" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.select_db">
-<tt class="descname">select_db</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.select_db" title="Permalink to this definition">¶</a></dt>
+<code class="descname">select_db</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.select_db" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.server_capabilities">
-<tt class="descname">server_capabilities</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.server_capabilities" title="Permalink to this definition">¶</a></dt>
+<code class="descname">server_capabilities</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.server_capabilities" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.set_character_set">
-<tt class="descname">set_character_set</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.set_character_set" title="Permalink to this definition">¶</a></dt>
+<code class="descname">set_character_set</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.set_character_set" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.set_server_option">
-<tt class="descname">set_server_option</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.set_server_option" title="Permalink to this definition">¶</a></dt>
+<code class="descname">set_server_option</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.set_server_option" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.set_sql_mode">
-<tt class="descname">set_sql_mode</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.set_sql_mode" title="Permalink to this definition">¶</a></dt>
+<code class="descname">set_sql_mode</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.set_sql_mode" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.show_warnings">
-<tt class="descname">show_warnings</tt><big>(</big><big>)</big><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.show_warnings" title="Permalink to this definition">¶</a></dt>
+<code class="descname">show_warnings</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.show_warnings" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.shutdown">
-<tt class="descname">shutdown</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.shutdown" title="Permalink to this definition">¶</a></dt>
+<code class="descname">shutdown</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.shutdown" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.sqlstate">
-<tt class="descname">sqlstate</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.sqlstate" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sqlstate</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.sqlstate" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.stat">
-<tt class="descname">stat</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.stat" title="Permalink to this definition">¶</a></dt>
+<code class="descname">stat</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.stat" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.store_result">
-<tt class="descname">store_result</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.store_result" title="Permalink to this definition">¶</a></dt>
+<code class="descname">store_result</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.store_result" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.string_literal">
-<tt class="descname">string_literal</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.string_literal" title="Permalink to this definition">¶</a></dt>
+<code class="descname">string_literal</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.string_literal" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.thread_id">
-<tt class="descname">thread_id</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.thread_id" title="Permalink to this definition">¶</a></dt>
+<code class="descname">thread_id</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.thread_id" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.use_result">
-<tt class="descname">use_result</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.use_result" title="Permalink to this definition">¶</a></dt>
+<code class="descname">use_result</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.use_result" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.warning_count">
-<tt class="descname">warning_count</tt><big>(</big><big>)</big><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.warning_count" title="Permalink to this definition">¶</a></dt>
+<code class="descname">warning_count</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.warning_count" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="class">
 <dt id="eventlet.db_pool.PooledConnectionWrapper">
-<em class="property">class </em><tt class="descclassname">eventlet.db_pool.</tt><tt class="descname">PooledConnectionWrapper</tt><big>(</big><em>baseconn</em>, <em>pool</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.PooledConnectionWrapper" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">eventlet.db_pool.</code><code class="descname">PooledConnectionWrapper</code><span class="sig-paren">(</span><em>baseconn</em>, <em>pool</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.PooledConnectionWrapper" title="Permalink to this definition">¶</a></dt>
 <dd><p>A connection wrapper where:
 - the close method returns the connection to the pool instead of closing it directly
-- <tt class="docutils literal"><span class="pre">bool(conn)</span></tt> returns a reasonable value
+- <code class="docutils literal"><span class="pre">bool(conn)</span></code> returns a reasonable value
 - returns itself to the pool if it gets garbage collected</p>
 <dl class="method">
 <dt id="eventlet.db_pool.PooledConnectionWrapper.close">
-<tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#eventlet.db_pool.PooledConnectionWrapper.close" title="Permalink to this definition">¶</a></dt>
+<code class="descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.PooledConnectionWrapper.close" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the connection to the pool, and remove the
 reference to it so that you can&#8217;t use it again through this
 wrapper object.</p>
@@ -340,40 +340,40 @@ wrapper object.</p>
 
 <dl class="class">
 <dt id="eventlet.db_pool.RawConnectionPool">
-<em class="property">class </em><tt class="descclassname">eventlet.db_pool.</tt><tt class="descname">RawConnectionPool</tt><big>(</big><em>db_module</em>, <em>min_size=0</em>, <em>max_size=4</em>, <em>max_idle=10</em>, <em>max_age=30</em>, <em>connect_timeout=5</em>, <em>cleanup=&lt;function cleanup_rollback at 0x7f8e1d7521b8&gt;</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.RawConnectionPool" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">eventlet.db_pool.</code><code class="descname">RawConnectionPool</code><span class="sig-paren">(</span><em>db_module</em>, <em>min_size=0</em>, <em>max_size=4</em>, <em>max_idle=10</em>, <em>max_age=30</em>, <em>connect_timeout=5</em>, <em>cleanup=&lt;function cleanup_rollback&gt;</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.RawConnectionPool" title="Permalink to this definition">¶</a></dt>
 <dd><p>A pool which gives out plain database connections.</p>
 <dl class="classmethod">
 <dt id="eventlet.db_pool.RawConnectionPool.connect">
-<em class="property">classmethod </em><tt class="descname">connect</tt><big>(</big><em>db_module</em>, <em>connect_timeout</em>, <em>*args</em>, <em>**kw</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.RawConnectionPool.connect" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><code class="descname">connect</code><span class="sig-paren">(</span><em>db_module</em>, <em>connect_timeout</em>, <em>*args</em>, <em>**kw</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.RawConnectionPool.connect" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.RawConnectionPool.create">
-<tt class="descname">create</tt><big>(</big><big>)</big><a class="headerlink" href="#eventlet.db_pool.RawConnectionPool.create" title="Permalink to this definition">¶</a></dt>
+<code class="descname">create</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.RawConnectionPool.create" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="class">
 <dt id="eventlet.db_pool.TpooledConnectionPool">
-<em class="property">class </em><tt class="descclassname">eventlet.db_pool.</tt><tt class="descname">TpooledConnectionPool</tt><big>(</big><em>db_module</em>, <em>min_size=0</em>, <em>max_size=4</em>, <em>max_idle=10</em>, <em>max_age=30</em>, <em>connect_timeout=5</em>, <em>cleanup=&lt;function cleanup_rollback at 0x7f8e1d7521b8&gt;</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.TpooledConnectionPool" title="Permalink to this definition">¶</a></dt>
-<dd><p>A pool which gives out <a class="reference internal" href="../threading.html#eventlet.tpool.Proxy" title="eventlet.tpool.Proxy"><tt class="xref py py-class docutils literal"><span class="pre">Proxy</span></tt></a>-based database
+<em class="property">class </em><code class="descclassname">eventlet.db_pool.</code><code class="descname">TpooledConnectionPool</code><span class="sig-paren">(</span><em>db_module</em>, <em>min_size=0</em>, <em>max_size=4</em>, <em>max_idle=10</em>, <em>max_age=30</em>, <em>connect_timeout=5</em>, <em>cleanup=&lt;function cleanup_rollback&gt;</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.TpooledConnectionPool" title="Permalink to this definition">¶</a></dt>
+<dd><p>A pool which gives out <a class="reference internal" href="../threading.html#eventlet.tpool.Proxy" title="eventlet.tpool.Proxy"><code class="xref py py-class docutils literal"><span class="pre">Proxy</span></code></a>-based database
 connections.</p>
 <dl class="classmethod">
 <dt id="eventlet.db_pool.TpooledConnectionPool.connect">
-<em class="property">classmethod </em><tt class="descname">connect</tt><big>(</big><em>db_module</em>, <em>connect_timeout</em>, <em>*args</em>, <em>**kw</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.TpooledConnectionPool.connect" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><code class="descname">connect</code><span class="sig-paren">(</span><em>db_module</em>, <em>connect_timeout</em>, <em>*args</em>, <em>**kw</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.TpooledConnectionPool.connect" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.TpooledConnectionPool.create">
-<tt class="descname">create</tt><big>(</big><big>)</big><a class="headerlink" href="#eventlet.db_pool.TpooledConnectionPool.create" title="Permalink to this definition">¶</a></dt>
+<code class="descname">create</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.TpooledConnectionPool.create" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="function">
 <dt id="eventlet.db_pool.cleanup_rollback">
-<tt class="descclassname">eventlet.db_pool.</tt><tt class="descname">cleanup_rollback</tt><big>(</big><em>conn</em><big>)</big><a class="headerlink" href="#eventlet.db_pool.cleanup_rollback" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">eventlet.db_pool.</code><code class="descname">cleanup_rollback</code><span class="sig-paren">(</span><em>conn</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.cleanup_rollback" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </div>
@@ -383,11 +383,11 @@ connections.</p>
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h3><a href="../index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#"><tt class="docutils literal"><span class="pre">db_pool</span></tt> &#8211; DBAPI 2 database connection pooling</a><ul>
+<li><a class="reference internal" href="#"><code class="docutils literal"><span class="pre">db_pool</span></code> &#8211; DBAPI 2 database connection pooling</a><ul>
 <li><a class="reference internal" href="#constructor-arguments">Constructor Arguments</a></li>
 <li><a class="reference internal" href="#databaseconnector">DatabaseConnector</a></li>
 </ul>
@@ -396,16 +396,18 @@ connections.</p>
 
   <h4>Previous topic</h4>
   <p class="topless"><a href="debug.html"
-                        title="previous chapter"><tt class="docutils literal"><span class="pre">debug</span></tt> &#8211; Debugging tools for Eventlet</a></p>
+                        title="previous chapter"><code class="docutils literal"><span class="pre">debug</span></code> &#8211; Debugging tools for Eventlet</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="event.html"
-                        title="next chapter"><tt class="docutils literal"><span class="pre">event</span></tt> &#8211; Cross-greenthread primitive</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="../_sources/modules/db_pool.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+                        title="next chapter"><code class="docutils literal"><span class="pre">event</span></code> &#8211; Cross-greenthread primitive</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/modules/db_pool.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
       <input type="text" name="q" />
@@ -422,7 +424,7 @@ connections.</p>
       </div>
       <div class="clearer"></div>
     </div>
-    <div class="related">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -437,14 +439,14 @@ connections.</p>
         <li class="right" >
           <a href="debug.html" title="debug – Debugging tools for Eventlet"
              >previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.16.1 documentation</a> &raquo;</li>
-          <li><a href="../modules.html" >Module Reference</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.17.2 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &raquo;</li> 
       </ul>
     </div>
 
-    <div class="footer">
+    <div class="footer" role="contentinfo">
         &copy; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

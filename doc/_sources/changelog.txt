@@ -1,11 +1,31 @@
+0.17.2
+======
+* wsgi: Provide python logging compatibility; Thanks to Sean Dague
+* greendns: fix premature connection closing in DNS proxy; Thanks to Tim Simmons
+* greenio: correct fd close; Thanks to Antonio Cuni and Victor Sergeyev
+* green.ssl: HTTPS client Python 2.7.9+ compatibility
+* setup: tests.{isolated,manual} polluted top-level packages
+
+0.17.1
+======
+* greendns: fix dns.name import and Python3 compatibility
+
+0.17
+====
+* Full Python3 compatibility; Thanks to Jakub Stasiak
+* greendns: IPv6 support, improved handling of /etc/hosts; Thanks to Floris Bruynooghe
+* tpool: make sure we return results during killall; Thanks to David Szotten
+* semaphore: Don't hog a semaphore if someone else is waiting for it; Thanks to Shaun Stanworth
+* green.socket: create_connection() was wrapping all exceptions in socket.error; Thanks to Donagh McCabe
+* Make sure SSL retries are done using the exact same data buffer; Thanks to Lior Neudorfer
+* greenio: shutdown already closed sockets without error; Thanks to David Szotten
+
 0.16.1
 ======
-
 * Wheel build 0.16.0 incorrectly shipped removed module eventlet.util.
 
 0.16.0
 ======
-
 * Fix SSL socket wrapping and Python 2.7.9 compatibility; Thanks to Jakub Stasiak
 * Fix monkey_patch() on Python 3; Thanks to Victor Stinner
 * Fix "maximum recursion depth exceeded in GreenSocket.__del__"; Thanks to Jakub Stasiak

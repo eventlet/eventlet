@@ -2,6 +2,7 @@
 *.egg*
 *.pyc
 .*
+bin/
 build/
 dist/
 doc/changelog.rst

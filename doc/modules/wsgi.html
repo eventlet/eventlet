@@ -6,15 +6,15 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>wsgi – WSGI server &mdash; Eventlet 0.16.1 documentation</title>
+    <title>wsgi – WSGI server &mdash; Eventlet 0.17.2 documentation</title>
     
-    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.16.1',
+        VERSION:     '0.17.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,13 +23,13 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.16.1 documentation" href="../index.html" />
+    <link rel="top" title="Eventlet 0.17.2 documentation" href="../index.html" />
     <link rel="up" title="Module Reference" href="../modules.html" />
     <link rel="next" title="eventlet.green.zmq – ØMQ support" href="zmq.html" />
     <link rel="prev" title="websocket – Websocket Server" href="websocket.html" /> 
   </head>
-  <body>
-    <div class="related">
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -44,23 +44,23 @@
         <li class="right" >
           <a href="websocket.html" title="websocket – Websocket Server"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.16.1 documentation</a> &raquo;</li>
-          <li><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.17.2 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
       </ul>
     </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="wsgi-wsgi-server">
-<h1><tt class="xref py py-mod docutils literal"><span class="pre">wsgi</span></tt> &#8211; WSGI server<a class="headerlink" href="#wsgi-wsgi-server" title="Permalink to this headline">¶</a></h1>
+<h1><code class="xref py py-mod docutils literal"><span class="pre">wsgi</span></code> &#8211; WSGI server<a class="headerlink" href="#wsgi-wsgi-server" title="Permalink to this headline">¶</a></h1>
 <p>The wsgi module provides a simple and easy way to start an event-driven
 <a class="reference external" href="http://wsgi.org/wsgi/">WSGI</a> server.  This can serve as an embedded
 web server in an application, or as the basis for a more full-featured web
 server package.  One such package is <a class="reference external" href="http://pypi.python.org/pypi/Spawning/">Spawning</a>.</p>
-<p>To launch a wsgi server, simply create a socket and call <a class="reference internal" href="#eventlet.wsgi.server" title="eventlet.wsgi.server"><tt class="xref py py-func docutils literal"><span class="pre">eventlet.wsgi.server()</span></tt></a> with it:</p>
+<p>To launch a wsgi server, simply create a socket and call <a class="reference internal" href="#eventlet.wsgi.server" title="eventlet.wsgi.server"><code class="xref py py-func docutils literal"><span class="pre">eventlet.wsgi.server()</span></code></a> with it:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">wsgi</span>
 <span class="kn">import</span> <span class="nn">eventlet</span>
 
@@ -72,24 +72,24 @@ server package.  One such package is <a class="reference external" href="http://
 </pre></div>
 </div>
 <p>You can find a slightly more elaborate version of this code in the file
-<tt class="docutils literal"><span class="pre">examples/wsgi.py</span></tt>.</p>
+<code class="docutils literal"><span class="pre">examples/wsgi.py</span></code>.</p>
 <span class="target" id="module-eventlet.wsgi"></span><dl class="function">
 <dt id="eventlet.wsgi.server">
-<tt class="descclassname">eventlet.wsgi.</tt><tt class="descname">server</tt><big>(</big><em>sock</em>, <em>site</em>, <em>log=None</em>, <em>environ=None</em>, <em>max_size=None</em>, <em>max_http_version='HTTP/1.1'</em>, <em>protocol=&lt;class eventlet.wsgi.HttpProtocol at 0x7f8e1d89b2c0&gt;</em>, <em>server_event=None</em>, <em>minimum_chunk_size=None</em>, <em>log_x_forwarded_for=True</em>, <em>custom_pool=None</em>, <em>keepalive=True</em>, <em>log_output=True</em>, <em>log_format='%(client_ip)s - - [%(date_time)s] &quot;%(request_line)s&quot; %(status_code)s %(body_length)s %(wall_seconds).6f'</em>, <em>url_length_limit=8192</em>, <em>debug=True</em>, <em>socket_timeout=None</em>, <em>capitalize_response_headers=True</em><big>)</big><a class="headerlink" href="#eventlet.wsgi.server" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">eventlet.wsgi.</code><code class="descname">server</code><span class="sig-paren">(</span><em>sock</em>, <em>site</em>, <em>log=None</em>, <em>environ=None</em>, <em>max_size=None</em>, <em>max_http_version='HTTP/1.1'</em>, <em>protocol=&lt;class 'eventlet.wsgi.HttpProtocol'&gt;</em>, <em>server_event=None</em>, <em>minimum_chunk_size=None</em>, <em>log_x_forwarded_for=True</em>, <em>custom_pool=None</em>, <em>keepalive=True</em>, <em>log_output=True</em>, <em>log_format='%(client_ip)s - - [%(date_time)s] &quot;%(request_line)s&quot; %(status_code)s %(body_length)s %(wall_seconds).6f'</em>, <em>url_length_limit=8192</em>, <em>debug=True</em>, <em>socket_timeout=None</em>, <em>capitalize_response_headers=True</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.wsgi.server" title="Permalink to this definition">¶</a></dt>
 <dd><p>Start up a WSGI server handling requests from the supplied server
 socket.  This function loops forever.  The <em>sock</em> object will be
 closed after server exits, but the underlying file descriptor will
 remain open, so if you have a dup() of <em>sock</em>, it will remain usable.</p>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
-<p>At the moment <a class="reference internal" href="#eventlet.wsgi.server" title="eventlet.wsgi.server"><tt class="xref py py-func docutils literal"><span class="pre">server()</span></tt></a> will always wait for active connections to finish before
+<p>At the moment <a class="reference internal" href="#eventlet.wsgi.server" title="eventlet.wsgi.server"><code class="xref py py-func docutils literal"><span class="pre">server()</span></code></a> will always wait for active connections to finish before
 exiting, even if there&#8217;s an exception raised inside it
-(<em>all</em> exceptions are handled the same way, including <tt class="xref py py-class docutils literal"><span class="pre">greenlet.GreenletExit</span></tt>
+(<em>all</em> exceptions are handled the same way, including <code class="xref py py-class docutils literal"><span class="pre">greenlet.GreenletExit</span></code>
 and those inheriting from <cite>BaseException</cite>).</p>
 <p class="last">While this may not be an issue normally, when it comes to long running HTTP connections
-(like <a class="reference internal" href="websocket.html#module-eventlet.websocket" title="eventlet.websocket"><tt class="xref py py-mod docutils literal"><span class="pre">eventlet.websocket</span></tt></a>) it will become problematic and calling
-<a class="reference internal" href="greenthread.html#eventlet.greenthread.GreenThread.wait" title="eventlet.greenthread.GreenThread.wait"><tt class="xref py py-meth docutils literal"><span class="pre">wait()</span></tt></a> on a thread that runs the server may hang,
-even after using <a class="reference internal" href="greenthread.html#eventlet.greenthread.GreenThread.kill" title="eventlet.greenthread.GreenThread.kill"><tt class="xref py py-meth docutils literal"><span class="pre">kill()</span></tt></a>, as long
+(like <a class="reference internal" href="websocket.html#module-eventlet.websocket" title="eventlet.websocket"><code class="xref py py-mod docutils literal"><span class="pre">eventlet.websocket</span></code></a>) it will become problematic and calling
+<a class="reference internal" href="greenthread.html#eventlet.greenthread.GreenThread.wait" title="eventlet.greenthread.GreenThread.wait"><code class="xref py py-meth docutils literal"><span class="pre">wait()</span></code></a> on a thread that runs the server may hang,
+even after using <a class="reference internal" href="greenthread.html#eventlet.greenthread.GreenThread.kill" title="eventlet.greenthread.GreenThread.kill"><code class="xref py py-meth docutils literal"><span class="pre">kill()</span></code></a>, as long
 as there are active connections.</p>
 </div>
 <table class="docutils field-list" frame="void" rules="none">
@@ -140,13 +140,13 @@ Default is True.</li>
 
 <dl class="function">
 <dt id="eventlet.wsgi.format_date_time">
-<tt class="descclassname">eventlet.wsgi.</tt><tt class="descname">format_date_time</tt><big>(</big><em>timestamp</em><big>)</big><a class="headerlink" href="#eventlet.wsgi.format_date_time" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">eventlet.wsgi.</code><code class="descname">format_date_time</code><span class="sig-paren">(</span><em>timestamp</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.wsgi.format_date_time" title="Permalink to this definition">¶</a></dt>
 <dd><p>Formats a unix timestamp into an HTTP standard string.</p>
 </dd></dl>
 
 <div class="section" id="ssl">
 <span id="wsgi-ssl"></span><h2>SSL<a class="headerlink" href="#ssl" title="Permalink to this headline">¶</a></h2>
-<p>Creating a secure server is only slightly more involved than the base example.  All that&#8217;s needed is to pass an SSL-wrapped socket to the <a class="reference internal" href="#eventlet.wsgi.server" title="eventlet.wsgi.server"><tt class="xref py py-func docutils literal"><span class="pre">server()</span></tt></a> method:</p>
+<p>Creating a secure server is only slightly more involved than the base example.  All that&#8217;s needed is to pass an SSL-wrapped socket to the <a class="reference internal" href="#eventlet.wsgi.server" title="eventlet.wsgi.server"><code class="xref py py-func docutils literal"><span class="pre">server()</span></code></a> method:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">wsgi</span><span class="o">.</span><span class="n">server</span><span class="p">(</span><span class="n">eventlet</span><span class="o">.</span><span class="n">wrap_ssl</span><span class="p">(</span><span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="mi">8090</span><span class="p">)),</span>
                               <span class="n">certfile</span><span class="o">=</span><span class="s">&#39;cert.crt&#39;</span><span class="p">,</span>
                               <span class="n">keyfile</span><span class="o">=</span><span class="s">&#39;private.key&#39;</span><span class="p">,</span>
@@ -154,14 +154,14 @@ Default is True.</li>
             <span class="n">hello_world</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Applications can detect whether they are inside a secure server by the value of the <tt class="docutils literal"><span class="pre">env['wsgi.url_scheme']</span></tt> environment variable.</p>
+<p>Applications can detect whether they are inside a secure server by the value of the <code class="docutils literal"><span class="pre">env['wsgi.url_scheme']</span></code> environment variable.</p>
 </div>
 <div class="section" id="non-standard-extension-to-support-post-hooks">
 <h2>Non-Standard Extension to Support Post Hooks<a class="headerlink" href="#non-standard-extension-to-support-post-hooks" title="Permalink to this headline">¶</a></h2>
 <p>Eventlet&#8217;s WSGI server supports a non-standard extension to the WSGI
-specification where <tt class="samp docutils literal"><span class="pre">env['eventlet.posthooks']</span></tt> contains an array of
+specification where <code class="samp docutils literal"><span class="pre">env['eventlet.posthooks']</span></code> contains an array of
 <cite>post hooks</cite> that will be called after fully sending a response. Each post hook
-is a tuple of <tt class="samp docutils literal"><span class="pre">(func,</span> <span class="pre">args,</span> <span class="pre">kwargs)</span></tt> and the <cite>func</cite> will be called with
+is a tuple of <code class="samp docutils literal"><span class="pre">(func,</span> <span class="pre">args,</span> <span class="pre">kwargs)</span></code> and the <cite>func</cite> will be called with
 the WSGI environment dictionary, followed by the <cite>args</cite> and then the <cite>kwargs</cite>
 in the post hook.</p>
 <p>For example:</p>
@@ -201,7 +201,7 @@ unencrypted decision before starting to send the data).</p>
 <p>This works well for WSGI servers as the WSGI specification mandates HTTP
 expect/continue mechanism (PEP333).</p>
 <p>To define the &#8220;100 Continue&#8221; response headers, one may call
-<tt class="xref py py-func docutils literal"><span class="pre">set_hundred_continue_response_header()</span></tt> on <tt class="samp docutils literal"><span class="pre">env['wsgi.input']</span></tt>
+<code class="xref py py-func docutils literal"><span class="pre">set_hundred_continue_response_header()</span></code> on <code class="samp docutils literal"><span class="pre">env['wsgi.input']</span></code>
 as shown in the following example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">wsgi</span>
 <span class="kn">import</span> <span class="nn">eventlet</span>
@@ -221,18 +221,18 @@ as shown in the following example:</p>
 </pre></div>
 </div>
 <p>You can find a more elaborate example in the file:
-<tt class="docutils literal"><span class="pre">tests/wsgi_test.py</span></tt>, <tt class="xref py py-func docutils literal"><span class="pre">test_024a_expect_100_continue_with_headers()</span></tt>.</p>
+<code class="docutils literal"><span class="pre">tests/wsgi_test.py</span></code>, <code class="xref py py-func docutils literal"><span class="pre">test_024a_expect_100_continue_with_headers()</span></code>.</p>
 <p>Per HTTP RFC 7231 (<a class="reference external" href="http://tools.ietf.org/html/rfc7231#section-6.2">http://tools.ietf.org/html/rfc7231#section-6.2</a>) a client is
 required to be able to process one or more 100 continue responses.  A sample
 use case might be a user protocol where the server may want to use a 100-continue
 response to indicate to a client that it is working on a request and the
 client should not timeout.</p>
 <p>To support multiple 100-continue responses, evenlet wsgi module exports
-the API <tt class="xref py py-func docutils literal"><span class="pre">send_hundred_continue_response()</span></tt>.</p>
+the API <code class="xref py py-func docutils literal"><span class="pre">send_hundred_continue_response()</span></code>.</p>
 <p>Sample use cases for chunked and non-chunked HTTP scenarios are included
-in the wsgi test case <tt class="docutils literal"><span class="pre">tests/wsgi_test.py</span></tt>,
-<tt class="xref py py-func docutils literal"><span class="pre">test_024b_expect_100_continue_with_headers_multiple_chunked()</span></tt> and
-<tt class="xref py py-func docutils literal"><span class="pre">test_024c_expect_100_continue_with_headers_multiple_nonchunked()</span></tt>.</p>
+in the wsgi test case <code class="docutils literal"><span class="pre">tests/wsgi_test.py</span></code>,
+<code class="xref py py-func docutils literal"><span class="pre">test_024b_expect_100_continue_with_headers_multiple_chunked()</span></code> and
+<code class="xref py py-func docutils literal"><span class="pre">test_024c_expect_100_continue_with_headers_multiple_nonchunked()</span></code>.</p>
 </div>
 </div>
 
@@ -240,11 +240,11 @@ in the wsgi test case <tt class="docutils literal"><span class="pre">tests/wsgi_
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h3><a href="../index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#"><tt class="docutils literal"><span class="pre">wsgi</span></tt> &#8211; WSGI server</a><ul>
+<li><a class="reference internal" href="#"><code class="docutils literal"><span class="pre">wsgi</span></code> &#8211; WSGI server</a><ul>
 <li><a class="reference internal" href="#ssl">SSL</a></li>
 <li><a class="reference internal" href="#non-standard-extension-to-support-post-hooks">Non-Standard Extension to Support Post Hooks</a></li>
 <li><a class="reference internal" href="#continue-response-headers">&#8220;100 Continue&#8221; Response Headers</a></li>
@@ -254,16 +254,18 @@ in the wsgi test case <tt class="docutils literal"><span class="pre">tests/wsgi_
 
   <h4>Previous topic</h4>
   <p class="topless"><a href="websocket.html"
-                        title="previous chapter"><tt class="docutils literal"><span class="pre">websocket</span></tt> &#8211; Websocket Server</a></p>
+                        title="previous chapter"><code class="docutils literal"><span class="pre">websocket</span></code> &#8211; Websocket Server</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="zmq.html"
-                        title="next chapter"><tt class="docutils literal"><span class="pre">eventlet.green.zmq</span></tt> &#8211; ØMQ support</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="../_sources/modules/wsgi.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+                        title="next chapter"><code class="docutils literal"><span class="pre">eventlet.green.zmq</span></code> &#8211; ØMQ support</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/modules/wsgi.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
       <input type="text" name="q" />
@@ -280,7 +282,7 @@ in the wsgi test case <tt class="docutils literal"><span class="pre">tests/wsgi_
       </div>
       <div class="clearer"></div>
     </div>
-    <div class="related">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -295,14 +297,14 @@ in the wsgi test case <tt class="docutils literal"><span class="pre">tests/wsgi_
         <li class="right" >
           <a href="websocket.html" title="websocket – Websocket Server"
              >previous</a> |</li>
-        <li><a href="../index.html">Eventlet 0.16.1 documentation</a> &raquo;</li>
-          <li><a href="../modules.html" >Module Reference</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.17.2 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &raquo;</li> 
       </ul>
     </div>
 
-    <div class="footer">
+    <div class="footer" role="contentinfo">
         &copy; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

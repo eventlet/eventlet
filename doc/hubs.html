@@ -6,15 +6,15 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Understanding Eventlet Hubs &mdash; Eventlet 0.16.1 documentation</title>
+    <title>Understanding Eventlet Hubs &mdash; Eventlet 0.17.2 documentation</title>
     
-    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.16.1',
+        VERSION:     '0.17.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,12 +23,12 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.16.1 documentation" href="index.html" />
+    <link rel="top" title="Eventlet 0.17.2 documentation" href="index.html" />
     <link rel="next" title="Testing Eventlet" href="testing.html" />
     <link rel="prev" title="Zeromq" href="zeromq.html" /> 
   </head>
-  <body>
-    <div class="related">
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -43,14 +43,14 @@
         <li class="right" >
           <a href="zeromq.html" title="Zeromq"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">Eventlet 0.16.1 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.17.2 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="understanding-eventlet-hubs">
 <span id="understanding-hubs"></span><h1>Understanding Eventlet Hubs<a class="headerlink" href="#understanding-eventlet-hubs" title="Permalink to this headline">¶</a></h1>
@@ -66,37 +66,37 @@
 <dt><strong>pyevent</strong></dt>
 <dd>This is a libevent-based backend and is thus the fastest.  It&#8217;s disabled by default, because it does not support native threads, but you can enable it yourself if your use case doesn&#8217;t require them.  (You have to install pyevent, too.)</dd>
 </dl>
-<p>If the selected hub is not ideal for the application, another can be selected.  You can make the selection either with the environment variable <a class="reference internal" href="environment.html#env-vars"><em>EVENTLET_HUB</em></a>, or with use_hub.</p>
+<p>If the selected hub is not ideal for the application, another can be selected.  You can make the selection either with the environment variable <a class="reference internal" href="environment.html#env-vars"><span>EVENTLET_HUB</span></a>, or with use_hub.</p>
 <dl class="function">
 <dt id="eventlet.hubs.use_hub">
-<tt class="descclassname">eventlet.hubs.</tt><tt class="descname">use_hub</tt><big>(</big><em>hub=None</em><big>)</big><a class="headerlink" href="#eventlet.hubs.use_hub" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">eventlet.hubs.</code><code class="descname">use_hub</code><span class="sig-paren">(</span><em>hub=None</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.hubs.use_hub" title="Permalink to this definition">¶</a></dt>
 <dd><p>Use this to control which hub Eventlet selects.  Call it with the name of the desired hub module.  Make sure to do this before the application starts doing any I/O!  Calling use_hub completely eliminates the old hub, and any file descriptors or timers that it had been managing will be forgotten.  Put the call as one of the first lines in the main module.:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="sd">&quot;&quot;&quot; This is the main module &quot;&quot;&quot;</span>
 <span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">hubs</span>
 <span class="n">hubs</span><span class="o">.</span><span class="n">use_hub</span><span class="p">(</span><span class="s">&quot;pyevent&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Hubs are implemented as thread-local class instances.  <a class="reference internal" href="#eventlet.hubs.use_hub" title="eventlet.hubs.use_hub"><tt class="xref py py-func docutils literal"><span class="pre">eventlet.hubs.use_hub()</span></tt></a> only operates on the current thread.  When using multiple threads that each need their own hub, call <a class="reference internal" href="#eventlet.hubs.use_hub" title="eventlet.hubs.use_hub"><tt class="xref py py-func docutils literal"><span class="pre">eventlet.hubs.use_hub()</span></tt></a> at the beginning of each thread function that needs a specific hub.  In practice, it may not be necessary to specify a hub in each thread; it works to use one special hub for the main thread, and let other threads use the default hub; this hybrid hub configuration will work fine.</p>
-<p>It is also possible to use a third-party hub module in place of one of the built-in ones.  Simply pass the module itself to <a class="reference internal" href="#eventlet.hubs.use_hub" title="eventlet.hubs.use_hub"><tt class="xref py py-func docutils literal"><span class="pre">eventlet.hubs.use_hub()</span></tt></a>.  The task of writing such a hub is a little beyond the scope of this document, it&#8217;s probably a good idea to simply inspect the code of the existing hubs to see how they work.:</p>
+<p>Hubs are implemented as thread-local class instances.  <a class="reference internal" href="#eventlet.hubs.use_hub" title="eventlet.hubs.use_hub"><code class="xref py py-func docutils literal"><span class="pre">eventlet.hubs.use_hub()</span></code></a> only operates on the current thread.  When using multiple threads that each need their own hub, call <a class="reference internal" href="#eventlet.hubs.use_hub" title="eventlet.hubs.use_hub"><code class="xref py py-func docutils literal"><span class="pre">eventlet.hubs.use_hub()</span></code></a> at the beginning of each thread function that needs a specific hub.  In practice, it may not be necessary to specify a hub in each thread; it works to use one special hub for the main thread, and let other threads use the default hub; this hybrid hub configuration will work fine.</p>
+<p>It is also possible to use a third-party hub module in place of one of the built-in ones.  Simply pass the module itself to <a class="reference internal" href="#eventlet.hubs.use_hub" title="eventlet.hubs.use_hub"><code class="xref py py-func docutils literal"><span class="pre">eventlet.hubs.use_hub()</span></code></a>.  The task of writing such a hub is a little beyond the scope of this document, it&#8217;s probably a good idea to simply inspect the code of the existing hubs to see how they work.:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">hubs</span>
 <span class="kn">from</span> <span class="nn">mypackage</span> <span class="kn">import</span> <span class="n">myhub</span>
 <span class="n">hubs</span><span class="o">.</span><span class="n">use_hub</span><span class="p">(</span><span class="n">myhub</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Supplying None as the argument to <a class="reference internal" href="#eventlet.hubs.use_hub" title="eventlet.hubs.use_hub"><tt class="xref py py-func docutils literal"><span class="pre">eventlet.hubs.use_hub()</span></tt></a> causes it to select the default hub.</p>
+<p>Supplying None as the argument to <a class="reference internal" href="#eventlet.hubs.use_hub" title="eventlet.hubs.use_hub"><code class="xref py py-func docutils literal"><span class="pre">eventlet.hubs.use_hub()</span></code></a> causes it to select the default hub.</p>
 </dd></dl>
 
 <div class="section" id="how-the-hubs-work">
 <h2>How the Hubs Work<a class="headerlink" href="#how-the-hubs-work" title="Permalink to this headline">¶</a></h2>
 <p>The hub has a main greenlet, MAINLOOP.  When one of the running coroutines needs
-to do some I/O, it registers a listener with the hub (so that the hub knows when to wake it up again), and then switches to MAINLOOP (via <tt class="docutils literal"><span class="pre">get_hub().switch()</span></tt>).  If there are other coroutines that are ready to run, MAINLOOP switches to them, and when they complete or need to do more I/O, they switch back to the MAINLOOP.  In this manner, MAINLOOP ensures that every coroutine gets scheduled when it has some work to do.</p>
+to do some I/O, it registers a listener with the hub (so that the hub knows when to wake it up again), and then switches to MAINLOOP (via <code class="docutils literal"><span class="pre">get_hub().switch()</span></code>).  If there are other coroutines that are ready to run, MAINLOOP switches to them, and when they complete or need to do more I/O, they switch back to the MAINLOOP.  In this manner, MAINLOOP ensures that every coroutine gets scheduled when it has some work to do.</p>
 <p>MAINLOOP is launched only when the first I/O operation happens, and it is not the same greenlet that __main__ is running in.  This lazy launching is why it&#8217;s not necessary to explicitly call a dispatch() method like other frameworks, which in turn means that code can start using Eventlet without needing to be substantially restructured.</p>
 </div>
 <div class="section" id="more-hub-related-functions">
 <h2>More Hub-Related Functions<a class="headerlink" href="#more-hub-related-functions" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="eventlet.hubs.get_hub">
-<tt class="descclassname">eventlet.hubs.</tt><tt class="descname">get_hub</tt><big>(</big><big>)</big><a class="headerlink" href="#eventlet.hubs.get_hub" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">eventlet.hubs.</code><code class="descname">get_hub</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.hubs.get_hub" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the current event hub singleton object.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
@@ -107,7 +107,7 @@ unexpectedly without being deprecated first.</p>
 
 <dl class="function">
 <dt id="eventlet.hubs.get_default_hub">
-<tt class="descclassname">eventlet.hubs.</tt><tt class="descname">get_default_hub</tt><big>(</big><big>)</big><a class="headerlink" href="#eventlet.hubs.get_default_hub" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">eventlet.hubs.</code><code class="descname">get_default_hub</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.hubs.get_default_hub" title="Permalink to this definition">¶</a></dt>
 <dd><p>Select the default hub implementation based on what multiplexing
 libraries are installed.  The order that the hubs are tried is:</p>
 <ul class="simple">
@@ -127,15 +127,15 @@ unexpectedly without being deprecated first.</p>
 
 <dl class="function">
 <dt id="eventlet.hubs.trampoline">
-<tt class="descclassname">eventlet.hubs.</tt><tt class="descname">trampoline</tt><big>(</big><em>fd</em>, <em>read=None</em>, <em>write=None</em>, <em>timeout=None</em>, <em>timeout_exc=&lt;class 'eventlet.timeout.Timeout'&gt;</em>, <em>mark_as_closed=None</em><big>)</big><a class="headerlink" href="#eventlet.hubs.trampoline" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">eventlet.hubs.</code><code class="descname">trampoline</code><span class="sig-paren">(</span><em>fd</em>, <em>read=None</em>, <em>write=None</em>, <em>timeout=None</em>, <em>timeout_exc=&lt;class 'eventlet.timeout.Timeout'&gt;</em>, <em>mark_as_closed=None</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.hubs.trampoline" title="Permalink to this definition">¶</a></dt>
 <dd><p>Suspend the current coroutine until the given socket object or file
 descriptor is ready to <em>read</em>, ready to <em>write</em>, or the specified
 <em>timeout</em> elapses, depending on arguments specified.</p>
-<p>To wait for <em>fd</em> to be ready to read, pass <em>read</em> <tt class="docutils literal"><span class="pre">=True</span></tt>; ready to
-write, pass <em>write</em> <tt class="docutils literal"><span class="pre">=True</span></tt>. To specify a timeout, pass the <em>timeout</em>
+<p>To wait for <em>fd</em> to be ready to read, pass <em>read</em> <code class="docutils literal"><span class="pre">=True</span></code>; ready to
+write, pass <em>write</em> <code class="docutils literal"><span class="pre">=True</span></code>. To specify a timeout, pass the <em>timeout</em>
 argument in seconds.</p>
 <p>If the specified <em>timeout</em> elapses before the socket is ready to read or
-write, <em>timeout_exc</em> will be raised instead of <tt class="docutils literal"><span class="pre">trampoline()</span></tt>
+write, <em>timeout_exc</em> will be raised instead of <code class="docutils literal"><span class="pre">trampoline()</span></code>
 returning normally.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
@@ -151,7 +151,7 @@ unexpectedly without being deprecated first.</p>
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
@@ -168,12 +168,14 @@ unexpectedly without being deprecated first.</p>
   <h4>Next topic</h4>
   <p class="topless"><a href="testing.html"
                         title="next chapter">Testing Eventlet</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="_sources/hubs.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/hubs.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />
@@ -190,7 +192,7 @@ unexpectedly without being deprecated first.</p>
       </div>
       <div class="clearer"></div>
     </div>
-    <div class="related">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -205,13 +207,13 @@ unexpectedly without being deprecated first.</p>
         <li class="right" >
           <a href="zeromq.html" title="Zeromq"
              >previous</a> |</li>
-        <li><a href="index.html">Eventlet 0.16.1 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.17.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
 
-    <div class="footer">
+    <div class="footer" role="contentinfo">
         &copy; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
