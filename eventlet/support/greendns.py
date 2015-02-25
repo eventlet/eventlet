@@ -251,7 +251,7 @@ class HostsResolver(object):
         else:
             cannon = hostname
         aliases.append(cannon)
-        for alias, cname in self._aliases.iteritems():
+        for alias, cname in six.iteritems(self._aliases):
             if cannon == cname:
                 aliases.append(alias)
         aliases.remove(hostname)
@@ -385,19 +385,19 @@ def _getaddrinfo_lookup(host, family, flags):
     addrs = []
     if family == socket.AF_UNSPEC:
         for qfamily in [socket.AF_INET6, socket.AF_INET]:
-            answer = resolve(host, qfamily, 0)
+            answer = resolve(host, qfamily, False)
             if answer.rrset:
                 addrs.extend([rr.address for rr in answer.rrset])
     elif family == socket.AF_INET6 and flags & socket.AI_V4MAPPED:
-        answer = resolve(host, socket.AF_INET6, 0)
+        answer = resolve(host, socket.AF_INET6, False)
         if answer.rrset:
             addrs = [rr.address for rr in answer.rrset]
         if not addrs or flags & socket.AI_ALL:
-            answer = resolve(host, socket.AF_INET, 0)
+            answer = resolve(host, socket.AF_INET, False)
             if answer.rrset:
                 addrs = ['::ffff:' + rr.address for rr in answer.rrset]
     else:
-        answer = resolve(host, family, 0)
+        answer = resolve(host, family, False)
         if answer.rrset:
             addrs = [rr.address for rr in answer.rrset]
     return str(answer.qname), addrs
@@ -412,7 +412,7 @@ def getaddrinfo(host, port, family=0, socktype=0, proto=0, flags=0):
     allows us to respect all the other arguments like the native OS.
     """
     if isinstance(host, six.string_types):
-        host = host.encode('idna')
+        host = host.encode('idna').decode('ascii')
     if host is not None and not is_ip_addr(host):
         qname, addrs = _getaddrinfo_lookup(host, family, flags)
     else:
@@ -437,7 +437,7 @@ def getaddrinfo(host, port, family=0, socktype=0, proto=0, flags=0):
         raise socket.gaierror(socket.EAI_NONAME, 'No address found')
     if flags & socket.AI_CANONNAME:
         if not is_ip_addr(qname):
-            qname = resolve_cname(qname).decode('idna')
+            qname = resolve_cname(qname).encode('ascii').decode('idna')
         ai = res[0]
         res[0] = (ai[0], ai[1], ai[2], qname, ai[4])
     return res

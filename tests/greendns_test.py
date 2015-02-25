@@ -1,3 +1,4 @@
+# coding: utf-8
 """Tests for the eventlet.support.greendns module"""
 
 import os
@@ -7,7 +8,6 @@ import time
 
 import tests
 from tests import mock
-
 try:
     import dns.rdatatype
     import dns.rdtypes.IN.A
@@ -50,15 +50,15 @@ class TestHostsResolver(tests.LimitedTestCase):
     @tests.skip_unless(greendns_requirement)
     def test_readlines_lines(self):
         hr = self._make_host_resolver()
-        hr.hosts.write('line0\n')
+        hr.hosts.write(b'line0\n')
         hr.hosts.flush()
         assert hr._readlines() == ['line0']
         hr._last_stat = 0
-        hr.hosts.write('line1\n')
+        hr.hosts.write(b'line1\n')
         hr.hosts.flush()
         assert hr._readlines() == ['line0', 'line1']
         hr._last_stat = 0
-        hr.hosts.write('#comment0\nline0\n #comment1\nline1')
+        hr.hosts.write(b'#comment0\nline0\n #comment1\nline1')
         assert hr._readlines() == ['line0', 'line1']
 
     @tests.skip_unless(greendns_requirement)
@@ -79,8 +79,8 @@ class TestHostsResolver(tests.LimitedTestCase):
     @tests.skip_unless(greendns_requirement)
     def test_load_v4_v6_cname_aliases(self):
         hr = self._make_host_resolver()
-        hr.hosts.write('1.2.3.4 v4.example.com v4\n'
-                       'dead:beef::1 v6.example.com v6\n')
+        hr.hosts.write(b'1.2.3.4 v4.example.com v4\n'
+                       b'dead:beef::1 v6.example.com v6\n')
         hr.hosts.flush()
         hr._load()
         assert hr._v4 == {'v4.example.com': '1.2.3.4', 'v4': '1.2.3.4'}
@@ -92,8 +92,8 @@ class TestHostsResolver(tests.LimitedTestCase):
     @tests.skip_unless(greendns_requirement)
     def test_load_v6_link_local(self):
         hr = self._make_host_resolver()
-        hr.hosts.write('fe80:: foo\n'
-                       'fe80:dead:beef::1 bar\n')
+        hr.hosts.write(b'fe80:: foo\n'
+                       b'fe80:dead:beef::1 bar\n')
         hr.hosts.flush()
         hr._load()
         assert not hr._v4
@@ -510,6 +510,37 @@ class TestGetaddrinfo(tests.LimitedTestCase):
         greendns.socket.getaddrinfo = self._old_orig_getaddrinfo
 
     @tests.skip_unless(greendns_requirement)
+    def test_getaddrinfo(self):
+        greendns.resolve = _make_mock_resolve()
+        greendns.resolve.add('example.com', '127.0.0.2')
+        greendns.resolve.add('example.com', '::1')
+        res = greendns.getaddrinfo('example.com', 'ssh')
+        addr = ('127.0.0.2', 22)
+        tcp = (socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP, addr)
+        udp = (socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP, addr)
+        addr = ('::1', 22, 0, 0)
+        tcp6 = (socket.AF_INET6, socket.SOCK_STREAM, socket.IPPROTO_TCP, addr)
+        udp6 = (socket.AF_INET6, socket.SOCK_DGRAM, socket.IPPROTO_UDP, addr)
+        filt_res = [ai[:3] + (ai[4],) for ai in res]
+        assert tcp in filt_res
+        assert udp in filt_res
+        assert tcp6 in filt_res
+        assert udp6 in filt_res
+
+    @tests.skip_unless(greendns_requirement)
+    def test_getaddrinfo_idn(self):
+        greendns.resolve = _make_mock_resolve()
+        idn_name = u'евентлет.com'
+        greendns.resolve.add(idn_name.encode('idna').decode('ascii'), '127.0.0.2')
+        res = greendns.getaddrinfo(idn_name, 'ssh')
+        addr = ('127.0.0.2', 22)
+        tcp = (socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP, addr)
+        udp = (socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP, addr)
+        filt_res = [ai[:3] + (ai[4],) for ai in res]
+        assert tcp in filt_res
+        assert udp in filt_res
+
+    @tests.skip_unless(greendns_requirement)
     def test_getaddrinfo_inet(self):
         greendns.resolve = _make_mock_resolve()
         greendns.resolve.add('example.com', '127.0.0.2')
@@ -530,24 +561,6 @@ class TestGetaddrinfo(tests.LimitedTestCase):
         udp = (socket.AF_INET6, socket.SOCK_DGRAM, socket.IPPROTO_UDP, addr)
         assert tcp in [ai[:3] + (ai[4],) for ai in res]
         assert udp in [ai[:3] + (ai[4],) for ai in res]
-
-    @tests.skip_unless(greendns_requirement)
-    def test_getaddrinfo(self):
-        greendns.resolve = _make_mock_resolve()
-        greendns.resolve.add('example.com', '127.0.0.2')
-        greendns.resolve.add('example.com', '::1')
-        res = greendns.getaddrinfo('example.com', 'ssh')
-        addr = ('127.0.0.2', 22)
-        tcp = (socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP, addr)
-        udp = (socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP, addr)
-        addr = ('::1', 22, 0, 0)
-        tcp6 = (socket.AF_INET6, socket.SOCK_STREAM, socket.IPPROTO_TCP, addr)
-        udp6 = (socket.AF_INET6, socket.SOCK_DGRAM, socket.IPPROTO_UDP, addr)
-        filt_res = [ai[:3] + (ai[4],) for ai in res]
-        assert tcp in filt_res
-        assert udp in filt_res
-        assert tcp6 in filt_res
-        assert udp6 in filt_res
 
     @tests.skip_unless(greendns_requirement)
     def test_getaddrinfo_only_a_ans(self):
