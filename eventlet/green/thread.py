@@ -3,6 +3,7 @@ from eventlet.support.six.moves import _thread as __thread
 from eventlet.support import greenlets as greenlet, six
 from eventlet import greenthread
 from eventlet.semaphore import Semaphore as LockType
+import sys
 
 
 __patched__ = ['get_ident', 'start_new_thread', 'start_new', 'allocate_lock',
@@ -43,6 +44,19 @@ def __thread_body(func, args, kwargs):
 
 
 def start_new_thread(function, args=(), kwargs=None):
+    if (sys.version_info >= (3, 4)
+    and getattr(function, '__module__', '') == 'threading'
+    and hasattr(function, '__self__')):
+        # Since Python 3.4, threading.Thread uses an internal lock
+        # automatically released when the python thread state is deleted.
+        # With monkey patching, eventlet uses green threads without python
+        # thread state, so the lock is not automatically released.
+        #
+        # Disable the thread state lock to avoid dead locks.
+        thread = function.__self__
+        thread._set_tstate_lock = lambda: None
+        thread._wait_for_tstate_lock = lambda *args, **kw: None
+
     kwargs = kwargs or {}
     g = greenthread.spawn_n(__thread_body, function, args, kwargs)
     return get_ident(g)
