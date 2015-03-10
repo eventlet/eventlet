@@ -38,14 +38,27 @@ from eventlet import patcher
 from eventlet.green import _socket_nodns
 from eventlet.green import os
 from eventlet.green import time
+from eventlet.green import select
 from eventlet.support import six
 
 
-dns = patcher.import_patched('dns')
-dns.resolver = patcher.import_patched('dns.resolver')
+dns = patcher.import_patched('dns',
+                             select=select,
+                             time=time,
+                             os=os,
+                             socket=_socket_nodns)
+dns.resolver = patcher.import_patched('dns.resolver',
+                                      select=select,
+                                      time=time,
+                                      os=os,
+                                      socket=_socket_nodns)
 
 for pkg in ('dns.entropy', 'dns.inet', 'dns.query'):
-    setattr(dns, pkg.split('.')[1], patcher.import_patched(pkg))
+    setattr(dns, pkg.split('.')[1], patcher.import_patched(pkg,
+                                                           select=select,
+                                                           time=time,
+                                                           os=os,
+                                                           socket=_socket_nodns))
 import dns.rdtypes
 for pkg in ['dns.rdtypes.IN', 'dns.rdtypes.ANY']:
     setattr(dns.rdtypes, pkg.split('.')[-1], patcher.import_patched(pkg))
