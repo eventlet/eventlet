@@ -45,3 +45,22 @@ def test_communicate_with_poll():
     eventlet.with_timeout(0.1, p.communicate, timeout_value=True)
     tdiff = time.time() - t1
     assert 0.1 <= tdiff <= 0.2, 'did not stop within allowed time'
+
+
+def test_close_popen_stdin_with_close_fds():
+    p = subprocess.Popen(
+        ['ls'],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        close_fds=True,
+        shell=False,
+        cwd=None,
+        env=None)
+
+    p.communicate(None)
+
+    try:
+        p.stdin.close()
+    except Exception as e:
+        assert False, "Exception should not be raised, got %r instead" % e

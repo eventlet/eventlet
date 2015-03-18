@@ -126,9 +126,10 @@ class GreenFileIO(_OriginalIOBase):
                     trampoline(self, write=True)
 
     def close(self):
-        _original_os.close(self._fileno)
+        if not self._closed:
+            _original_os.close(self._fileno)
+            self._closed = True
         notify_close(self._fileno)
-        self._closed = True
         for method in [
                 'fileno', 'flush', 'isatty', 'next', 'read', 'readinto',
                 'readline', 'readlines', 'seek', 'tell', 'truncate',
