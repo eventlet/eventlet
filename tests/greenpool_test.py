@@ -323,6 +323,12 @@ class GreenPool(tests.LimitedTestCase):
         p = greenpool.GreenPool()
         p.waitall()
 
+    def test_imap_sets_pool(self):
+        p = greenpool.GreenPool(4)
+        pile = p.imap(passthru, list(range(10)))
+        self.assertTrue(p is pile.pool)
+        p.waitall()
+
     def test_recursive_waitall(self):
         p = greenpool.GreenPool()
         gt = p.spawn(p.waitall)
