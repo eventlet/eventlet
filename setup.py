@@ -11,7 +11,7 @@ setup(
     author='Linden Lab',
     author_email='eventletdev@lists.secondlife.com',
     url='http://eventlet.net',
-    packages=find_packages(exclude=['tests', 'benchmarks']),
+    packages=find_packages(exclude=['benchmarks', 'tests', 'tests.*']),
     install_requires=(
         'greenlet >= 0.3',
     ),
