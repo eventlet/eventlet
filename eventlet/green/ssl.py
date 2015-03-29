@@ -3,6 +3,7 @@ __ssl = __import__('ssl')
 from eventlet.patcher import slurp_properties
 slurp_properties(__ssl, globals(), srckeys=dir(__ssl))
 
+import functools
 import sys
 import errno
 time = __import__('time')
@@ -353,3 +354,14 @@ if hasattr(__ssl, 'sslwrap_simple'):
                                   ssl_version=PROTOCOL_SSLv23,
                                   ca_certs=None)
         return ssl_sock
+
+
+if hasattr(__ssl, 'SSLContext'):
+    @functools.wraps(__ssl.SSLContext.wrap_socket)
+    def _green_sslcontext_wrap_socket(self, sock, *a, **kw):
+        return GreenSSLSocket(sock, *a, **kw)
+
+    # FIXME:
+    # * GreenSSLContext akin to GreenSSLSocket
+    # * make ssl.create_default_context() use modified SSLContext from globals as usual
+    __ssl.SSLContext.wrap_socket = _green_sslcontext_wrap_socket
