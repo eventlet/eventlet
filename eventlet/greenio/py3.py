@@ -127,8 +127,8 @@ class GreenFileIO(_OriginalIOBase):
 
     def close(self):
         if not self._closed:
-            _original_os.close(self._fileno)
             self._closed = True
+            _original_os.close(self._fileno)
         notify_close(self._fileno)
         for method in [
                 'fileno', 'flush', 'isatty', 'next', 'read', 'readinto',

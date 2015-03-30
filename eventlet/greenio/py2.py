@@ -143,7 +143,9 @@ class _SocketDuckForFd(object):
             raise
 
     def _mark_as_closed(self):
+        current = self._closed
         self._closed = True
+        return current
 
     @property
     def _sock(self):
@@ -201,8 +203,10 @@ class _SocketDuckForFd(object):
         self._close()
 
     def _close(self):
+        was_closed = self._mark_as_closed()
+        if was_closed:
+            return
         notify_close(self._fileno)
-        self._mark_as_closed()
         try:
             os.close(self._fileno)
         except:

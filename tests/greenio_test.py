@@ -15,10 +15,7 @@ from eventlet import event, greenio, debug
 from eventlet.hubs import get_hub
 from eventlet.green import select, socket, time, ssl
 from eventlet.support import capture_stderr, get_errno, six
-from tests import (
-    LimitedTestCase, main,
-    skip_with_pyevent, skipped, skip_if, skip_on_windows,
-)
+import tests
 
 
 if six.PY3:
@@ -58,7 +55,7 @@ def using_kqueue_hub(_f):
         return False
 
 
-class TestGreenSocket(LimitedTestCase):
+class TestGreenSocket(tests.LimitedTestCase):
     def assertWriteToClosedFileRaises(self, fd):
         if sys.version_info[0] < 3:
             # 2.x socket._fileobjects are odd: writes don't check
@@ -481,7 +478,7 @@ class TestGreenSocket(LimitedTestCase):
         server.close()
         client.close()
 
-    @skip_with_pyevent
+    @tests.skip_with_pyevent
     def test_raised_multiple_readers(self):
         debug.hub_prevent_multiple_readers(True)
 
@@ -503,9 +500,9 @@ class TestGreenSocket(LimitedTestCase):
         s.sendall(b'b')
         a.wait()
 
-    @skip_with_pyevent
-    @skip_if(using_epoll_hub)
-    @skip_if(using_kqueue_hub)
+    @tests.skip_with_pyevent
+    @tests.skip_if(using_epoll_hub)
+    @tests.skip_if(using_kqueue_hub)
     def test_closure(self):
         def spam_to_me(address):
             sock = eventlet.connect(address)
@@ -655,8 +652,8 @@ def test_get_fileno_of_a_socket_with_fileno_returning_wrong_type_fails():
         assert False, 'Expected TypeError not raised'
 
 
-class TestGreenPipe(LimitedTestCase):
-    @skip_on_windows
+class TestGreenPipe(tests.LimitedTestCase):
+    @tests.skip_on_windows
     def setUp(self):
         super(self.__class__, self).setUp()
         self.tempdir = tempfile.mkdtemp('_green_pipe_test')
@@ -768,10 +765,10 @@ class TestGreenPipe(LimitedTestCase):
         self.assertEqual(f.tell(), 9)
 
 
-class TestGreenIoLong(LimitedTestCase):
+class TestGreenIoLong(tests.LimitedTestCase):
     TEST_TIMEOUT = 10  # the test here might take a while depending on the OS
 
-    @skip_with_pyevent
+    @tests.skip_with_pyevent
     def test_multiple_readers(self, clibufsize=False):
         debug.hub_prevent_multiple_readers(False)
         recvsize = 2 * min_buf_size()
@@ -824,21 +821,21 @@ class TestGreenIoLong(LimitedTestCase):
         assert len(results2) > 0
         debug.hub_prevent_multiple_readers()
 
-    @skipped  # by rdw because it fails but it's not clear how to make it pass
-    @skip_with_pyevent
+    @tests.skipped  # by rdw because it fails but it's not clear how to make it pass
+    @tests.skip_with_pyevent
     def test_multiple_readers2(self):
         self.test_multiple_readers(clibufsize=True)
 
 
-class TestGreenIoStarvation(LimitedTestCase):
+class TestGreenIoStarvation(tests.LimitedTestCase):
     # fixme: this doesn't succeed, because of eventlet's predetermined
     # ordering.  two processes, one with server, one with client eventlets
     # might be more reliable?
 
     TEST_TIMEOUT = 300  # the test here might take a while depending on the OS
 
-    @skipped  # by rdw, because it fails but it's not clear how to make it pass
-    @skip_with_pyevent
+    @tests.skipped  # by rdw, because it fails but it's not clear how to make it pass
+    @tests.skip_with_pyevent
     def test_server_starvation(self, sendloops=15):
         recvsize = 2 * min_buf_size()
         sendsize = 10000 * recvsize
@@ -955,5 +952,5 @@ def test_socket_del_fails_gracefully_when_not_fully_initialized():
     assert err.getvalue() == ''
 
 
-if __name__ == '__main__':
-    main()
+def test_double_close_219():
+    tests.run_isolated('greenio_double_close_219.py')
