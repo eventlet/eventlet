@@ -1,3 +1,11 @@
+0.17.2
+======
+* wsgi: Provide python logging compatibility; Thanks to Sean Dague
+* greendns: fix premature connection closing in DNS proxy; Thanks to Tim Simmons
+* greenio: correct fd close; Thanks to Antonio Cuni and Victor Sergeyev
+* green.ssl: HTTPS client Python 2.7.9+ compatibility
+* setup: tests.{isolated,manual} polluted top-level packages
+
 0.17.1
 ======
 * greendns: fix dns.name import and Python3 compatibility

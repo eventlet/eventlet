@@ -116,3 +116,6 @@ Thanks To
 * Marc Abramowitz, fixing the README so it renders correctly on PyPI (GH-183)
 * Shaun Stanworth, equal chance to acquire semaphore from different greenthreads (GH-136)
 * Lior Neudorfer, Make sure SSL retries are done using the exact same data buffer
+* Sean Dague, wsgi: Provide python logging compatibility
+* Tim Simmons, Use _socket_nodns and select in dnspython support
+* Antonio Cuni, fix fd double close on PyPy
