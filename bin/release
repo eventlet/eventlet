@@ -1,0 +1,50 @@
+#!/bin/bash -e
+cd "$( dirname "${BASH_SOURCE[0]}" )/.."
+if [[ ! -d venv-release ]]; then
+	virtualenv venv-release
+    echo '*' >venv-release/.gitignore
+	venv-release/bin/pip install wheel sphinx
+fi
+. $PWD/venv-release/bin/activate
+pip install -e $PWD
+
+main() {
+	branch="${1-$(git symbolic-ref --short HEAD)}"
+	version="$(python -c 'import eventlet; print(eventlet.__version__)')"
+	printf "branch: %s version: '%s'\n" $branch $version >&2
+	if [[ "$branch" != "master" ]]; then
+		echo "Must be on master" >&2
+		exit 1
+	fi
+	if [[ -n "$(git status --short -uall)" ]]; then
+		echo "Tree must be clean" >&2
+		exit 1
+	fi
+	confirm "Continue? [yN] " || exit 1
+
+	if ! git tag "v$version"; then
+		echo "tag failed" >&2
+		confirm "Continue still? [yN] " || exit 1
+	fi
+
+	if confirm "Upload to PyPi? [Yn] "; then
+		rm -rf build dist
+		python setup.py sdist bdist_wheel register upload
+	fi
+
+	bin/build-website.bash
+	
+    git push origin master
+	git push --tags
+    git push origin gh-pages
+}
+
+confirm() {
+	read -n1 -p "$1" reply
+	echo ""
+	rc=0
+	[[ "$reply" != "y" ]] && rc=1
+	return $rc
+}
+
+main "$@"
