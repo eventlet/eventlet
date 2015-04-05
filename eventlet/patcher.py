@@ -304,6 +304,13 @@ def monkey_patch(**on):
         # importlib must use real thread locks, not eventlet.Semaphore
         importlib._bootstrap._thread = thread
 
+        # Issue #185: Since Python 3.3, threading.RLock is implemented in C and
+        # so call a C function to get the thread identifier, instead of calling
+        # threading.get_ident(). Force the Python implementation of RLock which
+        # calls threading.get_ident() and so is compatible with eventlet.
+        import threading
+        threading.RLock = threading._PyRLock
+
 
 def is_monkey_patched(module):
     """Returns True if the given module is monkeypatched currently, False if
