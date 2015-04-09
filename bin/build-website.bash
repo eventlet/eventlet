@@ -57,7 +57,7 @@ if [ $commit -eq 1 ]; then
     source_id=`git rev-parse --short HEAD`
     git branch --track gh-pages origin/gh-pages || true
     git checkout gh-pages
-    git ls-files -z |xargs -0 rm -f
+    git ls-files |grep -Ev '^.gitignore$' |xargs rm -f
     rm -rf "doc"
 
     mv "$build"/* ./
