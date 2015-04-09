@@ -11,7 +11,7 @@ Contributors
 ------------
 * AG Projects
 * Chris AtLee
-* R\. Tyler Ballance
+* R. Tyler Ballance
 * Denis Bilenko
 * Mike Barton
 * Patrick Carlisle
@@ -38,6 +38,7 @@ Contributors
 * Aldona Majorek
 * Victor Sergeyev
 * David Szotten
+* Victor Stinner
 
 Linden Lab Contributors
 -----------------------
@@ -111,7 +112,6 @@ Thanks To
 * Steven Hardy
 * Stuart McLaren
 * Tomaz Muraus
-* Victor Stinner
 * ChangBo Guo(gcb), fixing typos in the documentation (GH-194)
 * Marc Abramowitz, fixing the README so it renders correctly on PyPI (GH-183)
 * Shaun Stanworth, equal chance to acquire semaphore from different greenthreads (GH-136)

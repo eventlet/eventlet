@@ -2,7 +2,7 @@
 cd "$( dirname "${BASH_SOURCE[0]}" )/.."
 if [[ ! -d venv-release ]]; then
 	virtualenv venv-release
-    echo '*' >venv-release/.gitignore
+	echo '*' >venv-release/.gitignore
 	venv-release/bin/pip install wheel sphinx
 fi
 . $PWD/venv-release/bin/activate
@@ -33,10 +33,10 @@ main() {
 	fi
 
 	bin/build-website.bash
-	
-    git push origin master
+
+	git push origin master
 	git push --tags
-    git push origin gh-pages
+	git push origin gh-pages
 }
 
 confirm() {

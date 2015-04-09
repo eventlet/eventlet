@@ -1,3 +1,8 @@
+0.17.3
+======
+* green.thread: Python3.3+ fixes; Thanks to Victor Stinner
+* Semaphore.acquire() accepts timeout=-1; Thanks to Victor Stinner
+
 0.17.2
 ======
 * wsgi: Provide python logging compatibility; Thanks to Sean Dague
