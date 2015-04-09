@@ -502,3 +502,7 @@ def test_importlib_lock():
 
 def test_threading_condition():
     tests.run_isolated('patcher_threading_condition.py')
+
+
+def test_threading_join():
+    tests.run_isolated('patcher_threading_join.py')

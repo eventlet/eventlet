@@ -52,10 +52,20 @@ def start_new_thread(function, args=(), kwargs=None):
         # With monkey patching, eventlet uses green threads without python
         # thread state, so the lock is not automatically released.
         #
-        # Disable the thread state lock to avoid dead locks.
+        # Wrap _bootstrap_inner() to release explicitly the thread state lock
+        # when the thread completes.
         thread = function.__self__
-        thread._set_tstate_lock = lambda: None
-        thread._wait_for_tstate_lock = lambda *args, **kw: None
+        bootstrap_inner = thread._bootstrap_inner
+
+        def wrap_bootstrap_inner():
+            try:
+                bootstrap_inner()
+            finally:
+                # The lock can be cleared (ex: by a fork())
+                if thread._tstate_lock is not None:
+                    thread._tstate_lock.release()
+
+        thread._bootstrap_inner = wrap_bootstrap_inner
 
     kwargs = kwargs or {}
     g = greenthread.spawn_n(__thread_body, function, args, kwargs)
