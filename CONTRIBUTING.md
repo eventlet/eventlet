@@ -12,16 +12,16 @@ patches and features.
 ## Using the issue tracker
 
 The [issue tracker](https://github.com/eventlet/eventlet/issues) is
-the preferred channel for [bug reports](#bugs), [features requests](#features)
-and [submitting pull requests](#pull-requests), but please respect the following
-restrictions:
+the preferred channel for [Discussion](#discussion), [bug reports](#bugs), [features requests](#features)
+and [submitting pull requests](#pull-requests).
 
-* Please **do not** use the issue tracker for personal support requests (use
-  [Stack Overflow](http://stackoverflow.com) or IRC).
+<a name="discussion"></a>
+## Discussion
 
-* Please **do not** derail or troll issues. Keep the discussion on topic and
-  respect the opinions of others.
-
+- [eventletdev](mailto:eventletdev@lists.secondlife.com) -
+  This is a low traffic list about using and developing Eventlet. Look through the archives for some useful information and possible answers to questions.
+- There's an IRC channel dedicated to Eventlet: `#eventlet` on freenode. It's a pretty chill place to hang out!
+- We have Eventlet Google+ Community. Join us, +1, share your ideas, report bugs, find new friends or even new job!
 
 <a name="bugs"></a>
 ## Bug reports
@@ -29,40 +29,54 @@ restrictions:
 A bug is a _demonstrable problem_ that is caused by the code in the repository.
 Good bug reports are extremely helpful - thank you!
 
+You may report bugs via:
+
+1. [GitHub](https://github.com/eventlet/eventlet/issues/new)
+
+2. [Bitbucket](https://bitbucket.org/eventlet/eventlet/issues/new/)
+
+3. [Email](mailto:eventletdev@lists.secondlife.com)
+
+
 Guidelines for bug reports:
 
-1. **Use the GitHub issue search** &mdash; check if the issue has already been
+1. **Before filing issue try to search** &mdash; There are lots of good resources for Eventlet and its related information which can be helpful in resolving issues and get things done.
+   
+
+2. **Use the GitHub issue search** &mdash; check if the issue has already been
    reported.
 
-2. **Check if the issue has been fixed** &mdash; try to reproduce it using the
+3. **Check if the issue has been fixed** &mdash; try to reproduce it using the
    latest `master` or development branch in the repository.
 
-3. **Isolate the problem** &mdash; ideally create a [reduced test
-   case](http://css-tricks.com/6263-reduced-test-cases/) and a live example.
+4. Please be sure to report bugs [as effectively as possible](http://www.chiark.greenend.org.uk/~sgtatham/bugs.html),
+   to ensure that we understand and act on them quickly.
 
 A good bug report shouldn't leave others needing to chase you up for more
-information. Please try to be as detailed as possible in your report. What is
-your environment? What steps will reproduce the issue? What version of Nginx
-experiences the problem? What would you expect to be the outcome? All these
-details will help people to fix any potential bugs.
+information.
 
-Example:
+Please try to be as detailed as possible in your report.
 
-> Short and descriptive example bug report title
->
-> A summary of the issue and server version / OS / browser environment in which
-> it occurs. If suitable, include the steps required to reproduce the bug.
->
-> 1. This is the first step
-> 2. This is the second step
-> 3. Further steps, etc.
->
-> `<url>` - a link to the reduced test case
->
-> Any other information you want to share that is relevant to the issue being
-> reported. This might include the lines of code that you have identified as
-> causing the bug, and potential solutions (and your opinions on their merits).
 
+- What is your environment? 
+- Which is eventlet version your using? 
+- `uname -a`
+- `python -V`
+- `pip freeze` 
+-  What steps will reproduce the issue? 
+-  What would you expect to be the outcome? 
+
+All these details will help people to fix any potential bugs.
+
+Example of good bug report::
+
+> Short description in title of issue like `HTTPS/SSL failure when using requests library on Python 3.4`
+>
+> `uname -a` output
+>
+> `python -V` output
+> 
+> Steps to reproduce issue 
 
 <a name="features"></a>
 ## Feature requests
@@ -80,62 +94,25 @@ Good pull requests - patches, improvements, new features - are a fantastic help.
 They should remain focused in scope and avoid containing unrelated commits.
 
 **Please ask first** before embarking on any significant pull request (e.g.
-implementing features, refactoring code), otherwise you risk spending a lot of
+implementing features, re-factoring code), otherwise you risk spending a lot of
 time working on something that the project's developers might not want to merge
 into the project.
 
 Please adhere to the coding conventions used throughout a project (indentation,
-accurate comments, etc.) and any other requirements (such as test coverage).
+accurate comments, etc.) and any other requirements such as 
 
-Adhering to the following this process is the best way to get your work
-included in the project:
+- Test is required
+- One commit is strongly preferred, except for very big changes
+- Commit message should follow the following formula:
 
-1. [Fork](http://help.github.com/fork-a-repo/) the project, clone your fork,
-   and configure the remotes:
+>subsystem: description of why the change is useful
 
-   ```bash
-   # Clone your fork of the repo into the current directory
-   git clone https://github.com/<your-username>/eventlet.git
-   # Navigate to the newly cloned directory
-   cd eventlet
-   # Assign the original repo to a remote called "upstream"
-   git remote add upstream https://github.com/eventlet/eventlet
-   ```
+>optional details or links to related issues or websites
 
-2. If you cloned a while ago, get the latest changes from upstream:
+The why part is very important. Diff already says what you have done. But nobody knows why.
+Feel free to append yourself into AUTHORS file, sections Thanks To or Contributors.
 
-   ```bash
-   git checkout master
-   git pull upstream master
-   ```
-
-3. Create a new topic branch (off the main project development branch) to
-   contain your feature, change, or fix:
-
-   ```bash
-   git checkout -b <topic-branch-name>
-   ```
-
-4. Commit your changes in logical chunks. Please adhere to these [git commit
-   message guidelines](http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html)
-   or your code is unlikely be merged into the main project. Use Git's
-   [interactive rebase](https://help.github.com/articles/interactive-rebase)
-   feature to tidy up your commits before making them public.
-
-5. Locally merge (or rebase) the upstream development branch into your topic branch:
-
-   ```bash
-   git pull [--rebase] upstream master
-   ```
-
-6. Push your topic branch up to your fork:
-
-   ```bash
-   git push origin <topic-branch-name>
-   ```
-
-7. [Open a Pull Request](https://help.github.com/articles/using-pull-requests/)
-    with a clear title and description.
+If you don't like these rules, raw patches are more than welcome!
 
 **IMPORTANT**: By submitting a patch, you agree to allow the project owner to
 license your work under the same license as that used by the project.
