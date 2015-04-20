@@ -182,6 +182,11 @@ def original(modname):
     if original_name in sys.modules:
         return sys.modules.get(original_name)
 
+    if not already_patched and modname in sys.modules:
+        # https://github.com/eventlet/eventlet/issues/230 Don't load a module twice
+        # when eventlet monkey-patched is not used
+        return sys.modules[modname]
+
     # re-import the "pure" module and store it in the global _originals
     # dict; be sure to restore whatever module had that name already
     saver = SysModulesSaver((modname,))
