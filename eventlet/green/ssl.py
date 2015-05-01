@@ -358,9 +358,14 @@ if hasattr(__ssl, 'sslwrap_simple'):
 
 if hasattr(__ssl, 'SSLContext'):
     @functools.wraps(__ssl.SSLContext.wrap_socket)
-    def _green_sslcontext_wrap_socket(self, sock, *a, **kw):
-        return GreenSSLSocket(sock, *a, **kw)
-
+    def _green_sslcontext_wrap_socket(self, sock, server_side=False,
+                                      do_handshake_on_connect=True,
+                                      suppress_ragged_eofs=True,
+                                      server_hostname=None):
+        return GreenSSLSocket(sock, server_side=server_side,
+                              do_handshake_on_connect=do_handshake_on_connect,
+                              suppress_ragged_eofs=suppress_ragged_eofs,
+                              server_hostname=server_hostname, _context=self)
     # FIXME:
     # * GreenSSLContext akin to GreenSSLSocket
     # * make ssl.create_default_context() use modified SSLContext from globals as usual
