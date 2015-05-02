@@ -359,7 +359,7 @@ if hasattr(__ssl, 'sslwrap_simple'):
 if hasattr(__ssl, 'SSLContext'):
     @functools.wraps(__ssl.SSLContext.wrap_socket)
     def _green_sslcontext_wrap_socket(self, sock, *a, **kw):
-        return GreenSSLSocket(sock, *a, **kw)
+        return GreenSSLSocket(sock, *a, _context=self, **kw)
 
     # FIXME:
     # * GreenSSLContext akin to GreenSSLSocket
