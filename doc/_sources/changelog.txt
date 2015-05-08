@@ -1,3 +1,7 @@
+0.17.4
+======
+* ssl: incorrect initalization of default context; Thanks to stuart-mclaren
+
 0.17.3
 ======
 * green.thread: Python3.3+ fixes; Thanks to Victor Stinner
