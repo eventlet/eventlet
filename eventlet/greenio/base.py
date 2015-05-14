@@ -360,6 +360,8 @@ class GreenSocket(object):
             except socket.error as e:
                 if get_errno(e) not in SOCKET_BLOCKING:
                     raise
+                elif get_errno(e) is errno.ENOTCONN:
+                    raise
 
             if total_sent == len_data:
                 break
