@@ -119,3 +119,4 @@ Thanks To
 * Sean Dague, wsgi: Provide python logging compatibility
 * Tim Simmons, Use _socket_nodns and select in dnspython support
 * Antonio Cuni, fix fd double close on PyPy
+* Seyeong Kim
