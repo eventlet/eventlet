@@ -2,9 +2,11 @@ import cgi
 import collections
 import errno
 import os
+import shutil
 import signal
 import socket
 import sys
+import tempfile
 import traceback
 import unittest
 
@@ -1487,6 +1489,20 @@ class TestHttpd(_TestBase):
         self.assertEqual(result.status, 'HTTP/1.1 200 oK')
         self.assertEqual(result.headers_lower[random_case_header[0].lower()], random_case_header[1])
         self.assertEqual(result.headers_original[random_case_header[0]], random_case_header[1])
+
+    def test_log_unix_address(self):
+        tempdir = tempfile.mkdtemp('eventlet_test_log_unix_address')
+        path = ''
+        try:
+            sock = eventlet.listen(tempdir + '/socket', socket.AF_UNIX)
+            path = sock.getsockname()
+
+            log = six.StringIO()
+            self.spawn_server(sock=sock, log=log)
+            eventlet.sleep(0)  # need to enter server loop
+            assert 'http:' + path in log.getvalue()
+        finally:
+            shutil.rmtree(tempdir)
 
 
 def read_headers(sock):

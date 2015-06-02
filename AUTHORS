@@ -120,3 +120,4 @@ Thanks To
 * Tim Simmons, Use _socket_nodns and select in dnspython support
 * Antonio Cuni, fix fd double close on PyPy
 * Seyeong Kim
+* Ihar Hrachyshka

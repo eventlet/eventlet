@@ -711,6 +711,24 @@ except ImportError:
     ACCEPT_ERRNO = set((errno.EPIPE, errno.EBADF, errno.ECONNRESET))
 
 
+def socket_repr(sock):
+    scheme = 'http'
+    if hasattr(sock, 'do_handshake'):
+        scheme = 'https'
+
+    name = sock.getsockname()
+    if sock.family == socket.AF_INET:
+        hier_part = '//{0}:{1}'.format(*name)
+    elif sock.family == socket.AF_INET6:
+        hier_part = '//[{0}]:{1}'.format(*name[:2])
+    elif sock.family == socket.AF_UNIX:
+        hier_part = name
+    else:
+        hier_part = repr(name)
+
+    return scheme + ':' + hier_part
+
+
 def server(sock, site,
            log=None,
            environ=None,
@@ -805,19 +823,8 @@ def server(sock, site,
     else:
         pool = greenpool.GreenPool(max_size)
     try:
-        host, port = sock.getsockname()[:2]
-        port = ':%s' % (port, )
-        if hasattr(sock, 'do_handshake'):
-            scheme = 'https'
-            if port == ':443':
-                port = ''
-        else:
-            scheme = 'http'
-            if port == ':80':
-                port = ''
-
-        serv.log.info("(%s) wsgi starting up on %s://%s%s/" % (
-            serv.pid, scheme, host, port))
+        serv.log.info("(%s) wsgi starting up on %s" % (
+            serv.pid, socket_repr(sock)))
         while is_accepting:
             try:
                 client_socket = sock.accept()
