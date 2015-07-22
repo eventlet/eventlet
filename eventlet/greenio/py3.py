@@ -75,13 +75,13 @@ class GreenFileIO(_OriginalIOBase):
     def fileno(self):
         return self._fileno
 
-    def read(self, buflen=-1):
-        if buflen == -1:
+    def read(self, size=-1):
+        if size == -1:
             return self.readall()
 
         while True:
             try:
-                return _original_os.read(self._fileno, buflen)
+                return _original_os.read(self._fileno, size)
             except OSError as e:
                 if get_errno(e) not in SOCKET_BLOCKING:
                     raise IOError(*e.args)
