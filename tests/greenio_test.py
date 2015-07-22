@@ -3,6 +3,7 @@ import errno
 import eventlet
 import fcntl
 import gc
+from io import DEFAULT_BUFFER_SIZE
 import os
 import shutil
 import socket as _orig_sock
@@ -710,6 +711,20 @@ class TestGreenPipe(tests.LimitedTestCase):
         self.assertEqual(line, b'line\r\n')
 
         gt.wait()
+
+    def test_pip_read_until_end(self):
+        # similar to test_pip_read above but reading until eof
+        r, w = os.pipe()
+
+        r = greenio.GreenPipe(r, 'rb')
+        w = greenio.GreenPipe(w, 'wb')
+
+        w.write(b'c' * DEFAULT_BUFFER_SIZE * 2)
+        w.close()
+
+        buf = r.read()  # no chunk size specified; read until end
+        self.assertEqual(len(buf), 2 * DEFAULT_BUFFER_SIZE)
+        self.assertEqual(buf[:3], b'ccc')
 
     def test_pipe_writes_large_messages(self):
         r, w = os.pipe()

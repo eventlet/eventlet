@@ -75,10 +75,26 @@ class GreenFileIO(_OriginalIOBase):
     def fileno(self):
         return self._fileno
 
-    def read(self, buflen):
+    def read(self, size=-1):
+        if size == -1:
+            return self.readall()
+
         while True:
             try:
-                return _original_os.read(self._fileno, buflen)
+                return _original_os.read(self._fileno, size)
+            except OSError as e:
+                if get_errno(e) not in SOCKET_BLOCKING:
+                    raise IOError(*e.args)
+            self._trampoline(self, read=True)
+
+    def readall(self):
+        buf = []
+        while True:
+            try:
+                chunk = _original_os.read(self._fileno, DEFAULT_BUFFER_SIZE)
+                if chunk == b'':
+                    return b''.join(buf)
+                buf.append(chunk)
             except OSError as e:
                 if get_errno(e) not in SOCKET_BLOCKING:
                     raise IOError(*e.args)
