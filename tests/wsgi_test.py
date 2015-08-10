@@ -1319,6 +1319,70 @@ class TestHttpd(_TestBase):
         self.assertEqual(read_content.wait(), b'ok')
         assert blew_up[0]
 
+    def test_aborted_chunked_post_between_chunks(self):
+        read_content = event.Event()
+        blew_up = [False]
+
+        def chunk_reader(env, start_response):
+            try:
+                content = env['wsgi.input'].read(1024)
+            except wsgi.ChunkReadError:
+                blew_up[0] = True
+                content = b'ok'
+            except Exception as err:
+                blew_up[0] = True
+                content = b'wrong exception: ' + str(err).encode()
+            read_content.send(content)
+            start_response('200 OK', [('Content-Type', 'text/plain')])
+            return [content]
+        self.site.application = chunk_reader
+        expected_body = 'A' * 0xdb
+        data = "\r\n".join(['PUT /somefile HTTP/1.0',
+                            'Transfer-Encoding: chunked',
+                            '',
+                            'db',
+                            expected_body])
+        # start PUT-ing some chunked data but close prematurely
+        sock = eventlet.connect(('127.0.0.1', self.port))
+        sock.sendall(data.encode())
+        sock.close()
+        # the test passes if we successfully get here, and read all the data
+        # in spite of the early close
+        self.assertEqual(read_content.wait(), b'ok')
+        assert blew_up[0]
+
+    def test_aborted_chunked_post_bad_chunks(self):
+        read_content = event.Event()
+        blew_up = [False]
+
+        def chunk_reader(env, start_response):
+            try:
+                content = env['wsgi.input'].read(1024)
+            except wsgi.ChunkReadError:
+                blew_up[0] = True
+                content = b'ok'
+            except Exception as err:
+                blew_up[0] = True
+                content = b'wrong exception: ' + str(err).encode()
+            read_content.send(content)
+            start_response('200 OK', [('Content-Type', 'text/plain')])
+            return [content]
+        self.site.application = chunk_reader
+        expected_body = 'look here is some data for you'
+        data = "\r\n".join(['PUT /somefile HTTP/1.0',
+                            'Transfer-Encoding: chunked',
+                            '',
+                            'cats',
+                            expected_body])
+        # start PUT-ing some garbage
+        sock = eventlet.connect(('127.0.0.1', self.port))
+        sock.sendall(data.encode())
+        sock.close()
+        # the test passes if we successfully get here, and read all the data
+        # in spite of the early close
+        self.assertEqual(read_content.wait(), b'ok')
+        assert blew_up[0]
+
     def test_exceptions_close_connection(self):
         def wsgi_app(environ, start_response):
             raise RuntimeError("intentional error")

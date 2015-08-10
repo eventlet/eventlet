@@ -50,6 +50,10 @@ BAD_SOCK = set((errno.EBADF, 10053))
 BROKEN_SOCK = set((errno.EPIPE, errno.ECONNRESET))
 
 
+class ChunkReadError(ValueError):
+    pass
+
+
 # special flag return value for apps
 class _AlreadyHandled(object):
 
@@ -176,7 +180,10 @@ class Input(object):
                     if use_readline and data[-1] == "\n":
                         break
                 else:
-                    self.chunk_length = int(rfile.readline().split(b";", 1)[0], 16)
+                    try:
+                        self.chunk_length = int(rfile.readline().split(b";", 1)[0], 16)
+                    except ValueError as err:
+                        raise ChunkReadError(err)
                     self.position = 0
                     if self.chunk_length == 0:
                         rfile.readline()
