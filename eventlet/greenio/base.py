@@ -315,7 +315,7 @@ class GreenSocket(object):
                 if get_errno(e) in SOCKET_BLOCKING:
                     pass
                 elif get_errno(e) in SOCKET_CLOSED:
-                    return ''
+                    return b''
                 else:
                     raise
             try:
