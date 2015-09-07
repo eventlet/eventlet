@@ -1638,7 +1638,6 @@ class ProxiedIterableAlreadyHandledTest(IterableAlreadyHandledTest):
 
 
 class TestChunkedInput(_TestBase):
-    dirt = ""
     validator = None
 
     def application(self, env, start_response):
@@ -1687,16 +1686,13 @@ class TestChunkedInput(_TestBase):
         self.site = Site()
         self.site.application = self.application
 
-    def chunk_encode(self, chunks, dirt=None):
-        if dirt is None:
-            dirt = self.dirt
-
+    def chunk_encode(self, chunks, dirt=""):
         b = ""
         for c in chunks:
             b += "%x%s\r\n%s\r\n" % (len(c), dirt, c)
         return b
 
-    def body(self, dirt=None):
+    def body(self, dirt=""):
         return self.chunk_encode(["this", " is ", "chunked", "\nline",
                                   " 2", "\n", "line3", ""], dirt=dirt)
 

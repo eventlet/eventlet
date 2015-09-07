@@ -118,14 +118,12 @@ class Input(object):
         self.chunk_length = -1
 
     def _do_read(self, reader, length=None):
-        if self.wfile is not None and \
-                not self.is_hundred_continue_response_sent:
+        if self.wfile is not None and not self.is_hundred_continue_response_sent:
             # 100 Continue response
             self.send_hundred_continue_response()
             self.is_hundred_continue_response_sent = True
-        if length is None and self.content_length is not None:
-            length = self.content_length - self.position
-        if length and length > self.content_length - self.position:
+        if (self.content_length is not None) and (
+                length is None or length > self.content_length - self.position):
             length = self.content_length - self.position
         if not length:
             return b''
@@ -137,8 +135,7 @@ class Input(object):
         return read
 
     def _chunked_read(self, rfile, length=None, use_readline=False):
-        if self.wfile is not None and \
-                not self.is_hundred_continue_response_sent:
+        if self.wfile is not None and not self.is_hundred_continue_response_sent:
             # 100 Continue response
             self.send_hundred_continue_response()
             self.is_hundred_continue_response_sent = True
@@ -223,6 +220,10 @@ class Input(object):
                 for key, value in headers]
         self.hundred_continue_headers = headers
 
+    def discard(self, buffer_size=16 << 10):
+        while self.read(buffer_size):
+            pass
+
 
 class HeaderLineTooLong(Exception):
     pass
@@ -244,6 +245,9 @@ class LoggerFileWrapper(object):
     def __init__(self, log, debug):
         self.log = log
         self._debug = debug
+
+    def error(self, msg, *args, **kwargs):
+        self.write(msg, *args)
 
     def info(self, msg, *args, **kwargs):
         self.write(msg, *args)
@@ -503,16 +507,20 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         finally:
             if hasattr(result, 'close'):
                 result.close()
-            if (self.environ['eventlet.input'].chunked_input or
-                    self.environ['eventlet.input'].position
-                    < (self.environ['eventlet.input'].content_length or 0)):
+            request_input = self.environ['eventlet.input']
+            if (request_input.chunked_input or
+                    request_input.position < (request_input.content_length or 0)):
                 # Read and discard body if there was no pending 100-continue
-                if not self.environ['eventlet.input'].wfile:
-                    # NOTE: MINIMUM_CHUNK_SIZE is used here for purpose different than chunking.
-                    # We use it only cause it's at hand and has reasonable value in terms of
-                    # emptying the buffer.
-                    while self.environ['eventlet.input'].read(MINIMUM_CHUNK_SIZE):
-                        pass
+                if not request_input.wfile and self.close_connection == 0:
+                    try:
+                        request_input.discard()
+                    except ChunkReadError as e:
+                        self.close_connection = 1
+                        self.server.log.error((
+                            'chunked encoding error while discarding request body.'
+                            + ' ip={0} request="{1}" error="{2}"').format(
+                                self.get_client_ip(), self.requestline, e,
+                        ))
             finish = time.time()
 
             for hook, args, kwargs in self.environ['eventlet.posthooks']:
