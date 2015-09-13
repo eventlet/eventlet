@@ -55,8 +55,19 @@ class Popen(subprocess_orig.Popen):
             # eventlet.processes.Process.run() method.
             for attr in "stdin", "stdout", "stderr":
                 pipe = getattr(self, attr)
-                if pipe is not None and not type(pipe) == greenio.GreenPipe:
-                    wrapped_pipe = greenio.GreenPipe(pipe, pipe.mode, bufsize)
+                if pipe is not None and type(pipe) != greenio.GreenPipe:
+                    # https://github.com/eventlet/eventlet/issues/243
+                    # AttributeError: '_io.TextIOWrapper' object has no attribute 'mode'
+                    mode = getattr(pipe, 'mode', '')
+                    if not mode:
+                        if pipe.readable():
+                            mode += 'r'
+                        if pipe.writable():
+                            mode += 'w'
+                        # ValueError: can't have unbuffered text I/O
+                        if bufsize == 0:
+                            bufsize = -1
+                    wrapped_pipe = greenio.GreenPipe(pipe, mode, bufsize)
                     setattr(self, attr, wrapped_pipe)
         __init__.__doc__ = subprocess_orig.Popen.__init__.__doc__
 

@@ -64,3 +64,12 @@ def test_close_popen_stdin_with_close_fds():
         p.stdin.close()
     except Exception as e:
         assert False, "Exception should not be raised, got %r instead" % e
+
+
+def test_universal_lines():
+    p = subprocess.Popen(
+        [sys.executable, '--version'],
+        shell=False,
+        stdout=subprocess.PIPE,
+        universal_newlines=True)
+    p.communicate(None)
