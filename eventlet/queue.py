@@ -45,6 +45,7 @@ import sys
 import heapq
 import collections
 import traceback
+import Queue as Stdlib_Queue
 
 from eventlet.event import Event
 from eventlet.greenthread import getcurrent
@@ -145,9 +146,10 @@ class Waiter(object):
 class LightQueue(object):
     """
     This is a variant of Queue that behaves mostly like the standard
-    :class:`Queue`.  It differs by not supporting the
-    :meth:`task_done <Queue.task_done>` or :meth:`join <Queue.join>` methods,
-    and is a little faster for not having that overhead.
+    :class:`Stdlib_Queue`.  It differs by not supporting the
+    :meth:`task_done <Stdlib_Queue.task_done>` or
+    :meth:`join <Stdlib_Queue.join>` methods, and is a little faster for
+    not having that overhead.
     """
 
     def __init__(self, maxsize=None):
@@ -381,11 +383,11 @@ class Queue(LightQueue):
     If *maxsize* is less than zero or ``None``, the queue size is infinite.
 
     ``Queue(0)`` is a channel, that is, its :meth:`put` method always blocks
-    until the item is delivered. (This is unlike the standard :class:`Queue`,
-    where 0 means infinite size).
+    until the item is delivered. (This is unlike the standard
+    :class:`Stdlib_Queue`, where 0 means infinite size).
 
-    In all other respects, this Queue class resembled the standard library,
-    :class:`Queue`.
+    In all other respects, this Queue class resembles the standard library,
+    :class:`Stdlib_Queue`.
     '''
 
     def __init__(self, maxsize=None):
