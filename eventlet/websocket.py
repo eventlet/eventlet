@@ -560,7 +560,7 @@ class RFC6455WebSocket(WebSocket):
             decoder = self.UTF8Decoder() if opcode == 1 else None
             message = self.Message(opcode, decoder=decoder)
         if not length:
-            message.push('', final=finished)
+            message.push(b'', final=finished)
         else:
             while received < length:
                 d = self.socket.recv(length - received)
