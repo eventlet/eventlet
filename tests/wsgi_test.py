@@ -5,6 +5,7 @@ import os
 import shutil
 import signal
 import socket
+import string
 import sys
 import tempfile
 import traceback
@@ -1611,6 +1612,48 @@ def read_headers(sock):
         assert key.lower() not in headers, "%s header duplicated" % key
         headers[bytes_to_str(key.lower())] = bytes_to_str(value)
     return bytes_to_str(response_line), headers
+
+
+class WsgiTransformTestHttpProtocol(wsgi.HttpProtocol):
+    def header_name_to_wsgi(self, header_name):
+        tbl = string.maketrans("_-", "-_")
+        return header_name.translate(tbl).upper()
+
+
+class WsgiTransformTest(_TestBase):
+    def set_site(self):
+        self.site = Site()
+
+    def spawn_server(self, **kwargs):
+        kwargs['protocol'] = WsgiTransformTestHttpProtocol
+        return super(WsgiTransformTest, self).spawn_server(**kwargs)
+
+    def test_header_name_to_wsgi_is_used(self):
+        captured_environs = []
+
+        def wsgi_app(environ, start_response):
+            start_response("200 OK", [])
+            captured_environs.append(environ)
+            yield b"ok"
+
+
+        self.site.application = wsgi_app
+        sock = eventlet.connect(
+            ('localhost', self.port))
+
+        fd = sock.makefile('rwb')
+        fd.write(b'GET / HTTP/1.1\r\n'
+                 b'Host: localhost\r\n'
+                 b'Mixed-Dashes_And-Underscores: yes\r\n'
+                 b'\r\n')
+
+        fd.flush()
+        response_line, headers = read_headers(sock)
+        self.assertEqual(response_line, 'HTTP/1.1 200 OK\r\n')
+        self.assertEqual(len(captured_environs), 1)
+        self.assertEqual(
+            'yes',
+            captured_environs[0].get('HTTP_MIXED_DASHES-AND_UNDERSCORES'))
 
 
 class IterableAlreadyHandledTest(_TestBase):
