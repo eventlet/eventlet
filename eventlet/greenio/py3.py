@@ -132,14 +132,19 @@ class GreenFileIO(_OriginalIOBase):
         self._closed = True
 
     def write(self, data):
-        while True:
+        view = memoryview(data)
+        datalen = len(data)
+        offset = 0
+        while offset < datalen:
             try:
-                return _original_os.write(self._fileno, data)
+                written = _original_os.write(self._fileno, view[offset:])
             except OSError as e:
                 if get_errno(e) not in SOCKET_BLOCKING:
                     raise IOError(*e.args)
-                else:
-                    trampoline(self, write=True)
+                trampoline(self, write=True)
+            else:
+                offset += written
+        return offset
 
     def close(self):
         if not self._closed:
