@@ -1048,6 +1048,21 @@ class TestHttpd(_TestBase):
         self.assertNotEqual(result.headers_lower.get('transfer-encoding'), 'chunked')
         self.assertEqual(result.body, b"thisischunked")
 
+    def test_chunked_response_when_app_yields_empty_string(self):
+        def empty_string_chunked_app(env, start_response):
+            env['eventlet.minimum_write_chunk_size'] = 0  # no buffering
+            start_response('200 OK', [('Content-type', 'text/plain')])
+            return iter([b"stuff", b"", b"more stuff"])
+
+        self.site.application = empty_string_chunked_app
+        sock = eventlet.connect(('localhost', self.port))
+
+        sock.sendall(b'GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
+
+        result = read_http(sock)
+        self.assertEqual(result.headers_lower.get('transfer-encoding'), 'chunked')
+        self.assertEqual(result.body, b"5\r\nstuff\r\na\r\nmore stuff\r\n0\r\n\r\n")
+
     def test_minimum_chunk_size_parameter_leaves_httpprotocol_class_member_intact(self):
         start_size = wsgi.HttpProtocol.minimum_chunk_size
 
