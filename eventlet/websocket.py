@@ -257,8 +257,7 @@ class WebSocketWSGI(object):
     def _format_headers(self, headers):
         if len(headers) == 0:
             return b''
-        return six.moves.reduce(lambda x, y: x + y,
-                                [six.b(k) + b': ' + six.b(v) + b'\r\n' for (k, v) in headers])
+        return b''.join(six.b(k) + b': ' + six.b(v) + b'\r\n' for (k, v) in headers)
 
 
 class WebSocket(object):
