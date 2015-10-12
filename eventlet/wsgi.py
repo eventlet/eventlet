@@ -479,14 +479,15 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 minimum_write_chunk_size = int(self.environ.get(
                     'eventlet.minimum_write_chunk_size', self.minimum_chunk_size))
                 for data in result:
+                    if len(data) == 0:
+                        continue
                     if isinstance(data, six.text_type):
                         data = data.encode('ascii')
 
                     towrite.append(data)
                     towrite_size += len(data)
                     if towrite_size >= minimum_write_chunk_size:
-                        if towrite_size > 0:
-                            write(b''.join(towrite))
+                        write(b''.join(towrite))
                         towrite = []
                         just_written_size = towrite_size
                         towrite_size = 0
