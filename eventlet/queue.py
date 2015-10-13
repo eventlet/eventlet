@@ -45,12 +45,12 @@ import sys
 import heapq
 import collections
 import traceback
-import Queue as Stdlib_Queue
 
 from eventlet.event import Event
 from eventlet.greenthread import getcurrent
 from eventlet.hubs import get_hub
 from eventlet.support import six
+from eventlet.support.six.moves import queue as Stdlib_Queue
 from eventlet.timeout import Timeout
 
 
