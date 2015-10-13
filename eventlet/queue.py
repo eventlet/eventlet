@@ -45,13 +45,14 @@ import sys
 import heapq
 import collections
 import traceback
-import Queue as Stdlib_Queue
 
 from eventlet.event import Event
 from eventlet.greenthread import getcurrent
 from eventlet.hubs import get_hub
 from eventlet.support import six
 from eventlet.timeout import Timeout
+
+Stdlib_Queue = six.moves.queue
 
 
 __all__ = ['Queue', 'PriorityQueue', 'LifoQueue', 'LightQueue', 'Full', 'Empty']
