@@ -506,3 +506,7 @@ def test_threading_condition():
 
 def test_threading_join():
     tests.run_isolated('patcher_threading_join.py')
+
+
+def test_regular_file_readall():
+    tests.run_isolated('regular_file_readall.py')

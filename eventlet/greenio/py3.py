@@ -10,6 +10,7 @@ from io import (
     TextIOWrapper as _OriginalTextIOWrapper,
     IOBase as _OriginalIOBase,
 )
+import stat
 from types import FunctionType
 
 from eventlet.greenio.base import (
@@ -47,6 +48,8 @@ class GreenFileIO(_OriginalIOBase):
         self._closed = False
         set_nonblocking(self)
         self._seekable = None
+        mode = _original_os.fstat(self._fileno).st_mode
+        self._is_regular = stat.S_ISREG(mode)
 
     @property
     def closed(self):
@@ -98,7 +101,8 @@ class GreenFileIO(_OriginalIOBase):
             except OSError as e:
                 if get_errno(e) not in SOCKET_BLOCKING:
                     raise IOError(*e.args)
-            self._trampoline(self, read=True)
+            if not self._is_regular:
+                self._trampoline(self, read=True)
 
     def readinto(self, b):
         up_to = len(b)
