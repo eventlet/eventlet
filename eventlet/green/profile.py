@@ -42,7 +42,7 @@ from eventlet import greenthread
 from eventlet import patcher
 from eventlet.support import six
 
-thread = patcher.original('thread')  # non-monkeypatched module needed
+thread = patcher.original(six.moves._thread.__name__)  # non-monkeypatched module needed
 
 
 # This class provides the start() and stop() functions
@@ -151,9 +151,6 @@ class Profile(profile_orig.Profile):
             return f(self, arg, t)
         return ContextWrapper
 
-    # Add automatic tasklet detection to the callbacks.
-    dispatch = dict([(key, ContextWrap(val)) for key, val in six.iteritems(dispatch)])
-
     def TallyTimings(self):
         oldtimings = self.sleeping
         self.sleeping = {}
@@ -214,6 +211,10 @@ class Profile(profile_orig.Profile):
             rcur = ppt, pit + rpt, pet + frame_total, pfn, pframe, pcur
             cur = rcur
         return cur
+
+# Add automatic tasklet detection to the callbacks.
+Profile.dispatch = dict([(key, Profile.ContextWrap(val))
+                         for key, val in six.iteritems(Profile.dispatch)])
 
 
 # run statements shamelessly stolen from profile.py
