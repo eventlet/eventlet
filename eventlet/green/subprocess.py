@@ -17,6 +17,7 @@ if sys.version_info > (3, 4):
 
 patcher.inject('subprocess', globals(), *to_patch)
 subprocess_orig = __import__("subprocess")
+mswindows = sys.platform == "win32"
 
 
 if getattr(subprocess_orig, 'TimeoutExpired', None) is None:
@@ -46,7 +47,7 @@ class Popen(subprocess_orig.Popen):
     # Windows. (see eventlet.greenio.set_nonblocking()) As the sole purpose of
     # this __init__() override is to wrap the pipes for eventlet-friendly
     # non-blocking I/O, don't even bother overriding it on Windows.
-    if not subprocess_orig.mswindows:
+    if not mswindows:
         def __init__(self, args, bufsize=0, *argss, **kwds):
             self.args = args
             # Forward the call to base-class constructor
@@ -93,7 +94,7 @@ class Popen(subprocess_orig.Popen):
                 raise
     wait.__doc__ = subprocess_orig.Popen.wait.__doc__
 
-    if not subprocess_orig.mswindows:
+    if not mswindows:
         # don't want to rewrite the original _communicate() method, we
         # just want a version that uses eventlet.green.select.select()
         # instead of select.select().
