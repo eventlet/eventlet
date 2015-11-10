@@ -818,7 +818,14 @@ class TestGreenIoLong(tests.LimitedTestCase):
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client.connect(('127.0.0.1', listener.getsockname()[1]))
         bufsized(client, size=sendsize)
-        client.sendall(b'*' * sendsize)
+
+        # Split into multiple chunks so that we can wait a little
+        # every iteration which allows both readers to queue and
+        # recv some data when we actually send it.
+        for i in range(20):
+            eventlet.sleep(0.001)
+            client.sendall(b'*' * (sendsize // 20))
+
         client.close()
         server_coro.wait()
         listener.close()
