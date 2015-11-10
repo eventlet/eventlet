@@ -787,6 +787,7 @@ def server(sock, site,
                 If not specified, sys.stderr is used.
     :param environ: Additional parameters that go into the environ dictionary of every request.
     :param max_size: Maximum number of client connections opened at any time by this server.
+                Default is 1024.
     :param max_http_version: Set to "HTTP/1.0" to make the server pretend it only supports HTTP 1.0.
                 This can help with applications or clients that don't behave properly using HTTP 1.1.
     :param protocol: Protocol class.  Deprecated.
