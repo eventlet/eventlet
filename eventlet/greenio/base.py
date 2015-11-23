@@ -351,19 +351,27 @@ class GreenSocket(object):
         if self.act_non_blocking:
             return fd.send(data, flags)
 
+        # blocking socket behavior - sends all, blocks if the buffer is full
+        total_sent = 0
+        len_data = len(data)
         while 1:
             try:
-                return fd.send(data, flags)
+                total_sent += fd.send(data[total_sent:], flags)
             except socket.error as e:
                 eno = get_errno(e)
                 if eno == errno.ENOTCONN or eno not in SOCKET_BLOCKING:
                     raise
+
+            if total_sent == len_data:
+                break
 
             try:
                 self._trampoline(self.fd, write=True, timeout=self.gettimeout(),
                                  timeout_exc=socket.timeout("timed out"))
             except IOClosed:
                 raise socket.error(errno.ECONNRESET, 'Connection closed by another thread')
+
+        return total_sent
 
     def sendall(self, data, flags=0):
         tail = self.send(data, flags)
