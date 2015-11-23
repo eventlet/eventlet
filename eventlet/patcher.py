@@ -331,13 +331,7 @@ def _green_os_modules():
 
 def _green_select_modules():
     from eventlet.green import select
-    modules = [('select', select)]
-
-    if sys.version_info >= (3, 4):
-        from eventlet.green import selectors
-        modules.append(('selectors', selectors))
-
-    return modules
+    return [('select', select)]
 
 
 def _green_socket_modules():
