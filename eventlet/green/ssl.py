@@ -22,7 +22,9 @@ else:
     has_ciphers = False
     timeout_exc = orig_socket.timeout
 
-__patched__ = ['SSLSocket', 'wrap_socket', 'sslwrap_simple']
+__patched__ = [
+    'SSLSocket', 'SSLContext', 'wrap_socket', 'sslwrap_simple',
+    'create_default_context', '_create_default_https_context']
 
 _original_sslsocket = __ssl.SSLSocket
 
@@ -357,11 +359,27 @@ if hasattr(__ssl, 'sslwrap_simple'):
 
 
 if hasattr(__ssl, 'SSLContext'):
-    @functools.wraps(__ssl.SSLContext.wrap_socket)
-    def _green_sslcontext_wrap_socket(self, sock, *a, **kw):
-        return GreenSSLSocket(sock, *a, _context=self, **kw)
+    _original_sslcontext = __ssl.SSLContext
 
-    # FIXME:
-    # * GreenSSLContext akin to GreenSSLSocket
-    # * make ssl.create_default_context() use modified SSLContext from globals as usual
-    __ssl.SSLContext.wrap_socket = _green_sslcontext_wrap_socket
+    class GreenSSLContext(_original_sslcontext):
+        __slots__ = ()
+
+        def wrap_socket(self, sock, *a, **kw):
+            return GreenSSLSocket(sock, *a, _context=self, **kw)
+
+    SSLContext = GreenSSLContext
+
+    if hasattr(__ssl, 'create_default_context'):
+        _original_create_default_context = __ssl.create_default_context
+
+        def green_create_default_context(*a, **kw):
+            # We can't just monkey-patch on the green version of `wrap_socket`
+            # on to SSLContext instances, but SSLContext.create_default_context
+            # does a bunch of work. Rather than re-implementing it all, just
+            # switch out the __class__ to get our `wrap_socket` implementation
+            context = _original_create_default_context(*a, **kw)
+            context.__class__ = GreenSSLContext
+            return context
+
+        create_default_context = green_create_default_context
+        _create_default_https_context = green_create_default_context
