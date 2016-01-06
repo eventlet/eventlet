@@ -335,14 +335,6 @@ class TestHttpd(_TestBase):
         self.assertRaises(ConnectionClosed, read_http, sock)
         fd.close()
 
-    @tests.skipped
-    def test_005_run_apachebench(self):
-        url = 'http://localhost:12346/'
-        # ab is apachebench
-        subprocess.call(
-            [tests.find_command('ab'), '-c', '64', '-n', '1024', '-k', url],
-            stdout=subprocess.PIPE)
-
     def test_006_reject_long_urls(self):
         sock = eventlet.connect(
             ('localhost', self.port))

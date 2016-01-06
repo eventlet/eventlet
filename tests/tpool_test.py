@@ -22,7 +22,7 @@ import time
 import eventlet
 from eventlet import tpool, debug, event
 from eventlet.support import six
-from tests import LimitedTestCase, skipped, skip_with_pyevent, main
+from tests import LimitedTestCase, skip_with_pyevent, main
 
 
 one = 1
@@ -337,28 +337,6 @@ class TpoolLongTests(LimitedTestCase):
             pile.spawn(sender_loop, i)
         results = list(pile)
         self.assertEqual(len(results), cnt)
-        tpool.killall()
-
-    @skipped
-    def test_benchmark(self):
-        """ Benchmark computing the amount of overhead tpool adds to function calls."""
-        iterations = 10000
-        import timeit
-        imports = """
-from tests.tpool_test import noop
-from eventlet.tpool import execute
-        """
-        t = timeit.Timer("noop()", imports)
-        results = t.repeat(repeat=3, number=iterations)
-        best_normal = min(results)
-
-        t = timeit.Timer("execute(noop)", imports)
-        results = t.repeat(repeat=3, number=iterations)
-        best_tpool = min(results)
-
-        tpool_overhead = (best_tpool - best_normal) / iterations
-        print("%s iterations\nTpool overhead is %s seconds per call.  Normal: %s; Tpool: %s" % (
-            iterations, tpool_overhead, best_normal, best_tpool))
         tpool.killall()
 
     @skip_with_pyevent

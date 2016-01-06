@@ -8,7 +8,7 @@ from eventlet import greenthread
 from eventlet.green import thread
 from eventlet.support import six
 
-from tests import LimitedTestCase, skipped
+from tests import LimitedTestCase
 
 
 class Locals(LimitedTestCase):
@@ -23,29 +23,6 @@ class Locals(LimitedTestCase):
     def tearDown(self):
         self.results = []
         super(Locals, self).tearDown()
-
-    @skipped  # cause it relies on internal details of corolocal that are no longer true
-    def test_simple(self):
-        tls = thread._local()
-        g_ids = []
-        evt = event.Event()
-
-        def setter(tls, v):
-            g_id = id(greenthread.getcurrent())
-            g_ids.append(g_id)
-            tls.value = v
-            evt.wait()
-
-        thread.start_new_thread(setter, args=(tls, 1))
-        thread.start_new_thread(setter, args=(tls, 2))
-        eventlet.sleep()
-        objs = object.__getattribute__(tls, "__objs")
-        assert sorted(g_ids) == sorted(objs.keys())
-        assert objs[g_ids[0]]['value'] == 1
-        assert objs[g_ids[1]]['value'] == 2
-        assert getattr(tls, 'value', None) is None
-        evt.send("done")
-        eventlet.sleep()
 
     def test_assignment(self):
         my_local = corolocal.local()
