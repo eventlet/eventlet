@@ -295,6 +295,10 @@ def monkey_patch(**on):
                 patched_attr = getattr(mod, attr_name, None)
                 if patched_attr is not None:
                     setattr(orig_mod, attr_name, patched_attr)
+            deleted = getattr(mod, '__deleted__', [])
+            for attr_name in deleted:
+                if hasattr(orig_mod, attr_name):
+                    delattr(orig_mod, attr_name)
     finally:
         imp.release_lock()
 

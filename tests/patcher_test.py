@@ -510,3 +510,7 @@ def test_threading_join():
 
 def test_socketserver_selectors():
     tests.run_isolated('patcher_socketserver_selectors.py')
+
+
+def test_blocking_select_methods_are_deleted():
+    tests.run_isolated('patcher_blocking_select_methods_are_deleted.py')
