@@ -304,13 +304,13 @@ class GreenSocket(object):
                       "makefile instead", DeprecationWarning, stacklevel=2)
         return self.makefile(*args, **kw)
 
-    def _recv_loop(self, recv_meth, *args):
+    def recv(self, buflen, flags=0):
         fd = self.fd
         if self.act_non_blocking:
-            return recv_meth(*args)
+            return fd.recv(buflen, flags)
         while True:
             try:
-                return recv_meth(*args)
+                return fd.recv(buflen, flags)
             except socket.error as e:
                 if get_errno(e) in SOCKET_BLOCKING:
                     pass
@@ -328,28 +328,35 @@ class GreenSocket(object):
                 # Perhaps we should return '' instead?
                 raise EOFError()
 
-    def recv(self, bufsize, flags=0):
-        return self._recv_loop(self.fd.recv, bufsize, flags)
+    def recvfrom(self, *args):
+        if not self.act_non_blocking:
+            self._trampoline(self.fd, read=True, timeout=self.gettimeout(),
+                             timeout_exc=socket.timeout("timed out"))
+        return self.fd.recvfrom(*args)
 
-    def recvfrom(self, bufsize, flags=0):
-        return self._recv_loop(self.fd.recvfrom, bufsize, flags)
+    def recvfrom_into(self, *args):
+        if not self.act_non_blocking:
+            self._trampoline(self.fd, read=True, timeout=self.gettimeout(),
+                             timeout_exc=socket.timeout("timed out"))
+        return self.fd.recvfrom_into(*args)
 
-    def recv_into(self, buffer, nbytes=0, flags=0):
-        return self._recv_loop(self.fd.recv_into, buffer, nbytes, flags)
+    def recv_into(self, *args):
+        if not self.act_non_blocking:
+            self._trampoline(self.fd, read=True, timeout=self.gettimeout(),
+                             timeout_exc=socket.timeout("timed out"))
+        return self.fd.recv_into(*args)
 
-    def recvfrom_into(self, buffer, nbytes=0, flags=0):
-        return self._recv_loop(self.fd.recvfrom_into, buffer, nbytes, flags)
-
-    def _send_loop(self, send_method, data, *args):
+    def send(self, data, flags=0):
+        fd = self.fd
         if self.act_non_blocking:
-            return send_method(data, *args)
+            return fd.send(data, flags)
 
         # blocking socket behavior - sends all, blocks if the buffer is full
         total_sent = 0
         len_data = len(data)
         while 1:
             try:
-                total_sent += send_method(data[total_sent:], *args)
+                total_sent += fd.send(data[total_sent:], flags)
             except socket.error as e:
                 eno = get_errno(e)
                 if eno == errno.ENOTCONN or eno not in SOCKET_BLOCKING:
@@ -366,17 +373,15 @@ class GreenSocket(object):
 
         return total_sent
 
-    def send(self, data, flags=0):
-        return self._send_loop(self.fd.send, data, flags)
-
-    def sendto(self, data, address, flags=0):
-        return self._send_loop(self.fd.sendto, data, address, flags)
-
     def sendall(self, data, flags=0):
         tail = self.send(data, flags)
         len_data = len(data)
         while tail < len_data:
             tail += self.send(data[tail:], flags)
+
+    def sendto(self, *args):
+        self._trampoline(self.fd, write=True)
+        return self.fd.sendto(*args)
 
     def setblocking(self, flag):
         if flag:
