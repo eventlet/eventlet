@@ -31,6 +31,15 @@ def bufsized(sock, size=1):
     return sock
 
 
+def expect_socket_timeout(function, *args):
+    try:
+        function(*args)
+        raise AssertionError("socket.timeout not raised")
+    except socket.timeout as e:
+        assert hasattr(e, 'args')
+        eq_(e.args[0], 'timed out')
+
+
 def min_buf_size():
     """Return the minimum buffer size that the platform supports."""
     test_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -68,12 +77,9 @@ class TestGreenSocket(tests.LimitedTestCase):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(0.1)
         gs = greenio.GreenSocket(s)
+
         try:
-            gs.connect(('192.0.2.1', 80))
-            self.fail("socket.timeout not raised")
-        except socket.timeout as e:
-            assert hasattr(e, 'args')
-            self.assertEqual(e.args[0], 'timed out')
+            expect_socket_timeout(gs.connect, ('192.0.2.1', 80))
         except socket.error as e:
             # unreachable is also a valid outcome
             if not get_errno(e) in (errno.EHOSTUNREACH, errno.ENETUNREACH):
@@ -86,12 +92,7 @@ class TestGreenSocket(tests.LimitedTestCase):
 
         s.settimeout(0.1)
         gs = greenio.GreenSocket(s)
-        try:
-            gs.accept()
-            self.fail("socket.timeout not raised")
-        except socket.timeout as e:
-            assert hasattr(e, 'args')
-            self.assertEqual(e.args[0], 'timed out')
+        expect_socket_timeout(gs.accept)
 
     def test_connect_ex_timeout(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -122,12 +123,7 @@ class TestGreenSocket(tests.LimitedTestCase):
 
         client.connect(addr)
 
-        try:
-            client.recv(8192)
-            self.fail("socket.timeout not raised")
-        except socket.timeout as e:
-            assert hasattr(e, 'args')
-            self.assertEqual(e.args[0], 'timed out')
+        expect_socket_timeout(client.recv, 8192)
 
         evt.send()
         gt.wait()
@@ -138,12 +134,7 @@ class TestGreenSocket(tests.LimitedTestCase):
         gs.settimeout(.1)
         gs.bind(('', 0))
 
-        try:
-            gs.recvfrom(8192)
-            self.fail("socket.timeout not raised")
-        except socket.timeout as e:
-            assert hasattr(e, 'args')
-            self.assertEqual(e.args[0], 'timed out')
+        expect_socket_timeout(gs.recvfrom, 8192)
 
     def test_recvfrom_into_timeout(self):
         buf = array.array('B')
@@ -153,12 +144,7 @@ class TestGreenSocket(tests.LimitedTestCase):
         gs.settimeout(.1)
         gs.bind(('', 0))
 
-        try:
-            gs.recvfrom_into(buf)
-            self.fail("socket.timeout not raised")
-        except socket.timeout as e:
-            assert hasattr(e, 'args')
-            self.assertEqual(e.args[0], 'timed out')
+        expect_socket_timeout(gs.recvfrom_into, buf)
 
     def test_recv_into_timeout(self):
         buf = array.array('B')
@@ -183,12 +169,7 @@ class TestGreenSocket(tests.LimitedTestCase):
 
         client.connect(addr)
 
-        try:
-            client.recv_into(buf)
-            self.fail("socket.timeout not raised")
-        except socket.timeout as e:
-            assert hasattr(e, 'args')
-            self.assertEqual(e.args[0], 'timed out')
+        expect_socket_timeout(client.recv_into, buf)
 
         evt.send()
         gt.wait()
@@ -211,19 +192,17 @@ class TestGreenSocket(tests.LimitedTestCase):
 
         client = bufsized(greenio.GreenSocket(socket.socket()))
         client.connect(addr)
-        try:
-            client.settimeout(0.00001)
-            msg = b"A" * 100000  # large enough number to overwhelm most buffers
 
-            total_sent = 0
-            # want to exceed the size of the OS buffer so it'll block in a
-            # single send
+        client.settimeout(0.00001)
+        msg = b"A" * 100000  # large enough number to overwhelm most buffers
+
+        # want to exceed the size of the OS buffer so it'll block in a
+        # single send
+        def send():
             for x in range(10):
-                total_sent += client.send(msg)
-            self.fail("socket.timeout not raised")
-        except socket.timeout as e:
-            assert hasattr(e, 'args')
-            self.assertEqual(e.args[0], 'timed out')
+                client.send(msg)
+
+        expect_socket_timeout(send)
 
         evt.send()
         gt.wait()
@@ -248,15 +227,9 @@ class TestGreenSocket(tests.LimitedTestCase):
         client.settimeout(0.1)
         client.connect(addr)
 
-        try:
-            msg = b"A" * (8 << 20)
-
-            # want to exceed the size of the OS buffer so it'll block
-            client.sendall(msg)
-            self.fail("socket.timeout not raised")
-        except socket.timeout as e:
-            assert hasattr(e, 'args')
-            self.assertEqual(e.args[0], 'timed out')
+        # want to exceed the size of the OS buffer so it'll block
+        msg = b"A" * (8 << 20)
+        expect_socket_timeout(client.sendall, msg)
 
         evt.send()
         gt.wait()
