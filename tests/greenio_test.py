@@ -19,10 +19,6 @@ from eventlet.support import capture_stderr, get_errno, six
 import tests
 
 
-if six.PY3:
-    buffer = memoryview
-
-
 def bufsized(sock, size=1):
     """ Resize both send and receive buffers on a socket.
     Useful for testing trampoline.  Returns the socket.
