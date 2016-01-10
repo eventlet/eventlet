@@ -123,6 +123,7 @@ class TestGreenSocket(tests.LimitedTestCase):
 
         client.connect(addr)
 
+        expect_socket_timeout(client.recv, 0)
         expect_socket_timeout(client.recv, 8192)
 
         evt.send()
@@ -134,6 +135,7 @@ class TestGreenSocket(tests.LimitedTestCase):
         gs.settimeout(.1)
         gs.bind(('', 0))
 
+        expect_socket_timeout(gs.recvfrom, 0)
         expect_socket_timeout(gs.recvfrom, 8192)
 
     def test_recvfrom_into_timeout(self):
