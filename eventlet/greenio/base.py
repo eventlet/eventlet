@@ -320,6 +320,12 @@ class GreenSocket(object):
             try:
                 # recv: bufsize=0?
                 # recv_into: buffer is empty?
+                # This is needed because behind the scenes we use sockets in
+                # nonblocking mode and builtin recv* methods. Attempting to read
+                # 0 bytes from a nonblocking socket using a builtin recv* method
+                # does not raise a timeout exception. Since we're simulating
+                # a blocking socket here we need to produce a timeout exception
+                # if needed, hence the call to trampoline.
                 if not args[0]:
                     self._read_trampoline()
                 return recv_meth(*args)
