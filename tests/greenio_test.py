@@ -481,6 +481,9 @@ class TestGreenSocket(tests.LimitedTestCase):
             while True:
                 try:
                     sock.sendall(b'hello world')
+                    # Arbitrary delay to not use all available CPU, keeps the test
+                    # running quickly and reliably under a second
+                    time.sleep(0.001)
                 except socket.error as e:
                     if get_errno(e) == errno.EPIPE:
                         return
@@ -496,6 +499,9 @@ class TestGreenSocket(tests.LimitedTestCase):
                 while True:
                     data = client.recv(1024)
                     assert data
+                    # Arbitrary delay to not use all available CPU, keeps the test
+                    # running quickly and reliably under a second
+                    time.sleep(0.001)
             except socket.error as e:
                 # we get an EBADF because client is closed in the same process
                 # (but a different greenthread)
