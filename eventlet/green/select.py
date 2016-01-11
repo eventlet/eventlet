@@ -6,7 +6,7 @@ from eventlet.support import six
 
 
 __patched__ = ['select']
-__deleted__ = ['poll', 'epoll', 'kqueue', 'kevent']
+__deleted__ = ['devpoll', 'poll', 'epoll', 'kqueue', 'kevent']
 
 
 def get_fileno(obj):

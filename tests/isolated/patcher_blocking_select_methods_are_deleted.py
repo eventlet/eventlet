@@ -9,7 +9,7 @@ if __name__ == '__main__':
     # * https://bitbucket.org/eventlet/eventlet/issues/167
     # * https://github.com/eventlet/eventlet/issues/169
     import select
-    for name in ['poll', 'epoll', 'kqueue', 'kevent']:
+    for name in ['devpoll', 'poll', 'epoll', 'kqueue', 'kevent']:
         assert not hasattr(select, name), name
 
     import sys
