@@ -703,6 +703,32 @@ class TestGreenPipe(tests.LimitedTestCase):
         self.assertEqual(len(buf), 2 * DEFAULT_BUFFER_SIZE)
         self.assertEqual(buf[:3], b'ccc')
 
+    def test_pipe_read_unbuffered(self):
+        # ensure that 'bufsize=0' works properly on GreenPipes
+        r, w = os.pipe()
+
+        r = greenio.GreenPipe(r, 'rb', 0)
+        w = greenio.GreenPipe(w, 'wb', 0)
+
+        def writer():
+            w.write(b'line\n')
+
+            eventlet.sleep(.1)
+
+            w.write(b'line\r\n')
+
+        gt = eventlet.spawn(writer)
+
+        eventlet.sleep(0)
+
+        line = r.readline()
+        self.assertEqual(line, b'line\n')
+
+        line = r.readline()
+        self.assertEqual(line, b'line\r\n')
+
+        gt.wait()
+
     def test_pipe_writes_large_messages(self):
         r, w = os.pipe()
 
