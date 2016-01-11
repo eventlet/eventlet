@@ -4,6 +4,7 @@ from eventlet import patcher
 from eventlet.green import select
 
 __patched__ = [
+    'DefaultSelector',
     'SelectSelector',
 ]
 
@@ -29,3 +30,5 @@ del patcher
 
 if sys.platform != 'win32':
     SelectSelector._select = staticmethod(select.select)
+
+DefaultSelector = SelectSelector

@@ -24,4 +24,7 @@ if __name__ == '__main__':
         ]:
             assert not hasattr(selectors, name), name
 
+        default = selectors.DefaultSelector
+        assert default is selectors.SelectSelector, default
+
     print('pass')
