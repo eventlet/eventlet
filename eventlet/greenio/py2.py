@@ -1,5 +1,7 @@
 import errno
 import os
+import sys
+mswindows = (sys.platform == "win32")
 
 from eventlet.greenio.base import (
     _operation_on_closed_file,
@@ -39,7 +41,9 @@ class GreenPipe(_fileobject):
             f.close()
 
         super(GreenPipe, self).__init__(_SocketDuckForFd(fileno), mode)
-        set_nonblocking(self)
+        # Avoid setting non blocking on windows.
+        if not mswindows:
+            set_nonblocking(self)
         self.softspace = 0
 
     @property
