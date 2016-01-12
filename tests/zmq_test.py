@@ -597,3 +597,16 @@ def test_recv_json_no_args():
     with clean_pair(zmq.REQ, zmq.REP) as (s1, s2, _):
         eventlet.spawn(s1.send_json, {})
         s2.recv_json()
+
+
+@tests.skip_unless(zmq_supported)
+def test_recv_timeout():
+    # https://github.com/eventlet/eventlet/issues/282
+    with clean_pair(zmq.PUB, zmq.SUB) as (_, sub, _):
+        sub.setsockopt(zmq.RCVTIMEO, 100)
+        try:
+            with eventlet.Timeout(1, False):
+                sub.recv()
+            assert False
+        except zmq.ZMQError as e:
+            assert eventlet.is_timeout(e)
