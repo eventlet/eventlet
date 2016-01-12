@@ -38,7 +38,7 @@ class BackdoorTest(LimitedTestCase):
 
     def test_server_on_ipv6_socket(self):
         listener = socket.socket(socket.AF_INET6)
-        listener.bind(('::1',0))
+        listener.bind(('::1', 0))
         listener.listen(5)
         serv = eventlet.spawn(backdoor.backdoor_server, listener)
         client = socket.socket(socket.AF_INET6)

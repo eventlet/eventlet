@@ -90,7 +90,7 @@ def backdoor_server(sock, locals=None):
     """
     listening_on = sock.getsockname()
     if sock.family == socket.AF_INET:
-        #Expand result to IP + port
+        # Expand result to IP + port
         listening_on = '%s:%s' % listening_on
     elif sock.family == socket.AF_INET6:
         ip, port, _, _ = listening_on
