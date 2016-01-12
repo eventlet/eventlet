@@ -9,6 +9,7 @@ __zmq__ = __import__('zmq')
 from eventlet import hubs
 from eventlet.patcher import slurp_properties
 from eventlet.support import greenlets as greenlet
+from eventlet.green import time
 
 __patched__ = ['Context', 'Socket']
 slurp_properties(__zmq__, globals(), ignore=__patched__)
@@ -95,10 +96,13 @@ class _BlockedThread(object):
 
     __bool__ = __nonzero__
 
-    def block(self):
+    def block(self, timeout=None):
         if self._blocked_thread is not None:
             raise Exception("Cannot block more than one thread on one BlockedThread")
         self._blocked_thread = greenlet.getcurrent()
+
+        if timeout is not None:
+            self._hub.schedule_call_local(timeout, self.wake)
 
         try:
             self._hub.switch()
@@ -328,6 +332,17 @@ class Socket(_Socket):
             self._eventlet_recv_event.wake()
             return msg
 
+        if hasattr(__zmq__, 'RCVTIMEO'):
+            setting = self.getsockopt(RCVTIMEO)
+            if setting == -1:
+                expires = None
+            elif setting > 0:
+                expires = time.time() + setting / 1000.0
+            else:
+                raise ValueError(setting)
+        else:
+            expires = None
+
         flags |= NOBLOCK
         with self._eventlet_recv_lock:
             while True:
@@ -335,7 +350,14 @@ class Socket(_Socket):
                     return _Socket_recv(self, flags, copy, track)
                 except ZMQError as e:
                     if e.errno == EAGAIN:
-                        self._eventlet_recv_event.block()
+                        timeout = expires - time.time() if expires is not None else None
+                        if timeout and timeout < 0:
+                            # zmq in its wisdom decided to
+                            #   reuse EAGAIN for both timeouts
+                            #   and nonblocking lack of data
+                            raise
+
+                        self._eventlet_recv_event.block(timeout=timeout)
                     else:
                         raise
                 finally:
