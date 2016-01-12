@@ -274,6 +274,12 @@ class TestUpstreamDownStream(LimitedTestCase):
         self.assertRaisesErrno(zmq.EAGAIN, rep.recv, zmq.NOBLOCK, True)
 
     @skip_unless(zmq_supported)
+    def test_recv_rcvtimeo_bug282(self):
+        _pub, sub, _port = self.create_bound_pair(zmq.PUB, zmq.SUB)
+        sub.setsockopt(zmq.RCVTIMEO, 10)
+        self.assertRaisesErrno(zmq.EAGAIN, sub.recv)
+
+    @skip_unless(zmq_supported)
     def test_send_during_recv(self):
         sender, receiver, port = self.create_bound_pair(zmq.XREQ, zmq.XREQ)
         sleep()
