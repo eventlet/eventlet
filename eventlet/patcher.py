@@ -260,9 +260,12 @@ def monkey_patch(**on):
     if on['socket'] and not already_patched.get('socket'):
         modules_to_patch += _green_socket_modules()
         already_patched['socket'] = True
+        already_patched['ssl'] = True
     if on['thread'] and not already_patched.get('thread'):
         modules_to_patch += _green_thread_modules()
         already_patched['thread'] = True
+        already_patched['Queue'] = True
+        already_patched['threading'] = True
     if on['time'] and not already_patched.get('time'):
         modules_to_patch += _green_time_modules()
         already_patched['time'] = True
