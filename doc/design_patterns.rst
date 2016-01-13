@@ -14,7 +14,7 @@ The canonical client-side example is a web crawler.  This use case is given a li
     from eventlet.green import urllib2
 
     urls = ["http://www.google.com/intl/en_ALL/images/logo.gif",
-           "https://wiki.secondlife.com/w/images/secondlife.jpg",
+           "https://www.python.org/static/img/python-logo.png",
            "http://us.i1.yimg.com/us.yimg.com/i/ww/beta/y3.gif"]
 
     def fetch(url):
