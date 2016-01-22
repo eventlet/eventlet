@@ -1,3 +1,65 @@
+0.18.0 (not released yet)
+=========================
+
+* greenio: Fixed a bug that could cause send() to start an endless loop on
+  ENOTCONN; Thanks to Seyeong Kim
+* wsgi: Fixed UNIX socket address being trimmed in "wsgi starting" log; Thanks
+  to Ihar Hrachyshka
+* ssl: Ported eventlet.green.OpenSSL to Python 3; Thanks to Victor Stinner
+* greenio: Made read() support buflen=-1 and added readall() (Python 3);
+  Thanks to David Szotten
+* wsgi: Made the error raised in case of chunk read failures more precise (this
+  should be backwards compatible as the new exception class,
+  wsgi.ChunkReadError, is a subclass of ValueError which was being used there
+  before); Thanks to Samuel Merritt
+* greenio: Fixed socket.recv() sometimes returning str instead of bytes on
+  Python 3; Thanks to Janusz Harkot
+* wsgi: Improved request body discarding
+* websocket: Fixed TypeError on empty websocket message (Python 3); Thanks to
+  Fukuchi Daisuke
+* subprocess: Fixed universal_newlines support
+* wsgi: Output of 0-byte chunks is now suppressed; Thanks to Samuel Merritt
+* Improved the documentation; Thanks to Ramakrishnan G, ashutosh-mishra and
+  Azhar Hussain
+* greenio: Changed GreenFileIO.write() (Python 3) to always write all data to
+  match the behavior on Python 2; Thanks to Victor Stinner
+* subprocess: Fixed missing subprocess.mswindows attribute on Python 3.5;
+  Thanks to Josh VanderLinden
+* ssl/monkey patching: Fixed a bug that would cause merely importing eventlet
+  to monkey patch the ssl module; Thanks to David Szotten
+* documentation: Added support for building plain text documentation; thanks
+  to Levente Polyak
+* greenio: Fixed handling blocking IO errors in various GreenSocket methods;
+  Thanks to Victor Stinner
+* greenio: Fixed GreenPipe ignoring the bufsize parameter on Python 2; Thanks
+  to Phus Lu
+* backdoor: Added Unix and IPv6 socket support; Thanks to Eric Urban
+
+
+Backwards incompatible:
+
+* monkey patching: The following select methods and selector classes are now
+  removed, instead of being left in their respective modules after patching
+  even though they are not green (this also fixes HTTPServer.serve_forever()
+  blocking whole process on Python 3):
+
+  * select.poll
+  * select.epoll
+  * select.devpoll
+  * select.kqueue
+  * select.kevent
+  * selectors.PollSelector
+  * selectors.EpollSelector
+  * selectors.DevpollSelector
+  * selectors.KqueueSelector
+
+  Additionally selectors.DefaultSelector points to a green SelectSelector
+
+* greenio: Fixed send() to no longer behave like sendall() which makes it
+  consistent with Python standard library and removes a source of very subtle
+  errors
+
+
 0.17.4
 ======
 * ssl: incorrect initalization of default context; Thanks to stuart-mclaren
