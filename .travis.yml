@@ -1,8 +1,6 @@
 language: python
 python: 2.7
 env:
-  global:
-    - PIP_DOWNLOAD_CACHE="$HOME/.cache/pip"
   matrix:
     - TOX_ENV=pep8
     - TOX_ENV=py26-epolls
