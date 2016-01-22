@@ -777,7 +777,7 @@ class TestGreenIoLong(tests.LimitedTestCase):
     TEST_TIMEOUT = 10  # the test here might take a while depending on the OS
 
     @tests.skip_with_pyevent
-    def test_multiple_readers(self, clibufsize=False):
+    def test_multiple_readers(self):
         debug.hub_prevent_multiple_readers(False)
         recvsize = 2 * min_buf_size()
         sendsize = 10 * recvsize
@@ -817,10 +817,7 @@ class TestGreenIoLong(tests.LimitedTestCase):
         server_coro = eventlet.spawn(server)
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client.connect(('127.0.0.1', listener.getsockname()[1]))
-        if clibufsize:
-            bufsized(client, size=sendsize)
-        else:
-            bufsized(client)
+        bufsized(client, size=sendsize)
         client.sendall(b'*' * sendsize)
         client.close()
         server_coro.wait()
