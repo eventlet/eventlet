@@ -39,6 +39,8 @@ Contributors
 * Victor Sergeyev
 * David Szotten
 * Victor Stinner
+* Samuel Merritt
+* Eric Urban
 
 Linden Lab Contributors
 -----------------------
@@ -91,7 +93,6 @@ Thanks To
 * Peter Skirko, fixing socket.settimeout(0) bug
 * Derk Tegeler, Pre-cache proxied GreenSocket methods (Bitbucket #136)
 * David Malcolm, optional "timeout" argument to the subprocess module (Bitbucket #89)
-* Eric Urban, fix wsgi.input 1-byte (Bitbucket #150)
 * David Goetz, wsgi: Allow minimum_chunk_size to be overriden on a per request basis
 * Dmitry Orlov, websocket: accept Upgrade: websocket (lowercase)
 * Zhang Hua, profile: accumulate results between runs (Bitbucket #162)
@@ -121,3 +122,11 @@ Thanks To
 * Antonio Cuni, fix fd double close on PyPy
 * Seyeong Kim
 * Ihar Hrachyshka
+* Janusz Harkot
+* Fukuchi Daisuke
+* Ramakrishnan G
+* ashutosh-mishra
+* Azhar Hussain
+* Josh VanderLinden
+* Levente Polyak
+* Phus Lu
