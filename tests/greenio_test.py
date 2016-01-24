@@ -593,6 +593,21 @@ class TestGreenSocket(tests.LimitedTestCase):
         # should not raise
         greenio.shutdown_safe(sock)
 
+    def test_datagram_socket_operations_work(self):
+        receiver = greenio.GreenSocket(socket.AF_INET, socket.SOCK_DGRAM)
+        receiver.bind(('127.0.0.1', 0))
+        address = receiver.getsockname()
+
+        sender = greenio.GreenSocket(socket.AF_INET, socket.SOCK_DGRAM)
+
+        # Two ways sendto can be called
+        sender.sendto(b'first', address)
+        sender.sendto(b'second', 0, address)
+
+        sender_address = ('127.0.0.1', sender.getsockname()[1])
+        eq_(receiver.recvfrom(1024), (b'first', sender_address))
+        eq_(receiver.recvfrom(1024), (b'second', sender_address))
+
 
 def test_get_fileno_of_a_socket_works():
     class DummySocket(object):

@@ -376,8 +376,8 @@ class GreenSocket(object):
     def send(self, data, flags=0):
         return self._send_loop(self.fd.send, data, flags)
 
-    def sendto(self, data, address, flags=0):
-        return self._send_loop(self.fd.sendto, data, address, flags)
+    def sendto(self, data, *args):
+        return self._send_loop(self.fd.sendto, data, *args)
 
     def sendall(self, data, flags=0):
         tail = self.send(data, flags)
