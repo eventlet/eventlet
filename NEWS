@@ -1,3 +1,8 @@
+0.18.1
+======
+* patcher: Fix AttributeError in subprocess communicate()
+* greenio: Fix "TypeError: an integer is required" in sendto()
+
 0.18.0
 ======
 * greenio: Fixed a bug that could cause send() to start an endless loop on
@@ -33,7 +38,6 @@
 * greenio: Fixed GreenPipe ignoring the bufsize parameter on Python 2; Thanks
   to Phus Lu
 * backdoor: Added Unix and IPv6 socket support; Thanks to Eric Urban
-
 
 Backwards incompatible:
 
