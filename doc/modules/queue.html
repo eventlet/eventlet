@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>queue – Queue class &mdash; Eventlet 0.17.4 documentation</title>
+    <title>queue – Queue class &mdash; Eventlet 0.18.1 documentation</title>
     
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.17.4',
+        VERSION:     '0.18.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.17.4 documentation" href="../index.html" />
+    <link rel="top" title="Eventlet 0.18.1 documentation" href="../index.html" />
     <link rel="up" title="Module Reference" href="../modules.html" />
     <link rel="next" title="semaphore – Semaphore classes" href="semaphore.html" />
     <link rel="prev" title="pools - Generic pools of resources" href="pools.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="pools.html" title="pools - Generic pools of resources"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.17.4 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.18.1 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
       </ul>
     </div>  
@@ -77,10 +77,10 @@ in <code class="xref py py-meth docutils literal"><span class="pre">put</span></
 <dd><p>Create a queue object with a given maximum size.</p>
 <p>If <em>maxsize</em> is less than zero or <code class="docutils literal"><span class="pre">None</span></code>, the queue size is infinite.</p>
 <p><code class="docutils literal"><span class="pre">Queue(0)</span></code> is a channel, that is, its <code class="xref py py-meth docutils literal"><span class="pre">put()</span></code> method always blocks
-until the item is delivered. (This is unlike the standard <a class="reference internal" href="#eventlet.queue.Queue" title="eventlet.queue.Queue"><code class="xref py py-class docutils literal"><span class="pre">Queue</span></code></a>,
-where 0 means infinite size).</p>
-<p>In all other respects, this Queue class resembled the standard library,
-<a class="reference internal" href="#eventlet.queue.Queue" title="eventlet.queue.Queue"><code class="xref py py-class docutils literal"><span class="pre">Queue</span></code></a>.</p>
+until the item is delivered. (This is unlike the standard
+<code class="xref py py-class docutils literal"><span class="pre">Stdlib_Queue</span></code>, where 0 means infinite size).</p>
+<p>In all other respects, this Queue class resembles the standard library,
+<code class="xref py py-class docutils literal"><span class="pre">Stdlib_Queue</span></code>.</p>
 <dl class="method">
 <dt id="eventlet.queue.Queue.join">
 <code class="descname">join</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.Queue.join" title="Permalink to this definition">¶</a></dt>
@@ -122,9 +122,10 @@ For each <code class="xref py py-meth docutils literal"><span class="pre">get</s
 <dt id="eventlet.queue.LightQueue">
 <em class="property">class </em><code class="descclassname">eventlet.queue.</code><code class="descname">LightQueue</code><span class="sig-paren">(</span><em>maxsize=None</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.LightQueue" title="Permalink to this definition">¶</a></dt>
 <dd><p>This is a variant of Queue that behaves mostly like the standard
-<a class="reference internal" href="#eventlet.queue.Queue" title="eventlet.queue.Queue"><code class="xref py py-class docutils literal"><span class="pre">Queue</span></code></a>.  It differs by not supporting the
-<a class="reference internal" href="#eventlet.queue.Queue.task_done" title="eventlet.queue.Queue.task_done"><code class="xref py py-meth docutils literal"><span class="pre">task_done</span></code></a> or <a class="reference internal" href="#eventlet.queue.Queue.join" title="eventlet.queue.Queue.join"><code class="xref py py-meth docutils literal"><span class="pre">join</span></code></a> methods,
-and is a little faster for not having that overhead.</p>
+<code class="xref py py-class docutils literal"><span class="pre">Stdlib_Queue</span></code>.  It differs by not supporting the
+<code class="xref py py-meth docutils literal"><span class="pre">task_done</span></code> or
+<code class="xref py py-meth docutils literal"><span class="pre">join</span></code> methods, and is a little faster for
+not having that overhead.</p>
 <dl class="method">
 <dt id="eventlet.queue.LightQueue.empty">
 <code class="descname">empty</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.LightQueue.empty" title="Permalink to this definition">¶</a></dt>
@@ -273,7 +274,7 @@ items into the queue.</p>
         <li class="right" >
           <a href="pools.html" title="pools - Generic pools of resources"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.17.4 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.18.1 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &raquo;</li> 
       </ul>
     </div>
