@@ -355,13 +355,13 @@ class GreenSocket(object):
     def recvfrom_into(self, buffer, nbytes=0, flags=0):
         return self._recv_loop(self.fd.recvfrom_into, buffer, nbytes, flags)
 
-    def _send_loop(self, send_method, data, *args):
+    def _send_loop(self, send_method, data, *args, **kw):
         if self.act_non_blocking:
-            return send_method(data, *args)
+            return send_method(data, *args, **kw)
 
         while 1:
             try:
-                return send_method(data, *args)
+                return send_method(data, *args, **kw)
             except socket.error as e:
                 eno = get_errno(e)
                 if eno == errno.ENOTCONN or eno not in SOCKET_BLOCKING:
@@ -376,8 +376,8 @@ class GreenSocket(object):
     def send(self, data, flags=0):
         return self._send_loop(self.fd.send, data, flags)
 
-    def sendto(self, data, *args):
-        return self._send_loop(self.fd.sendto, data, *args)
+    def sendto(self, data, *args, **kw):
+        return self._send_loop(self.fd.sendto, data, *args, **kw)
 
     def sendall(self, data, flags=0):
         tail = self.send(data, flags)
