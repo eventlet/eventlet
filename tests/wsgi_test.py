@@ -15,7 +15,6 @@ from eventlet import debug
 from eventlet import event
 from eventlet.green import socket as greensocket
 from eventlet.green import ssl
-from eventlet.green import subprocess
 from eventlet import greenio
 from eventlet import greenthread
 from eventlet import support
