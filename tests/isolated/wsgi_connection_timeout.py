@@ -42,6 +42,7 @@ class BufferLog(object):
     @staticmethod
     def write(s):
         output_buffer.append(s.rstrip())
+        return len(s)
 
 
 # This test might make you wince

@@ -53,3 +53,20 @@ def capture_stderr():
     finally:
         sys.stderr = original
         stream.seek(0)
+
+
+def safe_writelines(fd, to_write):
+    # Standard Python 3 writelines() is not reliable because it doesn't care if it
+    # loses data. See CPython bug report: http://bugs.python.org/issue26292
+    for item in to_write:
+        writeall(fd, item)
+
+
+if six.PY2:
+    def writeall(fd, buf):
+        fd.write(buf)
+else:
+    def writeall(fd, buf):
+        written = 0
+        while written < len(buf):
+            written += fd.write(buf[written:])

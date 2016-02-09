@@ -1,4 +1,5 @@
 import errno
+import functools
 import os
 import sys
 import time
@@ -11,7 +12,7 @@ from eventlet.green import socket
 from eventlet import greenio
 from eventlet import greenpool
 from eventlet import support
-from eventlet.support import six
+from eventlet.support import safe_writelines, six, writeall
 
 from eventlet.support.six.moves import urllib
 
@@ -112,7 +113,7 @@ class Input(object):
         # Blank line
         towrite.append(b'\r\n')
 
-        self.wfile.writelines(towrite)
+        safe_writelines(self.wfile, towrite)
 
         # Reinitialize chunk_length (expect more data)
         self.chunk_length = -1
@@ -260,7 +261,7 @@ class LoggerFileWrapper(object):
         msg = msg + '\n'
         if args:
             msg = msg % args
-        self.log.write(msg)
+        writeall(self.log, msg)
 
 
 class FileObjectForHeaders(object):
@@ -314,7 +315,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         try:
             self.raw_requestline = self.rfile.readline(self.server.url_length_limit)
             if len(self.raw_requestline) == self.server.url_length_limit:
-                self.wfile.write(
+                writeall(
+                    self.wfile,
                     b"HTTP/1.0 414 Request URI Too Long\r\n"
                     b"Connection: close\r\nContent-length: 0\r\n\r\n")
                 self.close_connection = 1
@@ -336,13 +338,15 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             if not self.parse_request():
                 return
         except HeaderLineTooLong:
-            self.wfile.write(
+            writeall(
+                self.wfile,
                 b"HTTP/1.0 400 Header Line Too Long\r\n"
                 b"Connection: close\r\nContent-length: 0\r\n\r\n")
             self.close_connection = 1
             return
         except HeadersTooLarge:
-            self.wfile.write(
+            writeall(
+                self.wfile,
                 b"HTTP/1.0 400 Headers Too Large\r\n"
                 b"Connection: close\r\nContent-length: 0\r\n\r\n")
             self.close_connection = 1
@@ -355,7 +359,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             try:
                 int(content_length)
             except ValueError:
-                self.wfile.write(
+                writeall(
+                    self.wfile,
                     b"HTTP/1.0 400 Bad Request\r\n"
                     b"Connection: close\r\nContent-length: 0\r\n\r\n")
                 self.close_connection = 1
@@ -385,7 +390,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         length = [0]
         status_code = [200]
 
-        def write(data, _writelines=wfile.writelines):
+        def write(data, _writelines=functools.partial(safe_writelines, wfile)):
             towrite = []
             if not headers_set:
                 raise AssertionError("write() before start_response()")

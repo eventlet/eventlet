@@ -10,6 +10,8 @@ import tempfile
 import traceback
 import unittest
 
+from nose.tools import eq_
+
 import eventlet
 from eventlet import debug
 from eventlet import event
@@ -443,6 +445,61 @@ class TestHttpd(_TestBase):
         response = fd.read()
         # Require a CRLF to close the message body
         self.assertEqual(response, b'\r\n')
+
+    def test_partial_writes_are_handled(self):
+        # The bug was caused by the default writelines() implementaiton
+        # (used by the wsgi module) which doesn't check if write()
+        # successfully completed sending *all* data therefore data could be
+        # lost and the client could be left hanging forever.
+        #
+        # This test additionally ensures that plain write() calls in the wsgi
+        # are also correct now (replaced with writeare also correct now (replaced with writeall()).
+        #
+        # Eventlet issue: "Python 3: wsgi doesn't handle correctly partial
+        # write of socket send() when using writelines()",
+        # https://github.com/eventlet/eventlet/issues/295
+        #
+        # Related CPython issue: "Raw I/O writelines() broken",
+        # http://bugs.python.org/issue26292
+
+        # Custom accept() and send() in order to simulate a connection that
+        # only sends one byte at a time so that any code that doesn't handle
+        # partial writes correctly has to fail.
+        listen_socket = eventlet.listen(('localhost', 0))
+        original_accept = listen_socket.accept
+
+        def accept():
+            connection, address = original_accept()
+            original_send = connection.send
+
+            def send(b, *args):
+                if b:
+                    b = b[0:1]
+                return original_send(b, *args)
+
+            connection.send = send
+            return connection, address
+
+        listen_socket.accept = accept
+
+        def application(env, start_response):
+            # Sending content-length is important here so that the client knows
+            # exactly how many bytes does it need to wait for.
+            start_response('200 OK', [('Content-length', 3)])
+            yield 'asd'
+
+        self.spawn_server(sock=listen_socket)
+        self.site.application = application
+
+        sock = eventlet.connect(('localhost', self.port))
+
+        sock.sendall(b'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+
+        # This would previously hang forever
+        result = read_http(sock)
+
+        # Just to be sure we actually read what we wanted
+        eq_(result.body, b'asd')
 
     @tests.skip_if_no_ssl
     def test_012_ssl_server(self):
