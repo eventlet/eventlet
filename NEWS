@@ -1,3 +1,7 @@
+0.18.2
+======
+* wsgi: Fix data loss on partial writes (socket.send); Thanks to Jakub Stasiak
+
 0.18.1
 ======
 * patcher: Fix AttributeError in subprocess communicate()
