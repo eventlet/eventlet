@@ -287,9 +287,18 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
     minimum_chunk_size = MINIMUM_CHUNK_SIZE
     capitalize_response_headers = True
 
+    # Disable nagle algorithm for this socket, if True.
+    # Use only when wbufsize != 0, to avoid small packets.
+    # Contrary to stdlib, it's enabled by default.
+    disable_nagle_algorithm = True
+
     def setup(self):
         # overriding SocketServer.setup to correctly handle SSL.Connection objects
         conn = self.connection = self.request
+
+        if self.disable_nagle_algorithm:
+            conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
+
         try:
             self.rfile = conn.makefile('rb', self.rbufsize)
             self.wfile = conn.makefile('wb', self.wbufsize)
