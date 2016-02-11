@@ -1,114 +1,46 @@
-import os
-from eventlet.support import six
-from tests.patcher_test import ProcessBase
-from tests import skip_with_pyevent
+import tests
 
 
-class Socket(ProcessBase):
-    def test_patched_thread(self):
-        new_mod = """from eventlet.green import socket
+def test_hub_selects():
+    code = 'from eventlet import hubs\nprint(hubs.get_hub())'
+    output = tests.run_python(
+        path=None,
+        env={'EVENTLET_HUB': 'selects'},
+        args=['-c', code],
+    )
+    assert output.count(b'\n') == 1
+    assert b'eventlet.hubs.selects.Hub' in output
+
+
+def test_tpool_dns():
+    code = '''\
+from eventlet.green import socket
 socket.gethostbyname('localhost')
 socket.getaddrinfo('localhost', 80)
-"""
-        os.environ['EVENTLET_TPOOL_DNS'] = 'yes'
-        try:
-            self.write_to_tempfile("newmod", new_mod)
-            output, lines = self.launch_subprocess('newmod.py')
-            self.assertEqual(len(lines), 1, lines)
-        finally:
-            del os.environ['EVENTLET_TPOOL_DNS']
+print('pass')
+'''
+    output = tests.run_python(
+        path=None,
+        env={'EVENTLET_TPOOL_DNS': 'yes'},
+        args=['-c', code],
+    )
+    assert output.rstrip() == b'pass'
 
 
-class Tpool(ProcessBase):
-    @skip_with_pyevent
-    def test_tpool_size(self):
-        expected = "40"
-        normal = "20"
-        new_mod = """from eventlet import tpool
-import eventlet
-import time
-current = [0]
-highwater = [0]
-def count():
-    current[0] += 1
-    time.sleep(0.1)
-    if current[0] > highwater[0]:
-        highwater[0] = current[0]
-    current[0] -= 1
-expected = %s
-normal = %s
-p = eventlet.GreenPool()
-for i in range(expected*2):
-    p.spawn(tpool.execute, count)
-p.waitall()
-assert highwater[0] > 20, "Highwater %%s  <= %%s" %% (highwater[0], normal)
-"""
-        os.environ['EVENTLET_THREADPOOL_SIZE'] = expected
-        try:
-            self.write_to_tempfile("newmod", new_mod % (expected, normal))
-            output, lines = self.launch_subprocess('newmod.py')
-            self.assertEqual(len(lines), 1, lines)
-        finally:
-            del os.environ['EVENTLET_THREADPOOL_SIZE']
-
-    def test_tpool_negative(self):
-        new_mod = """from eventlet import tpool
-import eventlet
-import time
-def do():
-    print("should not get here")
-try:
-    tpool.execute(do)
-except AssertionError:
-    print("success")
-"""
-        os.environ['EVENTLET_THREADPOOL_SIZE'] = "-1"
-        try:
-            self.write_to_tempfile("newmod", new_mod)
-            output, lines = self.launch_subprocess('newmod.py')
-            self.assertEqual(len(lines), 2, lines)
-            self.assertEqual(lines[0], "success", output)
-        finally:
-            del os.environ['EVENTLET_THREADPOOL_SIZE']
-
-    def test_tpool_zero(self):
-        new_mod = """from eventlet import tpool
-import eventlet
-import time
-def do():
-    print("ran it")
-tpool.execute(do)
-"""
-        os.environ['EVENTLET_THREADPOOL_SIZE'] = "0"
-        try:
-            self.write_to_tempfile("newmod", new_mod)
-            output, lines = self.launch_subprocess('newmod.py')
-            self.assertEqual(len(lines), 4, lines)
-            self.assertEqual(lines[-2], 'ran it', lines)
-            assert 'Warning' in lines[1] or 'Warning' in lines[0], lines
-        finally:
-            del os.environ['EVENTLET_THREADPOOL_SIZE']
+@tests.skip_with_pyevent
+def test_tpool_size():
+    expected = '40'
+    normal = '20'
+    tests.run_isolated(
+        path='env_tpool_size.py',
+        env={'EVENTLET_THREADPOOL_SIZE': expected},
+        args=[expected, normal],
+    )
 
 
-class Hub(ProcessBase):
+def test_tpool_negative():
+    tests.run_isolated('env_tpool_negative.py', env={'EVENTLET_THREADPOOL_SIZE': '-1'})
 
-    def setUp(self):
-        super(Hub, self).setUp()
-        self.old_environ = os.environ.get('EVENTLET_HUB')
-        os.environ['EVENTLET_HUB'] = 'selects'
 
-    def tearDown(self):
-        if self.old_environ:
-            os.environ['EVENTLET_HUB'] = self.old_environ
-        else:
-            del os.environ['EVENTLET_HUB']
-        super(Hub, self).tearDown()
-
-    def test_eventlet_hub(self):
-        new_mod = """from eventlet import hubs
-print(hubs.get_hub())
-"""
-        self.write_to_tempfile("newmod", new_mod)
-        output, lines = self.launch_subprocess('newmod.py')
-        self.assertEqual(len(lines), 2, "\n".join(lines))
-        assert "selects" in lines[0]
+def test_tpool_zero():
+    tests.run_isolated('env_tpool_zero.py', env={'EVENTLET_THREADPOOL_SIZE': '0'})

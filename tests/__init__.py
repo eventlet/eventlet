@@ -299,17 +299,22 @@ def get_database_auth():
     return retval
 
 
-def run_python(path, env=None):
-    if not path.endswith('.py'):
-        path += '.py'
-    path = os.path.abspath(path)
-    src_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+def run_python(path, env=None, args=None):
+    new_argv = [sys.executable]
     new_env = os.environ.copy()
-    new_env['PYTHONPATH'] = os.pathsep.join(sys.path + [src_dir])
+    if path:
+        if not path.endswith('.py'):
+            path += '.py'
+        path = os.path.abspath(path)
+        new_argv.append(path)
+        src_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        new_env['PYTHONPATH'] = os.pathsep.join(sys.path + [src_dir])
     if env:
         new_env.update(env)
+    if args:
+        new_argv.extend(args)
     p = subprocess.Popen(
-        [sys.executable, path],
+        new_argv,
         env=new_env,
         stderr=subprocess.STDOUT,
         stdin=subprocess.PIPE,
@@ -319,8 +324,8 @@ def run_python(path, env=None):
     return output
 
 
-def run_isolated(path, prefix='tests/isolated/', env=None):
-    output = run_python(prefix + path, env=env).rstrip()
+def run_isolated(path, prefix='tests/isolated/', env=None, args=None):
+    output = run_python(prefix + path, env=env, args=args).rstrip()
     if output.startswith(b'skip'):
         parts = output.split(b':', 1)
         skip_args = []

@@ -291,18 +291,20 @@ import time
         self.assertEqual(len(lines), 2, "\n".join(lines))
 
 
-class Subprocess(ProcessBase):
-    def test_monkeypatched_subprocess(self):
-        new_mod = """import eventlet
+def test_subprocess_after_monkey_patch():
+    code = '''\
+import sys
+import eventlet
 eventlet.monkey_patch()
 from eventlet.green import subprocess
-
-subprocess.Popen(['true'], stdin=subprocess.PIPE)
-print("done")
-"""
-        self.write_to_tempfile("newmod", new_mod)
-        output, lines = self.launch_subprocess('newmod')
-        self.assertEqual(output, "done\n", output)
+subprocess.Popen([sys.executable, '-c', ''], stdin=subprocess.PIPE).wait()
+print('pass')
+'''
+    output = tests.run_python(
+        path=None,
+        args=['-c', code],
+    )
+    assert output.rstrip() == b'pass'
 
 
 class Threading(ProcessBase):
@@ -324,8 +326,8 @@ print(len(_threading._active))
         output, lines = self.launch_subprocess('newmod')
         self.assertEqual(len(lines), 4, "\n".join(lines))
         assert lines[0].startswith('<Thread'), lines[0]
-        self.assertEqual(lines[1], "1", lines[1])
-        self.assertEqual(lines[2], "1", lines[2])
+        assert lines[1] == '1', lines
+        assert lines[2] == '1', lines
 
     def test_threading(self):
         new_mod = """import eventlet

@@ -7,13 +7,12 @@ import traceback
 import types
 import warnings
 
-from eventlet.green import BaseHTTPServer
-from eventlet.green import socket
 from eventlet import greenio
 from eventlet import greenpool
 from eventlet import support
 from eventlet.support import safe_writelines, six, writeall
-
+from eventlet.green import BaseHTTPServer
+from eventlet.green import socket
 from eventlet.support.six.moves import urllib
 
 

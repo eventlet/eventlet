@@ -12,6 +12,7 @@ import tempfile
 
 from nose.tools import eq_
 
+import eventlet
 from eventlet import event, greenio, debug
 from eventlet.hubs import get_hub
 from eventlet.green import select, socket, time, ssl
@@ -877,3 +878,41 @@ def test_socket_del_fails_gracefully_when_not_fully_initialized():
 
 def test_double_close_219():
     tests.run_isolated('greenio_double_close_219.py')
+
+
+def test_socket_file_read_non_int():
+    listen_socket = eventlet.listen(('localhost', 0))
+
+    def server():
+        conn, _ = listen_socket.accept()
+        conn.recv(1)
+        conn.sendall('response')
+        conn.close()
+
+    eventlet.spawn(server)
+    sock = eventlet.connect(listen_socket.getsockname())
+
+    fd = sock.makefile('rwb')
+    fd.write(b'?')
+    fd.flush()
+    with eventlet.Timeout(1):
+        try:
+            fd.read("This shouldn't work")
+            assert False
+        except TypeError:
+            pass
+
+
+def test_pipe_context():
+    # ensure using a pipe as a context actually closes it.
+    r, w = os.pipe()
+    r = greenio.GreenPipe(r)
+    w = greenio.GreenPipe(w, 'w')
+
+    with r:
+        pass
+    assert r.closed and not w.closed
+
+    with w as f:
+        assert f == w
+    assert r.closed and w.closed

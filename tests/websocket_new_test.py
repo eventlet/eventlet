@@ -8,7 +8,7 @@ from eventlet.green import httplib
 from eventlet.green import socket
 from eventlet.support import six
 
-from tests.wsgi_test import _TestBase
+import tests.wsgi_test
 
 
 # demo app
@@ -32,7 +32,7 @@ def handle(ws):
 wsapp = websocket.WebSocketWSGI(handle)
 
 
-class TestWebSocket(_TestBase):
+class TestWebSocket(tests.wsgi_test._TestBase):
     TEST_TIMEOUT = 5
 
     def set_site(self):
@@ -42,11 +42,11 @@ class TestWebSocket(_TestBase):
         headers = dict(kv.split(': ') for kv in [
             "Upgrade: websocket",
             # NOTE: intentionally no connection header
-            "Host: localhost:%s" % self.port,
-            "Origin: http://localhost:%s" % self.port,
+            "Host: %s:%s" % self.server_addr,
+            "Origin: http://%s:%s" % self.server_addr,
             "Sec-WebSocket-Version: 13",
         ])
-        http = httplib.HTTPConnection('localhost', self.port)
+        http = httplib.HTTPConnection(*self.server_addr)
         http.request("GET", "/echo", headers=headers)
         resp = http.getresponse()
 
@@ -58,11 +58,11 @@ class TestWebSocket(_TestBase):
         headers = dict(kv.split(': ') for kv in [
             "Upgrade: websocket",
             "Connection: Upgrade",
-            "Host: localhost:%s" % self.port,
-            "Origin: http://localhost:%s" % self.port,
+            "Host: %s:%s" % self.server_addr,
+            "Origin: http://%s:%s" % self.server_addr,
             "Sec-WebSocket-Version: 13",
         ])
-        http = httplib.HTTPConnection('localhost', self.port)
+        http = httplib.HTTPConnection(*self.server_addr)
         http.request("GET", "/echo", headers=headers)
         resp = http.getresponse()
 
@@ -73,11 +73,11 @@ class TestWebSocket(_TestBase):
         # No Upgrade now
         headers = dict(kv.split(': ') for kv in [
             "Connection: Upgrade",
-            "Host: localhost:%s" % self.port,
-            "Origin: http://localhost:%s" % self.port,
+            "Host: %s:%s" % self.server_addr,
+            "Origin: http://%s:%s" % self.server_addr,
             "Sec-WebSocket-Version: 13",
         ])
-        http = httplib.HTTPConnection('localhost', self.port)
+        http = httplib.HTTPConnection(*self.server_addr)
         http.request("GET", "/echo", headers=headers)
         resp = http.getresponse()
 
@@ -91,12 +91,12 @@ class TestWebSocket(_TestBase):
                 "GET /echo HTTP/1.1",
                 "Upgrade: websocket",
                 "Connection: %s" % http_connection,
-                "Host: localhost:%s" % self.port,
-                "Origin: http://localhost:%s" % self.port,
+                "Host: %s:%s" % self.server_addr,
+                "Origin: http://%s:%s" % self.server_addr,
                 "Sec-WebSocket-Version: 13",
                 "Sec-WebSocket-Key: d9MXuOzlVQ0h+qRllvSCIg==",
             ]
-            sock = eventlet.connect(('localhost', self.port))
+            sock = eventlet.connect(self.server_addr)
 
             sock.sendall(six.b('\r\n'.join(connect) + '\r\n\r\n'))
             result = sock.recv(1024)
@@ -114,14 +114,12 @@ class TestWebSocket(_TestBase):
             "GET /echo HTTP/1.1",
             "Upgrade: websocket",
             "Connection: Upgrade",
-            "Host: localhost:%s" % self.port,
-            "Origin: http://localhost:%s" % self.port,
+            "Host: %s:%s" % self.server_addr,
+            "Origin: http://%s:%s" % self.server_addr,
             "Sec-WebSocket-Version: 13",
             "Sec-WebSocket-Key: d9MXuOzlVQ0h+qRllvSCIg==",
         ]
-        sock = eventlet.connect(
-            ('localhost', self.port))
-
+        sock = eventlet.connect(self.server_addr)
         sock.sendall(six.b('\r\n'.join(connect) + '\r\n\r\n'))
         sock.recv(1024)
         ws = websocket.RFC6455WebSocket(sock, {}, client=True)
@@ -154,13 +152,12 @@ class TestWebSocket(_TestBase):
             "GET /echo HTTP/1.1",
             "Upgrade: websocket",
             "Connection: Upgrade",
-            "Host: localhost:%s" % self.port,
-            "Origin: http://localhost:%s" % self.port,
+            "Host: %s:%s" % self.server_addr,
+            "Origin: http://%s:%s" % self.server_addr,
             "Sec-WebSocket-Version: 13",
             "Sec-WebSocket-Key: d9MXuOzlVQ0h+qRllvSCIg==",
         ]
-        sock = eventlet.connect(
-            ('localhost', self.port))
+        sock = eventlet.connect(self.server_addr)
         sock.sendall(six.b('\r\n'.join(connect) + '\r\n\r\n'))
         sock.recv(1024)  # get the headers
         sock.close()  # close while the app is running
@@ -187,13 +184,12 @@ class TestWebSocket(_TestBase):
             "GET /echo HTTP/1.1",
             "Upgrade: websocket",
             "Connection: Upgrade",
-            "Host: localhost:%s" % self.port,
-            "Origin: http://localhost:%s" % self.port,
+            "Host: %s:%s" % self.server_addr,
+            "Origin: http://%s:%s" % self.server_addr,
             "Sec-WebSocket-Version: 13",
             "Sec-WebSocket-Key: d9MXuOzlVQ0h+qRllvSCIg==",
         ]
-        sock = eventlet.connect(
-            ('localhost', self.port))
+        sock = eventlet.connect(self.server_addr)
         sock.sendall(six.b('\r\n'.join(connect) + '\r\n\r\n'))
         sock.recv(1024)  # get the headers
         closeframe = struct.pack('!BBIH', 1 << 7 | 8, 1 << 7 | 2, 0, 1000)
@@ -221,13 +217,12 @@ class TestWebSocket(_TestBase):
             "GET /echo HTTP/1.1",
             "Upgrade: websocket",
             "Connection: Upgrade",
-            "Host: localhost:%s" % self.port,
-            "Origin: http://localhost:%s" % self.port,
+            "Host: %s:%s" % self.server_addr,
+            "Origin: http://%s:%s" % self.server_addr,
             "Sec-WebSocket-Version: 13",
             "Sec-WebSocket-Key: d9MXuOzlVQ0h+qRllvSCIg==",
         ]
-        sock = eventlet.connect(
-            ('localhost', self.port))
+        sock = eventlet.connect(self.server_addr)
         sock.sendall(six.b('\r\n'.join(connect) + '\r\n\r\n'))
         sock.recv(1024)  # get the headers
         sock.sendall(b'\x07\xff')  # Weird packet.

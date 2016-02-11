@@ -1,11 +1,3 @@
-from __future__ import print_function
-
-import sys
-
-import eventlet
-
-
-# no standard tests in this file, ignore
 __test__ = False
 
 
@@ -14,6 +6,9 @@ def do_import():
 
 
 if __name__ == '__main__':
+    import sys
+    import eventlet
+
     eventlet.monkey_patch()
     threading = eventlet.patcher.original('threading')
 

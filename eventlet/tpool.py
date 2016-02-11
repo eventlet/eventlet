@@ -256,6 +256,16 @@ def setup():
     else:
         _setup_already = True
 
+    assert _nthreads >= 0, "Can't specify negative number of threads"
+    if _nthreads == 0:
+        import warnings
+        warnings.warn("Zero threads in tpool.  All tpool.execute calls will\
+            execute in main thread.  Check the value of the environment \
+            variable EVENTLET_THREADPOOL_SIZE.", RuntimeWarning)
+    _reqq = Queue(maxsize=-1)
+    _rspq = Queue(maxsize=-1)
+
+    # connected socket pair
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.bind(('127.0.0.1', 0))
     sock.listen(1)
@@ -265,14 +275,6 @@ def setup():
     sock.close()
     _rsock = greenio.GreenSocket(csock)
 
-    _reqq = Queue(maxsize=-1)
-    _rspq = Queue(maxsize=-1)
-    assert _nthreads >= 0, "Can't specify negative number of threads"
-    if _nthreads == 0:
-        import warnings
-        warnings.warn("Zero threads in tpool.  All tpool.execute calls will\
-            execute in main thread.  Check the value of the environment \
-            variable EVENTLET_THREADPOOL_SIZE.", RuntimeWarning)
     for i in six.moves.range(_nthreads):
         t = threading.Thread(target=tworker,
                              name="tpool_thread_%s" % i)

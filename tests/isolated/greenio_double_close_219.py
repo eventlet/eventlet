@@ -1,7 +1,6 @@
 __test__ = False
 
-
-def main():
+if __name__ == '__main__':
     import eventlet
     eventlet.monkey_patch()
     import subprocess
@@ -17,6 +16,3 @@ def main():
 
     f.close() # OSError, because the fd 3 has already been closed
     print('pass')
-
-if __name__ == '__main__':
-    main()
