@@ -389,17 +389,16 @@ class TestHttpd(_TestBase):
         self.assertEqual(response, b'\r\n')
 
     def test_partial_writes_are_handled(self):
+        # https://github.com/eventlet/eventlet/issues/295
+        # Eventlet issue: "Python 3: wsgi doesn't handle correctly partial
+        # write of socket send() when using writelines()".
+        #
         # The bug was caused by the default writelines() implementaiton
         # (used by the wsgi module) which doesn't check if write()
         # successfully completed sending *all* data therefore data could be
         # lost and the client could be left hanging forever.
         #
-        # This test additionally ensures that plain write() calls in the wsgi
-        # are also correct now (replaced with writeare also correct now (replaced with writeall()).
-        #
-        # Eventlet issue: "Python 3: wsgi doesn't handle correctly partial
-        # write of socket send() when using writelines()",
-        # https://github.com/eventlet/eventlet/issues/295
+        # Switching wsgi wfile to buffered mode fixes the issue.
         #
         # Related CPython issue: "Raw I/O writelines() broken",
         # http://bugs.python.org/issue26292

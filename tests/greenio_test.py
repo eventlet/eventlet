@@ -880,6 +880,41 @@ def test_double_close_219():
     tests.run_isolated('greenio_double_close_219.py')
 
 
+def test_partial_write_295():
+    # https://github.com/eventlet/eventlet/issues/295
+    # `socket.makefile('w').writelines()` must send all
+    # despite partial writes by underlying socket
+    listen_socket = eventlet.listen(('localhost', 0))
+    original_accept = listen_socket.accept
+
+    def talk(conn):
+        f = conn.makefile('wb')
+        line = b'*' * 2140
+        f.writelines([line] * 10000)
+        conn.close()
+
+    def accept():
+        connection, address = original_accept()
+        original_send = connection.send
+
+        def slow_send(b, *args):
+            b = b[:1031]
+            return original_send(b, *args)
+
+        connection.send = slow_send
+        eventlet.spawn(talk, connection)
+        return connection, address
+
+    listen_socket.accept = accept
+
+    eventlet.spawn(listen_socket.accept)
+    sock = eventlet.connect(listen_socket.getsockname())
+    with eventlet.Timeout(10):
+        bs = sock.makefile('rb').read()
+    assert len(bs) == 21400000
+    assert bs == (b'*' * 21400000)
+
+
 def test_socket_file_read_non_int():
     listen_socket = eventlet.listen(('localhost', 0))
 
