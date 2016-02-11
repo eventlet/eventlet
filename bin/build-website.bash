@@ -53,8 +53,7 @@ rm -f "doc/changelog.rst"
 
 if [ $commit -eq 1 ]; then
     echo "3. Updating git branch gh-pages"
-    source_name=`git rev-parse --abbrev-ref HEAD`
-    source_id=`git rev-parse --short HEAD`
+    source_name=`git describe --dirty --tags HEAD`
     git branch --track gh-pages origin/gh-pages || true
     git checkout gh-pages
     git ls-files |grep -Ev '^.gitignore$' |xargs rm -f
@@ -70,5 +69,5 @@ if [ $commit -eq 1 ]; then
     git status
 
     read -p "Carefully read git status output above, press Enter to continue or Ctrl+C to abort"
-    git commit --edit -m "Website built from $source_name $source_id"
+    git commit --edit -m "Website built from $source_name"
 fi
