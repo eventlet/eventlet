@@ -8,6 +8,9 @@ fi
 . $PWD/venv-release/bin/activate
 pip install -e $PWD
 
+version=
+version_next=
+
 main() {
 	branch="${1-$(git symbolic-ref --short HEAD)}"
 	version="$(python -c 'import eventlet; print(eventlet.__version__)')"
@@ -16,8 +19,6 @@ main() {
 		echo "Must be on master" >&2
 		exit 1
 	fi
-	create_commit
-	exit 1
 	if [[ -n "$(git status --short -uall)" ]]; then
 		echo "Tree must be clean. git status:" >&2
 		echo "" >&2
@@ -70,7 +71,7 @@ create_commit() {
 
 	git diff
 	confirm "Ready to commit? [Yn] " || exit 1
-	git commit -a -m "v$version release"
+	git commit -a -m "v$version_next release"
 
 	echo "Re-exec $0 to continue" >&2
 	exec $0
@@ -78,17 +79,16 @@ create_commit() {
 
 bump_version() {
 	local current=$version
-	local next
 	echo "Current version: '$current'" >&2
 	echo -n "Enter next version (empty to abort): " >&2
-	read next
-	if [[ -z "$next" ]]; then
+	read version_next
+	if [[ -z "$version_next" ]]; then
 		exit 1
 	fi
-	echo "Next version:    '$next'" >&2
+	echo "Next version:    '$version_next'" >&2
 
 	local current_tuple="${current//./, }"
-	local next_tuple="${next//./, }"
+	local next_tuple="${version_next//./, }"
 	local version_path="eventlet/__init__.py"
 	echo "Updating file '$version_path'" >&2
 	if ! sed -i '' -e "s/($current_tuple)/($next_tuple)/" "$version_path"; then
@@ -103,7 +103,7 @@ bump_version() {
 
 	local doc_path="doc/real_index.html"
 	echo "Updating file '$doc_path'" >&2
-	if ! sed -i '' -e "s/$current/$next/g" "$doc_path"; then
+	if ! sed -i '' -e "s/$current/$version_next/g" "$doc_path"; then
 		echo "sed error $?" >&2
 		exit 1
 	fi

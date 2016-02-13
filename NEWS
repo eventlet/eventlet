@@ -1,14 +1,22 @@
+0.18.3
+======
+* wsgi: Use buffered writes - fixes partial socket.send without custom
+  writelines(); Github issue #295
+* wsgi: TCP_NODELAY enabled by default
+
 0.18.2
 ======
 * wsgi: Fix data loss on partial writes (socket.send); Thanks to Jakub Stasiak
 
 0.18.1
 ======
+* IMPORTANT: do not use Eventlet 0.18.0 and 0.18.1
 * patcher: Fix AttributeError in subprocess communicate()
 * greenio: Fix "TypeError: an integer is required" in sendto()
 
 0.18.0
 ======
+* IMPORTANT: do not use Eventlet 0.18.0 and 0.18.1
 * greenio: Fixed a bug that could cause send() to start an endless loop on
   ENOTCONN; Thanks to Seyeong Kim
 * wsgi: Fixed UNIX socket address being trimmed in "wsgi starting" log; Thanks

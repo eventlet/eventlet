@@ -53,7 +53,7 @@ rm -f "doc/changelog.rst"
 
 if [ $commit -eq 1 ]; then
     echo "3. Updating git branch gh-pages"
-    source_name=`git describe --dirty --tags HEAD`
+    source_name=`git describe --dirty --tags`
     git branch --track gh-pages origin/gh-pages || true
     git checkout gh-pages
     git ls-files |grep -Ev '^.gitignore$' |xargs rm -f
