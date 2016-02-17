@@ -288,11 +288,6 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
     minimum_chunk_size = MINIMUM_CHUNK_SIZE
     capitalize_response_headers = True
 
-    # Disable nagle algorithm for this socket, if True.
-    # Use only when wbufsize != 0, to avoid small packets.
-    # Contrary to stdlib, it's enabled by default.
-    disable_nagle_algorithm = True
-
     # https://github.com/eventlet/eventlet/issues/295
     # Stdlib default is 0 (unbuffered), but then `wfile.writelines()` looses data
     # so before going back to unbuffered, remove any usage of `writelines`.
@@ -302,8 +297,13 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         # overriding SocketServer.setup to correctly handle SSL.Connection objects
         conn = self.connection = self.request
 
-        if self.disable_nagle_algorithm:
-            conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
+        # TCP_QUICKACK is a better alternative to disabling Nagle's algorithm
+        # https://news.ycombinator.com/item?id=10607422
+        if getattr(socket, 'TCP_QUICKACK', None):
+            try:
+                conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, True)
+            except socket.error:
+                pass
 
         try:
             self.rfile = conn.makefile('rb', self.rbufsize)
