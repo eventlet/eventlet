@@ -1,3 +1,7 @@
+0.18.4
+======
+* wsgi: change TCP_NODELAY to TCP_QUICKACK, ignore socket error when not available
+
 0.18.3
 ======
 * wsgi: Use buffered writes - fixes partial socket.send without custom
