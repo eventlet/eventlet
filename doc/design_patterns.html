@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Design Patterns &mdash; Eventlet 0.18.1 documentation</title>
+    <title>Design Patterns &mdash; Eventlet 0.18.4 documentation</title>
     
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.18.1',
+        VERSION:     '0.18.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.18.1 documentation" href="index.html" />
+    <link rel="top" title="Eventlet 0.18.4 documentation" href="index.html" />
     <link rel="next" title="Greening The World" href="patching.html" />
     <link rel="prev" title="Basic Usage" href="basic_usage.html" /> 
   </head>
@@ -43,7 +43,7 @@
         <li class="right" >
           <a href="basic_usage.html" title="Basic Usage"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.18.1 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.18.4 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -61,16 +61,16 @@
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">eventlet</span>
 <span class="kn">from</span> <span class="nn">eventlet.green</span> <span class="kn">import</span> <span class="n">urllib2</span>
 
-<span class="n">urls</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;http://www.google.com/intl/en_ALL/images/logo.gif&quot;</span><span class="p">,</span>
-       <span class="s">&quot;https://www.python.org/static/img/python-logo.png&quot;</span><span class="p">,</span>
-       <span class="s">&quot;http://us.i1.yimg.com/us.yimg.com/i/ww/beta/y3.gif&quot;</span><span class="p">]</span>
+<span class="n">urls</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;http://www.google.com/intl/en_ALL/images/logo.gif&quot;</span><span class="p">,</span>
+       <span class="s2">&quot;https://www.python.org/static/img/python-logo.png&quot;</span><span class="p">,</span>
+       <span class="s2">&quot;http://us.i1.yimg.com/us.yimg.com/i/ww/beta/y3.gif&quot;</span><span class="p">]</span>
 
 <span class="k">def</span> <span class="nf">fetch</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">urllib2</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 
 <span class="n">pool</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">GreenPool</span><span class="p">()</span>
 <span class="k">for</span> <span class="n">body</span> <span class="ow">in</span> <span class="n">pool</span><span class="o">.</span><span class="n">imap</span><span class="p">(</span><span class="n">fetch</span><span class="p">,</span> <span class="n">urls</span><span class="p">):</span>
-    <span class="k">print</span><span class="p">(</span><span class="s">&quot;got body&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">body</span><span class="p">))</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;got body&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">body</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>There is a slightly more complex version of this in the <a class="reference internal" href="examples.html#web-crawler-example"><span>web crawler example</span></a>.  Here&#8217;s a tour of the interesting lines in this crawler.</p>
@@ -90,7 +90,7 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="n">c</span><span class="p">:</span> <span class="k">break</span>
         <span class="n">client</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
 
-<span class="n">server</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s">&#39;0.0.0.0&#39;</span><span class="p">,</span> <span class="mi">6000</span><span class="p">))</span>
+<span class="n">server</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s1">&#39;0.0.0.0&#39;</span><span class="p">,</span> <span class="mi">6000</span><span class="p">))</span>
 <span class="n">pool</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">GreenPool</span><span class="p">(</span><span class="mi">10000</span><span class="p">)</span>
 <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
     <span class="n">new_sock</span><span class="p">,</span> <span class="n">address</span> <span class="o">=</span> <span class="n">server</span><span class="o">.</span><span class="n">accept</span><span class="p">()</span>
@@ -108,20 +108,20 @@
 <p>One common use case that Linden Lab runs into all the time is a &#8220;dispatch&#8221; design pattern.  This is a server that is also a client of some other services.  Proxies, aggregators, job workers, and so on are all terms that apply here.  This is the use case that the <a class="reference internal" href="modules/greenpool.html#eventlet.greenpool.GreenPile" title="eventlet.greenpool.GreenPile"><code class="xref py py-class docutils literal"><span class="pre">GreenPile</span></code></a> was designed for.</p>
 <p>Here&#8217;s a somewhat contrived example: a server that receives POSTs from clients that contain a list of urls of RSS feeds.  The server fetches all the feeds concurrently and responds with a list of their titles to the client.  It&#8217;s easy to imagine it doing something more complex than this, and this could be easily modified to become a Reader-style application:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">eventlet</span>
-<span class="n">feedparser</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">import_patched</span><span class="p">(</span><span class="s">&#39;feedparser&#39;</span><span class="p">)</span>
+<span class="n">feedparser</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">import_patched</span><span class="p">(</span><span class="s1">&#39;feedparser&#39;</span><span class="p">)</span>
 
 <span class="n">pool</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">GreenPool</span><span class="p">()</span>
 
 <span class="k">def</span> <span class="nf">fetch_title</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
     <span class="n">d</span> <span class="o">=</span> <span class="n">feedparser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">d</span><span class="o">.</span><span class="n">feed</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;title&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">d</span><span class="o">.</span><span class="n">feed</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;title&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
 
 <span class="k">def</span> <span class="nf">app</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
     <span class="n">pile</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">GreenPile</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">url</span> <span class="ow">in</span> <span class="n">environ</span><span class="p">[</span><span class="s">&#39;wsgi.input&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">readlines</span><span class="p">():</span>
+    <span class="k">for</span> <span class="n">url</span> <span class="ow">in</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;wsgi.input&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">readlines</span><span class="p">():</span>
         <span class="n">pile</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="n">fetch_title</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
-    <span class="n">titles</span> <span class="o">=</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pile</span><span class="p">)</span>
-    <span class="n">start_response</span><span class="p">(</span><span class="s">&#39;200 OK&#39;</span><span class="p">,</span> <span class="p">[(</span><span class="s">&#39;Content-type&#39;</span><span class="p">,</span> <span class="s">&#39;text/plain&#39;</span><span class="p">)])</span>
+    <span class="n">titles</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pile</span><span class="p">)</span>
+    <span class="n">start_response</span><span class="p">(</span><span class="s1">&#39;200 OK&#39;</span><span class="p">,</span> <span class="p">[(</span><span class="s1">&#39;Content-type&#39;</span><span class="p">,</span> <span class="s1">&#39;text/plain&#39;</span><span class="p">)])</span>
     <span class="k">return</span> <span class="p">[</span><span class="n">titles</span><span class="p">]</span>
 </pre></div>
 </div>
@@ -132,9 +132,9 @@
 2
 3
 4</pre></div></td><td class="code"><div class="highlight"><pre><span class="n">pile</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">GreenPile</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">url</span> <span class="ow">in</span> <span class="n">environ</span><span class="p">[</span><span class="s">&#39;wsgi.input&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">readlines</span><span class="p">():</span>
+<span class="k">for</span> <span class="n">url</span> <span class="ow">in</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;wsgi.input&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">readlines</span><span class="p">():</span>
     <span class="n">pile</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="n">fetch_title</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
-<span class="n">titles</span> <span class="o">=</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pile</span><span class="p">)</span>
+<span class="n">titles</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pile</span><span class="p">)</span>
 </pre></div>
 </td></tr></table></div>
 <p>Note that in line 1, the Pile is constructed using the global pool as its argument.  That ties the Pile&#8217;s concurrency to the global&#8217;s.  If there are already 1000 concurrent fetches from other clients of feedscraper, this one will block until some of those complete.  Limitations are good!</p>
@@ -204,13 +204,13 @@
         <li class="right" >
           <a href="basic_usage.html" title="Basic Usage"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.18.1 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.18.4 documentation</a> &raquo;</li> 
       </ul>
     </div>
 
     <div class="footer" role="contentinfo">
         &copy; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

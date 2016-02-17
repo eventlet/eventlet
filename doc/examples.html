@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Examples &mdash; Eventlet 0.18.1 documentation</title>
+    <title>Examples &mdash; Eventlet 0.18.4 documentation</title>
     
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.18.1',
+        VERSION:     '0.18.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.18.1 documentation" href="index.html" />
+    <link rel="top" title="Eventlet 0.18.4 documentation" href="index.html" />
     <link rel="next" title="Using SSL With Eventlet" href="ssl.html" />
     <link rel="prev" title="Greening The World" href="patching.html" /> 
   </head>
@@ -43,7 +43,7 @@
         <li class="right" >
           <a href="patching.html" title="Greening The World"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.18.1 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.18.4 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -58,7 +58,7 @@
 <div class="section" id="web-crawler">
 <span id="web-crawler-example"></span><h2>Web Crawler<a class="headerlink" href="#web-crawler" title="Permalink to this headline">¶</a></h2>
 <p><code class="docutils literal"><span class="pre">examples/webcrawler.py</span></code></p>
-<div class="highlight-python"><div class="highlight"><pre><span class="c">#!/usr/bin/env python</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="ch">#!/usr/bin/env python</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">This is a simple web &quot;crawler&quot; that fetches a bunch of urls using a pool to</span>
 <span class="sd">control the number of outbound connections. It has as many simultaneously open</span>
@@ -72,22 +72,22 @@
 
 
 <span class="n">urls</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s">&quot;https://www.google.com/intl/en_ALL/images/logo.gif&quot;</span><span class="p">,</span>
-    <span class="s">&quot;http://python.org/images/python-logo.gif&quot;</span><span class="p">,</span>
-    <span class="s">&quot;http://us.i1.yimg.com/us.yimg.com/i/ww/beta/y3.gif&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;https://www.google.com/intl/en_ALL/images/logo.gif&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;http://python.org/images/python-logo.gif&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;http://us.i1.yimg.com/us.yimg.com/i/ww/beta/y3.gif&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
 
 <span class="k">def</span> <span class="nf">fetch</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
-    <span class="k">print</span><span class="p">(</span><span class="s">&quot;opening&quot;</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;opening&quot;</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
     <span class="n">body</span> <span class="o">=</span> <span class="n">urllib2</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-    <span class="k">print</span><span class="p">(</span><span class="s">&quot;done with&quot;</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;done with&quot;</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">url</span><span class="p">,</span> <span class="n">body</span>
 
 
 <span class="n">pool</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">GreenPool</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">url</span><span class="p">,</span> <span class="n">body</span> <span class="ow">in</span> <span class="n">pool</span><span class="o">.</span><span class="n">imap</span><span class="p">(</span><span class="n">fetch</span><span class="p">,</span> <span class="n">urls</span><span class="p">):</span>
-    <span class="k">print</span><span class="p">(</span><span class="s">&quot;got body from&quot;</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="s">&quot;of length&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">body</span><span class="p">))</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;got body from&quot;</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="s2">&quot;of length&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">body</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -106,20 +106,20 @@
 
 
 <span class="k">def</span> <span class="nf">hello_world</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">env</span><span class="p">[</span><span class="s">&#39;PATH_INFO&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="s">&#39;/&#39;</span><span class="p">:</span>
-        <span class="n">start_response</span><span class="p">(</span><span class="s">&#39;404 Not Found&#39;</span><span class="p">,</span> <span class="p">[(</span><span class="s">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="s">&#39;text/plain&#39;</span><span class="p">)])</span>
-        <span class="k">return</span> <span class="p">[</span><span class="s">&#39;Not Found</span><span class="se">\r\n</span><span class="s">&#39;</span><span class="p">]</span>
-    <span class="n">start_response</span><span class="p">(</span><span class="s">&#39;200 OK&#39;</span><span class="p">,</span> <span class="p">[(</span><span class="s">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="s">&#39;text/plain&#39;</span><span class="p">)])</span>
-    <span class="k">return</span> <span class="p">[</span><span class="s">&#39;Hello, World!</span><span class="se">\r\n</span><span class="s">&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">env</span><span class="p">[</span><span class="s1">&#39;PATH_INFO&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;/&#39;</span><span class="p">:</span>
+        <span class="n">start_response</span><span class="p">(</span><span class="s1">&#39;404 Not Found&#39;</span><span class="p">,</span> <span class="p">[(</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="s1">&#39;text/plain&#39;</span><span class="p">)])</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s1">&#39;Not Found</span><span class="se">\r\n</span><span class="s1">&#39;</span><span class="p">]</span>
+    <span class="n">start_response</span><span class="p">(</span><span class="s1">&#39;200 OK&#39;</span><span class="p">,</span> <span class="p">[(</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="s1">&#39;text/plain&#39;</span><span class="p">)])</span>
+    <span class="k">return</span> <span class="p">[</span><span class="s1">&#39;Hello, World!</span><span class="se">\r\n</span><span class="s1">&#39;</span><span class="p">]</span>
 
-<span class="n">wsgi</span><span class="o">.</span><span class="n">server</span><span class="p">(</span><span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="mi">8090</span><span class="p">)),</span> <span class="n">hello_world</span><span class="p">)</span>
+<span class="n">wsgi</span><span class="o">.</span><span class="n">server</span><span class="p">(</span><span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="mi">8090</span><span class="p">)),</span> <span class="n">hello_world</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="echo-server">
 <span id="echo-server-example"></span><h2>Echo Server<a class="headerlink" href="#echo-server" title="Permalink to this headline">¶</a></h2>
 <p><code class="docutils literal"><span class="pre">examples/echoserver.py</span></code></p>
-<div class="highlight-python"><div class="highlight"><pre><span class="c">#! /usr/bin/env python</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="ch">#! /usr/bin/env python</span>
 <span class="sd">&quot;&quot;&quot;\</span>
 <span class="sd">Simple server that listens on port 6000 and echos back every input to</span>
 <span class="sd">the client.  To try out the server, start it up by running this file.</span>
@@ -136,25 +136,25 @@
 
 
 <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="n">fd</span><span class="p">):</span>
-    <span class="k">print</span><span class="p">(</span><span class="s">&quot;client connected&quot;</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;client connected&quot;</span><span class="p">)</span>
     <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
-        <span class="c"># pass through every non-eof line</span>
+        <span class="c1"># pass through every non-eof line</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">fd</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">x</span><span class="p">:</span>
             <span class="k">break</span>
         <span class="n">fd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">fd</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
-        <span class="k">print</span><span class="p">(</span><span class="s">&quot;echoed&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s">&#39; &#39;</span><span class="p">)</span>
-    <span class="k">print</span><span class="p">(</span><span class="s">&quot;client disconnected&quot;</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;echoed&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;client disconnected&quot;</span><span class="p">)</span>
 
-<span class="k">print</span><span class="p">(</span><span class="s">&quot;server socket listening on port 6000&quot;</span><span class="p">)</span>
-<span class="n">server</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s">&#39;0.0.0.0&#39;</span><span class="p">,</span> <span class="mi">6000</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="s2">&quot;server socket listening on port 6000&quot;</span><span class="p">)</span>
+<span class="n">server</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s1">&#39;0.0.0.0&#39;</span><span class="p">,</span> <span class="mi">6000</span><span class="p">))</span>
 <span class="n">pool</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">GreenPool</span><span class="p">()</span>
 <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">new_sock</span><span class="p">,</span> <span class="n">address</span> <span class="o">=</span> <span class="n">server</span><span class="o">.</span><span class="n">accept</span><span class="p">()</span>
-        <span class="k">print</span><span class="p">(</span><span class="s">&quot;accepted&quot;</span><span class="p">,</span> <span class="n">address</span><span class="p">)</span>
-        <span class="n">pool</span><span class="o">.</span><span class="n">spawn_n</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">new_sock</span><span class="o">.</span><span class="n">makefile</span><span class="p">(</span><span class="s">&#39;rw&#39;</span><span class="p">))</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;accepted&quot;</span><span class="p">,</span> <span class="n">address</span><span class="p">)</span>
+        <span class="n">pool</span><span class="o">.</span><span class="n">spawn_n</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">new_sock</span><span class="o">.</span><span class="n">makefile</span><span class="p">(</span><span class="s1">&#39;rw&#39;</span><span class="p">))</span>
     <span class="k">except</span> <span class="p">(</span><span class="ne">SystemExit</span><span class="p">,</span> <span class="ne">KeyboardInterrupt</span><span class="p">):</span>
         <span class="k">break</span>
 </pre></div>
@@ -177,20 +177,20 @@
     <span class="n">c</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">()</span>
     <span class="n">ip</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">gethostbyname</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
     <span class="n">c</span><span class="o">.</span><span class="n">connect</span><span class="p">((</span><span class="n">ip</span><span class="p">,</span> <span class="mi">80</span><span class="p">))</span>
-    <span class="k">print</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> connected&#39;</span> <span class="o">%</span> <span class="n">url</span><span class="p">)</span>
-    <span class="n">c</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="s">&#39;GET /</span><span class="se">\r\n\r\n</span><span class="s">&#39;</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> connected&#39;</span> <span class="o">%</span> <span class="n">url</span><span class="p">)</span>
+    <span class="n">c</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="s1">&#39;GET /</span><span class="se">\r\n\r\n</span><span class="s1">&#39;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">c</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">1024</span><span class="p">)</span>
 
 
-<span class="n">urls</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;www.google.com&#39;</span><span class="p">,</span> <span class="s">&#39;www.yandex.ru&#39;</span><span class="p">,</span> <span class="s">&#39;www.python.org&#39;</span><span class="p">]</span>
+<span class="n">urls</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;www.google.com&#39;</span><span class="p">,</span> <span class="s1">&#39;www.yandex.ru&#39;</span><span class="p">,</span> <span class="s1">&#39;www.python.org&#39;</span><span class="p">]</span>
 <span class="n">pile</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">GreenPile</span><span class="p">()</span>
 <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">urls</span><span class="p">:</span>
     <span class="n">pile</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="n">geturl</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
 
-<span class="c"># note that the pile acts as a collection of return values from the functions</span>
-<span class="c"># if any exceptions are raised by the function they&#39;ll get raised here</span>
+<span class="c1"># note that the pile acts as a collection of return values from the functions</span>
+<span class="c1"># if any exceptions are raised by the function they&#39;ll get raised here</span>
 <span class="k">for</span> <span class="n">url</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">urls</span><span class="p">,</span> <span class="n">pile</span><span class="p">):</span>
-    <span class="k">print</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="nb">repr</span><span class="p">(</span><span class="n">result</span><span class="p">)[:</span><span class="mi">50</span><span class="p">]))</span>
+    <span class="k">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="nb">repr</span><span class="p">(</span><span class="n">result</span><span class="p">)[:</span><span class="mi">50</span><span class="p">]))</span>
 </pre></div>
 </div>
 </div>
@@ -209,34 +209,34 @@ messages to all participants, not just the sender.</p>
 <span class="k">def</span> <span class="nf">read_chat_forever</span><span class="p">(</span><span class="n">writer</span><span class="p">,</span> <span class="n">reader</span><span class="p">):</span>
     <span class="n">line</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
     <span class="k">while</span> <span class="n">line</span><span class="p">:</span>
-        <span class="k">print</span><span class="p">(</span><span class="s">&quot;Chat:&quot;</span><span class="p">,</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Chat:&quot;</span><span class="p">,</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">participants</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">p</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">writer</span><span class="p">:</span>  <span class="c"># Don&#39;t echo</span>
+                <span class="k">if</span> <span class="n">p</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">writer</span><span class="p">:</span>  <span class="c1"># Don&#39;t echo</span>
                     <span class="n">p</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
                     <span class="n">p</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
             <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="c"># ignore broken pipes, they just mean the participant</span>
-                <span class="c"># closed its connection already</span>
+                <span class="c1"># ignore broken pipes, they just mean the participant</span>
+                <span class="c1"># closed its connection already</span>
                 <span class="k">if</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">32</span><span class="p">:</span>
                     <span class="k">raise</span>
         <span class="n">line</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
     <span class="n">participants</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">writer</span><span class="p">)</span>
-    <span class="k">print</span><span class="p">(</span><span class="s">&quot;Participant left chat.&quot;</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Participant left chat.&quot;</span><span class="p">)</span>
 
 <span class="k">try</span><span class="p">:</span>
-    <span class="k">print</span><span class="p">(</span><span class="s">&quot;ChatServer starting up on port </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">PORT</span><span class="p">)</span>
-    <span class="n">server</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s">&#39;0.0.0.0&#39;</span><span class="p">,</span> <span class="n">PORT</span><span class="p">))</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;ChatServer starting up on port </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">PORT</span><span class="p">)</span>
+    <span class="n">server</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s1">&#39;0.0.0.0&#39;</span><span class="p">,</span> <span class="n">PORT</span><span class="p">))</span>
     <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
         <span class="n">new_connection</span><span class="p">,</span> <span class="n">address</span> <span class="o">=</span> <span class="n">server</span><span class="o">.</span><span class="n">accept</span><span class="p">()</span>
-        <span class="k">print</span><span class="p">(</span><span class="s">&quot;Participant joined chat.&quot;</span><span class="p">)</span>
-        <span class="n">new_writer</span> <span class="o">=</span> <span class="n">new_connection</span><span class="o">.</span><span class="n">makefile</span><span class="p">(</span><span class="s">&#39;w&#39;</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Participant joined chat.&quot;</span><span class="p">)</span>
+        <span class="n">new_writer</span> <span class="o">=</span> <span class="n">new_connection</span><span class="o">.</span><span class="n">makefile</span><span class="p">(</span><span class="s1">&#39;w&#39;</span><span class="p">)</span>
         <span class="n">participants</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">new_writer</span><span class="p">)</span>
         <span class="n">eventlet</span><span class="o">.</span><span class="n">spawn_n</span><span class="p">(</span><span class="n">read_chat_forever</span><span class="p">,</span>
                          <span class="n">new_writer</span><span class="p">,</span>
-                         <span class="n">new_connection</span><span class="o">.</span><span class="n">makefile</span><span class="p">(</span><span class="s">&#39;r&#39;</span><span class="p">))</span>
+                         <span class="n">new_connection</span><span class="o">.</span><span class="n">makefile</span><span class="p">(</span><span class="s1">&#39;r&#39;</span><span class="p">))</span>
 <span class="k">except</span> <span class="p">(</span><span class="ne">KeyboardInterrupt</span><span class="p">,</span> <span class="ne">SystemExit</span><span class="p">):</span>
-    <span class="k">print</span><span class="p">(</span><span class="s">&quot;ChatServer exiting.&quot;</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;ChatServer exiting.&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -248,39 +248,39 @@ messages to all participants, not just the sender.</p>
 <span class="sd">and returns the titles of those feeds.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">eventlet</span>
-<span class="n">feedparser</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">import_patched</span><span class="p">(</span><span class="s">&#39;feedparser&#39;</span><span class="p">)</span>
+<span class="n">feedparser</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">import_patched</span><span class="p">(</span><span class="s1">&#39;feedparser&#39;</span><span class="p">)</span>
 
-<span class="c"># the pool provides a safety limit on our concurrency</span>
+<span class="c1"># the pool provides a safety limit on our concurrency</span>
 <span class="n">pool</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">GreenPool</span><span class="p">()</span>
 
 
 <span class="k">def</span> <span class="nf">fetch_title</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
     <span class="n">d</span> <span class="o">=</span> <span class="n">feedparser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">d</span><span class="o">.</span><span class="n">feed</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;title&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">d</span><span class="o">.</span><span class="n">feed</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;title&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">app</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">environ</span><span class="p">[</span><span class="s">&#39;REQUEST_METHOD&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="s">&#39;POST&#39;</span><span class="p">:</span>
-        <span class="n">start_response</span><span class="p">(</span><span class="s">&#39;403 Forbidden&#39;</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="k">if</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;REQUEST_METHOD&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;POST&#39;</span><span class="p">:</span>
+        <span class="n">start_response</span><span class="p">(</span><span class="s1">&#39;403 Forbidden&#39;</span><span class="p">,</span> <span class="p">[])</span>
         <span class="k">return</span> <span class="p">[]</span>
 
-    <span class="c"># the pile collects the result of a concurrent operation -- in this case,</span>
-    <span class="c"># the collection of feed titles</span>
+    <span class="c1"># the pile collects the result of a concurrent operation -- in this case,</span>
+    <span class="c1"># the collection of feed titles</span>
     <span class="n">pile</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">GreenPile</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">environ</span><span class="p">[</span><span class="s">&#39;wsgi.input&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">readlines</span><span class="p">():</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;wsgi.input&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">readlines</span><span class="p">():</span>
         <span class="n">url</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">url</span><span class="p">:</span>
             <span class="n">pile</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="n">fetch_title</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
-    <span class="c"># since the pile is an iterator over the results,</span>
-    <span class="c"># you can use it in all sorts of great Pythonic ways</span>
-    <span class="n">titles</span> <span class="o">=</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pile</span><span class="p">)</span>
-    <span class="n">start_response</span><span class="p">(</span><span class="s">&#39;200 OK&#39;</span><span class="p">,</span> <span class="p">[(</span><span class="s">&#39;Content-type&#39;</span><span class="p">,</span> <span class="s">&#39;text/plain&#39;</span><span class="p">)])</span>
+    <span class="c1"># since the pile is an iterator over the results,</span>
+    <span class="c1"># you can use it in all sorts of great Pythonic ways</span>
+    <span class="n">titles</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pile</span><span class="p">)</span>
+    <span class="n">start_response</span><span class="p">(</span><span class="s1">&#39;200 OK&#39;</span><span class="p">,</span> <span class="p">[(</span><span class="s1">&#39;Content-type&#39;</span><span class="p">,</span> <span class="s1">&#39;text/plain&#39;</span><span class="p">)])</span>
     <span class="k">return</span> <span class="p">[</span><span class="n">titles</span><span class="p">]</span>
 
 
-<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">wsgi</span>
-    <span class="n">wsgi</span><span class="o">.</span><span class="n">server</span><span class="p">(</span><span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s">&#39;localhost&#39;</span><span class="p">,</span> <span class="mi">9010</span><span class="p">)),</span> <span class="n">app</span><span class="p">)</span>
+    <span class="n">wsgi</span><span class="o">.</span><span class="n">server</span><span class="p">(</span><span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s1">&#39;localhost&#39;</span><span class="p">,</span> <span class="mi">9010</span><span class="p">)),</span> <span class="n">app</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -297,23 +297,23 @@ messages to all participants, not just the sender.</p>
 
 
 <span class="k">def</span> <span class="nf">closed_callback</span><span class="p">():</span>
-    <span class="k">print</span><span class="p">(</span><span class="s">&quot;called back&quot;</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;called back&quot;</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">cb</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="bp">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Forwards bytes unidirectionally from source to dest&quot;&quot;&quot;</span>
     <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
         <span class="n">d</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">32384</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">d</span> <span class="o">==</span> <span class="s">&#39;&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">d</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
             <span class="n">cb</span><span class="p">()</span>
             <span class="k">break</span>
         <span class="n">dest</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
 
-<span class="n">listener</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s">&#39;localhost&#39;</span><span class="p">,</span> <span class="mi">7000</span><span class="p">))</span>
+<span class="n">listener</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s1">&#39;localhost&#39;</span><span class="p">,</span> <span class="mi">7000</span><span class="p">))</span>
 <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
     <span class="n">client</span><span class="p">,</span> <span class="n">addr</span> <span class="o">=</span> <span class="n">listener</span><span class="o">.</span><span class="n">accept</span><span class="p">()</span>
-    <span class="n">server</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">connect</span><span class="p">((</span><span class="s">&#39;localhost&#39;</span><span class="p">,</span> <span class="mi">22</span><span class="p">))</span>
-    <span class="c"># two unidirectional forwarders make a bidirectional one</span>
+    <span class="n">server</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">connect</span><span class="p">((</span><span class="s1">&#39;localhost&#39;</span><span class="p">,</span> <span class="mi">22</span><span class="p">))</span>
+    <span class="c1"># two unidirectional forwarders make a bidirectional one</span>
     <span class="n">eventlet</span><span class="o">.</span><span class="n">spawn_n</span><span class="p">(</span><span class="n">forward</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span> <span class="n">closed_callback</span><span class="p">)</span>
     <span class="n">eventlet</span><span class="o">.</span><span class="n">spawn_n</span><span class="p">(</span><span class="n">forward</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span> <span class="n">client</span><span class="p">)</span>
 </pre></div>
@@ -340,24 +340,24 @@ messages to all participants, not just the sender.</p>
 <span class="kn">import</span> <span class="nn">eventlet</span>
 <span class="kn">import</span> <span class="nn">re</span>
 
-<span class="c"># http://daringfireball.net/2009/11/liberal_regex_for_matching_urls</span>
-<span class="n">url_regex</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;\b(([\w-]+://?|www[.])[^\s()&lt;&gt;]+(?:\([\w\d]+\)|([^[:punct:]\s]|/)))&#39;</span><span class="p">)</span>
+<span class="c1"># http://daringfireball.net/2009/11/liberal_regex_for_matching_urls</span>
+<span class="n">url_regex</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">r&#39;\b(([\w-]+://?|www[.])[^\s()&lt;&gt;]+(?:\([\w\d]+\)|([^[:punct:]\s]|/)))&#39;</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">fetch</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">seen</span><span class="p">,</span> <span class="n">pool</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Fetch a url, stick any found urls into the seen set, and</span>
 <span class="sd">    dispatch any new ones to the pool.&quot;&quot;&quot;</span>
-    <span class="k">print</span><span class="p">(</span><span class="s">&quot;fetching&quot;</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
-    <span class="n">data</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;fetching&quot;</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
     <span class="k">with</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">Timeout</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="bp">False</span><span class="p">):</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">urllib2</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">url_match</span> <span class="ow">in</span> <span class="n">url_regex</span><span class="o">.</span><span class="n">finditer</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
         <span class="n">new_url</span> <span class="o">=</span> <span class="n">url_match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        <span class="c"># only send requests to eventlet.net so as not to destroy the internet</span>
-        <span class="k">if</span> <span class="n">new_url</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span> <span class="ow">and</span> <span class="s">&#39;eventlet.net&#39;</span> <span class="ow">in</span> <span class="n">new_url</span><span class="p">:</span>
+        <span class="c1"># only send requests to eventlet.net so as not to destroy the internet</span>
+        <span class="k">if</span> <span class="n">new_url</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span> <span class="ow">and</span> <span class="s1">&#39;eventlet.net&#39;</span> <span class="ow">in</span> <span class="n">new_url</span><span class="p">:</span>
             <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">new_url</span><span class="p">)</span>
-            <span class="c"># while this seems stack-recursive, it&#39;s actually not:</span>
-            <span class="c"># spawned greenthreads start their own stacks</span>
+            <span class="c1"># while this seems stack-recursive, it&#39;s actually not:</span>
+            <span class="c1"># spawned greenthreads start their own stacks</span>
             <span class="n">pool</span><span class="o">.</span><span class="n">spawn_n</span><span class="p">(</span><span class="n">fetch</span><span class="p">,</span> <span class="n">new_url</span><span class="p">,</span> <span class="n">seen</span><span class="p">,</span> <span class="n">pool</span><span class="p">)</span>
 
 
@@ -370,9 +370,9 @@ messages to all participants, not just the sender.</p>
     <span class="n">pool</span><span class="o">.</span><span class="n">waitall</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">seen</span>
 
-<span class="n">seen</span> <span class="o">=</span> <span class="n">crawl</span><span class="p">(</span><span class="s">&quot;http://eventlet.net&quot;</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="s">&quot;I saw these urls:&quot;</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">seen</span><span class="p">))</span>
+<span class="n">seen</span> <span class="o">=</span> <span class="n">crawl</span><span class="p">(</span><span class="s2">&quot;http://eventlet.net&quot;</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s2">&quot;I saw these urls:&quot;</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">seen</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -397,14 +397,14 @@ messages to all participants, not just the sender.</p>
 <span class="kn">import</span> <span class="nn">eventlet</span>
 <span class="kn">import</span> <span class="nn">re</span>
 
-<span class="c"># http://daringfireball.net/2009/11/liberal_regex_for_matching_urls</span>
-<span class="n">url_regex</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;\b(([\w-]+://?|www[.])[^\s()&lt;&gt;]+(?:\([\w\d]+\)|([^[:punct:]\s]|/)))&#39;</span><span class="p">)</span>
+<span class="c1"># http://daringfireball.net/2009/11/liberal_regex_for_matching_urls</span>
+<span class="n">url_regex</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">r&#39;\b(([\w-]+://?|www[.])[^\s()&lt;&gt;]+(?:\([\w\d]+\)|([^[:punct:]\s]|/)))&#39;</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">fetch</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">outq</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Fetch a url and push any urls found into a queue.&quot;&quot;&quot;</span>
-    <span class="k">print</span><span class="p">(</span><span class="s">&quot;fetching&quot;</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
-    <span class="n">data</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;fetching&quot;</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
     <span class="k">with</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">Timeout</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="bp">False</span><span class="p">):</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">urllib2</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">url_match</span> <span class="ow">in</span> <span class="n">url_regex</span><span class="o">.</span><span class="n">finditer</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
@@ -419,12 +419,12 @@ messages to all participants, not just the sender.</p>
     <span class="n">seen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
     <span class="n">q</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">Queue</span><span class="p">()</span>
     <span class="n">q</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">start_url</span><span class="p">)</span>
-    <span class="c"># keep looping if there are new urls, or workers that may produce more urls</span>
+    <span class="c1"># keep looping if there are new urls, or workers that may produce more urls</span>
     <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
         <span class="k">while</span> <span class="ow">not</span> <span class="n">q</span><span class="o">.</span><span class="n">empty</span><span class="p">():</span>
             <span class="n">url</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
-            <span class="c"># limit requests to eventlet.net so we don&#39;t crash all over the internet</span>
-            <span class="k">if</span> <span class="n">url</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span> <span class="ow">and</span> <span class="s">&#39;eventlet.net&#39;</span> <span class="ow">in</span> <span class="n">url</span><span class="p">:</span>
+            <span class="c1"># limit requests to eventlet.net so we don&#39;t crash all over the internet</span>
+            <span class="k">if</span> <span class="n">url</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span> <span class="ow">and</span> <span class="s1">&#39;eventlet.net&#39;</span> <span class="ow">in</span> <span class="n">url</span><span class="p">:</span>
                 <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
                 <span class="n">pool</span><span class="o">.</span><span class="n">spawn_n</span><span class="p">(</span><span class="n">fetch</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>
         <span class="n">pool</span><span class="o">.</span><span class="n">waitall</span><span class="p">()</span>
@@ -434,9 +434,9 @@ messages to all participants, not just the sender.</p>
     <span class="k">return</span> <span class="n">seen</span>
 
 
-<span class="n">seen</span> <span class="o">=</span> <span class="n">producer</span><span class="p">(</span><span class="s">&quot;http://eventlet.net&quot;</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="s">&quot;I saw these urls:&quot;</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">seen</span><span class="p">))</span>
+<span class="n">seen</span> <span class="o">=</span> <span class="n">producer</span><span class="p">(</span><span class="s2">&quot;http://eventlet.net&quot;</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s2">&quot;I saw these urls:&quot;</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">seen</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -450,7 +450,7 @@ implementation.</p>
 <span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">websocket</span>
 <span class="kn">from</span> <span class="nn">eventlet.support</span> <span class="kn">import</span> <span class="n">six</span>
 
-<span class="c"># demo app</span>
+<span class="c1"># demo app</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">random</span>
 
@@ -459,34 +459,34 @@ implementation.</p>
 <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="n">ws</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;  This is the websocket handler function.  Note that we</span>
 <span class="sd">    can dispatch based on path in here, too.&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">ws</span><span class="o">.</span><span class="n">path</span> <span class="o">==</span> <span class="s">&#39;/echo&#39;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">ws</span><span class="o">.</span><span class="n">path</span> <span class="o">==</span> <span class="s1">&#39;/echo&#39;</span><span class="p">:</span>
         <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
             <span class="n">m</span> <span class="o">=</span> <span class="n">ws</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="k">break</span>
             <span class="n">ws</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
 
-    <span class="k">elif</span> <span class="n">ws</span><span class="o">.</span><span class="n">path</span> <span class="o">==</span> <span class="s">&#39;/data&#39;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">ws</span><span class="o">.</span><span class="n">path</span> <span class="o">==</span> <span class="s1">&#39;/data&#39;</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">moves</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">10000</span><span class="p">):</span>
-            <span class="n">ws</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">&quot;0 </span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()))</span>
+            <span class="n">ws</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;0 </span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()))</span>
             <span class="n">eventlet</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">dispatch</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; This resolves to the web page or the websocket depending on</span>
 <span class="sd">    the path.&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">environ</span><span class="p">[</span><span class="s">&#39;PATH_INFO&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;/data&#39;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;PATH_INFO&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;/data&#39;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">handle</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">start_response</span><span class="p">(</span><span class="s">&#39;200 OK&#39;</span><span class="p">,</span> <span class="p">[(</span><span class="s">&#39;content-type&#39;</span><span class="p">,</span> <span class="s">&#39;text/html&#39;</span><span class="p">)])</span>
+        <span class="n">start_response</span><span class="p">(</span><span class="s1">&#39;200 OK&#39;</span><span class="p">,</span> <span class="p">[(</span><span class="s1">&#39;content-type&#39;</span><span class="p">,</span> <span class="s1">&#39;text/html&#39;</span><span class="p">)])</span>
         <span class="k">return</span> <span class="p">[</span><span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
                      <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">),</span>
-                     <span class="s">&#39;websocket.html&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">read</span><span class="p">()]</span>
+                     <span class="s1">&#39;websocket.html&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">read</span><span class="p">()]</span>
 
-<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&quot;__main__&quot;</span><span class="p">:</span>
-    <span class="c"># run an example app from the command line</span>
-    <span class="n">listener</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">7000</span><span class="p">))</span>
-    <span class="k">print</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">Visit http://localhost:7000/ in your websocket-capable browser.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="c1"># run an example app from the command line</span>
+    <span class="n">listener</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">7000</span><span class="p">))</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Visit http://localhost:7000/ in your websocket-capable browser.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="n">wsgi</span><span class="o">.</span><span class="n">server</span><span class="p">(</span><span class="n">listener</span><span class="p">,</span> <span class="n">dispatch</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -522,17 +522,17 @@ implementation.</p>
 
 <span class="k">def</span> <span class="nf">dispatch</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Resolves to the web page or the websocket depending on the path.&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">environ</span><span class="p">[</span><span class="s">&#39;PATH_INFO&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;/chat&#39;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;PATH_INFO&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;/chat&#39;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">handle</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">start_response</span><span class="p">(</span><span class="s">&#39;200 OK&#39;</span><span class="p">,</span> <span class="p">[(</span><span class="s">&#39;content-type&#39;</span><span class="p">,</span> <span class="s">&#39;text/html&#39;</span><span class="p">)])</span>
-        <span class="n">html_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">),</span> <span class="s">&#39;websocket_chat.html&#39;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">[</span><span class="nb">open</span><span class="p">(</span><span class="n">html_path</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span> <span class="o">%</span> <span class="p">{</span><span class="s">&#39;port&#39;</span><span class="p">:</span> <span class="n">PORT</span><span class="p">}]</span>
+        <span class="n">start_response</span><span class="p">(</span><span class="s1">&#39;200 OK&#39;</span><span class="p">,</span> <span class="p">[(</span><span class="s1">&#39;content-type&#39;</span><span class="p">,</span> <span class="s1">&#39;text/html&#39;</span><span class="p">)])</span>
+        <span class="n">html_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">),</span> <span class="s1">&#39;websocket_chat.html&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="nb">open</span><span class="p">(</span><span class="n">html_path</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span> <span class="o">%</span> <span class="p">{</span><span class="s1">&#39;port&#39;</span><span class="p">:</span> <span class="n">PORT</span><span class="p">}]</span>
 
-<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&quot;__main__&quot;</span><span class="p">:</span>
-    <span class="c"># run an example app from the command line</span>
-    <span class="n">listener</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="n">PORT</span><span class="p">))</span>
-    <span class="k">print</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">Visit http://localhost:7000/ in your websocket-capable browser.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="c1"># run an example app from the command line</span>
+    <span class="n">listener</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="n">PORT</span><span class="p">))</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Visit http://localhost:7000/ in your websocket-capable browser.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="n">wsgi</span><span class="o">.</span><span class="n">server</span><span class="p">(</span><span class="n">listener</span><span class="p">,</span> <span class="n">dispatch</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -608,13 +608,13 @@ implementation.</p>
         <li class="right" >
           <a href="patching.html" title="Greening The World"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.18.1 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.18.4 documentation</a> &raquo;</li> 
       </ul>
     </div>
 
     <div class="footer" role="contentinfo">
         &copy; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

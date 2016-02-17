@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>wsgi – WSGI server &mdash; Eventlet 0.18.1 documentation</title>
+    <title>wsgi – WSGI server &mdash; Eventlet 0.18.4 documentation</title>
     
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.18.1',
+        VERSION:     '0.18.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.18.1 documentation" href="../index.html" />
+    <link rel="top" title="Eventlet 0.18.4 documentation" href="../index.html" />
     <link rel="up" title="Module Reference" href="../modules.html" />
     <link rel="next" title="eventlet.green.zmq – ØMQ support" href="zmq.html" />
     <link rel="prev" title="websocket – Websocket Server" href="websocket.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="websocket.html" title="websocket – Websocket Server"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.18.1 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.18.4 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
       </ul>
     </div>  
@@ -65,10 +65,10 @@ server package.  One such package is <a class="reference external" href="http://
 <span class="kn">import</span> <span class="nn">eventlet</span>
 
 <span class="k">def</span> <span class="nf">hello_world</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
-    <span class="n">start_response</span><span class="p">(</span><span class="s">&#39;200 OK&#39;</span><span class="p">,</span> <span class="p">[(</span><span class="s">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="s">&#39;text/plain&#39;</span><span class="p">)])</span>
-    <span class="k">return</span> <span class="p">[</span><span class="s">&#39;Hello, World!</span><span class="se">\r\n</span><span class="s">&#39;</span><span class="p">]</span>
+    <span class="n">start_response</span><span class="p">(</span><span class="s1">&#39;200 OK&#39;</span><span class="p">,</span> <span class="p">[(</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="s1">&#39;text/plain&#39;</span><span class="p">)])</span>
+    <span class="k">return</span> <span class="p">[</span><span class="s1">&#39;Hello, World!</span><span class="se">\r\n</span><span class="s1">&#39;</span><span class="p">]</span>
 
-<span class="n">wsgi</span><span class="o">.</span><span class="n">server</span><span class="p">(</span><span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="mi">8090</span><span class="p">)),</span> <span class="n">hello_world</span><span class="p">)</span>
+<span class="n">wsgi</span><span class="o">.</span><span class="n">server</span><span class="p">(</span><span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="mi">8090</span><span class="p">)),</span> <span class="n">hello_world</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>You can find a slightly more elaborate version of this code in the file
@@ -148,9 +148,9 @@ Default is True.</li>
 <div class="section" id="ssl">
 <span id="wsgi-ssl"></span><h2>SSL<a class="headerlink" href="#ssl" title="Permalink to this headline">¶</a></h2>
 <p>Creating a secure server is only slightly more involved than the base example.  All that&#8217;s needed is to pass an SSL-wrapped socket to the <a class="reference internal" href="#eventlet.wsgi.server" title="eventlet.wsgi.server"><code class="xref py py-func docutils literal"><span class="pre">server()</span></code></a> method:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">wsgi</span><span class="o">.</span><span class="n">server</span><span class="p">(</span><span class="n">eventlet</span><span class="o">.</span><span class="n">wrap_ssl</span><span class="p">(</span><span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="mi">8090</span><span class="p">)),</span>
-                              <span class="n">certfile</span><span class="o">=</span><span class="s">&#39;cert.crt&#39;</span><span class="p">,</span>
-                              <span class="n">keyfile</span><span class="o">=</span><span class="s">&#39;private.key&#39;</span><span class="p">,</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">wsgi</span><span class="o">.</span><span class="n">server</span><span class="p">(</span><span class="n">eventlet</span><span class="o">.</span><span class="n">wrap_ssl</span><span class="p">(</span><span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="mi">8090</span><span class="p">)),</span>
+                              <span class="n">certfile</span><span class="o">=</span><span class="s1">&#39;cert.crt&#39;</span><span class="p">,</span>
+                              <span class="n">keyfile</span><span class="o">=</span><span class="s1">&#39;private.key&#39;</span><span class="p">,</span>
                               <span class="n">server_side</span><span class="o">=</span><span class="bp">True</span><span class="p">),</span>
             <span class="n">hello_world</span><span class="p">)</span>
 </pre></div>
@@ -170,15 +170,15 @@ in the post hook.</p>
 <span class="kn">import</span> <span class="nn">eventlet</span>
 
 <span class="k">def</span> <span class="nf">hook</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">arg1</span><span class="p">,</span> <span class="n">arg2</span><span class="p">,</span> <span class="n">kwarg3</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">kwarg4</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-    <span class="k">print</span><span class="p">(</span><span class="s">&#39;Hook called: </span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">arg1</span><span class="p">,</span> <span class="n">arg2</span><span class="p">,</span> <span class="n">kwarg3</span><span class="p">,</span> <span class="n">kwarg4</span><span class="p">))</span>
+    <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Hook called: </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">arg1</span><span class="p">,</span> <span class="n">arg2</span><span class="p">,</span> <span class="n">kwarg3</span><span class="p">,</span> <span class="n">kwarg4</span><span class="p">))</span>
 
 <span class="k">def</span> <span class="nf">hello_world</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
-    <span class="n">env</span><span class="p">[</span><span class="s">&#39;eventlet.posthooks&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-        <span class="p">(</span><span class="n">hook</span><span class="p">,</span> <span class="p">(</span><span class="s">&#39;arg1&#39;</span><span class="p">,</span> <span class="s">&#39;arg2&#39;</span><span class="p">),</span> <span class="p">{</span><span class="s">&#39;kwarg3&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s">&#39;kwarg4&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">}))</span>
-    <span class="n">start_response</span><span class="p">(</span><span class="s">&#39;200 OK&#39;</span><span class="p">,</span> <span class="p">[(</span><span class="s">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="s">&#39;text/plain&#39;</span><span class="p">)])</span>
-    <span class="k">return</span> <span class="p">[</span><span class="s">&#39;Hello, World!</span><span class="se">\r\n</span><span class="s">&#39;</span><span class="p">]</span>
+    <span class="n">env</span><span class="p">[</span><span class="s1">&#39;eventlet.posthooks&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">hook</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;arg1&#39;</span><span class="p">,</span> <span class="s1">&#39;arg2&#39;</span><span class="p">),</span> <span class="p">{</span><span class="s1">&#39;kwarg3&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;kwarg4&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">}))</span>
+    <span class="n">start_response</span><span class="p">(</span><span class="s1">&#39;200 OK&#39;</span><span class="p">,</span> <span class="p">[(</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="s1">&#39;text/plain&#39;</span><span class="p">)])</span>
+    <span class="k">return</span> <span class="p">[</span><span class="s1">&#39;Hello, World!</span><span class="se">\r\n</span><span class="s1">&#39;</span><span class="p">]</span>
 
-<span class="n">wsgi</span><span class="o">.</span><span class="n">server</span><span class="p">(</span><span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="mi">8090</span><span class="p">)),</span> <span class="n">hello_world</span><span class="p">)</span>
+<span class="n">wsgi</span><span class="o">.</span><span class="n">server</span><span class="p">(</span><span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="mi">8090</span><span class="p">)),</span> <span class="n">hello_world</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The above code will print the WSGI environment and the other passed function
@@ -208,16 +208,16 @@ as shown in the following example:</p>
 <span class="kn">import</span> <span class="nn">eventlet</span>
 
 <span class="k">def</span> <span class="nf">wsgi_app</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
-    <span class="c"># Define &quot;100 Continue&quot; response headers</span>
-    <span class="n">env</span><span class="p">[</span><span class="s">&#39;wsgi.input&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_hundred_continue_response_headers</span><span class="p">(</span>
-        <span class="p">[(</span><span class="s">&#39;Hundred-Continue-Header-1&#39;</span><span class="p">,</span> <span class="s">&#39;H1&#39;</span><span class="p">),</span>
-         <span class="p">(</span><span class="s">&#39;Hundred-Continue-Header-k&#39;</span><span class="p">,</span> <span class="s">&#39;Hk&#39;</span><span class="p">)])</span>
-    <span class="c"># The following read() causes &quot;100 Continue&quot; response to</span>
-    <span class="c"># the client.  Headers &#39;Hundred-Continue-Header-1&#39; and</span>
-    <span class="c"># &#39;Hundred-Continue-Header-K&#39; are sent with the response</span>
-    <span class="c"># following the &quot;HTTP/1.1 100 Continue\r\n&quot; status line</span>
-    <span class="n">text</span> <span class="o">=</span> <span class="n">env</span><span class="p">[</span><span class="s">&#39;wsgi.input&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-    <span class="n">start_response</span><span class="p">(</span><span class="s">&#39;200 OK&#39;</span><span class="p">,</span> <span class="p">[(</span><span class="s">&#39;Content-Length&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)))])</span>
+    <span class="c1"># Define &quot;100 Continue&quot; response headers</span>
+    <span class="n">env</span><span class="p">[</span><span class="s1">&#39;wsgi.input&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_hundred_continue_response_headers</span><span class="p">(</span>
+        <span class="p">[(</span><span class="s1">&#39;Hundred-Continue-Header-1&#39;</span><span class="p">,</span> <span class="s1">&#39;H1&#39;</span><span class="p">),</span>
+         <span class="p">(</span><span class="s1">&#39;Hundred-Continue-Header-k&#39;</span><span class="p">,</span> <span class="s1">&#39;Hk&#39;</span><span class="p">)])</span>
+    <span class="c1"># The following read() causes &quot;100 Continue&quot; response to</span>
+    <span class="c1"># the client.  Headers &#39;Hundred-Continue-Header-1&#39; and</span>
+    <span class="c1"># &#39;Hundred-Continue-Header-K&#39; are sent with the response</span>
+    <span class="c1"># following the &quot;HTTP/1.1 100 Continue\r\n&quot; status line</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">env</span><span class="p">[</span><span class="s1">&#39;wsgi.input&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="n">start_response</span><span class="p">(</span><span class="s1">&#39;200 OK&#39;</span><span class="p">,</span> <span class="p">[(</span><span class="s1">&#39;Content-Length&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)))])</span>
     <span class="k">return</span> <span class="p">[</span><span class="n">text</span><span class="p">]</span>
 </pre></div>
 </div>
@@ -298,14 +298,14 @@ in the wsgi test case <code class="docutils literal"><span class="pre">tests/wsg
         <li class="right" >
           <a href="websocket.html" title="websocket – Websocket Server"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.18.1 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.18.4 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &raquo;</li> 
       </ul>
     </div>
 
     <div class="footer" role="contentinfo">
         &copy; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

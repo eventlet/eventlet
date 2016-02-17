@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>backdoor – Python interactive interpreter within a running process &mdash; Eventlet 0.18.1 documentation</title>
+    <title>backdoor – Python interactive interpreter within a running process &mdash; Eventlet 0.18.4 documentation</title>
     
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.18.1',
+        VERSION:     '0.18.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.18.1 documentation" href="../index.html" />
+    <link rel="top" title="Eventlet 0.18.4 documentation" href="../index.html" />
     <link rel="up" title="Module Reference" href="../modules.html" />
     <link rel="next" title="corolocal – Coroutine local storage" href="corolocal.html" />
     <link rel="prev" title="Module Reference" href="../modules.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="../modules.html" title="Module Reference"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.18.1 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.18.4 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
       </ul>
     </div>  
@@ -58,11 +58,11 @@
 <h1><code class="xref py py-mod docutils literal"><span class="pre">backdoor</span></code> &#8211; Python interactive interpreter within a running process<a class="headerlink" href="#backdoor-python-interactive-interpreter-within-a-running-process" title="Permalink to this headline">¶</a></h1>
 <p>The backdoor module is convenient for inspecting the state of a long-running process.  It supplies the normal Python interactive interpreter in a way that does not block the normal operation of the application.  This can be useful for debugging, performance tuning, or simply learning about how things behave in situ.</p>
 <p>In the application, spawn a greenthread running backdoor_server on a listening socket:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">eventlet</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="n">backdoor</span><span class="o">.</span><span class="n">backdoor_server</span><span class="p">,</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s">&#39;localhost&#39;</span><span class="p">,</span> <span class="mi">3000</span><span class="p">)))</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">eventlet</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="n">backdoor</span><span class="o">.</span><span class="n">backdoor_server</span><span class="p">,</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s1">&#39;localhost&#39;</span><span class="p">,</span> <span class="mi">3000</span><span class="p">)))</span>
 </pre></div>
 </div>
 <p>When this is running, the backdoor is accessible via telnet to the specified port.</p>
-<div class="highlight-sh"><div class="highlight"><pre><span class="nv">$ </span>telnet localhost 3000
+<div class="highlight-sh"><div class="highlight"><pre>$ telnet localhost 3000
 Python 2.6.2 <span class="o">(</span>r262:71600, Apr <span class="m">16</span> 2009, 09:17:39<span class="o">)</span>
 <span class="o">[</span>GCC 4.0.1 <span class="o">(</span>Apple Computer, Inc. build 5250<span class="o">)]</span> on darwin
 Type <span class="s2">&quot;help&quot;</span>, <span class="s2">&quot;copyright&quot;</span>, <span class="s2">&quot;credits&quot;</span> or <span class="s2">&quot;license&quot;</span> <span class="k">for</span> more information.
@@ -146,14 +146,14 @@ variables in here.</p>
         <li class="right" >
           <a href="../modules.html" title="Module Reference"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.18.1 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.18.4 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &raquo;</li> 
       </ul>
     </div>
 
     <div class="footer" role="contentinfo">
         &copy; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
