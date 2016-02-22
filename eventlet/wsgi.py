@@ -799,7 +799,8 @@ def server(sock, site,
 
     :param sock: Server socket, must be already bound to a port and listening.
     :param site: WSGI application function.
-    :param log: File-like object that logs should be written to.
+    :param log: logging.Logger instance or file-like object that logs should be written to.
+                If a Logger instance is supplied, messages are sent to the INFO log level.
                 If not specified, sys.stderr is used.
     :param environ: Additional parameters that go into the environ dictionary of every request.
     :param max_size: Maximum number of client connections opened at any time by this server.
