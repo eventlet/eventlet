@@ -3,16 +3,17 @@ __ssl = __import__('ssl')
 from eventlet.patcher import slurp_properties
 slurp_properties(__ssl, globals(), srckeys=dir(__ssl))
 
+import errno
 import functools
 import sys
-import errno
-time = __import__('time')
+import time
 
-from eventlet.support import get_errno, PY33, six
-from eventlet.hubs import trampoline, IOClosed
+from eventlet import greenio
 from eventlet.greenio import (
-    set_nonblocking, GreenSocket, SOCKET_CLOSED, CONNECT_ERR, CONNECT_SUCCESS,
+    set_nonblocking, GreenSocket, CONNECT_ERR, CONNECT_SUCCESS,
 )
+from eventlet.hubs import trampoline, IOClosed
+from eventlet.support import get_errno, PY33, six
 orig_socket = __import__('socket')
 socket = orig_socket.socket
 if sys.version_info >= (2, 7):
@@ -181,10 +182,11 @@ class GreenSSLSocket(_original_sslsocket):
                 except orig_socket.error as e:
                     if self.act_non_blocking:
                         raise
-                    if get_errno(e) == errno.EWOULDBLOCK:
+                    erno = get_errno(e)
+                    if erno in greenio.SOCKET_BLOCKING:
                         trampoline(self, write=True,
                                    timeout=self.gettimeout(), timeout_exc=timeout_exc('timed out'))
-                    if get_errno(e) in SOCKET_CLOSED:
+                    elif erno in greenio.SOCKET_CLOSED:
                         return ''
                     raise
 
@@ -204,14 +206,15 @@ class GreenSSLSocket(_original_sslsocket):
                 except orig_socket.error as e:
                     if self.act_non_blocking:
                         raise
-                    if get_errno(e) == errno.EWOULDBLOCK:
+                    erno = get_errno(e)
+                    if erno in greenio.SOCKET_BLOCKING:
                         try:
                             trampoline(
                                 self, read=True,
                                 timeout=self.gettimeout(), timeout_exc=timeout_exc('timed out'))
                         except IOClosed:
                             return b''
-                    if get_errno(e) in SOCKET_CLOSED:
+                    elif erno in greenio.SOCKET_CLOSED:
                         return b''
                     raise
 
@@ -318,7 +321,7 @@ class GreenSSLSocket(_original_sslsocket):
                     set_nonblocking(newsock)
                     break
                 except orig_socket.error as e:
-                    if get_errno(e) != errno.EWOULDBLOCK:
+                    if get_errno(e) not in greenio.SOCKET_BLOCKING:
                         raise
                     trampoline(self, read=True, timeout=self.gettimeout(),
                                timeout_exc=timeout_exc('timed out'))
@@ -331,7 +334,7 @@ class GreenSSLSocket(_original_sslsocket):
             cert_reqs=self.cert_reqs,
             ssl_version=self.ssl_version,
             ca_certs=self.ca_certs,
-            do_handshake_on_connect=self.do_handshake_on_connect,
+            do_handshake_on_connect=False,
             suppress_ragged_eofs=self.suppress_ragged_eofs)
         return (new_ssl, addr)
 

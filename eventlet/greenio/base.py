@@ -11,7 +11,7 @@ from eventlet.support import get_errno, six
 
 __all__ = [
     'GreenSocket', '_GLOBAL_DEFAULT_TIMEOUT', 'set_nonblocking',
-    'SOCKET_CLOSED', 'CONNECT_ERR', 'CONNECT_SUCCESS',
+    'SOCKET_BLOCKING', 'SOCKET_CLOSED', 'CONNECT_ERR', 'CONNECT_SUCCESS',
     'shutdown_safe', 'SSL',
 ]
 
