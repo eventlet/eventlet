@@ -601,9 +601,9 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         else:
             headers = [h.split(':', 1) for h in headers]
 
-        for k, v in headers:
+        env['headers_raw'] = headers_raw = tuple((k, v.strip()) for k, v in headers)
+        for k, v in headers_raw:
             k = k.replace('-', '_').upper()
-            v = v.strip()
             if k in env:
                 continue
             envk = 'HTTP_' + k

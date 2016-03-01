@@ -1515,6 +1515,19 @@ class TestHttpd(_TestBase):
         finally:
             shutil.rmtree(tempdir)
 
+    def test_headers_raw(self):
+        def app(environ, start_response):
+            start_response('200 OK', [])
+            return [b'\n'.join('{0}: {1}'.format(*kv).encode() for kv in environ['headers_raw'])]
+
+        self.spawn_server(site=app)
+        sock = eventlet.connect(self.server_addr)
+        sock.sendall(b'GET / HTTP/1.1\r\nHost: localhost\r\nx-ANY_k: one\r\nx-ANY_k: two\r\n\r\n')
+        result = read_http(sock)
+        sock.close()
+        assert result.status == 'HTTP/1.1 200 OK'
+        assert result.body == b'Host: localhost\nx-ANY_k: one\nx-ANY_k: two'
+
 
 def read_headers(sock):
     fd = sock.makefile('rb')
