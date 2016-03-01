@@ -602,7 +602,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             headers = [h.split(':', 1) for h in headers]
 
         for k, v in headers:
-            k = k.replace('-', '_').upper()
+            k = self.header_name_to_wsgi(k)
             v = v.strip()
             if k in env:
                 continue
@@ -625,6 +625,9 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         env['eventlet.posthooks'] = []
 
         return env
+
+    def header_name_to_wsgi(self, name):
+        return name.replace('-', '_').upper()
 
     def finish(self):
         try:
