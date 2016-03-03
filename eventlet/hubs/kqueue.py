@@ -7,6 +7,7 @@ time = patcher.original('time')
 sleep = time.sleep
 
 from eventlet.support import clear_sys_exc_info
+from eventlet import hubs
 from eventlet.hubs.hub import BaseHub, READ, WRITE, noop
 
 
@@ -21,7 +22,9 @@ FILTERS = {READ: select.KQ_FILTER_READ,
 class Hub(BaseHub):
     MAX_EVENTS = 100
 
-    def __init__(self, clock=time.time):
+    def __init__(self, clock=None):
+        if clock is None:
+            clock = hubs.default_clock
         super(Hub, self).__init__(clock)
         self._events = {}
         self._init_kqueue()

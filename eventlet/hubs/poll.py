@@ -6,6 +6,7 @@ select = patcher.original('select')
 time = patcher.original('time')
 sleep = time.sleep
 
+from eventlet import hubs
 from eventlet.hubs.hub import BaseHub, READ, WRITE, noop
 from eventlet.support import get_errno, clear_sys_exc_info
 
@@ -15,7 +16,9 @@ WRITE_MASK = select.POLLOUT
 
 
 class Hub(BaseHub):
-    def __init__(self, clock=time.time):
+    def __init__(self, clock=None):
+        if clock is None:
+            clock = hubs.default_clock
         super(Hub, self).__init__(clock)
         self.poll = select.poll()
         # poll.modify is new to 2.6

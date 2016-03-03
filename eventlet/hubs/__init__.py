@@ -6,8 +6,15 @@ from eventlet.support import greenlets as greenlet, six
 
 __all__ = ["use_hub", "get_hub", "get_default_hub", "trampoline"]
 
+time = patcher.original('time')
 threading = patcher.original('threading')
 _threadlocal = threading.local()
+
+
+if hasattr(time, 'monotonic'):
+    default_clock = time.monotonic
+else:
+    default_clock = time.time
 
 
 def get_default_hub():
