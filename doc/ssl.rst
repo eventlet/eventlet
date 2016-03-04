@@ -3,7 +3,7 @@ Using SSL With Eventlet
 
 Eventlet makes it easy to use non-blocking SSL sockets.  If you're using Python 2.6 or later, you're all set, eventlet wraps the built-in ssl module.  If on Python 2.5 or 2.4, you have to install pyOpenSSL_ to use eventlet.
 
-In either case, the the ``green`` modules handle SSL sockets transparently, just like their standard counterparts.  As an example, :mod:`eventlet.green.urllib2` can be used to fetch https urls in as non-blocking a fashion as you please::
+In either case, the ``green`` modules handle SSL sockets transparently, just like their standard counterparts.  As an example, :mod:`eventlet.green.urllib2` can be used to fetch https urls in as non-blocking a fashion as you please::
 
     from eventlet.green import urllib2
     from eventlet import spawn

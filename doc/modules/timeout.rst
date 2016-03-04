@@ -11,7 +11,7 @@
         finally:
             timeout.cancel()
 
-    When *exception* is omitted or ``None``, the :class:`Timeout` instance
+    When *exception* is omitted or is ``None``, the :class:`Timeout` instance
     itself is raised:
 
         >>> Timeout(0.1)
@@ -48,8 +48,8 @@
     * If the code block catches and doesn't re-raise :class:`BaseException`  (for example, with ``except:``), then it will catch the Timeout exception, and might not abort as intended.
 
     When catching timeouts, keep in mind that the one you catch may not be the
-    one you have set; if you going to silence a timeout, always check that it's
-    the same instance that you set::
+    one you set; if you plan on silencing a timeout, always check that it's the
+    same instance that you set::
 
         timeout = Timeout(1)
         try:
