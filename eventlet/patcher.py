@@ -250,6 +250,9 @@ def monkey_patch(**on):
             on.setdefault(modname, False)
         on.setdefault(modname, default_on)
 
+    if on['thread'] and not already_patched.get('thread'):
+        _green_existing_locks()
+
     modules_to_patch = []
     for name, modules_function in [
         ('os', _green_os_modules),
@@ -318,6 +321,19 @@ def is_monkey_patched(module):
     module."""
     return module in already_patched or \
         getattr(module, '__name__', None) in already_patched
+
+
+def _green_existing_locks():
+    if sys.version[0] != '2':
+        return
+    import threading
+    import eventlet.green.threading
+    lock_type = type(threading.Lock())
+    rlock_type = type(threading.RLock())
+    gc = __import__('gc')
+    for o in gc.get_objects():
+        if isinstance(o, rlock_type) and isinstance(o._RLock__block, lock_type):
+            o._RLock__block = eventlet.green.threading.Lock()
 
 
 def _green_os_modules():
