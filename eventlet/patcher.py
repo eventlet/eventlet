@@ -334,14 +334,22 @@ def _green_existing_locks():
         return
     import gc
     import threading
+    import eventlet.green.thread
     import eventlet.green.threading
     lock_type = type(threading.Lock())
     rlock_type = type(threading.RLock())
+    # We're monkey-patching so there can't be any greenlets yet, ergo our thread
+    # ID is the only valid owner possible.
+    tid = eventlet.green.thread.get_ident()
     for o in gc.get_objects():
         if isinstance(o, rlock_type) and isinstance(o._RLock__block, lock_type):
-            o._RLock__block = eventlet.green.threading.Lock()
-            # TODO: lock this lock if the original was locked
-            # TODO: Set o._RLock__owner
+            orig = o._RLock__block
+            new = eventlet.green.threading.Lock()
+            o._RLock__block = new
+            if orig.locked():
+                new.acquire()
+            o._RLock__owner = tid
+            # TODO test re-locking and owner
 
 
 def _green_os_modules():
