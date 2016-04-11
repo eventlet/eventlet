@@ -498,12 +498,12 @@ t2.join()
         self.assertEqual(lines[1], "True", lines[1])
 
 
-class ExistingLocks(ProcessBase):
-    def test_early(self):
-        tests.run_isolated('patcher_existing_locks_early.py')
+def test_patcher_existing_locks_early():
+    tests.run_isolated('patcher_existing_locks_early.py')
 
-    def test_late(self):
-        tests.run_isolated('patcher_existing_locks_late.py')
+
+def test_patcher_existing_locks_late():
+    tests.run_isolated('patcher_existing_locks_late.py')
 
 
 def test_importlib_lock():

@@ -14,7 +14,7 @@ except ImportError:
 import signal
 try:
     import subprocess32 as subprocess  # py2
-except:
+except ImportError:
     import subprocess  # py3
 import sys
 import unittest
@@ -328,7 +328,7 @@ def run_python(path, env=None, args=None):
     except subprocess.TimeoutExpired:
         p.kill()
         output, _ = p.communicate(timeout=30)
-        return "%s\nFAIL - timed out" % output
+        return "{0}\nFAIL - timed out".format(output)
     return output
 
 

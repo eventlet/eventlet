@@ -1,6 +1,3 @@
-import threading
-
-
 __test__ = False
 
 
@@ -18,6 +15,7 @@ def bbb(lock, e1, e2):
 
 
 if __name__ == '__main__':
+    import threading
     test_lock = threading.RLock()
     import eventlet
     eventlet.monkey_patch()

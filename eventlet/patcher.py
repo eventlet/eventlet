@@ -324,16 +324,24 @@ def is_monkey_patched(module):
 
 
 def _green_existing_locks():
+    """Make locks created before monkey-patching safe.
+
+    RLocks rely on a Lock and on Python 2, if an unpatched Lock blocks, it
+    blocks the native thread. We need to replace these with green Locks.
+
+    This was originally noticed in the stdlib logging module."""
     if sys.version[0] != '2':
         return
+    import gc
     import threading
     import eventlet.green.threading
     lock_type = type(threading.Lock())
     rlock_type = type(threading.RLock())
-    gc = __import__('gc')
     for o in gc.get_objects():
         if isinstance(o, rlock_type) and isinstance(o._RLock__block, lock_type):
             o._RLock__block = eventlet.green.threading.Lock()
+            # TODO: lock this lock if the original was locked
+            # TODO: Set o._RLock__owner
 
 
 def _green_os_modules():
