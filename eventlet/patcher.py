@@ -330,26 +330,49 @@ def _green_existing_locks():
     blocks the native thread. We need to replace these with green Locks.
 
     This was originally noticed in the stdlib logging module."""
-    if sys.version[0] != '2':
-        return
     import gc
     import threading
     import eventlet.green.thread
-    import eventlet.green.threading
     lock_type = type(threading.Lock())
     rlock_type = type(threading.RLock())
+    if sys.version_info[0] >= 3:
+        pyrlock_type = type(threading._PyRLock())
     # We're monkey-patching so there can't be any greenlets yet, ergo our thread
     # ID is the only valid owner possible.
     tid = eventlet.green.thread.get_ident()
-    for o in gc.get_objects():
-        if isinstance(o, rlock_type) and isinstance(o._RLock__block, lock_type):
-            orig = o._RLock__block
-            new = eventlet.green.threading.Lock()
-            o._RLock__block = new
-            if orig.locked():
-                new.acquire()
-            o._RLock__owner = tid
-            # TODO test re-locking and owner
+    for obj in gc.get_objects():
+        if isinstance(obj, rlock_type):
+            if (sys.version_info[0] == 2 and
+                    isinstance(obj._RLock__block, lock_type)):
+                _fix_py2_rlock(obj, tid)
+            elif (sys.version_info[0] >= 3 and
+                    not isinstance(obj, pyrlock_type)):
+                _fix_py3_rlock(obj)
+
+
+def _fix_py2_rlock(rlock, tid):
+    import eventlet.green.threading
+    old = rlock._RLock__block
+    new = eventlet.green.threading.Lock()
+    rlock._RLock__block = new
+    if old.locked():
+        new.acquire()
+    rlock._RLock__owner = tid
+
+
+def _fix_py3_rlock(old):
+    import gc
+    import threading
+    new = threading._PyRLock()
+    while old._is_owned():
+        old.release()
+        new.acquire()
+    if old._is_owned():
+        new.acquire()
+    for ref in gc.get_referrers(old):
+        for k, v in vars(ref):
+            if v == old:
+                setattr(ref, k, new)
 
 
 def _green_os_modules():
