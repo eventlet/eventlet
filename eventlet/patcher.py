@@ -250,6 +250,9 @@ def monkey_patch(**on):
             on.setdefault(modname, False)
         on.setdefault(modname, default_on)
 
+    if on['thread'] and not already_patched.get('thread'):
+        _green_existing_locks()
+
     modules_to_patch = []
     for name, modules_function in [
         ('os', _green_os_modules),
@@ -318,6 +321,59 @@ def is_monkey_patched(module):
     module."""
     return module in already_patched or \
         getattr(module, '__name__', None) in already_patched
+
+
+def _green_existing_locks():
+    """Make locks created before monkey-patching safe.
+
+    RLocks rely on a Lock and on Python 2, if an unpatched Lock blocks, it
+    blocks the native thread. We need to replace these with green Locks.
+
+    This was originally noticed in the stdlib logging module."""
+    import gc
+    import threading
+    import eventlet.green.thread
+    lock_type = type(threading.Lock())
+    rlock_type = type(threading.RLock())
+    if sys.version_info[0] >= 3:
+        pyrlock_type = type(threading._PyRLock())
+    # We're monkey-patching so there can't be any greenlets yet, ergo our thread
+    # ID is the only valid owner possible.
+    tid = eventlet.green.thread.get_ident()
+    for obj in gc.get_objects():
+        if isinstance(obj, rlock_type):
+            if (sys.version_info[0] == 2 and
+                    isinstance(obj._RLock__block, lock_type)):
+                _fix_py2_rlock(obj, tid)
+            elif (sys.version_info[0] >= 3 and
+                    not isinstance(obj, pyrlock_type)):
+                _fix_py3_rlock(obj)
+
+
+def _fix_py2_rlock(rlock, tid):
+    import eventlet.green.threading
+    old = rlock._RLock__block
+    new = eventlet.green.threading.Lock()
+    rlock._RLock__block = new
+    if old.locked():
+        new.acquire()
+    rlock._RLock__owner = tid
+
+
+def _fix_py3_rlock(old):
+    import gc
+    import threading
+    new = threading._PyRLock()
+    while old._is_owned():
+        old.release()
+        new.acquire()
+    if old._is_owned():
+        new.acquire()
+    gc.collect()
+    for ref in gc.get_referrers(old):
+        for k, v in vars(ref):
+            if v == old:
+                setattr(ref, k, new)
 
 
 def _green_os_modules():

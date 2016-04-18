@@ -12,7 +12,10 @@ try:
 except ImportError:
     resource = None
 import signal
-import subprocess
+try:
+    import subprocess32 as subprocess  # py2
+except ImportError:
+    import subprocess  # py3
 import sys
 import unittest
 import warnings
@@ -320,7 +323,12 @@ def run_python(path, env=None, args=None):
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
     )
-    output, _ = p.communicate()
+    try:
+        output, _ = p.communicate(timeout=30)
+    except subprocess.TimeoutExpired:
+        p.kill()
+        output, _ = p.communicate(timeout=30)
+        return "{0}\nFAIL - timed out".format(output)
     return output
 
 
