@@ -246,7 +246,7 @@ class TestHubBlockingDetector(LimitedTestCase):
 
 
 class TestSuspend(LimitedTestCase):
-    TEST_TIMEOUT = 3
+    TEST_TIMEOUT = 4
     longMessage = True
     maxDiff = None
 
