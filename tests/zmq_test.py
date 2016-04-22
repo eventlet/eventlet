@@ -19,6 +19,8 @@ def zmq_supported(_):
 
 
 class TestUpstreamDownStream(tests.LimitedTestCase):
+    TEST_TIMEOUT = 2
+
     @tests.skip_unless(zmq_supported)
     def setUp(self):
         super(TestUpstreamDownStream, self).setUp()
