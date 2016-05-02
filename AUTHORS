@@ -131,3 +131,5 @@ Thanks To
 * Levente Polyak
 * Phus Lu
 * Collin Stocks, fixing eventlet.green.urllib2.urlopen() so it accepts cafile, capath, or cadefault arguments
+* Alexis Lee
+* Steven Erenst
