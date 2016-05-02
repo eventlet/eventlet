@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Testing Eventlet &mdash; Eventlet 0.18.4 documentation</title>
+    <title>Testing Eventlet &mdash; Eventlet 0.19.0 documentation</title>
     
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.18.4',
+        VERSION:     '0.19.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.18.4 documentation" href="index.html" />
+    <link rel="top" title="Eventlet 0.19.0 documentation" href="index.html" />
     <link rel="next" title="Environment Variables" href="environment.html" />
     <link rel="prev" title="Understanding Eventlet Hubs" href="hubs.html" /> 
   </head>
@@ -43,7 +43,7 @@
         <li class="right" >
           <a href="hubs.html" title="Understanding Eventlet Hubs"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.18.4 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.19.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -78,7 +78,7 @@
 </div>
 <div class="section" id="standard-library-tests">
 <h2>Standard Library Tests<a class="headerlink" href="#standard-library-tests" title="Permalink to this headline">¶</a></h2>
-<p>Eventlet provides for the ability to test itself with the standard Python networking tests.  This verifies that the libraries it wraps work at least as well as the standard ones do.  The directory tests/stdlib contains a bunch of stubs that import the standard lib tests from your system and run them.  If you do not have any tests in your python distribution, they&#8217;ll simply fail to import.</p>
+<p>Eventlet provides the ability to test itself with the standard Python networking tests.  This verifies that the libraries it wraps work at least as well as the standard ones do.  The directory tests/stdlib contains a bunch of stubs that import the standard lib tests from your system and run them.  If you do not have any tests in your python distribution, they&#8217;ll simply fail to import.</p>
 <p>There&#8217;s a convenience module called all.py designed to handle the impedance mismatch between Nose and the standard tests:</p>
 <div class="highlight-sh"><div class="highlight"><pre>$ nosetests tests/stdlib/all.py
 </pre></div>
@@ -111,11 +111,11 @@
 </pre></div>
 </div>
 <p>After running the tests to completion, this will emit a huge wodge of module names and line numbers.  For some reason, the <code class="docutils literal"><span class="pre">--cover-inclusive</span></code> option breaks everything rather than serving its purpose of limiting the coverage to the local files, so don&#8217;t use that.</p>
-<p>The html option is quite useful because it generates nicely-formatted HTML that are much easier to read than line-number soup.  Here&#8217;s a command that generates the annotation, dumping the html files into a directory called &#8220;cover&#8221;:</p>
+<p>The html option is quite useful because it generates nicely-formatted HTML files that are much easier to read than line-number soup.  Here&#8217;s a command that generates the annotation, dumping the html files into a directory called &#8220;cover&#8221;:</p>
 <div class="highlight-sh"><div class="highlight"><pre>coverage html -d cover --omit<span class="o">=</span><span class="s1">&#39;tempmod,&lt;console&gt;,tests&#39;</span>
 </pre></div>
 </div>
-<p>(<code class="docutils literal"><span class="pre">tempmod</span></code> and <code class="docutils literal"><span class="pre">console</span></code> are omitted because they gets thrown away at the completion of their unit tests and coverage.py isn&#8217;t smart enough to detect this.)</p>
+<p>(<code class="docutils literal"><span class="pre">tempmod</span></code> and <code class="docutils literal"><span class="pre">console</span></code> are omitted because they get thrown away at the completion of their unit tests and coverage.py isn&#8217;t smart enough to detect this.)</p>
 </div>
 </div>
 
@@ -182,7 +182,7 @@
         <li class="right" >
           <a href="hubs.html" title="Understanding Eventlet Hubs"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.18.4 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.19.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
 

@@ -1,3 +1,13 @@
+0.19.0
+======
+* ssl: IMPORTANT DoS FIX do_handshake_connect=False in server accept(); Thanks to Garth Mollett
+* patcher: patch existing threading locks; Thanks to Alexis Lee
+* green.urllib2: missing patched ssl module; Thanks to Collin RM Stocks
+* wsgi: environ[headers_raw] tuple of unmodified name: value pairs
+* test against modern pyopenssl 16.0.0 for Python 2.7+; Thanks to Victor Stinner
+* wsgi: document compatibility with python `logging`
+* Minor grammatical improvements and typo fixes to the docs; Thanks to Steven Erenst
+
 0.18.4
 ======
 * wsgi: change TCP_NODELAY to TCP_QUICKACK, ignore socket error when not available

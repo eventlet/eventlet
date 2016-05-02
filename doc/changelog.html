@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>0.18.4 &mdash; Eventlet 0.18.4 documentation</title>
+    <title>0.19.0 &mdash; Eventlet 0.19.0 documentation</title>
     
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.18.4',
+        VERSION:     '0.19.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.18.4 documentation" href="index.html" /> 
+    <link rel="top" title="Eventlet 0.19.0 documentation" href="index.html" /> 
   </head>
   <body role="document">
     <div class="related" role="navigation" aria-label="related navigation">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.18.4 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.19.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -45,35 +45,47 @@
           <div class="body" role="main">
             
   <div class="section" id="id1">
-<h1>0.18.4<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<h1>0.19.0<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>ssl: IMPORTANT DoS FIX do_handshake_connect=False in server accept(); Thanks to Garth Mollett</li>
+<li>patcher: patch existing threading locks; Thanks to Alexis Lee</li>
+<li>green.urllib2: missing patched ssl module; Thanks to Collin RM Stocks</li>
+<li>wsgi: environ[headers_raw] tuple of unmodified name: value pairs</li>
+<li>test against modern pyopenssl 16.0.0 for Python 2.7+; Thanks to Victor Stinner</li>
+<li>wsgi: document compatibility with python <cite>logging</cite></li>
+<li>Minor grammatical improvements and typo fixes to the docs; Thanks to Steven Erenst</li>
+</ul>
+</div>
+<div class="section" id="id2">
+<h1>0.18.4<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>wsgi: change TCP_NODELAY to TCP_QUICKACK, ignore socket error when not available</li>
 </ul>
 </div>
-<div class="section" id="id2">
-<h1>0.18.3<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id3">
+<h1>0.18.3<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>wsgi: Use buffered writes - fixes partial socket.send without custom
 writelines(); Github issue #295</li>
 <li>wsgi: TCP_NODELAY enabled by default</li>
 </ul>
 </div>
-<div class="section" id="id3">
-<h1>0.18.2<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id4">
+<h1>0.18.2<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>wsgi: Fix data loss on partial writes (socket.send); Thanks to Jakub Stasiak</li>
 </ul>
 </div>
-<div class="section" id="id4">
-<h1>0.18.1<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id5">
+<h1>0.18.1<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>IMPORTANT: do not use Eventlet 0.18.0 and 0.18.1</li>
 <li>patcher: Fix AttributeError in subprocess communicate()</li>
 <li>greenio: Fix &#8220;TypeError: an integer is required&#8221; in sendto()</li>
 </ul>
 </div>
-<div class="section" id="id5">
-<h1>0.18.0<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id6">
+<h1>0.18.0<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>IMPORTANT: do not use Eventlet 0.18.0 and 0.18.1</li>
 <li>greenio: Fixed a bug that could cause send() to start an endless loop on
@@ -135,21 +147,21 @@ errors</p>
 </li>
 </ul>
 </div>
-<div class="section" id="id6">
-<h1>0.17.4<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id7">
+<h1>0.17.4<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>ssl: incorrect initalization of default context; Thanks to stuart-mclaren</li>
 </ul>
 </div>
-<div class="section" id="id7">
-<h1>0.17.3<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id8">
+<h1>0.17.3<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>green.thread: Python3.3+ fixes; Thanks to Victor Stinner</li>
 <li>Semaphore.acquire() accepts timeout=-1; Thanks to Victor Stinner</li>
 </ul>
 </div>
-<div class="section" id="id8">
-<h1>0.17.2<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id9">
+<h1>0.17.2<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>wsgi: Provide python logging compatibility; Thanks to Sean Dague</li>
 <li>greendns: fix premature connection closing in DNS proxy; Thanks to Tim Simmons</li>
@@ -158,14 +170,14 @@ errors</p>
 <li>setup: tests.{isolated,manual} polluted top-level packages</li>
 </ul>
 </div>
-<div class="section" id="id9">
-<h1>0.17.1<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id10">
+<h1>0.17.1<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>greendns: fix dns.name import and Python3 compatibility</li>
 </ul>
 </div>
-<div class="section" id="id10">
-<h1>0.17<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id11">
+<h1>0.17<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>Full Python3 compatibility; Thanks to Jakub Stasiak</li>
 <li>greendns: IPv6 support, improved handling of /etc/hosts; Thanks to Floris Bruynooghe</li>
@@ -176,14 +188,14 @@ errors</p>
 <li>greenio: shutdown already closed sockets without error; Thanks to David Szotten</li>
 </ul>
 </div>
-<div class="section" id="id11">
-<h1>0.16.1<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id12">
+<h1>0.16.1<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>Wheel build 0.16.0 incorrectly shipped removed module eventlet.util.</li>
 </ul>
 </div>
-<div class="section" id="id12">
-<h1>0.16.0<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id13">
+<h1>0.16.0<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>Fix SSL socket wrapping and Python 2.7.9 compatibility; Thanks to Jakub Stasiak</li>
 <li>Fix monkey_patch() on Python 3; Thanks to Victor Stinner</li>
@@ -199,22 +211,22 @@ errors</p>
 <li>tests: Fix timers not cleaned up on MySQL test skips; Thanks to Corey Wright</li>
 </ul>
 </div>
-<div class="section" id="id13">
-<h1>0.15.2<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id14">
+<h1>0.15.2<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>greenio: fixed memory leak, introduced in 0.15.1; Thanks to Michael Kerrin, Tushar Gohad</li>
 <li>wsgi: Support optional headers w/ &#8220;100 Continue&#8221; responses; Thanks to Tushar Gohad</li>
 </ul>
 </div>
-<div class="section" id="id14">
-<h1>0.15.1<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id15">
+<h1>0.15.1<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>greenio: Fix second simultaneous read (parallel paramiko issue); Thanks to Jan Grant, Michael Kerrin</li>
 <li>db_pool: customizable connection cleanup function; Thanks to Avery Fay</li>
 </ul>
 </div>
-<div class="section" id="id15">
-<h1>0.15<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id16">
+<h1>0.15<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>Python3 compatibility &#8211; <strong>not ready yet</strong>; Thanks to Astrum Kuo, Davanum Srinivas, Jakub Stasiak, Victor Sergeyev</li>
 <li>coros: remove Actor which was deprecated in 2010-01</li>
@@ -229,8 +241,8 @@ errors</p>
 <li>wsgi: capitalize_response_headers option</li>
 </ul>
 </div>
-<div class="section" id="id16">
-<h1>0.14<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id17">
+<h1>0.14<a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>wsgi: handle connection socket timeouts; Thanks to Paul Oppenheim</li>
 <li>wsgi: close timed out client connections</li>
@@ -242,8 +254,8 @@ errors</p>
 <li>wsgi: configurable socket_timeout</li>
 </ul>
 </div>
-<div class="section" id="id17">
-<h1>0.13<a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id18">
+<h1>0.13<a class="headerlink" href="#id18" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>hubs: kqueue support! Thanks to YAMAMOTO Takashi, Edward George</li>
 <li>greenio: Fix AttributeError on MacOSX; Bitbucket #136; Thanks to Derk Tegeler</li>
@@ -260,8 +272,8 @@ errors</p>
 <li>doc: hubs: Point to the correct function in exception message; Thanks to Floris Bruynooghe</li>
 </ul>
 </div>
-<div class="section" id="id18">
-<h1>0.12<a class="headerlink" href="#id18" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id19">
+<h1>0.12<a class="headerlink" href="#id19" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>zmq: Fix 100% busy CPU in idle after .bind(PUB) (thanks to Geoff Salmon)</li>
 <li>greenio: Fix socket.settimeout() did not switch back to blocking mode (thanks to Peter Skirko)</li>
@@ -271,16 +283,16 @@ errors</p>
 <li>tests: Support libzmq 3.0 SNDHWM option (thanks to Geoff Salmon)</li>
 </ul>
 </div>
-<div class="section" id="id19">
-<h1>0.11<a class="headerlink" href="#id19" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id20">
+<h1>0.11<a class="headerlink" href="#id20" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>ssl: Fix 100% busy CPU in socket.sendall() (thanks to Raymon Lu)</li>
 <li>zmq: Return linger argument to Socket.close() (thanks to Eric Windisch)</li>
 <li>tests: SSL tests were always skipped due to bug in skip_if_no_ssl decorator</li>
 </ul>
 </div>
-<div class="section" id="id20">
-<h1>0.10<a class="headerlink" href="#id20" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id21">
+<h1>0.10<a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>greenio: Fix relative seek() (thanks to AlanP)</li>
 <li>db_pool: Fix pool.put() TypeError with min_size &gt; 1 (thanks to Jessica Qi)</li>
@@ -298,8 +310,8 @@ errors</p>
 <li>greenio: Remove deprecated GreenPipe.xreadlines() method, was broken anyway</li>
 </ul>
 </div>
-<div class="section" id="id21">
-<h1>0.9.17<a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id22">
+<h1>0.9.17<a class="headerlink" href="#id22" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>ZeroMQ support calling send and recv from multiple greenthreads (thanks to Geoff Salmon)</li>
 <li>SSL: unwrap() sends data, and so it needs trampolining (#104 thanks to Brandon Rhodes)</li>
@@ -315,14 +327,14 @@ errors</p>
 <li>wsgi: Configurable maximum URL length (thanks to Tomas Sedovic)</li>
 </ul>
 </div>
-<div class="section" id="id22">
-<h1>0.9.16<a class="headerlink" href="#id22" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id23">
+<h1>0.9.16<a class="headerlink" href="#id23" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>SO_REUSEADDR now correctly set.</li>
 </ul>
 </div>
-<div class="section" id="id23">
-<h1>0.9.15<a class="headerlink" href="#id23" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id24">
+<h1>0.9.15<a class="headerlink" href="#id24" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>ZeroMQ support without an explicit hub now implemented!  Thanks to Zed Shaw for the patch.</li>
 <li>zmq module supports the NOBLOCK flag, thanks to rfk. (#76)</li>
@@ -334,8 +346,8 @@ errors</p>
 <li>Timeouts raised within tpool.execute are propagated back to the caller (thanks again to redbo for being the squeaky wheel)</li>
 </ul>
 </div>
-<div class="section" id="id24">
-<h1>0.9.14<a class="headerlink" href="#id24" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id25">
+<h1>0.9.14<a class="headerlink" href="#id25" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>Many fixes to the ZeroMQ hub, which now requires version 2.0.10 or later.  Thanks to Ben Ford.</li>
 <li>ZeroMQ hub no longer depends on pollhub, and thus works on Windows (thanks, Alexey Borzenkov)</li>
@@ -349,8 +361,8 @@ errors</p>
 <li>Documentation for eventlet.green.zmq, courtesy of Ben Ford</li>
 </ul>
 </div>
-<div class="section" id="id25">
-<h1>0.9.13<a class="headerlink" href="#id25" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id26">
+<h1>0.9.13<a class="headerlink" href="#id26" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>ZeroMQ hub, and eventlet.green.zmq make supersockets green.  Thanks to Ben Ford!</li>
 <li>eventlet.green.MySQLdb added.  It&#8217;s an interface to MySQLdb that uses tpool to make it appear nonblocking</li>
@@ -369,8 +381,8 @@ errors</p>
 <li>Removed _main_wrapper from greenthread, thanks to Ambroff adding keyword arguments to switch() in 0.3!</li>
 </ul>
 </div>
-<div class="section" id="id26">
-<h1>0.9.12<a class="headerlink" href="#id26" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id27">
+<h1>0.9.12<a class="headerlink" href="#id27" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>Eventlet no longer uses the Twisted hub if Twisted is imported &#8211; you must call eventlet.hubs.use_hub(&#8216;twistedr&#8217;) if you want to use it.  This prevents strange race conditions for those who want to use both Twisted and Eventlet separately.</li>
 <li>Removed circular import in twistedr.py</li>
@@ -383,8 +395,8 @@ errors</p>
 <li>Adding websocket.html to tarball so that you can run the examples without checking out the source</li>
 </ul>
 </div>
-<div class="section" id="id27">
-<h1>0.9.10<a class="headerlink" href="#id27" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id28">
+<h1>0.9.10<a class="headerlink" href="#id28" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>Greendns: if dnspython is installed, Eventlet will automatically use it to provide non-blocking DNS queries.  Set the environment variable &#8216;EVENTLET_NO_GREENDNS&#8217; if you don&#8217;t want greendns but have dnspython installed.</li>
 <li>Full test suite passes on Python 2.7.</li>
@@ -397,16 +409,16 @@ errors</p>
 <li>Tweaked Timeout class to do something sensible when True is passed to the constructor</li>
 </ul>
 </div>
-<div class="section" id="id28">
-<h1>0.9.9<a class="headerlink" href="#id28" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id29">
+<h1>0.9.9<a class="headerlink" href="#id29" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>A fix for monkeypatching on systems with psycopg version 2.0.14.</li>
 <li>Improved support for chunked transfers in wsgi, plus a bunch of tests from schmir (ported from gevent by redbo)</li>
 <li>A fix for the twisted hub from Favo Yang</li>
 </ul>
 </div>
-<div class="section" id="id29">
-<h1>0.9.8<a class="headerlink" href="#id29" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id30">
+<h1>0.9.8<a class="headerlink" href="#id30" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>Support for psycopg2&#8217;s asynchronous mode, from Daniele Varrazzo</li>
 <li>websocket module is now part of core Eventlet with 100% unit test coverage thanks to Ben Ford.  See its documentation at <a class="reference external" href="http://eventlet.net/doc/modules/websocket.html">http://eventlet.net/doc/modules/websocket.html</a></li>
@@ -418,8 +430,8 @@ errors</p>
 <li>Many bug fixes, major and minor.</li>
 </ul>
 </div>
-<div class="section" id="id30">
-<h1>0.9.7<a class="headerlink" href="#id30" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id31">
+<h1>0.9.7<a class="headerlink" href="#id31" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>GreenPipe is now a context manager (thanks, quad)</li>
 <li>tpool.Proxy supports iterators properly</li>
@@ -429,8 +441,8 @@ errors</p>
 <li>multitudinous improvements in Py3k compatibility from amajorek</li>
 </ul>
 </div>
-<div class="section" id="id31">
-<h1>0.9.6<a class="headerlink" href="#id31" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id32">
+<h1>0.9.6<a class="headerlink" href="#id32" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>new EVENTLET_HUB environment variable allows you to select a hub without code</li>
 <li>improved GreenSocket and GreenPipe compatibility with stdlib</li>
@@ -449,8 +461,8 @@ errors</p>
 <li>new eventlet.serve convenience function for easy TCP servers</li>
 </ul>
 </div>
-<div class="section" id="id32">
-<h1>0.9.5<a class="headerlink" href="#id32" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id33">
+<h1>0.9.5<a class="headerlink" href="#id33" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>support psycopg in db_pool</li>
 <li>smart patcher that does the right patching when importing without needing to understand plumbing of patched module</li>
@@ -473,8 +485,8 @@ errors</p>
 <li>new convenience functions: eventlet.connect and eventlet.listen.  Thanks, Sergey!</li>
 </ul>
 </div>
-<div class="section" id="id33">
-<h1>0.9.4<a class="headerlink" href="#id33" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id34">
+<h1>0.9.4<a class="headerlink" href="#id34" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>Deprecated coros.Queue and coros.Channel (use queue.Queue instead)</li>
 <li>Added putting and getting methods to queue.Queue.</li>
@@ -483,8 +495,8 @@ errors</p>
 <li>Bugfixes in wsgi, greenpool</li>
 </ul>
 </div>
-<div class="section" id="id34">
-<h1>0.9.3<a class="headerlink" href="#id34" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id35">
+<h1>0.9.3<a class="headerlink" href="#id35" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>Moved primary api module to __init__ from api.  It shouldn&#8217;t be necessary to import eventlet.api anymore; import eventlet should do the same job.</li>
 <li>Proc module deprecated in favor of greenthread</li>
@@ -510,16 +522,16 @@ errors</p>
 <li>Removed saranwrap as an option for making db connections nonblocking in db_pool.</li>
 </ul>
 </div>
-<div class="section" id="id35">
-<h1>0.9.2<a class="headerlink" href="#id35" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id36">
+<h1>0.9.2<a class="headerlink" href="#id36" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>Bugfix for wsgi.py where it was improperly expecting the environ variable to be a constant when passed to the application.</li>
 <li>Tpool.py now passes its tests on Windows.</li>
 <li>Fixed minor performance issue in wsgi.</li>
 </ul>
 </div>
-<div class="section" id="id36">
-<h1>0.9.1<a class="headerlink" href="#id36" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id37">
+<h1>0.9.1<a class="headerlink" href="#id37" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>PyOpenSSL is no longer required for Python 2.6: use the eventlet.green.ssl module. 2.5 and 2.4 still require PyOpenSSL.</li>
 <li>Cleaned up the eventlet.green packages and their associated tests, this should result in fewer version-dependent bugs with these modules.</li>
@@ -538,8 +550,8 @@ errors</p>
 <li>Bug fixes in: wsgi.py, twistedr.py, poll.py, greenio.py, util.py, select.py, processes.py, selects.py</li>
 </ul>
 </div>
-<div class="section" id="id37">
-<h1>0.9.0<a class="headerlink" href="#id37" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id38">
+<h1>0.9.0<a class="headerlink" href="#id38" title="Permalink to this headline">¶</a></h1>
 <ul>
 <li><p class="first">Full-duplex sockets (simultaneous readers and writers in the same process).</p>
 </li>
@@ -559,23 +571,23 @@ errors</p>
 </li>
 </ul>
 </div>
-<div class="section" id="id38">
-<h1>0.8.16<a class="headerlink" href="#id38" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id39">
+<h1>0.8.16<a class="headerlink" href="#id39" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>GreenSSLObject properly masks ZeroReturnErrors with an empty read; with unit test.</li>
 <li>Fixed 2.6 SSL compatibility issue.</li>
 </ul>
 </div>
-<div class="section" id="id39">
-<h1>0.8.15<a class="headerlink" href="#id39" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id40">
+<h1>0.8.15<a class="headerlink" href="#id40" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>GreenSSL object no longer converts ZeroReturnErrors into empty reads, because that is more compatible with the underlying SSLConnection object.</li>
 <li>Fixed issue caused by SIGCHLD handler in processes.py</li>
 <li>Stopped supporting string exceptions in saranwrap and fixed a few test failures.</li>
 </ul>
 </div>
-<div class="section" id="id40">
-<h1>0.8.14<a class="headerlink" href="#id40" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id41">
+<h1>0.8.14<a class="headerlink" href="#id41" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>Fixed some more Windows compatibility problems, resolving EVT-37 :</li>
 </ul>
@@ -583,15 +595,15 @@ errors</p>
 * waiting() method on Pool class, which was lost when the Pool implementation
 replaced CoroutinePool.</p>
 </div>
-<div class="section" id="id41">
-<h1>0.8.13<a class="headerlink" href="#id41" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id42">
+<h1>0.8.13<a class="headerlink" href="#id42" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>2.6 SSL compatibility patch by Marcus Cavanaugh.</li>
 <li>Added greenlet and pyopenssl as dependencies in setup.py.</li>
 </ul>
 </div>
-<div class="section" id="id42">
-<h1>0.8.12<a class="headerlink" href="#id42" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id43">
+<h1>0.8.12<a class="headerlink" href="#id43" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>The ability to resize() pools of coroutines, which was lost when the</li>
 </ul>
@@ -604,8 +616,8 @@ like SSL.Connection objects.
 * A small patch that makes Eventlet work on Windows.  This is the first
 release of Eventlet that works on Windows.</p>
 </div>
-<div class="section" id="id43">
-<h1>0.8.11<a class="headerlink" href="#id43" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id44">
+<h1>0.8.11<a class="headerlink" href="#id44" title="Permalink to this headline">¶</a></h1>
 <p>Eventlet can now run on top of twisted reactor. Twisted-based hub is enabled automatically if
 twisted.internet.reactor is imported. It is also possible to &#8220;embed&#8221; eventlet into a twisted
 application via eventlet.twistedutil.join_reactor. See the examples for details.</p>
@@ -659,24 +671,24 @@ Thanks to Marcus Cavanaugh for pointing out some coros.queue(0) bugs.</p>
 <p>Fix the libev hub to match libev&#8217;s callback signature. (Patch by grugq)</p>
 <p>Add a backlog argument to api.tcp_listener (Patch by grugq)</p>
 </div>
-<div class="section" id="id44">
-<h1>0.7.x<a class="headerlink" href="#id44" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id45">
+<h1>0.7.x<a class="headerlink" href="#id45" title="Permalink to this headline">¶</a></h1>
 <p>Fix a major memory leak when using the libevent or libev hubs. Timers were not being removed from the hub after they fired. (Thanks Agusto Becciu and the grugq). Also, make it possible to call wrap_socket_with_coroutine_socket without using the threadpool to make dns operations non-blocking (Thanks the grugq).</p>
 <p>It&#8217;s now possible to use eventlet&#8217;s SSL client to talk to eventlet&#8217;s SSL server. (Thanks to Ryan Williams)</p>
 <p>Fixed a major CPU leak when using select hub. When adding a descriptor to the hub, entries were made in all three dictionaries, readers, writers, and exc, even if the callback is None. Thus every fd would be passed into all three lists when calling select regardless of whether there was a callback for that event or not. When reading the next request out of a keepalive socket, the socket would come back as ready for writing, the hub would notice the callback is None and ignore it, and then loop as fast as possible consuming CPU.</p>
 </div>
-<div class="section" id="id45">
-<h1>0.6.x<a class="headerlink" href="#id45" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id46">
+<h1>0.6.x<a class="headerlink" href="#id46" title="Permalink to this headline">¶</a></h1>
 <p>Fixes some long-standing bugs where sometimes failures in accept() or connect() would cause the coroutine that was waiting to be double-resumed, most often resulting in SwitchingToDeadGreenlet exceptions as well as weird tuple-unpacking exceptions in the CoroutinePool main loop.</p>
 <p>0.6.1: Added eventlet.tpool.killall. Blocks until all of the threadpool threads have been told to exit and join()ed. Meant to be used to clean up the threadpool on exit or if calling execv. Used by Spawning.</p>
 </div>
-<div class="section" id="id46">
-<h1>0.5.x<a class="headerlink" href="#id46" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id47">
+<h1>0.5.x<a class="headerlink" href="#id47" title="Permalink to this headline">¶</a></h1>
 <p>&#8220;The Pycon 2008 Refactor&#8221;: The first release which incorporates libevent support. Also comes with significant refactoring and code cleanup, especially to the eventlet.wsgi http server. Docstring coverage is much higher and there is new extensive documentation: <a class="reference external" href="http://wiki.secondlife.com/wiki/Eventlet/Documentation">http://wiki.secondlife.com/wiki/Eventlet/Documentation</a></p>
 <p>The point releases of 0.5.x fixed some bugs in the wsgi server, most notably handling of Transfer-Encoding: chunked; previously, it would happily send chunked encoding to clients which asked for HTTP/1.0, which isn&#8217;t legal.</p>
 </div>
-<div class="section" id="id47">
-<h1>0.2<a class="headerlink" href="#id47" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id48">
+<h1>0.2<a class="headerlink" href="#id48" title="Permalink to this headline">¶</a></h1>
 <p>Initial re-release of forked linden branch.</p>
 </div>
 
@@ -688,54 +700,55 @@ Thanks to Marcus Cavanaugh for pointing out some coros.queue(0) bugs.</p>
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">0.18.4</a></li>
-<li><a class="reference internal" href="#id2">0.18.3</a></li>
-<li><a class="reference internal" href="#id3">0.18.2</a></li>
-<li><a class="reference internal" href="#id4">0.18.1</a></li>
-<li><a class="reference internal" href="#id5">0.18.0</a></li>
-<li><a class="reference internal" href="#id6">0.17.4</a></li>
-<li><a class="reference internal" href="#id7">0.17.3</a></li>
-<li><a class="reference internal" href="#id8">0.17.2</a></li>
-<li><a class="reference internal" href="#id9">0.17.1</a></li>
-<li><a class="reference internal" href="#id10">0.17</a></li>
-<li><a class="reference internal" href="#id11">0.16.1</a></li>
-<li><a class="reference internal" href="#id12">0.16.0</a></li>
-<li><a class="reference internal" href="#id13">0.15.2</a></li>
-<li><a class="reference internal" href="#id14">0.15.1</a></li>
-<li><a class="reference internal" href="#id15">0.15</a></li>
-<li><a class="reference internal" href="#id16">0.14</a></li>
-<li><a class="reference internal" href="#id17">0.13</a></li>
-<li><a class="reference internal" href="#id18">0.12</a></li>
-<li><a class="reference internal" href="#id19">0.11</a></li>
-<li><a class="reference internal" href="#id20">0.10</a></li>
-<li><a class="reference internal" href="#id21">0.9.17</a></li>
-<li><a class="reference internal" href="#id22">0.9.16</a></li>
-<li><a class="reference internal" href="#id23">0.9.15</a></li>
-<li><a class="reference internal" href="#id24">0.9.14</a></li>
-<li><a class="reference internal" href="#id25">0.9.13</a></li>
-<li><a class="reference internal" href="#id26">0.9.12</a></li>
-<li><a class="reference internal" href="#id27">0.9.10</a></li>
-<li><a class="reference internal" href="#id28">0.9.9</a></li>
-<li><a class="reference internal" href="#id29">0.9.8</a></li>
-<li><a class="reference internal" href="#id30">0.9.7</a></li>
-<li><a class="reference internal" href="#id31">0.9.6</a></li>
-<li><a class="reference internal" href="#id32">0.9.5</a></li>
-<li><a class="reference internal" href="#id33">0.9.4</a></li>
-<li><a class="reference internal" href="#id34">0.9.3</a></li>
-<li><a class="reference internal" href="#id35">0.9.2</a></li>
-<li><a class="reference internal" href="#id36">0.9.1</a></li>
-<li><a class="reference internal" href="#id37">0.9.0</a></li>
-<li><a class="reference internal" href="#id38">0.8.16</a></li>
-<li><a class="reference internal" href="#id39">0.8.15</a></li>
-<li><a class="reference internal" href="#id40">0.8.14</a></li>
-<li><a class="reference internal" href="#id41">0.8.13</a></li>
-<li><a class="reference internal" href="#id42">0.8.12</a></li>
-<li><a class="reference internal" href="#id43">0.8.11</a></li>
+<li><a class="reference internal" href="#">0.19.0</a></li>
+<li><a class="reference internal" href="#id2">0.18.4</a></li>
+<li><a class="reference internal" href="#id3">0.18.3</a></li>
+<li><a class="reference internal" href="#id4">0.18.2</a></li>
+<li><a class="reference internal" href="#id5">0.18.1</a></li>
+<li><a class="reference internal" href="#id6">0.18.0</a></li>
+<li><a class="reference internal" href="#id7">0.17.4</a></li>
+<li><a class="reference internal" href="#id8">0.17.3</a></li>
+<li><a class="reference internal" href="#id9">0.17.2</a></li>
+<li><a class="reference internal" href="#id10">0.17.1</a></li>
+<li><a class="reference internal" href="#id11">0.17</a></li>
+<li><a class="reference internal" href="#id12">0.16.1</a></li>
+<li><a class="reference internal" href="#id13">0.16.0</a></li>
+<li><a class="reference internal" href="#id14">0.15.2</a></li>
+<li><a class="reference internal" href="#id15">0.15.1</a></li>
+<li><a class="reference internal" href="#id16">0.15</a></li>
+<li><a class="reference internal" href="#id17">0.14</a></li>
+<li><a class="reference internal" href="#id18">0.13</a></li>
+<li><a class="reference internal" href="#id19">0.12</a></li>
+<li><a class="reference internal" href="#id20">0.11</a></li>
+<li><a class="reference internal" href="#id21">0.10</a></li>
+<li><a class="reference internal" href="#id22">0.9.17</a></li>
+<li><a class="reference internal" href="#id23">0.9.16</a></li>
+<li><a class="reference internal" href="#id24">0.9.15</a></li>
+<li><a class="reference internal" href="#id25">0.9.14</a></li>
+<li><a class="reference internal" href="#id26">0.9.13</a></li>
+<li><a class="reference internal" href="#id27">0.9.12</a></li>
+<li><a class="reference internal" href="#id28">0.9.10</a></li>
+<li><a class="reference internal" href="#id29">0.9.9</a></li>
+<li><a class="reference internal" href="#id30">0.9.8</a></li>
+<li><a class="reference internal" href="#id31">0.9.7</a></li>
+<li><a class="reference internal" href="#id32">0.9.6</a></li>
+<li><a class="reference internal" href="#id33">0.9.5</a></li>
+<li><a class="reference internal" href="#id34">0.9.4</a></li>
+<li><a class="reference internal" href="#id35">0.9.3</a></li>
+<li><a class="reference internal" href="#id36">0.9.2</a></li>
+<li><a class="reference internal" href="#id37">0.9.1</a></li>
+<li><a class="reference internal" href="#id38">0.9.0</a></li>
+<li><a class="reference internal" href="#id39">0.8.16</a></li>
+<li><a class="reference internal" href="#id40">0.8.15</a></li>
+<li><a class="reference internal" href="#id41">0.8.14</a></li>
+<li><a class="reference internal" href="#id42">0.8.13</a></li>
+<li><a class="reference internal" href="#id43">0.8.12</a></li>
+<li><a class="reference internal" href="#id44">0.8.11</a></li>
 <li><a class="reference internal" href="#x">0.8.x</a></li>
-<li><a class="reference internal" href="#id44">0.7.x</a></li>
-<li><a class="reference internal" href="#id45">0.6.x</a></li>
-<li><a class="reference internal" href="#id46">0.5.x</a></li>
-<li><a class="reference internal" href="#id47">0.2</a></li>
+<li><a class="reference internal" href="#id45">0.7.x</a></li>
+<li><a class="reference internal" href="#id46">0.6.x</a></li>
+<li><a class="reference internal" href="#id47">0.5.x</a></li>
+<li><a class="reference internal" href="#id48">0.2</a></li>
 </ul>
 
   <div role="note" aria-label="source link">
@@ -771,7 +784,7 @@ Thanks to Marcus Cavanaugh for pointing out some coros.queue(0) bugs.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.18.4 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.19.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
 

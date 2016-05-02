@@ -37,7 +37,7 @@ Currently there are 16 doctests.
 Standard Library Tests
 ----------------------
 
-Eventlet provides for the ability to test itself with the standard Python networking tests.  This verifies that the libraries it wraps work at least as well as the standard ones do.  The directory tests/stdlib contains a bunch of stubs that import the standard lib tests from your system and run them.  If you do not have any tests in your python distribution, they'll simply fail to import.
+Eventlet provides the ability to test itself with the standard Python networking tests.  This verifies that the libraries it wraps work at least as well as the standard ones do.  The directory tests/stdlib contains a bunch of stubs that import the standard lib tests from your system and run them.  If you do not have any tests in your python distribution, they'll simply fail to import.
 
 There's a convenience module called all.py designed to handle the impedance mismatch between Nose and the standard tests:
 
@@ -85,10 +85,10 @@ Coverage.py is an awesome tool for evaluating how much code was exercised by uni
 
 After running the tests to completion, this will emit a huge wodge of module names and line numbers.  For some reason, the ``--cover-inclusive`` option breaks everything rather than serving its purpose of limiting the coverage to the local files, so don't use that.
 
-The html option is quite useful because it generates nicely-formatted HTML that are much easier to read than line-number soup.  Here's a command that generates the annotation, dumping the html files into a directory called "cover":
+The html option is quite useful because it generates nicely-formatted HTML files that are much easier to read than line-number soup.  Here's a command that generates the annotation, dumping the html files into a directory called "cover":
 
 .. code-block:: sh
 
   coverage html -d cover --omit='tempmod,<console>,tests'
 
-(``tempmod`` and ``console`` are omitted because they gets thrown away at the completion of their unit tests and coverage.py isn't smart enough to detect this.)
+(``tempmod`` and ``console`` are omitted because they get thrown away at the completion of their unit tests and coverage.py isn't smart enough to detect this.)

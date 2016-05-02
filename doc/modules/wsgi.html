@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>wsgi – WSGI server &mdash; Eventlet 0.18.4 documentation</title>
+    <title>wsgi – WSGI server &mdash; Eventlet 0.19.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.18.4',
+        VERSION:     '0.19.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.18.4 documentation" href="../index.html" />
+    <link rel="top" title="Eventlet 0.19.0 documentation" href="../index.html" />
     <link rel="up" title="Module Reference" href="../modules.html" />
     <link rel="next" title="eventlet.green.zmq – ØMQ support" href="zmq.html" />
     <link rel="prev" title="websocket – Websocket Server" href="websocket.html" /> 
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="websocket.html" title="websocket – Websocket Server"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.18.4 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.19.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
       </ul>
     </div>  
@@ -99,7 +99,8 @@ as there are active connections.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>sock</strong> &#8211; Server socket, must be already bound to a port and listening.</li>
 <li><strong>site</strong> &#8211; WSGI application function.</li>
-<li><strong>log</strong> &#8211; File-like object that logs should be written to.
+<li><strong>log</strong> &#8211; logging.Logger instance or file-like object that logs should be written to.
+If a Logger instance is supplied, messages are sent to the INFO log level.
 If not specified, sys.stderr is used.</li>
 <li><strong>environ</strong> &#8211; Additional parameters that go into the environ dictionary of every request.</li>
 <li><strong>max_size</strong> &#8211; Maximum number of client connections opened at any time by this server.
@@ -298,7 +299,7 @@ in the wsgi test case <code class="docutils literal"><span class="pre">tests/wsg
         <li class="right" >
           <a href="websocket.html" title="websocket – Websocket Server"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.18.4 documentation</a> &raquo;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.19.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &raquo;</li> 
       </ul>
     </div>
