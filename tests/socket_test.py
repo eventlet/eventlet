@@ -1,5 +1,6 @@
 import eventlet
 from eventlet.green import socket
+import tests
 
 
 def test_create_connection_error():
@@ -29,3 +30,7 @@ def test_recv_type():
     sock = eventlet.connect(tuple(addr))
     s = sock.recv(1)
     assert isinstance(s, bytes)
+
+
+def test_threading_condition():
+    tests.run_isolated('socket_udp_sendto.py')
