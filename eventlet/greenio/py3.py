@@ -85,7 +85,7 @@ class GreenFileIO(_OriginalIOBase):
             except OSError as e:
                 if get_errno(e) not in SOCKET_BLOCKING:
                     raise IOError(*e.args)
-            self._trampoline(self, read=True)
+                self._trampoline(self, read=True)
 
     def readall(self):
         buf = []
@@ -98,7 +98,7 @@ class GreenFileIO(_OriginalIOBase):
             except OSError as e:
                 if get_errno(e) not in SOCKET_BLOCKING:
                     raise IOError(*e.args)
-            self._trampoline(self, read=True)
+                self._trampoline(self, read=True)
 
     def readinto(self, b):
         up_to = len(b)
