@@ -43,6 +43,10 @@ from eventlet.support import six
 
 
 def import_patched(module_name):
+    # Import cycle note: it's crucial to use _socket_nodns here because
+    # regular evenlet.green.socket imports *this* module and if we imported
+    # it back we'd end with an import cycle (socket -> greendns -> socket).
+    # We break this import cycle by providing a restricted socket module.
     return patcher.import_patched(module_name,
                                   select=select,
                                   time=time,
@@ -55,15 +59,15 @@ dns.resolver = import_patched('dns.resolver')
 
 for pkg in ('dns.entropy', 'dns.inet', 'dns.query'):
     setattr(dns, pkg.split('.')[1], import_patched(pkg))
-del import_patched
 
 import dns.rdtypes
 for pkg in ['dns.rdtypes.IN', 'dns.rdtypes.ANY']:
-    setattr(dns.rdtypes, pkg.split('.')[-1], patcher.import_patched(pkg))
+    setattr(dns.rdtypes, pkg.split('.')[-1], import_patched(pkg))
 for pkg in ['dns.rdtypes.IN.A', 'dns.rdtypes.IN.AAAA']:
-    setattr(dns.rdtypes.IN, pkg.split('.')[-1], patcher.import_patched(pkg))
+    setattr(dns.rdtypes.IN, pkg.split('.')[-1], import_patched(pkg))
 for pkg in ['dns.rdtypes.ANY.CNAME']:
-    setattr(dns.rdtypes.ANY, pkg.split('.')[-1], patcher.import_patched(pkg))
+    setattr(dns.rdtypes.ANY, pkg.split('.')[-1], import_patched(pkg))
+del import_patched
 
 
 socket = _socket_nodns

@@ -16,7 +16,16 @@ if os.environ.get("EVENTLET_NO_GREENDNS", '').lower() != "yes":
     try:
         from eventlet.support import greendns
     except ImportError as ex:
-        pass
+        try:
+            import dns
+        except ImportError:
+            # greendns import failed because we don't have dnspython - all is well,
+            # that's why we have the conditional import
+            pass
+        else:
+            # If, however, dnspython is importable yet greendns can't be imported
+            # this suggests there's another issue (like an import cycle)
+            raise
 
 if greendns:
     gethostbyname = greendns.gethostbyname

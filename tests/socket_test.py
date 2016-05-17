@@ -1,5 +1,11 @@
 import eventlet
 from eventlet.green import socket
+try:
+    from eventlet.support import greendns
+    has_greendns = True
+except ImportError:
+    has_greendns = False
+from tests import skip_if
 
 
 def test_create_connection_error():
@@ -29,3 +35,11 @@ def test_recv_type():
     sock = eventlet.connect(tuple(addr))
     s = sock.recv(1)
     assert isinstance(s, bytes)
+
+
+@skip_if(not has_greendns)
+def test_dns_methods_are_green():
+    assert socket.gethostbyname is greendns.gethostbyname
+    assert socket.gethostbyname_ex is greendns.gethostbyname_ex
+    assert socket.getaddrinfo is greendns.getaddrinfo
+    assert socket.getnameinfo is greendns.getnameinfo
