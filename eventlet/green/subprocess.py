@@ -9,6 +9,7 @@ from eventlet.green import select, threading, time
 from eventlet.support import six
 
 
+__patched__ = ['call', 'check_call', 'Popen']
 to_patch = [('select', select), ('threading', threading), ('time', time)]
 
 if sys.version_info > (3, 4):
@@ -16,7 +17,7 @@ if sys.version_info > (3, 4):
     to_patch.append(('selectors', selectors))
 
 patcher.inject('subprocess', globals(), *to_patch)
-subprocess_orig = __import__("subprocess")
+subprocess_orig = patcher.original("subprocess")
 mswindows = sys.platform == "win32"
 
 

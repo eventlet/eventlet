@@ -224,7 +224,7 @@ def monkey_patch(**on):
     """
     accepted_args = set(('os', 'select', 'socket',
                          'thread', 'time', 'psycopg', 'MySQLdb',
-                         'builtins'))
+                         'builtins', 'subprocess'))
     # To make sure only one of them is passed here
     assert not ('__builtin__' in on and 'builtins' in on)
     try:
@@ -262,6 +262,7 @@ def monkey_patch(**on):
         ('time', _green_time_modules),
         ('MySQLdb', _green_MySQLdb),
         ('builtins', _green_builtins),
+        ('subprocess', _green_subprocess_modules),
     ]:
         if on[name] and not already_patched.get(name):
             modules_to_patch += modules_function()
@@ -399,6 +400,11 @@ def _green_socket_modules():
         return [('socket', socket), ('ssl', ssl)]
     except ImportError:
         return [('socket', socket)]
+
+
+def _green_subprocess_modules():
+    from eventlet.green import subprocess
+    return [('subprocess', subprocess)]
 
 
 def _green_thread_modules():

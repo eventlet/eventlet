@@ -6,6 +6,14 @@ if __name__ == '__main__':
     from eventlet.green import MySQLdb as gm
     patcher.monkey_patch(all=True, MySQLdb=True)
     patched_set = set(patcher.already_patched) - set(['psycopg'])
-    assert patched_set == frozenset(['MySQLdb', 'os', 'select', 'socket', 'thread', 'time'])
+    assert patched_set == frozenset([
+        'MySQLdb',
+        'os',
+        'select',
+        'socket',
+        'subprocess',
+        'thread',
+        'time',
+    ])
     assert m.connect == gm.connect
     print('pass')
