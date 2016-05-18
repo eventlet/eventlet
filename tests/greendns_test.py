@@ -9,13 +9,8 @@ import time
 import tests
 from tests import mock
 try:
-    import dns.rdatatype
-    import dns.rdtypes.IN.A
-    import dns.rdtypes.IN.AAAA
-    import dns.resolver
-    import dns.reversename
-    import dns.rrset
     from eventlet.support import greendns
+    from eventlet.support.greendns import dns
 except ImportError:
     __test__ = False
 
