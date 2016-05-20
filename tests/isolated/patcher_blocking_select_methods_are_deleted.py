@@ -11,9 +11,7 @@ if __name__ == '__main__':
     # * https://bitbucket.org/eventlet/eventlet/issues/167
     # * https://github.com/eventlet/eventlet/issues/169
     import select
-    # FIXME: must also delete `poll`, but it breaks subprocess `communicate()`
-    # https://github.com/eventlet/eventlet/issues/290
-    for name in ['devpoll', 'epoll', 'kqueue', 'kevent']:
+    for name in ['devpoll', 'poll', 'epoll', 'kqueue', 'kevent']:
         assert not hasattr(select, name), name
 
     import sys
