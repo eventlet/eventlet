@@ -46,6 +46,7 @@ main() {
 
 	if confirm "Build documentation (website)? [Yn] " >&2; then
 		bin/build-website.bash || exit 1
+		git checkout "$branch"
 	fi
 
 	if confirm "Upload to PyPi? [Yn] "; then
