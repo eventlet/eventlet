@@ -125,14 +125,14 @@ class GreenSocket(object):
     # This placeholder is to prevent __getattr__ from creating an infinite call loop
     fd = None
 
-    def __init__(self, family_or_realsock=socket.AF_INET, *args, **kwargs):
+    def __init__(self, family=socket.AF_INET, *args, **kwargs):
         should_set_nonblocking = kwargs.pop('set_nonblocking', True)
-        if isinstance(family_or_realsock, six.integer_types):
-            fd = _original_socket(family_or_realsock, *args, **kwargs)
+        if isinstance(family, six.integer_types):
+            fd = _original_socket(family, *args, **kwargs)
             # Notify the hub that this is a newly-opened socket.
             notify_opened(fd.fileno())
         else:
-            fd = family_or_realsock
+            fd = family
 
         # import timeout from other socket, if it was there
         try:

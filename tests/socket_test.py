@@ -43,3 +43,9 @@ def test_dns_methods_are_green():
     assert socket.gethostbyname_ex is greendns.gethostbyname_ex
     assert socket.getaddrinfo is greendns.getaddrinfo
     assert socket.getnameinfo is greendns.getnameinfo
+
+
+def test_socket_api_family():
+    # It was named family_or_realsock
+    # https://github.com/eventlet/eventlet/issues/319
+    socket.socket(family=socket.AF_INET)
