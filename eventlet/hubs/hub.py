@@ -21,7 +21,7 @@ else:
 
 from eventlet import patcher
 from eventlet.hubs import timer, IOClosed
-from eventlet.support import greenlets as greenlet, clear_sys_exc_info
+from eventlet.support import greenlets as greenlet, clear_sys_exc_info, six
 time = patcher.original('time')
 
 g_prevent_multiple_readers = True
@@ -187,7 +187,7 @@ class BaseHub(object):
             their greenlets queued up to send.
         """
         found = False
-        for evtype, bucket in self.secondaries.items():
+        for evtype, bucket in six.iteritems(self.secondaries):
             if fileno in bucket:
                 for listener in bucket[fileno]:
                     found = True
@@ -197,7 +197,7 @@ class BaseHub(object):
 
         # For the primary listeners, we actually need to call remove,
         # which may modify the underlying OS polling objects.
-        for evtype, bucket in self.listeners.items():
+        for evtype, bucket in six.iteritems(self.listeners):
             if fileno in bucket:
                 listener = bucket[fileno]
                 found = True
