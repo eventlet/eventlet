@@ -1529,6 +1529,67 @@ class TestHttpd(_TestBase):
         assert result.body == b'Host: localhost\nx-ANY_k: one\nx-ANY_k: two'
 
 
+class TestHttpdUnixSocket(_TestBase):
+    def setUp(self):
+        self._socketnumber = 1
+        self._tempdir = tempfile.mkdtemp('eventlet_test_httpd_unix_socket')
+        super(TestHttpdUnixSocket, self).setUp()
+
+    def tearDown(self):
+        super(TestHttpdUnixSocket, self).tearDown()
+        shutil.rmtree(self._tempdir)
+
+    def set_site(self):
+        self.site = Site()
+
+    def spawn_server(self, **kwargs):
+        new_kwargs = dict(max_size=128,
+                          log=self.logfile,
+                          site=self.site)
+        new_kwargs.update(kwargs)
+
+        if 'sock' not in new_kwargs:
+            self.socket_filename = os.path.join(
+                self._tempdir, 'sock%d' % self._socketnumber)
+            self._socketnumber += 1
+            listen_socket = eventlet.listen(self.socket_filename,
+                                            family=socket.AF_UNIX)
+            new_kwargs['sock'] = listen_socket
+
+        self.server_addr = new_kwargs['sock'].getsockname()
+        self.spawn_thread(wsgi.server, **new_kwargs)
+
+    def test_basic_response(self):
+        sock = eventlet.connect(self.server_addr, family=socket.AF_UNIX)
+
+        sock.sendall(b'GET / HTTP/1.0\r\nHost: localhost\r\n\r\n')
+        result = recvall(sock)
+        # The server responds with the maximum version it supports
+        self.assertTrue(result.startswith(b'HTTP'), result)
+        self.assertTrue(result.endswith(b'hello world'), result)
+        self.assertTrue(b' 200 OK\r\n' in result)
+
+    def test_wsgi_environment(self):
+        captured_environ = {}
+
+        def app(environ, start_response):
+            start_response('200 OK', [])
+            captured_environ.update(**environ)
+            return [b'hello']
+
+        self.spawn_server(site=app)
+        sock = eventlet.connect(self.server_addr, family=socket.AF_UNIX)
+        sock.sendall(b'GET / HTTP/1.1\r\nHost: localhost\r\nSome-Header: 12345\r\n\r\n')
+        result = read_http(sock)
+        sock.close()
+        self.assertEqual(result.status, 'HTTP/1.1 200 OK')
+        self.assertEqual(result.body, b'hello')
+        self.assertEqual(captured_environ.get('SERVER_NAME'), 'unix')
+        self.assertEqual(captured_environ.get('SERVER_PORT'), self.socket_filename)
+        self.assertFalse('REMOTE_ADDR' in captured_environ)
+        self.assertFalse('REMOTE_PORT' in captured_environ)
+
+
 def read_headers(sock):
     fd = sock.makefile('rb')
     try:

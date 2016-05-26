@@ -536,8 +536,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                         self.close_connection = 1
                         self.server.log.error((
                             'chunked encoding error while discarding request body.'
-                            + ' ip={0} request="{1}" error="{2}"').format(
-                                self.get_client_ip(), self.requestline, e,
+                            + ' client={0} request="{1}" error="{2}"').format(
+                                self.get_client_address(), self.requestline, e,
                         ))
             finish = time.time()
 
@@ -545,9 +545,13 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 hook(self.environ, *args, **kwargs)
 
             if self.server.log_output:
+                if isinstance(self.client_address, six.string_types):
+                    client_port = ''
+                else:
+                    client_port = self.client_address[1]
                 self.server.log.info(self.server.log_format % {
-                    'client_ip': self.get_client_ip(),
-                    'client_port': self.client_address[1],
+                    'client_ip': self.get_client_address(),
+                    'client_port': client_port,
                     'date_time': self.log_date_time_string(),
                     'request_line': self.requestline,
                     'status_code': status_code[0],
@@ -555,13 +559,18 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     'wall_seconds': finish - start,
                 })
 
-    def get_client_ip(self):
-        client_ip = self.client_address[0]
+    def get_client_address(self):
+        if isinstance(self.client_address, six.string_types):
+            # there's nothing useful in self.client_address
+            client_addr = "unix"
+        else:
+            client_addr = self.client_address[0]
+
         if self.server.log_x_forwarded_for:
             forward = self.headers.get('X-Forwarded-For', '').replace(' ', '')
             if forward:
-                client_ip = "%s,%s" % (forward, client_ip)
-        return client_ip
+                client_addr = "%s,%s" % (forward, client_addr)
+        return client_addr
 
     def get_environ(self):
         env = self.server.get_environ()
@@ -587,11 +596,21 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             env['CONTENT_LENGTH'] = length
         env['SERVER_PROTOCOL'] = 'HTTP/1.0'
 
-        host, port = self.request.getsockname()[:2]
-        env['SERVER_NAME'] = host
-        env['SERVER_PORT'] = str(port)
-        env['REMOTE_ADDR'] = self.client_address[0]
-        env['REMOTE_PORT'] = str(self.client_address[1])
+        sockname = self.request.getsockname()
+        if isinstance(sockname, six.string_types):
+            env['SERVER_NAME'] = 'unix'
+            env['SERVER_PORT'] = sockname
+        else:
+            host, port = sockname
+            env['SERVER_NAME'] = host
+            env['SERVER_PORT'] = str(port)
+
+        if isinstance(self.client_address, (list, tuple)):
+            env['REMOTE_ADDR'] = self.client_address[0]
+            env['REMOTE_PORT'] = str(self.client_address[1])
+        # REMOTE_ADDR and REMOTE_PORT aren't required by PEP 333, so omit
+        # them in case of a Unix domain socket.
+
         env['GATEWAY_INTERFACE'] = 'CGI/1.1'
 
         try:
