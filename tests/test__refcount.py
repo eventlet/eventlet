@@ -3,7 +3,6 @@ are not leaked by the hub.
 """
 import gc
 from pprint import pformat
-import unittest
 import weakref
 
 from eventlet.support import clear_sys_exc_info
@@ -86,7 +85,3 @@ def test_clean_exit():
 def test_timeout_exit():
     run_and_check(False)
     run_and_check(False)
-
-
-if __name__ == '__main__':
-    unittest.main()

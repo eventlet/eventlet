@@ -2,10 +2,8 @@
 To do that spawn a green server and then access it using a green socket.
 If either operation blocked the whole script would block and timeout.
 """
-import unittest
-
+import eventlet
 from eventlet.green import BaseHTTPServer
-from eventlet import spawn, kill
 from eventlet.support import six
 
 if six.PY2:
@@ -34,27 +32,20 @@ def start_http_server():
         # the send() for the response blocks (or at least appeared to be)
         httpd.request_count += 1
         httpd.handle_request()
-    return spawn(serve), httpd, sa[1]
+    return eventlet.spawn(serve), httpd, sa[1]
 
 
-class TestGreenness(unittest.TestCase):
+def test_urllib():
+    gthread, server, port = start_http_server()
 
-    def setUp(self):
-        self.gthread, self.server, self.port = start_http_server()
-        # print('Spawned the server')
-
-    def tearDown(self):
-        self.server.server_close()
-        kill(self.gthread)
-
-    def test_urllib(self):
-        self.assertEqual(self.server.request_count, 0)
+    try:
+        assert server.request_count == 0
         try:
-            urlopen('http://127.0.0.1:%s' % self.port)
+            urlopen('http://127.0.0.1:{0}'.format(port))
             assert False, 'should not get there'
         except HTTPError as ex:
             assert ex.code == 501, repr(ex)
-        self.assertEqual(self.server.request_count, 1)
-
-if __name__ == '__main__':
-    unittest.main()
+        assert server.request_count == 1
+    finally:
+        server.server_close()
+        eventlet.kill(gthread)

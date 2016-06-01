@@ -60,7 +60,3 @@ def test_create_connection_refused():
     except socket.error as ex:
         errno = ex.errno
     assert errno in [111, 61, 10061], 'Expected socket.error ECONNREFUSED, got {0}'.format(errno)
-
-
-if __name__ == '__main__':
-    unittest.main()

@@ -8,7 +8,6 @@ import socket
 import sys
 import tempfile
 import traceback
-import unittest
 
 import eventlet
 from eventlet import debug
@@ -1787,7 +1786,3 @@ class TestChunkedInput(_TestBase):
             signal.signal(signal.SIGALRM, signal.SIG_DFL)
 
         assert not got_signal, "caught alarm signal. infinite loop detected."
-
-
-if __name__ == '__main__':
-    unittest.main()

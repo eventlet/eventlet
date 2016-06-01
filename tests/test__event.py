@@ -1,4 +1,3 @@
-import unittest
 from eventlet import spawn, sleep, with_timeout
 from eventlet.event import Event
 import eventlet
@@ -39,7 +38,3 @@ class TestEvent(LimitedTestCase):
             X = object()
             result = with_timeout(DELAY, event2.wait, timeout_value=X)
             assert result is X, 'Nobody sent anything to event2 yet it received %r' % (result, )
-
-
-if __name__ == '__main__':
-    unittest.main()

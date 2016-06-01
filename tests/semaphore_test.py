@@ -1,5 +1,4 @@
 import time
-import unittest
 
 import eventlet
 from eventlet import semaphore
@@ -62,7 +61,3 @@ def test_semaphore_contention():
     t2.kill()
 
     assert abs(counts[0] - counts[1]) < int(min(counts) * 0.1), counts
-
-
-if __name__ == '__main__':
-    unittest.main()
