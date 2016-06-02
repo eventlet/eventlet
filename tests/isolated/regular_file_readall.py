@@ -1,4 +1,5 @@
-import eventlet; eventlet.monkey_patch()
+import eventlet
+eventlet.monkey_patch()
 
 from eventlet.support import six
 import io
