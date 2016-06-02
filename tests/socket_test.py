@@ -62,3 +62,10 @@ def test_socket_api_family():
     # It was named family_or_realsock
     # https://github.com/eventlet/eventlet/issues/319
     socket.socket(family=socket.AF_INET)
+
+
+def test_getaddrinfo_ipv6_scope():
+    greendns.is_ipv6_addr('::1%2')
+    if not socket.has_ipv6:
+        return
+    socket.getaddrinfo('::1%2', 80, socket.AF_INET6)
