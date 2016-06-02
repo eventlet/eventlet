@@ -96,6 +96,7 @@ def is_ipv6_addr(host):
     """Return True if host is a valid IPv6 address"""
     if not isinstance(host, six.string_types):
         return False
+    host = host.split('%', 1)[0]
     try:
         dns.ipv6.inet_aton(host)
     except dns.exception.SyntaxError:
