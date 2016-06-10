@@ -1527,6 +1527,22 @@ class TestHttpd(_TestBase):
         assert result.status == 'HTTP/1.1 200 OK'
         assert result.body == b'Host: localhost\nx-ANY_k: one\nx-ANY_k: two'
 
+    def test_env_headers(self):
+        def app(environ, start_response):
+            start_response('200 OK', [])
+            return ['{0}: {1}\n'.format(*kv).encode() for kv in sorted(environ.items())
+                    if kv[0].startswith('HTTP_')]
+
+        self.spawn_server(site=app)
+        sock = eventlet.connect(self.server_addr)
+        sock.sendall(b'GET / HTTP/1.1\r\nHost: localhost\r\npath-info: foo\r\n'
+                     b'x-ANY_k: one\r\nhttp-x-ANY_k: two\r\n\r\n')
+        result = read_http(sock)
+        sock.close()
+        assert result.status == 'HTTP/1.1 200 OK', 'Received status {0!r}'.format(result.status)
+        assert result.body == (b'HTTP_HOST: localhost\nHTTP_HTTP_X_ANY_K: two\n'
+                               b'HTTP_PATH_INFO: foo\nHTTP_X_ANY_K: one\n')
+
 
 def read_headers(sock):
     fd = sock.makefile('rb')
