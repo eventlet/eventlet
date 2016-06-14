@@ -13,7 +13,10 @@ except ImportError:
 if six.PY2:
     patcher.inject('httplib', globals(), *to_patch)
 if six.PY3:
-    patcher.inject('http.client', globals(), *to_patch)
+    from eventlet.green.http import client
+    for name in dir(client):
+        if name not in patcher.__exclude:
+            globals()[name] = getattr(client, name)
 
 if __name__ == '__main__':
     test()

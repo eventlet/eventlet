@@ -13,6 +13,7 @@ setup(
     url='http://eventlet.net',
     packages=find_packages(exclude=['benchmarks', 'tests', 'tests.*']),
     install_requires=(
+        'enum-compat',
         'greenlet >= 0.3',
     ),
     zip_safe=False,
