@@ -1,5 +1,5 @@
 from eventlet import patcher
-from eventlet.green import ftplib, os, socket, time
+from eventlet.green import ftplib, http, os, socket, time
 from eventlet.green.http import client as http_client
 from eventlet.green.urllib import error, parse, response
 
@@ -8,6 +8,12 @@ from eventlet.green.urllib import error, parse, response
 
 
 to_patch = [
+    # This (http module) is needed here, otherwise test__greenness hangs
+    # forever on Python 3 because parts of non-green http (including
+    # http.client) leak into our patched urllib.request. There may be a nicer
+    # way to handle this (I didn't dig too deep) but this does the job. Jakub
+    ('http', http),
+
     ('http.client', http_client),
     ('os', os),
     ('socket', socket),
