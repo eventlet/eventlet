@@ -279,6 +279,7 @@ def setup():
     _wsock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
     sock.close()
     _rsock = greenio.GreenSocket(csock)
+    _rsock.settimeout(None)
 
     for i in six.moves.range(_nthreads):
         t = threading.Thread(target=tworker,
