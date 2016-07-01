@@ -528,3 +528,7 @@ def test_socketserver_selectors():
 
 def test_blocking_select_methods_are_deleted():
     tests.run_isolated('patcher_blocking_select_methods_are_deleted.py')
+
+
+def test_regular_file_readall():
+    tests.run_isolated('regular_file_readall.py')
