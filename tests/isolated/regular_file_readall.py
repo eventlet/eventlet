@@ -1,13 +1,14 @@
-import eventlet
-eventlet.monkey_patch()
+__test__ = False
 
-from eventlet.support import six
-import io
-import os
-import tempfile
+if __name__ == '__main__':
+    import eventlet
+    eventlet.monkey_patch()
 
+    from eventlet.support import six
+    import io
+    import os
+    import tempfile
 
-if __name__ == "__main__":
     with tempfile.NamedTemporaryFile() as tmp:
         with io.open(tmp.name, "wb") as fp:
             fp.write(b"content")
