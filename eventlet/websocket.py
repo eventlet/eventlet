@@ -135,7 +135,12 @@ class WebSocketWSGI(object):
         return wsgi.ALREADY_HANDLED
 
     def _handle_legacy_request(self, environ):
-        sock = environ['eventlet.input'].get_socket()
+        if 'eventlet.input' in environ:
+            sock = environ['eventlet.input'].get_socket()
+        elif 'gunicorn.socket' in environ:
+            sock = environ['gunicorn.socket']
+        else:
+            raise Exception('No eventlet.input or gunicorn.socket present in environ.')
 
         if 'HTTP_SEC_WEBSOCKET_KEY1' in environ:
             self.protocol_version = 76
@@ -192,7 +197,13 @@ class WebSocketWSGI(object):
         return WebSocket(sock, environ, self.protocol_version)
 
     def _handle_hybi_request(self, environ):
-        sock = environ['eventlet.input'].get_socket()
+        if 'eventlet.input' in environ:
+            sock = environ['eventlet.input'].get_socket()
+        elif 'gunicorn.socket' in environ:
+            sock = environ['gunicorn.socket']
+        else:
+            raise Exception('No eventlet.input or gunicorn.socket present in environ.')
+
         hybi_version = environ['HTTP_SEC_WEBSOCKET_VERSION']
         if hybi_version not in ('8', '13', ):
             raise BadRequest(status='426 Upgrade Required',
