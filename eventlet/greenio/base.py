@@ -299,6 +299,11 @@ class GreenSocket(object):
             res = _python2_fileobject(dupped, *args, **kwargs)
             if hasattr(dupped, "_drop"):
                 dupped._drop()
+                # Making the close function of dupped None so that when garbage collector
+                # kicks in and tries to call del, which will ultimately call close, _drop
+                # doesn't get called on dupped twice as it has been already explicitly called in
+                # previous line
+                dupped.close = None
             return res
 
     def makeGreenFile(self, *args, **kw):
