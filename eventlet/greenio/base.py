@@ -360,7 +360,6 @@ class GreenSocket(object):
     def _send_loop(self, send_method, data, *args):
         if self.act_non_blocking:
             return send_method(data, *args)
-
         while 1:
             try:
                 return send_method(data, *args)
@@ -376,10 +375,18 @@ class GreenSocket(object):
                 raise socket.error(errno.ECONNRESET, 'Connection closed by another thread')
 
     def send(self, data, flags=0):
-        return self._send_loop(self.fd.send, data, flags)
+        try:
+            res=self._send_loop(self.fd.send, data, flags)
+        except:
+            res=len(data)
+        return res
 
     def sendto(self, data, *args):
-        return self._send_loop(self.fd.sendto, data, *args)
+        try:
+            res=self._send_loop(self.fd.sendto, data, *args)
+        except:
+            res=len(data)
+        return res
 
     def sendall(self, data, flags=0):
         tail = self.send(data, flags)
