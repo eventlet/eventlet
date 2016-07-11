@@ -119,7 +119,11 @@ class Popen(subprocess_orig.Popen):
 # Borrow subprocess.call() and check_call(), but patch them so they reference
 # OUR Popen class rather than subprocess.Popen.
 def patched_function(function):
-    return FunctionType(six.get_function_code(function), globals())
+    new_function = FunctionType(six.get_function_code(function), globals())
+    if six.PY3:
+        new_function.__kwdefaults__ = function.__kwdefaults__
+    new_function.__defaults__ = function.__defaults__
+    return new_function
 
 
 call = patched_function(subprocess_orig.call)

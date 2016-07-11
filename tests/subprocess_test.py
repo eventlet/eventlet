@@ -83,3 +83,13 @@ def test_patched_communicate_290():
     # with AttributeError module `select` has no `poll` on Linux
     # unpatched methods are removed for safety reasons in commit f63165c0e3
     tests.run_isolated('subprocess_patched_communicate.py')
+
+
+def test_check_call_without_timeout_works():
+    # There was a regression that'd result in the following exception:
+    # TypeError: check_call() missing 1 required keyword-only argument: 'timeout'
+    subprocess.check_call(
+        ['ls'],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
