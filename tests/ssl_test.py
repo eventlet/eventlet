@@ -1,12 +1,15 @@
+import contextlib
 import socket
 import warnings
 
 import eventlet
 from eventlet import greenio
+from eventlet.green import socket
 try:
     from eventlet.green import ssl
 except ImportError:
     __test__ = False
+from eventlet.support import six
 import tests
 
 
@@ -205,3 +208,63 @@ class SSLTest(tests.LimitedTestCase):
         listener.close()
         loopt.wait()
         eventlet.sleep(0)
+
+    def test_receiving_doesnt_block_if_there_is_already_decrypted_buffered_data(self):
+        # Here's what could (and would) happen before the relevant bug was fixed (assuming method
+        # M was trampolining unconditionally before actually reading):
+        # 1. One side sends n bytes, leaves connection open (important)
+        # 2. The other side uses method M to read m (where m < n) bytes, the underlying SSL
+        #    implementation reads everything from the underlying socket, decrypts all n bytes,
+        #    returns m of them and buffers n-m to be read later.
+        # 3. The other side tries to read the remainder of the data (n-m bytes), this blocks
+        #    because M trampolines uncoditionally and trampoline will hang because reading from
+        #    the underlying socket would block. It would block because there's no data to be read
+        #    and the connection is still open; leaving the connection open /mentioned in 1./ is
+        #    important because otherwise trampoline would return immediately and the test would pass
+        #    even with the bug still present in the code).
+        #
+        # The solution is to first request data from the underlying SSL implementation and only
+        # trampoline if we actually need to read some data from the underlying socket.
+        #
+        # GreenSSLSocket.recv() wasn't broken but I've added code to test it as well for
+        # completeness.
+        content = b'xy'
+
+        def recv(sock, expected):
+            assert sock.recv(len(expected)) == expected
+
+        def recv_into(sock, expected):
+            buf = bytearray(len(expected))
+            assert sock.recv_into(buf, len(expected)) == len(expected)
+            assert buf == expected
+
+        for read_function in [recv, recv_into]:
+            print('Trying %s...' % (read_function,))
+            listener = listen_ssl_socket()
+
+            def accept(listener):
+                sock, addr = listener.accept()
+                sock.sendall(content)
+                return sock
+
+            accepter = eventlet.spawn(accept, listener)
+
+            client_to_server = None
+            try:
+                client_to_server = ssl.wrap_socket(eventlet.connect(listener.getsockname()))
+                for character in six.iterbytes(content):
+                    character = six.int2byte(character)
+                    print('We have %d already decrypted bytes pending, expecting: %s' % (
+                        client_to_server.pending(), character))
+                    read_function(client_to_server, character)
+            finally:
+                if client_to_server is not None:
+                    client_to_server.close()
+                server_to_client = accepter.wait()
+
+                # Very important: we only want to close the socket *after* the other side has
+                # read the data it wanted already, otherwise this would defeat the purpose of the
+                # test (see the comment at the top of this test).
+                server_to_client.close()
+
+                listener.close()
