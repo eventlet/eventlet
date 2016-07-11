@@ -6,7 +6,7 @@ from eventlet import greenio
 try:
     from eventlet.green import ssl
 except ImportError:
-    pass
+    __test__ = False
 import tests
 
 
@@ -33,7 +33,6 @@ class SSLTest(tests.LimitedTestCase):
 
         super(SSLTest, self).setUp()
 
-    @tests.skip_if_no_ssl
     def test_duplex_response(self):
         def serve(listener):
             sock, addr = listener.accept()
@@ -49,7 +48,6 @@ class SSLTest(tests.LimitedTestCase):
         self.assertEqual(client.recv(8192), b'response')
         server_coro.wait()
 
-    @tests.skip_if_no_ssl
     def test_ssl_close(self):
         def serve(listener):
             sock, addr = listener.accept()
@@ -70,7 +68,6 @@ class SSLTest(tests.LimitedTestCase):
         client.close()
         server_coro.wait()
 
-    @tests.skip_if_no_ssl
     def test_ssl_connect(self):
         def serve(listener):
             sock, addr = listener.accept()
@@ -86,7 +83,6 @@ class SSLTest(tests.LimitedTestCase):
         ssl_client.close()
         server_coro.wait()
 
-    @tests.skip_if_no_ssl
     def test_ssl_unwrap(self):
         def serve():
             sock, addr = listener.accept()
@@ -110,7 +106,6 @@ class SSLTest(tests.LimitedTestCase):
         client2.sendall(b'after')
         server_coro.wait()
 
-    @tests.skip_if_no_ssl
     def test_sendall_cpu_usage(self):
         """SSL socket.sendall() busy loop
 
@@ -150,7 +145,6 @@ class SSLTest(tests.LimitedTestCase):
         tests.check_idle_cpu_usage(0.2, 0.1)
         server_coro.kill()
 
-    @tests.skip_if_no_ssl
     def test_greensslobject(self):
         def serve(listener):
             sock, addr = listener.accept()
@@ -163,7 +157,6 @@ class SSLTest(tests.LimitedTestCase):
         self.assertEqual(client.recv(1024), b'content')
         self.assertEqual(client.recv(1024), b'')
 
-    @tests.skip_if_no_ssl
     def test_regression_gh_17(self):
         # https://github.com/eventlet/eventlet/issues/17
         # ssl wrapped but unconnected socket methods go special code path
@@ -175,7 +168,6 @@ class SSLTest(tests.LimitedTestCase):
         except ssl.SSLError as e:
             assert 'timed out' in str(e)
 
-    @tests.skip_if_no_ssl
     def test_no_handshake_block_accept_loop(self):
         listener = listen_ssl_socket()
         listener.settimeout(0.3)
