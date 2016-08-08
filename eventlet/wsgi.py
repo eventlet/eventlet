@@ -604,7 +604,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         env['headers_raw'] = headers_raw = tuple((k, v.strip()) for k, v in headers)
         for k, v in headers_raw:
             k = k.replace('-', '_').upper()
-            if k in env:
+            if k in ('CONTENT_TYPE', 'CONTENT_LENGTH'):
+                # These do not get the HTTP_ prefix and were handled above
                 continue
             envk = 'HTTP_' + k
             if envk in env:
