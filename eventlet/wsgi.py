@@ -366,7 +366,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             self.rfile = orig_rfile
 
         content_length = self.headers.get('content-length')
-        if content_length:
+        if content_length is not None:
             try:
                 int(content_length)
             except ValueError:
