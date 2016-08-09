@@ -44,6 +44,15 @@ def format_date_time(timestamp):
     )
 
 
+def addr_to_host_port(addr):
+    host = 'unix'
+    port = ''
+    if isinstance(addr, tuple):
+        host = addr[0]
+        port = addr[1]
+    return (host, port)
+
+
 # Collections of error codes to compare against.  Not all attributes are set
 # on errno module on all platforms, so some are literals :(
 BAD_SOCK = set((errno.EBADF, 10053))
@@ -536,8 +545,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                         self.close_connection = 1
                         self.server.log.error((
                             'chunked encoding error while discarding request body.'
-                            + ' ip={0} request="{1}" error="{2}"').format(
-                                self.get_client_ip(), self.requestline, e,
+                            + ' client={0} request="{1}" error="{2}"').format(
+                                self.get_client_address()[0], self.requestline, e,
                         ))
             finish = time.time()
 
@@ -545,9 +554,11 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 hook(self.environ, *args, **kwargs)
 
             if self.server.log_output:
+                client_host, client_port = self.get_client_address()
+
                 self.server.log.info(self.server.log_format % {
-                    'client_ip': self.get_client_ip(),
-                    'client_port': self.client_address[1],
+                    'client_ip': client_host,
+                    'client_port': client_port,
                     'date_time': self.log_date_time_string(),
                     'request_line': self.requestline,
                     'status_code': status_code[0],
@@ -555,13 +566,14 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     'wall_seconds': finish - start,
                 })
 
-    def get_client_ip(self):
-        client_ip = self.client_address[0]
+    def get_client_address(self):
+        host, port = addr_to_host_port(self.client_address)
+
         if self.server.log_x_forwarded_for:
             forward = self.headers.get('X-Forwarded-For', '').replace(' ', '')
             if forward:
-                client_ip = "%s,%s" % (forward, client_ip)
-        return client_ip
+                host = forward + ',' + host
+        return (host, port)
 
     def get_environ(self):
         env = self.server.get_environ()
@@ -587,11 +599,13 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             env['CONTENT_LENGTH'] = length
         env['SERVER_PROTOCOL'] = 'HTTP/1.0'
 
-        host, port = self.request.getsockname()[:2]
-        env['SERVER_NAME'] = host
-        env['SERVER_PORT'] = str(port)
-        env['REMOTE_ADDR'] = self.client_address[0]
-        env['REMOTE_PORT'] = str(self.client_address[1])
+        sockname = self.request.getsockname()
+        server_addr = addr_to_host_port(sockname)
+        env['SERVER_NAME'] = server_addr[0]
+        env['SERVER_PORT'] = str(server_addr[1])
+        client_addr = addr_to_host_port(self.client_address)
+        env['REMOTE_ADDR'] = client_addr[0]
+        env['REMOTE_PORT'] = str(client_addr[1])
         env['GATEWAY_INTERFACE'] = 'CGI/1.1'
 
         try:

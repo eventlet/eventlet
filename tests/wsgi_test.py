@@ -1515,18 +1515,33 @@ class TestHttpd(_TestBase):
         self.assertEqual(result.headers_original[random_case_header[0]], random_case_header[1])
 
     def test_log_unix_address(self):
+        def app(environ, start_response):
+            start_response('200 OK', [])
+            return ['\n{0}={1}\n'.format(k, v).encode() for k, v in environ.items()]
+
         tempdir = tempfile.mkdtemp('eventlet_test_log_unix_address')
-        path = ''
         try:
-            sock = eventlet.listen(tempdir + '/socket', socket.AF_UNIX)
-            path = sock.getsockname()
+            server_sock = eventlet.listen(tempdir + '/socket', socket.AF_UNIX)
+            path = server_sock.getsockname()
 
             log = six.StringIO()
-            self.spawn_server(sock=sock, log=log)
+            self.spawn_server(site=app, sock=server_sock, log=log)
             eventlet.sleep(0)  # need to enter server loop
             assert 'http:' + path in log.getvalue()
+
+            client_sock = eventlet.connect(path, family=socket.AF_UNIX)
+            client_sock.sendall(b'GET / HTTP/1.0\r\nHost: localhost\r\n\r\n')
+            result = read_http(client_sock)
+            client_sock.close()
+            assert '\nunix -' in log.getvalue()
         finally:
             shutil.rmtree(tempdir)
+
+        assert result.status == 'HTTP/1.1 200 OK', repr(result) + log.getvalue()
+        assert b'\nSERVER_NAME=unix\n' in result.body
+        assert b'\nSERVER_PORT=\n' in result.body
+        assert b'\nREMOTE_ADDR=unix\n' in result.body
+        assert b'\nREMOTE_PORT=\n' in result.body
 
     def test_headers_raw(self):
         def app(environ, start_response):
