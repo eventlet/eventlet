@@ -302,7 +302,7 @@ def get_database_auth():
     return retval
 
 
-def run_python(path, env=None, args=None):
+def run_python(path, env=None, args=None, timeout=None):
     new_argv = [sys.executable]
     new_env = os.environ.copy()
     if path:
@@ -323,17 +323,19 @@ def run_python(path, env=None, args=None):
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
     )
+    if timeout is None:
+        timeout = 10
     try:
-        output, _ = p.communicate(timeout=30)
+        output, _ = p.communicate(timeout=timeout)
     except subprocess.TimeoutExpired:
         p.kill()
-        output, _ = p.communicate(timeout=30)
+        output, _ = p.communicate(timeout=timeout)
         return "{0}\nFAIL - timed out".format(output)
     return output
 
 
-def run_isolated(path, prefix='tests/isolated/', env=None, args=None):
-    output = run_python(prefix + path, env=env, args=args).rstrip()
+def run_isolated(path, prefix='tests/isolated/', env=None, args=None, timeout=None):
+    output = run_python(prefix + path, env=env, args=args, timeout=timeout).rstrip()
     if output.startswith(b'skip'):
         parts = output.split(b':', 1)
         skip_args = []
