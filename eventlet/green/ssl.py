@@ -67,6 +67,10 @@ class GreenSSLSocket(_original_sslsocket):
             sock.fd, keyfile, certfile, server_side, cert_reqs, ssl_version,
             ca_certs, do_handshake_on_connect and six.PY2, *args, **kw)
 
+        # SSL versions 2 and 3 are considered insecure, disabling
+        self._context.options |= OP_NO_SSLv2
+        self._context.options |= OP_NO_SSLv3
+
         # the superclass initializer trashes the methods so we remove
         # the local-object versions of them and let the actual class
         # methods shine through
@@ -382,6 +386,10 @@ if hasattr(__ssl, 'sslwrap_simple'):
                                   cert_reqs=CERT_NONE,
                                   ssl_version=PROTOCOL_SSLv23,
                                   ca_certs=None)
+
+        # SSL versions 2 and 3 are considered insecure, disabling
+        ssl_sock._context.options |= ssl.OP_NO_SSLv2
+        ssl_sock._context.options |= ssl.OP_NO_SSLv3
         return ssl_sock
 
 
