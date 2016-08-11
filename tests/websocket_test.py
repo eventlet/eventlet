@@ -1,4 +1,5 @@
 import errno
+import mock
 import socket
 
 import eventlet
@@ -9,7 +10,6 @@ from eventlet.support import six
 from eventlet.websocket import WebSocket, WebSocketWSGI
 
 import tests
-from tests import mock
 import tests.wsgi_test
 
 

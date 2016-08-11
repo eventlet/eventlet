@@ -1,13 +1,13 @@
 # coding: utf-8
 """Tests for the eventlet.support.greendns module"""
 
+import mock
 import os
 import socket
 import tempfile
 import time
 
 import tests
-from tests import mock
 try:
     from eventlet.support import greendns
     from eventlet.support.greendns import dns

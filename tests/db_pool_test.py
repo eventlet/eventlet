@@ -3,11 +3,12 @@
 from __future__ import print_function
 
 import sys
+import mock
 import os
 import traceback
 from unittest import TestCase, main
 
-from tests import mock, skip_unless, skip_with_pyevent, get_database_auth
+from tests import skip_unless, skip_with_pyevent, get_database_auth
 from eventlet import event
 from eventlet import db_pool
 from eventlet.support import six
