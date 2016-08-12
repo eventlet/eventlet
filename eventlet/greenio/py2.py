@@ -162,7 +162,7 @@ class _SocketDuckForFd(object):
             except OSError as e:
                 if get_errno(e) not in SOCKET_BLOCKING:
                     raise IOError(*e.args)
-            self._trampoline(self, read=True)
+                self._trampoline(self, read=True)
 
     def recv_into(self, buf, nbytes=0, flags=0):
         if nbytes == 0:
@@ -178,8 +178,7 @@ class _SocketDuckForFd(object):
             except OSError as e:
                 if get_errno(e) not in SOCKET_BLOCKING:
                     raise IOError(*e.args)
-                else:
-                    trampoline(self, write=True)
+                trampoline(self, write=True)
 
     def sendall(self, data):
         len_data = len(data)
