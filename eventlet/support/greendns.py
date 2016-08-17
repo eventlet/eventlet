@@ -86,7 +86,7 @@ def is_ipv4_addr(host):
         return False
     try:
         dns.ipv4.inet_aton(host)
-    except dns.exception.SyntaxError:
+    except (dns.exception.SyntaxError, socket.error):
         return False
     else:
         return True
@@ -98,7 +98,7 @@ def is_ipv6_addr(host):
         return False
     try:
         dns.ipv6.inet_aton(host)
-    except dns.exception.SyntaxError:
+    except (dns.exception.SyntaxError, socket.error):
         return False
     else:
         return True
@@ -293,7 +293,10 @@ class ResolverProxy(object):
         self._hosts = hosts_resolver
         self._filename = filename
         self._resolver = dns.resolver.Resolver(filename=self._filename)
-        self._resolver.cache = dns.resolver.LRUCache()
+        if hasattr(dns.resolver, 'LRUCache'):
+            self._resolver.cache = dns.resolver.LRUCache()
+        else:
+            self._resolver.cache = dns.resolver.Cache()
 
     def clear(self):
         self._resolver = dns.resolver.Resolver(filename=self._filename)
