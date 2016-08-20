@@ -1,38 +1,35 @@
 import os
 import sys
+import warnings
 
 __import__('eventlet.green._socket_nodns')
 __socket = sys.modules['eventlet.green._socket_nodns']
 
 __all__ = __socket.__all__
-__patched__ = __socket.__patched__ + ['gethostbyname', 'getaddrinfo', 'create_connection', ]
+__patched__ = __socket.__patched__ + [
+    'create_connection',
+    'getaddrinfo',
+    'gethostbyname',
+    'gethostbyname_ex',
+    'getnameinfo',
+]
 
 from eventlet.patcher import slurp_properties
 slurp_properties(__socket, globals(), srckeys=dir(__socket))
 
 
-greendns = None
-if os.environ.get("EVENTLET_NO_GREENDNS", '').lower() != "yes":
-    try:
-        from eventlet.support import greendns
-    except ImportError as ex:
-        try:
-            import dns
-        except ImportError:
-            # greendns import failed because we don't have dnspython - all is well,
-            # that's why we have the conditional import
-            pass
-        else:
-            # If, however, dnspython is importable yet greendns can't be imported
-            # this suggests there's another issue (like an import cycle)
-            raise
+if os.environ.get("EVENTLET_NO_GREENDNS", '').lower() == "yes":
+    warnings.warn(
+        'EVENTLET_NO_GREENDNS is noop, dnspython is bundled and DNS resolution is always green',
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
-if greendns:
-    gethostbyname = greendns.gethostbyname
-    getaddrinfo = greendns.getaddrinfo
-    gethostbyname_ex = greendns.gethostbyname_ex
-    getnameinfo = greendns.getnameinfo
-    __patched__ = __patched__ + ['gethostbyname_ex', 'getnameinfo']
+from eventlet.support import greendns
+gethostbyname = greendns.gethostbyname
+getaddrinfo = greendns.getaddrinfo
+gethostbyname_ex = greendns.gethostbyname_ex
+getnameinfo = greendns.getnameinfo
 
 
 def create_connection(address,

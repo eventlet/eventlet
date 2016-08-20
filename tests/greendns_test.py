@@ -8,11 +8,8 @@ import time
 
 import tests
 from tests import mock
-try:
-    from eventlet.support import greendns
-    from eventlet.support.greendns import dns
-except ImportError:
-    __test__ = False
+from eventlet.support import greendns
+from eventlet.support.greendns import dns
 
 
 class TestHostsResolver(tests.LimitedTestCase):

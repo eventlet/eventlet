@@ -1,11 +1,11 @@
+import os
+import shutil
+import sys
+import tempfile
 import eventlet
 from eventlet.green import socket
-try:
-    from eventlet.support import greendns
-    has_greendns = True
-except ImportError:
-    has_greendns = False
-from tests import skip_if
+from eventlet.support import greendns
+import tests
 
 
 def test_create_connection_error():
@@ -37,12 +37,25 @@ def test_recv_type():
     assert isinstance(s, bytes)
 
 
-@skip_if(not has_greendns)
 def test_dns_methods_are_green():
     assert socket.gethostbyname is greendns.gethostbyname
     assert socket.gethostbyname_ex is greendns.gethostbyname_ex
     assert socket.getaddrinfo is greendns.getaddrinfo
     assert socket.getnameinfo is greendns.getnameinfo
+
+    # https://github.com/eventlet/eventlet/pull/341
+    # mock older dnspython in system packages
+    mock_sys_pkg_dir = tempfile.mkdtemp('eventlet_test_dns_methods_are_green')
+    try:
+        with open(mock_sys_pkg_dir + '/dns.py', 'wb') as f:
+            f.write(b'raise Exception("Your IP address string is so illegal ' +
+                    b'it prevents installing packages.")\n')
+        tests.run_isolated(
+            'socket_resolve_green.py',
+            env={'PYTHONPATH': os.pathsep.join(sys.path + [mock_sys_pkg_dir])},
+        )
+    finally:
+        shutil.rmtree(mock_sys_pkg_dir)
 
 
 def test_socket_api_family():

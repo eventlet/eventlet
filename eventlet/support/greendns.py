@@ -33,6 +33,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import struct
+import sys
 
 from eventlet import patcher
 from eventlet.green import _socket_nodns
@@ -47,27 +48,29 @@ def import_patched(module_name):
     # regular evenlet.green.socket imports *this* module and if we imported
     # it back we'd end with an import cycle (socket -> greendns -> socket).
     # We break this import cycle by providing a restricted socket module.
-    return patcher.import_patched(module_name,
-                                  select=select,
-                                  time=time,
-                                  os=os,
-                                  socket=_socket_nodns)
+    # if (module_name + '.').startswith('dns.'):
+    #     module_name = 'eventlet.support.' + module_name
+    modules = {
+        'select': select,
+        'time': time,
+        'os': os,
+        'socket': _socket_nodns,
+    }
+    return patcher.import_patched(module_name, **modules)
 
 
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 dns = import_patched('dns')
-dns.resolver = import_patched('dns.resolver')
-
-for pkg in ('dns.entropy', 'dns.inet', 'dns.query'):
-    setattr(dns, pkg.split('.')[1], import_patched(pkg))
-
-import dns.rdtypes
-for pkg in ['dns.rdtypes.IN', 'dns.rdtypes.ANY']:
-    setattr(dns.rdtypes, pkg.split('.')[-1], import_patched(pkg))
-for pkg in ['dns.rdtypes.IN.A', 'dns.rdtypes.IN.AAAA']:
-    setattr(dns.rdtypes.IN, pkg.split('.')[-1], import_patched(pkg))
-for pkg in ['dns.rdtypes.ANY.CNAME']:
-    setattr(dns.rdtypes.ANY, pkg.split('.')[-1], import_patched(pkg))
+for pkg in dns.__all__:
+    setattr(dns, pkg, import_patched('dns.' + pkg))
+for pkg in dns.rdtypes.__all__:
+    setattr(dns.rdtypes, pkg, import_patched('dns.rdtypes.' + pkg))
+for pkg in dns.rdtypes.IN.__all__:
+    setattr(dns.rdtypes.IN, pkg, import_patched('dns.rdtypes.IN.' + pkg))
+for pkg in dns.rdtypes.ANY.__all__:
+    setattr(dns.rdtypes.ANY, pkg, import_patched('dns.rdtypes.ANY.' + pkg))
 del import_patched
+sys.path.pop(0)
 
 
 socket = _socket_nodns
@@ -292,12 +295,11 @@ class ResolverProxy(object):
         """
         self._hosts = hosts_resolver
         self._filename = filename
-        self._resolver = dns.resolver.Resolver(filename=self._filename)
-        self._resolver.cache = dns.resolver.LRUCache()
+        self.clear()
 
     def clear(self):
         self._resolver = dns.resolver.Resolver(filename=self._filename)
-        self._resolver.cache = dns.resolver.Cache()
+        self._resolver.cache = dns.resolver.LRUCache()
 
     def query(self, qname, rdtype=dns.rdatatype.A, rdclass=dns.rdataclass.IN,
               tcp=False, source=None, raise_on_no_answer=True):

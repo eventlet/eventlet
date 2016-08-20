@@ -1,0 +1,13 @@
+#!/bin/bash -eux
+cd "$( dirname "${BASH_SOURCE[0]}" )/.."
+version=${1-188aa701a6826c607da0624e31a8c4618d0a8017}
+upstream_path=./dnspython-${version}
+if [[ ! -d "${upstream_path}" ]]; then
+  curl -L -odnspython.zip "https://github.com/rthalley/dnspython/archive/${version}.zip"
+  unzip dnspython.zip
+  rm dnspython.zip
+fi
+rm -rf eventlet/support/dns
+# patch --directory=eventlet/support -p1 --normal --forward -r/dev/null <./dns.patch
+mv ${upstream_path}/dns eventlet/support/
+rm -rf ${upstream_path}
