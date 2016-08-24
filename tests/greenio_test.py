@@ -921,7 +921,7 @@ def test_socket_file_read_non_int():
     def server():
         conn, _ = listen_socket.accept()
         conn.recv(1)
-        conn.sendall('response')
+        conn.sendall(b'response')
         conn.close()
 
     eventlet.spawn(server)
