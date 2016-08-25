@@ -25,6 +25,35 @@ from nose.plugins.skip import SkipTest
 import eventlet
 from eventlet import tpool
 
+# Python 2.7 compatibility
+
+try:
+    TimeoutExpired = subprocess.TimeoutExpired
+except AttributeError:
+    # Python 2.7 subprocess doesn't have a TimeoutExpired exception. It
+    # doesn't matter if we define it locally because nobody will raise it.
+    class TimeoutExpired(object):
+        pass
+
+import inspect
+try:
+    getargspec = inspect.getargspec
+except AttributeError:
+    # As of Python 3.0, inspect.getargspec is deprecated. Someday it may go
+    # away entirely. At that point let's just assume that
+    # subprocess.communicate() supports timeout=.
+    def communicate_args(**kwds):
+        return kwds
+else:
+    # If in fact Popen.communicate() supports timeout, fabulous.
+    if 'timeout' in inspect.getargspec(subprocess.Popen.communicate).args:
+        def communicate_args(**kwds):
+            return kwds
+    else:
+        # Popen.communicate() has no timeout arg. Filter that out.
+        def communicate_args(**kwds):
+            kwds.pop("timeout", None)
+            return kwds
 
 # convenience for importers
 main = unittest.main
@@ -326,10 +355,10 @@ def run_python(path, env=None, args=None, timeout=None):
     if timeout is None:
         timeout = 10
     try:
-        output, _ = p.communicate(timeout=timeout)
-    except subprocess.TimeoutExpired:
+        output, _ = p.communicate(**communicate_args(timeout=timeout))
+    except TimeoutExpired:
         p.kill()
-        output, _ = p.communicate(timeout=timeout)
+        output, _ = p.communicate(**communicate_args(timeout=timeout))
         return "{0}\nFAIL - timed out".format(output)
     return output
 
