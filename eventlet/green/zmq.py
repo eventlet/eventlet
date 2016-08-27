@@ -194,6 +194,12 @@ _Socket_recv = _Socket.recv
 _Socket_send = _Socket.send
 _Socket_send_multipart = _Socket.send_multipart
 _Socket_recv_multipart = _Socket.recv_multipart
+_Socket_send_string = _Socket.send_string
+_Socket_recv_string = _Socket.recv_string
+_Socket_send_pyobj = _Socket.send_pyobj
+_Socket_recv_pyobj = _Socket.recv_pyobj
+_Socket_send_json = _Socket.send_json
+_Socket_recv_json = _Socket.recv_json
 _Socket_getsockopt = _Socket.getsockopt
 
 
@@ -313,6 +319,48 @@ class Socket(_Socket):
         with self._eventlet_send_lock:
             return _Socket_send_multipart(self, msg_parts, flags, copy, track)
 
+    @_wraps(_Socket.send_string)
+    def send_string(self, msg_parts, flags=0, copy=True, track=False):
+        """A send_string method that's safe to use when multiple
+        greenthreads are calling send, send_string, recv and
+        recv_string on the same socket.
+        """
+        if flags & NOBLOCK:
+            return _Socket_send_string(self, msg_parts, flags, copy, track)
+
+        # acquire lock here so the subsequent calls to send for the
+        # message parts after the first don't block
+        with self._eventlet_send_lock:
+            return _Socket_send_string(self, msg_parts, flags, copy, track)
+
+    @_wraps(_Socket.send_pyobj)
+    def send_pyobj(self, msg_parts, flags=0, copy=True, track=False):
+        """A send_pyobj method that's safe to use when multiple
+        greenthreads are calling send, send_pyobj, recv and
+        recv_pyobj on the same socket.
+        """
+        if flags & NOBLOCK:
+            return _Socket_send_pyobj(self, msg_parts, flags, copy, track)
+
+        # acquire lock here so the subsequent calls to send for the
+        # message parts after the first don't block
+        with self._eventlet_send_lock:
+            return _Socket_send_pyobj(self, msg_parts, flags, copy, track)
+
+    @_wraps(_Socket.send_json)
+    def send_json(self, msg_parts, flags=0, copy=True, track=False):
+        """A send_json method that's safe to use when multiple
+        greenthreads are calling send, send_json, recv and
+        recv_json on the same socket.
+        """
+        if flags & NOBLOCK:
+            return _Socket_send_json(self, msg_parts, flags, copy, track)
+
+        # acquire lock here so the subsequent calls to send for the
+        # message parts after the first don't block
+        with self._eventlet_send_lock:
+            return _Socket_send_json(self, msg_parts, flags, copy, track)
+
     @_wraps(_Socket.recv)
     def recv(self, flags=0, copy=True, track=False):
         """A recv method that's safe to use when multiple greenthreads
@@ -357,3 +405,45 @@ class Socket(_Socket):
         # message parts after the first don't block
         with self._eventlet_recv_lock:
             return _Socket_recv_multipart(self, flags, copy, track)
+
+    @_wraps(_Socket.recv_string)
+    def recv_string(self, flags=0, copy=True, track=False):
+        """A recv_string method that's safe to use when multiple
+        greenthreads are calling send, send_string, recv and
+        recv_string on the same socket.
+        """
+        if flags & NOBLOCK:
+            return _Socket_recv_string(self, flags, copy, track)
+
+        # acquire lock here so the subsequent calls to recv for the
+        # message parts after the first don't block
+        with self._eventlet_recv_lock:
+            return _Socket_recv_string(self, flags, copy, track)
+
+    @_wraps(_Socket.recv_pyobj)
+    def recv_pyobj(self, flags=0, copy=True, track=False):
+        """A recv_pyobj method that's safe to use when multiple
+        greenthreads are calling send, send_pyobj, recv and
+        recv_pyobj on the same socket.
+        """
+        if flags & NOBLOCK:
+            return _Socket_recv_pyobj(self, flags, copy, track)
+
+        # acquire lock here so the subsequent calls to recv for the
+        # message parts after the first don't block
+        with self._eventlet_recv_lock:
+            return _Socket_recv_pyobj(self, flags, copy, track)
+
+    @_wraps(_Socket.recv_json)
+    def recv_json(self, flags=0, copy=True, track=False):
+        """A recv_json method that's safe to use when multiple
+        greenthreads are calling send, send_json, recv and
+        recv_json on the same socket.
+        """
+        if flags & NOBLOCK:
+            return _Socket_recv_json(self, flags, copy, track)
+
+        # acquire lock here so the subsequent calls to recv for the
+        # message parts after the first don't block
+        with self._eventlet_recv_lock:
+            return _Socket_recv_json(self, flags, copy, track)
