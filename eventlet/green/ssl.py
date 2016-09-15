@@ -116,12 +116,12 @@ class GreenSSLSocket(_original_sslsocket):
                         trampoline(self,
                                    read=True,
                                    timeout=self.gettimeout(),
-                                   timeout_exc=timeout_exc('timed out'))
+                                   timeout_exc=timeout_exc('The read operation timed out'))
                     elif get_errno(exc) == SSL_ERROR_WANT_WRITE:
                         trampoline(self,
                                    write=True,
                                    timeout=self.gettimeout(),
-                                   timeout_exc=timeout_exc('timed out'))
+                                   timeout_exc=timeout_exc('The write operation timed out'))
                     else:
                         raise
 
