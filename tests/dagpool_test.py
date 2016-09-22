@@ -98,9 +98,11 @@ def test_check_no_suspend():
 
     # Here we use check_no_suspend() the right way, inside 'with
     # suspend_checker()'. Does it really do what we claim it should?
-    with suspend_checker(), assert_raises(AssertionError), check_no_suspend():
-        # suspend, so we know if check_no_suspend() asserts
-        eventlet.sleep(0)
+    with suspend_checker():
+        with assert_raises(AssertionError):
+            with check_no_suspend():
+                # suspend, so we know if check_no_suspend() asserts
+                eventlet.sleep(0)
 
 # ****************************************************************************
 #   Verify that the expected things happened in the expected order
@@ -195,20 +197,22 @@ def test_init():
 
 def test_wait_each_empty():
     pool = DAGPool()
-    with suspend_checker(), check_no_suspend():
-        for k, v in pool.wait_each(()):
-            # shouldn't yield anything
-            raise AssertionError("empty wait_each() returned (%s, %s)" % (k, v))
+    with suspend_checker():
+        with check_no_suspend():
+            for k, v in pool.wait_each(()):
+                # shouldn't yield anything
+                raise AssertionError("empty wait_each() returned (%s, %s)" % (k, v))
 
 def test_wait_each_preload():
     pool = DAGPool(dict(a=1, b=2, c=3))
-    with suspend_checker(), check_no_suspend():
-        # wait_each() may deliver in arbitrary order; collect into a dict
-        # for comparison
-        assert_equals(dict(pool.wait_each("abc")), dict(a=1, b=2, c=3))
+    with suspend_checker():
+        with check_no_suspend():
+            # wait_each() may deliver in arbitrary order; collect into a dict
+            # for comparison
+            assert_equals(dict(pool.wait_each("abc")), dict(a=1, b=2, c=3))
 
-        # while we're at it, test wait() for preloaded keys
-        assert_equals(pool.wait("bc"), dict(b=2, c=3))
+            # while we're at it, test wait() for preloaded keys
+            assert_equals(pool.wait("bc"), dict(b=2, c=3))
 
 def post_each(pool, capture):
     # distinguish the results wait_each() can retrieve immediately from those
