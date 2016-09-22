@@ -31,6 +31,7 @@ $/LicenseInfo$
 from eventlet.event import Event
 from eventlet import greenthread
 
+
 class Collision(Exception):
     """
     DAGPool raises Collision when you try to launch two greenthreads with the
@@ -39,6 +40,7 @@ class Collision(Exception):
     key in question.
     """
     pass
+
 
 class DAGPool(object):
     """

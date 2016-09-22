@@ -33,12 +33,19 @@ from eventlet.dagpool import DAGPool, Collision
 from contextlib import contextmanager
 import itertools
 
+# tactic for Python 2/3 compatibility from mock.py
+try:
+    basestring
+except NameError:
+    basestring = unicode = str
+
 # ****************************************************************************
 #   Verify that a given operation returns without suspending
 # ****************************************************************************
 # module-scope counter allows us to verify when the main greenthread running
 # the test does or does not suspend
 counter = None
+
 
 def incrementer():
     """
@@ -53,6 +60,7 @@ def incrementer():
     # control, set it to 1
     for counter in itertools.count(1):
         eventlet.sleep(0)
+
 
 @contextmanager
 def suspend_checker():
@@ -69,6 +77,7 @@ def suspend_checker():
     coro.kill()
     # set counter back to None to disable check_no_suspend()
     counter = None
+
 
 @contextmanager
 def check_no_suspend():
@@ -88,6 +97,7 @@ def check_no_suspend():
     yield
     assert counter == current, "Operation suspended %s times" % (counter - current)
 
+
 def test_check_no_suspend():
     with assert_raises(AssertionError):
         # We WANT this to raise AssertionError because it's outside of a
@@ -103,6 +113,7 @@ def test_check_no_suspend():
             with check_no_suspend():
                 # suspend, so we know if check_no_suspend() asserts
                 eventlet.sleep(0)
+
 
 # ****************************************************************************
 #   Verify that the expected things happened in the expected order
@@ -162,6 +173,7 @@ class Capture(object):
         # Now that we've massaged 'sequence' into 'setlist', compare.
         assert_equal(self.sequence, setlist)
 
+
 # ****************************************************************************
 #   Canonical DAGPool greenthread function
 # ****************************************************************************
@@ -171,6 +183,7 @@ def observe(key, results, capture, event):
     result = event.wait()
     capture.add("%s returning %s" % (key, result))
     return result
+
 
 # ****************************************************************************
 #   DAGPool test functions
@@ -195,6 +208,7 @@ def test_init():
             results = pool.waitall()
         assert_equals(results, dict(d=4, e=5, f=6))
 
+
 def test_wait_each_empty():
     pool = DAGPool()
     with suspend_checker():
@@ -202,6 +216,7 @@ def test_wait_each_empty():
             for k, v in pool.wait_each(()):
                 # shouldn't yield anything
                 raise AssertionError("empty wait_each() returned (%s, %s)" % (k, v))
+
 
 def test_wait_each_preload():
     pool = DAGPool(dict(a=1, b=2, c=3))
@@ -213,6 +228,7 @@ def test_wait_each_preload():
 
             # while we're at it, test wait() for preloaded keys
             assert_equals(pool.wait("bc"), dict(b=2, c=3))
+
 
 def post_each(pool, capture):
     # distinguish the results wait_each() can retrieve immediately from those
@@ -226,6 +242,7 @@ def post_each(pool, capture):
     pool.post('e', 'eval')
     pool.post('d', 'dval')
 
+
 def test_wait_each_posted():
     capture = Capture()
     pool = DAGPool(dict(a=1, b=2, c=3))
@@ -235,10 +252,11 @@ def test_wait_each_posted():
         capture.add("got (%s, %s)" % (k, v))
 
     capture.validate([
-        ["got (b, 2)",    "got (c, 3)"],
+        ["got (b, 2)", "got (c, 3)"],
         ["got (f, fval)", "got (g, gval)"],
         ["got (d, dval)", "got (e, eval)"],
-        ])
+    ])
+
 
 def test_wait_posted():
     # same as test_wait_each_posted(), but calling wait()
@@ -255,18 +273,21 @@ def test_wait_posted():
         [],
         [],
         ["got all"],
-        ])
+    ])
+
 
 def test_spawn_collision_preload():
     pool = DAGPool([("a", 1)])
     with assert_raises(Collision):
         pool.spawn("a", (), lambda key, results: None)
 
+
 def test_spawn_collision_post():
     pool = DAGPool()
     pool.post("a", "aval")
     with assert_raises(Collision):
         pool.spawn("a", (), lambda key, results: None)
+
 
 def test_spawn_collision_spawn():
     pool = DAGPool()
@@ -286,10 +307,12 @@ def test_spawn_collision_spawn():
         # has completed.
         pool.spawn("a", (), lambda key, results: "badagain")
 
+
 def spin():
     # Let all pending greenthreads run until they're blocked
     for x in xrange(10):
         eventlet.sleep(0)
+
 
 def test_spawn_multiple():
     capture = Capture()
@@ -371,7 +394,8 @@ def test_spawn_multiple():
          "h got e", "h got g"],
         ["d returning dval", "h got d", "h returning hval"],
         [],
-        ])
+    ])
+
 
 def spawn_many_func(key, results, capture, pool):
     for k, v in results:
@@ -384,9 +408,11 @@ def spawn_many_func(key, results, capture, pool):
     capture.step()
     spin()
 
+
 def waitall_done(capture, pool):
     pool.waitall()
     capture.add("waitall() done")
+
 
 def test_spawn_many():
     # This dependencies dict sets up a graph like this:
@@ -426,6 +452,7 @@ def test_spawn_many():
                    set(["waitall() done"]),
                    ])
 
+
 def test_kill():
     pool = DAGPool()
     # nonexistent key raises KeyError
@@ -450,16 +477,19 @@ def test_kill():
     # verify it ran to completion
     assert_equals(pool.get("a"), 2)
 
+
 def test_post_collision_preload():
     pool = DAGPool(dict(a=1))
     with assert_raises(Collision):
         pool.post("a", 2)
+
 
 def test_post_collision_post():
     pool = DAGPool()
     pool.post("a", 1)
     with assert_raises(Collision):
         pool.post("a", 2)
+
 
 def test_post_collision_spawn():
     pool = DAGPool()
@@ -488,6 +518,7 @@ def test_post_collision_spawn():
     with assert_raises(Collision):
         pool.post("a", 6)
 
+
 def test_post_replace():
     pool = DAGPool()
     pool.post("a", 1)
@@ -496,10 +527,12 @@ def test_post_replace():
     assert_equals(dict(pool.wait_each("a")), dict(a=2))
     assert_equals(pool.wait("a"), dict(a=2))
     assert_equals(pool["a"], 2)
-    
+
+
 def waitfor(capture, pool, key):
     value = pool[key]
     capture.add("got %s" % value)
+
 
 def test_getitem():
     capture = Capture()
