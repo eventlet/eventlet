@@ -39,6 +39,7 @@ try:
 except NameError:
     basestring = unicode = str
 
+
 # ****************************************************************************
 #   Verify that a given operation returns without suspending
 # ****************************************************************************
@@ -310,7 +311,7 @@ def test_spawn_collision_spawn():
 
 def spin():
     # Let all pending greenthreads run until they're blocked
-    for x in xrange(10):
+    for x in range(10):
         eventlet.sleep(0)
 
 
