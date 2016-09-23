@@ -357,11 +357,11 @@ class DAGPool(object):
         __getitem__(key) (aka dagpool[key]) blocks until 'key' has a value,
         then delivers that value.
         """
-        # This is a degenerate case of wait_each(). Construct a list
-        # containing only this 'key'. list(wait_each()) will make a list
-        # containing exactly one (key, value) pair. Extract that pair, then
-        # extract just its value.
-        return list(self.wait_each([key]))[0][1]
+        # This is a degenerate case of wait_each(). Construct a tuple
+        # containing only this 'key'. wait_each() will yield exactly one (key,
+        # value) pair. Return just its value.
+        for _, value in self.wait_each( (key,) ):
+            return value
 
     def get(self, key, default=None):
         """
