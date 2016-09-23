@@ -30,6 +30,7 @@ $/LicenseInfo$
 
 from eventlet.event import Event
 from eventlet import greenthread
+import collections
 
 
 class Collision(Exception):
@@ -84,13 +85,9 @@ class DAGPool(object):
     GreenPool: it may be hard to provably avoid deadlock.
     """
 
-    class _Coro(object):
-        """
-        Internal object used to track running greenthreads
-        """
-        def __init__(self, greenthread, pending):
-            self.greenthread = greenthread
-            self.pending = pending
+
+    _Coro = collections.namedtuple("_Coro", ("greenthread", "pending"))
+
 
     def __init__(self, preload={}):
         """
