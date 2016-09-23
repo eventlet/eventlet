@@ -30,6 +30,7 @@ $/LicenseInfo$
 
 from eventlet.event import Event
 from eventlet import greenthread
+from eventlet.support import six
 import collections
 
 
@@ -98,7 +99,7 @@ class DAGPool(object):
         try:
             # If a dict is passed, copy it. Don't risk a subsequent
             # modification to passed dict affecting our internal state.
-            iteritems = preload.iteritems()
+            iteritems = six.iteritems(preload)
         except AttributeError:
             # Not a dict, just an iterable of (key, value) pairs
             iteritems = preload
@@ -199,7 +200,7 @@ class DAGPool(object):
         # But we do need to wait for every running coroutine.
         # Discard wait()'s return value, though, because we want to return ALL
         # the values.
-        self.wait(self.coros.keys())
+        self.wait(six.iterkeys(self.coros))
         # As promised, return all the values.
         return self.values
 
@@ -268,8 +269,9 @@ class DAGPool(object):
         greenthread is spawned for each key in the dict. That dict key's value
         should be an iterable of other keys on which this greenthread depends.
         """
-        # Iterate over a snapshot of 'depends' items
-        for key, deps in depends.items():
+        # Iterate over 'depends' items, relying on self.spawn() not to
+        # context-switch so no one can modify 'depends' along the way.
+        for key, deps in six.iteritems(depends):
             self.spawn(key, deps, function, *args, **kwds)
 
     def kill(self, key):
@@ -382,7 +384,7 @@ class DAGPool(object):
         return a copy rather than an iterator: don't assume our caller will
         finish iterating before new values are posted.
         """
-        return self.values.keys()
+        return tuple(six.iterkeys(self.values))
 
     def items(self):
         """
@@ -390,7 +392,7 @@ class DAGPool(object):
         Don't assume our caller will finish iterating before new values are
         posted.
         """
-        return self.values.items()
+        return tuple(six.iteritems(self.values))
 
     def running(self):
         """
@@ -408,7 +410,7 @@ class DAGPool(object):
         """
         # return snapshot; don't assume caller will finish iterating before we
         # next modify self.coros
-        return self.coros.keys()
+        return tuple(six.iterkeys(self.coros))
 
     def waiting(self):
         """
@@ -447,7 +449,7 @@ class DAGPool(object):
         # some or all of those keys, because those greenthreads have not yet
         # regained control since values were posted. So make a point of
         # excluding values that are now available.
-        available = set(self.values.iterkeys())
+        available = set(six.iterkeys(self.values))
 
         if key is not DAGPool._Omitted:
             # waiting_for(key) is semantically different than waiting_for().
@@ -479,5 +481,5 @@ class DAGPool(object):
         # Make a dict from those pairs.
         return dict((key, pending)
                     for key, pending in ((key, (coro.pending - available))
-                                         for key, coro in self.coros.iteritems())
+                                         for key, coro in six.iteritems(self.coros))
                     if pending)

@@ -30,14 +30,9 @@ $/LicenseInfo$
 from nose.tools import *
 import eventlet
 from eventlet.dagpool import DAGPool, Collision
+from eventlet.support import six
 from contextlib import contextmanager
 import itertools
-
-# tactic for Python 2/3 compatibility from mock.py
-try:
-    basestring
-except NameError:
-    basestring = unicode = str
 
 
 # ****************************************************************************
@@ -154,7 +149,7 @@ class Capture(object):
         # purposes, turn them into the specific form we store: a list of sets.
         setlist = []
         for subseq in sequence:
-            if isinstance(subseq, basestring):
+            if isinstance(subseq, six.string_types):
                 # If this item is a plain string (which Python regards as an
                 # iterable of characters) rather than a list or tuple or set
                 # of strings, treat it as atomic. Make a set containing only
@@ -384,7 +379,7 @@ def test_spawn_multiple():
                   dict(a=1, b=2, c=3,
                        d="dval", e="eval", f="fval", g="gval", h="hval"))
     assert_equals(pool.running(), 0)
-    assert_equals(pool.running_keys(), [])
+    assert_false(pool.running_keys())
     assert_equals(pool.waiting(), 0)
     assert_equals(pool.waiting_for("h"), set())
 
