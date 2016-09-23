@@ -323,8 +323,7 @@ class DAGPool(object):
         # A DAGPool greenthread is explicitly permitted to post() to its
         # OWN key.
         coro = self.coros.get(key, _MISSING)
-        if coro is not _MISSING \
-         and coro.greenthread is not greenthread.getcurrent():
+        if coro is not _MISSING and coro.greenthread is not greenthread.getcurrent():
             # oh oh, trying to post a value for running greenthread from
             # some other greenthread
             raise Collision(key)
@@ -334,8 +333,7 @@ class DAGPool(object):
 
         # Has somebody already post()ed a value for this key?
         # Unless replace == True, this is a problem.
-        if self.values.get(key, _MISSING) is not _MISSING \
-         and not replace:
+        if key in self.values and not replace:
             raise Collision(key)
 
         # Either we've never before posted a value for this key, or we're
