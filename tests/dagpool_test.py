@@ -35,6 +35,20 @@ from contextlib import contextmanager
 import itertools
 
 
+# Not all versions of nose.tools.assert_raises() support the usage in this
+# module, but it's straightforward enough to code that explicitly.
+@contextmanager
+def assert_raises(exc):
+    """exc is an exception class"""
+    try:
+        yield
+    except exc:
+        pass
+    else:
+        raise AssertionError("failed to raise expected exception %s" %
+                             exc.__class__.__name__)
+
+
 # ****************************************************************************
 #   Verify that a given operation returns without suspending
 # ****************************************************************************
