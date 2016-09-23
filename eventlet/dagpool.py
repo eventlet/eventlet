@@ -90,9 +90,7 @@ class DAGPool(object):
     GreenPool: it may be hard to provably avoid deadlock.
     """
 
-
     _Coro = collections.namedtuple("_Coro", ("greenthread", "pending"))
-
 
     def __init__(self, preload={}):
         """
@@ -326,7 +324,7 @@ class DAGPool(object):
         # OWN key.
         coro = self.coros.get(key, _MISSING)
         if coro is not _MISSING \
-        and coro.greenthread is not greenthread.getcurrent():
+            and coro.greenthread is not greenthread.getcurrent():
             # oh oh, trying to post a value for running greenthread from
             # some other greenthread
             raise Collision(key)
@@ -337,7 +335,7 @@ class DAGPool(object):
         # Has somebody already post()ed a value for this key?
         # Unless replace == True, this is a problem.
         if self.values.get(key, _MISSING) is not _MISSING \
-        and not replace:
+            and not replace:
             raise Collision(key)
 
         # Either we've never before posted a value for this key, or we're
@@ -360,7 +358,7 @@ class DAGPool(object):
         # This is a degenerate case of wait_each(). Construct a tuple
         # containing only this 'key'. wait_each() will yield exactly one (key,
         # value) pair. Return just its value.
-        for _, value in self.wait_each( (key,) ):
+        for _, value in self.wait_each((key,)):
             return value
 
     def get(self, key, default=None):
