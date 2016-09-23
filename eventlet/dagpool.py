@@ -34,6 +34,10 @@ from eventlet.support import six
 import collections
 
 
+# value distinguished from any other Python value including None
+_MISSING = object()
+
+
 class Collision(Exception):
     """
     DAGPool raises Collision when you try to launch two greenthreads with the
@@ -159,11 +163,8 @@ class DAGPool(object):
             # are already available. Copy 'pending' because we want to be able
             # to remove items from the original set while iterating.
             for key in pending.copy():
-                try:
-                    value = self.values[key]
-                except KeyError:
-                    pass
-                else:
+                value = self.values.get(key, _MISSING)
+                if value is not _MISSING:
                     # found one, it's no longer pending
                     pending.remove(key)
                     yield (key, value)
@@ -321,32 +322,23 @@ class DAGPool(object):
         """
         # First, check if we're trying to post() to a key with a running
         # greenthread.
-        try:
-            coro = self.coros[key]
-        except KeyError:
-            # If there's no running greenthread with this key, carry on.
-            pass
-        else:
-            # A DAGPool greenthread is explicitly permitted to post() to its
-            # OWN key.
-            if coro.greenthread is not greenthread.getcurrent():
-                # oh oh, trying to post a value for running greenthread from
-                # some other greenthread
-                raise Collision(key)
+        # A DAGPool greenthread is explicitly permitted to post() to its
+        # OWN key.
+        coro = self.coros.get(key, _MISSING)
+        if coro is not _MISSING \
+        and coro.greenthread is not greenthread.getcurrent():
+            # oh oh, trying to post a value for running greenthread from
+            # some other greenthread
+            raise Collision(key)
 
         # Here, either we're posting a value for a key with no greenthread or
         # we're posting from that greenthread itself.
 
         # Has somebody already post()ed a value for this key?
-        try:
-            self.values[key]
-        except KeyError:
-            # no, we're good
-            pass
-        else:
-            # unless replace == True, this is a problem
-            if not replace:
-                raise Collision(key)
+        # Unless replace == True, this is a problem.
+        if self.values.get(key, _MISSING) is not _MISSING \
+        and not replace:
+            raise Collision(key)
 
         # Either we've never before posted a value for this key, or we're
         # posting with replace == True.
@@ -424,12 +416,9 @@ class DAGPool(object):
         # waiting_for() call.
         return len(self.waiting_for())
 
-    class _Omitted(object):
-        pass
-
-    # Use _Omitted instead of None as the default 'key' param so we can permit
+    # Use _MISSING instead of None as the default 'key' param so we can permit
     # None as a supported key.
-    def waiting_for(self, key=_Omitted):
+    def waiting_for(self, key=_MISSING):
         """
         waiting_for(key) returns a set() of the keys for which the greenthread
         spawned with that key is still waiting. If you pass a key for which no
@@ -451,12 +440,11 @@ class DAGPool(object):
         # excluding values that are now available.
         available = set(six.iterkeys(self.values))
 
-        if key is not DAGPool._Omitted:
+        if key is not _MISSING:
             # waiting_for(key) is semantically different than waiting_for().
             # It's just that they both seem to want the same method name.
-            try:
-                coro = self.coros[key]
-            except KeyError:
+            coro = self.coros.get(key, _MISSING)
+            if coro is _MISSING:
                 # Hmm, no running greenthread with this key. But was there
                 # EVER a greenthread with this key? If not, let KeyError
                 # propagate.
