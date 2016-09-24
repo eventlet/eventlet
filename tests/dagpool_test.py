@@ -442,6 +442,8 @@ def test_spawn_many():
 
     capture = Capture()
     pool = DAGPool()
+    # spawn a waitall() waiter externally to our DAGPool, but capture its
+    # message in same Capture instance
     eventlet.spawn(waitall_done, capture, pool)
     pool.spawn_many(deps, spawn_many_func, capture, pool)
     # This set of greenthreads should in fact run to completion once spawned.
@@ -461,6 +463,42 @@ def test_spawn_many():
                    set(["e done"]),
                    set(["waitall() done"]),
                    ])
+
+
+# deliberately distinguish this from dagpool._MISSING
+_notthere = object()
+
+
+def test_wait_each_all():
+    # set up a simple linear dependency chain
+    deps = dict(b="a", c="b", d="c", e="d")
+    capture = Capture()
+    pool = DAGPool([("a", "a")])
+    # capture a different Event for each key
+    events = dict((key, eventlet.event.Event()) for key in six.iterkeys(deps))
+    # can't use spawn_many() because we need a different event for each
+    for key, dep in six.iteritems(deps):
+        pool.spawn(key, dep, observe, capture, events[key])
+    keys = "abcde"                      # this specific order
+    each = iter(pool.wait_each())
+    for pos in range(len(keys)):
+        # next value from wait_each()
+        k, v = each.next()
+        assert_equals(k, keys[pos])
+        # advance every pool greenlet as far as it can go
+        spin()
+        # everything from keys[:pos+1] should have a value by now
+        for k in keys[:pos+1]:
+            assert pool.get(k, _notthere) is not _notthere, \
+                   "greenlet %s did not yet produce a value" % k
+        # everything from keys[pos+1:] should not yet
+        for k in keys[pos+1:]:
+            assert pool.get(k, _notthere) is _notthere, \
+                   "wait_each() delayed value for %s" % k
+        # let next greenthread complete
+        if pos < len(keys) - 1:
+            k = keys[pos+1]
+            events[k].send(k)
 
 
 def test_kill():

@@ -115,9 +115,11 @@ class DAGPool(object):
         # The key to blocking greenthreads is the Event.
         self.event = Event()
 
-    def wait_each(self, keys):
+    def wait_each(self, keys=_MISSING):
         """
-        keys is an iterable of keys.
+        keys is an optional iterable of keys. If you omit the argument, it
+        waits for all the keys from preload data, from post() calls and from
+        spawn() calls: in other words, all the keys of which it is aware.
 
         wait_each(keys) is a generator producing (key, value) pairs as a value
         becomes available for each requested key. wait_each() blocks the
@@ -146,7 +148,12 @@ class DAGPool(object):
         returns immediately without yielding anything.
         """
         # Build a local set() and then call _wait_each().
-        return self._wait_each(set(keys))
+        if keys is not _MISSING:
+            keyset = set(keys)
+        else:
+            # keys arg omitted -- use all the keys we know about
+            keyset = set(six.iterkeys(self.coros)) | set(six.iterkeys(self.values))
+        return self._wait_each(keyset)
 
     def _wait_each(self, pending):
         """
@@ -195,13 +202,7 @@ class DAGPool(object):
         containing all preload data, all data from post() and all values
         returned by spawned greenthreads.
         """
-        # We don't need to wait for any coroutine that's already completed.
-        # But we do need to wait for every running coroutine.
-        # Discard wait()'s return value, though, because we want to return ALL
-        # the values.
-        self.wait(six.iterkeys(self.coros))
-        # As promised, return all the values.
-        return self.values
+        return dict(self.wait_each())
 
     def spawn(self, key, depends, function, *args, **kwds):
         """
