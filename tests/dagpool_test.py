@@ -461,7 +461,7 @@ def test_wait_each_all():
     each = iter(pool.wait_each())
     for pos in range(len(keys)):
         # next value from wait_each()
-        k, v = six.next(each)
+        k, v = next(each)
         assert_equals(k, keys[pos])
         # advance every pool greenlet as far as it can go
         spin()
