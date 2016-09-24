@@ -86,8 +86,8 @@ class DAGPool(object):
     External greenthreads may also interact with a DAGPool. See wait_each(),
     waitall(), post().
 
-    It is not recommended to constrain DAGPool producer greenthreads in a
-    GreenPool: it may be hard to provably avoid deadlock.
+    It is not recommended to constrain external DAGPool producer greenthreads
+    in a GreenPool: it may be hard to provably avoid deadlock.
     """
 
     _Coro = collections.namedtuple("_Coro", ("greenthread", "pending"))
@@ -368,7 +368,7 @@ class DAGPool(object):
 
     def keys(self):
         """
-        Return the list of keys for which we currently have values. Explicitly
+        Return a tuple of keys for which we currently have values. Explicitly
         return a copy rather than an iterator: don't assume our caller will
         finish iterating before new values are posted.
         """
@@ -376,7 +376,7 @@ class DAGPool(object):
 
     def items(self):
         """
-        Return a snapshot list of currently-available (key, value) pairs.
+        Return a snapshot tuple of currently-available (key, value) pairs.
         Don't assume our caller will finish iterating before new values are
         posted.
         """
