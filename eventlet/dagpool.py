@@ -40,7 +40,7 @@ class PropagateError(Exception):
         self.exc = exc
 
     def __str__(self):
-        return "PropagateError({}): {}: {}" \
+        return "PropagateError({0}): {1}: {2}" \
                .format(self.key, self.exc.__class__.__name__, self.exc)
 
 

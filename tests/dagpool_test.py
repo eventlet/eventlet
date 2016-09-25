@@ -23,12 +23,12 @@ def assert_raises(exc):
     except exc:
         pass
     else:
-        raise AssertionError("failed to raise expected exception {}"
+        raise AssertionError("failed to raise expected exception {0}"
                              .format(exc.__class__.__name__))
 
 
 def assert_in(sought, container):
-    assert sought in container, "{} not in {}".format(sought, container)
+    assert sought in container, "{0} not in {1}".format(sought, container)
 
 
 # ****************************************************************************
@@ -87,7 +87,7 @@ def check_no_suspend():
     assert counter is not None, "Use 'with suspend_checker():' to enable check_no_suspend()"
     current = counter
     yield
-    assert counter == current, "Operation suspended {} times".format(counter - current)
+    assert counter == current, "Operation suspended {0} times".format(counter - current)
 
 
 def test_check_no_suspend():
@@ -171,9 +171,9 @@ class Capture(object):
 # ****************************************************************************
 def observe(key, results, capture, event):
     for k, v in results:
-        capture.add("{} got {}".format(key, k))
+        capture.add("{0} got {1}".format(key, k))
     result = event.wait()
-    capture.add("{} returning {}".format(key, result))
+    capture.add("{0} returning {1}".format(key, result))
     return result
 
 
@@ -207,7 +207,7 @@ def test_wait_each_empty():
         with check_no_suspend():
             for k, v in pool.wait_each(()):
                 # shouldn't yield anything
-                raise AssertionError("empty wait_each() returned ({}, {})".format(k, v))
+                raise AssertionError("empty wait_each() returned ({0}, {1})".format(k, v))
 
 
 def test_wait_each_preload():
@@ -241,7 +241,7 @@ def test_wait_each_posted():
     eventlet.spawn(post_each, pool, capture)
     # use a string as a convenient iterable of single-letter keys
     for k, v in pool.wait_each("bcdefg"):
-        capture.add("got ({}, {})".format(k, v))
+        capture.add("got ({0}, {1})".format(k, v))
 
     capture.validate([
         ["got (b, 2)", "got (c, 3)"],
@@ -394,7 +394,7 @@ def spawn_many_func(key, results, capture, pool):
         # with a capture.step() at each post(), too complicated to predict
         # which results will be delivered when
         pass
-    capture.add("{} done".format(key))
+    capture.add("{0} done".format(key))
     # use post(key) instead of waiting for implicit post() of return value
     pool.post(key, key)
     capture.step()
@@ -472,11 +472,11 @@ def test_wait_each_all():
         # everything from keys[:pos+1] should have a value by now
         for k in keys[:pos + 1]:
             assert pool.get(k, _notthere) is not _notthere, \
-                "greenlet {} did not yet produce a value".format(k)
+                "greenlet {0} did not yet produce a value".format(k)
         # everything from keys[pos+1:] should not yet
         for k in keys[pos + 1:]:
             assert pool.get(k, _notthere) is _notthere, \
-                "wait_each() delayed value for {}".format(keys[pos])
+                "wait_each() delayed value for {0}".format(keys[pos])
         # let next greenthread complete
         if pos < len(keys) - 1:
             k = keys[pos + 1]
@@ -561,7 +561,7 @@ def test_post_replace():
 
 def waitfor(capture, pool, key):
     value = pool[key]
-    capture.add("got {}".format(value))
+    capture.add("got {0}".format(value))
 
 
 def test_getitem():
@@ -600,7 +600,7 @@ def test_waitall_exc():
     except PropagateError as err:
         assert_equals(err.key, "a")
         assert isinstance(err.exc, BogusError), \
-            "exc attribute is {}, not BogusError".format(err.exc)
+            "exc attribute is {0}, not BogusError".format(err.exc)
         assert_equals(str(err.exc), "bogus")
         msg = str(err)
         assert_in("PropagateError(a)", msg)
@@ -622,7 +622,7 @@ def test_propagate_exc():
         erra = errb.exc
         assert_equals(erra.key, "a")
         assert isinstance(erra.exc, BogusError), \
-            "exc attribute is {}, not BogusError".format(erra.exc)
+            "exc attribute is {0}, not BogusError".format(erra.exc)
         assert_equals(str(erra.exc), "bogus")
         msg = str(errc)
         assert_in("PropagateError(a)", msg)
