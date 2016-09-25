@@ -25,6 +25,25 @@ class Collision(Exception):
     pass
 
 
+class PropagateError(Exception):
+    """
+    When a DAGPool greenthread terminates with an exception instead of
+    returning a result, attempting to retrieve its value raises
+    PropagateError.
+
+    Attributes:
+    key: the key of the greenthread which raised the exception
+    exc: the exception object raised by the greenthread
+    """
+    def __init__(self, key, exc):
+        self.key = key
+        self.exc = exc
+
+    def __str__(self):
+        return "PropagateError({}): {}: {}" \
+               .format(self.key, self.exc.__class__.__name__, self.exc)
+
+
 class DAGPool(object):
     """
     A DAGPool is a pool that constrains greenthreads, not by max concurrency,
@@ -60,6 +79,15 @@ class DAGPool(object):
     The value returned by a DAGPool greenthread becomes the value for its
     key, which unblocks any other greenthreads waiting on that key.
 
+    If a DAGPool greenthread terminates with an exception instead of returning
+    a value, attempting to retrieve the value raises PropagateError, which
+    binds the key of the original greenthread and the original exception.
+    Unless the greenthread attempting to retrieve the value handles
+    PropagateError, that exception will in turn be wrapped in a PropagateError
+    of its own, and so forth. The code that ultimately handles PropagateError
+    can follow the chain of PropagateError.exc attributes to discover the flow
+    of that exception through the DAG of greenthreads.
+
     External greenthreads may also interact with a DAGPool. See wait_each(),
     waitall(), post().
 
@@ -92,27 +120,64 @@ class DAGPool(object):
         # The key to blocking greenthreads is the Event.
         self.event = Event()
 
+    def waitall(self):
+        """
+        waitall() blocks the calling greenthread until there is a value for
+        every DAGPool greenthread launched by spawn(). It returns a dict
+        containing all preload data, all data from post() and all values
+        returned by spawned greenthreads.
+
+        See also wait().
+        """
+        # waitall() is an alias for compatibility with GreenPool
+        return self.wait()
+
+    def wait(self, keys=_MISSING):
+        """
+        keys is an optional iterable of keys. If you omit the argument, it
+        waits for all the keys from preload data, from post() calls and from
+        spawn() calls: in other words, all the keys of which this DAGPool is
+        aware.
+
+        wait() blocks the calling greenthread until all of the relevant keys
+        have values. wait() returns a dict whose keys are the relevant keys,
+        and whose values come from the preload data, from values returned by
+        DAGPool greenthreads or from post() calls.
+
+        If a greenthread terminates with an exception, wait() will raise
+        PropagateError wrapping that exception. If more than one greenthread
+        terminates with an exception, it is indeterminate which one wait()
+        will raise.
+
+        If a greenthread posts a PropagateError instance, wait() will raise
+        that PropagateError. If more than one greenthread posts
+        PropagateError, it is indeterminate which one wait() will raise.
+
+        See also wait_each_success(), wait_each_exception().
+        """
+        # This is mostly redundant with wait_each() functionality.
+        return dict(self.wait_each(keys))
+
     def wait_each(self, keys=_MISSING):
         """
         keys is an optional iterable of keys. If you omit the argument, it
         waits for all the keys from preload data, from post() calls and from
-        spawn() calls: in other words, all the keys of which it is aware.
+        spawn() calls: in other words, all the keys of which this DAGPool is
+        aware.
 
-        wait_each(keys) is a generator producing (key, value) pairs as a value
+        wait_each() is a generator producing (key, value) pairs as a value
         becomes available for each requested key. wait_each() blocks the
-        calling greenthread until values become available. If the DAGPool was
-        prepopulated with any values, of course those can be delivered
-        immediately without waiting.
+        calling greenthread until the next value becomes available. If the
+        DAGPool was prepopulated with values for any of the relevant keys, of
+        course those can be delivered immediately without waiting.
 
-        As soon as each key acquires a value, wait_each() yields a (key,
-        value) pair. Delivery order is intentionally decoupled from the
-        initial sequence of keys: each value is delivered as soon as it
-        becomes available. If multiple keys are available at the same time,
-        wait_each() delivers each of the ready ones in arbitrary order before
-        blocking again.
+        Delivery order is intentionally decoupled from the initial sequence of
+        keys: each value is delivered as soon as it becomes available. If
+        multiple keys are available at the same time, wait_each() delivers
+        each of the ready ones in arbitrary order before blocking again.
 
         The DAGPool does not distinguish between a value returned by one of
-        its own greenthreads and one provided by a post() call.
+        its own greenthreads and one provided by a post() call or preload data.
 
         The wait_each() generator terminates (raises StopIteration) when all
         specified keys have been delivered. Thus, typical usage might be:
@@ -123,22 +188,86 @@ class DAGPool(object):
 
         By implication, if you pass wait_each() an empty iterable of keys, it
         returns immediately without yielding anything.
+
+        If the value to be delivered is a PropagateError exception object, the
+        generator raises that PropagateError instead of yielding it.
+
+        See also wait_each_success(), wait_each_exception().
         """
         # Build a local set() and then call _wait_each().
+        return self._wait_each(self._get_keyset_for_wait_each(keys))
+
+    def wait_each_success(self, keys=_MISSING):
+        """
+        wait_each_success() filters results so that only success values are
+        yielded. In other words, unlike wait_each(), wait_each_success() will
+        not raise PropagateError. Not every provided (or defaulted) key will
+        necessarily be represented, though naturally the generator must wait
+        until all have completed.
+
+        In all other respects, wait_each_success() behaves like wait_each().
+        """
+        for key, value in self._wait_each_raw(self._get_keyset_for_wait_each(keys)):
+            if not isinstance(value, PropagateError):
+                yield key, value
+
+    def wait_each_exception(self, keys=_MISSING):
+        """
+        wait_each_exception() filters results so that only exceptions are
+        yielded. Not every provided (or defaulted) key will necessarily be
+        represented, though naturally the generator must wait until all have
+        completed.
+
+        Unlike other DAGPool methods, wait_each_exception() simply yields
+        PropagateError instances as values rather than raising them.
+
+        In all other respects, wait_each_exception() behaves like wait_each().
+        """
+        for key, value in self._wait_each_raw(self._get_keyset_for_wait_each(keys)):
+            if isinstance(value, PropagateError):
+                yield key, value
+
+    def _get_keyset_for_wait_each(self, keys):
+        """
+        wait_each(), wait_each_success() and wait_each_exception() promise
+        that if you pass an iterable of keys, the method will wait for results
+        from those keys -- but if you omit the keys argument, the method will
+        wait for results from all known keys. This helper implements that
+        distinction, returning a set() of the relevant keys.
+        """
         if keys is not _MISSING:
-            keyset = set(keys)
+            return set(keys)
         else:
             # keys arg omitted -- use all the keys we know about
-            keyset = set(six.iterkeys(self.coros)) | set(six.iterkeys(self.values))
-        return self._wait_each(keyset)
+            return set(six.iterkeys(self.coros)) | set(six.iterkeys(self.values))
 
     def _wait_each(self, pending):
+        """
+        When _wait_each() encounters a value of PropagateError, it raises it.
+
+        In all other respects, _wait_each() behaves like _wait_each_raw().
+        """
+        for key, value in self._wait_each_raw(pending):
+            yield key, self._value_or_raise(value)
+
+    @staticmethod
+    def _value_or_raise(value):
+        # Most methods attempting to deliver PropagateError should raise that
+        # instead of simply returning it.
+        if isinstance(value, PropagateError):
+            raise value
+        return value
+
+    def _wait_each_raw(self, pending):
         """
         pending is a set() of keys for which we intend to wait. THIS SET WILL
         BE DESTRUCTIVELY MODIFIED: as each key acquires a value, that key will
         be removed from the passed 'pending' set.
 
-        In all other respects, _wait_each() behaves as described for wait_each().
+        _wait_each_raw() does not treat a PropagateError instance specially:
+        it will be yielded to the caller like any other value.
+
+        In all other respects, _wait_each_raw() behaves like wait_each().
         """
         while True:
             # Before even waiting, show caller any (key, value) pairs that
@@ -158,29 +287,6 @@ class DAGPool(object):
             # There are still more keys pending, so wait.
             self.event.wait()
 
-    def wait(self, keys):
-        """
-        keys is an iterable of keys.
-
-        wait(keys) blocks the calling greenthread until all of those 'keys'
-        have values. wait() returns a dict whose keys are the passed keys.
-
-        wait() collects a dict whose keys are the keys, and whose values come
-        from the preload data, from values returned by DAGPool greenthreads or
-        from post() calls.
-        """
-        # This is mostly redundant with wait_each() functionality.
-        return dict(self.wait_each(keys))
-
-    def waitall(self):
-        """
-        waitall() blocks the calling greenthread until there is a value for
-        every DAGPool greenthread launched by spawn(). It returns a dict
-        containing all preload data, all data from post() and all values
-        returned by spawned greenthreads.
-        """
-        return dict(self.wait_each())
-
     def spawn(self, key, depends, function, *args, **kwds):
         """
         Launch the passed function(key, results, ...) as a greenthread,
@@ -194,6 +300,17 @@ class DAGPool(object):
         wait_each(depends).
 
         Returning from function() behaves like post(key, return_value).
+
+        If function() terminates with an exception, that exception is wrapped
+        in PropagateError with the greenthread's key and (effectively) posted
+        as the value for that key. Attempting to retrieve that value will
+        raise that PropagateError.
+
+        Thus, if the greenthread with key 'a' terminates with an exception,
+        and greenthread 'b' depends on 'a', when greenthread 'b' attempts to
+        iterate through its 'results' argument, it will encounter
+        PropagateError. So by default, an uncaught exception will propagate
+        through all the downstream dependencies.
 
         If you pass spawn() a key already passed to spawn() or post(), spawn()
         raises Collision.
@@ -216,15 +333,18 @@ class DAGPool(object):
     def _wrapper(self, function, key, results, *args, **kwds):
         """
         This wrapper runs the top-level function in a DAGPool greenthread,
-        posting its return value to the DAGPool.
+        posting its return value (or PropagateError) to the DAGPool.
         """
         try:
             # call our passed function
             result = function(key, results, *args, **kwds)
+        except Exception as err:
+            # Wrap any exception it may raise in a PropagateError.
+            result = PropagateError(key, err)
         finally:
-            # function() has returned (or raised an exception). We no longer
-            # need to track this greenthread in self.coros. Remove it first so
-            # post() won't complain about a running greenthread.
+            # function() has returned (or terminated with an exception). We no
+            # longer need to track this greenthread in self.coros. Remove it
+            # first so post() won't complain about a running greenthread.
             del self.coros[key]
 
         try:
@@ -295,6 +415,10 @@ class DAGPool(object):
         value1 versus value2. It is guaranteed that subsequent
         wait_each([key...]) calls (or greenthreads spawned after that point)
         will observe value2.
+
+        A successful call to post(key, PropagateError(key, ExceptionSubclass))
+        ensures that any subsequent attempt to retrieve that key's value will
+        raise that PropagateError instance.
         """
         # First, check if we're trying to post() to a key with a running
         # greenthread.
@@ -342,7 +466,7 @@ class DAGPool(object):
         get() returns the value for 'key'. If 'key' does not yet have a value,
         get() returns 'default'.
         """
-        return self.values.get(key, default)
+        return self._value_or_raise(self.values.get(key, default))
 
     def keys(self):
         """
@@ -358,7 +482,8 @@ class DAGPool(object):
         Don't assume our caller will finish iterating before new values are
         posted.
         """
-        return tuple(six.iteritems(self.values))
+        return tuple((key, self._value_or_raise(value))
+                     for key, value in six.iteritems(self.values))
 
     def running(self):
         """

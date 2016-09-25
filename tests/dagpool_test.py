@@ -7,7 +7,7 @@
 
 from nose.tools import *
 import eventlet
-from eventlet.dagpool import DAGPool, Collision
+from eventlet.dagpool import DAGPool, Collision, PropagateError
 from eventlet.support import six
 from contextlib import contextmanager
 import itertools
@@ -25,6 +25,10 @@ def assert_raises(exc):
     else:
         raise AssertionError("failed to raise expected exception {}"
                              .format(exc.__class__.__name__))
+
+
+def assert_in(sought, container):
+    assert sought in container, "{} not in {}".format(sought, container)
 
 
 # ****************************************************************************
@@ -572,3 +576,118 @@ def test_getitem():
     # run it
     spin()
     capture.validate([["got 1"]])
+
+
+class BogusError(Exception):
+    pass
+
+
+def raiser(key, results, exc):
+    raise exc
+
+
+def consumer(key, results):
+    for k, v in results:
+        pass
+    return True
+
+
+def test_waitall_exc():
+    pool = DAGPool()
+    pool.spawn("a", (), raiser, BogusError("bogus"))
+    try:
+        pool.waitall()
+    except PropagateError as err:
+        assert_equals(err.key, "a")
+        assert isinstance(err.exc, BogusError), \
+               "exc attribute is {}, not BogusError".format(err.exc)
+        assert_equals(str(err.exc), "bogus")
+        msg = str(err)
+        assert_in("PropagateError(a)", msg)
+        assert_in("BogusError", msg)
+        assert_in("bogus", msg)
+
+
+def test_propagate_exc():
+    pool = DAGPool()
+    pool.spawn("a", (), raiser, BogusError("bogus"))
+    pool.spawn("b", "a", consumer)
+    pool.spawn("c", "b", consumer)
+    try:
+        pool["c"]
+    except PropagateError as errc:
+        assert_equals(errc.key, "c")
+        errb = errc.exc
+        assert_equals(errb.key, "b")
+        erra = errb.exc
+        assert_equals(erra.key, "a")
+        assert isinstance(erra.exc, BogusError), \
+               "exc attribute is {}, not BogusError".format(erra.exc)
+        assert_equals(str(erra.exc), "bogus")
+        msg = str(errc)
+        assert_in("PropagateError(a)", msg)
+        assert_in("PropagateError(b)", msg)
+        assert_in("PropagateError(c)", msg)
+        assert_in("BogusError", msg)
+        assert_in("bogus", msg)
+
+
+def test_wait_each_exc():
+    pool = DAGPool()
+    pool.spawn("a", (), raiser, BogusError("bogus"))
+    with assert_raises(PropagateError):
+        for k, v in pool.wait_each("a"):
+            pass
+
+    with assert_raises(PropagateError):
+        for k, v in pool.wait_each():
+            pass
+
+
+def test_post_get_exc():
+    pool = DAGPool()
+    bogua = BogusError("bogua")
+    pool.post("a", bogua)
+    assert isinstance(pool.get("a"), BogusError), \
+           "should have delivered BogusError instead of raising"
+    bogub = PropagateError("b", BogusError("bogub"))
+    pool.post("b", bogub)
+    with assert_raises(PropagateError):
+        pool.get("b")
+
+    # Notice that although we have both "a" and "b" keys, items() is
+    # guaranteed to raise PropagateError because one of them is
+    # PropagateError. Other values don't matter.
+    with assert_raises(PropagateError):
+        pool.items()
+    
+    # Similar remarks about waitall() and wait().
+    with assert_raises(PropagateError):
+        pool.waitall()
+    with assert_raises(PropagateError):
+        pool.wait()
+    with assert_raises(PropagateError):
+        pool.wait("b")
+    with assert_raises(PropagateError):
+        pool.wait("ab")
+    # but if we're only wait()ing for success results, no exception
+    assert isinstance(pool.wait("a")["a"], BogusError), \
+           "should have delivered BogusError instead of raising"
+
+    # wait_each() is guaranteed to eventually raise PropagateError, though you
+    # may obtain valid values before you hit it.
+    with assert_raises(PropagateError):
+        for k, v in pool.wait_each():
+            pass
+
+    # wait_each_success() filters
+    assert_equals(dict(pool.wait_each_success()), dict(a=bogua))
+    assert_equals(dict(pool.wait_each_success("ab")), dict(a=bogua))
+    assert_equals(dict(pool.wait_each_success("a")), dict(a=bogua))
+    assert_equals(dict(pool.wait_each_success("b")), {})
+
+    # wait_each_exception() filters the other way
+    assert_equals(dict(pool.wait_each_exception()), dict(b=bogub))
+    assert_equals(dict(pool.wait_each_exception("ab")), dict(b=bogub))
+    assert_equals(dict(pool.wait_each_exception("a")), {})
+    assert_equals(dict(pool.wait_each_exception("b")), dict(b=bogub))
