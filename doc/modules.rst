@@ -6,6 +6,7 @@ Module Reference
 
    modules/backdoor
    modules/corolocal
+   modules/dagpool
    modules/debug
    modules/db_pool
    modules/event
