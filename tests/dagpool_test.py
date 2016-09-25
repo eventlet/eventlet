@@ -470,16 +470,16 @@ def test_wait_each_all():
         # advance every pool greenlet as far as it can go
         spin()
         # everything from keys[:pos+1] should have a value by now
-        for k in keys[:pos+1]:
+        for k in keys[:pos + 1]:
             assert pool.get(k, _notthere) is not _notthere, \
-                   "greenlet {} did not yet produce a value".format(k)
+                "greenlet {} did not yet produce a value".format(k)
         # everything from keys[pos+1:] should not yet
-        for k in keys[pos+1:]:
+        for k in keys[pos + 1:]:
             assert pool.get(k, _notthere) is _notthere, \
-                   "wait_each() delayed value for {}".format(keys[pos])
+                "wait_each() delayed value for {}".format(keys[pos])
         # let next greenthread complete
         if pos < len(keys) - 1:
-            k = keys[pos+1]
+            k = keys[pos + 1]
             events[k].send(k)
 
 
@@ -600,7 +600,7 @@ def test_waitall_exc():
     except PropagateError as err:
         assert_equals(err.key, "a")
         assert isinstance(err.exc, BogusError), \
-               "exc attribute is {}, not BogusError".format(err.exc)
+            "exc attribute is {}, not BogusError".format(err.exc)
         assert_equals(str(err.exc), "bogus")
         msg = str(err)
         assert_in("PropagateError(a)", msg)
@@ -622,7 +622,7 @@ def test_propagate_exc():
         erra = errb.exc
         assert_equals(erra.key, "a")
         assert isinstance(erra.exc, BogusError), \
-               "exc attribute is {}, not BogusError".format(erra.exc)
+            "exc attribute is {}, not BogusError".format(erra.exc)
         assert_equals(str(erra.exc), "bogus")
         msg = str(errc)
         assert_in("PropagateError(a)", msg)
@@ -649,7 +649,7 @@ def test_post_get_exc():
     bogua = BogusError("bogua")
     pool.post("a", bogua)
     assert isinstance(pool.get("a"), BogusError), \
-           "should have delivered BogusError instead of raising"
+        "should have delivered BogusError instead of raising"
     bogub = PropagateError("b", BogusError("bogub"))
     pool.post("b", bogub)
     with assert_raises(PropagateError):
@@ -660,7 +660,7 @@ def test_post_get_exc():
     # PropagateError. Other values don't matter.
     with assert_raises(PropagateError):
         pool.items()
-    
+
     # Similar remarks about waitall() and wait().
     with assert_raises(PropagateError):
         pool.waitall()
@@ -672,7 +672,7 @@ def test_post_get_exc():
         pool.wait("ab")
     # but if we're only wait()ing for success results, no exception
     assert isinstance(pool.wait("a")["a"], BogusError), \
-           "should have delivered BogusError instead of raising"
+        "should have delivered BogusError instead of raising"
 
     # wait_each() is guaranteed to eventually raise PropagateError, though you
     # may obtain valid values before you hit it.
