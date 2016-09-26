@@ -327,7 +327,14 @@ class GreenSSLSocket(_original_sslsocket):
                              self.cert_reqs, self.ssl_version,
                              self.ca_certs, *([self.ciphers] if has_ciphers else []))
 
-        self._sslobj = sslobj
+        try:
+            # This is added in Python 3.5, http://bugs.python.org/issue21965
+            SSLObject
+        except NameError:
+            self._sslobj = sslobj
+        else:
+            self._sslobj = SSLObject(sslobj, owner=self)
+
         if self.do_handshake_on_connect:
             self.do_handshake()
 
