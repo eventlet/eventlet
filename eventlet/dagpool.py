@@ -32,8 +32,12 @@ class PropagateError(Exception):
     PropagateError.
 
     Attributes:
-    key: the key of the greenthread which raised the exception
-    exc: the exception object raised by the greenthread
+
+    key
+        the key of the greenthread which raised the exception
+
+    exc
+        the exception object raised by the greenthread
     """
     def __init__(self, key, exc):
         self.key = key
@@ -51,9 +55,10 @@ class DAGPool(object):
 
     This is a way to implement general DAG dependencies. A simple dependency
     tree (flowing in either direction) can straightforwardly be implemented
-    using recursion and (e.g.) GreenThread.imap(). What gets complicated is
-    when a given node depends on several other nodes as well as contributing
-    to several other nodes.
+    using recursion and (e.g.)
+    :meth:`GreenThread.imap() <eventlet.greenthread.GreenThread.imap>`.
+    What gets complicated is when a given node depends on several other nodes
+    as well as contributing to several other nodes.
 
     With DAGPool, you concurrently launch all applicable greenthreads; each
     will proceed as soon as it has all required inputs. The DAG is implicit in
@@ -65,34 +70,38 @@ class DAGPool(object):
 
     The greenthread callable must accept (key, results), where:
 
-    key is its own key
-    results is an iterable of (key, value) pairs.
+    key
+        is its own key
+
+    results
+        is an iterable of (key, value) pairs.
 
     A newly-launched DAGPool greenthread is entered immediately, and can
     perform any necessary setup work. At some point it will iterate over the
     (key, value) pairs from the passed 'results' iterable. Doing so blocks the
     greenthread until a value is available for each of the keys specified in
     its initial dependencies iterable. These (key, value) pairs are delivered
-    in chronological order, NOT the order in which they are initially
+    in chronological order, *not* the order in which they are initially
     specified: each value will be delivered as soon as it becomes available.
 
     The value returned by a DAGPool greenthread becomes the value for its
     key, which unblocks any other greenthreads waiting on that key.
 
     If a DAGPool greenthread terminates with an exception instead of returning
-    a value, attempting to retrieve the value raises PropagateError, which
-    binds the key of the original greenthread and the original exception.
-    Unless the greenthread attempting to retrieve the value handles
+    a value, attempting to retrieve the value raises :class:`PropagateError`,
+    which binds the key of the original greenthread and the original
+    exception. Unless the greenthread attempting to retrieve the value handles
     PropagateError, that exception will in turn be wrapped in a PropagateError
     of its own, and so forth. The code that ultimately handles PropagateError
     can follow the chain of PropagateError.exc attributes to discover the flow
     of that exception through the DAG of greenthreads.
 
-    External greenthreads may also interact with a DAGPool. See wait_each(),
-    waitall(), post().
+    External greenthreads may also interact with a DAGPool. See :meth:`wait_each`,
+    :meth:`waitall`, :meth:`post`.
 
     It is not recommended to constrain external DAGPool producer greenthreads
-    in a GreenPool: it may be hard to provably avoid deadlock.
+    in a :class:`GreenPool <eventlet.greenpool.GreenPool>`: it may be hard to
+    provably avoid deadlock.
     """
 
     _Coro = collections.namedtuple("_Coro", ("greenthread", "pending"))
@@ -123,47 +132,47 @@ class DAGPool(object):
     def waitall(self):
         """
         waitall() blocks the calling greenthread until there is a value for
-        every DAGPool greenthread launched by spawn(). It returns a dict
-        containing all preload data, all data from post() and all values
-        returned by spawned greenthreads.
+        every DAGPool greenthread launched by :meth:`spawn`. It returns a dict
+        containing all :class:`preload data <DAGPool>`, all data from
+        :meth:`post` and all values returned by spawned greenthreads.
 
-        See also wait().
+        See also :meth:`wait`.
         """
         # waitall() is an alias for compatibility with GreenPool
         return self.wait()
 
     def wait(self, keys=_MISSING):
         """
-        keys is an optional iterable of keys. If you omit the argument, it
-        waits for all the keys from preload data, from post() calls and from
-        spawn() calls: in other words, all the keys of which this DAGPool is
-        aware.
+        *keys* is an optional iterable of keys. If you omit the argument, it
+        waits for all the keys from :class:`preload data <DAGPool>`, from
+        :meth:`post` calls and from :meth:`spawn` calls: in other words, all
+        the keys of which this DAGPool is aware.
 
         wait() blocks the calling greenthread until all of the relevant keys
         have values. wait() returns a dict whose keys are the relevant keys,
-        and whose values come from the preload data, from values returned by
-        DAGPool greenthreads or from post() calls.
+        and whose values come from the *preload* data, from values returned by
+        DAGPool greenthreads or from :meth:`post` calls.
 
-        If a greenthread terminates with an exception, wait() will raise
-        PropagateError wrapping that exception. If more than one greenthread
-        terminates with an exception, it is indeterminate which one wait()
-        will raise.
+        If a DAGPool greenthread terminates with an exception, wait() will
+        raise :class:`PropagateError` wrapping that exception. If more than
+        one greenthread terminates with an exception, it is indeterminate
+        which one wait() will raise.
 
-        If a greenthread posts a PropagateError instance, wait() will raise
-        that PropagateError. If more than one greenthread posts
-        PropagateError, it is indeterminate which one wait() will raise.
+        If an external greenthread posts a :class:`PropagateError` instance,
+        wait() will raise that PropagateError. If more than one greenthread
+        posts PropagateError, it is indeterminate which one wait() will raise.
 
-        See also wait_each_success(), wait_each_exception().
+        See also :meth:`wait_each_success`, :meth:`wait_each_exception`.
         """
         # This is mostly redundant with wait_each() functionality.
         return dict(self.wait_each(keys))
 
     def wait_each(self, keys=_MISSING):
         """
-        keys is an optional iterable of keys. If you omit the argument, it
-        waits for all the keys from preload data, from post() calls and from
-        spawn() calls: in other words, all the keys of which this DAGPool is
-        aware.
+        *keys* is an optional iterable of keys. If you omit the argument, it
+        waits for all the keys from :class:`preload data <DAGPool>`, from
+        :meth:`post` calls and from :meth:`spawn` calls: in other words, all
+        the keys of which this DAGPool is aware.
 
         wait_each() is a generator producing (key, value) pairs as a value
         becomes available for each requested key. wait_each() blocks the
@@ -177,22 +186,24 @@ class DAGPool(object):
         each of the ready ones in arbitrary order before blocking again.
 
         The DAGPool does not distinguish between a value returned by one of
-        its own greenthreads and one provided by a post() call or preload data.
+        its own greenthreads and one provided by a :meth:`post` call or *preload* data.
 
         The wait_each() generator terminates (raises StopIteration) when all
         specified keys have been delivered. Thus, typical usage might be:
 
-        for key, value in dagpool.wait_each(keys):
-            # process this ready key and value
-        # continue processing now that we've gotten values for all keys
+        ::
+
+            for key, value in dagpool.wait_each(keys):
+                # process this ready key and value
+            # continue processing now that we've gotten values for all keys
 
         By implication, if you pass wait_each() an empty iterable of keys, it
         returns immediately without yielding anything.
 
-        If the value to be delivered is a PropagateError exception object, the
+        If the value to be delivered is a :class:`PropagateError` exception object, the
         generator raises that PropagateError instead of yielding it.
 
-        See also wait_each_success(), wait_each_exception().
+        See also :meth:`wait_each_success`, :meth:`wait_each_exception`.
         """
         # Build a local set() and then call _wait_each().
         return self._wait_each(self._get_keyset_for_wait_each(keys))
@@ -200,12 +211,12 @@ class DAGPool(object):
     def wait_each_success(self, keys=_MISSING):
         """
         wait_each_success() filters results so that only success values are
-        yielded. In other words, unlike wait_each(), wait_each_success() will
-        not raise PropagateError. Not every provided (or defaulted) key will
-        necessarily be represented, though naturally the generator must wait
-        until all have completed.
+        yielded. In other words, unlike :meth:`wait_each`, wait_each_success()
+        will not raise :class:`PropagateError`. Not every provided (or
+        defaulted) key will necessarily be represented, though naturally the
+        generator will not finish until all have completed.
 
-        In all other respects, wait_each_success() behaves like wait_each().
+        In all other respects, wait_each_success() behaves like :meth:`wait_each`.
         """
         for key, value in self._wait_each_raw(self._get_keyset_for_wait_each(keys)):
             if not isinstance(value, PropagateError):
@@ -215,13 +226,13 @@ class DAGPool(object):
         """
         wait_each_exception() filters results so that only exceptions are
         yielded. Not every provided (or defaulted) key will necessarily be
-        represented, though naturally the generator must wait until all have
-        completed.
+        represented, though naturally the generator will not finish until
+        all have completed.
 
         Unlike other DAGPool methods, wait_each_exception() simply yields
-        PropagateError instances as values rather than raising them.
+        :class:`PropagateError` instances as values rather than raising them.
 
-        In all other respects, wait_each_exception() behaves like wait_each().
+        In all other respects, wait_each_exception() behaves like :meth:`wait_each`.
         """
         for key, value in self._wait_each_raw(self._get_keyset_for_wait_each(keys)):
             if isinstance(value, PropagateError):
@@ -289,31 +300,32 @@ class DAGPool(object):
 
     def spawn(self, key, depends, function, *args, **kwds):
         """
-        Launch the passed function(key, results, ...) as a greenthread,
+        Launch the passed *function(key, results, ...)* as a greenthread,
         passing it:
 
-        - the specified 'key'
+        - the specified *key*
         - an iterable of (key, value) pairs
         - whatever other positional args or keywords you specify.
 
-        Iterating over the 'results' iterable behaves like calling
-        wait_each(depends).
+        Iterating over the *results* iterable behaves like calling
+        :meth:`wait_each(depends) <DAGPool.wait_each>`.
 
-        Returning from function() behaves like post(key, return_value).
+        Returning from *function()* behaves like
+        :meth:`post(key, return_value) <DAGPool.post>`.
 
-        If function() terminates with an exception, that exception is wrapped
-        in PropagateError with the greenthread's key and (effectively) posted
+        If *function()* terminates with an exception, that exception is wrapped
+        in :class:`PropagateError` with the greenthread's *key* and (effectively) posted
         as the value for that key. Attempting to retrieve that value will
         raise that PropagateError.
 
         Thus, if the greenthread with key 'a' terminates with an exception,
         and greenthread 'b' depends on 'a', when greenthread 'b' attempts to
-        iterate through its 'results' argument, it will encounter
+        iterate through its *results* argument, it will encounter
         PropagateError. So by default, an uncaught exception will propagate
         through all the downstream dependencies.
 
-        If you pass spawn() a key already passed to spawn() or post(), spawn()
-        raises Collision.
+        If you pass :meth:`spawn` a key already passed to spawn() or :meth:`post`, spawn()
+        raises :class:`Collision`.
         """
         if key in self.coros or key in self.values:
             raise Collision(key)
@@ -359,12 +371,18 @@ class DAGPool(object):
 
     def spawn_many(self, depends, function, *args, **kwds):
         """
-        spawn_many() accepts a single function whose parameters are the same
-        as for spawn().
+        spawn_many() accepts a single *function* whose parameters are the same
+        as for :meth:`spawn`.
 
-        The difference is that spawn_many() accepts a dependency dict. A new
-        greenthread is spawned for each key in the dict. That dict key's value
-        should be an iterable of other keys on which this greenthread depends.
+        The difference is that spawn_many() accepts a dependency dict
+        *depends*. A new greenthread is spawned for each key in the dict. That
+        dict key's value should be an iterable of other keys on which this
+        greenthread depends.
+
+        If the *depends* dict contains any key already passed to :meth:`spawn`
+        or :meth:`post`, spawn_many() raises :class:`Collision`. It is
+        indeterminate how many of the other keys in *depends* will have
+        successfully spawned greenthreads.
         """
         # Iterate over 'depends' items, relying on self.spawn() not to
         # context-switch so no one can modify 'depends' along the way.
@@ -373,7 +391,7 @@ class DAGPool(object):
 
     def kill(self, key):
         """
-        Kill the greenthread that was spawned with the specified 'key'.
+        Kill the greenthread that was spawned with the specified *key*.
 
         If no such greenthread was spawned, raise KeyError.
         """
@@ -384,25 +402,26 @@ class DAGPool(object):
 
     def post(self, key, value, replace=False):
         """
-        post(key, value) stores the passed value for the passed key. It then
-        causes each greenthread blocked on its results iterable, or on
-        wait_each(keys), to check for new values. A waiting greenthread might
-        not literally resume on every single post() of a relevant key, but the
-        first post() of a relevant key ensures that it will resume eventually,
-        and when it does it will catch up with all relevant post() calls.
+        post(key, value) stores the passed *value* for the passed *key*. It
+        then causes each greenthread blocked on its results iterable, or on
+        :meth:`wait_each(keys) <DAGPool.wait_each>`, to check for new values.
+        A waiting greenthread might not literally resume on every single
+        post() of a relevant key, but the first post() of a relevant key
+        ensures that it will resume eventually, and when it does it will catch
+        up with all relevant post() calls.
 
         Calling post(key, value) when there is a running greenthread with that
-        same 'key' raises Collision. If you must post(key, value) instead of
+        same *key* raises :class:`Collision`. If you must post(key, value) instead of
         letting the greenthread run to completion, you must first call
-        kill(key).
+        :meth:`kill(key) <DAGPool.kill>`.
 
         The DAGPool implicitly post()s the return value from each of its
         greenthreads. But a greenthread may explicitly post() a value for its
         own key, which will cause its return value to be discarded.
 
-        Calling post(key, value, replace=False) (the default 'replace') when a
+        Calling post(key, value, replace=False) (the default *replace*) when a
         value for that key has already been posted, by any means, raises
-        Collision.
+        :class:`Collision`.
 
         Calling post(key, value, replace=True) when a value for that key has
         already been posted, by any means, replaces the previously-stored
@@ -410,13 +429,14 @@ class DAGPool(object):
         behavior of greenthreads waiting on that key.
 
         After a post(key, value1) followed by post(key, value2, replace=True),
-        it is unspecified which pending wait_each([key...]) calls (or
-        greenthreads iterating over 'results' involving that key) will observe
-        value1 versus value2. It is guaranteed that subsequent
-        wait_each([key...]) calls (or greenthreads spawned after that point)
-        will observe value2.
+        it is unspecified which pending :meth:`wait_each([key...]) <DAGPool.wait_each>`
+        calls (or greenthreads iterating over *results* involving that key)
+        will observe *value1* versus *value2*. It is guaranteed that
+        subsequent wait_each([key...]) calls (or greenthreads spawned after
+        that point) will observe *value2*.
 
-        A successful call to post(key, PropagateError(key, ExceptionSubclass))
+        A successful call to
+        post(key, :class:`PropagateError(key, ExceptionSubclass) <PropagateError>`)
         ensures that any subsequent attempt to retrieve that key's value will
         raise that PropagateError instance.
         """
@@ -452,7 +472,7 @@ class DAGPool(object):
 
     def __getitem__(self, key):
         """
-        __getitem__(key) (aka dagpool[key]) blocks until 'key' has a value,
+        __getitem__(key) (aka dagpool[key]) blocks until *key* has a value,
         then delivers that value.
         """
         # This is a degenerate case of wait_each(). Construct a tuple
@@ -463,41 +483,41 @@ class DAGPool(object):
 
     def get(self, key, default=None):
         """
-        get() returns the value for 'key'. If 'key' does not yet have a value,
-        get() returns 'default'.
+        get() returns the value for *key*. If *key* does not yet have a value,
+        get() returns *default*.
         """
         return self._value_or_raise(self.values.get(key, default))
 
     def keys(self):
         """
-        Return a tuple of keys for which we currently have values. Explicitly
-        return a copy rather than an iterator: don't assume our caller will
-        finish iterating before new values are posted.
+        Return a snapshot tuple of keys for which we currently have values.
         """
+        # Explicitly return a copy rather than an iterator: don't assume our
+        # caller will finish iterating before new values are posted.
         return tuple(six.iterkeys(self.values))
 
     def items(self):
         """
         Return a snapshot tuple of currently-available (key, value) pairs.
-        Don't assume our caller will finish iterating before new values are
-        posted.
         """
+        # Don't assume our caller will finish iterating before new values are
+        # posted.
         return tuple((key, self._value_or_raise(value))
                      for key, value in six.iteritems(self.values))
 
     def running(self):
         """
-        Return number of running greenthreads. This includes greenthreads
-        blocked while iterating through their 'results' iterable, that is,
-        greenthreads waiting on values from other keys.
+        Return number of running DAGPool greenthreads. This includes
+        greenthreads blocked while iterating through their *results* iterable,
+        that is, greenthreads waiting on values from other keys.
         """
         return len(self.coros)
 
     def running_keys(self):
         """
-        Return keys for running greenthreads. This includes greenthreads
-        blocked while iterating through their 'results' iterable, that is,
-        greenthreads waiting on values from other keys.
+        Return keys for running DAGPool greenthreads. This includes
+        greenthreads blocked while iterating through their *results* iterable,
+        that is, greenthreads waiting on values from other keys.
         """
         # return snapshot; don't assume caller will finish iterating before we
         # next modify self.coros
@@ -505,9 +525,10 @@ class DAGPool(object):
 
     def waiting(self):
         """
-        Return number of waiting greenthreads, that is, greenthreads still
-        waiting on values from other keys. This explicitly does NOT include
-        external greenthreads waiting on wait(), waitall(), wait_each().
+        Return number of waiting DAGPool greenthreads, that is, greenthreads
+        still waiting on values from other keys. This explicitly does *not*
+        include external greenthreads waiting on :meth:`wait`,
+        :meth:`waitall`, :meth:`wait_each`.
         """
         # n.b. if Event would provide a count of its waiters, we could say
         # something about external greenthreads as well.
@@ -519,18 +540,19 @@ class DAGPool(object):
     # None as a supported key.
     def waiting_for(self, key=_MISSING):
         """
-        waiting_for(key) returns a set() of the keys for which the greenthread
-        spawned with that key is still waiting. If you pass a key for which no
-        greenthread was spawned, waiting_for() raises KeyError.
+        waiting_for(key) returns a set() of the keys for which the DAGPool
+        greenthread spawned with that *key* is still waiting. If you pass a
+        *key* for which no greenthread was spawned, waiting_for() raises
+        KeyError.
 
         waiting_for() without argument returns a dict. Its keys are the keys
-        of greenthreads still waiting on one or more values. In the returned
-        dict, the value of each such key is the set of other keys for which
-        that greenthread is still waiting.
+        of DAGPool greenthreads still waiting on one or more values. In the
+        returned dict, the value of each such key is the set of other keys for
+        which that greenthread is still waiting.
 
-        This method allows diagnosing a 'hung' DAGPool. If certain
+        This method allows diagnosing a "hung" DAGPool. If certain
         greenthreads are making no progress, it's possible that they are
-        waiting on keys for which there is no greenthread and no post() data.
+        waiting on keys for which there is no greenthread and no :meth:`post` data.
         """
         # We may have greenthreads whose 'pending' entry indicates they're
         # waiting on some keys even though values have now been posted for
