@@ -1,12 +1,11 @@
 import os
 import sys
-from eventlet import patcher
+from eventlet import patcher, support
 from eventlet.support import six
 select = patcher.original('select')
 time = patcher.original('time')
 sleep = time.sleep
 
-from eventlet.support import clear_sys_exc_info
 from eventlet.hubs.hub import BaseHub, READ, WRITE, noop
 
 
@@ -73,9 +72,11 @@ class Hub(BaseHub):
         evtype = listener.evtype
         fileno = listener.fileno
         if not self.listeners[evtype].get(fileno):
-            event = self._events[fileno].pop(evtype)
+            event = self._events[fileno].pop(evtype, None)
+            if event is None:
+                return
             try:
-                self._delete_events([event])
+                self._delete_events((event,))
             except OSError:
                 pass
 
@@ -111,4 +112,4 @@ class Hub(BaseHub):
                 raise
             except:
                 self.squelch_exception(fileno, sys.exc_info())
-                clear_sys_exc_info()
+                support.clear_sys_exc_info()
