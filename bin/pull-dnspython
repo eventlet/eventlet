@@ -1,6 +1,6 @@
 #!/bin/bash -eux
 cd "$( dirname "${BASH_SOURCE[0]}" )/.."
-version=${1-188aa701a6826c607da0624e31a8c4618d0a8017}
+version=${1-bb0c9f21f4a6f56f2fe8d7c1fc991080ef89d223}
 upstream_path=./dnspython-${version}
 if [[ ! -d "${upstream_path}" ]]; then
   curl -L -odnspython.zip "https://github.com/rthalley/dnspython/archive/${version}.zip"

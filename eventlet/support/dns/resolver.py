@@ -135,8 +135,9 @@ class NoNameservers(dns.exception.DNSException):
 
     """All nameservers failed to answer the query.
 
-    @param errors: list of servers and respective errors
-    @type errors: [(server ip address, any object convertible to string)]
+    errors: list of servers and respective errors
+    The type of errors is
+    [(server ip address, any object convertible to string)].
     Non-empty errors list will add explanatory message ()
     """
 
@@ -271,19 +272,16 @@ class Answer(object):
             raise AttributeError(attr)
 
     def __len__(self):
-        return len(self.rrset)
+        return self.rrset and len(self.rrset) or 0
 
     def __iter__(self):
-        return iter(self.rrset)
+        return self.rrset and iter(self.rrset) or iter(tuple())
 
     def __getitem__(self, i):
         return self.rrset[i]
 
     def __delitem__(self, i):
         del self.rrset[i]
-
-    def __getslice__(self, i, j):
-        return self.rrset[i:j]
 
 
 class Cache(object):
@@ -434,7 +432,7 @@ class LRUCache(object):
         """Initialize a DNS cache.
 
         @param max_size: The maximum number of nodes to cache; the default is
-        100000. Must be > 1.
+        100,000. Must be greater than 1.
         @type max_size: int
         """
         self.data = {}
@@ -580,6 +578,24 @@ class Resolver(object):
         the resolver is running on.  (I.e. a /etc/resolv.conf file on
         POSIX systems and from the registry on Windows systems.)
         @type configure: bool"""
+
+        self.domain = None
+        self.nameservers = None
+        self.nameserver_ports = None
+        self.port = None
+        self.search = None
+        self.timeout = None
+        self.lifetime = None
+        self.keyring = None
+        self.keyname = None
+        self.keyalgorithm = None
+        self.edns = None
+        self.ednsflags = None
+        self.payload = None
+        self.cache = None
+        self.flags = None
+        self.retry_servfail = False
+        self.rotate = False
 
         self.reset()
         if configure:
@@ -901,12 +917,13 @@ class Resolver(object):
         all_nxdomain = True
         nxdomain_responses = {}
         start = time.time()
+        _qname = None # make pylint happy
         for _qname in qnames_to_try:
             if self.cache:
                 answer = self.cache.get((_qname, rdtype, rdclass))
                 if answer is not None:
                     if answer.rrset is None and raise_on_no_answer:
-                        raise NoAnswer
+                        raise NoAnswer(response=answer.response)
                     else:
                         return answer
             request = dns.message.make_query(_qname, rdtype, rdclass)
@@ -1032,10 +1049,10 @@ class Resolver(object):
             break
         if all_nxdomain:
             raise NXDOMAIN(qnames=qnames_to_try, responses=nxdomain_responses)
-        answer = Answer(qname, rdtype, rdclass, response,
+        answer = Answer(_qname, rdtype, rdclass, response,
                         raise_on_no_answer)
         if self.cache:
-            self.cache.put((qname, rdtype, rdclass), answer)
+            self.cache.put((_qname, rdtype, rdclass), answer)
         return answer
 
     def use_tsig(self, keyring, keyname=None,
@@ -1194,13 +1211,13 @@ def _getaddrinfo(host=None, service=None, family=socket.AF_UNSPEC, socktype=0,
             addr = dns.ipv6.inet_aton(ahost)
             v6addrs.append(host)
             canonical_name = host
-    except:
+    except Exception:
         try:
             # Is it a V4 address literal?
             addr = dns.ipv4.inet_aton(host)
             v4addrs.append(host)
             canonical_name = host
-        except:
+        except Exception:
             if flags & socket.AI_NUMERICHOST == 0:
                 try:
                     if family == socket.AF_INET6 or family == socket.AF_UNSPEC:
@@ -1232,11 +1249,11 @@ def _getaddrinfo(host=None, service=None, family=socket.AF_UNSPEC, socktype=0,
             port = 0
         else:
             port = int(service)
-    except:
+    except Exception:
         if flags & socket.AI_NUMERICSERV == 0:
             try:
                 port = socket.getservbyname(service)
-            except:
+            except Exception:
                 pass
     if port is None:
         raise socket.gaierror(socket.EAI_NONAME)
@@ -1311,7 +1328,7 @@ def _getfqdn(name=None):
         name = socket.gethostname()
     try:
         return _getnameinfo(_getaddrinfo(name, 80)[0][4])[0]
-    except:
+    except Exception:
         return name
 
 
@@ -1336,7 +1353,7 @@ def _gethostbyaddr(ip):
         dns.ipv6.inet_aton(ip)
         sockaddr = (ip, 80, 0, 0)
         family = socket.AF_INET6
-    except:
+    except Exception:
         sockaddr = (ip, 80)
         family = socket.AF_INET
     (name, port) = _getnameinfo(sockaddr, socket.NI_NAMEREQD)
