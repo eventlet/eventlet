@@ -1,9 +1,7 @@
-"""\
-@file   dagpool.py
-@author Nat Goodspeed
-@date   2016-08-08
-@brief  Provide DAGPool class
-"""
+#@file   dagpool.py
+#@author Nat Goodspeed
+#@date   2016-08-08
+#@brief  Provide DAGPool class
 
 from eventlet.event import Event
 from eventlet import greenthread
@@ -102,6 +100,8 @@ class DAGPool(object):
     It is not recommended to constrain external DAGPool producer greenthreads
     in a :class:`GreenPool <eventlet.greenpool.GreenPool>`: it may be hard to
     provably avoid deadlock.
+
+    .. automethod:: __getitem__
     """
 
     _Coro = collections.namedtuple("_Coro", ("greenthread", "pending"))
