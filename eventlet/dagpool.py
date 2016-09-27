@@ -101,6 +101,7 @@ class DAGPool(object):
     in a :class:`GreenPool <eventlet.greenpool.GreenPool>`: it may be hard to
     provably avoid deadlock.
 
+    .. automethod:: __init__
     .. automethod:: __getitem__
     """
 
