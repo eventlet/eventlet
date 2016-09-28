@@ -147,16 +147,16 @@ them:
 ::
 
     final = pool.waitall()
-    print "for d: {0}".format(final["d"])
-    print "for e: {0}".format(final["e"])
+    print("for d: {0}".format(final["d"]))
+    print("for e: {0}".format(final["e"]))
 
 waitall() is an alias for :meth:`wait() <eventlet.dagpool.DAGPool.wait>` with no arguments:
 
 ::
 
     final = pool.wait()
-    print "for d: {0}".format(final["d"])
-    print "for e: {0}".format(final["e"])
+    print("for d: {0}".format(final["d"]))
+    print("for e: {0}".format(final["e"]))
 
 Or you can specifically wait for only the final programs:
 
@@ -248,7 +248,7 @@ available:
 ::
 
     for key, result in pool.wait_each():
-        print "got result for {0}".format(key)
+        print("got result for {0}".format(key))
         # ... process ...
 
 Once the build for a has completed, this produces:
@@ -264,7 +264,7 @@ greenthreads:
 
 ::
 
-    >>> print pool.running()
+    >>> print(pool.running())
     4
 
 and the number of :meth:`waiting <eventlet.dagpool.DAGPool.waiting>`
@@ -272,7 +272,7 @@ greenthreads:
 
 ::
 
-    >>> print pool.waiting()
+    >>> print(pool.waiting())
     4
 
 It's often more informative to ask *which* greenthreads are :meth:`still
@@ -280,7 +280,7 @@ running <eventlet.dagpool.DAGPool.running_keys>`:
 
 ::
 
-    >>> print pool.running_keys()
+    >>> print(pool.running_keys())
     ('c', 'b', 'e', 'd')
 
 but in this case, we already know a has completed.
@@ -289,9 +289,9 @@ We can ask for all available results:
 
 ::
 
-    >>> print pool.keys()
+    >>> print(pool.keys())
     ('a',)
-    >>> print pool.items()
+    >>> print(pool.items())
     (('a', result_from_a),)
 
 The :meth:`keys() <eventlet.dagpool.DAGPool.keys>` and :meth:`items()
@@ -303,7 +303,7 @@ But what's blocking the works? What are we :meth:`waiting for
 
 ::
 
-    >>> print pool.waiting_for("d")
+    >>> print(pool.waiting_for("d"))
     set(['c', 'b'])
 
 (waiting_for()'s optional argument is a *single* key.)
@@ -312,9 +312,9 @@ That doesn't help much yet...
 
 ::
 
-    >>> print pool.waiting_for("b")
+    >>> print(pool.waiting_for("b"))
     set(['zlib'])
-    >>> print pool.waiting_for("zlib")
+    >>> print(pool.waiting_for("zlib"))
     KeyError: 'zlib'
 
 Aha! We forgot to even include the zlib build when we were originally
@@ -440,7 +440,7 @@ For that you can call :meth:`wait_each_success()
 ::
 
     for key, result in pool.wait_each_success():
-        print "{0} succeeded".format(key)
+        print("{0} succeeded".format(key))
         # ... process result ...
 
     a succeeded
@@ -452,7 +452,7 @@ with :meth:`wait_each_exception() <eventlet.dagpool.DAGPool.wait_each_exception>
 ::
 
     for key, err in pool.wait_each_exception():
-        print "{0} failed with {1}".format(key, err.exc.__class__.__name__)
+        print("{0} failed with {1}".format(key, err.exc.__class__.__name__))
 
     c failed with PropagateError
     b failed with PropagateError
@@ -472,12 +472,12 @@ keys to report:
 ::
 
     for key, result in pool.wait_each_success(["d", "e"]):
-        print "{0} succeeded".format(key)
+        print("{0} succeeded".format(key))
 
     (no output)
 
     for key, err in pool.wait_each_exception(["d", "e"]):
-        print "{0} failed with {1}".format(key, err.exc.__class__.__name__)
+        print("{0} failed with {1}".format(key, err.exc.__class__.__name__))
 
     e failed with PropagateError
     d failed with PropagateError
