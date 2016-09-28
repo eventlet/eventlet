@@ -463,8 +463,8 @@ with :meth:`wait_each_exception() <eventlet.dagpool.DAGPool.wait_each_exception>
 wait_each_exception() yields each PropagateError wrapper as if it were the
 result, rather than raising it as an exception.
 
-Notice that we print err.exc.\_\_class\_\_.\_\_name\_\_ because
-err.\_\_class\_\_.\_\_name\_\_ is always PropagateError.
+Notice that we print :code:`err.exc.__class__.__name__` because
+:code:`err.__class__.__name__` is always PropagateError.
 
 Both wait_each_success() and wait_each_exception() can accept an iterable of
 keys to report:
