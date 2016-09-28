@@ -1,7 +1,7 @@
-#@file   dagpool.py
-#@author Nat Goodspeed
-#@date   2016-08-08
-#@brief  Provide DAGPool class
+# @file   dagpool.py
+# @author Nat Goodspeed
+# @date   2016-08-08
+# @brief  Provide DAGPool class
 
 from eventlet.event import Event
 from eventlet import greenthread
