@@ -132,9 +132,7 @@ class TestServe(LimitedTestCase):
         lsock1 = eventlet.listen(('localhost', 0))
         port = lsock1.getsockname()[1]
 
-        def same_socket():
-            return eventlet.listen(('localhost', port))
-
-        self.assertRaises(socket.error, same_socket)
+        lsock2 = eventlet.listen(('localhost', port))
         lsock1.close()
-        assert same_socket()
+        lsock2.close()
+        assert True
