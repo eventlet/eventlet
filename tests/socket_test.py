@@ -1,3 +1,4 @@
+import array
 import os
 import shutil
 import sys
@@ -35,6 +36,27 @@ def test_recv_type():
     sock = eventlet.connect(tuple(addr))
     s = sock.recv(1)
     assert isinstance(s, bytes)
+
+
+def test_recv_into_type():
+    # make sure `_recv_loop` returns the correct value when `recv_meth` is of
+    # foo_into type (fills a buffer and returns number of bytes, not the data)
+    # Using threads like `test_recv_type` above.
+    threading = eventlet.patcher.original('threading')
+    addr = []
+
+    def server():
+        sock = eventlet.listen(('127.0.0.1', 0))
+        addr[:] = sock.getsockname()
+        eventlet.sleep(0.2)
+
+    server_thread = threading.Thread(target=server)
+    server_thread.start()
+    eventlet.sleep(0.1)
+    sock = eventlet.connect(tuple(addr))
+    buf = array.array('B', b' ')
+    res = sock.recv_into(buf, 1)
+    assert isinstance(res, int)
 
 
 def test_dns_methods_are_green():
