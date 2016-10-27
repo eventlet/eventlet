@@ -4,14 +4,14 @@ import eventlet
 from eventlet import debug, event
 from eventlet.green import socket
 from eventlet.support import six
-from tests import LimitedTestCase, skip_if_no_ssl
+import tests
 
 
 certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
 private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
 
 
-class TestServe(LimitedTestCase):
+class TestServe(tests.LimitedTestCase):
     def setUp(self):
         super(TestServe, self).setUp()
         debug.hub_exceptions(False)
@@ -111,7 +111,7 @@ class TestServe(LimitedTestCase):
             timeout_value="timed out")
         self.assertEqual(x, "timed out")
 
-    @skip_if_no_ssl
+    @tests.skip_if_no_ssl
     def test_wrap_ssl(self):
         server = eventlet.wrap_ssl(
             eventlet.listen(('localhost', 0)),
@@ -132,9 +132,14 @@ class TestServe(LimitedTestCase):
         lsock1 = eventlet.listen(('localhost', 0))
         port = lsock1.getsockname()[1]
 
-        def same_socket():
-            return eventlet.listen(('localhost', port))
+        if hasattr(socket, 'SO_REUSEPORT'):
+            lsock2 = eventlet.listen(('localhost', port))
+        else:
+            try:
+                lsock2 = eventlet.listen(('localhost', port))
+                assert lsock2
+                lsock2.close()
+            except socket.error:
+                pass
 
-        self.assertRaises(socket.error, same_socket)
         lsock1.close()
-        assert same_socket()

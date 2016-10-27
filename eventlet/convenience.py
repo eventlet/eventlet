@@ -40,6 +40,9 @@ def listen(addr, family=socket.AF_INET, backlog=50):
     sock = socket.socket(family, socket.SOCK_STREAM)
     if sys.platform[:3] != "win":
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    if hasattr(socket, 'SO_REUSEPORT'):
+        # NOTE(zhengwei): linux kernel >= 3.9
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
     sock.bind(addr)
     sock.listen(backlog)
     return sock
