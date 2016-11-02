@@ -402,10 +402,19 @@ def _getaddrinfo_lookup(host, family, flags):
         raise EAI_NONAME_ERROR
     addrs = []
     if family == socket.AF_UNSPEC:
+        err = None
         for qfamily in [socket.AF_INET6, socket.AF_INET]:
-            answer = resolve(host, qfamily, False)
-            if answer.rrset:
-                addrs.extend([rr.address for rr in answer.rrset])
+            try:
+                answer = resolve(host, qfamily, False)
+            except socket.gaierror as e:
+                if e.errno not in (socket.EAI_AGAIN, socket.EAI_NODATA):
+                    raise
+                err = e
+            else:
+                if answer.rrset:
+                    addrs.extend(rr.address for rr in answer.rrset)
+        if err is not None and not addrs:
+            raise err
     elif family == socket.AF_INET6 and flags & socket.AI_V4MAPPED:
         answer = resolve(host, socket.AF_INET6, False)
         if answer.rrset:
