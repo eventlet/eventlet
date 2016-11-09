@@ -517,6 +517,62 @@ class TestGetaddrinfo(tests.LimitedTestCase):
         addr = [('dead:beef::1', 0, 0, 0)] * len(res)
         assert addr == [ai[-1] for ai in res]
 
+    def test_getaddrinfo_hosts_only_ans_with_timeout(self):
+        def clear_raises(res_self):
+            res_self.raises = None
+            return greendns.dns.resolver.NoAnswer()
+
+        hostsres = _make_mock_base_resolver()
+        hostsres.raises = clear_raises
+        hostsres.rr.address = '1.2.3.4'
+        greendns.resolver = greendns.ResolverProxy(hostsres())
+        res = _make_mock_base_resolver()
+        res.raises = greendns.dns.exception.Timeout
+        greendns.resolver._resolver = res()
+
+        result = greendns.getaddrinfo('example.com', 0, 0)
+        addr = [('1.2.3.4', 0)] * len(result)
+        assert addr == [ai[-1] for ai in result]
+
+    def test_getaddrinfo_hosts_only_ans_with_error(self):
+        def clear_raises(res_self):
+            res_self.raises = None
+            return greendns.dns.resolver.NoAnswer()
+
+        hostsres = _make_mock_base_resolver()
+        hostsres.raises = clear_raises
+        hostsres.rr.address = '1.2.3.4'
+        greendns.resolver = greendns.ResolverProxy(hostsres())
+        res = _make_mock_base_resolver()
+        res.raises = greendns.dns.exception.DNSException
+        greendns.resolver._resolver = res()
+
+        result = greendns.getaddrinfo('example.com', 0, 0)
+        addr = [('1.2.3.4', 0)] * len(result)
+        assert addr == [ai[-1] for ai in result]
+
+    def test_getaddrinfo_hosts_only_timeout(self):
+        hostsres = _make_mock_base_resolver()
+        hostsres.raises = greendns.dns.resolver.NoAnswer
+        greendns.resolver = greendns.ResolverProxy(hostsres())
+        res = _make_mock_base_resolver()
+        res.raises = greendns.dns.exception.Timeout
+        greendns.resolver._resolver = res()
+
+        with tests.assert_raises(socket.gaierror):
+            greendns.getaddrinfo('example.com', 0, 0)
+
+    def test_getaddrinfo_hosts_only_dns_error(self):
+        hostsres = _make_mock_base_resolver()
+        hostsres.raises = greendns.dns.resolver.NoAnswer
+        greendns.resolver = greendns.ResolverProxy(hostsres())
+        res = _make_mock_base_resolver()
+        res.raises = greendns.dns.exception.DNSException
+        greendns.resolver._resolver = res()
+
+        with tests.assert_raises(socket.gaierror):
+            greendns.getaddrinfo('example.com', 0, 0)
+
     def test_canonname(self):
         greendns.resolve = _make_mock_resolve()
         greendns.resolve.add('host.example.com', '1.2.3.4')
