@@ -372,9 +372,14 @@ def _fix_py3_rlock(old):
         new.acquire()
     gc.collect()
     for ref in gc.get_referrers(old):
-        for k, v in vars(ref):
-            if v == old:
-                setattr(ref, k, new)
+        try:
+            ref_vars = vars(ref)
+        except TypeError:
+            pass
+        else:
+            for k, v in ref_vars.items():
+                if v == old:
+                    setattr(ref, k, new)
 
 
 def _green_os_modules():
