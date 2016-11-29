@@ -38,12 +38,15 @@ class PropagateError(Exception):
         the exception object raised by the greenthread
     """
     def __init__(self, key, exc):
+        # initialize base class with a reasonable string message
+        super(PropagateError, self).__init__(
+            "PropagateError({0}): {1}: {2}"
+            .format(key, exc.__class__.__name__, exc))
+        # Unless we set args, this is unpickleable:
+        # https://bugs.python.org/issue1692335
+        self.args = (key, exc)
         self.key = key
         self.exc = exc
-
-    def __str__(self):
-        return "PropagateError({0}): {1}: {2}" \
-               .format(self.key, self.exc.__class__.__name__, self.exc)
 
 
 class DAGPool(object):
