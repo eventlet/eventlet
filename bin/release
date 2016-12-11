@@ -13,7 +13,7 @@ version_next=
 
 main() {
 	branch="${1-$(git symbolic-ref --short HEAD)}"
-	version="$(python -c 'import eventlet; print(eventlet.__version__)')"
+	version="$(EVENTLET_IMPORT_VERSION_ONLY=1 python -c 'import eventlet; print(eventlet.__version__)')"
 	printf "\nbranch: %s eventlet.__version__: '%s'\n" $branch $version >&2
 	if [[ "$branch" != "master" ]]; then
 		echo "Must be on master" >&2
@@ -44,7 +44,7 @@ main() {
 		confirm "Continue still? [yN] " || exit 1
 	fi
 
-	if confirm "Build documentation (website)? [Yn] " >&2; then
+	if confirm "Build documentation (website)? [Yn] "; then
 		bin/build-website.bash || exit 1
 		git checkout "$branch"
 	fi

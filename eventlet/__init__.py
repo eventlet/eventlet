@@ -1,7 +1,12 @@
+import os
+
+
 version_info = (0, 20, 0)
 __version__ = '.'.join(map(str, version_info))
-
-try:
+# This is to make Debian packaging easier, it ignores import
+# errors of greenlet so that the packager can still at least
+# access the version.  Also this makes easy_install a little quieter
+if os.environ.get('EVENTLET_IMPORT_VERSION_ONLY') != '1':
     from eventlet import greenthread
     from eventlet import greenpool
     from eventlet import queue
@@ -39,11 +44,3 @@ try:
     TimeoutError = timeout.Timeout
     exc_after = greenthread.exc_after
     call_after_global = greenthread.call_after_global
-except ImportError as e:
-    # This is to make Debian packaging easier, it ignores import
-    # errors of greenlet so that the packager can still at least
-    # access the version.  Also this makes easy_install a little quieter
-    if 'greenlet' not in str(e):
-        # any other exception should be printed
-        import traceback
-        traceback.print_exc()
