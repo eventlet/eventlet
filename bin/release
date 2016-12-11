@@ -1,11 +1,12 @@
-#!/bin/bash -e
+#!/bin/bash
+set -e
 cd "$( dirname "${BASH_SOURCE[0]}" )/.."
-if [[ ! -d venv-release ]]; then
-	virtualenv venv-release
-	echo '*' >venv-release/.gitignore
-	venv-release/bin/pip install -U pip setuptools sphinx wheel
+if [[ ! -d ./venv-release ]]; then
+	virtualenv ./venv-release
+	echo '*' >./venv-release/.gitignore
+	./venv-release/bin/pip install -U pip setuptools sphinx twine wheel
 fi
-. $PWD/venv-release/bin/activate
+source $PWD/venv-release/bin/activate
 pip install -e $PWD
 
 version=
@@ -51,7 +52,8 @@ main() {
 
 	if confirm "Upload to PyPi? [Yn] "; then
 		rm -rf build dist
-		python setup.py sdist bdist_wheel register upload || exit 1
+		python setup.py sdist bdist_wheel || exit 1
+		twine upload dist/* || exit 1
 	fi
 
 	git push --verbose origin master gh-pages || exit 1
