@@ -30,13 +30,11 @@ Getting Eventlet
 
 The easiest way to get Eventlet is to use pip::
 
-  pip install eventlet
+  pip install -U eventlet
 
-The development `tip`_ is available as well::
+To install latest development verson once::
 
-  pip install 'eventlet==dev'
-
-.. _tip: http://bitbucket.org/eventlet/eventlet/get/tip.zip#egg=eventlet-dev
+  pip install -U https://github.com/eventlet/eventlet/archive/master.zip
 
 
 Building the Docs Locally
