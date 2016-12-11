@@ -26,4 +26,4 @@ while simultaneously accepting incoming connections from multiple endpoints boun
 API documentation
 =================
 
-ØMQ support is provided in the :mod:`eventlet.green.zmq` module
+ØMQ support is provided in the :mod:`eventlet.green.zmq` module.

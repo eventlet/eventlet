@@ -123,13 +123,13 @@ class _BlockedThread(object):
 
 
 class Context(__zmq__.Context):
-    """Subclass of :class:`zmq.core.context.Context`
+    """Subclass of :class:`zmq.Context`
     """
 
     def socket(self, socket_type):
         """Overridden method to ensure that the green version of socket is used
 
-        Behaves the same as :meth:`zmq.core.context.Context.socket`, but ensures
+        Behaves the same as :meth:`zmq.Context.socket`, but ensures
         that a :class:`Socket` with all of its send and recv methods set to be
         non-blocking is returned
         """
