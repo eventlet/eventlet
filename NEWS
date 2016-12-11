@@ -1,3 +1,24 @@
+0.20.0
+======
+* IMPORTANT: removed select.poll() function
+* DNS resolving is always green with dnspython bundled in
+* greenio: only trampoline when we block
+* convenience: listen() sets SO_REUSEPORT when available; Thanks to Zhengwei Gao
+* ssl: Fix "TypeError: read() argument 2 must be read-write bytes-like object, not None"
+* greenio: _recv_loop behaviour with recv_into on closed sock
+* ipv6: getaddrinfo would fail with scope index
+* green.zmq: Support {send,recv}_{string,json,pyobj} wrappers
+* greendns: Return answers from /etc/hosts despite nameserver errors
+* patcher: fixed green existing locks fail (Python3)
+* Add DAGPool, a dependency-driven greenthread pool
+* wsgi: Unix socket address representation; Thanks to Samuel Merritt
+* tpool: isolate internal socket from default timeout; Thanks to Alex Villacís Lasso
+* wsgi: only skip Content-Type and Content-Length headers (GH-327)
+* wsgi: 400 on blank Content-Length headers (GH-334)
+* greenio: makefile related pypy socket ref counting
+* ssl: Fix recv_into blocking when reading chunks of data
+* websocket: support Gunicorn environ['gunicorn.socket']
+
 0.19.0
 ======
 * ssl: IMPORTANT DoS FIX do_handshake_connect=False in server accept(); Thanks to Garth Mollett
