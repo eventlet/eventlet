@@ -20,6 +20,7 @@ else:
         arm_alarm = alarm_signal
 
 from eventlet import patcher
+from eventlet import hubs
 from eventlet.hubs import timer, IOClosed
 from eventlet.support import greenlets as greenlet, clear_sys_exc_info, six
 time = patcher.original('time')
@@ -113,7 +114,9 @@ class BaseHub(object):
     READ = READ
     WRITE = WRITE
 
-    def __init__(self, clock=time.time):
+    def __init__(self, clock=None):
+        if clock is None:
+            clock = hubs.default_clock
         self.listeners = {READ: {}, WRITE: {}}
         self.secondaries = {READ: {}, WRITE: {}}
         self.closed = []

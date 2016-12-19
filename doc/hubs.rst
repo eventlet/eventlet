@@ -48,6 +48,16 @@ MAINLOOP is launched only when the first I/O operation happens, and it is not th
 More Hub-Related Functions
 ---------------------------
 
+.. data:: default_clock
+
+   Default clock function used by hubs. On Python 3.3 and newer, use
+   :func:`time.monotonic` by default, otherwise use :func:`time.time`.
+
+   A monotonic clock is recommended.
+
+   .. versionadded:: 0.18.5
+
+
 .. autofunction:: eventlet.hubs.get_hub
 .. autofunction:: eventlet.hubs.get_default_hub
 .. autofunction:: eventlet.hubs.trampoline

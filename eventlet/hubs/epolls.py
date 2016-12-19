@@ -25,6 +25,7 @@ else:
                     " NOT http://pypi.python.org/pypi/pyepoll/. "
                     " easy_install pyepoll installs the wrong version.")
 
+from eventlet import hubs
 from eventlet.hubs.hub import BaseHub
 from eventlet.hubs import poll
 from eventlet.hubs.poll import READ, WRITE
@@ -34,7 +35,9 @@ from eventlet.hubs.poll import READ, WRITE
 
 
 class Hub(poll.Hub):
-    def __init__(self, clock=time.time):
+    def __init__(self, clock=None):
+        if clock is None:
+            clock = hubs.default_clock
         BaseHub.__init__(self, clock)
         self.poll = epoll()
         try:

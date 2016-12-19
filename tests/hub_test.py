@@ -84,6 +84,18 @@ class TestTimerCleanup(LimitedTestCase):
                                         hub.get_timers_count())
         eventlet.sleep()
 
+    def test_default_clock(self):
+        # check that time.monotonic() is used by default if available
+        if hasattr(time, 'monotonic'):
+            self.assertEqual(hubs.default_clock, time.monotonic)
+        else:
+            self.assertEqual(hubs.default_clock, time.time)
+
+    def test_clock(self):
+        # by default, a hub must use default_clock for its clock
+        hub = hubs.get_hub()
+        self.assertEqual(hub.clock, hubs.default_clock)
+
 
 class TestScheduleCall(LimitedTestCase):
 
