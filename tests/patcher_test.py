@@ -82,26 +82,19 @@ class ImportPatched(ProcessBase):
         assert 'eventlet.green.urllib' in lines[2], repr(output)
         assert 'eventlet.green.httplib' not in lines[2], repr(output)
 
-    def test_import_patched_defaults(self):
-        self.write_to_tempfile("base", """
-import socket
-try:
-    import urllib.request as urllib
-except ImportError:
-    import urllib
-print("base {0} {1}".format(socket, urllib))""")
 
-        new_mod = """
-from eventlet import patcher
-base = patcher.import_patched('base')
-print("newmod {0} {1} {2}".format(base, base.socket, base.urllib.socket.socket))
-"""
-        self.write_to_tempfile("newmod", new_mod)
-        output, lines = self.launch_subprocess('newmod.py')
-        assert lines[0].startswith('base'), repr(output)
-        assert lines[1].startswith('newmod'), repr(output)
-        assert 'eventlet.green.socket' in lines[1], repr(output)
-        assert 'GreenSocket' in lines[1], repr(output)
+def test_import_patched_defaults():
+    code = '''\
+import eventlet
+eventlet.import_patched('patcher_import_patched_defaults')
+'''
+    isolated_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/tests/isolated'
+    env = {
+        'eventlet_test_import_patched_defaults': '1',
+        'PYTHONPATH': os.pathsep.join(sys.path + [isolated_path]),
+    }
+    output = tests.run_python(path=None, env=env, args=['-c', code])
+    assert output.rstrip() == b'pass', repr(output)
 
 
 class MonkeyPatch(ProcessBase):
