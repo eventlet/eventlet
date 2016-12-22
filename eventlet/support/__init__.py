@@ -1,7 +1,13 @@
+import inspect
+import functools
 import sys
-from contextlib import contextmanager
+import warnings
+import contextlib
 
 from eventlet.support import greenlets, six
+
+
+_MISSING = object()
 
 
 def get_errno(exc):
@@ -43,7 +49,8 @@ else:
 
 PY33 = sys.version_info[:2] == (3, 3)
 
-@contextmanager
+
+@contextlib.contextmanager
 def capture_stderr():
     stream = six.StringIO()
     original = sys.stderr
@@ -53,3 +60,30 @@ def capture_stderr():
     finally:
         sys.stderr = original
         stream.seek(0)
+
+
+def wrap_deprecated(old, new):
+    def _resolve(s):
+        return 'eventlet.'+s if '.' not in s else s
+    msg = '''\
+{old} is deprecated and will be removed in next version. Use {new} instead.
+Autoupgrade: fgrep -rl '{old}' . |xargs -t sed --in-place='' -e 's/{old}/{new}/'
+'''.format(old=_resolve(old), new=_resolve(new))
+
+    def wrapper(base):
+        klass = None
+        if inspect.isclass(base):
+            klass = base
+            base = klass.__init__
+
+        @functools.wraps(base)
+        def wrapped(*a, **kw):
+            warnings.warn(msg, DeprecationWarning, stacklevel=5)
+            return base(*a, **kw)
+
+        if klass is not None:
+            klass.__init__ = wrapped
+            return klass
+
+        return wrapped
+    return wrapper

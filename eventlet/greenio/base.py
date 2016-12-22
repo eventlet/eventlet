@@ -13,6 +13,7 @@ __all__ = [
     'GreenSocket', '_GLOBAL_DEFAULT_TIMEOUT', 'set_nonblocking',
     'SOCKET_BLOCKING', 'SOCKET_CLOSED', 'CONNECT_ERR', 'CONNECT_SUCCESS',
     'shutdown_safe', 'SSL',
+    'socket_timeout',
 ]
 
 BUFFER_SIZE = 4096
@@ -25,6 +26,9 @@ if six.PY2:
     _python2_fileobject = socket._fileobject
 
 _original_socket = eventlet.patcher.original('socket').socket
+
+
+socket_timeout = eventlet.timeout.wrap_is_timeout(socket.timeout)
 
 
 def socket_connect(descriptor, address):
@@ -210,14 +214,14 @@ class GreenSocket(object):
         if self.act_non_blocking:
             return self.fd.accept()
         fd = self.fd
+        _timeout_exc = socket_timeout('timed out')
         while True:
             res = socket_accept(fd)
             if res is not None:
                 client, addr = res
                 set_nonblocking(client)
                 return type(self)(client), addr
-            self._trampoline(fd, read=True, timeout=self.gettimeout(),
-                             timeout_exc=socket.timeout("timed out"))
+            self._trampoline(fd, read=True, timeout=self.gettimeout(), timeout_exc=_timeout_exc)
 
     def _mark_as_closed(self):
         """ Mark this socket as being closed """
@@ -233,6 +237,7 @@ class GreenSocket(object):
         if self.act_non_blocking:
             return self.fd.connect(address)
         fd = self.fd
+        _timeout_exc = socket_timeout('timed out')
         if self.gettimeout() is None:
             while not socket_connect(fd, address):
                 try:
@@ -246,10 +251,10 @@ class GreenSocket(object):
                 if socket_connect(fd, address):
                     return
                 if time.time() >= end:
-                    raise socket.timeout("timed out")
+                    raise _timeout_exc
+                timeout = end - time.time()
                 try:
-                    self._trampoline(fd, write=True, timeout=end - time.time(),
-                                     timeout_exc=socket.timeout("timed out"))
+                    self._trampoline(fd, write=True, timeout=timeout, timeout_exc=_timeout_exc)
                 except IOClosed:
                     # ... we need some workable errno here.
                     raise socket.error(errno.EBADFD)
@@ -270,14 +275,15 @@ class GreenSocket(object):
                     return errno.EBADFD
         else:
             end = time.time() + self.gettimeout()
+            timeout_exc = socket.timeout(errno.EAGAIN)
             while True:
                 try:
                     if socket_connect(fd, address):
                         return 0
                     if time.time() >= end:
-                        raise socket.timeout(errno.EAGAIN)
+                        raise timeout_exc
                     self._trampoline(fd, write=True, timeout=end - time.time(),
-                                     timeout_exc=socket.timeout(errno.EAGAIN))
+                                     timeout_exc=timeout_exc)
                     socket_checkerr(fd)
                 except socket.error as ex:
                     return get_errno(ex)
@@ -316,7 +322,7 @@ class GreenSocket(object):
             self.fd,
             read=True,
             timeout=self.gettimeout(),
-            timeout_exc=socket.timeout("timed out"))
+            timeout_exc=socket_timeout('timed out'))
 
     def _recv_loop(self, recv_meth, empty_val, *args):
         fd = self.fd
@@ -366,7 +372,8 @@ class GreenSocket(object):
         if self.act_non_blocking:
             return send_method(data, *args)
 
-        while 1:
+        _timeout_exc = socket_timeout('timed out')
+        while True:
             try:
                 return send_method(data, *args)
             except socket.error as e:
@@ -376,7 +383,7 @@ class GreenSocket(object):
 
             try:
                 self._trampoline(self.fd, write=True, timeout=self.gettimeout(),
-                                 timeout_exc=socket.timeout("timed out"))
+                                 timeout_exc=_timeout_exc)
             except IOClosed:
                 raise socket.error(errno.ECONNRESET, 'Connection closed by another thread')
 

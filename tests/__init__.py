@@ -304,6 +304,8 @@ def get_database_auth():
 
 def run_python(path, env=None, args=None, timeout=None, pythonpath_extend=None, expect_pass=False):
     new_argv = [sys.executable]
+    if sys.version_info[:2] <= (2, 6):
+        new_argv += ['-W', 'ignore::DeprecationWarning']
     new_env = os.environ.copy()
     new_env.setdefault('eventlet_test_in_progress', 'yes')
     src_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -355,6 +357,11 @@ def run_python(path, env=None, args=None, timeout=None, pythonpath_extend=None, 
 def run_isolated(path, prefix='tests/isolated/', **kwargs):
     kwargs.setdefault('expect_pass', True)
     run_python(prefix + path, **kwargs)
+
+
+def check_is_timeout(obj):
+    value_text = getattr(obj, 'is_timeout', '(missing)')
+    assert obj.is_timeout, 'type={0} str={1} .is_timeout={2}'.format(type(obj), str(obj), value_text)
 
 
 certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')

@@ -14,6 +14,7 @@ if os.environ.get('EVENTLET_IMPORT_VERSION_ONLY') != '1':
     from eventlet import patcher
     from eventlet import queue
     from eventlet import semaphore
+    from eventlet import support
     from eventlet import timeout
     import greenlet
 
@@ -45,10 +46,15 @@ if os.environ.get('EVENTLET_IMPORT_VERSION_ONLY') != '1':
 
     Timeout = timeout.Timeout
     with_timeout = timeout.with_timeout
+    wrap_is_timeout = timeout.wrap_is_timeout
+    is_timeout = timeout.is_timeout
 
     getcurrent = greenlet.greenlet.getcurrent
 
     # deprecated
-    TimeoutError = timeout.Timeout
-    exc_after = greenthread.exc_after
-    call_after_global = greenthread.call_after_global
+    TimeoutError, exc_after, call_after_global = (
+        support.wrap_deprecated(old, new)(fun) for old, new, fun in (
+            ('TimeoutError', 'Timeout', Timeout),
+            ('exc_after', 'greenthread.exc_after', greenthread.exc_after),
+            ('call_after_global', 'greenthread.call_after_global', greenthread.call_after_global),
+        ))

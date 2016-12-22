@@ -3,6 +3,7 @@ import sys
 
 from eventlet import event
 from eventlet import hubs
+from eventlet import support
 from eventlet import timeout
 from eventlet.hubs import timer
 from eventlet.support import greenlets as greenlet, six
@@ -144,8 +145,11 @@ def exc_after(seconds, *throw_args):
     return hub.schedule_call_local(seconds, getcurrent().throw, *throw_args)
 
 # deprecate, remove
-TimeoutError = timeout.Timeout
-with_timeout = timeout.with_timeout
+TimeoutError, with_timeout = (
+    support.wrap_deprecated(old, new)(fun) for old, new, fun in (
+        ('greenthread.TimeoutError', 'Timeout', timeout.Timeout),
+        ('greenthread.with_timeout', 'with_timeout', timeout.with_timeout),
+    ))
 
 
 def _spawn_n(seconds, func, args, kwargs):

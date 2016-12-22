@@ -88,3 +88,14 @@ def test_getaddrinfo_ipv6_scope():
     if not socket.has_ipv6:
         return
     socket.getaddrinfo('::1%2', 80, socket.AF_INET6)
+
+
+def test_error_is_timeout():
+    s1, _ = socket.socketpair()
+    s1.settimeout(0.01)
+    try:
+        s1.recv(1)
+    except socket.error as e:
+        tests.check_is_timeout(e)
+    else:
+        assert False, 'No timeout, socket.error was not raised'

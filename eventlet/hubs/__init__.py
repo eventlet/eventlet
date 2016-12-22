@@ -118,6 +118,7 @@ def get_hub():
     return hub
 
 
+# Lame middle file import because complex dependencies in import graph
 from eventlet import timeout
 
 
