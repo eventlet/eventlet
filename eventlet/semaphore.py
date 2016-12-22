@@ -1,10 +1,7 @@
-from __future__ import with_statement
-
 import collections
 
-from eventlet import greenthread
+import eventlet
 from eventlet import hubs
-from eventlet.timeout import Timeout
 
 
 class Semaphore(object):
@@ -34,10 +31,15 @@ class Semaphore(object):
     """
 
     def __init__(self, value=1):
-        self.counter = value
+        try:
+            value = int(value)
+        except ValueError as e:
+            msg = 'Semaphore() expect value :: int, actual: {0} {1}'.format(type(value), str(e))
+            raise TypeError(msg)
         if value < 0:
-            raise ValueError("Semaphore must be initialized with a positive "
-                             "number, got %s" % value)
+            msg = 'Semaphore() expect value >= 0, actual: {0}'.format(repr(value))
+            raise ValueError(msg)
+        self.counter = value
         self._waiters = collections.deque()
 
     def __repr__(self):
@@ -92,7 +94,7 @@ class Semaphore(object):
         if not blocking and self.locked():
             return False
 
-        current_thread = greenthread.getcurrent()
+        current_thread = eventlet.getcurrent()
 
         if self.counter <= 0 or self._waiters:
             if current_thread not in self._waiters:
@@ -100,7 +102,7 @@ class Semaphore(object):
             try:
                 if timeout is not None:
                     ok = False
-                    with Timeout(timeout, False):
+                    with eventlet.Timeout(timeout, False):
                         while self.counter <= 0:
                             hubs.get_hub().switch()
                         ok = True

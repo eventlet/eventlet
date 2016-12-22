@@ -1,9 +1,7 @@
 import traceback
 
-from eventlet import event
-from eventlet import greenthread
+import eventlet
 from eventlet import queue
-from eventlet import semaphore
 from eventlet.support import greenlets as greenlet
 from eventlet.support import six
 
@@ -17,10 +15,18 @@ class GreenPool(object):
     """
 
     def __init__(self, size=1000):
+        try:
+            size = int(size)
+        except ValueError as e:
+            msg = 'GreenPool() expect size :: int, actual: {0} {1}'.format(type(size), str(e))
+            raise TypeError(msg)
+        if size < 0:
+            msg = 'GreenPool() expect size >= 0, actual: {0}'.format(repr(size))
+            raise ValueError(msg)
         self.size = size
         self.coroutines_running = set()
-        self.sem = semaphore.Semaphore(size)
-        self.no_coros_running = event.Event()
+        self.sem = eventlet.Semaphore(size)
+        self.no_coros_running = eventlet.Event()
 
     def resize(self, new_size):
         """ Change the max number of greenthreads doing work at any given time.
@@ -49,7 +55,7 @@ class GreenPool(object):
 
     def spawn(self, function, *args, **kwargs):
         """Run the *function* with its arguments in its own green thread.
-        Returns the :class:`GreenThread <eventlet.greenthread.GreenThread>`
+        Returns the :class:`GreenThread <eventlet.GreenThread>`
         object that is running the function, which can be used to retrieve the
         results.
 
@@ -61,17 +67,17 @@ class GreenPool(object):
         """
         # if reentering an empty pool, don't try to wait on a coroutine freeing
         # itself -- instead, just execute in the current coroutine
-        current = greenthread.getcurrent()
+        current = eventlet.getcurrent()
         if self.sem.locked() and current in self.coroutines_running:
             # a bit hacky to use the GT without switching to it
-            gt = greenthread.GreenThread(current)
+            gt = eventlet.greenthread.GreenThread(current)
             gt.main(function, args, kwargs)
             return gt
         else:
             self.sem.acquire()
-            gt = greenthread.spawn(function, *args, **kwargs)
+            gt = eventlet.spawn(function, *args, **kwargs)
             if not self.coroutines_running:
-                self.no_coros_running = event.Event()
+                self.no_coros_running = eventlet.Event()
             self.coroutines_running.add(gt)
             gt.link(self._spawn_done)
         return gt
@@ -89,7 +95,7 @@ class GreenPool(object):
             if coro is None:
                 return
             else:
-                coro = greenthread.getcurrent()
+                coro = eventlet.getcurrent()
                 self._spawn_done(coro)
 
     def spawn_n(self, function, *args, **kwargs):
@@ -99,21 +105,21 @@ class GreenPool(object):
         """
         # if reentering an empty pool, don't try to wait on a coroutine freeing
         # itself -- instead, just execute in the current coroutine
-        current = greenthread.getcurrent()
+        current = eventlet.getcurrent()
         if self.sem.locked() and current in self.coroutines_running:
             self._spawn_n_impl(function, args, kwargs, None)
         else:
             self.sem.acquire()
-            g = greenthread.spawn_n(
+            g = eventlet.spawn_n(
                 self._spawn_n_impl,
                 function, args, kwargs, True)
             if not self.coroutines_running:
-                self.no_coros_running = event.Event()
+                self.no_coros_running = eventlet.Event()
             self.coroutines_running.add(g)
 
     def waitall(self):
         """Waits until all greenthreads in the pool are finished working."""
-        assert greenthread.getcurrent() not in self.coroutines_running, \
+        assert eventlet.getcurrent() not in self.coroutines_running, \
             "Calling waitall() from within one of the " \
             "GreenPool's greenthreads will never terminate."
         if self.running():
@@ -151,7 +157,7 @@ class GreenPool(object):
         if function is None:
             function = lambda *a: a
         gi = GreenMap(self.size)
-        greenthread.spawn_n(self._do_map, function, iterable, gi)
+        eventlet.spawn_n(self._do_map, function, iterable, gi)
         return gi
 
     def imap(self, function, *iterables):
