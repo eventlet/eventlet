@@ -150,7 +150,7 @@ class GreenPool(object):
         """
         if function is None:
             function = lambda *a: a
-        gi = GreenMap(self.size)
+        gi = GreenMap(self)
         greenthread.spawn_n(self._do_map, function, iterable, gi)
         return gi
 
