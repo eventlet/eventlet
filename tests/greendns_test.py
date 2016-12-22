@@ -6,10 +6,10 @@ import socket
 import tempfile
 import time
 
-import tests
-from tests import mock
 from eventlet.support import greendns
 from eventlet.support.greendns import dns
+import tests
+import tests.mock
 
 
 class TestHostsResolver(tests.LimitedTestCase):
@@ -777,3 +777,17 @@ class TestGethostbyname_ex(tests.LimitedTestCase):
 
 def test_reverse_name():
     tests.run_isolated('greendns_from_address_203.py')
+
+
+def test_proxy_resolve_unqualified():
+    # https://github.com/eventlet/eventlet/issues/363
+    rp = greendns.ResolverProxy(filename=None)
+    rp._resolver.search.append(dns.name.from_text('example.com'))
+    with tests.mock.patch('dns.resolver.Resolver.query', side_effect=dns.resolver.NoAnswer) as m:
+        try:
+            rp.query('machine')
+            assert False, 'Expected NoAnswer exception'
+        except dns.resolver.NoAnswer:
+            pass
+        assert any(call[0][0] == dns.name.from_text('machine') for call in m.call_args_list)
+        assert any(call[0][0] == dns.name.from_text('machine.') for call in m.call_args_list)

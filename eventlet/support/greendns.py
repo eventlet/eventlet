@@ -303,17 +303,58 @@ class ResolverProxy(object):
         self._resolver.cache = dns.resolver.LRUCache()
 
     def query(self, qname, rdtype=dns.rdatatype.A, rdclass=dns.rdataclass.IN,
-              tcp=False, source=None, raise_on_no_answer=True):
-        """Query the resolver, using /etc/hosts if enabled"""
+              tcp=False, source=None, raise_on_no_answer=True,
+              _hosts_rdtypes=(dns.rdatatype.A, dns.rdatatype.AAAA)):
+        """Query the resolver, using /etc/hosts if enabled.
+        """
+        result = [None, None, 0]
+
         if qname is None:
             qname = '0.0.0.0'
-        if rdclass == dns.rdataclass.IN and self._hosts:
+        if isinstance(qname, six.string_types):
+            qname = dns.name.from_text(qname, None)
+
+        def step(fun, *args, **kwargs):
             try:
-                return self._hosts.query(qname, rdtype)
-            except dns.resolver.NoAnswer:
-                pass
-        return self._resolver.query(qname, rdtype, rdclass,
-                                    tcp, source, raise_on_no_answer)
+                a = fun(*args, **kwargs)
+            except Exception as e:
+                result[1] = e
+                return False
+            if a.rrset is not None and len(a.rrset):
+                if result[0] is None:
+                    result[0] = a
+                else:
+                    result[0].rrset.union_update(a.rrset)
+                result[2] += len(a.rrset)
+            return True
+
+        # Main query
+        step(self._resolver.query, qname, rdtype, rdclass, tcp, source, raise_on_no_answer=False)
+
+        # `resolv.conf` docs say unqualified names must resolve from search (or local) domain.
+        # However, common OS `getaddrinfo()` implementations append trailing dot (e.g. `db -> db.`)
+        # and ask nameservers, as if top-level domain was queried.
+        # This step follows established practice.
+        # https://github.com/nameko/nameko/issues/392
+        # https://github.com/eventlet/eventlet/issues/363
+        if len(qname) == 1:
+            step(self._resolver.query, qname.concatenate(dns.name.root),
+                 rdtype, rdclass, tcp, source, raise_on_no_answer=False)
+
+        # Return answers from /etc/hosts despite nameserver errors
+        # https://github.com/eventlet/eventlet/pull/354
+        if ((result[2] == 0) and self._hosts and
+                (rdclass == dns.rdataclass.IN) and (rdtype in _hosts_rdtypes)):
+            step(self._hosts.query, qname, rdtype, raise_on_no_answer=False)
+
+        if result[0] is not None:
+            if raise_on_no_answer and result[2] == 0:
+                raise dns.resolver.NoAnswer
+            return result[0]
+        if result[1] is not None:
+            if raise_on_no_answer or not isinstance(result[1], dns.resolver.NoAnswer):
+                raise result[1]
+        raise dns.resolver.NXDOMAIN(qnames=(qname,))
 
     def getaliases(self, hostname):
         """Return a list of all the aliases of a given hostname"""
