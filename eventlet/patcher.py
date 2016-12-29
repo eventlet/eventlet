@@ -1,5 +1,7 @@
+import collections
 import imp
 import sys
+import types
 
 import eventlet
 import six
@@ -8,6 +10,7 @@ import six
 __all__ = ['inject', 'import_patched', 'monkey_patch', 'is_monkey_patched']
 
 __exclude = set(('__builtins__', '__file__', '__name__'))
+_MISSING = object()
 
 
 class SysModulesSaver(object):
@@ -34,10 +37,7 @@ class SysModulesSaver(object):
                 if mod is not None:
                     sys.modules[modname] = mod
                 else:
-                    try:
-                        del sys.modules[modname]
-                    except KeyError:
-                        pass
+                    sys.modules.pop(modname, None)
         finally:
             imp.release_lock()
 
@@ -79,7 +79,7 @@ def inject(module_name, new_globals, *additional_modules):
 
     # after this we are gonna screw with sys.modules, so capture the
     # state of all the modules we're going to mess with, and lock
-    saver = SysModulesSaver([name for name, m in additional_modules])
+    saver = SysModulesSaver([name for name, _ in additional_modules])
     saver.save(module_name)
 
     # Cover the target modules so that when you import the module it
@@ -96,8 +96,14 @@ def inject(module_name, new_globals, *additional_modules):
     for imported_module_name in list(sys.modules.keys()):
         if imported_module_name.startswith(module_name + '.'):
             sys.modules.pop(imported_module_name, None)
+
+    import_control = _patch_import(dict(additional_modules))
     try:
-        module = __import__(module_name, {}, {}, module_name.split('.')[:-1])
+        import_control.begin()
+        try:
+            module = import_control.original(module_name, fromlist=module_name.split('.')[:-1])
+        finally:
+            import_control.end()
 
         if new_globals is not None:
             # Update the given globals dictionary with everything from this new module
@@ -111,6 +117,32 @@ def inject(module_name, new_globals, *additional_modules):
         saver.restore()  # Put the original modules back
 
     return module
+
+
+ImportControl = collections.namedtuple('ImportControl', 'begin end original patched')
+
+
+def _patch_import(patch_map, _missing=object()):
+    original = __builtins__['__import__']
+
+    def fun(name, *args, **kwargs):
+        module = original(name, *args, **kwargs)
+        for k in dir(module):
+            v = getattr(module, k, None)
+            replacement = patch_map.get(k)
+            if isinstance(v, types.ModuleType) and replacement is not None:
+                # print('    _patch_import {0}.{1} = {2}'.format(name, k, v))
+                setattr(module, k, replacement)
+        return module
+
+    def begin():
+        __builtins__['__import__'] = fun
+
+    def end():
+        __builtins__['__import__'] = original
+
+    control = ImportControl(begin, end, original, fun)
+    return control
 
 
 def import_patched(module_name, *additional_modules, **kw_additional_modules):
