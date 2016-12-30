@@ -84,17 +84,7 @@ class ImportPatched(ProcessBase):
 
 
 def test_import_patched_defaults():
-    code = '''\
-import eventlet
-eventlet.import_patched('patcher_import_patched_defaults')
-'''
-    isolated_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/tests/isolated'
-    env = {
-        'eventlet_test_import_patched_defaults': '1',
-        'PYTHONPATH': os.pathsep.join(sys.path + [isolated_path]),
-    }
-    output = tests.run_python(path=None, env=env, args=['-c', code])
-    assert output.rstrip() == b'pass', repr(output)
+    tests.run_isolated('patcher_import_patched_defaults.py')
 
 
 class MonkeyPatch(ProcessBase):

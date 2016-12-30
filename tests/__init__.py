@@ -302,16 +302,23 @@ def get_database_auth():
     return retval
 
 
-def run_python(path, env=None, args=None, timeout=None):
+def run_python(path, env=None, args=None, timeout=None, pythonpath_extend=None, expect_pass=False):
     new_argv = [sys.executable]
     new_env = os.environ.copy()
+    new_env.setdefault('eventlet_test_in_progress', 'yes')
+    src_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     if path:
         path = os.path.abspath(path)
         new_argv.append(path)
-        src_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         new_env['PYTHONPATH'] = os.pathsep.join(sys.path + [src_dir])
     if env:
         new_env.update(env)
+    if pythonpath_extend:
+        new_path = [p for p in new_env.get('PYTHONPATH', '').split(os.pathsep) if p]
+        new_path.extend(
+            p if os.path.isabs(p) else os.path.join(src_dir, p) for p in pythonpath_extend
+        )
+        new_env['PYTHONPATH'] = os.pathsep.join(new_path)
     if args:
         new_argv.extend(args)
     p = subprocess.Popen(
@@ -329,21 +336,25 @@ def run_python(path, env=None, args=None, timeout=None):
         p.kill()
         output, _ = p.communicate(timeout=timeout)
         return '{0}\nFAIL - timed out'.format(output).encode()
+
+    if expect_pass:
+        if output.startswith(b'skip'):
+            parts = output.rstrip().split(b':', 1)
+            skip_args = []
+            if len(parts) > 1:
+                skip_args.append(parts[1])
+            raise SkipTest(*skip_args)
+        ok = output.rstrip() == b'pass'
+        if not ok:
+            sys.stderr.write('Program {0} output:\n---\n{1}\n---\n'.format(path, output.decode()))
+        assert ok, 'Expected single line "pass" in stdout'
+
     return output
 
 
-def run_isolated(path, prefix='tests/isolated/', env=None, args=None, timeout=None):
-    output = run_python(prefix + path, env=env, args=args, timeout=timeout).rstrip()
-    if output.startswith(b'skip'):
-        parts = output.split(b':', 1)
-        skip_args = []
-        if len(parts) > 1:
-            skip_args.append(parts[1])
-        raise SkipTest(*skip_args)
-    ok = output == b'pass'
-    if not ok:
-        sys.stderr.write('Isolated test {0} output:\n---\n{1}\n---\n'.format(path, output.decode()))
-    assert ok, 'Expected single line "pass" in stdout'
+def run_isolated(path, prefix='tests/isolated/', **kwargs):
+    kwargs.setdefault('expect_pass', True)
+    run_python(prefix + path, **kwargs)
 
 
 certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
@@ -353,3 +364,10 @@ private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
 def test_run_python_timeout():
     output = run_python('', args=('-c', 'import time; time.sleep(0.5)'), timeout=0.1)
     assert output.endswith(b'FAIL - timed out')
+
+
+def test_run_python_pythonpath_extend():
+    code = '''import os, sys ; print('\\n'.join(sys.path))'''
+    output = run_python('', args=('-c', code), pythonpath_extend=('dira', 'dirb'))
+    assert b'/dira\n' in output
+    assert b'/dirb\n' in output

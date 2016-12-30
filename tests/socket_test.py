@@ -72,10 +72,7 @@ def test_dns_methods_are_green():
         with open(mock_sys_pkg_dir + '/dns.py', 'wb') as f:
             f.write(b'raise Exception("Your IP address string is so illegal ' +
                     b'it prevents installing packages.")\n')
-        tests.run_isolated(
-            'socket_resolve_green.py',
-            env={'PYTHONPATH': os.pathsep.join(sys.path + [mock_sys_pkg_dir])},
-        )
+        tests.run_isolated('socket_resolve_green.py', pythonpath_extend=[mock_sys_pkg_dir])
     finally:
         shutil.rmtree(mock_sys_pkg_dir)
 

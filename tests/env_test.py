@@ -19,12 +19,12 @@ socket.gethostbyname('localhost')
 socket.getaddrinfo('localhost', 80)
 print('pass')
 '''
-    output = tests.run_python(
+    tests.run_python(
         path=None,
         env={'EVENTLET_TPOOL_DNS': 'yes'},
         args=['-c', code],
+        expect_pass=True,
     )
-    assert output.rstrip() == b'pass'
 
 
 @tests.skip_with_pyevent
