@@ -61,3 +61,13 @@ If you have a project that uses Eventlet with Twisted, your options are:
 * fork Eventlet, revert Twisted removal, identify and fix problems. This work may be merged back into main project.
 
 Apologies for any inconvenience.
+
+
+Flair
+=====
+
+.. image:: https://travis-ci.org/eventlet/eventlet.svg?branch=master
+    :target: https://travis-ci.org/eventlet/eventlet
+
+.. image:: https://codecov.io/gh/eventlet/eventlet/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/eventlet/eventlet

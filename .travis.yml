@@ -1,5 +1,7 @@
+sudo: false
 language: python
 python: 3.5
+
 env:
   matrix:
     - TOX_ENV=pep8
@@ -27,6 +29,7 @@ matrix:
     - env: TOX_ENV=pypy-epolls
     - env: TOX_ENV=pypy-poll
     - env: TOX_ENV=pypy-selects
+
 cache:
   apt: true
   ccache: true
@@ -40,16 +43,18 @@ addons:
     - libpq-dev
     - libssl-dev
     - libzmq3-dev
+
 install:
-  - pip install --upgrade pip setuptools tox virtualenv
+  - pip install --upgrade pip setuptools tox virtualenv codecov
 before_script:
   - "export EVENTLET_DB_TEST_AUTH='{\"psycopg2\": {\"user\": \"postgres\"}, \"MySQLdb\": {\"passwd\": \"\", \"host\": \"localhost\", \"user\": \"root\"}}'"
   - "export PATH=/usr/lib/ccache:$PATH"
 script:
   - tox -v -v -e $TOX_ENV
+  - codecov
 after_failure:
   - for X in .tox/$TOX_ENV/log/*; do echo "$X\n"; cat "$X"; echo "\n\n"; done
   - echo "pip.log\n"; cat $HOME/.pip/pip.log
+
 notifications:
   slack: eventlet-net:OYrQ1JE3hdTD78yQY1yZJnnc
-sudo: false
