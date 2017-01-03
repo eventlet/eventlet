@@ -1,3 +1,10 @@
+0.20.1
+======
+* dns: try unqualified queries as top level
+* test_import_patched_defaults bended to play with pyopenssl>=16.1.0
+* Explicit environ flag for importing eventlet.__version__ without ignoring import errors
+* Type check Semaphore, GreenPool arguments; Thanks to Matthew D. Pagel
+
 0.20.0
 ======
 * IMPORTANT: removed select.poll() function
