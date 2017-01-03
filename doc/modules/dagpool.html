@@ -1,0 +1,846 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>dagpool – Dependency-Driven Greenthreads &#8212; Eventlet 0.20.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.20.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="debug – Debugging tools for Eventlet" href="debug.html" />
+    <link rel="prev" title="corolocal – Coroutine local storage" href="corolocal.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="debug.html" title="debug – Debugging tools for Eventlet"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="corolocal.html" title="corolocal – Coroutine local storage"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.20.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="dagpool-dependency-driven-greenthreads">
+<h1><code class="xref py py-mod docutils literal"><span class="pre">dagpool</span></code> &#8211; Dependency-Driven Greenthreads<a class="headerlink" href="#dagpool-dependency-driven-greenthreads" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="rationale">
+<h2>Rationale<a class="headerlink" href="#rationale" title="Permalink to this headline">¶</a></h2>
+<p>The dagpool module provides the <a class="reference internal" href="#eventlet.dagpool.DAGPool" title="eventlet.dagpool.DAGPool"><code class="xref py py-class docutils literal"><span class="pre">DAGPool</span></code></a>
+class, which addresses situations in which the value produced by one
+greenthread might be consumed by several others &#8211; while at the same time a
+consuming greenthread might depend on the output from several different
+greenthreads.</p>
+<p>If you have a tree with strict many-to-one dependencies &#8211; each producer
+greenthread provides results to exactly one consumer, though a given consumer
+may depend on multiple producers &#8211; that could be addressed by recursively
+constructing a <a class="reference internal" href="greenpool.html#eventlet.greenpool.GreenPool" title="eventlet.greenpool.GreenPool"><code class="xref py py-class docutils literal"><span class="pre">GreenPool</span></code></a> of producers
+for each consumer, then <a class="reference internal" href="greenpool.html#eventlet.greenpool.GreenPool.waitall" title="eventlet.greenpool.GreenPool.waitall"><code class="xref py py-meth docutils literal"><span class="pre">waiting</span></code></a>
+for all producers.</p>
+<p>If you have a tree with strict one-to-many dependencies &#8211; each consumer
+greenthread depends on exactly one producer, though a given producer may
+provide results to multiple consumers &#8211; that could be addressed by causing
+each producer to finish by launching a <a class="reference internal" href="greenpool.html#eventlet.greenpool.GreenPool" title="eventlet.greenpool.GreenPool"><code class="xref py py-class docutils literal"><span class="pre">GreenPool</span></code></a> of consumers.</p>
+<p>But when you have many-to-many dependencies, a tree doesn&#8217;t suffice. This is
+known as a
+<a class="reference external" href="https://en.wikipedia.org/wiki/Directed_acyclic_graph">Directed Acyclic Graph</a>,
+or DAG.</p>
+<p>You might consider sorting the greenthreads into dependency order
+(<a class="reference external" href="https://en.wikipedia.org/wiki/Topological_sorting">topological sort</a>) and
+launching them in a GreenPool. But the concurrency of the GreenPool must be
+strictly constrained to ensure that no greenthread is launched before all its
+upstream producers have completed &#8211; and the appropriate pool size is
+data-dependent. Only a pool of size 1 (serializing all the greenthreads)
+guarantees that a topological sort will produce correct results.</p>
+<p>Even if you do serialize all the greenthreads, how do you pass results from
+each producer to all its consumers, which might start at very different points
+in time?</p>
+<p>One answer is to associate each greenthread with a distinct key, and store its
+result in a common dict. Then each consumer greenthread can identify its
+direct upstream producers by their keys, and find their results in that dict.</p>
+<p>This is the essence of DAGPool.</p>
+<p>A DAGPool instance owns a dict, and stores greenthread results in that dict.
+You <a class="reference internal" href="#eventlet.dagpool.DAGPool.spawn" title="eventlet.dagpool.DAGPool.spawn"><code class="xref py py-meth docutils literal"><span class="pre">spawn</span></code></a> <em>all</em> greenthreads in the
+DAG, specifying for each its own key &#8211; the key with which its result will be
+stored on completion &#8211; plus the keys of the upstream producer greenthreads on
+whose results it directly depends.</p>
+<p>Keys need only be unique within the DAGPool instance; they need not be UUIDs.
+A key can be any type that can be used as a dict key. String keys make it
+easier to reason about a DAGPool&#8217;s behavior, but are by no means required.</p>
+<p>The DAGPool passes to each greenthread an iterable of (key, value) pairs.
+The key in each pair is the key of one of the greenthread&#8217;s specified upstream
+producers; the value is the value returned by that producer greenthread. Pairs
+are delivered in the order results become available; the consuming greenthread
+blocks until the next result can be delivered.</p>
+</div>
+<div class="section" id="tutorial">
+<h2>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="example">
+<h3>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h3>
+<p>Consider a couple of programs in some compiled language that depend on a set
+of precompiled libraries. Suppose every such build requires as input the
+specific set of library builds on which it directly depends.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">a</span>  <span class="n">zlib</span>
+<span class="o">|</span> <span class="o">/</span>  <span class="o">|</span>
+<span class="o">|/</span>   <span class="o">|</span>
+<span class="n">b</span>    <span class="n">c</span>
+<span class="o">|</span>   <span class="o">/|</span>
+<span class="o">|</span>  <span class="o">/</span> <span class="o">|</span>
+<span class="o">|</span> <span class="o">/</span>  <span class="o">|</span>
+<span class="o">|/</span>   <span class="o">|</span>
+<span class="n">d</span>    <span class="n">e</span>
+</pre></div>
+</div>
+<p>We can&#8217;t run the build for program d until we have the build results for both
+b and c. We can&#8217;t run the build for library b until we have build results for
+a and zlib. We can, however, immediately run the builds for a and zlib.</p>
+<p>So we can use a DAGPool instance to spawn greenthreads running a function such
+as this:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">builder</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">upstream</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">libname</span><span class="p">,</span> <span class="n">product</span> <span class="ow">in</span> <span class="n">upstream</span><span class="p">:</span>
+        <span class="c1"># ... configure build for &#39;key&#39; to use &#39;product&#39; for &#39;libname&#39;</span>
+    <span class="c1"># all upstream builds have completed</span>
+    <span class="c1"># ... run build for &#39;key&#39;</span>
+    <span class="k">return</span> <span class="n">build_product_for_key</span>
+</pre></div>
+</div>
+<p><a class="reference internal" href="#eventlet.dagpool.DAGPool.spawn" title="eventlet.dagpool.DAGPool.spawn"><code class="xref py py-meth docutils literal"><span class="pre">spawn</span></code></a> all these greenthreads:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">pool</span> <span class="o">=</span> <span class="n">DAGPool</span><span class="p">()</span>
+<span class="c1"># the upstream producer keys passed to spawn() can be from any iterable,</span>
+<span class="c1"># including a generator</span>
+<span class="n">pool</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">),</span> <span class="n">builder</span><span class="p">)</span>
+<span class="n">pool</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="s2">&quot;e&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;c&quot;</span><span class="p">],</span> <span class="n">builder</span><span class="p">)</span>
+<span class="n">pool</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;zlib&quot;</span><span class="p">),</span> <span class="n">builder</span><span class="p">)</span>
+<span class="n">pool</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="s2">&quot;c&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;zlib&quot;</span><span class="p">],</span> <span class="n">builder</span><span class="p">)</span>
+<span class="n">pool</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="p">(),</span> <span class="n">builder</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>As with <a class="reference internal" href="../basic_usage.html#eventlet.spawn" title="eventlet.spawn"><code class="xref py py-func docutils literal"><span class="pre">eventlet.spawn()</span></code></a>, if you need to pass special
+build flags to some set of builds, these can be passed as either positional or
+keyword arguments:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">builder</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">upstream</span><span class="p">,</span> <span class="n">cflags</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">linkflags</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+    <span class="o">...</span>
+
+<span class="n">pool</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">),</span> <span class="n">builder</span><span class="p">,</span> <span class="s2">&quot;-o2&quot;</span><span class="p">)</span>
+<span class="n">pool</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="s2">&quot;e&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;c&quot;</span><span class="p">],</span> <span class="n">builder</span><span class="p">,</span> <span class="n">linkflags</span><span class="o">=</span><span class="s2">&quot;-pie&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>However, if the arguments to each builder() call are uniform (as in the
+original example), you could alternatively build a dict of the dependencies
+and call <a class="reference internal" href="#eventlet.dagpool.DAGPool.spawn_many" title="eventlet.dagpool.DAGPool.spawn_many"><code class="xref py py-meth docutils literal"><span class="pre">spawn_many()</span></code></a>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">deps</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">d</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">),</span>
+            <span class="n">e</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;c&quot;</span><span class="p">],</span>
+            <span class="n">b</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;zlib&quot;</span><span class="p">),</span>
+            <span class="n">c</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;zlib&quot;</span><span class="p">],</span>
+            <span class="n">a</span><span class="o">=</span><span class="p">())</span>
+<span class="n">pool</span><span class="o">.</span><span class="n">spawn_many</span><span class="p">(</span><span class="n">deps</span><span class="p">,</span> <span class="n">builder</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>From outside the DAGPool, you can obtain the results for d and e (or in fact
+for any of the build greenthreads) in any of several ways.</p>
+<p><a class="reference internal" href="#eventlet.dagpool.DAGPool.waitall" title="eventlet.dagpool.DAGPool.waitall"><code class="xref py py-meth docutils literal"><span class="pre">pool.waitall()</span></code></a> waits until the last of the spawned
+greenthreads has completed, and returns a dict containing results for <em>all</em> of
+them:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">final</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">waitall</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;for d: </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">final</span><span class="p">[</span><span class="s2">&quot;d&quot;</span><span class="p">]))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;for e: </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">final</span><span class="p">[</span><span class="s2">&quot;e&quot;</span><span class="p">]))</span>
+</pre></div>
+</div>
+<p>waitall() is an alias for <a class="reference internal" href="#eventlet.dagpool.DAGPool.wait" title="eventlet.dagpool.DAGPool.wait"><code class="xref py py-meth docutils literal"><span class="pre">wait()</span></code></a> with no arguments:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">final</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;for d: </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">final</span><span class="p">[</span><span class="s2">&quot;d&quot;</span><span class="p">]))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;for e: </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">final</span><span class="p">[</span><span class="s2">&quot;e&quot;</span><span class="p">]))</span>
+</pre></div>
+</div>
+<p>Or you can specifically wait for only the final programs:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">final</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">wait</span><span class="p">([</span><span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="s2">&quot;e&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>The returned dict will contain only the specified keys. The keys may be passed
+into wait() from any iterable, including a generator.</p>
+<p>You can wait for any specified set of greenthreads; they need not be
+topologically last:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># returns as soon as both a and zlib have returned results, regardless of</span>
+<span class="c1"># what else is still running</span>
+<span class="n">leaves</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">wait</span><span class="p">([</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;zlib&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>Suppose you want to wait specifically for just <em>one</em> of the final programs:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">final</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">wait</span><span class="p">([</span><span class="s2">&quot;d&quot;</span><span class="p">])</span>
+<span class="n">dprog</span> <span class="o">=</span> <span class="n">final</span><span class="p">[</span><span class="s2">&quot;d&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>The above wait() call will return as soon as greenthread d returns a result &#8211;
+regardless of whether greenthread e has finished.</p>
+<p><a class="reference internal" href="#eventlet.dagpool.DAGPool.__getitem__" title="eventlet.dagpool.DAGPool.__getitem__"><code class="xref py py-meth docutils literal"><span class="pre">__getitem()__</span></code></a> is shorthand for
+obtaining a single result:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># waits until greenthread d returns its result</span>
+<span class="n">dprog</span> <span class="o">=</span> <span class="n">pool</span><span class="p">[</span><span class="s2">&quot;d&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>In contrast, <a class="reference internal" href="#eventlet.dagpool.DAGPool.get" title="eventlet.dagpool.DAGPool.get"><code class="xref py py-meth docutils literal"><span class="pre">get()</span></code></a> returns immediately,
+whether or not a result is ready:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># returns immediately</span>
+<span class="k">if</span> <span class="n">pool</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;d&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>Of course, your greenthread might not include an explicit return statement and
+hence might implicitly return None. You might have to test some other value.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># returns immediately</span>
+<span class="k">if</span> <span class="n">pool</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="s2">&quot;notdone&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;notdone&quot;</span><span class="p">:</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>Suppose you want to process each of the final programs in some way (upload
+it?), but you don&#8217;t want to have to wait until they&#8217;ve both finished. You
+don&#8217;t have to poll get() calls &#8211; use <a class="reference internal" href="#eventlet.dagpool.DAGPool.wait_each" title="eventlet.dagpool.DAGPool.wait_each"><code class="xref py py-meth docutils literal"><span class="pre">wait_each()</span></code></a>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">pool</span><span class="o">.</span><span class="n">wait_each</span><span class="p">([</span><span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="s2">&quot;e&quot;</span><span class="p">]):</span>
+    <span class="c1"># key will be d or e, in completion order</span>
+    <span class="c1"># process result...</span>
+</pre></div>
+</div>
+<p>As with <a class="reference internal" href="#eventlet.dagpool.DAGPool.wait" title="eventlet.dagpool.DAGPool.wait"><code class="xref py py-meth docutils literal"><span class="pre">wait()</span></code></a>, if you omit the
+argument to wait_each(), it delivers results for all the greenthreads of which
+it&#8217;s aware:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">pool</span><span class="o">.</span><span class="n">wait_each</span><span class="p">():</span>
+    <span class="c1"># key will be a, zlib, b, c, d, e, in whatever order each completes</span>
+    <span class="c1"># process its result...</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="introspection">
+<h3>Introspection<a class="headerlink" href="#introspection" title="Permalink to this headline">¶</a></h3>
+<p>Let&#8217;s say you have set up a <a class="reference internal" href="#eventlet.dagpool.DAGPool" title="eventlet.dagpool.DAGPool"><code class="xref py py-class docutils literal"><span class="pre">DAGPool</span></code></a> with
+the dependencies shown above. To your consternation, your <a class="reference internal" href="#eventlet.dagpool.DAGPool.waitall" title="eventlet.dagpool.DAGPool.waitall"><code class="xref py py-meth docutils literal"><span class="pre">waitall()</span></code></a> call does not return! The DAGPool instance
+is stuck!</p>
+<p>You could change waitall() to <a class="reference internal" href="#eventlet.dagpool.DAGPool.wait_each" title="eventlet.dagpool.DAGPool.wait_each"><code class="xref py py-meth docutils literal"><span class="pre">wait_each()</span></code></a>, and print each key as it becomes
+available:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">pool</span><span class="o">.</span><span class="n">wait_each</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;got result for </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+    <span class="c1"># ... process ...</span>
+</pre></div>
+</div>
+<p>Once the build for a has completed, this produces:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">got</span> <span class="n">result</span> <span class="k">for</span> <span class="n">a</span>
+</pre></div>
+</div>
+<p>and then stops. Hmm!</p>
+<p>You can check the number of <a class="reference internal" href="#eventlet.dagpool.DAGPool.running" title="eventlet.dagpool.DAGPool.running"><code class="xref py py-meth docutils literal"><span class="pre">running</span></code></a>
+greenthreads:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">pool</span><span class="o">.</span><span class="n">running</span><span class="p">())</span>
+<span class="go">4</span>
+</pre></div>
+</div>
+<p>and the number of <a class="reference internal" href="#eventlet.dagpool.DAGPool.waiting" title="eventlet.dagpool.DAGPool.waiting"><code class="xref py py-meth docutils literal"><span class="pre">waiting</span></code></a>
+greenthreads:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">pool</span><span class="o">.</span><span class="n">waiting</span><span class="p">())</span>
+<span class="go">4</span>
+</pre></div>
+</div>
+<p>It&#8217;s often more informative to ask <em>which</em> greenthreads are <a class="reference internal" href="#eventlet.dagpool.DAGPool.running_keys" title="eventlet.dagpool.DAGPool.running_keys"><code class="xref py py-meth docutils literal"><span class="pre">still</span>
+<span class="pre">running</span></code></a>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">pool</span><span class="o">.</span><span class="n">running_keys</span><span class="p">())</span>
+<span class="go">(&#39;c&#39;, &#39;b&#39;, &#39;e&#39;, &#39;d&#39;)</span>
+</pre></div>
+</div>
+<p>but in this case, we already know a has completed.</p>
+<p>We can ask for all available results:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">pool</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+<span class="go">(&#39;a&#39;,)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">pool</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+<span class="go">((&#39;a&#39;, result_from_a),)</span>
+</pre></div>
+</div>
+<p>The <a class="reference internal" href="#eventlet.dagpool.DAGPool.keys" title="eventlet.dagpool.DAGPool.keys"><code class="xref py py-meth docutils literal"><span class="pre">keys()</span></code></a> and <a class="reference internal" href="#eventlet.dagpool.DAGPool.items" title="eventlet.dagpool.DAGPool.items"><code class="xref py py-meth docutils literal"><span class="pre">items()</span></code></a> methods only return keys and items for
+which results are actually available, reflecting the underlying dict.</p>
+<p>But what&#8217;s blocking the works? What are we <a class="reference internal" href="#eventlet.dagpool.DAGPool.waiting_for" title="eventlet.dagpool.DAGPool.waiting_for"><code class="xref py py-meth docutils literal"><span class="pre">waiting</span> <span class="pre">for</span></code></a>?</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">pool</span><span class="o">.</span><span class="n">waiting_for</span><span class="p">(</span><span class="s2">&quot;d&quot;</span><span class="p">))</span>
+<span class="go">set([&#39;c&#39;, &#39;b&#39;])</span>
+</pre></div>
+</div>
+<p>(waiting_for()&#8217;s optional argument is a <em>single</em> key.)</p>
+<p>That doesn&#8217;t help much yet...</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">pool</span><span class="o">.</span><span class="n">waiting_for</span><span class="p">(</span><span class="s2">&quot;b&quot;</span><span class="p">))</span>
+<span class="go">set([&#39;zlib&#39;])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">pool</span><span class="o">.</span><span class="n">waiting_for</span><span class="p">(</span><span class="s2">&quot;zlib&quot;</span><span class="p">))</span>
+<span class="go">KeyError: &#39;zlib&#39;</span>
+</pre></div>
+</div>
+<p>Aha! We forgot to even include the zlib build when we were originally
+configuring this DAGPool!</p>
+<p>(For non-interactive use, it would be more informative to omit waiting_for()&#8217;s
+argument. This usage returns a dict indicating, for each greenthread key,
+which other keys it&#8217;s waiting for.)</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pprint</span> <span class="k">import</span> <span class="n">pprint</span>
+<span class="n">pprint</span><span class="p">(</span><span class="n">pool</span><span class="o">.</span><span class="n">waiting_for</span><span class="p">())</span>
+
+<span class="p">{</span><span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="nb">set</span><span class="p">([</span><span class="s1">&#39;zlib&#39;</span><span class="p">]),</span> <span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="nb">set</span><span class="p">([</span><span class="s1">&#39;zlib&#39;</span><span class="p">]),</span> <span class="s1">&#39;d&#39;</span><span class="p">:</span> <span class="nb">set</span><span class="p">([</span><span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">]),</span> <span class="s1">&#39;e&#39;</span><span class="p">:</span> <span class="nb">set</span><span class="p">([</span><span class="s1">&#39;c&#39;</span><span class="p">])}</span>
+</pre></div>
+</div>
+<p>In this case, a reasonable fix would be to spawn the zlib greenthread:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">pool</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="s2">&quot;zlib&quot;</span><span class="p">,</span> <span class="p">(),</span> <span class="n">builder</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Even if this is the last method call on this DAGPool instance, it should
+unblock all the rest of the DAGPool greenthreads.</p>
+</div>
+<div class="section" id="posting">
+<h3>Posting<a class="headerlink" href="#posting" title="Permalink to this headline">¶</a></h3>
+<p>If we happen to have zlib build results in hand already, though, we could
+instead <a class="reference internal" href="#eventlet.dagpool.DAGPool.post" title="eventlet.dagpool.DAGPool.post"><code class="xref py py-meth docutils literal"><span class="pre">post()</span></code></a> that result instead of
+rebuilding the library:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">pool</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;zlib&quot;</span><span class="p">,</span> <span class="n">result_from_zlib</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This, too, should unblock the rest of the DAGPool greenthreads.</p>
+</div>
+<div class="section" id="preloading">
+<h3>Preloading<a class="headerlink" href="#preloading" title="Permalink to this headline">¶</a></h3>
+<p>If rebuilding takes nontrivial realtime, it might be useful to record partial
+results, so that in case of interruption you can restart from where you left
+off rather than having to rebuild everything prior to that point.</p>
+<p>You could iteratively <a class="reference internal" href="#eventlet.dagpool.DAGPool.post" title="eventlet.dagpool.DAGPool.post"><code class="xref py py-meth docutils literal"><span class="pre">post()</span></code></a> those
+prior results into a new DAGPool instance; alternatively you can
+<a class="reference internal" href="#eventlet.dagpool.DAGPool.__init__" title="eventlet.dagpool.DAGPool.__init__"><code class="xref py py-meth docutils literal"><span class="pre">preload</span></code></a> the <a class="reference internal" href="#eventlet.dagpool.DAGPool" title="eventlet.dagpool.DAGPool"><code class="xref py py-class docutils literal"><span class="pre">DAGPool</span></code></a> from an existing dict:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">pool</span> <span class="o">=</span> <span class="n">DAGPool</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="n">result_from_a</span><span class="p">,</span> <span class="n">zlib</span><span class="o">=</span><span class="n">result_from_zlib</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Any DAGPool greenthreads that depend on either a or zlib can immediately
+consume those results.</p>
+<p>It also works to construct DAGPool with an iterable of (key, result) pairs.</p>
+</div>
+<div class="section" id="exception-propagation">
+<h3>Exception Propagation<a class="headerlink" href="#exception-propagation" title="Permalink to this headline">¶</a></h3>
+<p>But what if we spawn a zlib build that fails? Suppose the zlib greenthread
+terminates with an exception? In that case none of b, c, d or e can proceed!
+Nor do we want to wait forever for them.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">dprog</span> <span class="o">=</span> <span class="n">pool</span><span class="p">[</span><span class="s2">&quot;d&quot;</span><span class="p">]</span>
+<span class="n">eventlet</span><span class="o">.</span><span class="n">dagpool</span><span class="o">.</span><span class="n">PropagateError</span><span class="p">:</span> <span class="n">PropagateError</span><span class="p">(</span><span class="n">d</span><span class="p">):</span> <span class="n">PropagateError</span><span class="p">:</span> <span class="n">PropagateError</span><span class="p">(</span><span class="n">c</span><span class="p">):</span> <span class="n">PropagateError</span><span class="p">:</span> <span class="n">PropagateError</span><span class="p">(</span><span class="n">zlib</span><span class="p">):</span> <span class="n">OriginalError</span>
+</pre></div>
+</div>
+<p>DAGPool provides a <a class="reference internal" href="#eventlet.dagpool.PropagateError" title="eventlet.dagpool.PropagateError"><code class="xref py py-class docutils literal"><span class="pre">PropagateError</span></code></a>
+exception specifically to wrap such failures. If a DAGPool greenthread
+terminates with an Exception subclass, the DAGPool wraps that exception in a
+PropagateError instance whose <em>key</em> attribute is the key of the failing
+greenthread and whose <em>exc</em> attribute is the exception that terminated it.
+This PropagateError is stored as the result from that greenthread.</p>
+<p>Attempting to consume the result from a greenthread for which a PropagateError
+was stored raises that PropagateError.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">pool</span><span class="p">[</span><span class="s2">&quot;zlib&quot;</span><span class="p">]</span>
+<span class="n">eventlet</span><span class="o">.</span><span class="n">dagpool</span><span class="o">.</span><span class="n">PropagateError</span><span class="p">:</span> <span class="n">PropagateError</span><span class="p">(</span><span class="n">zlib</span><span class="p">):</span> <span class="n">OriginalError</span>
+</pre></div>
+</div>
+<p>Thus, when greenthread c attempts to consume the result from zlib, the
+PropagateError for zlib is raised. Unless the builder function for greenthread
+c handles that PropagateError exception, that greenthread will itself
+terminate. That PropagateError will be wrapped in another PropagateError whose
+<em>key</em> attribute is c and whose <em>exc</em> attribute is the PropagateError for zlib.</p>
+<p>Similarly, when greenthread d attempts to consume the result from c, the
+PropagateError for c is raised. This in turn is wrapped in a PropagateError
+whose <em>key</em> is d and whose <em>exc</em> is the PropagateError for c.</p>
+<p>When someone attempts to consume the result from d, as shown above, the
+PropagateError for d is raised.</p>
+<p>You can programmatically chase the failure path to determine the original
+failure if desired:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">orig_err</span> <span class="o">=</span> <span class="n">err</span>
+<span class="n">key</span> <span class="o">=</span> <span class="s2">&quot;unknown&quot;</span>
+<span class="k">while</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">orig_err</span><span class="p">,</span> <span class="n">PropagateError</span><span class="p">):</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="n">orig_err</span><span class="o">.</span><span class="n">key</span>
+    <span class="n">orig_err</span> <span class="o">=</span> <span class="n">orig_err</span><span class="o">.</span><span class="n">exc</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="scanning-for-success-exceptions">
+<h3>Scanning for Success / Exceptions<a class="headerlink" href="#scanning-for-success-exceptions" title="Permalink to this headline">¶</a></h3>
+<p>Exception propagation means that we neither perform useless builds nor wait for
+results that will never arrive.</p>
+<p>However, it does make it difficult to obtain <em>partial</em> results for builds that
+<em>did</em> succeed.</p>
+<p>For that you can call <a class="reference internal" href="#eventlet.dagpool.DAGPool.wait_each_success" title="eventlet.dagpool.DAGPool.wait_each_success"><code class="xref py py-meth docutils literal"><span class="pre">wait_each_success()</span></code></a>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">pool</span><span class="o">.</span><span class="n">wait_each_success</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{0}</span><span class="s2"> succeeded&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+    <span class="c1"># ... process result ...</span>
+
+<span class="n">a</span> <span class="n">succeeded</span>
+</pre></div>
+</div>
+<p>Another problem is that although five different greenthreads failed in the
+example, we only see one chain of failures. You can enumerate the bad news
+with <a class="reference internal" href="#eventlet.dagpool.DAGPool.wait_each_exception" title="eventlet.dagpool.DAGPool.wait_each_exception"><code class="xref py py-meth docutils literal"><span class="pre">wait_each_exception()</span></code></a>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">err</span> <span class="ow">in</span> <span class="n">pool</span><span class="o">.</span><span class="n">wait_each_exception</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{0}</span><span class="s2"> failed with </span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">err</span><span class="o">.</span><span class="n">exc</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">))</span>
+
+<span class="n">c</span> <span class="n">failed</span> <span class="k">with</span> <span class="n">PropagateError</span>
+<span class="n">b</span> <span class="n">failed</span> <span class="k">with</span> <span class="n">PropagateError</span>
+<span class="n">e</span> <span class="n">failed</span> <span class="k">with</span> <span class="n">PropagateError</span>
+<span class="n">d</span> <span class="n">failed</span> <span class="k">with</span> <span class="n">PropagateError</span>
+<span class="n">zlib</span> <span class="n">failed</span> <span class="k">with</span> <span class="n">OriginalError</span>
+</pre></div>
+</div>
+<p>wait_each_exception() yields each PropagateError wrapper as if it were the
+result, rather than raising it as an exception.</p>
+<p>Notice that we print <code class="code docutils literal"><span class="pre">err.exc.__class__.__name__</span></code> because
+<code class="code docutils literal"><span class="pre">err.__class__.__name__</span></code> is always PropagateError.</p>
+<p>Both wait_each_success() and wait_each_exception() can accept an iterable of
+keys to report:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">pool</span><span class="o">.</span><span class="n">wait_each_success</span><span class="p">([</span><span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="s2">&quot;e&quot;</span><span class="p">]):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{0}</span><span class="s2"> succeeded&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+
+<span class="p">(</span><span class="n">no</span> <span class="n">output</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">err</span> <span class="ow">in</span> <span class="n">pool</span><span class="o">.</span><span class="n">wait_each_exception</span><span class="p">([</span><span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="s2">&quot;e&quot;</span><span class="p">]):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{0}</span><span class="s2"> failed with </span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">err</span><span class="o">.</span><span class="n">exc</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">))</span>
+
+<span class="n">e</span> <span class="n">failed</span> <span class="k">with</span> <span class="n">PropagateError</span>
+<span class="n">d</span> <span class="n">failed</span> <span class="k">with</span> <span class="n">PropagateError</span>
+</pre></div>
+</div>
+<p>Both wait_each_success() and wait_each_exception() must wait until the
+greenthreads for all specified keys (or all keys) have terminated, one way or
+the other, because of course we can&#8217;t know until then how to categorize each.</p>
+</div>
+</div>
+</div>
+<div class="section" id="module-eventlet.dagpool">
+<span id="module-contents"></span><h1>Module Contents<a class="headerlink" href="#module-eventlet.dagpool" title="Permalink to this headline">¶</a></h1>
+<dl class="exception">
+<dt id="eventlet.dagpool.Collision">
+<em class="property">exception </em><code class="descclassname">eventlet.dagpool.</code><code class="descname">Collision</code><a class="headerlink" href="#eventlet.dagpool.Collision" title="Permalink to this definition">¶</a></dt>
+<dd><p>DAGPool raises Collision when you try to launch two greenthreads with the
+same key, or post() a result for a key corresponding to a greenthread, or
+post() twice for the same key. As with KeyError, str(collision) names the
+key in question.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="eventlet.dagpool.DAGPool">
+<em class="property">class </em><code class="descclassname">eventlet.dagpool.</code><code class="descname">DAGPool</code><span class="sig-paren">(</span><em>preload={}</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.dagpool.DAGPool" title="Permalink to this definition">¶</a></dt>
+<dd><p>A DAGPool is a pool that constrains greenthreads, not by max concurrency,
+but by data dependencies.</p>
+<p>This is a way to implement general DAG dependencies. A simple dependency
+tree (flowing in either direction) can straightforwardly be implemented
+using recursion and (e.g.)
+<code class="xref py py-meth docutils literal"><span class="pre">GreenThread.imap()</span></code>.
+What gets complicated is when a given node depends on several other nodes
+as well as contributing to several other nodes.</p>
+<p>With DAGPool, you concurrently launch all applicable greenthreads; each
+will proceed as soon as it has all required inputs. The DAG is implicit in
+which items are required by each greenthread.</p>
+<p>Each greenthread is launched in a DAGPool with a key: any value that can
+serve as a Python dict key. The caller also specifies an iterable of other
+keys on which this greenthread depends. This iterable may be empty.</p>
+<p>The greenthread callable must accept (key, results), where:</p>
+<dl class="docutils">
+<dt>key</dt>
+<dd>is its own key</dd>
+<dt>results</dt>
+<dd>is an iterable of (key, value) pairs.</dd>
+</dl>
+<p>A newly-launched DAGPool greenthread is entered immediately, and can
+perform any necessary setup work. At some point it will iterate over the
+(key, value) pairs from the passed &#8216;results&#8217; iterable. Doing so blocks the
+greenthread until a value is available for each of the keys specified in
+its initial dependencies iterable. These (key, value) pairs are delivered
+in chronological order, <em>not</em> the order in which they are initially
+specified: each value will be delivered as soon as it becomes available.</p>
+<p>The value returned by a DAGPool greenthread becomes the value for its
+key, which unblocks any other greenthreads waiting on that key.</p>
+<p>If a DAGPool greenthread terminates with an exception instead of returning
+a value, attempting to retrieve the value raises <a class="reference internal" href="#eventlet.dagpool.PropagateError" title="eventlet.dagpool.PropagateError"><code class="xref py py-class docutils literal"><span class="pre">PropagateError</span></code></a>,
+which binds the key of the original greenthread and the original
+exception. Unless the greenthread attempting to retrieve the value handles
+PropagateError, that exception will in turn be wrapped in a PropagateError
+of its own, and so forth. The code that ultimately handles PropagateError
+can follow the chain of PropagateError.exc attributes to discover the flow
+of that exception through the DAG of greenthreads.</p>
+<p>External greenthreads may also interact with a DAGPool. See <a class="reference internal" href="#eventlet.dagpool.DAGPool.wait_each" title="eventlet.dagpool.DAGPool.wait_each"><code class="xref py py-meth docutils literal"><span class="pre">wait_each()</span></code></a>,
+<a class="reference internal" href="#eventlet.dagpool.DAGPool.waitall" title="eventlet.dagpool.DAGPool.waitall"><code class="xref py py-meth docutils literal"><span class="pre">waitall()</span></code></a>, <a class="reference internal" href="#eventlet.dagpool.DAGPool.post" title="eventlet.dagpool.DAGPool.post"><code class="xref py py-meth docutils literal"><span class="pre">post()</span></code></a>.</p>
+<p>It is not recommended to constrain external DAGPool producer greenthreads
+in a <a class="reference internal" href="greenpool.html#eventlet.greenpool.GreenPool" title="eventlet.greenpool.GreenPool"><code class="xref py py-class docutils literal"><span class="pre">GreenPool</span></code></a>: it may be hard to
+provably avoid deadlock.</p>
+<dl class="method">
+<dt id="eventlet.dagpool.DAGPool.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>preload={}</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.dagpool.DAGPool.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>DAGPool can be prepopulated with an initial dict or iterable of (key,
+value) pairs. These (key, value) pairs are of course immediately
+available for any greenthread that depends on any of those keys.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventlet.dagpool.DAGPool.__getitem__">
+<code class="descname">__getitem__</code><span class="sig-paren">(</span><em>key</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.dagpool.DAGPool.__getitem__" title="Permalink to this definition">¶</a></dt>
+<dd><p>__getitem__(key) (aka dagpool[key]) blocks until <em>key</em> has a value,
+then delivers that value.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventlet.dagpool.DAGPool.get">
+<code class="descname">get</code><span class="sig-paren">(</span><em>key</em>, <em>default=None</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.dagpool.DAGPool.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>get() returns the value for <em>key</em>. If <em>key</em> does not yet have a value,
+get() returns <em>default</em>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventlet.dagpool.DAGPool.items">
+<code class="descname">items</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.dagpool.DAGPool.items" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a snapshot tuple of currently-available (key, value) pairs.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventlet.dagpool.DAGPool.keys">
+<code class="descname">keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.dagpool.DAGPool.keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a snapshot tuple of keys for which we currently have values.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventlet.dagpool.DAGPool.kill">
+<code class="descname">kill</code><span class="sig-paren">(</span><em>key</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.dagpool.DAGPool.kill" title="Permalink to this definition">¶</a></dt>
+<dd><p>Kill the greenthread that was spawned with the specified <em>key</em>.</p>
+<p>If no such greenthread was spawned, raise KeyError.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventlet.dagpool.DAGPool.post">
+<code class="descname">post</code><span class="sig-paren">(</span><em>key</em>, <em>value</em>, <em>replace=False</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.dagpool.DAGPool.post" title="Permalink to this definition">¶</a></dt>
+<dd><p>post(key, value) stores the passed <em>value</em> for the passed <em>key</em>. It
+then causes each greenthread blocked on its results iterable, or on
+<a class="reference internal" href="#eventlet.dagpool.DAGPool.wait_each" title="eventlet.dagpool.DAGPool.wait_each"><code class="xref py py-meth docutils literal"><span class="pre">wait_each(keys)</span></code></a>, to check for new values.
+A waiting greenthread might not literally resume on every single
+post() of a relevant key, but the first post() of a relevant key
+ensures that it will resume eventually, and when it does it will catch
+up with all relevant post() calls.</p>
+<p>Calling post(key, value) when there is a running greenthread with that
+same <em>key</em> raises <a class="reference internal" href="#eventlet.dagpool.Collision" title="eventlet.dagpool.Collision"><code class="xref py py-class docutils literal"><span class="pre">Collision</span></code></a>. If you must post(key, value) instead of
+letting the greenthread run to completion, you must first call
+<a class="reference internal" href="#eventlet.dagpool.DAGPool.kill" title="eventlet.dagpool.DAGPool.kill"><code class="xref py py-meth docutils literal"><span class="pre">kill(key)</span></code></a>.</p>
+<p>The DAGPool implicitly post()s the return value from each of its
+greenthreads. But a greenthread may explicitly post() a value for its
+own key, which will cause its return value to be discarded.</p>
+<p>Calling post(key, value, replace=False) (the default <em>replace</em>) when a
+value for that key has already been posted, by any means, raises
+<a class="reference internal" href="#eventlet.dagpool.Collision" title="eventlet.dagpool.Collision"><code class="xref py py-class docutils literal"><span class="pre">Collision</span></code></a>.</p>
+<p>Calling post(key, value, replace=True) when a value for that key has
+already been posted, by any means, replaces the previously-stored
+value. However, that may make it complicated to reason about the
+behavior of greenthreads waiting on that key.</p>
+<p>After a post(key, value1) followed by post(key, value2, replace=True),
+it is unspecified which pending <a class="reference internal" href="#eventlet.dagpool.DAGPool.wait_each" title="eventlet.dagpool.DAGPool.wait_each"><code class="xref py py-meth docutils literal"><span class="pre">wait_each([key...])</span></code></a>
+calls (or greenthreads iterating over <em>results</em> involving that key)
+will observe <em>value1</em> versus <em>value2</em>. It is guaranteed that
+subsequent wait_each([key...]) calls (or greenthreads spawned after
+that point) will observe <em>value2</em>.</p>
+<p>A successful call to
+post(key, <a class="reference internal" href="#eventlet.dagpool.PropagateError" title="eventlet.dagpool.PropagateError"><code class="xref py py-class docutils literal"><span class="pre">PropagateError(key,</span> <span class="pre">ExceptionSubclass)</span></code></a>)
+ensures that any subsequent attempt to retrieve that key&#8217;s value will
+raise that PropagateError instance.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventlet.dagpool.DAGPool.running">
+<code class="descname">running</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.dagpool.DAGPool.running" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return number of running DAGPool greenthreads. This includes
+greenthreads blocked while iterating through their <em>results</em> iterable,
+that is, greenthreads waiting on values from other keys.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventlet.dagpool.DAGPool.running_keys">
+<code class="descname">running_keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.dagpool.DAGPool.running_keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return keys for running DAGPool greenthreads. This includes
+greenthreads blocked while iterating through their <em>results</em> iterable,
+that is, greenthreads waiting on values from other keys.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventlet.dagpool.DAGPool.spawn">
+<code class="descname">spawn</code><span class="sig-paren">(</span><em>key</em>, <em>depends</em>, <em>function</em>, <em>*args</em>, <em>**kwds</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.dagpool.DAGPool.spawn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Launch the passed <em>function(key, results, ...)</em> as a greenthread,
+passing it:</p>
+<ul class="simple">
+<li>the specified <em>key</em></li>
+<li>an iterable of (key, value) pairs</li>
+<li>whatever other positional args or keywords you specify.</li>
+</ul>
+<p>Iterating over the <em>results</em> iterable behaves like calling
+<a class="reference internal" href="#eventlet.dagpool.DAGPool.wait_each" title="eventlet.dagpool.DAGPool.wait_each"><code class="xref py py-meth docutils literal"><span class="pre">wait_each(depends)</span></code></a>.</p>
+<p>Returning from <em>function()</em> behaves like
+<a class="reference internal" href="#eventlet.dagpool.DAGPool.post" title="eventlet.dagpool.DAGPool.post"><code class="xref py py-meth docutils literal"><span class="pre">post(key,</span> <span class="pre">return_value)</span></code></a>.</p>
+<p>If <em>function()</em> terminates with an exception, that exception is wrapped
+in <a class="reference internal" href="#eventlet.dagpool.PropagateError" title="eventlet.dagpool.PropagateError"><code class="xref py py-class docutils literal"><span class="pre">PropagateError</span></code></a> with the greenthread&#8217;s <em>key</em> and (effectively) posted
+as the value for that key. Attempting to retrieve that value will
+raise that PropagateError.</p>
+<p>Thus, if the greenthread with key &#8216;a&#8217; terminates with an exception,
+and greenthread &#8216;b&#8217; depends on &#8216;a&#8217;, when greenthread &#8216;b&#8217; attempts to
+iterate through its <em>results</em> argument, it will encounter
+PropagateError. So by default, an uncaught exception will propagate
+through all the downstream dependencies.</p>
+<p>If you pass <a class="reference internal" href="#eventlet.dagpool.DAGPool.spawn" title="eventlet.dagpool.DAGPool.spawn"><code class="xref py py-meth docutils literal"><span class="pre">spawn()</span></code></a> a key already passed to spawn() or <a class="reference internal" href="#eventlet.dagpool.DAGPool.post" title="eventlet.dagpool.DAGPool.post"><code class="xref py py-meth docutils literal"><span class="pre">post()</span></code></a>, spawn()
+raises <a class="reference internal" href="#eventlet.dagpool.Collision" title="eventlet.dagpool.Collision"><code class="xref py py-class docutils literal"><span class="pre">Collision</span></code></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventlet.dagpool.DAGPool.spawn_many">
+<code class="descname">spawn_many</code><span class="sig-paren">(</span><em>depends</em>, <em>function</em>, <em>*args</em>, <em>**kwds</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.dagpool.DAGPool.spawn_many" title="Permalink to this definition">¶</a></dt>
+<dd><p>spawn_many() accepts a single <em>function</em> whose parameters are the same
+as for <a class="reference internal" href="#eventlet.dagpool.DAGPool.spawn" title="eventlet.dagpool.DAGPool.spawn"><code class="xref py py-meth docutils literal"><span class="pre">spawn()</span></code></a>.</p>
+<p>The difference is that spawn_many() accepts a dependency dict
+<em>depends</em>. A new greenthread is spawned for each key in the dict. That
+dict key&#8217;s value should be an iterable of other keys on which this
+greenthread depends.</p>
+<p>If the <em>depends</em> dict contains any key already passed to <a class="reference internal" href="#eventlet.dagpool.DAGPool.spawn" title="eventlet.dagpool.DAGPool.spawn"><code class="xref py py-meth docutils literal"><span class="pre">spawn()</span></code></a>
+or <a class="reference internal" href="#eventlet.dagpool.DAGPool.post" title="eventlet.dagpool.DAGPool.post"><code class="xref py py-meth docutils literal"><span class="pre">post()</span></code></a>, spawn_many() raises <a class="reference internal" href="#eventlet.dagpool.Collision" title="eventlet.dagpool.Collision"><code class="xref py py-class docutils literal"><span class="pre">Collision</span></code></a>. It is
+indeterminate how many of the other keys in <em>depends</em> will have
+successfully spawned greenthreads.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventlet.dagpool.DAGPool.wait">
+<code class="descname">wait</code><span class="sig-paren">(</span><em>keys=&lt;object object&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.dagpool.DAGPool.wait" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>keys</em> is an optional iterable of keys. If you omit the argument, it
+waits for all the keys from <a class="reference internal" href="#eventlet.dagpool.DAGPool" title="eventlet.dagpool.DAGPool"><code class="xref py py-class docutils literal"><span class="pre">preload</span> <span class="pre">data</span></code></a>, from
+<a class="reference internal" href="#eventlet.dagpool.DAGPool.post" title="eventlet.dagpool.DAGPool.post"><code class="xref py py-meth docutils literal"><span class="pre">post()</span></code></a> calls and from <a class="reference internal" href="#eventlet.dagpool.DAGPool.spawn" title="eventlet.dagpool.DAGPool.spawn"><code class="xref py py-meth docutils literal"><span class="pre">spawn()</span></code></a> calls: in other words, all
+the keys of which this DAGPool is aware.</p>
+<p>wait() blocks the calling greenthread until all of the relevant keys
+have values. wait() returns a dict whose keys are the relevant keys,
+and whose values come from the <em>preload</em> data, from values returned by
+DAGPool greenthreads or from <a class="reference internal" href="#eventlet.dagpool.DAGPool.post" title="eventlet.dagpool.DAGPool.post"><code class="xref py py-meth docutils literal"><span class="pre">post()</span></code></a> calls.</p>
+<p>If a DAGPool greenthread terminates with an exception, wait() will
+raise <a class="reference internal" href="#eventlet.dagpool.PropagateError" title="eventlet.dagpool.PropagateError"><code class="xref py py-class docutils literal"><span class="pre">PropagateError</span></code></a> wrapping that exception. If more than
+one greenthread terminates with an exception, it is indeterminate
+which one wait() will raise.</p>
+<p>If an external greenthread posts a <a class="reference internal" href="#eventlet.dagpool.PropagateError" title="eventlet.dagpool.PropagateError"><code class="xref py py-class docutils literal"><span class="pre">PropagateError</span></code></a> instance,
+wait() will raise that PropagateError. If more than one greenthread
+posts PropagateError, it is indeterminate which one wait() will raise.</p>
+<p>See also <a class="reference internal" href="#eventlet.dagpool.DAGPool.wait_each_success" title="eventlet.dagpool.DAGPool.wait_each_success"><code class="xref py py-meth docutils literal"><span class="pre">wait_each_success()</span></code></a>, <a class="reference internal" href="#eventlet.dagpool.DAGPool.wait_each_exception" title="eventlet.dagpool.DAGPool.wait_each_exception"><code class="xref py py-meth docutils literal"><span class="pre">wait_each_exception()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventlet.dagpool.DAGPool.wait_each">
+<code class="descname">wait_each</code><span class="sig-paren">(</span><em>keys=&lt;object object&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.dagpool.DAGPool.wait_each" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>keys</em> is an optional iterable of keys. If you omit the argument, it
+waits for all the keys from <a class="reference internal" href="#eventlet.dagpool.DAGPool" title="eventlet.dagpool.DAGPool"><code class="xref py py-class docutils literal"><span class="pre">preload</span> <span class="pre">data</span></code></a>, from
+<a class="reference internal" href="#eventlet.dagpool.DAGPool.post" title="eventlet.dagpool.DAGPool.post"><code class="xref py py-meth docutils literal"><span class="pre">post()</span></code></a> calls and from <a class="reference internal" href="#eventlet.dagpool.DAGPool.spawn" title="eventlet.dagpool.DAGPool.spawn"><code class="xref py py-meth docutils literal"><span class="pre">spawn()</span></code></a> calls: in other words, all
+the keys of which this DAGPool is aware.</p>
+<p>wait_each() is a generator producing (key, value) pairs as a value
+becomes available for each requested key. wait_each() blocks the
+calling greenthread until the next value becomes available. If the
+DAGPool was prepopulated with values for any of the relevant keys, of
+course those can be delivered immediately without waiting.</p>
+<p>Delivery order is intentionally decoupled from the initial sequence of
+keys: each value is delivered as soon as it becomes available. If
+multiple keys are available at the same time, wait_each() delivers
+each of the ready ones in arbitrary order before blocking again.</p>
+<p>The DAGPool does not distinguish between a value returned by one of
+its own greenthreads and one provided by a <a class="reference internal" href="#eventlet.dagpool.DAGPool.post" title="eventlet.dagpool.DAGPool.post"><code class="xref py py-meth docutils literal"><span class="pre">post()</span></code></a> call or <em>preload</em> data.</p>
+<p>The wait_each() generator terminates (raises StopIteration) when all
+specified keys have been delivered. Thus, typical usage might be:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">dagpool</span><span class="o">.</span><span class="n">wait_each</span><span class="p">(</span><span class="n">keys</span><span class="p">):</span>
+    <span class="c1"># process this ready key and value</span>
+<span class="c1"># continue processing now that we&#39;ve gotten values for all keys</span>
+</pre></div>
+</div>
+<p>By implication, if you pass wait_each() an empty iterable of keys, it
+returns immediately without yielding anything.</p>
+<p>If the value to be delivered is a <a class="reference internal" href="#eventlet.dagpool.PropagateError" title="eventlet.dagpool.PropagateError"><code class="xref py py-class docutils literal"><span class="pre">PropagateError</span></code></a> exception object, the
+generator raises that PropagateError instead of yielding it.</p>
+<p>See also <a class="reference internal" href="#eventlet.dagpool.DAGPool.wait_each_success" title="eventlet.dagpool.DAGPool.wait_each_success"><code class="xref py py-meth docutils literal"><span class="pre">wait_each_success()</span></code></a>, <a class="reference internal" href="#eventlet.dagpool.DAGPool.wait_each_exception" title="eventlet.dagpool.DAGPool.wait_each_exception"><code class="xref py py-meth docutils literal"><span class="pre">wait_each_exception()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventlet.dagpool.DAGPool.wait_each_exception">
+<code class="descname">wait_each_exception</code><span class="sig-paren">(</span><em>keys=&lt;object object&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.dagpool.DAGPool.wait_each_exception" title="Permalink to this definition">¶</a></dt>
+<dd><p>wait_each_exception() filters results so that only exceptions are
+yielded. Not every provided (or defaulted) key will necessarily be
+represented, though naturally the generator will not finish until
+all have completed.</p>
+<p>Unlike other DAGPool methods, wait_each_exception() simply yields
+<a class="reference internal" href="#eventlet.dagpool.PropagateError" title="eventlet.dagpool.PropagateError"><code class="xref py py-class docutils literal"><span class="pre">PropagateError</span></code></a> instances as values rather than raising them.</p>
+<p>In all other respects, wait_each_exception() behaves like <a class="reference internal" href="#eventlet.dagpool.DAGPool.wait_each" title="eventlet.dagpool.DAGPool.wait_each"><code class="xref py py-meth docutils literal"><span class="pre">wait_each()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventlet.dagpool.DAGPool.wait_each_success">
+<code class="descname">wait_each_success</code><span class="sig-paren">(</span><em>keys=&lt;object object&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.dagpool.DAGPool.wait_each_success" title="Permalink to this definition">¶</a></dt>
+<dd><p>wait_each_success() filters results so that only success values are
+yielded. In other words, unlike <a class="reference internal" href="#eventlet.dagpool.DAGPool.wait_each" title="eventlet.dagpool.DAGPool.wait_each"><code class="xref py py-meth docutils literal"><span class="pre">wait_each()</span></code></a>, wait_each_success()
+will not raise <a class="reference internal" href="#eventlet.dagpool.PropagateError" title="eventlet.dagpool.PropagateError"><code class="xref py py-class docutils literal"><span class="pre">PropagateError</span></code></a>. Not every provided (or
+defaulted) key will necessarily be represented, though naturally the
+generator will not finish until all have completed.</p>
+<p>In all other respects, wait_each_success() behaves like <a class="reference internal" href="#eventlet.dagpool.DAGPool.wait_each" title="eventlet.dagpool.DAGPool.wait_each"><code class="xref py py-meth docutils literal"><span class="pre">wait_each()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventlet.dagpool.DAGPool.waitall">
+<code class="descname">waitall</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.dagpool.DAGPool.waitall" title="Permalink to this definition">¶</a></dt>
+<dd><p>waitall() blocks the calling greenthread until there is a value for
+every DAGPool greenthread launched by <a class="reference internal" href="#eventlet.dagpool.DAGPool.spawn" title="eventlet.dagpool.DAGPool.spawn"><code class="xref py py-meth docutils literal"><span class="pre">spawn()</span></code></a>. It returns a dict
+containing all <a class="reference internal" href="#eventlet.dagpool.DAGPool" title="eventlet.dagpool.DAGPool"><code class="xref py py-class docutils literal"><span class="pre">preload</span> <span class="pre">data</span></code></a>, all data from
+<a class="reference internal" href="#eventlet.dagpool.DAGPool.post" title="eventlet.dagpool.DAGPool.post"><code class="xref py py-meth docutils literal"><span class="pre">post()</span></code></a> and all values returned by spawned greenthreads.</p>
+<p>See also <a class="reference internal" href="#eventlet.dagpool.DAGPool.wait" title="eventlet.dagpool.DAGPool.wait"><code class="xref py py-meth docutils literal"><span class="pre">wait()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventlet.dagpool.DAGPool.waiting">
+<code class="descname">waiting</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.dagpool.DAGPool.waiting" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return number of waiting DAGPool greenthreads, that is, greenthreads
+still waiting on values from other keys. This explicitly does <em>not</em>
+include external greenthreads waiting on <a class="reference internal" href="#eventlet.dagpool.DAGPool.wait" title="eventlet.dagpool.DAGPool.wait"><code class="xref py py-meth docutils literal"><span class="pre">wait()</span></code></a>,
+<a class="reference internal" href="#eventlet.dagpool.DAGPool.waitall" title="eventlet.dagpool.DAGPool.waitall"><code class="xref py py-meth docutils literal"><span class="pre">waitall()</span></code></a>, <a class="reference internal" href="#eventlet.dagpool.DAGPool.wait_each" title="eventlet.dagpool.DAGPool.wait_each"><code class="xref py py-meth docutils literal"><span class="pre">wait_each()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventlet.dagpool.DAGPool.waiting_for">
+<code class="descname">waiting_for</code><span class="sig-paren">(</span><em>key=&lt;object object&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.dagpool.DAGPool.waiting_for" title="Permalink to this definition">¶</a></dt>
+<dd><p>waiting_for(key) returns a set() of the keys for which the DAGPool
+greenthread spawned with that <em>key</em> is still waiting. If you pass a
+<em>key</em> for which no greenthread was spawned, waiting_for() raises
+KeyError.</p>
+<p>waiting_for() without argument returns a dict. Its keys are the keys
+of DAGPool greenthreads still waiting on one or more values. In the
+returned dict, the value of each such key is the set of other keys for
+which that greenthread is still waiting.</p>
+<p>This method allows diagnosing a &#8220;hung&#8221; DAGPool. If certain
+greenthreads are making no progress, it&#8217;s possible that they are
+waiting on keys for which there is no greenthread and no <a class="reference internal" href="#eventlet.dagpool.DAGPool.post" title="eventlet.dagpool.DAGPool.post"><code class="xref py py-meth docutils literal"><span class="pre">post()</span></code></a> data.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="eventlet.dagpool.PropagateError">
+<em class="property">exception </em><code class="descclassname">eventlet.dagpool.</code><code class="descname">PropagateError</code><span class="sig-paren">(</span><em>key</em>, <em>exc</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.dagpool.PropagateError" title="Permalink to this definition">¶</a></dt>
+<dd><p>When a DAGPool greenthread terminates with an exception instead of
+returning a result, attempting to retrieve its value raises
+PropagateError.</p>
+<p>Attributes:</p>
+<dl class="docutils">
+<dt>key</dt>
+<dd>the key of the greenthread which raised the exception</dd>
+<dt>exc</dt>
+<dd>the exception object raised by the greenthread</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#"><code class="docutils literal"><span class="pre">dagpool</span></code> &#8211; Dependency-Driven Greenthreads</a><ul>
+<li><a class="reference internal" href="#rationale">Rationale</a></li>
+<li><a class="reference internal" href="#tutorial">Tutorial</a><ul>
+<li><a class="reference internal" href="#example">Example</a></li>
+<li><a class="reference internal" href="#introspection">Introspection</a></li>
+<li><a class="reference internal" href="#posting">Posting</a></li>
+<li><a class="reference internal" href="#preloading">Preloading</a></li>
+<li><a class="reference internal" href="#exception-propagation">Exception Propagation</a></li>
+<li><a class="reference internal" href="#scanning-for-success-exceptions">Scanning for Success / Exceptions</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-eventlet.dagpool">Module Contents</a></li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="corolocal.html"
+                        title="previous chapter"><code class="docutils literal"><span class="pre">corolocal</span></code> &#8211; Coroutine local storage</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="debug.html"
+                        title="next chapter"><code class="docutils literal"><span class="pre">debug</span></code> &#8211; Debugging tools for Eventlet</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/modules/dagpool.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="debug.html" title="debug – Debugging tools for Eventlet"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="corolocal.html" title="corolocal – Coroutine local storage"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.20.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &#187;</li> 
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2005-2010, Eventlet Contributors.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.
+    </div>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-42952223-1', 'eventlet.net');
+  ga('send', 'pageview');
+</script>
+
+  </body>
+</html>

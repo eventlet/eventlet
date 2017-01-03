@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Design Patterns &mdash; Eventlet 0.19.0 documentation</title>
+    <title>Design Patterns &#8212; Eventlet 0.20.1 documentation</title>
     
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,16 +14,18 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.19.0',
+        VERSION:     '0.20.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.19.0 documentation" href="index.html" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Greening The World" href="patching.html" />
     <link rel="prev" title="Basic Usage" href="basic_usage.html" /> 
   </head>
@@ -43,7 +45,7 @@
         <li class="right" >
           <a href="basic_usage.html" title="Basic Usage"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.19.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.20.1 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -58,8 +60,8 @@
 <div class="section" id="client-pattern">
 <h2>Client Pattern<a class="headerlink" href="#client-pattern" title="Permalink to this headline">¶</a></h2>
 <p>The canonical client-side example is a web crawler.  This use case is given a list of urls and wants to retrieve their bodies for later processing.  Here is a very simple example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">eventlet</span>
-<span class="kn">from</span> <span class="nn">eventlet.green</span> <span class="kn">import</span> <span class="n">urllib2</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">eventlet</span>
+<span class="kn">from</span> <span class="nn">eventlet.green</span> <span class="k">import</span> <span class="n">urllib2</span>
 
 <span class="n">urls</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;http://www.google.com/intl/en_ALL/images/logo.gif&quot;</span><span class="p">,</span>
        <span class="s2">&quot;https://www.python.org/static/img/python-logo.png&quot;</span><span class="p">,</span>
@@ -70,11 +72,11 @@
 
 <span class="n">pool</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">GreenPool</span><span class="p">()</span>
 <span class="k">for</span> <span class="n">body</span> <span class="ow">in</span> <span class="n">pool</span><span class="o">.</span><span class="n">imap</span><span class="p">(</span><span class="n">fetch</span><span class="p">,</span> <span class="n">urls</span><span class="p">):</span>
-    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;got body&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">body</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;got body&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">body</span><span class="p">))</span>
 </pre></div>
 </div>
-<p>There is a slightly more complex version of this in the <a class="reference internal" href="examples.html#web-crawler-example"><span>web crawler example</span></a>.  Here&#8217;s a tour of the interesting lines in this crawler.</p>
-<p><code class="docutils literal"><span class="pre">from</span> <span class="pre">eventlet.green</span> <span class="pre">import</span> <span class="pre">urllib2</span></code> is how you import a cooperatively-yielding version of urllib2.  It is the same in all respects to the standard version, except that it uses green sockets for its communication.  This is an example of the <a class="reference internal" href="patching.html#import-green"><span>Import Green</span></a> pattern.</p>
+<p>There is a slightly more complex version of this in the <a class="reference internal" href="examples.html#web-crawler-example"><span class="std std-ref">web crawler example</span></a>.  Here&#8217;s a tour of the interesting lines in this crawler.</p>
+<p><code class="docutils literal"><span class="pre">from</span> <span class="pre">eventlet.green</span> <span class="pre">import</span> <span class="pre">urllib2</span></code> is how you import a cooperatively-yielding version of urllib2.  It is the same in all respects to the standard version, except that it uses green sockets for its communication.  This is an example of the <a class="reference internal" href="patching.html#import-green"><span class="std std-ref">Import Green</span></a> pattern.</p>
 <p><code class="docutils literal"><span class="pre">pool</span> <span class="pre">=</span> <span class="pre">eventlet.GreenPool()</span></code> constructs a <a class="reference internal" href="modules/greenpool.html#eventlet.greenpool.GreenPool" title="eventlet.greenpool.GreenPool"><code class="xref py py-class docutils literal"><span class="pre">GreenPool</span></code></a> of a thousand green threads.  Using a pool is good practice because it provides an upper limit on the amount of work that this crawler will be doing simultaneously, which comes in handy when the input data changes dramatically.</p>
 <p><code class="docutils literal"><span class="pre">for</span> <span class="pre">body</span> <span class="pre">in</span> <span class="pre">pool.imap(fetch,</span> <span class="pre">urls):</span></code> iterates over the results of calling the fetch function in parallel.  <a class="reference internal" href="modules/greenpool.html#eventlet.greenpool.GreenPool.imap" title="eventlet.greenpool.GreenPool.imap"><code class="xref py py-meth docutils literal"><span class="pre">imap</span></code></a> makes the function calls in parallel, and the results are returned in the order that they were executed.</p>
 <p>The key aspect of the client pattern is that it involves collecting the results of each function call; the fact that each fetch is done concurrently is essentially an invisible optimization.  Note also that imap is memory-bounded and won&#8217;t consume gigabytes of memory if the list of urls grows to the tens of thousands (yes, we had that problem in production once!).</p>
@@ -82,22 +84,22 @@
 <div class="section" id="server-pattern">
 <h2>Server Pattern<a class="headerlink" href="#server-pattern" title="Permalink to this headline">¶</a></h2>
 <p>Here&#8217;s a simple server-side example, a simple echo server:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">eventlet</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">eventlet</span>
 
 <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="n">client</span><span class="p">):</span>
-    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
         <span class="n">c</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">c</span><span class="p">:</span> <span class="k">break</span>
         <span class="n">client</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
 
 <span class="n">server</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s1">&#39;0.0.0.0&#39;</span><span class="p">,</span> <span class="mi">6000</span><span class="p">))</span>
 <span class="n">pool</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">GreenPool</span><span class="p">(</span><span class="mi">10000</span><span class="p">)</span>
-<span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+<span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
     <span class="n">new_sock</span><span class="p">,</span> <span class="n">address</span> <span class="o">=</span> <span class="n">server</span><span class="o">.</span><span class="n">accept</span><span class="p">()</span>
     <span class="n">pool</span><span class="o">.</span><span class="n">spawn_n</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">new_sock</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>The file <a class="reference internal" href="examples.html#echo-server-example"><span>echo server example</span></a> contains a somewhat more robust and complex version of this example.</p>
+<p>The file <a class="reference internal" href="examples.html#echo-server-example"><span class="std std-ref">echo server example</span></a> contains a somewhat more robust and complex version of this example.</p>
 <p><code class="docutils literal"><span class="pre">server</span> <span class="pre">=</span> <span class="pre">eventlet.listen(('0.0.0.0',</span> <span class="pre">6000))</span></code> uses a convenience function to create a listening socket.</p>
 <p><code class="docutils literal"><span class="pre">pool</span> <span class="pre">=</span> <span class="pre">eventlet.GreenPool(10000)</span></code> creates a pool of green threads that could handle ten thousand clients.</p>
 <p><code class="docutils literal"><span class="pre">pool.spawn_n(handle,</span> <span class="pre">new_sock)</span></code> launches a green thread to handle the new client.  The accept loop doesn&#8217;t care about the return value of the <code class="docutils literal"><span class="pre">handle</span></code> function, so it uses <a class="reference internal" href="modules/greenpool.html#eventlet.greenpool.GreenPool.spawn_n" title="eventlet.greenpool.GreenPool.spawn_n"><code class="xref py py-meth docutils literal"><span class="pre">spawn_n</span></code></a>, instead of <a class="reference internal" href="modules/greenpool.html#eventlet.greenpool.GreenPool.spawn" title="eventlet.greenpool.GreenPool.spawn"><code class="xref py py-meth docutils literal"><span class="pre">spawn</span></code></a>.</p>
@@ -107,7 +109,7 @@
 <h2>Dispatch Pattern<a class="headerlink" href="#dispatch-pattern" title="Permalink to this headline">¶</a></h2>
 <p>One common use case that Linden Lab runs into all the time is a &#8220;dispatch&#8221; design pattern.  This is a server that is also a client of some other services.  Proxies, aggregators, job workers, and so on are all terms that apply here.  This is the use case that the <a class="reference internal" href="modules/greenpool.html#eventlet.greenpool.GreenPile" title="eventlet.greenpool.GreenPile"><code class="xref py py-class docutils literal"><span class="pre">GreenPile</span></code></a> was designed for.</p>
 <p>Here&#8217;s a somewhat contrived example: a server that receives POSTs from clients that contain a list of urls of RSS feeds.  The server fetches all the feeds concurrently and responds with a list of their titles to the client.  It&#8217;s easy to imagine it doing something more complex than this, and this could be easily modified to become a Reader-style application:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">eventlet</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">eventlet</span>
 <span class="n">feedparser</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">import_patched</span><span class="p">(</span><span class="s1">&#39;feedparser&#39;</span><span class="p">)</span>
 
 <span class="n">pool</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">GreenPool</span><span class="p">()</span>
@@ -125,13 +127,13 @@
     <span class="k">return</span> <span class="p">[</span><span class="n">titles</span><span class="p">]</span>
 </pre></div>
 </div>
-<p>The full version of this example is in the <a class="reference internal" href="examples.html#feed-scraper-example"><span>Feed Scraper</span></a>, which includes code to start the WSGI server on a particular port.</p>
+<p>The full version of this example is in the <a class="reference internal" href="examples.html#feed-scraper-example"><span class="std std-ref">Feed Scraper</span></a>, which includes code to start the WSGI server on a particular port.</p>
 <p>This example uses a global (gasp) <a class="reference internal" href="modules/greenpool.html#eventlet.greenpool.GreenPool" title="eventlet.greenpool.GreenPool"><code class="xref py py-class docutils literal"><span class="pre">GreenPool</span></code></a> to control concurrency.  If we didn&#8217;t have a global limit on the number of outgoing requests, then a client could cause the server to open tens of thousands of concurrent connections to external servers, thereby getting feedscraper&#8217;s IP banned, or various other accidental-or-on-purpose bad behavior.  The pool isn&#8217;t a complete DoS protection, but it&#8217;s the bare minimum.</p>
 <p>The interesting lines are in the app function:</p>
 <div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
 2
 3
-4</pre></div></td><td class="code"><div class="highlight"><pre><span class="n">pile</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">GreenPile</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span>
+4</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="n">pile</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">GreenPile</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">url</span> <span class="ow">in</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;wsgi.input&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">readlines</span><span class="p">():</span>
     <span class="n">pile</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="n">fetch_title</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
 <span class="n">titles</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pile</span><span class="p">)</span>
@@ -168,21 +170,18 @@
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="_sources/design_patterns.txt"
+      <li><a href="_sources/design_patterns.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -204,13 +203,13 @@
         <li class="right" >
           <a href="basic_usage.html" title="Basic Usage"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.19.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.20.1 documentation</a> &#187;</li> 
       </ul>
     </div>
 
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+        &#169; Copyright 2005-2010, Eventlet Contributors.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

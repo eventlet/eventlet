@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>semaphore – Semaphore classes &mdash; Eventlet 0.19.0 documentation</title>
+    <title>semaphore – Semaphore classes &#8212; Eventlet 0.20.1 documentation</title>
     
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,17 +14,18 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.19.0',
+        VERSION:     '0.20.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.19.0 documentation" href="../index.html" />
-    <link rel="up" title="Module Reference" href="../modules.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="timeout – Universal Timeouts" href="timeout.html" />
     <link rel="prev" title="queue – Queue class" href="queue.html" /> 
   </head>
@@ -44,8 +45,8 @@
         <li class="right" >
           <a href="queue.html" title="queue – Queue class"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.19.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.20.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -64,16 +65,16 @@ Optionally initialize with a resource <em>count</em>, then <code class="xref py 
 <code class="xref py py-meth docutils literal"><span class="pre">release()</span></code> resources as needed. Attempting to <code class="xref py py-meth docutils literal"><span class="pre">acquire()</span></code> when
 <em>count</em> is zero suspends the calling greenthread until <em>count</em> becomes
 nonzero again.</p>
-<p>This is API-compatible with <a class="reference external" href="http://docs.python.org/library/threading.html#threading.Semaphore" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">threading.Semaphore</span></code></a>.</p>
+<p>This is API-compatible with <a class="reference external" href="https://docs.python.org/2/library/threading.html#threading.Semaphore" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">threading.Semaphore</span></code></a>.</p>
 <p>It is a context manager, and thus can be used in a with block:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">sem</span> <span class="o">=</span> <span class="n">Semaphore</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sem</span> <span class="o">=</span> <span class="n">Semaphore</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="k">with</span> <span class="n">sem</span><span class="p">:</span>
   <span class="n">do_some_stuff</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>If not specified, <em>value</em> defaults to 1.</p>
 <p>It is possible to limit acquire time:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">sem</span> <span class="o">=</span> <span class="n">Semaphore</span><span class="p">()</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sem</span> <span class="o">=</span> <span class="n">Semaphore</span><span class="p">()</span>
 <span class="n">ok</span> <span class="o">=</span> <span class="n">sem</span><span class="o">.</span><span class="n">acquire</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
 <span class="c1"># True if acquired, False if timed out.</span>
 </pre></div>
@@ -167,13 +168,13 @@ and is ignored</p>
 again.  Attempting to <code class="xref py py-meth docutils literal"><span class="pre">release()</span></code> after <em>count</em> has reached <em>limit</em>
 suspends the calling greenthread until <em>count</em> becomes less than <em>limit</em>
 again.</p>
-<p>This has the same API as <a class="reference external" href="http://docs.python.org/library/threading.html#threading.Semaphore" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">threading.Semaphore</span></code></a>, though its
+<p>This has the same API as <a class="reference external" href="https://docs.python.org/2/library/threading.html#threading.Semaphore" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">threading.Semaphore</span></code></a>, though its
 semantics and behavior differ subtly due to the upper limit on calls
 to <code class="xref py py-meth docutils literal"><span class="pre">release()</span></code>.  It is <strong>not</strong> compatible with
 <code class="xref py py-class docutils literal"><span class="pre">threading.BoundedSemaphore</span></code> because it blocks when reaching <em>limit</em>
 instead of raising a ValueError.</p>
 <p>It is a context manager, and thus can be used in a with block:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">sem</span> <span class="o">=</span> <span class="n">CappedSemaphore</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sem</span> <span class="o">=</span> <span class="n">CappedSemaphore</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="k">with</span> <span class="n">sem</span><span class="p">:</span>
   <span class="n">do_some_stuff</span><span class="p">()</span>
 </pre></div>
@@ -251,21 +252,18 @@ counter is greater than or equal to <em>limit</em>.</p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="../_sources/modules/semaphore.txt"
+      <li><a href="../_sources/modules/semaphore.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -287,14 +285,14 @@ counter is greater than or equal to <em>limit</em>.</p>
         <li class="right" >
           <a href="queue.html" title="queue – Queue class"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.19.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.20.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &#187;</li> 
       </ul>
     </div>
 
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+        &#169; Copyright 2005-2010, Eventlet Contributors.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

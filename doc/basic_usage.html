@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Basic Usage &mdash; Eventlet 0.19.0 documentation</title>
+    <title>Basic Usage &#8212; Eventlet 0.20.1 documentation</title>
     
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,16 +14,18 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.19.0',
+        VERSION:     '0.20.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.19.0 documentation" href="index.html" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Design Patterns" href="design_patterns.html" />
     <link rel="prev" title="Eventlet Documentation" href="index.html" /> 
   </head>
@@ -43,7 +45,7 @@
         <li class="right" >
           <a href="index.html" title="Eventlet Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.19.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.20.1 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -54,7 +56,7 @@
             
   <div class="section" id="basic-usage">
 <h1>Basic Usage<a class="headerlink" href="#basic-usage" title="Permalink to this headline">¶</a></h1>
-<p>If it&#8217;s your first time to Eventlet, you may find the illuminated examples in the <a class="reference internal" href="design_patterns.html#design-patterns"><span>Design Patterns</span></a> document to be a good starting point.</p>
+<p>If it&#8217;s your first time to Eventlet, you may find the illuminated examples in the <a class="reference internal" href="design_patterns.html#design-patterns"><span class="std std-ref">Design Patterns</span></a> document to be a good starting point.</p>
 <p>Eventlet is built around the concept of green threads (i.e. coroutines, we use the terms interchangeably) that are launched to do network-related work.  Green threads differ from normal threads in two main ways:</p>
 <ul class="simple">
 <li>Green threads are so cheap they are nearly free.  You do not have to conserve green threads like you would normal threads.  In general, there will be at least one green thread per network connection.</li>
@@ -126,13 +128,13 @@ See <a class="reference internal" href="modules/timeout.html#eventlet.timeout.Ti
 <dl class="function">
 <dt id="eventlet.import_patched">
 <code class="descclassname">eventlet.</code><code class="descname">import_patched</code><span class="sig-paren">(</span><em>modulename</em>, <em>*additional_modules</em>, <em>**kw_additional_modules</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.import_patched" title="Permalink to this definition">¶</a></dt>
-<dd><p>Imports a module in a way that ensures that the module uses &#8220;green&#8221; versions of the standard library modules, so that everything works nonblockingly.  The only required argument is the name of the module to be imported.  For more information see <a class="reference internal" href="patching.html#import-green"><span>Import Green</span></a>.</p>
+<dd><p>Imports a module in a way that ensures that the module uses &#8220;green&#8221; versions of the standard library modules, so that everything works nonblockingly.  The only required argument is the name of the module to be imported.  For more information see <a class="reference internal" href="patching.html#import-green"><span class="std std-ref">Import Green</span></a>.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="eventlet.monkey_patch">
 <code class="descclassname">eventlet.</code><code class="descname">monkey_patch</code><span class="sig-paren">(</span><em>all=True</em>, <em>os=False</em>, <em>select=False</em>, <em>socket=False</em>, <em>thread=False</em>, <em>time=False</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.monkey_patch" title="Permalink to this definition">¶</a></dt>
-<dd><p>Globally patches certain system modules to be greenthread-friendly. The keyword arguments afford some control over which modules are patched. If <em>all</em> is True, then all modules are patched regardless of the other arguments. If it&#8217;s False, then the rest of the keyword arguments control patching of specific subsections of the standard library.  Most patch the single module of the same name (os, time, select).  The exceptions are socket, which also patches the ssl module if present; and thread, which patches thread, threading, and Queue.  It&#8217;s safe to call monkey_patch multiple times.  For more information see <a class="reference internal" href="patching.html#monkey-patch"><span>Monkeypatching the Standard Library</span></a>.</p>
+<dd><p>Globally patches certain system modules to be greenthread-friendly. The keyword arguments afford some control over which modules are patched. If <em>all</em> is True, then all modules are patched regardless of the other arguments. If it&#8217;s False, then the rest of the keyword arguments control patching of specific subsections of the standard library.  Most patch the single module of the same name (os, time, select).  The exceptions are socket, which also patches the ssl module if present; and thread, which patches thread, threading, and Queue.  It&#8217;s safe to call monkey_patch multiple times.  For more information see <a class="reference internal" href="patching.html#monkey-patch"><span class="std std-ref">Monkeypatching the Standard Library</span></a>.</p>
 </dd></dl>
 
 </div>
@@ -148,7 +150,7 @@ See <a class="reference internal" href="modules/timeout.html#eventlet.timeout.Ti
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>addr</strong> &#8211; Address of the server to connect to.  For TCP sockets, this is a (host, port) tuple.</li>
-<li><strong>family</strong> &#8211; Socket family, optional.  See <a class="reference external" href="http://docs.python.org/library/socket.html#module-socket" title="(in Python v2.7)"><code class="xref py py-mod docutils literal"><span class="pre">socket</span></code></a> documentation for available families.</li>
+<li><strong>family</strong> &#8211; Socket family, optional.  See <a class="reference external" href="https://docs.python.org/2/library/socket.html#module-socket" title="(in Python v2.7)"><code class="xref py py-mod docutils literal"><span class="pre">socket</span></code></a> documentation for available families.</li>
 <li><strong>bind</strong> &#8211; Local address to bind to, optional.</li>
 </ul>
 </td>
@@ -172,7 +174,7 @@ socket can be used in <a class="reference internal" href="#eventlet.serve" title
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>addr</strong> &#8211; Address to listen on.  For TCP sockets, this is a (host, port)  tuple.</li>
-<li><strong>family</strong> &#8211; Socket family, optional.  See <a class="reference external" href="http://docs.python.org/library/socket.html#module-socket" title="(in Python v2.7)"><code class="xref py py-mod docutils literal"><span class="pre">socket</span></code></a> documentation for available families.</li>
+<li><strong>family</strong> &#8211; Socket family, optional.  See <a class="reference external" href="https://docs.python.org/2/library/socket.html#module-socket" title="(in Python v2.7)"><code class="xref py py-mod docutils literal"><span class="pre">socket</span></code></a> documentation for available families.</li>
 <li><strong>backlog</strong> &#8211; The maximum number of queued connections. Should be at least 1; the maximum
 value is system-dependent.</li>
 </ul>
@@ -189,7 +191,7 @@ value is system-dependent.</li>
 <dt id="eventlet.wrap_ssl">
 <code class="descclassname">eventlet.</code><code class="descname">wrap_ssl</code><span class="sig-paren">(</span><em>sock</em>, <em>*a</em>, <em>**kw</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.wrap_ssl" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convenience function for converting a regular socket into an
-SSL socket.  Has the same interface as <a class="reference external" href="http://docs.python.org/library/ssl.html#ssl.wrap_socket" title="(in Python v2.7)"><code class="xref py py-func docutils literal"><span class="pre">ssl.wrap_socket()</span></code></a>,
+SSL socket.  Has the same interface as <a class="reference external" href="https://docs.python.org/2/library/ssl.html#ssl.wrap_socket" title="(in Python v2.7)"><code class="xref py py-func docutils literal"><span class="pre">ssl.wrap_socket()</span></code></a>,
 but can also use PyOpenSSL. Though, note that it ignores the
 <cite>cert_reqs</cite>, <cite>ssl_version</cite>, <cite>ca_certs</cite>, <cite>do_handshake_on_connect</cite>,
 and <cite>suppress_ragged_eofs</cite> arguments when using PyOpenSSL.</p>
@@ -207,8 +209,8 @@ session.</p>
 <dd><p>Runs a server on the supplied socket.  Calls the function <em>handle</em> in a
 separate greenthread for every incoming client connection.  <em>handle</em> takes
 two arguments: the client socket object, and the client address:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">myhandle</span><span class="p">(</span><span class="n">client_sock</span><span class="p">,</span> <span class="n">client_addr</span><span class="p">):</span>
-    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;client connected&quot;</span><span class="p">,</span> <span class="n">client_addr</span><span class="p">)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">myhandle</span><span class="p">(</span><span class="n">client_sock</span><span class="p">,</span> <span class="n">client_addr</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;client connected&quot;</span><span class="p">,</span> <span class="n">client_addr</span><span class="p">)</span>
 
 <span class="n">eventlet</span><span class="o">.</span><span class="n">serve</span><span class="p">(</span><span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">9999</span><span class="p">)),</span> <span class="n">myhandle</span><span class="p">)</span>
 </pre></div>
@@ -236,7 +238,7 @@ connections until the existing ones complete.</p>
 <dd><p>Exception class used for quitting <a class="reference internal" href="#eventlet.serve" title="eventlet.serve"><code class="xref py py-func docutils literal"><span class="pre">serve()</span></code></a> gracefully.</p>
 </dd></dl>
 
-<p>These are the basic primitives of Eventlet; there are a lot more out there in the other Eventlet modules; check out the <a class="reference internal" href="modules.html"><em>Module Reference</em></a>.</p>
+<p>These are the basic primitives of Eventlet; there are a lot more out there in the other Eventlet modules; check out the <a class="reference internal" href="modules.html"><span class="doc">Module Reference</span></a>.</p>
 </div>
 </div>
 
@@ -267,21 +269,18 @@ connections until the existing ones complete.</p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="_sources/basic_usage.txt"
+      <li><a href="_sources/basic_usage.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -303,13 +302,13 @@ connections until the existing ones complete.</p>
         <li class="right" >
           <a href="index.html" title="Eventlet Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.19.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.20.1 documentation</a> &#187;</li> 
       </ul>
     </div>
 
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+        &#169; Copyright 2005-2010, Eventlet Contributors.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

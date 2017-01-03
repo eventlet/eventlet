@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>greenpool – Green Thread Pools &mdash; Eventlet 0.19.0 documentation</title>
+    <title>greenpool – Green Thread Pools &#8212; Eventlet 0.20.1 documentation</title>
     
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,17 +14,18 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.19.0',
+        VERSION:     '0.20.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.19.0 documentation" href="../index.html" />
-    <link rel="up" title="Module Reference" href="../modules.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="greenthread – Green Thread Implementation" href="greenthread.html" />
     <link rel="prev" title="event – Cross-greenthread primitive" href="event.html" /> 
   </head>
@@ -44,8 +45,8 @@
         <li class="right" >
           <a href="event.html" title="event – Cross-greenthread primitive"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.19.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.20.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -71,14 +72,14 @@ block the calling greenthread until a slot becomes available.</p>
 <dl class="method">
 <dt id="eventlet.greenpool.GreenPool.imap">
 <code class="descname">imap</code><span class="sig-paren">(</span><em>function</em>, <em>*iterables</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.greenpool.GreenPool.imap" title="Permalink to this definition">¶</a></dt>
-<dd><p>This is the same as <a class="reference external" href="http://docs.python.org/library/itertools.html#itertools.imap" title="(in Python v2.7)"><code class="xref py py-func docutils literal"><span class="pre">itertools.imap()</span></code></a>, and has the same
+<dd><p>This is the same as <a class="reference external" href="https://docs.python.org/2/library/itertools.html#itertools.imap" title="(in Python v2.7)"><code class="xref py py-func docutils literal"><span class="pre">itertools.imap()</span></code></a>, and has the same
 concurrency and memory behavior as <a class="reference internal" href="#eventlet.greenpool.GreenPool.starmap" title="eventlet.greenpool.GreenPool.starmap"><code class="xref py py-meth docutils literal"><span class="pre">starmap()</span></code></a>.</p>
 <p>It&#8217;s quite convenient for, e.g., farming out jobs from a file:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">worker</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">worker</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">do_something</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
 <span class="n">pool</span> <span class="o">=</span> <span class="n">GreenPool</span><span class="p">()</span>
 <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">pool</span><span class="o">.</span><span class="n">imap</span><span class="p">(</span><span class="n">worker</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;filename&quot;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)):</span>
-    <span class="k">print</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -105,7 +106,7 @@ functions in the GreenPool.</p>
 <dt id="eventlet.greenpool.GreenPool.spawn">
 <code class="descname">spawn</code><span class="sig-paren">(</span><em>function</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.greenpool.GreenPool.spawn" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run the <em>function</em> with its arguments in its own green thread.
-Returns the <a class="reference internal" href="greenthread.html#eventlet.greenthread.GreenThread" title="eventlet.greenthread.GreenThread"><code class="xref py py-class docutils literal"><span class="pre">GreenThread</span></code></a>
+Returns the <code class="xref py py-class docutils literal"><span class="pre">GreenThread</span></code>
 object that is running the function, which can be used to retrieve the
 results.</p>
 <p>If the pool is currently at capacity, <code class="docutils literal"><span class="pre">spawn</span></code> will block until one of
@@ -125,7 +126,7 @@ None; the results of <em>function</em> are not retrievable.</p>
 <dl class="method">
 <dt id="eventlet.greenpool.GreenPool.starmap">
 <code class="descname">starmap</code><span class="sig-paren">(</span><em>function</em>, <em>iterable</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.greenpool.GreenPool.starmap" title="Permalink to this definition">¶</a></dt>
-<dd><p>This is the same as <a class="reference external" href="http://docs.python.org/library/itertools.html#itertools.starmap" title="(in Python v2.7)"><code class="xref py py-func docutils literal"><span class="pre">itertools.starmap()</span></code></a>, except that <em>func</em> is
+<dd><p>This is the same as <a class="reference external" href="https://docs.python.org/2/library/itertools.html#itertools.starmap" title="(in Python v2.7)"><code class="xref py py-func docutils literal"><span class="pre">itertools.starmap()</span></code></a>, except that <em>func</em> is
 executed in a separate green thread for each item, with the concurrency
 limited by the pool&#8217;s size. In operation, starmap consumes a constant
 amount of memory, proportional to the size of the pool, and is thus
@@ -192,21 +193,18 @@ iterating over the GreenPile object.</p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="../_sources/modules/greenpool.txt"
+      <li><a href="../_sources/modules/greenpool.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -228,14 +226,14 @@ iterating over the GreenPile object.</p>
         <li class="right" >
           <a href="event.html" title="event – Cross-greenthread primitive"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.19.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.20.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &#187;</li> 
       </ul>
     </div>
 
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+        &#169; Copyright 2005-2010, Eventlet Contributors.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

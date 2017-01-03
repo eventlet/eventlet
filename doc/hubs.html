@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Understanding Eventlet Hubs &mdash; Eventlet 0.19.0 documentation</title>
+    <title>Understanding Eventlet Hubs &#8212; Eventlet 0.20.1 documentation</title>
     
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,16 +14,18 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.19.0',
+        VERSION:     '0.20.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.19.0 documentation" href="index.html" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Testing Eventlet" href="testing.html" />
     <link rel="prev" title="Zeromq" href="zeromq.html" /> 
   </head>
@@ -43,7 +45,7 @@
         <li class="right" >
           <a href="zeromq.html" title="Zeromq"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.19.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.20.1 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -66,20 +68,20 @@
 <dt><strong>pyevent</strong></dt>
 <dd>This is a libevent-based backend and is thus the fastest.  It&#8217;s disabled by default, because it does not support native threads, but you can enable it yourself if your use case doesn&#8217;t require them.  (You have to install pyevent, too.)</dd>
 </dl>
-<p>If the selected hub is not ideal for the application, another can be selected.  You can make the selection either with the environment variable <a class="reference internal" href="environment.html#env-vars"><span>EVENTLET_HUB</span></a>, or with use_hub.</p>
+<p>If the selected hub is not ideal for the application, another can be selected.  You can make the selection either with the environment variable <a class="reference internal" href="environment.html#env-vars"><span class="std std-ref">EVENTLET_HUB</span></a>, or with use_hub.</p>
 <dl class="function">
 <dt id="eventlet.hubs.use_hub">
 <code class="descclassname">eventlet.hubs.</code><code class="descname">use_hub</code><span class="sig-paren">(</span><em>hub=None</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.hubs.use_hub" title="Permalink to this definition">¶</a></dt>
 <dd><p>Use this to control which hub Eventlet selects.  Call it with the name of the desired hub module.  Make sure to do this before the application starts doing any I/O!  Calling use_hub completely eliminates the old hub, and any file descriptors or timers that it had been managing will be forgotten.  Put the call as one of the first lines in the main module.:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="sd">&quot;&quot;&quot; This is the main module &quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">hubs</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot; This is the main module &quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">eventlet</span> <span class="k">import</span> <span class="n">hubs</span>
 <span class="n">hubs</span><span class="o">.</span><span class="n">use_hub</span><span class="p">(</span><span class="s2">&quot;pyevent&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Hubs are implemented as thread-local class instances.  <a class="reference internal" href="#eventlet.hubs.use_hub" title="eventlet.hubs.use_hub"><code class="xref py py-func docutils literal"><span class="pre">eventlet.hubs.use_hub()</span></code></a> only operates on the current thread.  When using multiple threads that each need their own hub, call <a class="reference internal" href="#eventlet.hubs.use_hub" title="eventlet.hubs.use_hub"><code class="xref py py-func docutils literal"><span class="pre">eventlet.hubs.use_hub()</span></code></a> at the beginning of each thread function that needs a specific hub.  In practice, it may not be necessary to specify a hub in each thread; it works to use one special hub for the main thread, and let other threads use the default hub; this hybrid hub configuration will work fine.</p>
 <p>It is also possible to use a third-party hub module in place of one of the built-in ones.  Simply pass the module itself to <a class="reference internal" href="#eventlet.hubs.use_hub" title="eventlet.hubs.use_hub"><code class="xref py py-func docutils literal"><span class="pre">eventlet.hubs.use_hub()</span></code></a>.  The task of writing such a hub is a little beyond the scope of this document, it&#8217;s probably a good idea to simply inspect the code of the existing hubs to see how they work.:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">hubs</span>
-<span class="kn">from</span> <span class="nn">mypackage</span> <span class="kn">import</span> <span class="n">myhub</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">eventlet</span> <span class="k">import</span> <span class="n">hubs</span>
+<span class="kn">from</span> <span class="nn">mypackage</span> <span class="k">import</span> <span class="n">myhub</span>
 <span class="n">hubs</span><span class="o">.</span><span class="n">use_hub</span><span class="p">(</span><span class="n">myhub</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -171,21 +173,18 @@ unexpectedly without being deprecated first.</p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="_sources/hubs.txt"
+      <li><a href="_sources/hubs.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -207,13 +206,13 @@ unexpectedly without being deprecated first.</p>
         <li class="right" >
           <a href="zeromq.html" title="Zeromq"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.19.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.20.1 documentation</a> &#187;</li> 
       </ul>
     </div>
 
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+        &#169; Copyright 2005-2010, Eventlet Contributors.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>wsgi – WSGI server &mdash; Eventlet 0.19.0 documentation</title>
+    <title>wsgi – WSGI server &#8212; Eventlet 0.20.1 documentation</title>
     
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,17 +14,18 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.19.0',
+        VERSION:     '0.20.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Eventlet 0.19.0 documentation" href="../index.html" />
-    <link rel="up" title="Module Reference" href="../modules.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="eventlet.green.zmq – ØMQ support" href="zmq.html" />
     <link rel="prev" title="websocket – Websocket Server" href="websocket.html" /> 
   </head>
@@ -44,8 +45,8 @@
         <li class="right" >
           <a href="websocket.html" title="websocket – Websocket Server"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.19.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.20.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -61,7 +62,7 @@
 web server in an application, or as the basis for a more full-featured web
 server package.  One such package is <a class="reference external" href="http://pypi.python.org/pypi/Spawning/">Spawning</a>.</p>
 <p>To launch a wsgi server, simply create a socket and call <a class="reference internal" href="#eventlet.wsgi.server" title="eventlet.wsgi.server"><code class="xref py py-func docutils literal"><span class="pre">eventlet.wsgi.server()</span></code></a> with it:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">wsgi</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">eventlet</span> <span class="k">import</span> <span class="n">wsgi</span>
 <span class="kn">import</span> <span class="nn">eventlet</span>
 
 <span class="k">def</span> <span class="nf">hello_world</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
@@ -149,10 +150,10 @@ Default is True.</li>
 <div class="section" id="ssl">
 <span id="wsgi-ssl"></span><h2>SSL<a class="headerlink" href="#ssl" title="Permalink to this headline">¶</a></h2>
 <p>Creating a secure server is only slightly more involved than the base example.  All that&#8217;s needed is to pass an SSL-wrapped socket to the <a class="reference internal" href="#eventlet.wsgi.server" title="eventlet.wsgi.server"><code class="xref py py-func docutils literal"><span class="pre">server()</span></code></a> method:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">wsgi</span><span class="o">.</span><span class="n">server</span><span class="p">(</span><span class="n">eventlet</span><span class="o">.</span><span class="n">wrap_ssl</span><span class="p">(</span><span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="mi">8090</span><span class="p">)),</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">wsgi</span><span class="o">.</span><span class="n">server</span><span class="p">(</span><span class="n">eventlet</span><span class="o">.</span><span class="n">wrap_ssl</span><span class="p">(</span><span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="mi">8090</span><span class="p">)),</span>
                               <span class="n">certfile</span><span class="o">=</span><span class="s1">&#39;cert.crt&#39;</span><span class="p">,</span>
                               <span class="n">keyfile</span><span class="o">=</span><span class="s1">&#39;private.key&#39;</span><span class="p">,</span>
-                              <span class="n">server_side</span><span class="o">=</span><span class="bp">True</span><span class="p">),</span>
+                              <span class="n">server_side</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
             <span class="n">hello_world</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -167,11 +168,11 @@ is a tuple of <code class="samp docutils literal"><span class="pre">(func,</span
 the WSGI environment dictionary, followed by the <cite>args</cite> and then the <cite>kwargs</cite>
 in the post hook.</p>
 <p>For example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">wsgi</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">eventlet</span> <span class="k">import</span> <span class="n">wsgi</span>
 <span class="kn">import</span> <span class="nn">eventlet</span>
 
-<span class="k">def</span> <span class="nf">hook</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">arg1</span><span class="p">,</span> <span class="n">arg2</span><span class="p">,</span> <span class="n">kwarg3</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">kwarg4</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-    <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Hook called: </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">arg1</span><span class="p">,</span> <span class="n">arg2</span><span class="p">,</span> <span class="n">kwarg3</span><span class="p">,</span> <span class="n">kwarg4</span><span class="p">))</span>
+<span class="k">def</span> <span class="nf">hook</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">arg1</span><span class="p">,</span> <span class="n">arg2</span><span class="p">,</span> <span class="n">kwarg3</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kwarg4</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Hook called: </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">arg1</span><span class="p">,</span> <span class="n">arg2</span><span class="p">,</span> <span class="n">kwarg3</span><span class="p">,</span> <span class="n">kwarg4</span><span class="p">))</span>
 
 <span class="k">def</span> <span class="nf">hello_world</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
     <span class="n">env</span><span class="p">[</span><span class="s1">&#39;eventlet.posthooks&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
@@ -205,7 +206,7 @@ expect/continue mechanism (PEP333).</p>
 <p>To define the &#8220;100 Continue&#8221; response headers, one may call
 <code class="xref py py-func docutils literal"><span class="pre">set_hundred_continue_response_header()</span></code> on <code class="samp docutils literal"><span class="pre">env['wsgi.input']</span></code>
 as shown in the following example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">wsgi</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">eventlet</span> <span class="k">import</span> <span class="n">wsgi</span>
 <span class="kn">import</span> <span class="nn">eventlet</span>
 
 <span class="k">def</span> <span class="nf">wsgi_app</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
@@ -263,21 +264,18 @@ in the wsgi test case <code class="docutils literal"><span class="pre">tests/wsg
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="../_sources/modules/wsgi.txt"
+      <li><a href="../_sources/modules/wsgi.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -299,14 +297,14 @@ in the wsgi test case <code class="docutils literal"><span class="pre">tests/wsg
         <li class="right" >
           <a href="websocket.html" title="websocket – Websocket Server"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.19.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.20.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &#187;</li> 
       </ul>
     </div>
 
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+        &#169; Copyright 2005-2010, Eventlet Contributors.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
