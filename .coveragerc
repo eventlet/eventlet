@@ -1,7 +1,8 @@
 [run]
 branch = True
 source = eventlet
-concurrency = eventlet
+# concurrency=eventlet gives 0% report on CPython and start error on pypy
+#concurrency = eventlet
 omit =
     eventlet/support/dns/*
     eventlet/support/six.py

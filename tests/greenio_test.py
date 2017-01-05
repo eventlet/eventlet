@@ -443,7 +443,7 @@ class TestGreenSocket(tests.LimitedTestCase):
             wrap_rfile = client.makefile()
             wrap_rfile.read(1)
             self.fail()
-        except eventlet.TimeoutError:
+        except eventlet.Timeout:
             pass
 
         result = evt.wait()

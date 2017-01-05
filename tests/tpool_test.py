@@ -20,7 +20,7 @@ import re
 import time
 
 import eventlet
-from eventlet import tpool, debug, event
+from eventlet import tpool
 from eventlet.support import six
 import tests
 
@@ -218,10 +218,13 @@ class TestTpool(tests.LimitedTestCase):
 
     @tests.skip_with_pyevent
     def test_timeout(self):
-        import time
-        eventlet.Timeout(0.1, eventlet.TimeoutError())
-        self.assertRaises(eventlet.TimeoutError,
-                          tpool.execute, time.sleep, 0.3)
+        blocking = eventlet.patcher.original('time')
+        eventlet.Timeout(0.1, eventlet.Timeout())
+        try:
+            tpool.execute(blocking.sleep, 0.3)
+            assert False, 'Expected Timeout'
+        except eventlet.Timeout:
+            pass
 
     @tests.skip_with_pyevent
     def test_killall(self):
@@ -230,7 +233,7 @@ class TestTpool(tests.LimitedTestCase):
 
     @tests.skip_with_pyevent
     def test_killall_remaining_results(self):
-        semaphore = event.Event()
+        semaphore = eventlet.Event()
 
         def native_fun():
             time.sleep(.5)

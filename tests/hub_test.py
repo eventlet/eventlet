@@ -1,14 +1,12 @@
 from __future__ import with_statement
 import sys
+import time
 
 import tests
-from tests import LimitedTestCase, main, skip_with_pyevent, skip_if_no_itimer, skip_unless
+from tests import skip_with_pyevent, skip_if_no_itimer, skip_unless
 from tests.patcher_test import ProcessBase
-import time
 import eventlet
 from eventlet import hubs
-from eventlet.event import Event
-from eventlet.semaphore import Semaphore
 from eventlet.support import greenlets, six
 
 
@@ -19,7 +17,7 @@ def noop():
     pass
 
 
-class TestTimerCleanup(LimitedTestCase):
+class TestTimerCleanup(tests.LimitedTestCase):
     TEST_TIMEOUT = 2
 
     @skip_with_pyevent
@@ -85,7 +83,7 @@ class TestTimerCleanup(LimitedTestCase):
         eventlet.sleep()
 
 
-class TestScheduleCall(LimitedTestCase):
+class TestScheduleCall(tests.LimitedTestCase):
 
     def test_local(self):
         lst = [1]
@@ -111,7 +109,7 @@ class TestScheduleCall(LimitedTestCase):
         self.assertEqual(lst, [1, 2, 3])
 
 
-class TestDebug(LimitedTestCase):
+class TestDebug(tests.LimitedTestCase):
 
     def test_debug_listeners(self):
         hubs.get_hub().set_debug_listeners(True)
@@ -122,7 +120,7 @@ class TestDebug(LimitedTestCase):
         hubs.get_hub().set_timer_exceptions(False)
 
 
-class TestExceptionInMainloop(LimitedTestCase):
+class TestExceptionInMainloop(tests.LimitedTestCase):
 
     def test_sleep(self):
         # even if there was an error in the mainloop, the hub should continue
@@ -149,13 +147,13 @@ class TestExceptionInMainloop(LimitedTestCase):
                 delay, DELAY)
 
 
-class TestExceptionInGreenthread(LimitedTestCase):
+class TestExceptionInGreenthread(tests.LimitedTestCase):
 
     @skip_unless(greenlets.preserves_excinfo)
     def test_exceptionpreservation(self):
         # events for controlling execution order
-        gt1event = Event()
-        gt2event = Event()
+        gt1event = eventlet.Event()
+        gt2event = eventlet.Event()
 
         def test_gt1():
             try:
@@ -196,7 +194,7 @@ class TestExceptionInGreenthread(LimitedTestCase):
                 hubs.get_hub().switch()
 
         # semaphores for controlling execution order
-        sem = Semaphore()
+        sem = eventlet.Semaphore()
         sem.acquire()
         g = eventlet.spawn(test_gt, sem)
         try:
@@ -206,7 +204,7 @@ class TestExceptionInGreenthread(LimitedTestCase):
             g.kill()
 
 
-class TestHubSelection(LimitedTestCase):
+class TestHubSelection(tests.LimitedTestCase):
 
     def test_explicit_hub(self):
         oldhub = hubs.get_hub()
@@ -217,7 +215,7 @@ class TestHubSelection(LimitedTestCase):
             hubs._threadlocal.hub = oldhub
 
 
-class TestHubBlockingDetector(LimitedTestCase):
+class TestHubBlockingDetector(tests.LimitedTestCase):
     TEST_TIMEOUT = 10
 
     @skip_with_pyevent
@@ -245,7 +243,7 @@ class TestHubBlockingDetector(LimitedTestCase):
         debug.hub_blocking_detection(False)
 
 
-class TestSuspend(LimitedTestCase):
+class TestSuspend(tests.LimitedTestCase):
     TEST_TIMEOUT = 4
     longMessage = True
     maxDiff = None
@@ -283,25 +281,30 @@ except eventlet.Timeout:
         shutil.rmtree(self.tempdir)
 
 
-class TestBadFilenos(LimitedTestCase):
+def test_repeated_select_bad_fd():
+    from eventlet.green import select
 
-    @skip_with_pyevent
-    def test_repeated_selects(self):
-        from eventlet.green import select
-        self.assertRaises(ValueError, select.select, [-1], [], [])
-        self.assertRaises(ValueError, select.select, [-1], [], [])
+    def once():
+        try:
+            select.select([-1], [], [])
+            assert False, 'Expected ValueError'
+        except ValueError:
+            pass
 
-
-class TestFork(LimitedTestCase):
-
-    @skip_with_pyevent
-    def test_fork(self):
-        output = tests.run_python('tests/hub_test_fork.py')
-        lines = output.splitlines()
-        self.assertEqual(lines, [b"accept blocked", b"child died ok"], output)
+    once()
+    once()
 
 
-class TestDeadRunLoop(LimitedTestCase):
+@skip_with_pyevent
+def test_fork():
+    tests.run_isolated('hub_fork.py')
+
+
+def test_fork_simple():
+    tests.run_isolated('hub_fork_simple.py')
+
+
+class TestDeadRunLoop(tests.LimitedTestCase):
     TEST_TIMEOUT = 2
 
     class CustomException(Exception):
@@ -397,7 +400,3 @@ print('ok')
         self.write_to_tempfile('newmod', module_source)
         output, _ = self.launch_subprocess('newmod.py')
         self.assertEqual(output, 'kqueue tried\nok\n')
-
-
-if __name__ == '__main__':
-    main()
