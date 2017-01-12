@@ -458,11 +458,11 @@ class TestGetaddrinfo(tests.LimitedTestCase):
         greendns.resolve = _make_mock_resolve()
         greendns.resolve.add('example.com', '127.0.0.2')
         greendns.resolve.add('example.com', '::1')
-        res = greendns.getaddrinfo('example.com', 'ssh')
-        addr = ('127.0.0.2', 22)
+        res = greendns.getaddrinfo('example.com', 'domain')
+        addr = ('127.0.0.2', 53)
         tcp = (socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP, addr)
         udp = (socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP, addr)
-        addr = ('::1', 22, 0, 0)
+        addr = ('::1', 53, 0, 0)
         tcp6 = (socket.AF_INET6, socket.SOCK_STREAM, socket.IPPROTO_TCP, addr)
         udp6 = (socket.AF_INET6, socket.SOCK_DGRAM, socket.IPPROTO_UDP, addr)
         filt_res = [ai[:3] + (ai[4],) for ai in res]
@@ -475,8 +475,8 @@ class TestGetaddrinfo(tests.LimitedTestCase):
         greendns.resolve = _make_mock_resolve()
         idn_name = u'евентлет.com'
         greendns.resolve.add(idn_name.encode('idna').decode('ascii'), '127.0.0.2')
-        res = greendns.getaddrinfo(idn_name, 'ssh')
-        addr = ('127.0.0.2', 22)
+        res = greendns.getaddrinfo(idn_name, 'domain')
+        addr = ('127.0.0.2', 53)
         tcp = (socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP, addr)
         udp = (socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP, addr)
         filt_res = [ai[:3] + (ai[4],) for ai in res]
@@ -486,8 +486,8 @@ class TestGetaddrinfo(tests.LimitedTestCase):
     def test_getaddrinfo_inet(self):
         greendns.resolve = _make_mock_resolve()
         greendns.resolve.add('example.com', '127.0.0.2')
-        res = greendns.getaddrinfo('example.com', 'ssh', socket.AF_INET)
-        addr = ('127.0.0.2', 22)
+        res = greendns.getaddrinfo('example.com', 'domain', socket.AF_INET)
+        addr = ('127.0.0.2', 53)
         tcp = (socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP, addr)
         udp = (socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP, addr)
         assert tcp in [ai[:3] + (ai[4],) for ai in res]
@@ -496,8 +496,8 @@ class TestGetaddrinfo(tests.LimitedTestCase):
     def test_getaddrinfo_inet6(self):
         greendns.resolve = _make_mock_resolve()
         greendns.resolve.add('example.com', '::1')
-        res = greendns.getaddrinfo('example.com', 'ssh', socket.AF_INET6)
-        addr = ('::1', 22, 0, 0)
+        res = greendns.getaddrinfo('example.com', 'domain', socket.AF_INET6)
+        addr = ('::1', 53, 0, 0)
         tcp = (socket.AF_INET6, socket.SOCK_STREAM, socket.IPPROTO_TCP, addr)
         udp = (socket.AF_INET6, socket.SOCK_DGRAM, socket.IPPROTO_UDP, addr)
         assert tcp in [ai[:3] + (ai[4],) for ai in res]
