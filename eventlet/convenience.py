@@ -143,6 +143,8 @@ except ImportError:
                           suppress_ragged_eofs=True, ciphers=None):
             # theoretically the ssl_version could be respected in this line
             context = SSL.Context(SSL.SSLv23_METHOD)
+            # SSL versions 2 and 3 are considered insecure, disabling
+            context.set_options(SSL.OP_NO_SSLv2 | SSL.OP_NO_SSLv3)
             if certfile is not None:
                 context.use_certificate_file(certfile)
             if keyfile is not None:

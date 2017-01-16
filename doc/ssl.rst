@@ -37,6 +37,7 @@ Here's an example of a server::
 
     # insecure context, only for example purposes
     context = SSL.Context(SSL.SSLv23_METHOD)
+    context.set_options(SSL.OP_NO_SSLv2 | SSL.OP_NO_SSLv3)
     context.set_verify(SSL.VERIFY_NONE, lambda *x: True))
 
     # create underlying green socket and wrap it in ssl
