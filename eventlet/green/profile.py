@@ -42,7 +42,7 @@ from eventlet import greenthread
 from eventlet import patcher
 from eventlet.support import six
 
-thread = patcher.original('thread')  # non-monkeypatched module needed
+thread = patcher.original(six.moves._thread.__name__)  # non-monkeypatched module needed
 
 
 # This class provides the start() and stop() functions
@@ -117,13 +117,6 @@ class Profile(profile_orig.Profile):
             self.trace_dispatch_c_call(frame, 0)
         return self.trace_dispatch_return(frame, t)
 
-    # Add "return safety" to the dispatchers
-    dispatch = dict(profile_orig.Profile.dispatch)
-    dispatch.update({
-        "return": trace_dispatch_return_extend_back,
-        "c_return": trace_dispatch_c_return_extend_back,
-    })
-
     def SwitchTasklet(self, t0, t1, t):
         # tally the time spent in the old tasklet
         pt, it, et, fn, frame, rcur = self.cur
@@ -140,19 +133,6 @@ class Profile(profile_orig.Profile):
             self.cur, self.timings = None, {}
             self.simulate_call("profiler")
             self.simulate_call("new_tasklet")
-
-    def ContextWrap(f):
-        @functools.wraps(f)
-        def ContextWrapper(self, arg, t):
-            current = greenthread.getcurrent()
-            if current != self.current_tasklet:
-                self.SwitchTasklet(self.current_tasklet, current, t)
-                t = 0.0  # the time was billed to the previous tasklet
-            return f(self, arg, t)
-        return ContextWrapper
-
-    # Add automatic tasklet detection to the callbacks.
-    dispatch = dict([(key, ContextWrap(val)) for key, val in six.iteritems(dispatch)])
 
     def TallyTimings(self):
         oldtimings = self.sleeping
@@ -214,6 +194,26 @@ class Profile(profile_orig.Profile):
             rcur = ppt, pit + rpt, pet + frame_total, pfn, pframe, pcur
             cur = rcur
         return cur
+
+
+def ContextWrap(f):
+    @functools.wraps(f)
+    def ContextWrapper(self, arg, t):
+        current = greenthread.getcurrent()
+        if current != self.current_tasklet:
+            self.SwitchTasklet(self.current_tasklet, current, t)
+            t = 0.0  # the time was billed to the previous tasklet
+        return f(self, arg, t)
+    return ContextWrapper
+
+
+# Add "return safety" to the dispatchers
+Profile.dispatch = dict(profile_orig.Profile.dispatch, **{
+    'return': Profile.trace_dispatch_return_extend_back,
+    'c_return': Profile.trace_dispatch_c_return_extend_back,
+})
+# Add automatic tasklet detection to the callbacks.
+Profile.dispatch = dict((k, ContextWrap(v)) for k, v in six.viewitems(Profile.dispatch))
 
 
 # run statements shamelessly stolen from profile.py
