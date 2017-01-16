@@ -41,6 +41,8 @@ from eventlet.green import os
 from eventlet.green import time
 from eventlet.green import select
 from eventlet.support import six
+from eventlet.support.afinet import ip_defaults
+from eventlet.support.afinet import use_ipv6_by_default
 
 
 def import_patched(module_name):
@@ -72,6 +74,11 @@ for pkg in dns.rdtypes.ANY.__all__:
 del import_patched
 sys.path.pop(0)
 
+# Done here to prevent import nesting errors
+if use_ipv6_by_default:
+    def_rdtype = dns.rdatatype.AAAA
+else:
+    def_rdtype = dns.rdatatype.A
 
 socket = _socket_nodns
 
@@ -302,7 +309,7 @@ class ResolverProxy(object):
         self._resolver = dns.resolver.Resolver(filename=self._filename)
         self._resolver.cache = dns.resolver.LRUCache()
 
-    def query(self, qname, rdtype=dns.rdatatype.A, rdclass=dns.rdataclass.IN,
+    def query(self, qname, rdtype=def_rdtype, rdclass=dns.rdataclass.IN,
               tcp=False, source=None, raise_on_no_answer=True,
               _hosts_rdtypes=(dns.rdatatype.A, dns.rdatatype.AAAA)):
         """Query the resolver, using /etc/hosts if enabled.
@@ -310,7 +317,7 @@ class ResolverProxy(object):
         result = [None, None, 0]
 
         if qname is None:
-            qname = '0.0.0.0'
+            qname = ip_defaults['null_addr']
         if isinstance(qname, six.string_types):
             qname = dns.name.from_text(qname, None)
 
@@ -376,7 +383,7 @@ class ResolverProxy(object):
 resolver = ResolverProxy(hosts_resolver=HostsResolver())
 
 
-def resolve(name, family=socket.AF_INET, raises=True):
+def resolve(name, family=ip_defaults['af_inet'], raises=True):
     """Resolve a name for a given family using the global resolver proxy
 
     This method is called by the global getaddrinfo() function.

@@ -5,9 +5,10 @@ from eventlet import greenpool
 from eventlet import greenthread
 from eventlet.green import socket
 from eventlet.support import greenlets as greenlet
+from eventlet.support.afinet import ip_defaults
 
 
-def connect(addr, family=socket.AF_INET, bind=None):
+def connect(addr, family=ip_defaults['af_inet'], bind=None):
     """Convenience function for opening client sockets.
 
     :param addr: Address of the server to connect to.  For TCP sockets, this is a (host, port) tuple.
@@ -22,7 +23,7 @@ def connect(addr, family=socket.AF_INET, bind=None):
     return sock
 
 
-def listen(addr, family=socket.AF_INET, backlog=50):
+def listen(addr, family=ip_defaults['af_inet'], backlog=50):
     """Convenience function for opening server sockets.  This
     socket can be used in :func:`~eventlet.serve` or a custom ``accept()`` loop.
 
