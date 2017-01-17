@@ -177,3 +177,10 @@ def test_wrap_is_timeout():
 
     obj = eventlet.wrap_is_timeout(A)()
     tests.check_is_timeout(obj)
+
+
+def test_timeouterror_deprecated():
+    # https://github.com/eventlet/eventlet/issues/378
+    code = '''import eventlet; eventlet.Timeout(1).cancel(); print('pass')'''
+    args = ['-Werror:eventlet.Timeout:DeprecationWarning', '-c', code]
+    tests.run_python(path=None, args=args, expect_pass=True)

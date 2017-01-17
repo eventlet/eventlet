@@ -73,8 +73,10 @@ Autoupgrade: fgrep -rl '{old}' . |xargs -t sed --in-place='' -e 's/{old}/{new}/'
     def wrapper(base):
         klass = None
         if inspect.isclass(base):
-            klass = base
-            base = klass.__init__
+            class klass(base):
+                pass
+            klass.__name__ = base.__name__
+            klass.__module__ = base.__module__
 
         @functools.wraps(base)
         def wrapped(*a, **kw):
