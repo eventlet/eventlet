@@ -77,9 +77,9 @@ def select(read_list, write_list, error_list, timeout=None):
     try:
         for k, v in six.iteritems(ds):
             if v.get('read'):
-                listeners.append(hub.add(hub.READ, k, on_read, on_error, lambda x: None))
+                listeners.append(hub.add(hub.READ, k, on_read, on_error, lambda: None))
             if v.get('write'):
-                listeners.append(hub.add(hub.WRITE, k, on_write, on_error, lambda x: None))
+                listeners.append(hub.add(hub.WRITE, k, on_write, on_error, lambda: None))
         try:
             return hub.switch()
         finally:
