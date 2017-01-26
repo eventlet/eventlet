@@ -22,6 +22,7 @@ import traceback
 import eventlet
 from eventlet import event, greenio, greenthread, patcher, timeout
 from eventlet.support import six
+from eventlet.support.afinet import ip_defaults
 
 __all__ = ['execute', 'Proxy', 'killall', 'set_num_threads']
 
@@ -269,10 +270,10 @@ def setup():
     _rspq = Queue(maxsize=-1)
 
     # connected socket pair
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(('127.0.0.1', 0))
+    sock = socket.socket(ip_defaults['core_af_inet'], socket.SOCK_STREAM)
+    sock.bind((ip_defaults['core_lo_addr'], 0))
     sock.listen(1)
-    csock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    csock = socket.socket(ip_defaults['core_af_inet'], socket.SOCK_STREAM)
     csock.connect(sock.getsockname())
     csock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
     _wsock, _addr = sock.accept()

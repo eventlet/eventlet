@@ -10,6 +10,7 @@ import traceback
 import eventlet
 from eventlet import hubs
 from eventlet.support import greenlets, get_errno
+from eventlet.support.afinet import ip_defaults
 
 try:
     sys.ps1
@@ -133,4 +134,4 @@ def backdoor(conn_info, locals=None):
 
 
 if __name__ == '__main__':
-    backdoor_server(eventlet.listen(('127.0.0.1', 9000)), {})
+    backdoor_server(eventlet.listen((ip_defaults['core_lo_addr'], 9000)), {})
