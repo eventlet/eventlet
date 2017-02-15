@@ -19,10 +19,8 @@ else:
             signal.alarm(math.ceil(seconds))
         arm_alarm = alarm_signal
 
-from eventlet import patcher
 from eventlet.hubs import timer, IOClosed
-from eventlet.support import greenlets as greenlet, clear_sys_exc_info, six
-time = patcher.original('time')
+from eventlet.support import greenlets as greenlet, clear_sys_exc_info, monotonic, six
 
 g_prevent_multiple_readers = True
 
@@ -113,12 +111,15 @@ class BaseHub(object):
     READ = READ
     WRITE = WRITE
 
-    def __init__(self, clock=time.time):
+    def __init__(self, clock=None):
         self.listeners = {READ: {}, WRITE: {}}
         self.secondaries = {READ: {}, WRITE: {}}
         self.closed = []
 
+        if clock is None:
+            clock = monotonic.monotonic
         self.clock = clock
+
         self.greenlet = greenlet.greenlet(self.run)
         self.stopping = False
         self.running = False

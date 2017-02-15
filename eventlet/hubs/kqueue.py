@@ -4,7 +4,6 @@ from eventlet import patcher, support
 from eventlet.support import six
 select = patcher.original('select')
 time = patcher.original('time')
-sleep = time.sleep
 
 from eventlet.hubs.hub import BaseHub, READ, WRITE, noop
 
@@ -20,7 +19,7 @@ FILTERS = {READ: select.KQ_FILTER_READ,
 class Hub(BaseHub):
     MAX_EVENTS = 100
 
-    def __init__(self, clock=time.time):
+    def __init__(self, clock=None):
         super(Hub, self).__init__(clock)
         self._events = {}
         self._init_kqueue()
@@ -96,7 +95,7 @@ class Hub(BaseHub):
 
         if not readers and not writers:
             if seconds:
-                sleep(seconds)
+                time.sleep(seconds)
             return
         result = self._control([], self.MAX_EVENTS, seconds)
         SYSTEM_EXCEPTIONS = self.SYSTEM_EXCEPTIONS
