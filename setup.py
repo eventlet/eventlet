@@ -17,6 +17,7 @@ setuptools.setup(
     install_requires=(
         'enum-compat',
         'greenlet >= 0.3',
+        'monotonic',
     ),
     zip_safe=False,
     long_description=open(

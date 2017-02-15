@@ -1,6 +1,8 @@
 import errno
 import sys
 
+import monotonic
+
 from eventlet import patcher
 select = patcher.original('select')
 time = patcher.original('time')
@@ -15,7 +17,7 @@ WRITE_MASK = select.POLLOUT
 
 
 class Hub(BaseHub):
-    def __init__(self, clock=time.time):
+    def __init__(self, clock=monotonic.monotonic):
         super(Hub, self).__init__(clock)
         self.poll = select.poll()
         # poll.modify is new to 2.6
