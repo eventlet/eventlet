@@ -306,6 +306,12 @@ class ResolverProxy(object):
               tcp=False, source=None, raise_on_no_answer=True,
               _hosts_rdtypes=(dns.rdatatype.A, dns.rdatatype.AAAA)):
         """Query the resolver, using /etc/hosts if enabled.
+
+        Behavior:
+        1. if hosts is enabled and contains answer, return it now
+        2. query nameservers for qname
+        3. if qname did not contain dots, pretend it was top-level domain,
+           query "foobar." and append to previous result
         """
         result = [None, None, 0]
 
@@ -328,6 +334,21 @@ class ResolverProxy(object):
                 result[2] += len(a.rrset)
             return True
 
+        def end():
+            if result[0] is not None:
+                if raise_on_no_answer and result[2] == 0:
+                    raise dns.resolver.NoAnswer
+                return result[0]
+            if result[1] is not None:
+                if raise_on_no_answer or not isinstance(result[1], dns.resolver.NoAnswer):
+                    raise result[1]
+            raise dns.resolver.NXDOMAIN(qnames=(qname,))
+
+        if (self._hosts and (rdclass == dns.rdataclass.IN) and (rdtype in _hosts_rdtypes)):
+            if step(self._hosts.query, qname, rdtype, raise_on_no_answer=False):
+                if (result[0] is not None) or (result[1] is not None):
+                    return end()
+
         # Main query
         step(self._resolver.query, qname, rdtype, rdclass, tcp, source, raise_on_no_answer=False)
 
@@ -341,20 +362,7 @@ class ResolverProxy(object):
             step(self._resolver.query, qname.concatenate(dns.name.root),
                  rdtype, rdclass, tcp, source, raise_on_no_answer=False)
 
-        # Return answers from /etc/hosts despite nameserver errors
-        # https://github.com/eventlet/eventlet/pull/354
-        if ((result[2] == 0) and self._hosts and
-                (rdclass == dns.rdataclass.IN) and (rdtype in _hosts_rdtypes)):
-            step(self._hosts.query, qname, rdtype, raise_on_no_answer=False)
-
-        if result[0] is not None:
-            if raise_on_no_answer and result[2] == 0:
-                raise dns.resolver.NoAnswer
-            return result[0]
-        if result[1] is not None:
-            if raise_on_no_answer or not isinstance(result[1], dns.resolver.NoAnswer):
-                raise result[1]
-        raise dns.resolver.NXDOMAIN(qnames=(qname,))
+        return end()
 
     def getaliases(self, hostname):
         """Return a list of all the aliases of a given hostname"""
@@ -376,8 +384,8 @@ class ResolverProxy(object):
 resolver = ResolverProxy(hosts_resolver=HostsResolver())
 
 
-def resolve(name, family=socket.AF_INET, raises=True):
-    """Resolve a name for a given family using the global resolver proxy
+def resolve(name, family=socket.AF_INET, raises=True, _proxy=None):
+    """Resolve a name for a given family using the global resolver proxy.
 
     This method is called by the global getaddrinfo() function.
 
@@ -391,9 +399,12 @@ def resolve(name, family=socket.AF_INET, raises=True):
     else:
         raise socket.gaierror(socket.EAI_FAMILY,
                               'Address family not supported')
+
+    if _proxy is None:
+        _proxy = resolver
     try:
         try:
-            return resolver.query(name, rdtype, raise_on_no_answer=raises)
+            return _proxy.query(name, rdtype, raise_on_no_answer=raises)
         except dns.resolver.NXDOMAIN:
             if not raises:
                 return HostsAnswer(dns.name.Name(name),
