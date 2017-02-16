@@ -2,6 +2,8 @@ from __future__ import with_statement
 import sys
 import time
 
+import monotonic
+
 import tests
 from tests import skip_with_pyevent, skip_if_no_itimer, skip_unless
 from tests.patcher_test import ProcessBase
@@ -81,6 +83,10 @@ class TestTimerCleanup(tests.LimitedTestCase):
             self.assert_less_than_equal(hub.timers_canceled,
                                         hub.get_timers_count())
         eventlet.sleep()
+
+    def test_default_hub_uses_monotonic_clock(self):
+        hub = hubs.get_default_hub().Hub()
+        self.assertIs(hub.clock, monotonic.monotonic)
 
 
 class TestScheduleCall(tests.LimitedTestCase):

@@ -1,7 +1,6 @@
 import errno
 from eventlet.support import get_errno
 from eventlet import patcher
-time = patcher.original('time')
 select = patcher.original("select")
 if hasattr(select, 'epoll'):
     epoll = select.epoll
@@ -25,6 +24,8 @@ else:
                     " NOT http://pypi.python.org/pypi/pyepoll/. "
                     " easy_install pyepoll installs the wrong version.")
 
+import monotonic
+
 from eventlet.hubs.hub import BaseHub
 from eventlet.hubs import poll
 from eventlet.hubs.poll import READ, WRITE
@@ -34,7 +35,7 @@ from eventlet.hubs.poll import READ, WRITE
 
 
 class Hub(poll.Hub):
-    def __init__(self, clock=time.time):
+    def __init__(self, clock=monotonic.monotonic):
         BaseHub.__init__(self, clock)
         self.poll = epoll()
         try:
