@@ -1,17 +1,27 @@
-'''Test cases for db_pool
-'''
 from __future__ import print_function
-
-import sys
 import os
+import sys
 import traceback
-from unittest import TestCase, main
 
-from tests import mock, skip_unless, skip_with_pyevent, get_database_auth
-from eventlet import event
 from eventlet import db_pool
 from eventlet.support import six
 import eventlet
+import eventlet.tpool
+import tests
+import tests.mock
+
+psycopg2 = None
+try:
+    import psycopg2
+    import psycopg2.extensions
+except ImportError:
+    pass
+
+MySQLdb = None
+try:
+    import MySQLdb
+except ImportError:
+    pass
 
 
 class DBTester(object):
@@ -141,7 +151,7 @@ class DBConnectionPool(DBTester):
         curs = conn.cursor()
         results = []
         SHORT_QUERY = "select * from test_table"
-        evt = event.Event()
+        evt = eventlet.Event()
 
         def a_query():
             self.assert_cursor_works(curs)
@@ -282,7 +292,7 @@ class DBConnectionPool(DBTester):
         self.connection = self.pool.get()
         self.assertEqual(self.pool.free(), 0)
         self.assertEqual(self.pool.waiting(), 0)
-        e = event.Event()
+        e = eventlet.Event()
 
         def retrieve(pool, ev):
             c = pool.get()
@@ -337,14 +347,13 @@ class TpoolConnectionPool(DBConnectionPool):
             connect_timeout=connect_timeout,
             **self._auth)
 
-    @skip_with_pyevent
+    @tests.skip_with_pyevent
     def setUp(self):
         super(TpoolConnectionPool, self).setUp()
 
     def tearDown(self):
         super(TpoolConnectionPool, self).tearDown()
-        from eventlet import tpool
-        tpool.killall()
+        eventlet.tpool.killall()
 
 
 class RawConnectionPool(DBConnectionPool):
@@ -373,7 +382,7 @@ def test_raw_pool_issue_125():
 
 
 def test_raw_pool_custom_cleanup_ok():
-    cleanup_mock = mock.Mock()
+    cleanup_mock = tests.mock.Mock()
     pool = db_pool.RawConnectionPool(DummyDBModule(), cleanup=cleanup_mock)
     conn = pool.get()
     pool.put(conn)
@@ -385,7 +394,7 @@ def test_raw_pool_custom_cleanup_ok():
 
 
 def test_raw_pool_custom_cleanup_arg_error():
-    cleanup_mock = mock.Mock(side_effect=NotImplementedError)
+    cleanup_mock = tests.mock.Mock(side_effect=NotImplementedError)
     pool = db_pool.RawConnectionPool(DummyDBModule())
     conn = pool.get()
     pool.put(conn, cleanup=cleanup_mock)
@@ -427,25 +436,21 @@ def test_raw_pool_clear_update_current_size():
     assert len(pool.free_items) == 0
 
 
-get_auth = get_database_auth
-
-
 def mysql_requirement(_f):
     verbose = os.environ.get('eventlet_test_mysql_verbose')
-    try:
-        import MySQLdb
-        try:
-            auth = get_auth()['MySQLdb'].copy()
-            MySQLdb.connect(**auth)
-            return True
-        except MySQLdb.OperationalError:
-            if verbose:
-                print(">> Skipping mysql tests, error when connecting:", file=sys.stderr)
-                traceback.print_exc()
-            return False
-    except ImportError:
+    if MySQLdb is None:
         if verbose:
             print(">> Skipping mysql tests, MySQLdb not importable", file=sys.stderr)
+        return False
+
+    try:
+        auth = tests.get_database_auth()['MySQLdb'].copy()
+        MySQLdb.connect(**auth)
+        return True
+    except MySQLdb.OperationalError:
+        if verbose:
+            print(">> Skipping mysql tests, error when connecting:", file=sys.stderr)
+            traceback.print_exc()
         return False
 
 
@@ -463,11 +468,10 @@ class MysqlConnectionPool(object):
         created TIMESTAMP
         ) ENGINE=InnoDB;"""
 
-    @skip_unless(mysql_requirement)
+    @tests.skip_unless(mysql_requirement)
     def setUp(self):
-        import MySQLdb
         self._dbmodule = MySQLdb
-        self._auth = get_auth()['MySQLdb']
+        self._auth = tests.get_database_auth()['MySQLdb']
         super(MysqlConnectionPool, self).setUp()
 
     def tearDown(self):
@@ -493,26 +497,25 @@ class MysqlConnectionPool(object):
         del db
 
 
-class Test01MysqlTpool(MysqlConnectionPool, TpoolConnectionPool, TestCase):
+class Test01MysqlTpool(MysqlConnectionPool, TpoolConnectionPool, tests.LimitedTestCase):
     __test__ = True
 
 
-class Test02MysqlRaw(MysqlConnectionPool, RawConnectionPool, TestCase):
+class Test02MysqlRaw(MysqlConnectionPool, RawConnectionPool, tests.LimitedTestCase):
     __test__ = True
 
 
 def postgres_requirement(_f):
-    try:
-        import psycopg2
-        try:
-            auth = get_auth()['psycopg2'].copy()
-            psycopg2.connect(**auth)
-            return True
-        except psycopg2.OperationalError:
-            print("Skipping postgres tests, error when connecting")
-            return False
-    except ImportError:
+    if psycopg2 is None:
         print("Skipping postgres tests, psycopg2 not importable")
+        return False
+
+    try:
+        auth = tests.get_database_auth()['psycopg2'].copy()
+        psycopg2.connect(**auth)
+        return True
+    except psycopg2.OperationalError:
+        print("Skipping postgres tests, error when connecting")
         return False
 
 
@@ -529,11 +532,10 @@ class Psycopg2ConnectionPool(object):
         created TIMESTAMP
         );"""
 
-    @skip_unless(postgres_requirement)
+    @tests.skip_unless(postgres_requirement)
     def setUp(self):
-        import psycopg2
         self._dbmodule = psycopg2
-        self._auth = get_auth()['psycopg2']
+        self._auth = tests.get_database_auth()['psycopg2']
         super(Psycopg2ConnectionPool, self).setUp()
 
     def tearDown(self):
@@ -566,7 +568,7 @@ class Psycopg2ConnectionPool(object):
         conn.close()
 
 
-class TestPsycopg2Base(TestCase):
+class TestPsycopg2Base(tests.LimitedTestCase):
     __test__ = False
 
     def test_cursor_works_as_context_manager(self):
@@ -575,6 +577,9 @@ class TestPsycopg2Base(TestCase):
             row = c.fetchone()
             assert row == (1,)
 
+    def test_set_isolation_level(self):
+        self.connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+
 
 class Test01Psycopg2Tpool(Psycopg2ConnectionPool, TpoolConnectionPool, TestPsycopg2Base):
     __test__ = True
@@ -582,7 +587,3 @@ class Test01Psycopg2Tpool(Psycopg2ConnectionPool, TpoolConnectionPool, TestPsyco
 
 class Test02Psycopg2Raw(Psycopg2ConnectionPool, RawConnectionPool, TestPsycopg2Base):
     __test__ = True
-
-
-if __name__ == '__main__':
-    main()
