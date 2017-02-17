@@ -603,13 +603,13 @@ def getnameinfo(sockaddr, flags):
 
 
 def _net_read(sock, count, expiration):
-    """coro friendly replacement for dns.query._net_write
+    """coro friendly replacement for dns.query._net_read
     Read the specified number of bytes from sock.  Keep trying until we
     either get the desired amount, or we hit EOF.
     A Timeout exception will be raised if the operation is not completed
     by the expiration time.
     """
-    s = ''
+    s = b''
     while count > 0:
         try:
             n = sock.recv(count)
@@ -617,7 +617,7 @@ def _net_read(sock, count, expiration):
             # Q: Do we also need to catch coro.CoroutineSocketWake and pass?
             if expiration - time.time() <= 0.0:
                 raise dns.exception.Timeout
-        if n == '':
+        if n == b'':
             raise EOFError
         count = count - len(n)
         s = s + n
