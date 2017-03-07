@@ -490,5 +490,5 @@ def shutdown_safe(sock):
     except socket.error as e:
         # we don't care if the socket is already closed;
         # this will often be the case in an http server context
-        if get_errno(e) not in (errno.ENOTCONN, errno.EBADF):
+        if get_errno(e) not in (errno.ENOTCONN, errno.EBADF, errno.ENOTSOCK):
             raise
