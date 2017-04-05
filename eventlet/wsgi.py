@@ -248,10 +248,27 @@ def get_logger(log, debug):
        and callable(getattr(log, 'debug', None)):
         return log
     else:
-        return LoggerFileWrapper(log, debug)
+        return LoggerFileWrapper(log or sys.stderr, debug)
 
 
-class LoggerFileWrapper(object):
+class LoggerNull(object):
+    def __init__(self):
+        pass
+
+    def error(self, msg, *args, **kwargs):
+        pass
+
+    def info(self, msg, *args, **kwargs):
+        pass
+
+    def debug(self, msg, *args, **kwargs):
+        pass
+
+    def write(self, msg, *args):
+        pass
+
+
+class LoggerFileWrapper(LoggerNull):
     def __init__(self, log, debug):
         self.log = log
         self._debug = debug
@@ -678,10 +695,9 @@ class Server(BaseHTTPServer.HTTPServer):
         self.outstanding_requests = 0
         self.socket = socket
         self.address = address
-        if log:
+        self.log = LoggerNull()
+        if log_output:
             self.log = get_logger(log, debug)
-        else:
-            self.log = get_logger(sys.stderr, debug)
         self.app = app
         self.keepalive = keepalive
         self.environ = environ

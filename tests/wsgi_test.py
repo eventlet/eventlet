@@ -217,7 +217,6 @@ def read_http(sock):
 class _TestBase(tests.LimitedTestCase):
     def setUp(self):
         super(_TestBase, self).setUp()
-        self.logfile = six.StringIO()
         self.site = Site()
         self.killer = None
         self.set_site()
@@ -234,6 +233,7 @@ class _TestBase(tests.LimitedTestCase):
 
         Sets `self.server_addr` to (host, port) tuple suitable for `socket.connect`.
         """
+        self.logfile = six.StringIO()
         new_kwargs = dict(max_size=128,
                           log=self.logfile,
                           site=self.site)
@@ -1571,6 +1571,16 @@ class TestHttpd(_TestBase):
         assert result.status == 'HTTP/1.1 200 OK', 'Received status {0!r}'.format(result.status)
         assert result.body == (b'HTTP_HOST: localhost\nHTTP_HTTP_X_ANY_K: two\n'
                                b'HTTP_PATH_INFO: foo\nHTTP_X_ANY_K: one\n')
+
+    def test_log_disable(self):
+        self.spawn_server(log_output=False)
+        sock = eventlet.connect(self.server_addr)
+        sock.sendall(b'GET / HTTP/1.1\r\nHost: localhost\r\npath-info: foo\r\n'
+                     b'x-ANY_k: one\r\nhttp-x-ANY_k: two\r\n\r\n')
+        read_http(sock)
+        sock.close()
+        log_content = self.logfile.getvalue()
+        assert log_content == ''
 
 
 def read_headers(sock):
