@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Using SSL With Eventlet &#8212; Eventlet 0.20.1 documentation</title>
+    <title>Using SSL With Eventlet &#8212; Eventlet 0.21.0 documentation</title>
     
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.20.1',
+        VERSION:     '0.21.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="examples.html" title="Examples"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.20.1 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.21.0 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -78,13 +78,22 @@
 <div class="section" id="pyopenssl">
 <h2>PyOpenSSL<a class="headerlink" href="#pyopenssl" title="Permalink to this headline">¶</a></h2>
 <p><code class="xref py py-mod docutils literal"><span class="pre">eventlet.green.OpenSSL</span></code> has exactly the same interface as <a class="reference external" href="https://launchpad.net/pyopenssl">pyOpenSSL</a> <a class="reference external" href="http://pyopenssl.sourceforge.net/pyOpenSSL.html/">(docs)</a>, and works in all versions of Python.  This module is much more powerful than <code class="xref py py-func docutils literal"><span class="pre">socket.ssl()</span></code>, and may have some advantages over <a class="reference external" href="https://docs.python.org/2/library/ssl.html#module-ssl" title="(in Python v2.7)"><code class="xref py py-mod docutils literal"><span class="pre">ssl</span></code></a>, depending on your needs.</p>
-<p>Here&#8217;s an example of a server:</p>
+<p>For testing purpose first create self-signed certificate using following commands</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ openssl genrsa 1024 &gt; server.key
+$ openssl req -new -x509 -nodes -sha1 -days 365 -key server.key &gt; server.cert
+</pre></div>
+</div>
+<p>Keep these Private key and Self-signed certificate in same directory as <cite>server.py</cite> and <cite>client.py</cite> for simplicity sake.</p>
+<p>Here&#8217;s an example of a server (<cite>server.py</cite>)</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">eventlet.green</span> <span class="k">import</span> <span class="n">socket</span>
 <span class="kn">from</span> <span class="nn">eventlet.green.OpenSSL</span> <span class="k">import</span> <span class="n">SSL</span>
 
 <span class="c1"># insecure context, only for example purposes</span>
 <span class="n">context</span> <span class="o">=</span> <span class="n">SSL</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="n">SSL</span><span class="o">.</span><span class="n">SSLv23_METHOD</span><span class="p">)</span>
-<span class="n">context</span><span class="o">.</span><span class="n">set_verify</span><span class="p">(</span><span class="n">SSL</span><span class="o">.</span><span class="n">VERIFY_NONE</span><span class="p">,</span> <span class="k">lambda</span> <span class="o">*</span><span class="n">x</span><span class="p">:</span> <span class="kc">True</span><span class="p">))</span>
+<span class="c1"># Pass server&#39;s private key created</span>
+<span class="n">context</span><span class="o">.</span><span class="n">use_privatekey_file</span><span class="p">(</span><span class="s1">&#39;server.key&#39;</span><span class="p">)</span>
+<span class="c1"># Pass self-signed certificate created</span>
+<span class="n">context</span><span class="o">.</span><span class="n">use_certificate_file</span><span class="p">(</span><span class="s1">&#39;server.cert&#39;</span><span class="p">)</span>
 
 <span class="c1"># create underlying green socket and wrap it in ssl</span>
 <span class="n">sock</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span>
@@ -92,7 +101,7 @@
 
 <span class="c1"># configure as server</span>
 <span class="n">connection</span><span class="o">.</span><span class="n">set_accept_state</span><span class="p">()</span>
-<span class="n">connection</span><span class="o">.</span><span class="n">bind</span><span class="p">((</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">80443</span><span class="p">))</span>
+<span class="n">connection</span><span class="o">.</span><span class="n">bind</span><span class="p">((</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">8443</span><span class="p">))</span>
 <span class="n">connection</span><span class="o">.</span><span class="n">listen</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span>
 
 <span class="c1"># accept one client connection then close up shop</span>
@@ -103,6 +112,27 @@
 <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </pre></div>
 </div>
+<p>Here&#8217;s an example of a client (<cite>client.py</cite>)</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">socket</span>
+<span class="c1"># Create socket</span>
+<span class="n">s</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span>
+<span class="c1"># Connect to server</span>
+<span class="n">s</span><span class="o">.</span><span class="n">connect</span><span class="p">((</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">8443</span><span class="p">))</span>
+<span class="n">sslSocket</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">ssl</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+<span class="nb">print</span> <span class="nb">repr</span><span class="p">(</span><span class="n">sslSocket</span><span class="o">.</span><span class="n">server</span><span class="p">())</span>
+<span class="nb">print</span> <span class="nb">repr</span><span class="p">(</span><span class="n">sslSocket</span><span class="o">.</span><span class="n">issuer</span><span class="p">())</span>
+<span class="n">sslSocket</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;Hello secure socket</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="c1"># Close client</span>
+<span class="n">s</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Running example:</p>
+<p>In first terminal</p>
+<blockquote>
+<div>$ python server.py</div></blockquote>
+<p>In another terminal</p>
+<blockquote>
+<div>$ python client.py</div></blockquote>
 </div>
 </div>
 
@@ -164,7 +194,7 @@
         <li class="right" >
           <a href="examples.html" title="Examples"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.20.1 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.21.0 documentation</a> &#187;</li> 
       </ul>
     </div>
 

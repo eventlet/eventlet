@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>db_pool – DBAPI 2 database connection pooling &#8212; Eventlet 0.20.1 documentation</title>
+    <title>db_pool – DBAPI 2 database connection pooling &#8212; Eventlet 0.21.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.20.1',
+        VERSION:     '0.21.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="debug.html" title="debug – Debugging tools for Eventlet"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.20.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.21.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &#187;</li> 
       </ul>
     </div>  
@@ -167,7 +167,7 @@ connection pools on a per-host basis.</p>
 <em class="property">class </em><code class="descclassname">eventlet.db_pool.</code><code class="descname">GenericConnectionWrapper</code><span class="sig-paren">(</span><em>baseconn</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.affected_rows">
-<code class="descname">affected_rows</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.affected_rows" title="Permalink to this definition">¶</a></dt>
+<code class="descname">affected_rows</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.affected_rows" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -177,7 +177,7 @@ connection pools on a per-host basis.</p>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.begin">
-<code class="descname">begin</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.begin" title="Permalink to this definition">¶</a></dt>
+<code class="descname">begin</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.begin" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -266,6 +266,11 @@ connection pools on a per-host basis.</p>
 <dd></dd></dl>
 
 <dl class="method">
+<dt id="eventlet.db_pool.GenericConnectionWrapper.set_isolation_level">
+<code class="descname">set_isolation_level</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.set_isolation_level" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.set_server_option">
 <code class="descname">set_server_option</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.set_server_option" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -277,7 +282,7 @@ connection pools on a per-host basis.</p>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.show_warnings">
-<code class="descname">show_warnings</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.show_warnings" title="Permalink to this definition">¶</a></dt>
+<code class="descname">show_warnings</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.show_warnings" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -317,7 +322,7 @@ connection pools on a per-host basis.</p>
 
 <dl class="method">
 <dt id="eventlet.db_pool.GenericConnectionWrapper.warning_count">
-<code class="descname">warning_count</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.warning_count" title="Permalink to this definition">¶</a></dt>
+<code class="descname">warning_count</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.warning_count" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -437,7 +442,7 @@ connections.</p>
         <li class="right" >
           <a href="debug.html" title="debug – Debugging tools for Eventlet"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.20.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.21.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &#187;</li> 
       </ul>
     </div>

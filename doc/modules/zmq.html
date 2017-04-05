@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>eventlet.green.zmq – ØMQ support &#8212; Eventlet 0.20.1 documentation</title>
+    <title>eventlet.green.zmq – ØMQ support &#8212; Eventlet 0.21.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.20.1',
+        VERSION:     '0.21.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="wsgi.html" title="wsgi – WSGI server"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.20.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.21.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &#187;</li> 
       </ul>
     </div>  
@@ -394,7 +394,7 @@ otherwise it will be bytes.</dd>
 
 <dl class="method">
 <dt id="eventlet.green.zmq.Socket.recv_json">
-<code class="descname">recv_json</code><span class="sig-paren">(</span><em>flags=0</em>, <em>copy=True</em>, <em>track=False</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.green.zmq.Socket.recv_json" title="Permalink to this definition">¶</a></dt>
+<code class="descname">recv_json</code><span class="sig-paren">(</span><em>flags=0</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.green.zmq.Socket.recv_json" title="Permalink to this definition">¶</a></dt>
 <dd><p>receive a Python object as a message using json to serialize</p>
 <dl class="docutils">
 <dt>flags</dt>
@@ -433,7 +433,7 @@ depending on <cite>copy</cite>.</dd>
 
 <dl class="method">
 <dt id="eventlet.green.zmq.Socket.recv_pyobj">
-<code class="descname">recv_pyobj</code><span class="sig-paren">(</span><em>flags=0</em>, <em>copy=True</em>, <em>track=False</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.green.zmq.Socket.recv_pyobj" title="Permalink to this definition">¶</a></dt>
+<code class="descname">recv_pyobj</code><span class="sig-paren">(</span><em>flags=0</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.green.zmq.Socket.recv_pyobj" title="Permalink to this definition">¶</a></dt>
 <dd><p>receive a Python object as a message using pickle to serialize</p>
 <dl class="docutils">
 <dt>flags</dt>
@@ -447,7 +447,7 @@ depending on <cite>copy</cite>.</dd>
 
 <dl class="method">
 <dt id="eventlet.green.zmq.Socket.recv_string">
-<code class="descname">recv_string</code><span class="sig-paren">(</span><em>flags=0</em>, <em>copy=True</em>, <em>track=False</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.green.zmq.Socket.recv_string" title="Permalink to this definition">¶</a></dt>
+<code class="descname">recv_string</code><span class="sig-paren">(</span><em>flags=0</em>, <em>encoding='utf-8'</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.green.zmq.Socket.recv_string" title="Permalink to this definition">¶</a></dt>
 <dd><p>receive a unicode string, as sent by send_string</p>
 <dl class="docutils">
 <dt>flags</dt>
@@ -512,7 +512,7 @@ be True until the send is completed.</dd>
 
 <dl class="method">
 <dt id="eventlet.green.zmq.Socket.send_json">
-<code class="descname">send_json</code><span class="sig-paren">(</span><em>msg_parts</em>, <em>flags=0</em>, <em>copy=True</em>, <em>track=False</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.green.zmq.Socket.send_json" title="Permalink to this definition">¶</a></dt>
+<code class="descname">send_json</code><span class="sig-paren">(</span><em>obj</em>, <em>flags=0</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.green.zmq.Socket.send_json" title="Permalink to this definition">¶</a></dt>
 <dd><p>send a Python object as a message using json to serialize</p>
 <dl class="docutils">
 <dt>obj</dt>
@@ -547,7 +547,7 @@ be True until the last send is completed.</div></blockquote>
 
 <dl class="method">
 <dt id="eventlet.green.zmq.Socket.send_pyobj">
-<code class="descname">send_pyobj</code><span class="sig-paren">(</span><em>msg_parts</em>, <em>flags=0</em>, <em>copy=True</em>, <em>track=False</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.green.zmq.Socket.send_pyobj" title="Permalink to this definition">¶</a></dt>
+<code class="descname">send_pyobj</code><span class="sig-paren">(</span><em>obj</em>, <em>flags=0</em>, <em>protocol=2</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.green.zmq.Socket.send_pyobj" title="Permalink to this definition">¶</a></dt>
 <dd><p>send a Python object as a message using pickle to serialize</p>
 <dl class="docutils">
 <dt>obj</dt>
@@ -563,7 +563,7 @@ support.</dd>
 
 <dl class="method">
 <dt id="eventlet.green.zmq.Socket.send_string">
-<code class="descname">send_string</code><span class="sig-paren">(</span><em>msg_parts</em>, <em>flags=0</em>, <em>copy=True</em>, <em>track=False</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.green.zmq.Socket.send_string" title="Permalink to this definition">¶</a></dt>
+<code class="descname">send_string</code><span class="sig-paren">(</span><em>u</em>, <em>flags=0</em>, <em>copy=True</em>, <em>encoding='utf-8'</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.green.zmq.Socket.send_string" title="Permalink to this definition">¶</a></dt>
 <dd><p>send a Python unicode string as a message with an encoding</p>
 <p>0MQ communicates with raw bytes, so you must encode/decode
 text (unicode on py2, str on py3) around 0MQ.</p>
@@ -1261,7 +1261,7 @@ If <cite>flags=0</cite>, socket will be unregistered.</dd>
         <li class="right" >
           <a href="wsgi.html" title="wsgi – WSGI server"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.20.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.21.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &#187;</li> 
       </ul>
     </div>

@@ -1,3 +1,24 @@
+0.21.0
+======
+* New timeout error API: .is_timeout=True on exception object
+  It's now easy to test if network error is transient and retry is appropriate.
+  Please spread the word and invite other libraries to support this interface.
+* hubs: use monotonic clock by default (bundled package); Thanks to Roman Podoliaka and Victor Stinner
+* dns: EVENTLET_NO_GREENDNS option is back, green is still default
+* dns: hosts file was consulted after nameservers
+* ssl: RecursionError on Python3.6+; Thanks to justdoit0823@github and Gevent developers
+* wsgi: log_output=False was not disabling startup and accepted messages
+* greenio: Fixed OSError: [WinError 10038] Socket operation on nonsocket
+* dns: EAI_NODATA was removed from RFC3493 and FreeBSD
+* green.select: fix mark_as_closed() wrong number of args
+* green.zmq: socket.{recv,send}_* signatures did not match recent upstream pyzmq
+* New feature: Add zipkin tracing to eventlet
+* db_pool: proxy Connection.set_isolation_level()
+* green.zmq: support RCVTIMEO (receive timeout)
+* green.profile: Python3 compatibility; Thanks to Artur Stawiarski
+* support: upgrade bundled six to 1.10 (dbfbfc818e3d)
+* python3.6: http.client.request support chunked_encoding
+
 0.20.1
 ======
 * dns: try unqualified queries as top level
