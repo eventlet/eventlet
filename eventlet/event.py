@@ -92,14 +92,12 @@ class Event(object):
             return self.wait()
         return notready
 
-    def wait(self):
+    def wait(self, timeout=None):
         """Wait until another coroutine calls :meth:`send`.
-        Returns the value the other coroutine passed to
-        :meth:`send`.
+        Returns the value the other coroutine passed to :meth:`send`.
 
-        >>> from eventlet import event
         >>> import eventlet
-        >>> evt = event.Event()
+        >>> evt = eventlet.Event()
         >>> def wait_on():
         ...    retval = evt.wait()
         ...    print("waited for {0}".format(retval))
@@ -108,17 +106,26 @@ class Event(object):
         >>> eventlet.sleep(0)
         waited for result
 
-        Returns immediately if the event has already
-        occurred.
+        Returns immediately if the event has already occurred.
 
         >>> evt.wait()
         'result'
+
+        When the timeout argument is present and not None, it should be a floating point number
+        specifying a timeout for the operation in seconds (or fractions thereof).
         """
         current = greenlet.getcurrent()
         if self._result is NOT_USED:
+            hub = hubs.get_hub()
             self._waiters.add(current)
+            timer = None
+            if timeout is not None:
+                timer = hub.schedule_call_local(timeout, self._do_send, None, None, current)
             try:
-                return hubs.get_hub().switch()
+                result = hub.switch()
+                if timer is not None:
+                    timer.cancel()
+                return result
             finally:
                 self._waiters.discard(current)
         if self._exc is not None:

@@ -1,11 +1,11 @@
 import eventlet
-from eventlet import event
+import eventlet.hubs
 from tests import LimitedTestCase
 
 
 class TestEvent(LimitedTestCase):
     def test_waiting_for_event(self):
-        evt = event.Event()
+        evt = eventlet.Event()
         value = 'some stuff'
 
         def send_to_event():
@@ -20,7 +20,7 @@ class TestEvent(LimitedTestCase):
         self._test_multiple_waiters(True)
 
     def _test_multiple_waiters(self, exception):
-        evt = event.Event()
+        evt = eventlet.Event()
         results = []
 
         def wait_on_event(i_am_done):
@@ -33,7 +33,7 @@ class TestEvent(LimitedTestCase):
         waiters = []
         count = 5
         for i in range(count):
-            waiters.append(event.Event())
+            waiters.append(eventlet.Event())
             eventlet.spawn_n(wait_on_event, waiters[-1])
         eventlet.sleep()  # allow spawns to start executing
         evt.send()
@@ -44,7 +44,7 @@ class TestEvent(LimitedTestCase):
         self.assertEqual(len(results), count)
 
     def test_reset(self):
-        evt = event.Event()
+        evt = eventlet.Event()
 
         # calling reset before send should throw
         self.assertRaises(AssertionError, evt.reset)
@@ -71,7 +71,7 @@ class TestEvent(LimitedTestCase):
         self.assertEqual(evt.wait(), value2)
 
     def test_double_exception(self):
-        evt = event.Event()
+        evt = eventlet.Event()
         # send an exception through the event
         evt.send(exc=RuntimeError('from test_double_exception'))
         self.assertRaises(RuntimeError, evt.wait)
@@ -79,3 +79,27 @@ class TestEvent(LimitedTestCase):
         # shouldn't see the RuntimeError again
         eventlet.Timeout(0.001)
         self.assertRaises(eventlet.Timeout, evt.wait)
+
+
+def test_wait_timeout_ok():
+    evt = eventlet.Event()
+    delay = 0.1
+    eventlet.spawn_after(delay, evt.send, True)
+    t1 = eventlet.hubs.get_hub().clock()
+    with eventlet.Timeout(delay * 3, False):
+        result = evt.wait(timeout=delay * 2)
+        td = eventlet.hubs.get_hub().clock() - t1
+        assert result
+        assert td >= delay
+
+
+def test_wait_timeout_exceed():
+    evt = eventlet.Event()
+    delay = 0.1
+    eventlet.spawn_after(delay * 2, evt.send, True)
+    t1 = eventlet.hubs.get_hub().clock()
+    with eventlet.Timeout(delay, False):
+        result = evt.wait(timeout=delay)
+        td = eventlet.hubs.get_hub().clock() - t1
+        assert not result
+        assert td >= delay
