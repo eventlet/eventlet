@@ -150,6 +150,8 @@ except AttributeError:
                 CLOCK_MONOTONIC = 4
             elif 'bsd' in sys.platform:
                 CLOCK_MONOTONIC = 3
+            elif sys.platform.startswith('aix'):
+                CLOCK_MONOTONIC = ctypes.c_longlong(10)
 
             def monotonic():
                 """Monotonic clock, cannot go backward."""
