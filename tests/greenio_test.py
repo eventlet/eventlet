@@ -9,7 +9,6 @@ import shutil
 import socket as _orig_sock
 import sys
 import tempfile
-import mock
 
 from nose.tools import eq_
 
@@ -19,6 +18,7 @@ from eventlet.hubs import get_hub
 from eventlet.green import select, socket, time, ssl
 from eventlet.support import capture_stderr, get_errno, six
 import tests
+import tests.mock as mock
 
 
 def bufsized(sock, size=1):
@@ -333,7 +333,6 @@ class TestGreenSocket(tests.LimitedTestCase):
                 client.connect(('127.0.0.1', listener.getsockname()[1]))
                 client.close()
 
-
             server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             server.bind(('127.0.0.1', 0))
@@ -344,11 +343,14 @@ class TestGreenSocket(tests.LimitedTestCase):
             connfileno = conn.fileno()
             conn.close()
             assert patched_mark_as_reopened.called
-            assert patched_mark_as_reopened.call_count == 3, "3 fds were opened, but the hub was only " \
-                                                             "notified %d times" % patched_mark_as_reopened.call_count
+            assert patched_mark_as_reopened.call_count == 3, "3 fds were opened, but the hub was " \
+                                                             "only notified {call_count} times" \
+                .format(call_count=patched_mark_as_reopened.call_count)
             args, kwargs = patched_mark_as_reopened.call_args
-            assert args == (connfileno,), "Expected mark_as_reopened to be called with %d, " \
-                                          "but it was called with %d" % (connfileno, args[0])
+            assert args == (connfileno,), "Expected mark_as_reopened to be called " \
+                                          "with {expected_fileno}, but it was called " \
+                                          "with {fileno}".format(expected_fileno=connfileno,
+                                                                 fileno=args[0])
         server.close()
 
     def test_nonblocking_accept_mark_as_reopened(self):
@@ -375,11 +377,14 @@ class TestGreenSocket(tests.LimitedTestCase):
             connfileno = conn.fileno()
             conn.close()
             assert patched_mark_as_reopened.called
-            assert patched_mark_as_reopened.call_count == 3, "3 fds were opened, but the hub was only " \
-                                                             "notified %d times" % patched_mark_as_reopened.call_count
+            assert patched_mark_as_reopened.call_count == 3, "3 fds were opened, but the hub was " \
+                                                             "only notified {call_count} times" \
+                .format(call_count=patched_mark_as_reopened.call_count)
             args, kwargs = patched_mark_as_reopened.call_args
-            assert args == (connfileno,), "Expected mark_as_reopened to be called with %d, " \
-                                          "but it was called with %d" % (connfileno, args[0])
+            assert args == (connfileno,), "Expected mark_as_reopened to be called " \
+                                          "with {expected_fileno}, but it was called " \
+                                          "with {fileno}".format(expected_fileno=connfileno,
+                                                                 fileno=args[0])
         server.close()
 
     def test_full_duplex(self):
