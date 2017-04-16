@@ -45,6 +45,7 @@ import sys
 import heapq
 import collections
 import traceback
+import Queue as Stdlib_Queue
 
 from eventlet.event import Event
 from eventlet.greenthread import getcurrent
