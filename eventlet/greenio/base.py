@@ -212,13 +212,16 @@ class GreenSocket(object):
 
     def accept(self):
         if self.act_non_blocking:
-            return self.fd.accept()
+            res = self.fd.accept()
+            notify_opened(res[0].fileno())
+            return res
         fd = self.fd
         _timeout_exc = socket_timeout('timed out')
         while True:
             res = socket_accept(fd)
             if res is not None:
                 client, addr = res
+                notify_opened(client.fileno())
                 set_nonblocking(client)
                 return type(self)(client), addr
             self._trampoline(fd, read=True, timeout=self.gettimeout(), timeout_exc=_timeout_exc)
