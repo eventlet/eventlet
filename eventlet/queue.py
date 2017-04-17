@@ -53,6 +53,8 @@ from eventlet.support import six
 from eventlet.support.six.moves import queue as Stdlib_Queue
 from eventlet.timeout import Timeout
 
+Stdlib_Queue = six.moves.queue
+
 
 __all__ = ['Queue', 'PriorityQueue', 'LifoQueue', 'LightQueue', 'Full', 'Empty']
 
