@@ -116,7 +116,7 @@ class Waiter(object):
         if self.greenlet is not None:
             try:
                 self.greenlet.switch(value)
-            except:
+            except Exception:
                 traceback.print_exc()
 
     def throw(self, *throw_args):
@@ -128,7 +128,7 @@ class Waiter(object):
         if self.greenlet is not None:
             try:
                 self.greenlet.throw(*throw_args)
-            except:
+            except Exception:
                 traceback.print_exc()
 
     # XXX should be renamed to get() ? and the whole class is called Receiver?
