@@ -383,6 +383,8 @@ class GreenSocket(object):
                 eno = get_errno(e)
                 if eno == errno.ENOTCONN or eno not in SOCKET_BLOCKING:
                     raise
+                elif get_errno(e) is errno.ENOTCONN:
+                    raise
 
             try:
                 self._trampoline(self.fd, write=True, timeout=self.gettimeout(),
