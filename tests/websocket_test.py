@@ -1,5 +1,6 @@
 import errno
 import socket
+import sys
 
 import eventlet
 from eventlet import event
@@ -502,6 +503,30 @@ class TestWebSocket(tests.wsgi_test._TestBase):
         sock.recv(1024)
         done_with_request.wait()
         assert error_detected[0]
+
+    def test_close_idle(self):
+        pool = eventlet.GreenPool()
+        # use log=stderr when test runner can capture it
+        self.spawn_server(custom_pool=pool, log=sys.stdout)
+        connect = (
+            'GET /echo HTTP/1.1',
+            'Upgrade: WebSocket',
+            'Connection: Upgrade',
+            'Host: %s:%s' % self.server_addr,
+            'Origin: http://%s:%s' % self.server_addr,
+            'Sec-WebSocket-Protocol: ws',
+            'Sec-WebSocket-Key1: 4 @1  46546xW%0l 1 5',
+            'Sec-WebSocket-Key2: 12998 5 Y3 1  .P00',
+        )
+        sock = eventlet.connect(self.server_addr)
+        sock.sendall(six.b('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U'))
+        sock.recv(1024)
+        sock.sendall(b'\x00hello\xff')
+        result = sock.recv(1024)
+        assert result, b'\x00hello\xff'
+        self.killer.kill(KeyboardInterrupt)
+        with eventlet.Timeout(1):
+            pool.waitall()
 
 
 class TestWebSocketSSL(tests.wsgi_test._TestBase):

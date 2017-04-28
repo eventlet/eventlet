@@ -255,7 +255,7 @@ class _TestBase(tests.LimitedTestCase):
         if self.killer:
             greenthread.kill(self.killer)
 
-        self.killer = eventlet.spawn_n(target, **kwargs)
+        self.killer = eventlet.spawn(target, **kwargs)
 
     def set_site(self):
         raise NotImplementedError
@@ -557,8 +557,8 @@ class TestHttpd(_TestBase):
         def server(sock, site, log):
             try:
                 serv = wsgi.Server(sock, sock.getsockname(), site, log)
-                client_socket = sock.accept()
-                serv.process_request(client_socket)
+                client_socket, addr = sock.accept()
+                serv.process_request([addr, client_socket, wsgi.STATE_IDLE])
                 return True
             except Exception:
                 traceback.print_exc()
@@ -1471,13 +1471,14 @@ class TestHttpd(_TestBase):
             sock.close()
 
         request_thread = eventlet.spawn(make_request)
-        server_conn = server_sock.accept()
+        client_sock, addr = server_sock.accept()
         # Next line must not raise IOError -32 Broken pipe
-        server.process_request(server_conn)
+        server.process_request([addr, client_sock, wsgi.STATE_IDLE])
         request_thread.wait()
         server_sock.close()
 
     def test_server_connection_timeout_exception(self):
+        self.reset_timeout(5)
         # Handle connection socket timeouts
         # https://bitbucket.org/eventlet/eventlet/issue/143/
         # Runs tests.wsgi_test_conntimeout in a separate process.
@@ -1581,6 +1582,23 @@ class TestHttpd(_TestBase):
         sock.close()
         log_content = self.logfile.getvalue()
         assert log_content == ''
+
+    def test_close_idle_connections(self):
+        self.reset_timeout(2)
+        pool = eventlet.GreenPool()
+        self.spawn_server(custom_pool=pool)
+        # https://github.com/eventlet/eventlet/issues/188
+        sock = eventlet.connect(self.server_addr)
+
+        sock.sendall(b'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+        result = read_http(sock)
+        assert result.status == 'HTTP/1.1 200 OK', 'Received status {0!r}'.format(result.status)
+        self.killer.kill(KeyboardInterrupt)
+        try:
+            with eventlet.Timeout(1):
+                pool.waitall()
+        except Exception:
+            assert False, self.logfile.getvalue()
 
 
 def read_headers(sock):
