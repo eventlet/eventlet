@@ -1,5 +1,4 @@
 import errno
-import functools
 import os
 import sys
 import time
@@ -7,8 +6,8 @@ import traceback
 import types
 import warnings
 
+import eventlet
 from eventlet import greenio
-from eventlet import greenpool
 from eventlet import support
 from eventlet.green import BaseHTTPServer
 from eventlet.green import socket
@@ -341,8 +340,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.wfile = socket._fileobject(conn, "wb", self.wbufsize)
             else:
                 # it's a SSLObject, or a martian
-                raise NotImplementedError("wsgi.py doesn't support sockets "
-                                          "of type %s" % type(conn))
+                raise NotImplementedError(
+                    '''eventlet.wsgi doesn't support sockets of type {0}'''.format(type(conn)))
 
     def handle_one_request(self):
         if self.server.max_http_version:
@@ -354,7 +353,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
         try:
             self.raw_requestline = self.rfile.readline(self.server.url_length_limit)
-            if len(self.raw_requestline) == self.server.url_length_limit:
+            if len(self.raw_requestline) >= self.server.url_length_limit:
                 self.wfile.write(
                     b"HTTP/1.0 414 Request URI Too Long\r\n"
                     b"Connection: close\r\nContent-length: 0\r\n\r\n")
@@ -741,7 +740,7 @@ class Server(BaseHTTPServer.HTTPServer):
         # The actual request handling takes place in __init__, so we need to
         # set minimum_chunk_size before __init__ executes and we don't want to modify
         # class variable
-        sock, address = sock_params
+        sock, address = sock_params[:2]
         proto = new(self.protocol)
         if self.minimum_chunk_size is not None:
             proto.minimum_chunk_size = self.minimum_chunk_size
@@ -752,11 +751,12 @@ class Server(BaseHTTPServer.HTTPServer):
             # Expected exceptions are not exceptional
             sock.close()
             # similar to logging "accepted" in server()
-            self.log.debug('(%s) timed out %r' % (self.pid, address))
+            self.log.debug('({0}) timed out {1!r}'.format(self.pid, address))
 
     def log_message(self, message):
-        warnings.warn('server.log_message is deprecated.  Please use server.log.info instead')
-        self.log.info(message)
+        raise AttributeError('''\
+eventlet.wsgi.server.log_message was deprecated and deleted.
+Please use server.log.info instead.''')
 
 
 try:
@@ -865,56 +865,56 @@ def server(sock, site,
     :param capitalize_response_headers: Normalize response headers' names to Foo-Bar.
                 Default is True.
     """
-    serv = Server(sock, sock.getsockname(),
-                  site, log,
-                  environ=environ,
-                  max_http_version=max_http_version,
-                  protocol=protocol,
-                  minimum_chunk_size=minimum_chunk_size,
-                  log_x_forwarded_for=log_x_forwarded_for,
-                  keepalive=keepalive,
-                  log_output=log_output,
-                  log_format=log_format,
-                  url_length_limit=url_length_limit,
-                  debug=debug,
-                  socket_timeout=socket_timeout,
-                  capitalize_response_headers=capitalize_response_headers,
-                  )
+    serv = Server(
+        sock, sock.getsockname(),
+        site, log,
+        environ=environ,
+        max_http_version=max_http_version,
+        protocol=protocol,
+        minimum_chunk_size=minimum_chunk_size,
+        log_x_forwarded_for=log_x_forwarded_for,
+        keepalive=keepalive,
+        log_output=log_output,
+        log_format=log_format,
+        url_length_limit=url_length_limit,
+        debug=debug,
+        socket_timeout=socket_timeout,
+        capitalize_response_headers=capitalize_response_headers,
+    )
     if server_event is not None:
+        warnings.warn(
+            'eventlet.wsgi.Server() server_event kwarg is deprecated and will be removed soon',
+            DeprecationWarning, stacklevel=2)
         server_event.send(serv)
     if max_size is None:
         max_size = DEFAULT_MAX_SIMULTANEOUS_REQUESTS
     if custom_pool is not None:
         pool = custom_pool
     else:
-        pool = greenpool.GreenPool(max_size)
+        pool = eventlet.GreenPool(max_size)
+
+    if not (hasattr(pool, 'spawn_n') and hasattr(pool, 'waitall')):
+        raise AttributeError('''\
+eventlet.wsgi.Server pool must provide methods: `spawn_n`, `waitall`.
+If unsure, use eventlet.GreenPool.''')
+
     try:
-        serv.log.info("(%s) wsgi starting up on %s" % (
-            serv.pid, socket_repr(sock)))
+        serv.log.info('({0}) wsgi starting up on {1}'.format(serv.pid, socket_repr(sock)))
         while is_accepting:
             try:
                 client_socket = sock.accept()
                 client_socket[0].settimeout(serv.socket_timeout)
-                serv.log.debug("(%s) accepted %r" % (
-                    serv.pid, client_socket[1]))
-                try:
-                    pool.spawn_n(serv.process_request, client_socket)
-                except AttributeError:
-                    warnings.warn("wsgi's pool should be an instance of "
-                                  "eventlet.greenpool.GreenPool, is %s. Please convert your"
-                                  " call site to use GreenPool instead" % type(pool),
-                                  DeprecationWarning, stacklevel=2)
-                    pool.execute_async(serv.process_request, client_socket)
+                serv.log.debug('({0}) accepted {1!r}'.format(serv.pid, client_socket[1]))
+                pool.spawn_n(serv.process_request, client_socket)
             except ACCEPT_EXCEPTIONS as e:
                 if support.get_errno(e) not in ACCEPT_ERRNO:
                     raise
             except (KeyboardInterrupt, SystemExit):
-                serv.log.info("wsgi exiting")
+                serv.log.info('wsgi exiting')
                 break
     finally:
         pool.waitall()
-        serv.log.info("(%s) wsgi exited, is_accepting=%s" % (
-            serv.pid, is_accepting))
+        serv.log.info('({0}) wsgi exited, is_accepting={1}'.format(serv.pid, is_accepting))
         try:
             # NOTE: It's not clear whether we want this to leave the
             # socket open or close it.  Use cases like Spawning want
