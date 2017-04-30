@@ -501,6 +501,11 @@ def test_threading_condition():
     tests.run_isolated('patcher_threading_condition.py')
 
 
+def test_threading_original():
+    # Issue #230: test for non-regression of threading+original()
+    tests.run_isolated('patcher_threading_original.py')
+
+
 def test_threading_join():
     tests.run_isolated('patcher_threading_join.py')
 
