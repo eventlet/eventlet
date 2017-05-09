@@ -493,6 +493,11 @@ def test_patcher_existing_locks_locked():
     tests.run_isolated('patcher_existing_locks_locked.py')
 
 
+@tests.skip_if_CRLock_exist
+def test_patcher_existing_locks_unlocked():
+    tests.run_isolated('patcher_existing_locks_unlocked.py')
+
+
 def test_importlib_lock():
     tests.run_isolated('patcher_importlib_lock.py')
 

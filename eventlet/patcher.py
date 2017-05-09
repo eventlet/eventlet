@@ -358,7 +358,7 @@ def _fix_py2_rlock(rlock, tid):
     rlock._RLock__block = new
     if old.locked():
         new.acquire()
-    rlock._RLock__owner = tid
+        rlock._RLock__owner = tid
 
 
 def _fix_py3_rlock(old):

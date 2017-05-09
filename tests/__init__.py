@@ -123,6 +123,15 @@ def skip_if_no_itimer(func):
     return skip_unless(has_itimer)(func)
 
 
+def skip_if_CRLock_exist(func):
+    """ Decorator that skips a test if the `_thread.RLock` class exists """
+    try:
+        from _thread import RLock
+        return skipped(func)
+    except ImportError:
+        return func
+
+
 def skip_if_no_ssl(func):
     """ Decorator that skips a test if SSL is not available."""
     try:
