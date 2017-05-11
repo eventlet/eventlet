@@ -1,7 +1,8 @@
 import os
+import warnings
 
 import eventlet
-from eventlet import debug, event
+from eventlet import convenience, debug
 from eventlet.green import socket
 from eventlet.support import six
 import tests
@@ -90,7 +91,7 @@ class TestServe(tests.LimitedTestCase):
         gt.wait()
 
     def test_concurrency(self):
-        evt = event.Event()
+        evt = eventlet.Event()
 
         def waiter(sock, addr):
             sock.sendall(b'hi')
@@ -128,18 +129,41 @@ class TestServe(tests.LimitedTestCase):
         client.sendall(b"echo")
         self.assertEqual(b"echo", client.recv(1024))
 
-    def test_socket_reuse(self):
+
+def test_socket_reuse():
+    # pick a free port with bind to 0 - without SO_REUSEPORT
+    # then close it and try to bind to same port with SO_REUSEPORT
+    # loop helps in case something else used the chosen port before second bind
+    addr = None
+    errors = []
+    for _ in range(5):
         lsock1 = eventlet.listen(('localhost', 0))
-        port = lsock1.getsockname()[1]
-
-        if hasattr(socket, 'SO_REUSEPORT'):
-            lsock2 = eventlet.listen(('localhost', port))
-        else:
-            try:
-                lsock2 = eventlet.listen(('localhost', port))
-                assert lsock2
-                lsock2.close()
-            except socket.error:
-                pass
-
+        addr = lsock1.getsockname()
         lsock1.close()
+        try:
+            lsock1 = eventlet.listen(addr)
+        except socket.error as e:
+            errors.append(e)
+            continue
+        break
+    else:
+        assert False, errors
+
+    if hasattr(socket, 'SO_REUSEPORT'):
+        lsock2 = eventlet.listen(addr)
+    else:
+        try:
+            lsock2 = eventlet.listen(addr)
+            assert lsock2
+            lsock2.close()
+        except socket.error:
+            pass
+
+    lsock1.close()
+
+
+def test_reuse_random_port_warning():
+    with warnings.catch_warnings(record=True) as w:
+        eventlet.listen(('localhost', 0), reuse_port=True).close()
+        assert len(w) == 1
+        assert issubclass(w[0].category, convenience.ReuseRandomPortWarning)
