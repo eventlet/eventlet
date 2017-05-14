@@ -16,7 +16,7 @@ if sys.version_info > (3, 4):
     from eventlet.green import selectors
     to_patch.append(('selectors', selectors))
 
-patcher.inject('subprocess', globals(), *to_patch)
+sys.modules['subprocess'] = patcher.inject('subprocess', globals(), *to_patch)
 subprocess_orig = patcher.original("subprocess")
 mswindows = sys.platform == "win32"
 
