@@ -18,6 +18,7 @@ if sys.version_info > (3, 4):
 
 patcher.inject('subprocess', globals(), *to_patch)
 subprocess_orig = patcher.original("subprocess")
+subprocess_imported = sys.modules.get('subprocess', subprocess_orig)
 mswindows = sys.platform == "win32"
 
 
@@ -37,6 +38,8 @@ if getattr(subprocess_orig, 'TimeoutExpired', None) is None:
         def __str__(self):
             return ("Command '%s' timed out after %s seconds" %
                     (self.cmd, self.timeout))
+else:
+    TimeoutExpired = subprocess_imported.TimeoutExpired
 
 
 # This is the meat of this module, the green version of Popen.
@@ -133,3 +136,8 @@ if hasattr(subprocess_orig, 'check_output'):
     __patched__.append('check_output')
     check_output = patched_function(subprocess_orig.check_output)
 del patched_function
+
+# Keep exceptions identity.
+# https://github.com/eventlet/eventlet/issues/413
+CalledProcessError = subprocess_imported.CalledProcessError
+del subprocess_imported
