@@ -116,12 +116,12 @@ class GreenSSLSocket(_original_sslsocket):
                         trampoline(self,
                                    read=True,
                                    timeout=self.gettimeout(),
-                                   timeout_exc=timeout_exc('timed out'))
+                                   timeout_exc=timeout_exc('The read operation timed out'))
                     elif get_errno(exc) == SSL_ERROR_WANT_WRITE:
                         trampoline(self,
                                    write=True,
                                    timeout=self.gettimeout(),
-                                   timeout_exc=timeout_exc('timed out'))
+                                   timeout_exc=timeout_exc('The write operation timed out'))
                     else:
                         raise
 
@@ -145,7 +145,7 @@ class GreenSSLSocket(_original_sslsocket):
             return self._call_trampolining(
                 super(GreenSSLSocket, self).send, data, flags)
         else:
-            trampoline(self, write=True, timeout_exc=timeout_exc('timed out'))
+            trampoline(self, write=True, timeout_exc=timeout_exc('The write operation timed out'))
             return socket.send(self, data, flags)
 
     def sendto(self, data, addr, flags=0):
@@ -154,7 +154,7 @@ class GreenSSLSocket(_original_sslsocket):
             raise ValueError("sendto not allowed on instances of %s" %
                              self.__class__)
         else:
-            trampoline(self, write=True, timeout_exc=timeout_exc('timed out'))
+            trampoline(self, write=True, timeout_exc=timeout_exc('The write operation timed out'))
             return socket.sendto(self, data, addr, flags)
 
     def sendall(self, data, flags=0):
@@ -171,7 +171,7 @@ class GreenSSLSocket(_original_sslsocket):
                 v = self.send(data_to_send)
                 count += v
                 if v == 0:
-                    trampoline(self, write=True, timeout_exc=timeout_exc('timed out'))
+                    trampoline(self, write=True, timeout_exc=timeout_exc('The write operation timed out'))
                 else:
                     data_to_send = data[count:]
             return amount
@@ -185,7 +185,7 @@ class GreenSSLSocket(_original_sslsocket):
                     erno = get_errno(e)
                     if erno in greenio.SOCKET_BLOCKING:
                         trampoline(self, write=True,
-                                   timeout=self.gettimeout(), timeout_exc=timeout_exc('timed out'))
+                                   timeout=self.gettimeout(), timeout_exc=timeout_exc('The write operation timed out'))
                     elif erno in greenio.SOCKET_CLOSED:
                         return ''
                     raise
@@ -241,7 +241,7 @@ class GreenSSLSocket(_original_sslsocket):
                         try:
                             trampoline(
                                 self, read=True,
-                                timeout=self.gettimeout(), timeout_exc=timeout_exc('timed out'))
+                                timeout=self.gettimeout(), timeout_exc=timeout_exc('The read operation timed out'))
                         except IOClosed:
                             return b''
                     elif erno in greenio.SOCKET_CLOSED:
@@ -251,13 +251,13 @@ class GreenSSLSocket(_original_sslsocket):
     def recvfrom(self, addr, buflen=1024, flags=0):
         if not self.act_non_blocking:
             trampoline(self, read=True, timeout=self.gettimeout(),
-                       timeout_exc=timeout_exc('timed out'))
+                       timeout_exc=timeout_exc('The read operation timed out'))
         return super(GreenSSLSocket, self).recvfrom(addr, buflen, flags)
 
     def recvfrom_into(self, buffer, nbytes=None, flags=0):
         if not self.act_non_blocking:
             trampoline(self, read=True, timeout=self.gettimeout(),
-                       timeout_exc=timeout_exc('timed out'))
+                       timeout_exc=timeout_exc('The read operation timed out'))
         return super(GreenSSLSocket, self).recvfrom_into(buffer, nbytes, flags)
 
     def unwrap(self):
