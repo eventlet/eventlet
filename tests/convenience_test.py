@@ -6,6 +6,7 @@ from eventlet import convenience, debug
 from eventlet.green import socket
 from eventlet.support import six
 import tests
+import tests.mock
 
 
 certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
@@ -167,3 +168,29 @@ def test_reuse_random_port_warning():
         eventlet.listen(('localhost', 0), reuse_port=True).close()
         assert len(w) == 1
         assert issubclass(w[0].category, convenience.ReuseRandomPortWarning)
+
+
+@tests.skip_unless(hasattr(socket, 'SO_REUSEPORT'))
+def test_reuseport_oserror():
+    # https://github.com/eventlet/eventlet/issues/380
+    # https://github.com/eventlet/eventlet/issues/418
+    err22 = OSError(22, 'Invalid argument')
+
+    sock1 = eventlet.listen(('localhost', 0))
+    addr = sock1.getsockname()
+    sock1.close()
+
+    original_socket_init = socket.socket.__init__
+
+    def patched(self, *a, **kw):
+        original_socket_init(self, *a, **kw)
+        self.setsockopt = tests.mock.Mock(side_effect=err22)
+
+    with warnings.catch_warnings(record=True) as w:
+        try:
+            socket.socket.__init__ = patched
+            eventlet.listen(addr, reuse_addr=False, reuse_port=True).close()
+        finally:
+            socket.socket.__init__ = original_socket_init
+        assert len(w) == 1
+        assert issubclass(w[0].category, convenience.ReusePortUnavailableWarning)

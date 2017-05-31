@@ -3,6 +3,7 @@ import warnings
 
 from eventlet import greenpool
 from eventlet import greenthread
+from eventlet import support
 from eventlet.green import socket
 from eventlet.support import greenlets as greenlet
 
@@ -23,6 +24,10 @@ def connect(addr, family=socket.AF_INET, bind=None):
 
 
 class ReuseRandomPortWarning(Warning):
+    pass
+
+
+class ReusePortUnavailableWarning(Warning):
     pass
 
 
@@ -55,7 +60,20 @@ def listen(addr, family=socket.AF_INET, backlog=50, reuse_addr=True, reuse_port=
         reuse_port = True
     if reuse_port and hasattr(socket, 'SO_REUSEPORT'):
         # NOTE(zhengwei): linux kernel >= 3.9
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+        try:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+        except OSError as ex:
+            if support.get_errno(ex) in (22, 92):
+                # A famous platform defines unsupported socket option.
+                # https://github.com/eventlet/eventlet/issues/380
+                # https://github.com/eventlet/eventlet/issues/418
+                warnings.warn(
+                    '''socket.SO_REUSEPORT is defined but not supported.
+                    On Windows: known bug, wontfix.
+                    On other systems: please comment in the issue linked below.
+                    More information: https://github.com/eventlet/eventlet/issues/380''',
+                    ReusePortUnavailableWarning, stacklevel=3)
+
     sock.bind(addr)
     sock.listen(backlog)
     return sock
