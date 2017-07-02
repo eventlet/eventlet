@@ -20,9 +20,10 @@ patcher.inject('subprocess', globals(), *to_patch)
 subprocess_orig = patcher.original("subprocess")
 subprocess_imported = sys.modules.get('subprocess', subprocess_orig)
 mswindows = sys.platform == "win32"
+_MISSING = object()
 
 
-if getattr(subprocess_orig, 'TimeoutExpired', None) is None:
+if getattr(subprocess_orig, 'TimeoutExpired', _MISSING) is _MISSING:
     # Backported from Python 3.3.
     # https://bitbucket.org/eventlet/eventlet/issue/89
     class TimeoutExpired(Exception):
@@ -139,5 +140,10 @@ del patched_function
 
 # Keep exceptions identity.
 # https://github.com/eventlet/eventlet/issues/413
-CalledProcessError = subprocess_imported.CalledProcessError
-del subprocess_imported
+_current_module = sys.modules[__name__]
+_keep_names = ('CalledProcessError', 'SubprocessError')
+for k in _keep_names:
+    v = getattr(subprocess_imported, k, _MISSING)
+    if v is not _MISSING:
+        setattr(_current_module, k, v)
+del _current_module, _keep_names, k, v, subprocess_imported

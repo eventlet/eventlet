@@ -6,6 +6,7 @@ if __name__ == '__main__':
 
     cases = (
         'CalledProcessError',
+        'SubprocessError',
         'TimeoutExpired',
     )
     for c in cases:
