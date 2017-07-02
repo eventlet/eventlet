@@ -4,42 +4,42 @@ language: python
 matrix:
   fast_finish: true
   include:
-    - {python: 3.5, env: TOX_ENV=pep8}
+    - {python: 3.5, env: TOXENV=pep8}
 
-    - {python: 2.6, env: TOX_ENV=py26-epolls}
-    - {python: 2.6, env: TOX_ENV=py26-poll}
-    - {python: 2.6, env: TOX_ENV=py26-selects}
+    - {python: 2.6, env: TOXENV=py26-epolls}
+    - {python: 2.6, env: TOXENV=py26-poll}
+    - {python: 2.6, env: TOXENV=py26-selects}
 
-    - {python: 2.7, env: TOX_ENV=py27-epolls}
-    - {python: 2.7, env: TOX_ENV=py27-poll}
-    - {python: 2.7, env: TOX_ENV=py27-selects}
+    - {python: 2.7, env: TOXENV=py27-epolls}
+    - {python: 2.7, env: TOXENV=py27-poll}
+    - {python: 2.7, env: TOXENV=py27-selects}
 
-    - {python: 3.3, env: TOX_ENV=py33-epolls}
-    - {python: 3.3, env: TOX_ENV=py33-poll}
-    - {python: 3.3, env: TOX_ENV=py33-selects}
+    - {python: 3.3, env: TOXENV=py33-epolls}
+    - {python: 3.3, env: TOXENV=py33-poll}
+    - {python: 3.3, env: TOXENV=py33-selects}
 
-    - {python: 3.4, env: TOX_ENV=py34-epolls}
-    - {python: 3.4, env: TOX_ENV=py34-poll}
-    - {python: 3.4, env: TOX_ENV=py34-selects}
+    - {python: 3.4, env: TOXENV=py34-epolls}
+    - {python: 3.4, env: TOXENV=py34-poll}
+    - {python: 3.4, env: TOXENV=py34-selects}
 
-    - {python: 3.5, env: TOX_ENV=py35-epolls}
-    - {python: 3.5, env: TOX_ENV=py35-poll}
-    - {python: 3.5, env: TOX_ENV=py35-selects}
+    - {python: 3.5, env: TOXENV=py35-epolls}
+    - {python: 3.5, env: TOXENV=py35-poll}
+    - {python: 3.5, env: TOXENV=py35-selects}
 
-    - {python: 3.6-dev, env: TOX_ENV=py36-epolls}
-    - {python: 3.6-dev, env: TOX_ENV=py36-poll}
-    - {python: 3.6-dev, env: TOX_ENV=py36-selects}
+    - {python: 3.6-dev, env: TOXENV=py36-epolls}
+    - {python: 3.6-dev, env: TOXENV=py36-poll}
+    - {python: 3.6-dev, env: TOXENV=py36-selects}
 
-    - {python: pypy, env: TOX_ENV=pypy-epolls}
-    - {python: pypy, env: TOX_ENV=pypy-poll}
-    - {python: pypy, env: TOX_ENV=pypy-selects}
+    - {python: pypy, env: TOXENV=pypy-epolls}
+    - {python: pypy, env: TOXENV=pypy-poll}
+    - {python: pypy, env: TOXENV=pypy-selects}
   allow_failures:
-    - env: TOX_ENV=py26-epolls
-    - env: TOX_ENV=py26-poll
-    - env: TOX_ENV=py26-selects
-    - env: TOX_ENV=pypy-epolls
-    - env: TOX_ENV=pypy-poll
-    - env: TOX_ENV=pypy-selects
+    - env: TOXENV=py26-epolls
+    - env: TOXENV=py26-poll
+    - env: TOXENV=py26-selects
+    - env: TOXENV=pypy-epolls
+    - env: TOXENV=pypy-poll
+    - env: TOXENV=pypy-selects
 
 cache:
   apt: true
@@ -61,10 +61,10 @@ before_script:
   - "export EVENTLET_DB_TEST_AUTH='{\"psycopg2\": {\"user\": \"postgres\"}, \"MySQLdb\": {\"passwd\": \"\", \"host\": \"localhost\", \"user\": \"root\"}}'"
   - "export PATH=/usr/lib/ccache:$PATH"
 script:
-  - tox -v -v -e $TOX_ENV
-  - codecov --flags=$(echo $TOX_ENV |tr -d '-.')
+  - tox -v -v
+  - codecov --flags=$(echo $TOXENV |tr -d '-.')
 after_failure:
-  - for X in .tox/$TOX_ENV/log/*; do echo "$X\n"; cat "$X"; echo "\n\n"; done
+  - for X in .tox/$TOXENV/log/*; do echo "$X\n"; cat "$X"; echo "\n\n"; done
   - echo "pip.log\n"; cat $HOME/.pip/pip.log
 
 notifications:
