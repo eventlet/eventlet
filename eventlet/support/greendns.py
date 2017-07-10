@@ -157,7 +157,7 @@ class HostsResolver(object):
     def __init__(self, fname=None, interval=HOSTS_TTL):
         self._v4 = {}           # name -> ipv4
         self._v6 = {}           # name -> ipv6
-        self._aliases = {}      # name -> cannonical_name
+        self._aliases = {}      # name -> canonical_name
         self.interval = interval
         self.fname = fname
         if fname is None:
