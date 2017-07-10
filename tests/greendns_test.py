@@ -40,9 +40,20 @@ class TestHostsResolver(tests.LimitedTestCase):
         hr.hosts.write(b'line1\n')
         hr.hosts.flush()
         assert hr._readlines() == ['line0', 'line1']
+        # Test reading of varied newline styles
         hr._last_stat = 0
-        hr.hosts.write(b'#comment0\nline0\n #comment1\nline1')
-        assert hr._readlines() == ['line0', 'line1']
+        hr.hosts.seek(0)
+        hr.hosts.truncate()
+        hr.hosts.write(b'\naa\r\nbb\r  cc  \n\n\tdd ee')
+        hr.hosts.flush()
+        assert hr._readlines() == ['aa', 'bb', 'cc', 'dd ee']
+        # Test comments, including inline comments
+        hr._last_stat = 0
+        hr.hosts.seek(0)
+        hr.hosts.truncate()
+        hr.hosts.write(b' line1\n#comment\nline2 # inline comment\n')
+        hr.hosts.flush()
+        assert hr._readlines() == ['line1', 'line2']
 
     def test_readlines_missing_file(self):
         hr = _make_host_resolver()
