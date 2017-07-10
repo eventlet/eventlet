@@ -180,10 +180,11 @@ class HostsResolver(object):
         """
         lines = []
         try:
-            with open(self.fname, 'rU') as fp:
+            with open(self.fname, 'r') as fp:
                 for line in fp:
+                    line = line.split('#')[0]
                     line = line.strip()
-                    if line and line[0] != '#':
+                    if line:
                         lines.append(line)
         except (IOError, OSError):
             pass
