@@ -179,10 +179,14 @@ class HostsResolver(object):
         Note that this performs disk I/O so can be blocking.
         """
         lines = []
+        if sys.version_info < (3, 4):
+            mode = 'rU'
+        else:
+            mode = 'r'
         try:
-            with open(self.fname, 'r') as fp:
+            with open(self.fname, mode=mode) as fp:
                 for line in fp:
-                    line = line.split('#')[0]
+                    line = line.split('#', 1)[0]
                     line = line.strip()
                     if line:
                         lines.append(line)
