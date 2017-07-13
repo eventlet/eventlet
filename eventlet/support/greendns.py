@@ -157,7 +157,7 @@ class HostsResolver(object):
     def __init__(self, fname=None, interval=HOSTS_TTL):
         self._v4 = {}           # name -> ipv4
         self._v6 = {}           # name -> ipv6
-        self._aliases = {}      # name -> cannonical_name
+        self._aliases = {}      # name -> canonical_name
         self.interval = interval
         self.fname = fname
         if fname is None:
@@ -179,11 +179,16 @@ class HostsResolver(object):
         Note that this performs disk I/O so can be blocking.
         """
         lines = []
+        if sys.version_info < (3, 0):
+            mode = 'rU'
+        else:
+            mode = 'rt'
         try:
-            with open(self.fname, 'rU') as fp:
+            with open(self.fname, mode=mode) as fp:
                 for line in fp:
+                    line = line.split('#', 1)[0]
                     line = line.strip()
-                    if line and line[0] != '#':
+                    if line:
                         lines.append(line)
         except (IOError, OSError):
             pass
