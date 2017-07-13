@@ -179,7 +179,7 @@ class HostsResolver(object):
         Note that this performs disk I/O so can be blocking.
         """
         lines = []
-        if sys.version_info < (3, 4):
+        if sys.version_info < (3, 0):
             mode = 'rU'
         else:
             mode = 'rt'
