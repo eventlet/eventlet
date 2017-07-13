@@ -182,7 +182,7 @@ class HostsResolver(object):
         if sys.version_info < (3, 4):
             mode = 'rU'
         else:
-            mode = 'r'
+            mode = 'rt'
         try:
             with open(self.fname, mode=mode) as fp:
                 for line in fp:
