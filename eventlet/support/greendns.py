@@ -178,15 +178,24 @@ class HostsResolver(object):
 
         Note that this performs disk I/O so can be blocking.
         """
-        lines = []
         try:
-            with open(self.fname, 'rU') as fp:
-                for line in fp:
-                    line = line.strip()
-                    if line and line[0] != '#':
-                        lines.append(line)
+            with open(self.fname, 'rb') as fp:
+                fdata = fp.read()
         except (IOError, OSError):
-            pass
+            return []
+
+        lines = []
+        # Split by both \r and \n
+        # This introduces bogus empty lines for '\r\n' line breaks, but
+        # that doesn't matter because empty lines are ignored
+        for nline in fdata.split(b'\n'):
+            for line in nline.split(b'\r'):
+                if not isinstance(line, str):
+                    line = line.decode()
+                line = line.split('#', 1)[0]  # remove comments
+                line = line.strip()
+                if line:
+                    lines.append(line)
         return lines
 
     def _load(self):
