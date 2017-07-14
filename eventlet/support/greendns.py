@@ -32,6 +32,7 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import re
 import struct
 import sys
 
@@ -154,6 +155,14 @@ class HostsResolver(object):
     :interval: The time between checking for hosts file modification
     """
 
+    LINES_RE = re.compile(r"""
+        \s*  # Leading space
+        ([^\r\n#]+?)  # The actual match, non-greedy so as not to include trailing space
+        \s*  # Trailing space
+        (?:[#][^\r\n]+)?  # Comments
+        (?:$|[\r\n]+)  # EOF or newline
+    """, re.VERBOSE)
+
     def __init__(self, fname=None, interval=HOSTS_TTL):
         self._v4 = {}           # name -> ipv4
         self._v6 = {}           # name -> ipv6
@@ -184,19 +193,10 @@ class HostsResolver(object):
         except (IOError, OSError):
             return []
 
-        lines = []
-        # Split by both \r and \n
-        # This introduces bogus empty lines for '\r\n' line breaks, but
-        # that doesn't matter because empty lines are ignored
-        for nline in fdata.split(b'\n'):
-            for line in nline.split(b'\r'):
-                if not isinstance(line, str):
-                    line = line.decode()
-                line = line.split('#', 1)[0]  # remove comments
-                line = line.strip()
-                if line:
-                    lines.append(line)
-        return lines
+        if not isinstance(fdata, str):  # Python 3
+            fdata = fdata.decode()
+
+        return self.LINES_RE.findall(fdata)
 
     def _load(self):
         """Load hosts file
