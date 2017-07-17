@@ -193,10 +193,9 @@ class HostsResolver(object):
         except (IOError, OSError):
             return []
 
-        if not isinstance(fdata, str):  # Python 3
-            fdata = fdata.decode()
+        udata = fdata.decode(errors='ignore')
 
-        return self.LINES_RE.findall(fdata)
+        return self.LINES_RE.findall(udata)
 
     def _load(self):
         """Load hosts file
