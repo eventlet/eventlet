@@ -19,6 +19,10 @@ if sys.version_info > (3,):
         return x.decode()
     def maybe_encode(x):
         return x.encode()
+    def maybe_chr(x):
+        return x
+    def maybe_ord(x):
+        return x
 else:
     text_type = unicode  # pylint: disable=unicode-builtin, undefined-variable
     binary_type = str
@@ -30,6 +34,10 @@ else:
         return x
     def maybe_encode(x):
         return x
+    def maybe_chr(x):
+        return chr(x)
+    def maybe_ord(x):
+        return ord(x)
 
 
 def round_py2_compat(what):

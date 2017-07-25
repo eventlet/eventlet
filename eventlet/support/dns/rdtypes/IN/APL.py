@@ -20,7 +20,7 @@ import dns.exception
 import dns.inet
 import dns.rdata
 import dns.tokenizer
-from dns._compat import xrange
+from dns._compat import xrange, maybe_chr
 
 
 class APLItem(object):
@@ -63,7 +63,7 @@ class APLItem(object):
         #
         last = 0
         for i in xrange(len(address) - 1, -1, -1):
-            if address[i] != chr(0):
+            if address[i] != maybe_chr(0):
                 last = i + 1
                 break
         address = address[0: last]
@@ -142,11 +142,11 @@ class APL(dns.rdata.Rdata):
             l = len(address)
             if header[0] == 1:
                 if l < 4:
-                    address += '\x00' * (4 - l)
+                    address += b'\x00' * (4 - l)
                 address = dns.inet.inet_ntop(dns.inet.AF_INET, address)
             elif header[0] == 2:
                 if l < 16:
-                    address += '\x00' * (16 - l)
+                    address += b'\x00' * (16 - l)
                 address = dns.inet.inet_ntop(dns.inet.AF_INET6, address)
             else:
                 #

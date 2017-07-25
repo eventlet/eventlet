@@ -14,7 +14,7 @@ if __name__ == '__main__':
 
     def slow_udp(q, *a, **kw):
         qname = q.question[0].name
-        addr = addr_map[qname.to_text().decode()]
+        addr = addr_map[qname.to_text()]
         r = dns.message.make_response(q)
         r.index = None
         r.flags = 256
