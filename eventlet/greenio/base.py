@@ -431,6 +431,12 @@ class GreenSocket(object):
     def gettimeout(self):
         return self._timeout
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.close()
+
     if "__pypy__" in sys.builtin_module_names:
         def _reuse(self):
             getattr(self.fd, '_sock', self.fd)._reuse()
