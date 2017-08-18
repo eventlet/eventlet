@@ -62,7 +62,7 @@ before_script:
   - "export PATH=/usr/lib/ccache:$PATH"
 script:
   - tox -v -v
-  - codecov --flags=$(echo $TOXENV |tr -d '-.')
+  - codecov --flags=$(echo $TOXENV |tr -d -- '-.')
 after_failure:
   - for X in .tox/$TOXENV/log/*; do echo "$X\n"; cat "$X"; echo "\n\n"; done
   - echo "pip.log\n"; cat $HOME/.pip/pip.log
