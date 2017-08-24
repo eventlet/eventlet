@@ -36,6 +36,7 @@ import re
 import struct
 import sys
 
+import eventlet
 from eventlet import patcher
 from eventlet.green import _socket_nodns
 from eventlet.green import os
@@ -617,7 +618,7 @@ def _net_read(sock, count, expiration):
     A Timeout exception will be raised if the operation is not completed
     by the expiration time.
     """
-    s = b''
+    s = bytearray()
     while count > 0:
         try:
             n = sock.recv(count)
@@ -625,10 +626,12 @@ def _net_read(sock, count, expiration):
             # Q: Do we also need to catch coro.CoroutineSocketWake and pass?
             if expiration - time.time() <= 0.0:
                 raise dns.exception.Timeout
+            eventlet.sleep(0.01)
+            continue
         if n == b'':
             raise EOFError
         count = count - len(n)
-        s = s + n
+        s += n
     return s
 
 
@@ -698,19 +701,25 @@ def udp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
         expiration = dns.query._compute_expiration(timeout)
         if source is not None:
             s.bind(source)
-        try:
-            s.sendto(wire, destination)
-        except socket.timeout:
-            # Q: Do we also need to catch coro.CoroutineSocketWake and pass?
-            if expiration - time.time() <= 0.0:
-                raise dns.exception.Timeout
-        while 1:
+        while True:
+            try:
+                s.sendto(wire, destination)
+                break
+            except socket.timeout:
+                # Q: Do we also need to catch coro.CoroutineSocketWake and pass?
+                if expiration - time.time() <= 0.0:
+                    raise dns.exception.Timeout
+                eventlet.sleep(0.01)
+                continue
+        while True:
             try:
                 (wire, from_address) = s.recvfrom(65535)
             except socket.timeout:
                 # Q: Do we also need to catch coro.CoroutineSocketWake and pass?
                 if expiration - time.time() <= 0.0:
                     raise dns.exception.Timeout
+                eventlet.sleep(0.01)
+                continue
             if from_address == destination:
                 break
             if not ignore_unexpected:
@@ -771,12 +780,16 @@ def tcp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
         expiration = dns.query._compute_expiration(timeout)
         if source is not None:
             s.bind(source)
-        try:
-            s.connect(destination)
-        except socket.timeout:
-            # Q: Do we also need to catch coro.CoroutineSocketWake and pass?
-            if expiration - time.time() <= 0.0:
-                raise dns.exception.Timeout
+        while True:
+            try:
+                s.connect(destination)
+                break
+            except socket.timeout:
+                # Q: Do we also need to catch coro.CoroutineSocketWake and pass?
+                if expiration - time.time() <= 0.0:
+                    raise dns.exception.Timeout
+                eventlet.sleep(0.01)
+                continue
 
         l = len(wire)
         # copying the wire into tcpmsg is inefficient, but lets us
