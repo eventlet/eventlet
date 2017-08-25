@@ -1,6 +1,7 @@
 import imp
 import sys
 
+import eventlet
 from eventlet.support import six
 
 
@@ -222,6 +223,12 @@ def monkey_patch(**on):
 
     It's safe to call monkey_patch multiple times.
     """
+
+    # Make sure the hub is completely imported before any
+    # monkey-patching, or we risk recursion if the process of importing
+    # the hub calls into monkey-patched modules.
+    eventlet.hubs.get_hub()
+
     accepted_args = set(('os', 'select', 'socket',
                          'thread', 'time', 'psycopg', 'MySQLdb',
                          'builtins', 'subprocess'))
