@@ -74,12 +74,13 @@ class WebSocketWSGI(object):
     the time of closure.
     """
 
-    def __init__(self, handler):
+    def __init__(self, handler, on_open=None):
         self.handler = handler
         self.protocol_version = None
         self.support_legacy_versions = True
         self.supported_protocols = []
         self.origin_checker = None
+        self.on_open = on_open
 
     @classmethod
     def configured(cls,
@@ -159,6 +160,8 @@ class WebSocketWSGI(object):
             key = struct.pack(">II", key1, key2) + key3
             response = md5(key).digest()
 
+        custom_headers = [] if self.on_open is None else self.on_open(environ)
+
         # Start building the response
         scheme = 'ws'
         if environ.get('wsgi.url_scheme') == 'https':
@@ -178,7 +181,9 @@ class WebSocketWSGI(object):
                 b"Upgrade: WebSocket\r\n"
                 b"Connection: Upgrade\r\n"
                 b"WebSocket-Origin: " + six.b(environ.get('HTTP_ORIGIN')) + b"\r\n"
-                b"WebSocket-Location: " + six.b(location) + b"\r\n\r\n"
+                b"WebSocket-Location: " + six.b(location) + b"\r\n" +
+                self._format_headers(custom_headers) +
+                b"\r\n"
             )
         elif self.protocol_version == 76:
             handshake_reply = (
@@ -188,7 +193,8 @@ class WebSocketWSGI(object):
                 b"Sec-WebSocket-Origin: " + six.b(environ.get('HTTP_ORIGIN')) + b"\r\n"
                 b"Sec-WebSocket-Protocol: " +
                 six.b(environ.get('HTTP_SEC_WEBSOCKET_PROTOCOL', 'default')) + b"\r\n"
-                b"Sec-WebSocket-Location: " + six.b(location) + b"\r\n"
+                b"Sec-WebSocket-Location: " + six.b(location) + b"\r\n" +
+                self._format_headers(custom_headers) +
                 b"\r\n" + response
             )
         else:  # pragma NO COVER
@@ -230,6 +236,8 @@ class WebSocketWSGI(object):
         # if extensions:
         #    extensions = [i.strip() for i in extensions.split(',')]
 
+        custom_headers = [] if self.on_open is None else self.on_open(environ)
+
         key = environ['HTTP_SEC_WEBSOCKET_KEY']
         response = base64.b64encode(sha1(six.b(key) + PROTOCOL_GUID).digest())
         handshake_reply = [b"HTTP/1.1 101 Switching Protocols",
@@ -238,7 +246,8 @@ class WebSocketWSGI(object):
                            b"Sec-WebSocket-Accept: " + response]
         if negotiated_protocol:
             handshake_reply.append(b"Sec-WebSocket-Protocol: " + six.b(negotiated_protocol))
-        sock.sendall(b'\r\n'.join(handshake_reply) + b'\r\n\r\n')
+        sock.sendall(b'\r\n'.join(handshake_reply) + b'\r\n' +
+                     self._format_headers(custom_headers) + b'\r\n')
         return RFC6455WebSocket(sock, environ, self.protocol_version,
                                 protocol=negotiated_protocol)
 
@@ -255,6 +264,11 @@ class WebSocketWSGI(object):
             elif char == " ":
                 spaces += 1
         return int(out) // spaces
+
+    def _format_headers(self, headers):
+        if len(headers) == 0:
+            return b''
+        return b''.join(six.b(k) + b': ' + six.b(v) + b'\r\n' for (k, v) in headers)
 
 
 class WebSocket(object):
