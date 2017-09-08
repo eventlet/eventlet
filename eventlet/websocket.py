@@ -208,10 +208,10 @@ class WebSocketWSGI(object):
             for part in parts[1:]:
                 key_val = part.split("=")
                 if len(key_val) == 1:
-                    config[key_val[0].strip()] = True
+                    config[key_val[0].strip().lower()] = True
                 else:
-                    config[key_val[0].strip()] = key_val[1].strip().strip('"')
-            res.setdefault(parts[0].strip(), []).append(config)
+                    config[key_val[0].strip().lower()] = key_val[1].strip().strip('"').lower()
+            res.setdefault(parts[0].strip().lower(), []).append(config)
         return res
 
     def _negotiate_permessage_deflate(self, extensions):
@@ -528,9 +528,12 @@ class RFC6455WebSocket(WebSocket):
 
         def _make():
             return zlib.compressobj(zlib.Z_DEFAULT_COMPRESSION, zlib.DEFLATED,
-                                    -options.get("server_max_window_bits", zlib.MAX_WBITS))
+                                    -options.get("client_max_window_bits" if self.client
+                                                 else "server_max_window_bits",
+                                                 zlib.MAX_WBITS))
 
-        if options.get("server_no_context_takeover"):
+        if options.get("client_no_context_takeover" if self.client
+                       else "server_no_context_takeover"):
             # This option means we have to make a new one every time
             return _make()
         else:
@@ -538,15 +541,18 @@ class RFC6455WebSocket(WebSocket):
                 self._deflate_enc = _make()
             return self._deflate_enc
 
-    def _get_permessage_deflate_dec(self):
+    def _get_permessage_deflate_dec(self, rsv1):
         options = self.extensions.get("permessage-deflate")
-        if options is None:
+        if options is None or not rsv1:
             return None
 
         def _make():
-            return zlib.decompressobj(-options.get("client_max_window_bits", zlib.MAX_WBITS))
+            return zlib.decompressobj(-options.get("server_max_window_bits" if self.client
+                                                   else "client_max_window_bits",
+                                                   zlib.MAX_WBITS))
 
-        if options.get("client_no_context_takeover"):
+        if options.get("server_no_context_takeover" if self.client
+                       else"client_no_context_takeover"):
             # This option means we have to make a new one every time
             return _make()
         else:
@@ -692,7 +698,7 @@ class RFC6455WebSocket(WebSocket):
         received = 0
         if not message or opcode & 8:
             decoder = self.UTF8Decoder() if opcode == 1 else None
-            decompressor = self._get_permessage_deflate_dec()
+            decompressor = self._get_permessage_deflate_dec(rsv123 & 0x04)
             message = self.Message(opcode, decoder=decoder, decompressor=decompressor)
         if not length:
             message.push(b'', final=finished)
