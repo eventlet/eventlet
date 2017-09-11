@@ -278,8 +278,8 @@ class TestWebSocketWithCompression(tests.wsgi_test._TestBase):
             # The server responds the correct Websocket handshake
             # print('Extension offer: %r' % extension)
             match = re.match(self.handshake_re, result)
-            self.assertIsNotNone(match)
-            self.assertEqual(1, len(match.groups()))
+            assert match is not None
+            assert len(match.groups()) == 1
 
     def test_accept_deflate_ext_context_takeover_13(self):
         for extension in [
@@ -295,12 +295,11 @@ class TestWebSocketWithCompression(tests.wsgi_test._TestBase):
             # The server responds the correct Websocket handshake
             # print('Extension offer: %r' % extension)
             match = re.match(self.handshake_re, result)
-            self.assertIsNotNone(match)
-            self.assertEqual(1, len(match.groups()))
+            assert match is not None
+            assert len(match.groups()) == 1
             offered_ext_parts = (ex.strip().lower() for ex in extension.split(';'))
             accepted_ext_parts = match.groups()[0].decode().split('; ')
-            self.assertTrue(all(oep in accepted_ext_parts
-                                for oep in offered_ext_parts))
+            assert all(oep in accepted_ext_parts for oep in offered_ext_parts)
 
     def test_accept_deflate_ext_window_max_bits_13(self):
         for extension_string, vals in [
@@ -317,17 +316,17 @@ class TestWebSocketWithCompression(tests.wsgi_test._TestBase):
             # The server responds the correct Websocket handshake
             # print('Extension offer: %r' % extension_string)
             match = re.match(self.handshake_re, result)
-            self.assertIsNotNone(match)
-            self.assertEqual(1, len(match.groups()))
+            assert match is not None
+            assert len(match.groups()) == 1
 
             offered_parts = [part.strip().lower() for part in extension_string.split(';')]
             offered_parts_names = [part.split('=')[0].strip() for part in offered_parts]
             offered_parts_dict = dict(zip(offered_parts_names[1:], vals))
 
             accepted_ext_parts = match.groups()[0].decode().split('; ')
-            self.assertEqual(accepted_ext_parts[0], 'permessage-deflate')
+            assert accepted_ext_parts[0] == 'permessage-deflate'
             for param, val in (part.split('=') for part in accepted_ext_parts[1:]):
-                self.assertLessThanEqual(int(val), offered_parts_dict[param])
+                assert int(val) == offered_parts_dict[param]
 
     def test_reject_max_window_bits_out_of_range_13(self):
         extension_string = ('permessage-deflate; client_max_window_bits=7,'
@@ -343,7 +342,7 @@ class TestWebSocketWithCompression(tests.wsgi_test._TestBase):
         # The server responds the correct Websocket handshake
         # print('Extension offer: %r' % extension_string)
         match = re.match(self.handshake_re, result)
-        self.assertEqual(match.groups()[0], b'permessage-deflate')
+        assert match.groups()[0] == b'permessage-deflate'
 
     def test_server_compress_with_context_takeover_13(self):
         extensions_string = 'permessage-deflate; client_no_context_takeover;'
@@ -361,11 +360,11 @@ class TestWebSocketWithCompression(tests.wsgi_test._TestBase):
         # https://tools.ietf.org/html/rfc7692#section-7.2.3
         ws.send(b'Hello')
         msg1 = self.get_deflated_reply(ws)
-        self.assertEqual(msg1, b'\xf2\x48\xcd\xc9\xc9\x07\x00')
+        assert msg1 == b'\xf2\x48\xcd\xc9\xc9\x07\x00'
 
         ws.send(b'Hello')
         msg2 = self.get_deflated_reply(ws)
-        self.assertEqual(msg2, b'\xf2\x00\x11\x00\x00')
+        assert msg2 == b'\xf2\x00\x11\x00\x00'
 
         ws.close()
         eventlet.sleep(0.01)
@@ -388,15 +387,15 @@ class TestWebSocketWithCompression(tests.wsgi_test._TestBase):
         ws._send(masked_msg2)
         # Verify that client uses context takeover by checking
         # that the second message
-        self.assertLess(len(masked_msg2), len(masked_msg1))
+        assert len(masked_msg2) < len(masked_msg1)
 
         # Verify that server drops context between messages
         # Deflated values taken from Section 7.2.3 of RFC 7692
         # https://tools.ietf.org/html/rfc7692#section-7.2.3
         reply_msg1 = self.get_deflated_reply(ws)
-        self.assertEqual(reply_msg1, b'\xf2\x48\xcd\xc9\xc9\x07\x00')
+        assert reply_msg1 == b'\xf2\x48\xcd\xc9\xc9\x07\x00'
         reply_msg2 = self.get_deflated_reply(ws)
-        self.assertEqual(reply_msg2, b'\xf2\x48\xcd\xc9\xc9\x07\x00')
+        assert reply_msg2 == b'\xf2\x48\xcd\xc9\xc9\x07\x00'
 
     def test_client_compress_with_context_takeover_13(self):
         extensions = {'permessage-deflate': {
@@ -409,9 +408,9 @@ class TestWebSocketWithCompression(tests.wsgi_test._TestBase):
         # modified opcode to Binary instead of Text
         # https://tools.ietf.org/html/rfc7692#section-7.2.3
         packed_msg_1 = ws._pack_message(b'Hello', masked=False)
-        self.assertEqual(packed_msg_1, b'\xc2\x07\xf2\x48\xcd\xc9\xc9\x07\x00')
+        assert packed_msg_1 == b'\xc2\x07\xf2\x48\xcd\xc9\xc9\x07\x00'
         packed_msg_2 = ws._pack_message(b'Hello', masked=False)
-        self.assertEqual(packed_msg_2, b'\xc2\x05\xf2\x00\x11\x00\x00')
+        assert packed_msg_2 == b'\xc2\x05\xf2\x00\x11\x00\x00'
 
         eventlet.sleep(0.01)
 
@@ -426,9 +425,9 @@ class TestWebSocketWithCompression(tests.wsgi_test._TestBase):
         # modified opcode to Binary instead of Text
         # https://tools.ietf.org/html/rfc7692#section-7.2.3
         packed_msg_1 = ws._pack_message(b'Hello', masked=False)
-        self.assertEqual(packed_msg_1, b'\xc2\x07\xf2\x48\xcd\xc9\xc9\x07\x00')
+        assert packed_msg_1 == b'\xc2\x07\xf2\x48\xcd\xc9\xc9\x07\x00'
         packed_msg_2 = ws._pack_message(b'Hello', masked=False)
-        self.assertEqual(packed_msg_2, b'\xc2\x07\xf2\x48\xcd\xc9\xc9\x07\x00')
+        assert packed_msg_2 == b'\xc2\x07\xf2\x48\xcd\xc9\xc9\x07\x00'
 
     def test_compressed_send_recv_13(self):
         extensions_string = 'permessage-deflate'
@@ -442,11 +441,11 @@ class TestWebSocketWithCompression(tests.wsgi_test._TestBase):
         ws = websocket.RFC6455WebSocket(sock, {}, client=True, extensions=extensions)
 
         ws.send(b'hello')
-        self.assertEqual(ws.wait(), b'hello')
+        assert ws.wait() == b'hello'
         ws.send(b'hello world!')
         ws.send(u'hello world again!')
-        self.assertEqual(ws.wait(), b'hello world!')
-        self.assertEqual(ws.wait(), u'hello world again!')
+        assert ws.wait() == b'hello world!'
+        assert ws.wait() == u'hello world again!'
 
         ws.close()
         eventlet.sleep(0.01)
@@ -467,7 +466,71 @@ class TestWebSocketWithCompression(tests.wsgi_test._TestBase):
 
         # Adding extensions to recognise deflated response
         ws.extensions = extensions
-        self.assertEqual(ws.wait(), b'Hello')
+        assert ws.wait() == b'Hello'
+
+        ws.close()
+        eventlet.sleep(0.01)
+
+    def test_compressed_send_recv_client_no_context_13(self):
+        extensions_string = 'permessage-deflate; client_no_context_takeover'
+        extensions = {'permessage-deflate': {
+            'client_no_context_takeover': True,
+            'server_no_context_takeover': False}}
+
+        sock = eventlet.connect(self.server_addr)
+        sock.sendall(six.b(self.connect % extensions_string))
+        sock.recv(1024)
+        ws = websocket.RFC6455WebSocket(sock, {}, client=True, extensions=extensions)
+
+        ws.send(b'hello')
+        assert ws.wait() == b'hello'
+        ws.send(b'hello world!')
+        ws.send(u'hello world again!')
+        assert ws.wait() == b'hello world!'
+        assert ws.wait() == u'hello world again!'
+
+        ws.close()
+        eventlet.sleep(0.01)
+
+    def test_compressed_send_recv_server_no_context_13(self):
+        extensions_string = 'permessage-deflate; server_no_context_takeover'
+        extensions = {'permessage-deflate': {
+            'client_no_context_takeover': False,
+            'server_no_context_takeover': False}}
+
+        sock = eventlet.connect(self.server_addr)
+        sock.sendall(six.b(self.connect % extensions_string))
+        sock.recv(1024)
+        ws = websocket.RFC6455WebSocket(sock, {}, client=True, extensions=extensions)
+
+        ws.send(b'hello')
+        assert ws.wait() == b'hello'
+        ws.send(b'hello world!')
+        ws.send(u'hello world again!')
+        assert ws.wait() == b'hello world!'
+        assert ws.wait() == u'hello world again!'
+
+        ws.close()
+        eventlet.sleep(0.01)
+
+    def test_compressed_send_recv_both_no_context_13(self):
+        extensions_string = ('permessage-deflate;'
+                             ' server_no_context_takeover; client_no_context_takeover')
+        extensions = {'permessage-deflate': {
+            'client_no_context_takeover': True,
+            'server_no_context_takeover': True}}
+
+        sock = eventlet.connect(self.server_addr)
+        sock.sendall(six.b(self.connect % extensions_string))
+        sock.recv(1024)
+        ws = websocket.RFC6455WebSocket(sock, {}, client=True, extensions=extensions)
+
+        ws.send(b'hello')
+        assert ws.wait() == b'hello'
+        ws.send(b'hello world!')
+        ws.send(u'hello world again!')
+        assert ws.wait() == b'hello world!'
+        assert ws.wait() == u'hello world again!'
 
         ws.close()
         eventlet.sleep(0.01)

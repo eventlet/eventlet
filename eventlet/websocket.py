@@ -552,7 +552,7 @@ class RFC6455WebSocket(WebSocket):
                                                    zlib.MAX_WBITS))
 
         if options.get("server_no_context_takeover" if self.client
-                       else"client_no_context_takeover"):
+                       else "client_no_context_takeover"):
             # This option means we have to make a new one every time
             return _make()
         else:
@@ -651,12 +651,16 @@ class RFC6455WebSocket(WebSocket):
 
     def _recv_frame(self, message=None):
         recv = self._get_bytes
+
+        # Unpacking the frame described in Section 5.2 of RFC6455
+        # (https://tools.ietf.org/html/rfc6455#section-5.2)
         header = recv(2)
         a, b = struct.unpack('!BB', header)
         finished = a >> 7 == 1
         rsv123 = a >> 4 & 7
+        rsv1 = rsv123 & 4
         if rsv123:
-            if rsv123 & 0x04 and "permessage-deflate" not in self.extensions:
+            if rsv1 and "permessage-deflate" not in self.extensions:
                 # must be zero - unless it's compressed then rsv1 is true
                 raise FailedConnectionError(
                     1002,
@@ -698,7 +702,7 @@ class RFC6455WebSocket(WebSocket):
         received = 0
         if not message or opcode & 8:
             decoder = self.UTF8Decoder() if opcode == 1 else None
-            decompressor = self._get_permessage_deflate_dec(rsv123 & 0x04)
+            decompressor = self._get_permessage_deflate_dec(rsv1)
             message = self.Message(opcode, decoder=decoder, decompressor=decompressor)
         if not length:
             message.push(b'', final=finished)
