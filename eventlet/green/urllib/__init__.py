@@ -20,7 +20,6 @@ if six.PY2:
     except NameError:
         patcher.inject('urllib.request', globals(), *to_patch)
 
-
     # patch a bunch of things that have imports inside the
     # function body; this is lame and hacky but I don't feel
     # too bad because urllib is a hacky pile of junk that no
@@ -33,8 +32,8 @@ if six.PY2:
     ftpwrapper.init = patcher.patch_function(ftpwrapper.init, ('ftplib', ftplib))
     ftpwrapper.retrfile = patcher.patch_function(ftpwrapper.retrfile, ('ftplib', ftplib))
 
-    del patcher
+del patcher
 
-    # Run test program when run as a script
-    if __name__ == '__main__':
-        main()
+# Run test program when run as a script
+if __name__ == '__main__':
+    main()
