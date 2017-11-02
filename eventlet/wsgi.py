@@ -537,6 +537,9 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     self.close_connection = 1
                     return
 
+                if not headers_set:
+                    raise AssertionError("return before start_response()")
+
                 # Set content-length if possible
                 if not headers_sent and hasattr(result, '__len__') and \
                         'Content-Length' not in [h for h, _v in headers_set[1]]:
