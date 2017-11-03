@@ -381,7 +381,12 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         except greenio.SSL.ZeroReturnError:
             pass
         except socket.error as e:
-            if support.get_errno(e) not in BAD_SOCK:
+            last_errno = support.get_errno(e)
+            if last_errno in BROKEN_SOCK:
+                self.server.log.debug('({0}) connection reset by peer {1!r}'.format(
+                    self.server.pid,
+                    self.client_address))
+            elif last_errno not in BAD_SOCK:
                 raise
         return ''
 
