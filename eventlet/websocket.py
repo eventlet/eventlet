@@ -470,7 +470,10 @@ class WebSocket(object):
         """Forcibly close the websocket; generally it is preferable to
         return from the handler method."""
         self._send_closing_frame()
-        self.socket.shutdown(True)
+        try:
+            self.socket.shutdown(True)
+        except OSError:
+            pass
         self.socket.close()
 
 
@@ -810,5 +813,8 @@ class RFC6455WebSocket(WebSocket):
         """Forcibly close the websocket; generally it is preferable to
         return from the handler method."""
         self._send_closing_frame(close_data=close_data)
-        self.socket.shutdown(socket.SHUT_WR)
+        try:
+            self.socket.shutdown(socket.SHUT_WR)
+        except OSError:
+            pass
         self.socket.close()
