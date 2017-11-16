@@ -367,6 +367,12 @@ class WebSocket(object):
         :param environ: The wsgi environment
         :param version: The WebSocket spec version to follow (default is 76)
         """
+        self.log = environ.get('wsgi.errors', sys.stderr)
+        self.log_context = 'server={shost}/{spath} client={caddr}:{cport}'.format(
+            shost=environ.get('HTTP_HOST'),
+            spath=environ.get('SCRIPT_NAME', '') + environ.get('PATH_INFO', ''),
+            caddr=environ.get('REMOTE_ADDR'), cport=environ.get('REMOTE_PORT'),
+        )
         self.socket = sock
         self.origin = environ.get('HTTP_ORIGIN')
         self.protocol = environ.get('HTTP_WEBSOCKET_PROTOCOL')
@@ -469,9 +475,14 @@ class WebSocket(object):
     def close(self):
         """Forcibly close the websocket; generally it is preferable to
         return from the handler method."""
-        self._send_closing_frame()
-        self.socket.shutdown(True)
-        self.socket.close()
+        try:
+            self._send_closing_frame(True)
+            self.socket.shutdown(True)
+        except SocketError as e:
+            if e.errno != errno.ENOTCONN:
+                self.log.write('{ctx} socket shutdown error: {e}'.format(ctx=self.log_context, e=e))
+        finally:
+            self.socket.close()
 
 
 class ConnectionClosedError(Exception):
@@ -809,6 +820,11 @@ class RFC6455WebSocket(WebSocket):
     def close(self, close_data=None):
         """Forcibly close the websocket; generally it is preferable to
         return from the handler method."""
-        self._send_closing_frame(close_data=close_data)
-        self.socket.shutdown(socket.SHUT_WR)
-        self.socket.close()
+        try:
+            self._send_closing_frame(close_data=close_data, ignore_send_errors=True)
+            self.socket.shutdown(socket.SHUT_WR)
+        except SocketError as e:
+            if e.errno != errno.ENOTCONN:
+                self.log.write('{ctx} socket shutdown error: {e}'.format(ctx=self.log_context, e=e))
+        finally:
+            self.socket.close()
