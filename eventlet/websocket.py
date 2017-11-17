@@ -367,6 +367,7 @@ class WebSocket(object):
         :param environ: The wsgi environment
         :param version: The WebSocket spec version to follow (default is 76)
         """
+        self.log = environ.get('wsgi.errors', sys.stderr)
         self.socket = sock
         self.origin = environ.get('HTTP_ORIGIN')
         self.protocol = environ.get('HTTP_WEBSOCKET_PROTOCOL')
@@ -374,6 +375,7 @@ class WebSocket(object):
         self.environ = environ
         self.version = version
         self.websocket_closed = False
+        self.client_host, self.client_port = self.socket.getpeername()
         self._buf = b""
         self._msgs = collections.deque()
         self._sendlock = semaphore.Semaphore()
@@ -470,10 +472,15 @@ class WebSocket(object):
         """Forcibly close the websocket; generally it is preferable to
         return from the handler method."""
         try:
-            self._send_closing_frame()
+            self._send_closing_frame(True)
             self.socket.shutdown(True)
-        except SocketError:
-            pass
+        except SocketError as e:
+            if e.errno == errno.ENOTCONN:
+                pass  # already disconnected just close socket
+            else:
+                self.log.write('Error on socket shutdown {0}:{1}: {2}'.format(
+                    self.client_host, self.client_port, e
+                ))
         finally:
             self.socket.close()
 
@@ -814,9 +821,16 @@ class RFC6455WebSocket(WebSocket):
         """Forcibly close the websocket; generally it is preferable to
         return from the handler method."""
         try:
-            self._send_closing_frame(close_data=close_data)
+            self._send_closing_frame(
+                close_data=close_data, ignore_send_errors=True
+            )
             self.socket.shutdown(socket.SHUT_WR)
-        except SocketError:
-            pass
+        except SocketError as e:
+            if e.errno == errno.ENOTCONN:
+                pass  # already disconnected just close socket
+            else:
+                self.log.write('Error on socket shutdown {0}:{1}: {2}'.format(
+                    self.client_host, self.client_port, e
+                ))
         finally:
             self.socket.close()
