@@ -469,12 +469,13 @@ class WebSocket(object):
     def close(self):
         """Forcibly close the websocket; generally it is preferable to
         return from the handler method."""
-        self._send_closing_frame()
         try:
+            self._send_closing_frame()
             self.socket.shutdown(True)
-        except OSError:
+        except SocketError:
             pass
-        self.socket.close()
+        finally:
+            self.socket.close()
 
 
 class ConnectionClosedError(Exception):
@@ -812,9 +813,10 @@ class RFC6455WebSocket(WebSocket):
     def close(self, close_data=None):
         """Forcibly close the websocket; generally it is preferable to
         return from the handler method."""
-        self._send_closing_frame(close_data=close_data)
         try:
+            self._send_closing_frame(close_data=close_data)
             self.socket.shutdown(socket.SHUT_WR)
-        except OSError:
+        except SocketError:
             pass
-        self.socket.close()
+        finally:
+            self.socket.close()
