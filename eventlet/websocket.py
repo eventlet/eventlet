@@ -375,7 +375,7 @@ class WebSocket(object):
         self.environ = environ
         self.version = version
         self.websocket_closed = False
-        self.client_host, self.client_port = self.socket.getpeername()
+        self.client_peer = self.socket.getpeername()
         self._buf = b""
         self._msgs = collections.deque()
         self._sendlock = semaphore.Semaphore()
@@ -475,12 +475,8 @@ class WebSocket(object):
             self._send_closing_frame(True)
             self.socket.shutdown(True)
         except SocketError as e:
-            if e.errno == errno.ENOTCONN:
-                pass  # already disconnected just close socket
-            else:
-                self.log.write('Error on socket shutdown {0}:{1}: {2}'.format(
-                    self.client_host, self.client_port, e
-                ))
+            if e.errno != errno.ENOTCONN:
+                self.log.write('Error on socket shutdown {0}: {1}'.format(self.client_peer, e))
         finally:
             self.socket.close()
 
@@ -821,16 +817,10 @@ class RFC6455WebSocket(WebSocket):
         """Forcibly close the websocket; generally it is preferable to
         return from the handler method."""
         try:
-            self._send_closing_frame(
-                close_data=close_data, ignore_send_errors=True
-            )
+            self._send_closing_frame(close_data=close_data, ignore_send_errors=True)
             self.socket.shutdown(socket.SHUT_WR)
         except SocketError as e:
-            if e.errno == errno.ENOTCONN:
-                pass  # already disconnected just close socket
-            else:
-                self.log.write('Error on socket shutdown {0}:{1}: {2}'.format(
-                    self.client_host, self.client_port, e
-                ))
+            if e.errno != errno.ENOTCONN:
+                self.log.write('Error on socket shutdown {0}: {1}'.format(self.client_peer, e))
         finally:
             self.socket.close()
