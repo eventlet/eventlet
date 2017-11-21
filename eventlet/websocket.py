@@ -375,7 +375,6 @@ class WebSocket(object):
         self.environ = environ
         self.version = version
         self.websocket_closed = False
-        self.client_peer = self.socket.getpeername()
         self._buf = b""
         self._msgs = collections.deque()
         self._sendlock = semaphore.Semaphore()
@@ -476,7 +475,9 @@ class WebSocket(object):
             self.socket.shutdown(True)
         except SocketError as e:
             if e.errno != errno.ENOTCONN:
-                self.log.write('Error on socket shutdown {0}: {1}'.format(self.client_peer, e))
+                self.log.write('Error on socket shutdown {0}:{1}: {2}'.format(
+                    self.environ.get('REMOTE_ADDR'), self.environ.get('REMOTE_PORT'), e
+                ))
         finally:
             self.socket.close()
 
@@ -821,6 +822,8 @@ class RFC6455WebSocket(WebSocket):
             self.socket.shutdown(socket.SHUT_WR)
         except SocketError as e:
             if e.errno != errno.ENOTCONN:
-                self.log.write('Error on socket shutdown {0}: {1}'.format(self.client_peer, e))
+                self.log.write('Error on socket shutdown {0}:{1}: {2}'.format(
+                    self.environ.get('REMOTE_ADDR'), self.environ.get('REMOTE_PORT'), e
+                ))
         finally:
             self.socket.close()
