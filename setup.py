@@ -15,7 +15,7 @@ setuptools.setup(
     url='http://eventlet.net',
     packages=setuptools.find_packages(exclude=['benchmarks', 'tests', 'tests.*']),
     install_requires=(
-        'enum-compat',
+        'enum34;python_version<"3.4"',
         'greenlet >= 0.3',
     ),
     zip_safe=False,
