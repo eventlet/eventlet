@@ -145,6 +145,12 @@ def skip_if_no_ssl(func):
             return skipped(func)
 
 
+def skip_if_no_ipv6(func):
+    if os.environ.get('eventlet_test_ipv6') != '1':
+        return skipped(func)
+    return func
+
+
 class TestIsTakingTooLong(Exception):
     """ Custom exception class to be raised when a test's runtime exceeds a limit. """
     pass

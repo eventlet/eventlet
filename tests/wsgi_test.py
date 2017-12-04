@@ -1402,6 +1402,7 @@ class TestHttpd(_TestBase):
         assert b'decoded: /a*b@@#3' in result.body
         assert b'raw: /a*b@%40%233' in result.body
 
+    @tests.skip_if_no_ipv6
     def test_ipv6(self):
         try:
             sock = eventlet.listen(('::1', 0), family=socket.AF_INET6)

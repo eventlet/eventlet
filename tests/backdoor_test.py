@@ -6,10 +6,10 @@ import eventlet
 from eventlet import backdoor
 from eventlet.green import socket
 
-from tests import LimitedTestCase, main
+import tests
 
 
-class BackdoorTest(LimitedTestCase):
+class BackdoorTest(tests.LimitedTestCase):
     def test_server(self):
         listener = socket.socket()
         listener.bind(('localhost', 0))
@@ -36,9 +36,10 @@ class BackdoorTest(LimitedTestCase):
         # wait for the console to discover that it's dead
         eventlet.sleep(0.1)
 
+    @tests.skip_if_no_ipv6
     def test_server_on_ipv6_socket(self):
         listener = socket.socket(socket.AF_INET6)
-        listener.bind(('::1', 0))
+        listener.bind(('::', 0))
         listener.listen(5)
         serv = eventlet.spawn(backdoor.backdoor_server, listener)
         client = socket.socket(socket.AF_INET6)
@@ -56,7 +57,3 @@ class BackdoorTest(LimitedTestCase):
         client = socket.socket(socket.AF_UNIX)
         client.connect(SOCKET_PATH)
         self._run_test_on_client_and_server(client, serv)
-
-
-if __name__ == '__main__':
-    main()

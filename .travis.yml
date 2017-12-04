@@ -1,10 +1,10 @@
-sudo: false
+sudo: required
 language: python
 
 matrix:
   fast_finish: true
   include:
-    - {python: 3.5, env: TOXENV=pep8}
+    - {python: 3.6, env: TOXENV=pep8}
 
     - {python: 2.6, env: TOXENV=py26-epolls}
     - {python: 2.6, env: TOXENV=py26-poll}
@@ -26,14 +26,21 @@ matrix:
     - {python: 3.5, env: TOXENV=py35-poll}
     - {python: 3.5, env: TOXENV=py35-selects}
 
-    - {python: 3.6-dev, env: TOXENV=py36-epolls}
-    - {python: 3.6-dev, env: TOXENV=py36-poll}
-    - {python: 3.6-dev, env: TOXENV=py36-selects}
+    - {python: 3.6, env: TOXENV=py36-epolls}
+    - {python: 3.6, env: TOXENV=py36-poll}
+    - {python: 3.6, env: TOXENV=py36-selects}
+
+    - {python: 3.7-dev, env: TOXENV=py37-epolls}
+    - {python: 3.7-dev, env: TOXENV=py37-poll}
+    - {python: 3.7-dev, env: TOXENV=py37-selects}
 
     - {python: pypy, env: TOXENV=pypy-epolls}
     - {python: pypy, env: TOXENV=pypy-poll}
     - {python: pypy, env: TOXENV=pypy-selects}
+
+    - {python: 3.6, env: TOXENV=ipv6}
   allow_failures:
+    - env: TOXENV=ipv6
     - env: TOXENV=py26-epolls
     - env: TOXENV=py26-poll
     - env: TOXENV=py26-selects
