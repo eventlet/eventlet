@@ -174,6 +174,20 @@ class TestHostsResolver(tests.LimitedTestCase):
         res = set(hr.getaliases('host.example.com'))
         assert res == set(['host'])
 
+    def test_hosts_case_insensitive(self):
+        name = 'example.com'
+        hr = _make_host_resolver()
+        hr.hosts.write(b'1.2.3.4 ExAmPlE.CoM\n')
+        hr.hosts.flush()
+        hr._load()
+
+        ans = hr.query(name)
+        rr = ans.rrset[0]
+        assert isinstance(rr, greendns.dns.rdtypes.IN.A.A)
+        assert rr.rdtype == dns.rdatatype.A
+        assert rr.rdclass == dns.rdataclass.IN
+        assert rr.address == '1.2.3.4'
+
 
 def _make_mock_base_resolver():
     """A mocked base resolver class"""
