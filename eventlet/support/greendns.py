@@ -222,9 +222,10 @@ class HostsResolver(object):
                 ipmap = self._v6
             else:
                 continue
-            cname = parts.pop(0)
+            cname = parts.pop(0).lower()
             ipmap[cname] = ip
             for alias in parts:
+                alias = alias.lower()
                 ipmap[alias] = ip
                 self._aliases[alias] = cname
         self._last_load = time.time()
@@ -251,6 +252,7 @@ class HostsResolver(object):
             qname = dns.name.from_text(qname)
         else:
             name = str(qname)
+        name = name.lower()
         rrset = dns.rrset.RRset(qname, rdclass, rdtype)
         rrset.ttl = self._last_load + self.interval - now
         if rdclass == dns.rdataclass.IN and rdtype == dns.rdatatype.A:
