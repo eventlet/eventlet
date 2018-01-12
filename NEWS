@@ -1,3 +1,26 @@
+0.22.0
+======
+* convenience: (SO_REUSEPORT) socket.error is not OSError on Python 2; Thanks to JacoFourie@github
+* convenience: SO_REUSEPORT is not available on WSL platform (Linux on Windows)
+* convenience: skip SO_REUSEPORT for bind on random port (0)
+* dns: reading /etc/hosts raised DeprecationWarning for universal lines on Python 3.4+; Thanks to Chris Kerr
+* green.openssl: Drop OpenSSL.rand support; Thanks to Haikel Guemar
+* green.subprocess: keep CalledProcessError identity; Thanks to Linbing@github
+* greendns: be explicit about expecting bytes from sock.recv; Thanks to Matt Bennett
+* greendns: early socket.timeout was breaking IO retry loops
+* GreenSocket.accept does not notify_open; Thanks to orishoshan
+* patcher: set locked RLocks' owner only when patching existing locks; Thanks to Quan Tian
+* patcher: workaround for monotonic "no suitable implementation"; Thanks to Geoffrey Thomas
+* queue: empty except was catching too much
+* socket: context manager support; Thanks to Miguel Grinberg
+* support: update monotonic 1.3 (5c0322dc559bf)
+* support: upgrade bundled dnspython to 1.16.0 (22e9de1d7957e) https://github.com/eventlet/eventlet/issues/427
+* websocket: fd leak when client did not close connection properly; Thanks to Konstantin Enchant
+* websocket: support permessage-deflate extension; Thanks to Costas Christofi and Peter Kovary
+* wsgi: close idle connections (also applies to websockets)
+* wsgi: deprecated options are one step closer to removal
+* wsgi: handle remote connection resets; Thanks to Stefan Nica
+
 0.21.0
 ======
 * New timeout error API: .is_timeout=True on exception object
