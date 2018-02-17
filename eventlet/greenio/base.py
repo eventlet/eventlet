@@ -482,11 +482,11 @@ except ImportError:
 
 
 def shutdown_safe(sock):
-    """ Shuts down the socket. This is a convenience method for
+    """Shuts down the socket. This is a convenience method for
     code that wants to gracefully handle regular sockets, SSL.Connection
-    sockets from PyOpenSSL and ssl.SSLSocket objects from Python 2.6
-    interchangeably.  Both types of ssl socket require a shutdown() before
-    close, but they have different arity on their shutdown method.
+    sockets from PyOpenSSL and ssl.SSLSocket objects from Python 2.7 interchangeably.
+    Both types of ssl socket require a shutdown() before close,
+    but they have different arity on their shutdown method.
 
     Regular sockets don't need a shutdown before close, but it doesn't hurt.
     """

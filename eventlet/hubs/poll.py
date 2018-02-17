@@ -17,11 +17,6 @@ class Hub(BaseHub):
     def __init__(self, clock=None):
         super(Hub, self).__init__(clock)
         self.poll = select.poll()
-        # poll.modify is new to 2.6
-        try:
-            self.modify = self.poll.modify
-        except AttributeError:
-            self.modify = self.poll.register
 
     def add(self, evtype, fileno, cb, tb, mac):
         listener = super(Hub, self).add(evtype, fileno, cb, tb, mac)
@@ -44,7 +39,7 @@ class Hub(BaseHub):
                     self.poll.register(fileno, mask)
                 else:
                     try:
-                        self.modify(fileno, mask)
+                        self.poll.modify(fileno, mask)
                     except (IOError, OSError):
                         self.poll.register(fileno, mask)
             else:

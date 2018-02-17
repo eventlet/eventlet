@@ -1,12 +1,9 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
 """The :mod:`zmq` module wraps the :class:`Socket` and :class:`Context`
-found in :mod:`pyzmq <zmq>` to be non blocking
+found in :mod:`pyzmq <zmq>` to be non blocking.
 """
-
-from __future__ import with_statement
-
 __zmq__ = __import__('zmq')
-from eventlet import hubs
+import eventlet.hubs
 from eventlet.patcher import slurp_properties
 from eventlet.support import greenlets as greenlet
 
@@ -40,7 +37,7 @@ class _QueueLock(object):
         self._waiters = deque()
         self._count = 0
         self._holder = None
-        self._hub = hubs.get_hub()
+        self._hub = eventlet.hubs.get_hub()
 
     def __nonzero__(self):
         return bool(self._count)
@@ -88,7 +85,7 @@ class _BlockedThread(object):
     def __init__(self):
         self._blocked_thread = None
         self._wakeupper = None
-        self._hub = hubs.get_hub()
+        self._hub = eventlet.hubs.get_hub()
 
     def __nonzero__(self):
         return self._blocked_thread is not None
@@ -242,7 +239,7 @@ class Socket(_Socket):
                 # avoid repeated wakeups
                 _Socket_getsockopt(self, EVENTS)
 
-        hub = hubs.get_hub()
+        hub = eventlet.hubs.get_hub()
         self.__dict__['_eventlet_listener'] = hub.add(hub.READ,
                                                       self.getsockopt(FD),
                                                       event,
@@ -254,7 +251,7 @@ class Socket(_Socket):
     def close(self, linger=None):
         super(Socket, self).close(linger)
         if self._eventlet_listener is not None:
-            hubs.get_hub().remove(self._eventlet_listener)
+            eventlet.hubs.get_hub().remove(self._eventlet_listener)
             self.__dict__['_eventlet_listener'] = None
             # wake any blocked threads
             self._eventlet_send_event.wake()

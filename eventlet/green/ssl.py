@@ -17,12 +17,7 @@ from eventlet.support import get_errno, PY33
 import six
 orig_socket = __import__('socket')
 socket = orig_socket.socket
-if sys.version_info >= (2, 7):
-    has_ciphers = True
-    timeout_exc = SSLError
-else:
-    has_ciphers = False
-    timeout_exc = orig_socket.timeout
+timeout_exc = SSLError
 
 __patched__ = [
     'SSLSocket', 'SSLContext', 'wrap_socket', 'sslwrap_simple',
@@ -216,13 +211,7 @@ class GreenSSLSocket(_original_sslsocket):
                 raise ValueError(
                     "non-zero flags not allowed in calls to %s() on %s" %
                     plain_socket_function.__name__, self.__class__)
-            if sys.version_info < (2, 7) and into:
-                # Python 2.6 SSLSocket.read() doesn't support reading into
-                # a given buffer so we need to emulate
-                data = self.read(nbytes)
-                buffer_[:len(data)] = data
-                read = len(data)
-            elif into:
+            if into:
                 read = self.read(nbytes, buffer_)
             else:
                 read = self.read(nbytes)
@@ -326,7 +315,7 @@ class GreenSSLSocket(_original_sslsocket):
         else:
             sslobj = sslwrap(self._sock, server_side, self.keyfile, self.certfile,
                              self.cert_reqs, self.ssl_version,
-                             self.ca_certs, *([self.ciphers] if has_ciphers else []))
+                             self.ca_certs, *self.ciphers)
 
         try:
             # This is added in Python 3.5, http://bugs.python.org/issue21965
