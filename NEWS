@@ -1,3 +1,10 @@
+0.22.1
+======
+* Fixed issue installing excess enum34 on Python3.4+ (rebuild with updated setuptools)
+* event: Event.wait() timeout=None argument to be compatible with upstream CPython
+* greendns: Treat /etc/hosts entries case-insensitive; Thanks to Ralf Haferkamp
+
+
 0.22.0
 ======
 * convenience: (SO_REUSEPORT) socket.error is not OSError on Python 2; Thanks to JacoFourie@github
