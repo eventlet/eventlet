@@ -1,26 +1,15 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+        <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>debug – Debugging tools for Eventlet &#8212; Eventlet 0.21.0 documentation</title>
-    
+    <title>debug – Debugging tools for Eventlet &#8212; Eventlet 0.22.1 documentation</title>
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../',
-        VERSION:     '0.21.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" src="../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
@@ -28,8 +17,7 @@
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="db_pool – DBAPI 2 database connection pooling" href="db_pool.html" />
     <link rel="prev" title="dagpool – Dependency-Driven Greenthreads" href="dagpool.html" /> 
-  </head>
-  <body role="document">
+  </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
@@ -45,7 +33,7 @@
         <li class="right" >
           <a href="dagpool.html" title="dagpool – Dependency-Driven Greenthreads"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.21.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.22.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &#187;</li> 
       </ul>
     </div>  
@@ -56,7 +44,7 @@
           <div class="body" role="main">
             
   <div class="section" id="module-eventlet.debug">
-<span id="debug-debugging-tools-for-eventlet"></span><h1><code class="xref py py-mod docutils literal"><span class="pre">debug</span></code> &#8211; Debugging tools for Eventlet<a class="headerlink" href="#module-eventlet.debug" title="Permalink to this headline">¶</a></h1>
+<span id="debug-debugging-tools-for-eventlet"></span><h1><code class="xref py py-mod docutils literal notranslate"><span class="pre">debug</span></code> – Debugging tools for Eventlet<a class="headerlink" href="#module-eventlet.debug" title="Permalink to this headline">¶</a></h1>
 <p>The debug module contains utilities and functions for better
 debugging Eventlet-powered applications.</p>
 <dl class="function">
@@ -76,16 +64,16 @@ about what code is being executed to stdout.</p>
 <dt id="eventlet.debug.format_hub_listeners">
 <code class="descclassname">eventlet.debug.</code><code class="descname">format_hub_listeners</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.debug.format_hub_listeners" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a formatted string of the current listeners on the current
-hub.  This can be useful in determining what&#8217;s going on in the event system,
-especially when used in conjunction with <a class="reference internal" href="#eventlet.debug.hub_listener_stacks" title="eventlet.debug.hub_listener_stacks"><code class="xref py py-func docutils literal"><span class="pre">hub_listener_stacks()</span></code></a>.</p>
+hub.  This can be useful in determining what’s going on in the event system,
+especially when used in conjunction with <a class="reference internal" href="#eventlet.debug.hub_listener_stacks" title="eventlet.debug.hub_listener_stacks"><code class="xref py py-func docutils literal notranslate"><span class="pre">hub_listener_stacks()</span></code></a>.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="eventlet.debug.format_hub_timers">
 <code class="descclassname">eventlet.debug.</code><code class="descname">format_hub_timers</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.debug.format_hub_timers" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a formatted string of the current timers on the current
-hub.  This can be useful in determining what&#8217;s going on in the event system,
-especially when used in conjunction with <a class="reference internal" href="#eventlet.debug.hub_timer_stacks" title="eventlet.debug.hub_timer_stacks"><code class="xref py py-func docutils literal"><span class="pre">hub_timer_stacks()</span></code></a>.</p>
+hub.  This can be useful in determining what’s going on in the event system,
+especially when used in conjunction with <a class="reference internal" href="#eventlet.debug.hub_timer_stacks" title="eventlet.debug.hub_timer_stacks"><code class="xref py py-func docutils literal notranslate"><span class="pre">hub_timer_stacks()</span></code></a>.</p>
 </dd></dl>
 
 <dl class="function">
@@ -94,7 +82,7 @@ especially when used in conjunction with <a class="reference internal" href="#ev
 <dd><p>Toggles whether or not the hub records the stack when clients register
 listeners on file descriptors.  This can be useful when trying to figure
 out what the hub is up to at any given moment.  To inspect the stacks
-of the current listeners, call <a class="reference internal" href="#eventlet.debug.format_hub_listeners" title="eventlet.debug.format_hub_listeners"><code class="xref py py-func docutils literal"><span class="pre">format_hub_listeners()</span></code></a> at critical
+of the current listeners, call <a class="reference internal" href="#eventlet.debug.format_hub_listeners" title="eventlet.debug.format_hub_listeners"><code class="xref py py-func docutils literal notranslate"><span class="pre">format_hub_listeners()</span></code></a> at critical
 junctures in the application logic.</p>
 </dd></dl>
 
@@ -119,16 +107,16 @@ it normally does.</p>
 <dd><p>Toggle prevention of multiple greenlets reading from a socket</p>
 <p>When multiple greenlets read from the same socket it is often hard
 to predict which greenlet will receive what data.  To achieve
-resource sharing consider using <code class="docutils literal"><span class="pre">eventlet.pools.Pool</span></code> instead.</p>
+resource sharing consider using <code class="docutils literal notranslate"><span class="pre">eventlet.pools.Pool</span></code> instead.</p>
 <p>But if you really know what you are doing you can change the state
-to <code class="docutils literal"><span class="pre">False</span></code> to stop the hub from protecting against this mistake.</p>
+to <code class="docutils literal notranslate"><span class="pre">False</span></code> to stop the hub from protecting against this mistake.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="eventlet.debug.hub_timer_stacks">
 <code class="descclassname">eventlet.debug.</code><code class="descname">hub_timer_stacks</code><span class="sig-paren">(</span><em>state=False</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.debug.hub_timer_stacks" title="Permalink to this definition">¶</a></dt>
 <dd><p>Toggles whether or not the hub records the stack when timers are set.
-To inspect the stacks of the current timers, call <a class="reference internal" href="#eventlet.debug.format_hub_timers" title="eventlet.debug.format_hub_timers"><code class="xref py py-func docutils literal"><span class="pre">format_hub_timers()</span></code></a>
+To inspect the stacks of the current timers, call <a class="reference internal" href="#eventlet.debug.format_hub_timers" title="eventlet.debug.format_hub_timers"><code class="xref py py-func docutils literal notranslate"><span class="pre">format_hub_timers()</span></code></a>
 at critical junctures in the application logic.</p>
 </dd></dl>
 
@@ -141,9 +129,9 @@ behavior in an application.</p>
 short timeout, and clearing the timeout every time the hub
 greenlet is resumed.  Therefore, any code that runs for a long
 time without yielding to the hub will get interrupted by the
-blocking detector (don&#8217;t use it in production!).</p>
+blocking detector (don’t use it in production!).</p>
 <p>The <em>resolution</em> argument governs how long the SIGALARM timeout
-waits in seconds.  The implementation uses <a class="reference external" href="https://docs.python.org/2/library/signal.html#signal.setitimer" title="(in Python v2.7)"><code class="xref py py-func docutils literal"><span class="pre">signal.setitimer()</span></code></a>
+waits in seconds.  The implementation uses <a class="reference external" href="https://docs.python.org/2/library/signal.html#signal.setitimer" title="(in Python v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">signal.setitimer()</span></code></a>
 and can be specified as a floating-point value.
 The shorter the resolution, the greater the chance of false
 positives.</p>
@@ -159,10 +147,10 @@ positives.</p>
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
   <p class="topless"><a href="dagpool.html"
-                        title="previous chapter"><code class="docutils literal"><span class="pre">dagpool</span></code> &#8211; Dependency-Driven Greenthreads</a></p>
+                        title="previous chapter"><code class="docutils literal notranslate"><span class="pre">dagpool</span></code> – Dependency-Driven Greenthreads</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="db_pool.html"
-                        title="next chapter"><code class="docutils literal"><span class="pre">db_pool</span></code> &#8211; DBAPI 2 database connection pooling</a></p>
+                        title="next chapter"><code class="docutils literal notranslate"><span class="pre">db_pool</span></code> – DBAPI 2 database connection pooling</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -172,12 +160,14 @@ positives.</p>
    </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -199,14 +189,14 @@ positives.</p>
         <li class="right" >
           <a href="dagpool.html" title="dagpool – Dependency-Driven Greenthreads"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.21.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.22.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &#187;</li> 
       </ul>
     </div>
 
     <div class="footer" role="contentinfo">
         &#169; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.0.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

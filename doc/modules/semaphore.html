@@ -1,26 +1,15 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+        <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>semaphore – Semaphore classes &#8212; Eventlet 0.21.0 documentation</title>
-    
+    <title>semaphore – Semaphore classes &#8212; Eventlet 0.22.1 documentation</title>
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../',
-        VERSION:     '0.21.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" src="../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
@@ -28,8 +17,7 @@
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="timeout – Universal Timeouts" href="timeout.html" />
     <link rel="prev" title="queue – Queue class" href="queue.html" /> 
-  </head>
-  <body role="document">
+  </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
@@ -45,7 +33,7 @@
         <li class="right" >
           <a href="queue.html" title="queue – Queue class"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.21.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.22.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &#187;</li> 
       </ul>
     </div>  
@@ -56,25 +44,25 @@
           <div class="body" role="main">
             
   <div class="section" id="semaphore-semaphore-classes">
-<h1><code class="xref py py-mod docutils literal"><span class="pre">semaphore</span></code> &#8211; Semaphore classes<a class="headerlink" href="#semaphore-semaphore-classes" title="Permalink to this headline">¶</a></h1>
+<h1><code class="xref py py-mod docutils literal notranslate"><span class="pre">semaphore</span></code> – Semaphore classes<a class="headerlink" href="#semaphore-semaphore-classes" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="eventlet.semaphore.Semaphore">
 <em class="property">class </em><code class="descclassname">eventlet.semaphore.</code><code class="descname">Semaphore</code><span class="sig-paren">(</span><em>value=1</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.semaphore.Semaphore" title="Permalink to this definition">¶</a></dt>
 <dd><p>An unbounded semaphore.
-Optionally initialize with a resource <em>count</em>, then <code class="xref py py-meth docutils literal"><span class="pre">acquire()</span></code> and
-<code class="xref py py-meth docutils literal"><span class="pre">release()</span></code> resources as needed. Attempting to <code class="xref py py-meth docutils literal"><span class="pre">acquire()</span></code> when
+Optionally initialize with a resource <em>count</em>, then <a class="reference internal" href="#eventlet.semaphore.Semaphore.acquire" title="eventlet.semaphore.Semaphore.acquire"><code class="xref py py-meth docutils literal notranslate"><span class="pre">acquire()</span></code></a> and
+<a class="reference internal" href="#eventlet.semaphore.Semaphore.release" title="eventlet.semaphore.Semaphore.release"><code class="xref py py-meth docutils literal notranslate"><span class="pre">release()</span></code></a> resources as needed. Attempting to <a class="reference internal" href="#eventlet.semaphore.Semaphore.acquire" title="eventlet.semaphore.Semaphore.acquire"><code class="xref py py-meth docutils literal notranslate"><span class="pre">acquire()</span></code></a> when
 <em>count</em> is zero suspends the calling greenthread until <em>count</em> becomes
 nonzero again.</p>
-<p>This is API-compatible with <a class="reference external" href="https://docs.python.org/2/library/threading.html#threading.Semaphore" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">threading.Semaphore</span></code></a>.</p>
+<p>This is API-compatible with <a class="reference external" href="https://docs.python.org/2/library/threading.html#threading.Semaphore" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">threading.Semaphore</span></code></a>.</p>
 <p>It is a context manager, and thus can be used in a with block:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sem</span> <span class="o">=</span> <span class="n">Semaphore</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sem</span> <span class="o">=</span> <span class="n">Semaphore</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="k">with</span> <span class="n">sem</span><span class="p">:</span>
   <span class="n">do_some_stuff</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>If not specified, <em>value</em> defaults to 1.</p>
 <p>It is possible to limit acquire time:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sem</span> <span class="o">=</span> <span class="n">Semaphore</span><span class="p">()</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sem</span> <span class="o">=</span> <span class="n">Semaphore</span><span class="p">()</span>
 <span class="n">ok</span> <span class="o">=</span> <span class="n">sem</span><span class="o">.</span><span class="n">acquire</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
 <span class="c1"># True if acquired, False if timed out.</span>
 </pre></div>
@@ -103,20 +91,20 @@ same thing as when called without arguments, and return true.</p>
 <dt id="eventlet.semaphore.Semaphore.balance">
 <code class="descname">balance</code><a class="headerlink" href="#eventlet.semaphore.Semaphore.balance" title="Permalink to this definition">¶</a></dt>
 <dd><p>An integer value that represents how many new calls to
-<code class="xref py py-meth docutils literal"><span class="pre">acquire()</span></code> or <code class="xref py py-meth docutils literal"><span class="pre">release()</span></code> would be needed to get the counter to
+<a class="reference internal" href="#eventlet.semaphore.Semaphore.acquire" title="eventlet.semaphore.Semaphore.acquire"><code class="xref py py-meth docutils literal notranslate"><span class="pre">acquire()</span></code></a> or <a class="reference internal" href="#eventlet.semaphore.Semaphore.release" title="eventlet.semaphore.Semaphore.release"><code class="xref py py-meth docutils literal notranslate"><span class="pre">release()</span></code></a> would be needed to get the counter to
 0.  If it is positive, then its value is the number of acquires that can
 happen before the next acquire would block.  If it is negative, it is
 the negative of the number of releases that would be required in order
 to make the counter 0 again (one more release would push the counter to
 1 and unblock acquirers).  It takes into account how many greenthreads
-are currently blocking in <code class="xref py py-meth docutils literal"><span class="pre">acquire()</span></code>.</p>
+are currently blocking in <a class="reference internal" href="#eventlet.semaphore.Semaphore.acquire" title="eventlet.semaphore.Semaphore.acquire"><code class="xref py py-meth docutils literal notranslate"><span class="pre">acquire()</span></code></a>.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="eventlet.semaphore.Semaphore.bounded">
 <code class="descname">bounded</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.semaphore.Semaphore.bounded" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns False; for consistency with
-<a class="reference internal" href="#eventlet.semaphore.CappedSemaphore" title="eventlet.semaphore.CappedSemaphore"><code class="xref py py-class docutils literal"><span class="pre">CappedSemaphore</span></code></a>.</p>
+<a class="reference internal" href="#eventlet.semaphore.CappedSemaphore" title="eventlet.semaphore.CappedSemaphore"><code class="xref py py-class docutils literal notranslate"><span class="pre">CappedSemaphore</span></code></a>.</p>
 </dd></dl>
 
 <dl class="method">
@@ -140,10 +128,10 @@ ignored</p>
 <dl class="class">
 <dt id="eventlet.semaphore.BoundedSemaphore">
 <em class="property">class </em><code class="descclassname">eventlet.semaphore.</code><code class="descname">BoundedSemaphore</code><span class="sig-paren">(</span><em>value=1</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.semaphore.BoundedSemaphore" title="Permalink to this definition">¶</a></dt>
-<dd><p>A bounded semaphore checks to make sure its current value doesn&#8217;t exceed
+<dd><p>A bounded semaphore checks to make sure its current value doesn’t exceed
 its initial value. If it does, ValueError is raised. In most situations
 semaphores are used to guard resources with limited capacity. If the
-semaphore is released too many times it&#8217;s a sign of a bug. If not given,
+semaphore is released too many times it’s a sign of a bug. If not given,
 <em>value</em> defaults to 1.</p>
 <dl class="method">
 <dt id="eventlet.semaphore.BoundedSemaphore.release">
@@ -152,7 +140,7 @@ semaphore is released too many times it&#8217;s a sign of a bug. If not given,
 the counter would exceed the initial value, raises ValueError.  When
 it was zero on entry and another thread is waiting for it to become
 larger than zero again, wake up that thread.</p>
-<p>The <em>blocking</em> argument is for consistency with <code class="xref py py-class docutils literal"><span class="pre">CappedSemaphore</span></code>
+<p>The <em>blocking</em> argument is for consistency with <a class="reference internal" href="#eventlet.semaphore.CappedSemaphore" title="eventlet.semaphore.CappedSemaphore"><code class="xref py py-class docutils literal notranslate"><span class="pre">CappedSemaphore</span></code></a>
 and is ignored</p>
 </dd></dl>
 
@@ -162,19 +150,19 @@ and is ignored</p>
 <dt id="eventlet.semaphore.CappedSemaphore">
 <em class="property">class </em><code class="descclassname">eventlet.semaphore.</code><code class="descname">CappedSemaphore</code><span class="sig-paren">(</span><em>count</em>, <em>limit</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.semaphore.CappedSemaphore" title="Permalink to this definition">¶</a></dt>
 <dd><p>A blockingly bounded semaphore.</p>
-<p>Optionally initialize with a resource <em>count</em>, then <code class="xref py py-meth docutils literal"><span class="pre">acquire()</span></code> and
-<code class="xref py py-meth docutils literal"><span class="pre">release()</span></code> resources as needed. Attempting to <code class="xref py py-meth docutils literal"><span class="pre">acquire()</span></code> when
+<p>Optionally initialize with a resource <em>count</em>, then <a class="reference internal" href="#eventlet.semaphore.CappedSemaphore.acquire" title="eventlet.semaphore.CappedSemaphore.acquire"><code class="xref py py-meth docutils literal notranslate"><span class="pre">acquire()</span></code></a> and
+<a class="reference internal" href="#eventlet.semaphore.CappedSemaphore.release" title="eventlet.semaphore.CappedSemaphore.release"><code class="xref py py-meth docutils literal notranslate"><span class="pre">release()</span></code></a> resources as needed. Attempting to <a class="reference internal" href="#eventlet.semaphore.CappedSemaphore.acquire" title="eventlet.semaphore.CappedSemaphore.acquire"><code class="xref py py-meth docutils literal notranslate"><span class="pre">acquire()</span></code></a> when
 <em>count</em> is zero suspends the calling greenthread until count becomes nonzero
-again.  Attempting to <code class="xref py py-meth docutils literal"><span class="pre">release()</span></code> after <em>count</em> has reached <em>limit</em>
+again.  Attempting to <a class="reference internal" href="#eventlet.semaphore.CappedSemaphore.release" title="eventlet.semaphore.CappedSemaphore.release"><code class="xref py py-meth docutils literal notranslate"><span class="pre">release()</span></code></a> after <em>count</em> has reached <em>limit</em>
 suspends the calling greenthread until <em>count</em> becomes less than <em>limit</em>
 again.</p>
-<p>This has the same API as <a class="reference external" href="https://docs.python.org/2/library/threading.html#threading.Semaphore" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">threading.Semaphore</span></code></a>, though its
+<p>This has the same API as <a class="reference external" href="https://docs.python.org/2/library/threading.html#threading.Semaphore" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">threading.Semaphore</span></code></a>, though its
 semantics and behavior differ subtly due to the upper limit on calls
-to <code class="xref py py-meth docutils literal"><span class="pre">release()</span></code>.  It is <strong>not</strong> compatible with
-<code class="xref py py-class docutils literal"><span class="pre">threading.BoundedSemaphore</span></code> because it blocks when reaching <em>limit</em>
+to <a class="reference internal" href="#eventlet.semaphore.CappedSemaphore.release" title="eventlet.semaphore.CappedSemaphore.release"><code class="xref py py-meth docutils literal notranslate"><span class="pre">release()</span></code></a>.  It is <strong>not</strong> compatible with
+<code class="xref py py-class docutils literal notranslate"><span class="pre">threading.BoundedSemaphore</span></code> because it blocks when reaching <em>limit</em>
 instead of raising a ValueError.</p>
 <p>It is a context manager, and thus can be used in a with block:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sem</span> <span class="o">=</span> <span class="n">CappedSemaphore</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sem</span> <span class="o">=</span> <span class="n">CappedSemaphore</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="k">with</span> <span class="n">sem</span><span class="p">:</span>
   <span class="n">do_some_stuff</span><span class="p">()</span>
 </pre></div>
@@ -202,13 +190,13 @@ same thing as when called without arguments, and return true.</p>
 <dt id="eventlet.semaphore.CappedSemaphore.balance">
 <code class="descname">balance</code><a class="headerlink" href="#eventlet.semaphore.CappedSemaphore.balance" title="Permalink to this definition">¶</a></dt>
 <dd><p>An integer value that represents how many new calls to
-<code class="xref py py-meth docutils literal"><span class="pre">acquire()</span></code> or <code class="xref py py-meth docutils literal"><span class="pre">release()</span></code> would be needed to get the counter to
+<a class="reference internal" href="#eventlet.semaphore.CappedSemaphore.acquire" title="eventlet.semaphore.CappedSemaphore.acquire"><code class="xref py py-meth docutils literal notranslate"><span class="pre">acquire()</span></code></a> or <a class="reference internal" href="#eventlet.semaphore.CappedSemaphore.release" title="eventlet.semaphore.CappedSemaphore.release"><code class="xref py py-meth docutils literal notranslate"><span class="pre">release()</span></code></a> would be needed to get the counter to
 0.  If it is positive, then its value is the number of acquires that can
 happen before the next acquire would block.  If it is negative, it is
 the negative of the number of releases that would be required in order
 to make the counter 0 again (one more release would push the counter to
 1 and unblock acquirers).  It takes into account how many greenthreads
-are currently blocking in <code class="xref py py-meth docutils literal"><span class="pre">acquire()</span></code> and <code class="xref py py-meth docutils literal"><span class="pre">release()</span></code>.</p>
+are currently blocking in <a class="reference internal" href="#eventlet.semaphore.CappedSemaphore.acquire" title="eventlet.semaphore.CappedSemaphore.acquire"><code class="xref py py-meth docutils literal notranslate"><span class="pre">acquire()</span></code></a> and <a class="reference internal" href="#eventlet.semaphore.CappedSemaphore.release" title="eventlet.semaphore.CappedSemaphore.release"><code class="xref py py-meth docutils literal notranslate"><span class="pre">release()</span></code></a>.</p>
 </dd></dl>
 
 <dl class="method">
@@ -227,8 +215,8 @@ are currently blocking in <code class="xref py py-meth docutils literal"><span c
 <dt id="eventlet.semaphore.CappedSemaphore.release">
 <code class="descname">release</code><span class="sig-paren">(</span><em>blocking=True</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.semaphore.CappedSemaphore.release" title="Permalink to this definition">¶</a></dt>
 <dd><p>Release a semaphore.  In this class, this behaves very much like
-an <code class="xref py py-meth docutils literal"><span class="pre">acquire()</span></code> but in the opposite direction.</p>
-<p>Imagine the docs of <code class="xref py py-meth docutils literal"><span class="pre">acquire()</span></code> here, but with every direction
+an <a class="reference internal" href="#eventlet.semaphore.CappedSemaphore.acquire" title="eventlet.semaphore.CappedSemaphore.acquire"><code class="xref py py-meth docutils literal notranslate"><span class="pre">acquire()</span></code></a> but in the opposite direction.</p>
+<p>Imagine the docs of <a class="reference internal" href="#eventlet.semaphore.CappedSemaphore.acquire" title="eventlet.semaphore.CappedSemaphore.acquire"><code class="xref py py-meth docutils literal notranslate"><span class="pre">acquire()</span></code></a> here, but with every direction
 reversed.  When calling this method, it will block if the internal
 counter is greater than or equal to <em>limit</em>.</p>
 </dd></dl>
@@ -245,10 +233,10 @@ counter is greater than or equal to <em>limit</em>.</p>
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
   <p class="topless"><a href="queue.html"
-                        title="previous chapter"><code class="docutils literal"><span class="pre">queue</span></code> &#8211; Queue class</a></p>
+                        title="previous chapter"><code class="docutils literal notranslate"><span class="pre">queue</span></code> – Queue class</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="timeout.html"
-                        title="next chapter"><code class="docutils literal"><span class="pre">timeout</span></code> &#8211; Universal Timeouts</a></p>
+                        title="next chapter"><code class="docutils literal notranslate"><span class="pre">timeout</span></code> – Universal Timeouts</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -258,12 +246,14 @@ counter is greater than or equal to <em>limit</em>.</p>
    </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -285,14 +275,14 @@ counter is greater than or equal to <em>limit</em>.</p>
         <li class="right" >
           <a href="queue.html" title="queue – Queue class"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.21.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.22.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &#187;</li> 
       </ul>
     </div>
 
     <div class="footer" role="contentinfo">
         &#169; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.0.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

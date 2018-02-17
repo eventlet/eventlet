@@ -1,26 +1,15 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+        <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>db_pool – DBAPI 2 database connection pooling &#8212; Eventlet 0.21.0 documentation</title>
-    
+    <title>db_pool – DBAPI 2 database connection pooling &#8212; Eventlet 0.22.1 documentation</title>
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../',
-        VERSION:     '0.21.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" src="../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
@@ -28,8 +17,7 @@
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="event – Cross-greenthread primitive" href="event.html" />
     <link rel="prev" title="debug – Debugging tools for Eventlet" href="debug.html" /> 
-  </head>
-  <body role="document">
+  </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
@@ -45,7 +33,7 @@
         <li class="right" >
           <a href="debug.html" title="debug – Debugging tools for Eventlet"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.21.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.22.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &#187;</li> 
       </ul>
     </div>  
@@ -56,51 +44,51 @@
           <div class="body" role="main">
             
   <div class="section" id="db-pool-dbapi-2-database-connection-pooling">
-<h1><code class="xref py py-mod docutils literal"><span class="pre">db_pool</span></code> &#8211; DBAPI 2 database connection pooling<a class="headerlink" href="#db-pool-dbapi-2-database-connection-pooling" title="Permalink to this headline">¶</a></h1>
+<h1><code class="xref py py-mod docutils literal notranslate"><span class="pre">db_pool</span></code> – DBAPI 2 database connection pooling<a class="headerlink" href="#db-pool-dbapi-2-database-connection-pooling" title="Permalink to this headline">¶</a></h1>
 <p>The db_pool module is useful for managing database connections.  It provides three primary benefits: cooperative yielding during database operations, concurrency limiting to a database host, and connection reuse.  db_pool is intended to be database-agnostic, compatible with any DB-API 2.0 database module.</p>
 <p><em>It has currently been tested and used with both MySQLdb and psycopg2.</em></p>
 <p>A ConnectionPool object represents a pool of connections open to a particular database.  The arguments to the constructor include the database-software-specific module, the host name, and the credentials required for authentication.  After construction, the ConnectionPool object decides when to create and sever connections with the target database.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">MySQLdb</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">MySQLdb</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">cp</span> <span class="o">=</span> <span class="n">ConnectionPool</span><span class="p">(</span><span class="n">MySQLdb</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="s1">&#39;localhost&#39;</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="s1">&#39;root&#39;</span><span class="p">,</span> <span class="n">passwd</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Once you have this pool object, you connect to the database by calling <code class="xref py py-meth docutils literal"><span class="pre">get()</span></code> on it:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">conn</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+<p>Once you have this pool object, you connect to the database by calling <code class="xref py py-meth docutils literal notranslate"><span class="pre">get()</span></code> on it:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">conn</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>This call may either create a new connection, or reuse an existing open connection, depending on whether it has one open already or not.  You can then use the connection object as normal.  When done, you must return the connection to the pool:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">conn</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">conn</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">try</span><span class="p">:</span>
 <span class="gp">... </span>    <span class="n">result</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;SELECT NOW()&#39;</span><span class="p">)</span>
 <span class="gp">... </span><span class="k">finally</span><span class="p">:</span>
 <span class="gp">... </span>    <span class="n">cp</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>After you&#8217;ve returned a connection object to the pool, it becomes useless and will raise exceptions if any of its methods are called.</p>
+<p>After you’ve returned a connection object to the pool, it becomes useless and will raise exceptions if any of its methods are called.</p>
 <div class="section" id="constructor-arguments">
 <h2>Constructor Arguments<a class="headerlink" href="#constructor-arguments" title="Permalink to this headline">¶</a></h2>
 <p>In addition to the database credentials, there are a bunch of keyword constructor arguments to the ConnectionPool that are useful.</p>
 <ul class="simple">
-<li>min_size, max_size : The normal Pool arguments.  max_size is the most important constructor argument &#8211; it determines the number of concurrent connections can be open to the destination database.  min_size is not very useful.</li>
-<li>max_idle : Connections are only allowed to remain unused in the pool for a limited amount of time.  An asynchronous timer periodically wakes up and closes any connections in the pool that have been idle for longer than they are supposed to be.  Without this parameter, the pool would tend to have a &#8216;high-water mark&#8217;, where the number of connections open at a given time corresponds to the peak historical demand.  This number only has effect on the connections in the pool itself &#8211; if you take a connection out of the pool, you can hold on to it for as long as you want.  If this is set to 0, every connection is closed upon its return to the pool.</li>
-<li>max_age : The lifespan of a connection.  This works much like max_idle, but the timer is measured from the connection&#8217;s creation time, and is tracked throughout the connection&#8217;s life.  This means that if you take a connection out of the pool and hold on to it for some lengthy operation that exceeds max_age, upon putting the connection back in to the pool, it will be closed.  Like max_idle, max_age will not close connections that are taken out of the pool, and, if set to 0, will cause every connection to be closed when put back in the pool.</li>
-<li>connect_timeout : How long to wait before raising an exception on connect().  If the database module&#8217;s connect() method takes too long, it raises a ConnectTimeout exception from the get() method on the pool.</li>
+<li>min_size, max_size : The normal Pool arguments.  max_size is the most important constructor argument – it determines the number of concurrent connections can be open to the destination database.  min_size is not very useful.</li>
+<li>max_idle : Connections are only allowed to remain unused in the pool for a limited amount of time.  An asynchronous timer periodically wakes up and closes any connections in the pool that have been idle for longer than they are supposed to be.  Without this parameter, the pool would tend to have a ‘high-water mark’, where the number of connections open at a given time corresponds to the peak historical demand.  This number only has effect on the connections in the pool itself – if you take a connection out of the pool, you can hold on to it for as long as you want.  If this is set to 0, every connection is closed upon its return to the pool.</li>
+<li>max_age : The lifespan of a connection.  This works much like max_idle, but the timer is measured from the connection’s creation time, and is tracked throughout the connection’s life.  This means that if you take a connection out of the pool and hold on to it for some lengthy operation that exceeds max_age, upon putting the connection back in to the pool, it will be closed.  Like max_idle, max_age will not close connections that are taken out of the pool, and, if set to 0, will cause every connection to be closed when put back in the pool.</li>
+<li>connect_timeout : How long to wait before raising an exception on connect().  If the database module’s connect() method takes too long, it raises a ConnectTimeout exception from the get() method on the pool.</li>
 </ul>
 </div>
 <div class="section" id="databaseconnector">
 <h2>DatabaseConnector<a class="headerlink" href="#databaseconnector" title="Permalink to this headline">¶</a></h2>
-<p>If you want to connect to multiple databases easily (and who doesn&#8217;t), the DatabaseConnector is for you.  It&#8217;s a pool of pools, containing a ConnectionPool for every host you connect to.</p>
+<p>If you want to connect to multiple databases easily (and who doesn’t), the DatabaseConnector is for you.  It’s a pool of pools, containing a ConnectionPool for every host you connect to.</p>
 <p>The constructor arguments are:</p>
 <ul class="simple">
 <li>module : database module, e.g. MySQLdb.  This is simply passed through to the ConnectionPool.</li>
 <li>credentials : A dictionary, or dictionary-alike, mapping hostname to connection-argument-dictionary.  This is used for the constructors of the ConnectionPool objects.  Example:</li>
 </ul>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dc</span> <span class="o">=</span> <span class="n">DatabaseConnector</span><span class="p">(</span><span class="n">MySQLdb</span><span class="p">,</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dc</span> <span class="o">=</span> <span class="n">DatabaseConnector</span><span class="p">(</span><span class="n">MySQLdb</span><span class="p">,</span>
 <span class="gp">... </span>     <span class="p">{</span><span class="s1">&#39;db.internal.example.com&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;user&#39;</span><span class="p">:</span> <span class="s1">&#39;internal&#39;</span><span class="p">,</span> <span class="s1">&#39;passwd&#39;</span><span class="p">:</span> <span class="s1">&#39;s33kr1t&#39;</span><span class="p">},</span>
 <span class="gp">... </span>      <span class="s1">&#39;localhost&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;user&#39;</span><span class="p">:</span> <span class="s1">&#39;root&#39;</span><span class="p">,</span> <span class="s1">&#39;passwd&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">}})</span>
 </pre></div>
 </div>
-<p>If the credentials contain a host named &#8216;default&#8217;, then the value for &#8216;default&#8217; is used whenever trying to connect to a host that has no explicit entry in the database.  This is useful if there is some pool of hosts that share arguments.</p>
+<p>If the credentials contain a host named ‘default’, then the value for ‘default’ is used whenever trying to connect to a host that has no explicit entry in the database.  This is useful if there is some pool of hosts that share arguments.</p>
 <ul class="simple">
 <li>conn_pool : The connection pool class to use.  Defaults to db_pool.ConnectionPool.</li>
 </ul>
@@ -119,17 +107,32 @@ and removes all references to them.</p>
 <dl class="method">
 <dt id="eventlet.db_pool.BaseConnectionPool.get">
 <code class="descname">get</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.BaseConnectionPool.get" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Return an item from the pool, when one is available.  This may
+cause the calling greenthread to block.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.BaseConnectionPool.item">
 <code class="descname">item</code><span class="sig-paren">(</span><em>cleanup=&lt;object object&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.BaseConnectionPool.item" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Get an object out of the pool, for use with with statement.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">eventlet</span> <span class="k">import</span> <span class="n">pools</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pool</span> <span class="o">=</span> <span class="n">pools</span><span class="o">.</span><span class="n">TokenPool</span><span class="p">(</span><span class="n">max_size</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">pool</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="k">as</span> <span class="n">obj</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;got token&quot;</span><span class="p">)</span>
+<span class="gp">...</span>
+<span class="go">got token</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pool</span><span class="o">.</span><span class="n">free</span><span class="p">()</span>
+<span class="go">4</span>
+</pre></div>
+</div>
+</dd></dl>
 
 <dl class="method">
 <dt id="eventlet.db_pool.BaseConnectionPool.put">
 <code class="descname">put</code><span class="sig-paren">(</span><em>conn</em>, <em>cleanup=&lt;object object&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.BaseConnectionPool.put" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Put an item back into the pool, when done.  This may
+cause the putting greenthread to block.</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -141,7 +144,7 @@ and removes all references to them.</p>
 <dl class="attribute">
 <dt id="eventlet.db_pool.ConnectionPool">
 <code class="descclassname">eventlet.db_pool.</code><code class="descname">ConnectionPool</code><a class="headerlink" href="#eventlet.db_pool.ConnectionPool" title="Permalink to this definition">¶</a></dt>
-<dd><p>alias of <a class="reference internal" href="#eventlet.db_pool.TpooledConnectionPool" title="eventlet.db_pool.TpooledConnectionPool"><code class="xref py py-class docutils literal"><span class="pre">TpooledConnectionPool</span></code></a></p>
+<dd><p>alias of <a class="reference internal" href="#eventlet.db_pool.TpooledConnectionPool" title="eventlet.db_pool.TpooledConnectionPool"><code class="xref py py-class docutils literal notranslate"><span class="pre">eventlet.db_pool.TpooledConnectionPool</span></code></a></p>
 </dd></dl>
 
 <dl class="class">
@@ -332,13 +335,13 @@ connection pools on a per-host basis.</p>
 <em class="property">class </em><code class="descclassname">eventlet.db_pool.</code><code class="descname">PooledConnectionWrapper</code><span class="sig-paren">(</span><em>baseconn</em>, <em>pool</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.PooledConnectionWrapper" title="Permalink to this definition">¶</a></dt>
 <dd><p>A connection wrapper where:
 - the close method returns the connection to the pool instead of closing it directly
-- <code class="docutils literal"><span class="pre">bool(conn)</span></code> returns a reasonable value
+- <code class="docutils literal notranslate"><span class="pre">bool(conn)</span></code> returns a reasonable value
 - returns itself to the pool if it gets garbage collected</p>
 <dl class="method">
 <dt id="eventlet.db_pool.PooledConnectionWrapper.close">
 <code class="descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.PooledConnectionWrapper.close" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the connection to the pool, and remove the
-reference to it so that you can&#8217;t use it again through this
+reference to it so that you can’t use it again through this
 wrapper object.</p>
 </dd></dl>
 
@@ -356,14 +359,26 @@ wrapper object.</p>
 <dl class="method">
 <dt id="eventlet.db_pool.RawConnectionPool.create">
 <code class="descname">create</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.RawConnectionPool.create" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Generate a new pool item.  In order for the pool to
+function, either this method must be overriden in a subclass
+or the pool must be constructed with the <cite>create</cite> argument.
+It accepts no arguments and returns a single instance of
+whatever thing the pool is supposed to contain.</p>
+<p>In general, <a class="reference internal" href="#eventlet.db_pool.RawConnectionPool.create" title="eventlet.db_pool.RawConnectionPool.create"><code class="xref py py-meth docutils literal notranslate"><span class="pre">create()</span></code></a> is called whenever the pool exceeds its
+previous high-water mark of concurrently-checked-out-items.  In other
+words, in a new pool with <em>min_size</em> of 0, the very first call
+to <code class="xref py py-meth docutils literal notranslate"><span class="pre">get()</span></code> will result in a call to <a class="reference internal" href="#eventlet.db_pool.RawConnectionPool.create" title="eventlet.db_pool.RawConnectionPool.create"><code class="xref py py-meth docutils literal notranslate"><span class="pre">create()</span></code></a>.  If the first
+caller calls <code class="xref py py-meth docutils literal notranslate"><span class="pre">put()</span></code> before some other caller calls <code class="xref py py-meth docutils literal notranslate"><span class="pre">get()</span></code>,
+then the first item will be returned, and <a class="reference internal" href="#eventlet.db_pool.RawConnectionPool.create" title="eventlet.db_pool.RawConnectionPool.create"><code class="xref py py-meth docutils literal notranslate"><span class="pre">create()</span></code></a> will not be
+called a second time.</p>
+</dd></dl>
 
 </dd></dl>
 
 <dl class="class">
 <dt id="eventlet.db_pool.TpooledConnectionPool">
 <em class="property">class </em><code class="descclassname">eventlet.db_pool.</code><code class="descname">TpooledConnectionPool</code><span class="sig-paren">(</span><em>db_module</em>, <em>min_size=0</em>, <em>max_size=4</em>, <em>max_idle=10</em>, <em>max_age=30</em>, <em>connect_timeout=5</em>, <em>cleanup=&lt;function cleanup_rollback&gt;</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.TpooledConnectionPool" title="Permalink to this definition">¶</a></dt>
-<dd><p>A pool which gives out <a class="reference internal" href="../threading.html#eventlet.tpool.Proxy" title="eventlet.tpool.Proxy"><code class="xref py py-class docutils literal"><span class="pre">Proxy</span></code></a>-based database
+<dd><p>A pool which gives out <a class="reference internal" href="../threading.html#eventlet.tpool.Proxy" title="eventlet.tpool.Proxy"><code class="xref py py-class docutils literal notranslate"><span class="pre">Proxy</span></code></a>-based database
 connections.</p>
 <dl class="classmethod">
 <dt id="eventlet.db_pool.TpooledConnectionPool.connect">
@@ -373,7 +388,19 @@ connections.</p>
 <dl class="method">
 <dt id="eventlet.db_pool.TpooledConnectionPool.create">
 <code class="descname">create</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.TpooledConnectionPool.create" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Generate a new pool item.  In order for the pool to
+function, either this method must be overriden in a subclass
+or the pool must be constructed with the <cite>create</cite> argument.
+It accepts no arguments and returns a single instance of
+whatever thing the pool is supposed to contain.</p>
+<p>In general, <a class="reference internal" href="#eventlet.db_pool.TpooledConnectionPool.create" title="eventlet.db_pool.TpooledConnectionPool.create"><code class="xref py py-meth docutils literal notranslate"><span class="pre">create()</span></code></a> is called whenever the pool exceeds its
+previous high-water mark of concurrently-checked-out-items.  In other
+words, in a new pool with <em>min_size</em> of 0, the very first call
+to <code class="xref py py-meth docutils literal notranslate"><span class="pre">get()</span></code> will result in a call to <a class="reference internal" href="#eventlet.db_pool.TpooledConnectionPool.create" title="eventlet.db_pool.TpooledConnectionPool.create"><code class="xref py py-meth docutils literal notranslate"><span class="pre">create()</span></code></a>.  If the first
+caller calls <code class="xref py py-meth docutils literal notranslate"><span class="pre">put()</span></code> before some other caller calls <code class="xref py py-meth docutils literal notranslate"><span class="pre">get()</span></code>,
+then the first item will be returned, and <a class="reference internal" href="#eventlet.db_pool.TpooledConnectionPool.create" title="eventlet.db_pool.TpooledConnectionPool.create"><code class="xref py py-meth docutils literal notranslate"><span class="pre">create()</span></code></a> will not be
+called a second time.</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -393,7 +420,7 @@ connections.</p>
         <div class="sphinxsidebarwrapper">
   <h3><a href="../index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#"><code class="docutils literal"><span class="pre">db_pool</span></code> &#8211; DBAPI 2 database connection pooling</a><ul>
+<li><a class="reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">db_pool</span></code> – DBAPI 2 database connection pooling</a><ul>
 <li><a class="reference internal" href="#constructor-arguments">Constructor Arguments</a></li>
 <li><a class="reference internal" href="#databaseconnector">DatabaseConnector</a></li>
 </ul>
@@ -402,10 +429,10 @@ connections.</p>
 
   <h4>Previous topic</h4>
   <p class="topless"><a href="debug.html"
-                        title="previous chapter"><code class="docutils literal"><span class="pre">debug</span></code> &#8211; Debugging tools for Eventlet</a></p>
+                        title="previous chapter"><code class="docutils literal notranslate"><span class="pre">debug</span></code> – Debugging tools for Eventlet</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="event.html"
-                        title="next chapter"><code class="docutils literal"><span class="pre">event</span></code> &#8211; Cross-greenthread primitive</a></p>
+                        title="next chapter"><code class="docutils literal notranslate"><span class="pre">event</span></code> – Cross-greenthread primitive</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -415,12 +442,14 @@ connections.</p>
    </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -442,14 +471,14 @@ connections.</p>
         <li class="right" >
           <a href="debug.html" title="debug – Debugging tools for Eventlet"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.21.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.22.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &#187;</li> 
       </ul>
     </div>
 
     <div class="footer" role="contentinfo">
         &#169; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.0.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
