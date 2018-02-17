@@ -27,7 +27,6 @@ print('pass')
     )
 
 
-@tests.skip_with_pyevent
 def test_tpool_size():
     expected = '40'
     normal = '20'

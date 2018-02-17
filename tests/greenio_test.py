@@ -516,7 +516,6 @@ class TestGreenSocket(tests.LimitedTestCase):
         server.close()
         client.close()
 
-    @tests.skip_with_pyevent
     def test_raised_multiple_readers(self):
         debug.hub_prevent_multiple_readers(True)
 
@@ -538,7 +537,6 @@ class TestGreenSocket(tests.LimitedTestCase):
         s.sendall(b'b')
         a.wait()
 
-    @tests.skip_with_pyevent
     @tests.skip_if(using_epoll_hub)
     @tests.skip_if(using_kqueue_hub)
     def test_closure(self):
@@ -860,7 +858,6 @@ class TestGreenPipe(tests.LimitedTestCase):
 class TestGreenIoLong(tests.LimitedTestCase):
     TEST_TIMEOUT = 10  # the test here might take a while depending on the OS
 
-    @tests.skip_with_pyevent
     def test_multiple_readers(self):
         debug.hub_prevent_multiple_readers(False)
         recvsize = 2 * min_buf_size()

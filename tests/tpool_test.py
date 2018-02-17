@@ -47,7 +47,6 @@ class TestTpool(tests.LimitedTestCase):
         tpool.killall()
         super(TestTpool, self).tearDown()
 
-    @tests.skip_with_pyevent
     def test_wrap_tuple(self):
         my_tuple = (1, 2)
         prox = tpool.Proxy(my_tuple)
@@ -55,7 +54,6 @@ class TestTpool(tests.LimitedTestCase):
         self.assertEqual(prox[1], 2)
         self.assertEqual(len(my_tuple), 2)
 
-    @tests.skip_with_pyevent
     def test_wrap_string(self):
         my_object = "whatever"
         prox = tpool.Proxy(my_object)
@@ -63,7 +61,6 @@ class TestTpool(tests.LimitedTestCase):
         self.assertEqual(len(my_object), len(prox))
         self.assertEqual(my_object.join(['a', 'b']), prox.join(['a', 'b']))
 
-    @tests.skip_with_pyevent
     def test_wrap_uniterable(self):
         prox = tpool.Proxy([])
 
@@ -76,7 +73,6 @@ class TestTpool(tests.LimitedTestCase):
         self.assertRaises(IndexError, index)
         self.assertRaises(TypeError, key)
 
-    @tests.skip_with_pyevent
     def test_wrap_dict(self):
         my_object = {'a': 1}
         prox = tpool.Proxy(my_object)
@@ -85,7 +81,6 @@ class TestTpool(tests.LimitedTestCase):
         self.assertEqual(str(my_object), str(prox))
         self.assertEqual(repr(my_object), repr(prox))
 
-    @tests.skip_with_pyevent
     def test_wrap_module_class(self):
         prox = tpool.Proxy(re)
         self.assertEqual(tpool.Proxy, type(prox))
@@ -93,7 +88,6 @@ class TestTpool(tests.LimitedTestCase):
         self.assertEqual(exp.groups, 3)
         assert repr(prox.compile)
 
-    @tests.skip_with_pyevent
     def test_wrap_eq(self):
         prox = tpool.Proxy(re)
         exp1 = prox.compile('.')
@@ -102,12 +96,10 @@ class TestTpool(tests.LimitedTestCase):
         exp3 = prox.compile('/')
         assert exp1 != exp3
 
-    @tests.skip_with_pyevent
     def test_wrap_ints(self):
         p = tpool.Proxy(4)
         assert p == 4
 
-    @tests.skip_with_pyevent
     def test_wrap_hash(self):
         prox1 = tpool.Proxy('' + 'A')
         prox2 = tpool.Proxy('A' + '')
@@ -118,7 +110,6 @@ class TestTpool(tests.LimitedTestCase):
         proxList = tpool.Proxy([])
         self.assertRaises(TypeError, hash, proxList)
 
-    @tests.skip_with_pyevent
     def test_wrap_nonzero(self):
         prox = tpool.Proxy(re)
         exp1 = prox.compile('.')
@@ -126,7 +117,6 @@ class TestTpool(tests.LimitedTestCase):
         prox2 = tpool.Proxy([1, 2, 3])
         assert bool(prox2)
 
-    @tests.skip_with_pyevent
     def test_multiple_wraps(self):
         prox1 = tpool.Proxy(re)
         prox2 = tpool.Proxy(re)
@@ -135,18 +125,15 @@ class TestTpool(tests.LimitedTestCase):
         del x2
         prox2.compile('.')
 
-    @tests.skip_with_pyevent
     def test_wrap_getitem(self):
         prox = tpool.Proxy([0, 1, 2])
         self.assertEqual(prox[0], 0)
 
-    @tests.skip_with_pyevent
     def test_wrap_setitem(self):
         prox = tpool.Proxy([0, 1, 2])
         prox[1] = 2
         self.assertEqual(prox[1], 2)
 
-    @tests.skip_with_pyevent
     def test_wrap_iterator(self):
         self.reset_timeout(2)
         prox = tpool.Proxy(range(10))
@@ -155,7 +142,6 @@ class TestTpool(tests.LimitedTestCase):
             result.append(i)
         self.assertEqual(list(range(10)), result)
 
-    @tests.skip_with_pyevent
     def test_wrap_iterator2(self):
         self.reset_timeout(5)  # might take a while due to imprecise sleeping
 
@@ -184,7 +170,6 @@ class TestTpool(tests.LimitedTestCase):
         assert counter[0] > 10, counter[0]
         gt.kill()
 
-    @tests.skip_with_pyevent
     def test_raising_exceptions(self):
         prox = tpool.Proxy(re)
 
@@ -196,7 +181,6 @@ class TestTpool(tests.LimitedTestCase):
         prox = tpool.Proxy(tpool_test)
         self.assertRaises(RuntimeError, prox.raise_exception)
 
-    @tests.skip_with_pyevent
     def test_variable_and_keyword_arguments_with_function_calls(self):
         import optparse
         parser = tpool.Proxy(optparse.OptionParser())
@@ -204,7 +188,6 @@ class TestTpool(tests.LimitedTestCase):
         opts, args = parser.parse_args(["-nfoo"])
         self.assertEqual(opts.n, 'foo')
 
-    @tests.skip_with_pyevent
     def test_contention(self):
         from tests import tpool_test
         prox = tpool.Proxy(tpool_test)
@@ -216,7 +199,6 @@ class TestTpool(tests.LimitedTestCase):
         results = list(pile)
         self.assertEqual(len(results), 3)
 
-    @tests.skip_with_pyevent
     def test_timeout(self):
         blocking = eventlet.patcher.original('time')
         eventlet.Timeout(0.1, eventlet.Timeout())
@@ -226,12 +208,10 @@ class TestTpool(tests.LimitedTestCase):
         except eventlet.Timeout:
             pass
 
-    @tests.skip_with_pyevent
     def test_killall(self):
         tpool.killall()
         tpool.setup()
 
-    @tests.skip_with_pyevent
     def test_killall_remaining_results(self):
         semaphore = eventlet.Event()
 
@@ -247,7 +227,6 @@ class TestTpool(tests.LimitedTestCase):
         tpool.killall()
         gt.wait()
 
-    @tests.skip_with_pyevent
     def test_autowrap(self):
         x = tpool.Proxy({'a': 1, 'b': 2}, autowrap=(int,))
         assert isinstance(x.get('a'), tpool.Proxy)
@@ -258,7 +237,6 @@ class TestTpool(tests.LimitedTestCase):
         assert isinstance(x.one, tpool.Proxy)
         assert not isinstance(x.none, tpool.Proxy)
 
-    @tests.skip_with_pyevent
     def test_autowrap_names(self):
         x = tpool.Proxy({'a': 1, 'b': 2}, autowrap_names=('get',))
         assert isinstance(x.get('a'), tpool.Proxy)
@@ -268,7 +246,6 @@ class TestTpool(tests.LimitedTestCase):
         assert isinstance(x.one, tpool.Proxy)
         assert not isinstance(x.two, tpool.Proxy)
 
-    @tests.skip_with_pyevent
     def test_autowrap_both(self):
         from tests import tpool_test
         x = tpool.Proxy(tpool_test, autowrap=(int,), autowrap_names=('one',))
@@ -276,7 +253,6 @@ class TestTpool(tests.LimitedTestCase):
         # violating the abstraction to check that we didn't double-wrap
         assert not isinstance(x._obj, tpool.Proxy)
 
-    @tests.skip_with_pyevent
     def test_callable(self):
         def wrapped(arg):
             return arg
@@ -287,7 +263,6 @@ class TestTpool(tests.LimitedTestCase):
         assert isinstance(x(4), tpool.Proxy)
         self.assertEqual("4", str(x(4)))
 
-    @tests.skip_with_pyevent
     def test_callable_iterator(self):
         def wrapped(arg):
             yield arg
@@ -298,13 +273,11 @@ class TestTpool(tests.LimitedTestCase):
         for r in x(3):
             self.assertEqual(3, r)
 
-    @tests.skip_with_pyevent
     def test_eventlet_timeout(self):
         def raise_timeout():
             raise eventlet.Timeout()
         self.assertRaises(eventlet.Timeout, tpool.execute, raise_timeout)
 
-    @tests.skip_with_pyevent
     def test_tpool_set_num_threads(self):
         tpool.set_num_threads(5)
         self.assertEqual(5, tpool._nthreads)
@@ -313,7 +286,6 @@ class TestTpool(tests.LimitedTestCase):
 class TpoolLongTests(tests.LimitedTestCase):
     TEST_TIMEOUT = 60
 
-    @tests.skip_with_pyevent
     def test_a_buncha_stuff(self):
         assert_ = self.assert_
 
@@ -342,7 +314,6 @@ class TpoolLongTests(tests.LimitedTestCase):
         self.assertEqual(len(results), cnt)
         tpool.killall()
 
-    @tests.skip_with_pyevent
     def test_leakage_from_tracebacks(self):
         tpool.execute(noop)  # get it started
         gc.collect()

@@ -20,15 +20,5 @@ patcher.inject(
     ('time', time),
     ('threading', threading))
 
-# only a problem with pyevent
-from eventlet import tests
-if tests.using_pyevent():
-    try:
-        SocketServerTest.test_ForkingUDPServer = lambda *a, **kw: None
-        SocketServerTest.test_ForkingTCPServer = lambda *a, **kw: None
-        SocketServerTest.test_ForkingUnixStreamServer = lambda *a, **kw: None
-    except (NameError, AttributeError):
-        pass
-
 if __name__ == "__main__":
     test_main()

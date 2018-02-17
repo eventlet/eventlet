@@ -347,7 +347,6 @@ class TpoolConnectionPool(DBConnectionPool):
             connect_timeout=connect_timeout,
             **self._auth)
 
-    @tests.skip_with_pyevent
     def setUp(self):
         super(TpoolConnectionPool, self).setUp()
 
