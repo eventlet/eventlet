@@ -32,7 +32,7 @@ The easiest way to get Eventlet is to use pip::
 
   pip install -U eventlet
 
-To install latest development verson once::
+To install latest development version once::
 
   pip install -U https://github.com/eventlet/eventlet/archive/master.zip
 
