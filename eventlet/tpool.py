@@ -85,6 +85,7 @@ def tworker():
             raise
         except EXC_CLASSES:
             rv = sys.exc_info()
+            sys.exc_clear()
         # test_leakage_from_tracebacks verifies that the use of
         # exc_info does not lead to memory leaks
         _rspq.put((e, rv))
