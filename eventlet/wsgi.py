@@ -59,6 +59,12 @@ def addr_to_host_port(addr):
     return (host, port)
 
 
+def encode_dance(s):
+    if not isinstance(s, bytes):
+        s = s.encode('utf-8', 'replace')
+    return s.decode('latin1')
+
+
 # Collections of error codes to compare against.  Not all attributes are set
 # on errno module on all platforms, so some are literals :(
 BAD_SOCK = set((errno.EBADF, 10053))
@@ -631,7 +637,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
         pq = self.path.split('?', 1)
         env['RAW_PATH_INFO'] = pq[0]
-        env['PATH_INFO'] = urllib.parse.unquote(pq[0])
+        env['PATH_INFO'] = encode_dance(urllib.parse.unquote(pq[0]))
         if len(pq) > 1:
             env['QUERY_STRING'] = pq[1]
 

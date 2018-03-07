@@ -1,3 +1,4 @@
+# coding: utf-8
 import cgi
 import collections
 import errno
@@ -1398,9 +1399,31 @@ class TestHttpd(_TestBase):
         sock = eventlet.connect(self.server_addr)
         sock.sendall(b'GET /a*b@%40%233 HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
         result = read_http(sock)
-        self.assertEqual(result.status, 'HTTP/1.1 200 OK')
+        assert result.status == 'HTTP/1.1 200 OK'
         assert b'decoded: /a*b@@#3' in result.body
         assert b'raw: /a*b@%40%233' in result.body
+
+    def test_path_info_latin1(self):
+        # https://github.com/eventlet/eventlet/issues/468
+        g = []
+
+        def wsgi_app(environ, start_response):
+            g.append(environ['PATH_INFO'])
+            start_response("200 OK", [])
+            return b''
+
+        self.site.application = wsgi_app
+        sock = eventlet.connect(self.server_addr)
+        sock.sendall(b'GET /%E4%BD%A0%E5%A5%BD HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
+        result = read_http(sock)
+        assert result.status == 'HTTP/1.1 200 OK'
+        # that was only preparation, actual test below
+        # Per PEP-0333 https://www.python.org/dev/peps/pep-0333/#unicode-issues
+        # in all WSGI environment strings application must observe either bytes in latin-1 (ISO-8859-1)
+        # or unicode code points \u0000..\u00ff
+        # wsgi_decoding_dance from Werkzeug to emulate concerned application
+        decoded = g[0].encode('latin1').decode('utf-8', 'replace')
+        assert decoded == u'/你好'
 
     @tests.skip_if_no_ipv6
     def test_ipv6(self):
