@@ -17,6 +17,7 @@ from __future__ import print_function
 import gc
 import random
 import re
+import thread
 import time
 
 import eventlet
@@ -362,6 +363,54 @@ class TpoolLongTests(tests.LimitedTestCase):
         self.assert_(second_created - first_created < 10,
                      "first loop: %s, second loop: %s" % (first_created,
                                                           second_created))
+        tpool.killall()
+
+    @tests.skip_with_pyevent
+    def test_long_lived_object(self):
+        class A():
+            lock = thread.allocate_lock()
+            sequence = 0
+
+            def __init__(self):
+                with A.lock:
+                    A.sequence += 1
+
+            def noop(self):
+                return 'A'
+
+            def raise_exception(self):
+                raise RuntimeError('not implement yet')
+
+            def __del__(self):
+                with A.lock:
+                    A.sequence -= 1
+
+        def test_method_noop():
+            try:
+                a = tpool.Proxy(A())
+                a.noop()
+            except RuntimeError:
+                pass
+
+        def test_method_exception():
+            try:
+                a = tpool.Proxy(A())
+                a.raise_exception()
+            except RuntimeError:
+                pass
+
+        for i in range(100):
+            test_method_noop()
+        eventlet.sleep(0)
+        gc.collect()
+        self.assert_(A.sequence == 0)
+
+        for i in range(100):
+            test_method_exception()
+        # yield to tpool_trampoline(), otherwise e.send(rv) have a reference
+        eventlet.sleep(0)
+        gc.collect()
+        self.assert_(A.sequence == 0)
         tpool.killall()
 
 
