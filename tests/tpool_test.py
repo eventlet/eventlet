@@ -305,9 +305,43 @@ class TestTpool(tests.LimitedTestCase):
         self.assertRaises(eventlet.Timeout, tpool.execute, raise_timeout)
 
     @tests.skip_with_pyevent
-    def test_tpool_set_num_threads(self):
+    @tests.mock.patch('eventlet.tpool._spawn_threads')
+    def test_tpool_set_num_threads(self, spawn_mock):
         tpool.set_num_threads(5)
         self.assertEqual(5, tpool._nthreads)
+        self.assertEqual(0, spawn_mock.call_count)
+
+    @tests.skip_with_pyevent
+    def test_tpool_set_num_threads_increase(self):
+        tpool.set_num_threads(5)
+        tpool.setup()
+        self.assertEqual(5, tpool._nthreads)
+        self.assertEqual(5, len(tpool._threads))
+
+        with tests.mock.patch('eventlet.tpool._spawn_threads',
+                              wraps=tpool._spawn_threads) as spawn_mock:
+            tpool.set_num_threads(6)
+            spawn_mock.assert_called_once_with()
+        self.assertEqual(6, tpool._nthreads)
+        self.assertEqual(6, len(tpool._threads))
+
+    @tests.skip_with_pyevent
+    @tests.mock.patch('warnings.warn')
+    def test_tpool_set_num_threads_decrease(self, warn_mock):
+        tpool.set_num_threads(5)
+        tpool.setup()
+        self.assertEqual(5, tpool._nthreads)
+        self.assertEqual(5, len(tpool._threads))
+        original_threads = tpool._threads[:]
+
+        with tests.mock.patch('eventlet.tpool._spawn_threads',
+                              wraps=tpool._spawn_threads) as spawn_mock:
+            tpool.set_num_threads(4)
+            self.assertEqual(0, spawn_mock.call_count)
+            warn_mock.assert_called_once_with(tests.mock.ANY)
+        self.assertEqual(4, tpool._nthreads)
+        self.assertEqual(5, len(tpool._threads))
+        self.assertListEqual(original_threads, tpool._threads)
 
 
 class TpoolLongTests(tests.LimitedTestCase):

@@ -26,5 +26,12 @@ The simplest thing to do with :mod:`~eventlet.tpool` is to :func:`~eventlet.tpoo
 
 By default there are 20 threads in the pool, but you can configure this by setting the environment variable ``EVENTLET_THREADPOOL_SIZE`` to the desired pool size before importing tpool.
 
+Alternatively you can also set the number of threads in the pool to any value
+after importing tpool using the ``set_num_threads`` method as long as you
+haven't called the ``execute`` method.  If the ``execute`` method has already
+been called, only increases to the thread pool size will take immediate effect,
+lower values will not take effect until we kill all the existing threads with a
+call to ``killall``.
+
 .. automodule:: eventlet.tpool
 	:members:

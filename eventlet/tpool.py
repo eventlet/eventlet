@@ -18,6 +18,7 @@ import imp
 import os
 import sys
 import traceback
+import warnings
 
 import eventlet
 from eventlet import event, greenio, greenthread, patcher, timeout
@@ -261,7 +262,6 @@ def setup():
 
     assert _nthreads >= 0, "Can't specify negative number of threads"
     if _nthreads == 0:
-        import warnings
         warnings.warn("Zero threads in tpool.  All tpool.execute calls will\
             execute in main thread.  Check the value of the environment \
             variable EVENTLET_THREADPOOL_SIZE.", RuntimeWarning)
@@ -282,16 +282,21 @@ def setup():
     _rsock = greenio.GreenSocket(csock)
     _rsock.settimeout(None)
 
-    for i in six.moves.range(_nthreads):
-        t = threading.Thread(target=tworker,
-                             name="tpool_thread_%s" % i)
-        t.setDaemon(True)
-        t.start()
-        _threads.append(t)
+    # Create initial `_nthreads` threads
+    _spawn_threads()
 
     _coro = greenthread.spawn_n(tpool_trampoline)
     # This yield fixes subtle error with GreenSocket.__del__
     eventlet.sleep(0)
+
+
+def _spawn_threads():
+    for i in six.moves.range(len(_threads), _nthreads):
+        t = threading.Thread(target=tworker,
+                             name="tpool_thread_{0}".format(i + 1))
+        t.setDaemon(True)
+        t.start()
+        _threads.append(t)
 
 
 # Avoid ResourceWarning unclosed socket on Python3.2+
@@ -333,4 +338,11 @@ def killall():
 
 def set_num_threads(nthreads):
     global _nthreads
-    _nthreads = nthreads
+    old_nthreads, _nthreads = _nthreads, nthreads
+
+    if _setup_already:
+        if old_nthreads > nthreads:
+            warnings.warn("Dynamically reducing the number of threads is not "
+                          "supported and will be ignored.", RuntimeWarning)
+        else:
+            _spawn_threads()
