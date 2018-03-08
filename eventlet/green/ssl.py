@@ -11,7 +11,7 @@ from eventlet.greenio import (
     set_nonblocking, GreenSocket, CONNECT_ERR, CONNECT_SUCCESS,
 )
 from eventlet.hubs import trampoline, IOClosed
-from eventlet.support import get_errno, PY33, six
+from eventlet.support import get_errno, six
 orig_socket = __import__('socket')
 socket = orig_socket.socket
 has_ciphers = True
@@ -308,7 +308,7 @@ class GreenSSLSocket(_original_sslsocket):
             if six.PY2:
                 sslobj = self._context._wrap_socket(self._sock, server_side, ssl_sock=self)
             else:
-                context = self.context if PY33 else self._context
+                context = self._context
                 sslobj = context._wrap_socket(self, server_side)
         else:
             sslobj = sslwrap(self._sock, server_side, self.keyfile, self.certfile,
