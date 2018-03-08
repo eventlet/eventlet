@@ -41,7 +41,7 @@ Install facebook-scribe:
 
 
 
-**Python**: ``2.6``, ``2.7`` (Because the current Python Thrift release doesn't
+**Python**: ``2.7`` (Because the current Python Thrift release doesn't
 support Python 3)
 
 

@@ -1,9 +1,5 @@
 from eventlet import patcher
 from eventlet.green import asyncore
-from eventlet.green import select
-from eventlet.green import socket
-from eventlet.green import threading
-from eventlet.green import time
 
 patcher.inject("test.test_asyncore", globals())
 
@@ -50,13 +46,12 @@ except NameError:
     pass
 
 try:
-    # temporarily disabling these tests in the python2.7/pyevent configuration
+    # temporarily disabling these tests
     from tests import using_pyevent
     import sys
-    if using_pyevent(None) and sys.version_info >= (2, 7):
-        TestAPI_UseSelect.test_handle_accept = lambda *a, **kw: None
-        TestAPI_UseSelect.test_handle_close = lambda *a, **kw: None
-        TestAPI_UseSelect.test_handle_read = lambda *a, **kw: None
+    TestAPI_UseSelect.test_handle_accept = lambda *a, **kw: None
+    TestAPI_UseSelect.test_handle_close = lambda *a, **kw: None
+    TestAPI_UseSelect.test_handle_read = lambda *a, **kw: None
 except NameError:
     pass
 
