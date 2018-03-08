@@ -8,7 +8,7 @@ A hub forms the basis of Eventlet's event loop, which dispatches I/O events and 
 Eventlet has multiple hub implementations, and when you start using it, it tries to select the best hub implementation for your system.  The hubs that it supports are (in order of preference):
 
 **epolls**
-    Requires Python 2.6 or the `python-epoll <http://pypi.python.org/pypi/python-epoll/1.0>`_ package, and Linux.  This is the fastest pure-Python hub.
+    Requires Linux.  This is the fastest pure-Python hub.
 **poll**
     On platforms that support it
 **selects**

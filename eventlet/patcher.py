@@ -309,7 +309,7 @@ def monkey_patch(**on):
     finally:
         imp.release_lock()
 
-    if sys.version_info >= (3, 3):
+    if sys.version_info >= (3, 4):
         import importlib._bootstrap
         thread = original('_thread')
         # importlib must use real thread locks, not eventlet.Semaphore

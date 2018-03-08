@@ -3,8 +3,6 @@ __ssl = __import__('ssl')
 from eventlet.patcher import slurp_properties
 slurp_properties(__ssl, globals(), srckeys=dir(__ssl))
 
-import errno
-import functools
 import sys
 import time
 
@@ -13,15 +11,11 @@ from eventlet.greenio import (
     set_nonblocking, GreenSocket, CONNECT_ERR, CONNECT_SUCCESS,
 )
 from eventlet.hubs import trampoline, IOClosed
-from eventlet.support import get_errno, PY33, six
+from eventlet.support import get_errno, six
 orig_socket = __import__('socket')
 socket = orig_socket.socket
-if sys.version_info >= (2, 7):
-    has_ciphers = True
-    timeout_exc = SSLError
-else:
-    has_ciphers = False
-    timeout_exc = orig_socket.timeout
+has_ciphers = True
+timeout_exc = SSLError
 
 __patched__ = [
     'SSLSocket', 'SSLContext', 'wrap_socket', 'sslwrap_simple',
@@ -215,13 +209,7 @@ class GreenSSLSocket(_original_sslsocket):
                 raise ValueError(
                     "non-zero flags not allowed in calls to %s() on %s" %
                     plain_socket_function.__name__, self.__class__)
-            if sys.version_info < (2, 7) and into:
-                # Python 2.6 SSLSocket.read() doesn't support reading into
-                # a given buffer so we need to emulate
-                data = self.read(nbytes)
-                buffer_[:len(data)] = data
-                read = len(data)
-            elif into:
+            if into:
                 read = self.read(nbytes, buffer_)
             else:
                 read = self.read(nbytes)
@@ -320,7 +308,7 @@ class GreenSSLSocket(_original_sslsocket):
             if six.PY2:
                 sslobj = self._context._wrap_socket(self._sock, server_side, ssl_sock=self)
             else:
-                context = self.context if PY33 else self._context
+                context = self._context
                 sslobj = context._wrap_socket(self, server_side)
         else:
             sslobj = sslwrap(self._sock, server_side, self.keyfile, self.certfile,

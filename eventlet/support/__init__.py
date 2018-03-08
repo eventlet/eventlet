@@ -47,8 +47,6 @@ else:
     def bytes_to_str(b, encoding='ascii'):
         return b.decode(encoding)
 
-PY33 = sys.version_info[:2] == (3, 3)
-
 
 @contextlib.contextmanager
 def capture_stderr():
