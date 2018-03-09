@@ -631,7 +631,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
         pq = self.path.split('?', 1)
         env['RAW_PATH_INFO'] = pq[0]
-        env['PATH_INFO'] = urllib.parse.unquote(pq[0])
+        env['PATH_INFO'] = urllib.parse.unquote(pq[0]).encode().decode('latin-1')
         if len(pq) > 1:
             env['QUERY_STRING'] = pq[1]
 
