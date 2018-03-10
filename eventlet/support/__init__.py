@@ -2,9 +2,8 @@ import inspect
 import functools
 import sys
 import warnings
-import contextlib
 
-from eventlet.support import greenlets, six
+from eventlet.support import greenlets
 
 
 _MISSING = object()
@@ -48,18 +47,6 @@ else:
         return b.decode(encoding)
 
 PY33 = sys.version_info[:2] == (3, 3)
-
-
-@contextlib.contextmanager
-def capture_stderr():
-    stream = six.StringIO()
-    original = sys.stderr
-    try:
-        sys.stderr = stream
-        yield stream
-    finally:
-        sys.stderr = original
-        stream.seek(0)
 
 
 def wrap_deprecated(old, new):

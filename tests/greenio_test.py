@@ -1,6 +1,5 @@
 import array
 import errno
-import eventlet
 import fcntl
 import gc
 from io import DEFAULT_BUFFER_SIZE
@@ -16,7 +15,7 @@ import eventlet
 from eventlet import event, greenio, debug
 from eventlet.hubs import get_hub
 from eventlet.green import select, socket, time, ssl
-from eventlet.support import capture_stderr, get_errno, six
+from eventlet.support import get_errno, six
 import tests
 import tests.mock as mock
 
@@ -935,7 +934,7 @@ def test_socket_del_fails_gracefully_when_not_fully_initialized():
         def __init__(self):
             pass
 
-    with capture_stderr() as err:
+    with tests.capture_stderr() as err:
         SocketSubclass()
 
     assert err.getvalue() == ''

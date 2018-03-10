@@ -24,6 +24,7 @@ from nose.plugins.skip import SkipTest
 
 import eventlet
 from eventlet import tpool
+from eventlet.support import six
 
 
 # convenience for importers
@@ -377,6 +378,18 @@ def run_isolated(path, prefix='tests/isolated/', **kwargs):
 def check_is_timeout(obj):
     value_text = getattr(obj, 'is_timeout', '(missing)')
     assert obj.is_timeout, 'type={0} str={1} .is_timeout={2}'.format(type(obj), str(obj), value_text)
+
+
+@contextlib.contextmanager
+def capture_stderr():
+    stream = six.StringIO()
+    original = sys.stderr
+    try:
+        sys.stderr = stream
+        yield stream
+    finally:
+        sys.stderr = original
+        stream.seek(0)
 
 
 certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')

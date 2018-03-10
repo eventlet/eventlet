@@ -19,7 +19,7 @@ from eventlet import tpool
 from eventlet import wsgi
 from eventlet.green import socket as greensocket
 from eventlet.green import ssl
-from eventlet.support import bytes_to_str, capture_stderr, six
+from eventlet.support import bytes_to_str, six
 import tests
 
 
@@ -982,7 +982,7 @@ class TestHttpd(_TestBase):
         listener = greensocket.socket()
         listener.bind(('localhost', 0))
         # NOT calling listen, to trigger the error
-        with capture_stderr() as log:
+        with tests.capture_stderr() as log:
             self.spawn_server(sock=listener)
             eventlet.sleep(0)  # need to enter server loop
             try:
