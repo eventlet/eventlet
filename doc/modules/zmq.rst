@@ -1,14 +1,15 @@
 :mod:`eventlet.green.zmq` -- ØMQ support
 ========================================
 
+:mod:`pyzmq <zmq>` [1]_ is a python binding to the C++ ØMQ [2]_ library written in Cython [3]_.
+:mod:`eventlet.green.zmq` is greenthread aware version of `pyzmq`.
+
 .. automodule:: eventlet.green.zmq
     :show-inheritance:
 
 .. currentmodule:: eventlet.green.zmq
 
-.. autofunction:: Context
-
-.. autoclass:: _Context
+.. autoclass:: Context
     :show-inheritance:
 
     .. automethod:: socket
@@ -22,20 +23,6 @@
     .. automethod:: send
 
 .. module:: zmq
-
-:mod:`zmq` -- The pyzmq ØMQ python bindings
-===========================================
-
-:mod:`pyzmq <zmq>` [1]_ Is a python binding to the C++ ØMQ [2]_ library written in Cython [3]_. The following is
-auto generated :mod:`pyzmq's <zmq>` from documentation.
-
-.. autoclass:: zmq.core.context.Context
-    :members:
-
-.. autoclass:: zmq.core.socket.Socket
-
-.. autoclass:: zmq.core.poll.Poller
-    :members:
 
 
 .. [1] http://github.com/zeromq/pyzmq

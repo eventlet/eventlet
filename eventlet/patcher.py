@@ -1,6 +1,7 @@
 import imp
 import sys
 
+import eventlet
 from eventlet.support import six
 
 
@@ -222,6 +223,16 @@ def monkey_patch(**on):
 
     It's safe to call monkey_patch multiple times.
     """
+
+    # Workaround for import cycle observed as following in monotonic
+    # RuntimeError: no suitable implementation for this system
+    # see https://github.com/eventlet/eventlet/issues/401#issuecomment-325015989
+    #
+    # Make sure the hub is completely imported before any
+    # monkey-patching, or we risk recursion if the process of importing
+    # the hub calls into monkey-patched modules.
+    eventlet.hubs.get_hub()
+
     accepted_args = set(('os', 'select', 'socket',
                          'thread', 'time', 'psycopg', 'MySQLdb',
                          'builtins', 'subprocess'))
@@ -358,7 +369,7 @@ def _fix_py2_rlock(rlock, tid):
     rlock._RLock__block = new
     if old.locked():
         new.acquire()
-    rlock._RLock__owner = tid
+        rlock._RLock__owner = tid
 
 
 def _fix_py3_rlock(old):
@@ -372,9 +383,14 @@ def _fix_py3_rlock(old):
         new.acquire()
     gc.collect()
     for ref in gc.get_referrers(old):
-        for k, v in vars(ref):
-            if v == old:
-                setattr(ref, k, new)
+        try:
+            ref_vars = vars(ref)
+        except TypeError:
+            pass
+        else:
+            for k, v in ref_vars.items():
+                if v == old:
+                    setattr(ref, k, new)
 
 
 def _green_os_modules():

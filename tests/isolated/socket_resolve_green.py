@@ -8,20 +8,22 @@ if __name__ == '__main__':
     import dns.message
     import dns.query
 
+    n = 10
+    delay = 0.01
+    addr_map = {'test-host{0}.'.format(i): '0.0.1.{0}'.format(i) for i in range(n)}
+
     def slow_udp(q, *a, **kw):
-        addr = '0.0.0.1'
-        if 'host2' in str(q.question):
-            addr = '0.0.0.2'
-        if 'host3' in str(q.question):
-            addr = '0.0.0.3'
+        qname = q.question[0].name
+        addr = addr_map[qname.to_text()]
         r = dns.message.make_response(q)
         r.index = None
         r.flags = 256
-        r.answer.append(dns.rrset.from_text(str(q.question[0].name), 60, 'IN', 'A', addr))
+        r.answer.append(dns.rrset.from_text(str(qname), 60, 'IN', 'A', addr))
         r.time = 0.001
-        eventlet.sleep(0.1)
+        eventlet.sleep(delay)
         return r
 
+    dns.query.tcp = lambda: eventlet.Timeout(0)
     dns.query.udp = slow_udp
     results = {}
 
@@ -31,15 +33,18 @@ if __name__ == '__main__':
         except socket.error as e:
             print('name: {0} error: {1}'.format(name, e))
 
-    pool = eventlet.GreenPool()
+    pool = eventlet.GreenPool(size=n + 1)
+
+    # FIXME: For unknown reason, first GreenPool.spawn() takes ~250ms on some platforms.
+    # Spawned function executes for normal expected time, it's the GreenPool who needs warmup.
+    pool.spawn(eventlet.sleep)
+
     t1 = time.time()
-    pool.spawn(fun, 'eventlet-test-host1.')
-    pool.spawn(fun, 'eventlet-test-host2.')
-    pool.spawn(fun, 'eventlet-test-host3.')
+    for name in addr_map:
+        pool.spawn(fun, name)
     pool.waitall()
     td = time.time() - t1
-    assert 0.1 <= td < 0.3, 'Resolve time expected: ~0.1s, real: {0:.3f}'.format(td)
-    assert results.get('eventlet-test-host1.') == '0.0.0.1'
-    assert results.get('eventlet-test-host2.') == '0.0.0.2'
-    assert results.get('eventlet-test-host3.') == '0.0.0.3'
+    fail_msg = 'Resolve time expected: ~{0:.3f}s, real: {1:.3f}'.format(delay, td)
+    assert delay <= td < delay * n, fail_msg
+    assert addr_map == results
     print('pass')

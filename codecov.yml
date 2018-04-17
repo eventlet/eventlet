@@ -1,0 +1,6 @@
+codecov:
+  token: 2a926756-1923-42a1-89c7-97925ea0e17a
+
+coverage:
+  precision: 0
+  round: down

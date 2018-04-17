@@ -1,12 +1,12 @@
 import eventlet
 
-from tests import LimitedTestCase
+import tests
 
 
 DELAY = 0.01
 
 
-class TestDirectRaise(LimitedTestCase):
+class TestDirectRaise(tests.LimitedTestCase):
     def test_direct_raise_class(self):
         try:
             raise eventlet.Timeout
@@ -36,7 +36,7 @@ class TestDirectRaise(LimitedTestCase):
         str(tm)
 
 
-class TestWithTimeout(LimitedTestCase):
+class TestWithTimeout(tests.LimitedTestCase):
     def test_with_timeout(self):
         self.assertRaises(eventlet.Timeout, eventlet.with_timeout, DELAY, eventlet.sleep, DELAY * 10)
         X = object()
@@ -53,3 +53,7 @@ class TestWithTimeout(LimitedTestCase):
             eventlet.Timeout,
             eventlet.with_timeout,
             DELAY, longer_timeout)
+
+
+def test_is_timeout_attribute():
+    tests.check_is_timeout(eventlet.Timeout())

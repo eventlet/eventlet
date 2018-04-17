@@ -82,26 +82,9 @@ class ImportPatched(ProcessBase):
         assert 'eventlet.green.urllib' in lines[2], repr(output)
         assert 'eventlet.green.httplib' not in lines[2], repr(output)
 
-    def test_import_patched_defaults(self):
-        self.write_to_tempfile("base", """
-import socket
-try:
-    import urllib.request as urllib
-except ImportError:
-    import urllib
-print("base {0} {1}".format(socket, urllib))""")
 
-        new_mod = """
-from eventlet import patcher
-base = patcher.import_patched('base')
-print("newmod {0} {1} {2}".format(base, base.socket, base.urllib.socket.socket))
-"""
-        self.write_to_tempfile("newmod", new_mod)
-        output, lines = self.launch_subprocess('newmod.py')
-        assert lines[0].startswith('base'), repr(output)
-        assert lines[1].startswith('newmod'), repr(output)
-        assert 'eventlet.green.socket' in lines[1], repr(output)
-        assert 'GreenSocket' in lines[1], repr(output)
+def test_import_patched_defaults():
+    tests.run_isolated('patcher_import_patched_defaults.py')
 
 
 class MonkeyPatch(ProcessBase):
@@ -323,7 +306,7 @@ print(len(threading._active))
 print(len(_threading._active))
 """
         self.write_to_tempfile("newmod", new_mod)
-        output, lines = self.launch_subprocess('newmod')
+        output, lines = self.launch_subprocess('newmod.py')
         self.assertEqual(len(lines), 4, "\n".join(lines))
         assert lines[0].startswith('<Thread'), lines[0]
         assert lines[1] == '1', lines
@@ -341,7 +324,7 @@ t.join()
 print(len(threading._active))
 """
         self.write_to_tempfile("newmod", new_mod)
-        output, lines = self.launch_subprocess('newmod')
+        output, lines = self.launch_subprocess('newmod.py')
         self.assertEqual(len(lines), 3, "\n".join(lines))
         assert lines[0].startswith('<_MainThread'), lines[0]
         self.assertEqual(lines[1], "1", lines[1])
@@ -357,7 +340,7 @@ tpool.execute(test)
 print(len(threading._active))
 """
         self.write_to_tempfile("newmod", new_mod)
-        output, lines = self.launch_subprocess('newmod')
+        output, lines = self.launch_subprocess('newmod.py')
         self.assertEqual(len(lines), 3, "\n".join(lines))
         assert lines[0].startswith('<Thread'), lines[0]
         self.assertEqual(lines[1], "1", lines[1])
@@ -376,7 +359,7 @@ evt.wait()
 print(len(threading._active))
 """
         self.write_to_tempfile("newmod", new_mod)
-        output, lines = self.launch_subprocess('newmod')
+        output, lines = self.launch_subprocess('newmod.py')
         self.assertEqual(len(lines), 3, "\n".join(lines))
         assert lines[0].startswith('<_MainThread'), lines[0]
         self.assertEqual(lines[1], "1", lines[1])
@@ -392,7 +375,7 @@ t.wait()
 print(len(threading._active))
 """
         self.write_to_tempfile("newmod", new_mod)
-        output, lines = self.launch_subprocess('newmod')
+        output, lines = self.launch_subprocess('newmod.py')
         self.assertEqual(len(lines), 3, "\n".join(lines))
         assert lines[0].startswith('<_GreenThread'), lines[0]
         self.assertEqual(lines[1], "1", lines[1])
@@ -402,7 +385,7 @@ print(len(threading._active))
 eventlet.monkey_patch()
 """
         self.write_to_tempfile("newmod", new_mod)
-        output, lines = self.launch_subprocess('newmod')
+        output, lines = self.launch_subprocess('newmod.py')
         self.assertEqual(len(lines), 1, "\n".join(lines))
 
 
@@ -414,7 +397,7 @@ eventlet.monkey_patch(all=False, os=True)
 process = subprocess.Popen("sleep 0.1 && false", shell=True)
 print(process.wait())"""
         self.write_to_tempfile("newmod", new_mod)
-        output, lines = self.launch_subprocess('newmod')
+        output, lines = self.launch_subprocess('newmod.py')
         self.assertEqual(len(lines), 2, "\n".join(lines))
         self.assertEqual('1', lines[0], repr(output))
 
@@ -441,7 +424,7 @@ t.wait()
 print(repr(t2))
 t2.join()
 """)
-        output, lines = self.launch_subprocess('newmod')
+        output, lines = self.launch_subprocess('newmod.py')
         self.assertEqual(len(lines), 2, "\n".join(lines))
         assert lines[0].startswith('<_GreenThread'), lines[0]
 
@@ -459,7 +442,7 @@ t2.join()
     print(t.getName())
     print(t.get_name())
 """ + self.epilogue)
-        output, lines = self.launch_subprocess('newmod')
+        output, lines = self.launch_subprocess('newmod.py')
         self.assertEqual(len(lines), 10, "\n".join(lines))
         for i in range(0, 3):
             self.assertEqual(lines[i], "GreenThread-1", lines[i])
@@ -473,7 +456,7 @@ t2.join()
     print(id(t._g))
     print(t.ident)
 """ + self.epilogue)
-        output, lines = self.launch_subprocess('newmod')
+        output, lines = self.launch_subprocess('newmod.py')
         self.assertEqual(len(lines), 3, "\n".join(lines))
         self.assertEqual(lines[0], lines[1])
 
@@ -482,7 +465,7 @@ t2.join()
     print(t.is_alive())
     print(t.isAlive())
 """ + self.epilogue)
-        output, lines = self.launch_subprocess('newmod')
+        output, lines = self.launch_subprocess('newmod.py')
         self.assertEqual(len(lines), 3, "\n".join(lines))
         self.assertEqual(lines[0], "True", lines[0])
         self.assertEqual(lines[1], "True", lines[1])
@@ -492,7 +475,7 @@ t2.join()
     print(t.is_daemon())
     print(t.isDaemon())
 """ + self.epilogue)
-        output, lines = self.launch_subprocess('newmod')
+        output, lines = self.launch_subprocess('newmod.py')
         self.assertEqual(len(lines), 3, "\n".join(lines))
         self.assertEqual(lines[0], "True", lines[0])
         self.assertEqual(lines[1], "True", lines[1])
@@ -508,6 +491,11 @@ def test_patcher_existing_locks_late():
 
 def test_patcher_existing_locks_locked():
     tests.run_isolated('patcher_existing_locks_locked.py')
+
+
+@tests.skip_if_CRLock_exist
+def test_patcher_existing_locks_unlocked():
+    tests.run_isolated('patcher_existing_locks_unlocked.py')
 
 
 def test_importlib_lock():

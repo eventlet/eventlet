@@ -1,12 +1,7 @@
-import os
-from unittest import TestCase, main
-
-from nose.tools import eq_
-
 import eventlet
-from eventlet import greenio, hubs, greenthread, spawn
+from eventlet import greenio, hubs, greenthread
 from eventlet.green import ssl
-from tests import skip_if_no_ssl
+import tests
 
 
 def check_hub():
@@ -21,10 +16,7 @@ def check_hub():
     assert not hub.running
 
 
-class TestApi(TestCase):
-
-    certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
-    private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
+class TestApi(tests.LimitedTestCase):
 
     def test_tcp_listener(self):
         socket = eventlet.listen(('0.0.0.0', 0))
@@ -50,13 +42,13 @@ class TestApi(TestCase):
         client = eventlet.connect(('127.0.0.1', server.getsockname()[1]))
         fd = client.makefile('rb')
         client.close()
-        eq_(fd.readline(), b'hello\n')
-        eq_(fd.read(), b'')
+        assert fd.readline() == b'hello\n'
+        assert fd.read() == b''
         fd.close()
 
         check_hub()
 
-    @skip_if_no_ssl
+    @tests.skip_if_no_ssl
     def test_connect_ssl(self):
         def accept_once(listenfd):
             try:
@@ -70,8 +62,8 @@ class TestApi(TestCase):
 
         server = eventlet.wrap_ssl(
             eventlet.listen(('0.0.0.0', 0)),
-            self.private_key_file,
-            self.certificate_file,
+            tests.private_key_file,
+            tests.certificate_file,
             server_side=True
         )
         eventlet.spawn_n(accept_once, server)
@@ -98,12 +90,12 @@ class TestApi(TestCase):
         def server(sock):
             client, addr = sock.accept()
             eventlet.sleep(0.1)
-        server_evt = spawn(server, server_sock)
+        server_evt = eventlet.spawn(server, server_sock)
         eventlet.sleep(0)
         try:
             desc = eventlet.connect(('127.0.0.1', bound_port))
             hubs.trampoline(desc, read=True, write=False, timeout=0.001)
-        except eventlet.TimeoutError:
+        except eventlet.Timeout:
             pass  # test passed
         else:
             assert False, "Didn't timeout"
@@ -126,7 +118,7 @@ class TestApi(TestCase):
             desc = eventlet.connect(('127.0.0.1', bound_port))
             try:
                 hubs.trampoline(desc, read=True, timeout=0.1)
-            except eventlet.TimeoutError:
+            except eventlet.Timeout:
                 assert False, "Timed out"
 
             server.close()
@@ -174,14 +166,21 @@ class TestApi(TestCase):
 
         try:
             eventlet.with_timeout(0.1, func)
-            self.fail(u'Expected TimeoutError')
-        except eventlet.TimeoutError:
+            self.fail(u'Expected Timeout')
+        except eventlet.Timeout:
             pass
 
 
-class Foo(object):
-    pass
+def test_wrap_is_timeout():
+    class A(object):
+        pass
+
+    obj = eventlet.wrap_is_timeout(A)()
+    tests.check_is_timeout(obj)
 
 
-if __name__ == '__main__':
-    main()
+def test_timeouterror_deprecated():
+    # https://github.com/eventlet/eventlet/issues/378
+    code = '''import eventlet; eventlet.Timeout(1).cancel(); print('pass')'''
+    args = ['-Werror:eventlet.Timeout:DeprecationWarning', '-c', code]
+    tests.run_python(path=None, args=args, expect_pass=True)

@@ -1,7 +1,6 @@
 import errno
 from eventlet.support import get_errno
 from eventlet import patcher
-time = patcher.original('time')
 select = patcher.original("select")
 if hasattr(select, 'epoll'):
     epoll = select.epoll
@@ -34,7 +33,7 @@ from eventlet.hubs.poll import READ, WRITE
 
 
 class Hub(poll.Hub):
-    def __init__(self, clock=time.time):
+    def __init__(self, clock=None):
         BaseHub.__init__(self, clock)
         self.poll = epoll()
         try:

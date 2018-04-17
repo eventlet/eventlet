@@ -30,13 +30,11 @@ Getting Eventlet
 
 The easiest way to get Eventlet is to use pip::
 
-  pip install eventlet
+  pip install -U eventlet
 
-The development `tip`_ is available as well::
+To install latest development version once::
 
-  pip install 'eventlet==dev'
-
-.. _tip: http://bitbucket.org/eventlet/eventlet/get/tip.zip#egg=eventlet-dev
+  pip install -U https://github.com/eventlet/eventlet/archive/master.zip
 
 
 Building the Docs Locally
@@ -63,3 +61,13 @@ If you have a project that uses Eventlet with Twisted, your options are:
 * fork Eventlet, revert Twisted removal, identify and fix problems. This work may be merged back into main project.
 
 Apologies for any inconvenience.
+
+
+Flair
+=====
+
+.. image:: https://travis-ci.org/eventlet/eventlet.svg?branch=master
+    :target: https://travis-ci.org/eventlet/eventlet
+
+.. image:: https://codecov.io/gh/eventlet/eventlet/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/eventlet/eventlet

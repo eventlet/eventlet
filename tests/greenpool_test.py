@@ -1,9 +1,8 @@
 import gc
-import os
 import random
 
 import eventlet
-from eventlet import hubs, greenpool, event, pools
+from eventlet import hubs, pools
 from eventlet.support import greenlets as greenlet, six
 import tests
 
@@ -24,7 +23,7 @@ def raiser(exc):
 
 class GreenPool(tests.LimitedTestCase):
     def test_spawn(self):
-        p = greenpool.GreenPool(4)
+        p = eventlet.GreenPool(4)
         waiters = []
         for i in range(10):
             waiters.append(p.spawn(passthru, i))
@@ -32,7 +31,7 @@ class GreenPool(tests.LimitedTestCase):
         self.assertEqual(results, list(range(10)))
 
     def test_spawn_n(self):
-        p = greenpool.GreenPool(4)
+        p = eventlet.GreenPool(4)
         results_closure = []
 
         def do_something(a):
@@ -45,8 +44,8 @@ class GreenPool(tests.LimitedTestCase):
         self.assertEqual(results_closure, list(range(10)))
 
     def test_waiting(self):
-        pool = greenpool.GreenPool(1)
-        done = event.Event()
+        pool = eventlet.GreenPool(1)
+        done = eventlet.Event()
 
         def consume():
             done.wait()
@@ -74,7 +73,7 @@ class GreenPool(tests.LimitedTestCase):
         self.assertEqual(pool.running(), 0)
 
     def test_multiple_coros(self):
-        evt = event.Event()
+        evt = eventlet.Event()
         results = []
 
         def producer():
@@ -86,7 +85,7 @@ class GreenPool(tests.LimitedTestCase):
             evt.wait()
             results.append('cons2')
 
-        pool = greenpool.GreenPool(2)
+        pool = eventlet.GreenPool(2)
         done = pool.spawn(consumer)
         pool.spawn_n(producer)
         done.wait()
@@ -103,7 +102,7 @@ class GreenPool(tests.LimitedTestCase):
         def some_work():
             hubs.get_hub().schedule_call_local(0, fire_timer)
 
-        pool = greenpool.GreenPool(2)
+        pool = eventlet.GreenPool(2)
         worker = pool.spawn(some_work)
         worker.wait()
         eventlet.sleep(0)
@@ -111,7 +110,7 @@ class GreenPool(tests.LimitedTestCase):
         self.assertEqual(timer_fired, [])
 
     def test_reentrant(self):
-        pool = greenpool.GreenPool(1)
+        pool = eventlet.GreenPool(1)
 
         def reenter():
             waiter = pool.spawn(lambda a: a, 'reenter')
@@ -120,7 +119,7 @@ class GreenPool(tests.LimitedTestCase):
         outer_waiter = pool.spawn(reenter)
         outer_waiter.wait()
 
-        evt = event.Event()
+        evt = eventlet.Event()
 
         def reenter_async():
             pool.spawn_n(lambda a: a, 'reenter')
@@ -137,7 +136,7 @@ class GreenPool(tests.LimitedTestCase):
 
         timer = eventlet.Timeout(1)
         try:
-            evt = event.Event()
+            evt = eventlet.Event()
             for x in six.moves.range(num_free):
                 pool.spawn(wait_long_time, evt)
                 # if the pool has fewer free than we expect,
@@ -159,8 +158,8 @@ class GreenPool(tests.LimitedTestCase):
         eventlet.sleep(0)
 
     def test_resize(self):
-        pool = greenpool.GreenPool(2)
-        evt = event.Event()
+        pool = eventlet.GreenPool(2)
+        evt = eventlet.Event()
 
         def wait_long_time(e):
             e.wait()
@@ -194,7 +193,7 @@ class GreenPool(tests.LimitedTestCase):
         # The premise is that a coroutine in a Pool tries to get a token out
         # of a token pool but times out before getting the token.  We verify
         # that neither pool is adversely affected by this situation.
-        pool = greenpool.GreenPool(1)
+        pool = eventlet.GreenPool(1)
         tp = pools.TokenPool(max_size=1)
         tp.get()  # empty out the pool
 
@@ -230,7 +229,7 @@ class GreenPool(tests.LimitedTestCase):
         gt.wait()
 
     def test_spawn_n_2(self):
-        p = greenpool.GreenPool(2)
+        p = eventlet.GreenPool(2)
         self.assertEqual(p.free(), 2)
         r = []
 
@@ -259,7 +258,7 @@ class GreenPool(tests.LimitedTestCase):
         self.assertEqual(set(r), set([1, 2, 3, 4]))
 
     def test_exceptions(self):
-        p = greenpool.GreenPool(2)
+        p = eventlet.GreenPool(2)
         for m in (p.spawn, p.spawn_n):
             self.assert_pool_has_free(p, 2)
             m(raiser, RuntimeError())
@@ -272,22 +271,22 @@ class GreenPool(tests.LimitedTestCase):
             self.assert_pool_has_free(p, 2)
 
     def test_imap(self):
-        p = greenpool.GreenPool(4)
+        p = eventlet.GreenPool(4)
         result_list = list(p.imap(passthru, range(10)))
         self.assertEqual(result_list, list(range(10)))
 
     def test_empty_imap(self):
-        p = greenpool.GreenPool(4)
+        p = eventlet.GreenPool(4)
         result_iter = p.imap(passthru, [])
         self.assertRaises(StopIteration, result_iter.next)
 
     def test_imap_nonefunc(self):
-        p = greenpool.GreenPool(4)
+        p = eventlet.GreenPool(4)
         result_list = list(p.imap(None, range(10)))
         self.assertEqual(result_list, [(x,) for x in range(10)])
 
     def test_imap_multi_args(self):
-        p = greenpool.GreenPool(4)
+        p = eventlet.GreenPool(4)
         result_list = list(p.imap(passthru2, range(10), range(10, 20)))
         self.assertEqual(result_list, list(zip(range(10), range(10, 20))))
 
@@ -295,7 +294,7 @@ class GreenPool(tests.LimitedTestCase):
         # testing the case where the function raises an exception;
         # both that the caller sees that exception, and that the iterator
         # continues to be usable to get the rest of the items
-        p = greenpool.GreenPool(4)
+        p = eventlet.GreenPool(4)
 
         def raiser(item):
             if item == 1 or item == 7:
@@ -315,30 +314,30 @@ class GreenPool(tests.LimitedTestCase):
         self.assertEqual(results, [0, 'r', 2, 3, 4, 5, 6, 'r', 8, 9])
 
     def test_starmap(self):
-        p = greenpool.GreenPool(4)
+        p = eventlet.GreenPool(4)
         result_list = list(p.starmap(passthru, [(x,) for x in range(10)]))
         self.assertEqual(result_list, list(range(10)))
 
     def test_waitall_on_nothing(self):
-        p = greenpool.GreenPool()
+        p = eventlet.GreenPool()
         p.waitall()
 
     def test_recursive_waitall(self):
-        p = greenpool.GreenPool()
+        p = eventlet.GreenPool()
         gt = p.spawn(p.waitall)
         self.assertRaises(AssertionError, gt.wait)
 
 
 class GreenPile(tests.LimitedTestCase):
     def test_pile(self):
-        p = greenpool.GreenPile(4)
+        p = eventlet.GreenPile(4)
         for i in range(10):
             p.spawn(passthru, i)
         result_list = list(p)
         self.assertEqual(result_list, list(range(10)))
 
     def test_pile_spawn_times_out(self):
-        p = greenpool.GreenPile(4)
+        p = eventlet.GreenPile(4)
         for i in range(4):
             p.spawn(passthru, i)
         # now it should be full and this should time out
@@ -351,9 +350,9 @@ class GreenPile(tests.LimitedTestCase):
         self.assertEqual(list(p), list(range(10)))
 
     def test_constructing_from_pool(self):
-        pool = greenpool.GreenPool(2)
-        pile1 = greenpool.GreenPile(pool)
-        pile2 = greenpool.GreenPile(pool)
+        pool = eventlet.GreenPool(2)
+        pile1 = eventlet.GreenPile(pool)
+        pile2 = eventlet.GreenPile(pool)
 
         def bunch_of_work(pile, unique):
             for i in range(10):
@@ -364,6 +363,17 @@ class GreenPile(tests.LimitedTestCase):
         eventlet.sleep(0)
         self.assertEqual(list(pile2), list(range(100, 110)))
         self.assertEqual(list(pile1), list(range(10)))
+
+
+def test_greenpool_type_check():
+    eventlet.GreenPool(0)
+    eventlet.GreenPool(1)
+    eventlet.GreenPool(1e3)
+
+    with tests.assert_raises(TypeError):
+        eventlet.GreenPool('foo')
+    with tests.assert_raises(ValueError):
+        eventlet.GreenPool(-1)
 
 
 class StressException(Exception):
@@ -391,10 +401,9 @@ class Stress(tests.LimitedTestCase):
     # tests will take extra-long
     TEST_TIMEOUT = 60
 
-    @tests.skip_unless(os.environ.get('RUN_STRESS_TESTS') == 'YES')
     def spawn_order_check(self, concurrency):
         # checks that piles are strictly ordered
-        p = greenpool.GreenPile(concurrency)
+        p = eventlet.GreenPile(concurrency)
 
         def makework(count, unique):
             for i in six.moves.range(count):
@@ -425,18 +434,16 @@ class Stress(tests.LimitedTestCase):
         for l in latest[1:]:
             self.assertEqual(l, iters - 1)
 
-    @tests.skip_unless(os.environ.get('RUN_STRESS_TESTS') == 'YES')
     def test_ordering_5(self):
         self.spawn_order_check(5)
 
-    @tests.skip_unless(os.environ.get('RUN_STRESS_TESTS') == 'YES')
     def test_ordering_50(self):
         self.spawn_order_check(50)
 
     def imap_memory_check(self, concurrency):
         # checks that imap is strictly
         # ordered and consumes a constant amount of memory
-        p = greenpool.GreenPool(concurrency)
+        p = eventlet.GreenPool(concurrency)
         count = 1000
         it = p.imap(passthru, six.moves.range(count))
         latest = -1
@@ -460,15 +467,12 @@ class Stress(tests.LimitedTestCase):
         # make sure we got to the end
         self.assertEqual(latest, count - 1)
 
-    @tests.skip_unless(os.environ.get('RUN_STRESS_TESTS') == 'YES')
     def test_imap_50(self):
         self.imap_memory_check(50)
 
-    @tests.skip_unless(os.environ.get('RUN_STRESS_TESTS') == 'YES')
     def test_imap_500(self):
         self.imap_memory_check(500)
 
-    @tests.skip_unless(os.environ.get('RUN_STRESS_TESTS') == 'YES')
     def test_with_intpool(self):
         class IntPool(pools.Pool):
             def create(self):
@@ -483,7 +487,7 @@ class Stress(tests.LimitedTestCase):
                 return token
 
             int_pool = IntPool(max_size=intpool_size)
-            pool = greenpool.GreenPool(pool_size)
+            pool = eventlet.GreenPool(pool_size)
             for ix in six.moves.range(num_executes):
                 pool.spawn(run, int_pool)
             pool.waitall()

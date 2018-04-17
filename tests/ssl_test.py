@@ -86,6 +86,41 @@ class SSLTest(tests.LimitedTestCase):
         ssl_client.close()
         server_coro.wait()
 
+    def test_recv_after_ssl_connect(self):
+        def serve(listener):
+            sock, addr = listener.accept()
+            sock.sendall(b'hjk')
+        sock = listen_ssl_socket()
+        server_coro = eventlet.spawn(serve, sock)
+
+        raw_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        ssl_client = ssl.wrap_socket(raw_client)
+        # Important: We need to call connect() on an SSL socket, not a plain one.
+        # The bug was affecting that particular combination (create plain socket,
+        # wrap, call connect() on the SSL socket and try to recv) on Python 3.5.
+        ssl_client.connect(sock.getsockname())
+
+        # The call to recv used to fail with:
+        # Traceback (most recent call last):
+        #   File "tests/ssl_test.py", line 99, in test_recv_after_ssl_connect
+        #     self.assertEqual(ssl_client.recv(3), b'hjk')
+        #   File "eventlet/green/ssl.py", line 194, in recv
+        #     return self._base_recv(buflen, flags, into=False)
+        #   File "eventlet/green/ssl.py", line 227, in _base_recv
+        #     read = self.read(nbytes)
+        #   File "eventlet/green/ssl.py", line 139, in read
+        #     super(GreenSSLSocket, self).read, *args, **kwargs)
+        #   File "eventlet/green/ssl.py", line 113, in _call_trampolining
+        #     return func(*a, **kw)
+        #   File "PYTHONLIB/python3.5/ssl.py", line 791, in read
+        #     return self._sslobj.read(len, buffer)
+        # TypeError: read() argument 2 must be read-write bytes-like object, not None
+        self.assertEqual(ssl_client.recv(3), b'hjk')
+
+        greenio.shutdown_safe(ssl_client)
+        ssl_client.close()
+        server_coro.wait()
+
     def test_ssl_unwrap(self):
         def serve():
             sock, addr = listener.accept()

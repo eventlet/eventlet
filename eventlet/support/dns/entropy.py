@@ -1,4 +1,4 @@
-# Copyright (C) 2009, 2011 Nominum, Inc.
+# Copyright (C) 2009-2017 Nominum, Inc.
 #
 # Permission to use, copy, modify, and distribute this software and its
 # documentation for any purpose with or without fee is hereby granted,
@@ -24,6 +24,11 @@ except ImportError:
 
 
 class EntropyPool(object):
+
+    # This is an entropy pool for Python implementations that do not
+    # have a working SystemRandom.  I'm not sure there are any, but
+    # leaving this code doesn't hurt anything as the library code
+    # is used if present.
 
     def __init__(self, seed=None):
         self.pool_index = 0
@@ -70,14 +75,14 @@ class EntropyPool(object):
         if not self.seeded or self.seed_pid != os.getpid():
             try:
                 seed = os.urandom(16)
-            except:
+            except Exception:
                 try:
                     r = open('/dev/urandom', 'rb', 0)
                     try:
                         seed = r.read(16)
                     finally:
                         r.close()
-                except:
+                except Exception:
                     seed = str(time.time())
             self.seeded = True
             self.seed_pid = os.getpid()
@@ -125,7 +130,7 @@ pool = EntropyPool()
 
 try:
     system_random = random.SystemRandom()
-except:
+except Exception:
     system_random = None
 
 def random_16():

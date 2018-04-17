@@ -1,5 +1,4 @@
 import errno
-import functools
 import os
 import sys
 import time
@@ -7,8 +6,8 @@ import traceback
 import types
 import warnings
 
+import eventlet
 from eventlet import greenio
-from eventlet import greenpool
 from eventlet import support
 from eventlet.green import BaseHTTPServer
 from eventlet.green import socket
@@ -25,7 +24,14 @@ MINIMUM_CHUNK_SIZE = 4096
 # %(client_port)s is also available
 DEFAULT_LOG_FORMAT = ('%(client_ip)s - - [%(date_time)s] "%(request_line)s"'
                       ' %(status_code)s %(body_length)s %(wall_seconds).6f')
+RESPONSE_414 = b'''HTTP/1.0 414 Request URI Too Long\r\n\
+Connection: close\r\n\
+Content-Length: 0\r\n\r\n'''
 is_accepting = True
+
+STATE_IDLE = 'idle'
+STATE_REQUEST = 'request'
+STATE_CLOSE = 'close'
 
 __all__ = ['server', 'format_date_time']
 
@@ -51,6 +57,12 @@ def addr_to_host_port(addr):
         host = addr[0]
         port = addr[1]
     return (host, port)
+
+
+def encode_dance(s):
+    if not isinstance(s, bytes):
+        s = s.encode('utf-8', 'replace')
+    return s.decode('latin1')
 
 
 # Collections of error codes to compare against.  Not all attributes are set
@@ -248,10 +260,27 @@ def get_logger(log, debug):
        and callable(getattr(log, 'debug', None)):
         return log
     else:
-        return LoggerFileWrapper(log, debug)
+        return LoggerFileWrapper(log or sys.stderr, debug)
 
 
-class LoggerFileWrapper(object):
+class LoggerNull(object):
+    def __init__(self):
+        pass
+
+    def error(self, msg, *args, **kwargs):
+        pass
+
+    def info(self, msg, *args, **kwargs):
+        pass
+
+    def debug(self, msg, *args, **kwargs):
+        pass
+
+    def write(self, msg, *args):
+        pass
+
+
+class LoggerFileWrapper(LoggerNull):
     def __init__(self, log, debug):
         self.log = log
         self._debug = debug
@@ -302,6 +331,17 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
     # so before going back to unbuffered, remove any usage of `writelines`.
     wbufsize = 16 << 10
 
+    def __init__(self, conn_state, server):
+        self.request = conn_state[1]
+        self.client_address = conn_state[0]
+        self.conn_state = conn_state
+        self.server = server
+        self.setup()
+        try:
+            self.handle()
+        finally:
+            self.finish()
+
     def setup(self):
         # overriding SocketServer.setup to correctly handle SSL.Connection objects
         conn = self.connection = self.request
@@ -324,33 +364,48 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.wfile = socket._fileobject(conn, "wb", self.wbufsize)
             else:
                 # it's a SSLObject, or a martian
-                raise NotImplementedError("wsgi.py doesn't support sockets "
-                                          "of type %s" % type(conn))
+                raise NotImplementedError(
+                    '''eventlet.wsgi doesn't support sockets of type {0}'''.format(type(conn)))
+
+    def handle(self):
+        self.close_connection = True
+
+        while True:
+            self.handle_one_request()
+            if self.conn_state[2] == STATE_CLOSE:
+                self.close_connection = 1
+            if self.close_connection:
+                break
+
+    def _read_request_line(self):
+        if self.rfile.closed:
+            self.close_connection = 1
+            return ''
+
+        try:
+            return self.rfile.readline(self.server.url_length_limit)
+        except greenio.SSL.ZeroReturnError:
+            pass
+        except socket.error as e:
+            last_errno = support.get_errno(e)
+            if last_errno in BROKEN_SOCK:
+                self.server.log.debug('({0}) connection reset by peer {1!r}'.format(
+                    self.server.pid,
+                    self.client_address))
+            elif last_errno not in BAD_SOCK:
+                raise
+        return ''
 
     def handle_one_request(self):
         if self.server.max_http_version:
             self.protocol_version = self.server.max_http_version
 
-        if self.rfile.closed:
+        self.raw_requestline = self._read_request_line()
+        if not self.raw_requestline:
             self.close_connection = 1
             return
-
-        try:
-            self.raw_requestline = self.rfile.readline(self.server.url_length_limit)
-            if len(self.raw_requestline) == self.server.url_length_limit:
-                self.wfile.write(
-                    b"HTTP/1.0 414 Request URI Too Long\r\n"
-                    b"Connection: close\r\nContent-length: 0\r\n\r\n")
-                self.close_connection = 1
-                return
-        except greenio.SSL.ZeroReturnError:
-            self.raw_requestline = ''
-        except socket.error as e:
-            if support.get_errno(e) not in BAD_SOCK:
-                raise
-            self.raw_requestline = ''
-
-        if not self.raw_requestline:
+        if len(self.raw_requestline) >= self.server.url_length_limit:
+            self.wfile.write(RESPONSE_414)
             self.close_connection = 1
             return
 
@@ -582,7 +637,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
         pq = self.path.split('?', 1)
         env['RAW_PATH_INFO'] = pq[0]
-        env['PATH_INFO'] = urllib.parse.unquote(pq[0])
+        env['PATH_INFO'] = encode_dance(urllib.parse.unquote(pq[0]))
         if len(pq) > 1:
             env['QUERY_STRING'] = pq[1]
 
@@ -678,10 +733,9 @@ class Server(BaseHTTPServer.HTTPServer):
         self.outstanding_requests = 0
         self.socket = socket
         self.address = address
-        if log:
+        self.log = LoggerNull()
+        if log_output:
             self.log = get_logger(log, debug)
-        else:
-            self.log = get_logger(sys.stderr, debug)
         self.app = app
         self.keepalive = keepalive
         self.environ = environ
@@ -721,26 +775,26 @@ class Server(BaseHTTPServer.HTTPServer):
             d.update(self.environ)
         return d
 
-    def process_request(self, sock_params):
+    def process_request(self, conn_state):
         # The actual request handling takes place in __init__, so we need to
         # set minimum_chunk_size before __init__ executes and we don't want to modify
         # class variable
-        sock, address = sock_params
         proto = new(self.protocol)
         if self.minimum_chunk_size is not None:
             proto.minimum_chunk_size = self.minimum_chunk_size
         proto.capitalize_response_headers = self.capitalize_response_headers
         try:
-            proto.__init__(sock, address, self)
+            proto.__init__(conn_state, self)
         except socket.timeout:
             # Expected exceptions are not exceptional
-            sock.close()
+            conn_state[1].close()
             # similar to logging "accepted" in server()
-            self.log.debug('(%s) timed out %r' % (self.pid, address))
+            self.log.debug('({0}) timed out {1!r}'.format(self.pid, conn_state[0]))
 
     def log_message(self, message):
-        warnings.warn('server.log_message is deprecated.  Please use server.log.info instead')
-        self.log.info(message)
+        raise AttributeError('''\
+eventlet.wsgi.server.log_message was deprecated and deleted.
+Please use server.log.info instead.''')
 
 
 try:
@@ -849,56 +903,72 @@ def server(sock, site,
     :param capitalize_response_headers: Normalize response headers' names to Foo-Bar.
                 Default is True.
     """
-    serv = Server(sock, sock.getsockname(),
-                  site, log,
-                  environ=environ,
-                  max_http_version=max_http_version,
-                  protocol=protocol,
-                  minimum_chunk_size=minimum_chunk_size,
-                  log_x_forwarded_for=log_x_forwarded_for,
-                  keepalive=keepalive,
-                  log_output=log_output,
-                  log_format=log_format,
-                  url_length_limit=url_length_limit,
-                  debug=debug,
-                  socket_timeout=socket_timeout,
-                  capitalize_response_headers=capitalize_response_headers,
-                  )
+    serv = Server(
+        sock, sock.getsockname(),
+        site, log,
+        environ=environ,
+        max_http_version=max_http_version,
+        protocol=protocol,
+        minimum_chunk_size=minimum_chunk_size,
+        log_x_forwarded_for=log_x_forwarded_for,
+        keepalive=keepalive,
+        log_output=log_output,
+        log_format=log_format,
+        url_length_limit=url_length_limit,
+        debug=debug,
+        socket_timeout=socket_timeout,
+        capitalize_response_headers=capitalize_response_headers,
+    )
     if server_event is not None:
+        warnings.warn(
+            'eventlet.wsgi.Server() server_event kwarg is deprecated and will be removed soon',
+            DeprecationWarning, stacklevel=2)
         server_event.send(serv)
     if max_size is None:
         max_size = DEFAULT_MAX_SIMULTANEOUS_REQUESTS
     if custom_pool is not None:
         pool = custom_pool
     else:
-        pool = greenpool.GreenPool(max_size)
+        pool = eventlet.GreenPool(max_size)
+
+    if not (hasattr(pool, 'spawn') and hasattr(pool, 'waitall')):
+        raise AttributeError('''\
+eventlet.wsgi.Server pool must provide methods: `spawn`, `waitall`.
+If unsure, use eventlet.GreenPool.''')
+
+    # [addr, socket, state]
+    connections = {}
+
+    def _clean_connection(_, conn):
+        connections.pop(conn[0], None)
+        conn[2] = STATE_CLOSE
+        greenio.shutdown_safe(conn[1])
+        conn[1].close()
+
     try:
-        serv.log.info("(%s) wsgi starting up on %s" % (
-            serv.pid, socket_repr(sock)))
+        serv.log.info('({0}) wsgi starting up on {1}'.format(serv.pid, socket_repr(sock)))
         while is_accepting:
             try:
-                client_socket = sock.accept()
-                client_socket[0].settimeout(serv.socket_timeout)
-                serv.log.debug("(%s) accepted %r" % (
-                    serv.pid, client_socket[1]))
-                try:
-                    pool.spawn_n(serv.process_request, client_socket)
-                except AttributeError:
-                    warnings.warn("wsgi's pool should be an instance of "
-                                  "eventlet.greenpool.GreenPool, is %s. Please convert your"
-                                  " call site to use GreenPool instead" % type(pool),
-                                  DeprecationWarning, stacklevel=2)
-                    pool.execute_async(serv.process_request, client_socket)
+                client_socket, client_addr = sock.accept()
+                client_socket.settimeout(serv.socket_timeout)
+                serv.log.debug('({0}) accepted {1!r}'.format(serv.pid, client_addr))
+                connections[client_addr] = connection = [client_addr, client_socket, STATE_IDLE]
+                (pool.spawn(serv.process_request, connection)
+                    .link(_clean_connection, connection))
             except ACCEPT_EXCEPTIONS as e:
                 if support.get_errno(e) not in ACCEPT_ERRNO:
                     raise
             except (KeyboardInterrupt, SystemExit):
-                serv.log.info("wsgi exiting")
+                serv.log.info('wsgi exiting')
                 break
     finally:
+        for cs in six.itervalues(connections):
+            prev_state = cs[2]
+            cs[2] = STATE_CLOSE
+            if prev_state == STATE_IDLE:
+                greenio.shutdown_safe(cs[1])
         pool.waitall()
-        serv.log.info("(%s) wsgi exited, is_accepting=%s" % (
-            serv.pid, is_accepting))
+        serv.log.info('({0}) wsgi exited, is_accepting={1}'.format(serv.pid, is_accepting))
         try:
             # NOTE: It's not clear whether we want this to leave the
             # socket open or close it.  Use cases like Spawning want

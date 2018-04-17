@@ -3,6 +3,8 @@
 *.pyc
 .*
 build/
+.coverage
+coverage.xml
 dist/
 doc/changelog.rst
 venv*

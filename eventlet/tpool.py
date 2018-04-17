@@ -85,6 +85,10 @@ def tworker():
             raise
         except EXC_CLASSES:
             rv = sys.exc_info()
+            if sys.version_info >= (3, 4):
+                traceback.clear_frames(rv[1].__traceback__)
+        if six.PY2:
+            sys.exc_clear()
         # test_leakage_from_tracebacks verifies that the use of
         # exc_info does not lead to memory leaks
         _rspq.put((e, rv))

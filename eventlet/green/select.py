@@ -1,8 +1,8 @@
-__select = __import__('select')
-error = __select.error
-from eventlet.greenthread import getcurrent
+import eventlet
 from eventlet.hubs import get_hub
 from eventlet.support import six
+__select = eventlet.patcher.original('select')
+error = __select.error
 
 
 __patched__ = ['select']
@@ -36,7 +36,7 @@ def select(read_list, write_list, error_list, timeout=None):
             raise TypeError("Expected number for timeout")
     hub = get_hub()
     timers = []
-    current = getcurrent()
+    current = eventlet.getcurrent()
     assert hub.greenlet is not current, 'do not call blocking functions from the mainloop'
     ds = {}
     for r in read_list:
@@ -56,10 +56,6 @@ def select(read_list, write_list, error_list, timeout=None):
         original = ds[get_fileno(d)]['write']
         current.switch(([], [original], []))
 
-    def on_error(d, _err=None):
-        original = ds[get_fileno(d)]['error']
-        current.switch(([], [], [original]))
-
     def on_timeout2():
         current.switch(([], [], []))
 
@@ -77,9 +73,9 @@ def select(read_list, write_list, error_list, timeout=None):
     try:
         for k, v in six.iteritems(ds):
             if v.get('read'):
-                listeners.append(hub.add(hub.READ, k, on_read, on_error, lambda x: None))
+                listeners.append(hub.add(hub.READ, k, on_read, current.throw, lambda: None))
             if v.get('write'):
-                listeners.append(hub.add(hub.WRITE, k, on_write, on_error, lambda x: None))
+                listeners.append(hub.add(hub.WRITE, k, on_write, current.throw, lambda: None))
         try:
             return hub.switch()
         finally:

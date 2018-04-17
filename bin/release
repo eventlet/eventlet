@@ -1,11 +1,12 @@
-#!/bin/bash -e
+#!/bin/bash
+set -e
 cd "$( dirname "${BASH_SOURCE[0]}" )/.."
-if [[ ! -d venv-release ]]; then
-	virtualenv venv-release
-	echo '*' >venv-release/.gitignore
-	venv-release/bin/pip install -U pip setuptools sphinx wheel
+if [[ ! -d ./venv-release ]]; then
+	virtualenv ./venv-release
+	echo '*' >./venv-release/.gitignore
+	./venv-release/bin/pip install -U pip setuptools sphinx twine wheel
 fi
-. $PWD/venv-release/bin/activate
+source $PWD/venv-release/bin/activate
 pip install -e $PWD
 
 version=
@@ -13,7 +14,7 @@ version_next=
 
 main() {
 	branch="${1-$(git symbolic-ref --short HEAD)}"
-	version="$(python -c 'import eventlet; print(eventlet.__version__)')"
+	version="$(EVENTLET_IMPORT_VERSION_ONLY=1 python -c 'import eventlet; print(eventlet.__version__)')"
 	printf "\nbranch: %s eventlet.__version__: '%s'\n" $branch $version >&2
 	if [[ "$branch" != "master" ]]; then
 		echo "Must be on master" >&2
@@ -44,14 +45,15 @@ main() {
 		confirm "Continue still? [yN] " || exit 1
 	fi
 
-	if confirm "Build documentation (website)? [Yn] " >&2; then
+	if confirm "Build documentation (website)? [Yn] "; then
 		bin/build-website.bash || exit 1
 		git checkout "$branch"
 	fi
 
 	if confirm "Upload to PyPi? [Yn] "; then
 		rm -rf build dist
-		python setup.py sdist bdist_wheel register upload || exit 1
+		python setup.py sdist bdist_wheel || exit 1
+		twine upload dist/* || exit 1
 	fi
 
 	git push --verbose origin master gh-pages || exit 1
@@ -92,7 +94,7 @@ bump_version() {
 	local next_tuple="${version_next//./, }"
 	local version_path="eventlet/__init__.py"
 	echo "Updating file '$version_path'" >&2
-	if ! sed -i '' -e "s/($current_tuple)/($next_tuple)/" "$version_path"; then
+	if ! sed --in-place='' -e "s/($current_tuple)/($next_tuple)/" "$version_path"; then
 		echo "sed error $?" >&2
 		exit 1
 	fi
@@ -104,7 +106,7 @@ bump_version() {
 
 	local doc_path="doc/real_index.html"
 	echo "Updating file '$doc_path'" >&2
-	if ! sed -i '' -e "s/$current/$version_next/g" "$doc_path"; then
+	if ! sed --in-place='' -e "s/$current/$version_next/g" "$doc_path"; then
 		echo "sed error $?" >&2
 		exit 1
 	fi

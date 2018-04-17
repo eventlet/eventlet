@@ -27,7 +27,7 @@ Use `make_psycopg_green()` to enable eventlet support in Psycopg.
 import psycopg2
 from psycopg2 import extensions
 
-from eventlet.hubs import trampoline
+import eventlet.hubs
 
 
 def make_psycopg_green():
@@ -47,9 +47,9 @@ def eventlet_wait_callback(conn, timeout=-1):
         if state == extensions.POLL_OK:
             break
         elif state == extensions.POLL_READ:
-            trampoline(conn.fileno(), read=True)
+            eventlet.hubs.trampoline(conn.fileno(), read=True)
         elif state == extensions.POLL_WRITE:
-            trampoline(conn.fileno(), write=True)
+            eventlet.hubs.trampoline(conn.fileno(), write=True)
         else:
             raise psycopg2.OperationalError(
                 "Bad result from poll: %r" % state)

@@ -1,6 +1,6 @@
 import eventlet
 from eventlet import event, hubs, queue
-from tests import LimitedTestCase, main
+import tests
 
 
 def do_bail(q):
@@ -12,7 +12,7 @@ def do_bail(q):
         return 'timed out'
 
 
-class TestQueue(LimitedTestCase):
+class TestQueue(tests.LimitedTestCase):
     def test_send_first(self):
         q = eventlet.Queue()
         q.put('hi')
@@ -246,7 +246,7 @@ class TestQueue(LimitedTestCase):
         self.assertRaises(queue.Empty, c.get_nowait)
 
     def test_task_done(self):
-        channel = queue.Queue(0)
+        channel = eventlet.Queue(0)
         X = object()
         gt = eventlet.spawn(channel.put, X)
         result = channel.get()
@@ -268,7 +268,7 @@ def store_result(result, func, *args):
         result.append(exc)
 
 
-class TestNoWait(LimitedTestCase):
+class TestNoWait(tests.LimitedTestCase):
     def test_put_nowait_simple(self):
         hub = hubs.get_hub()
         result = []
@@ -284,7 +284,7 @@ class TestNoWait(LimitedTestCase):
     def test_get_nowait_simple(self):
         hub = hubs.get_hub()
         result = []
-        q = queue.Queue(1)
+        q = eventlet.Queue(1)
         q.put(4)
         hub.schedule_call_global(0, store_result, result, q.get_nowait)
         hub.schedule_call_global(0, store_result, result, q.get_nowait)
@@ -297,7 +297,7 @@ class TestNoWait(LimitedTestCase):
     def test_get_nowait_unlock(self):
         hub = hubs.get_hub()
         result = []
-        q = queue.Queue(0)
+        q = eventlet.Queue(0)
         p = eventlet.spawn(q.put, 5)
         assert q.empty(), q
         assert q.full(), q
@@ -318,7 +318,7 @@ class TestNoWait(LimitedTestCase):
     def test_put_nowait_unlock(self):
         hub = hubs.get_hub()
         result = []
-        q = queue.Queue(0)
+        q = eventlet.Queue(0)
         eventlet.spawn(q.get)
         assert q.empty(), q
         assert q.full(), q
@@ -335,6 +335,17 @@ class TestNoWait(LimitedTestCase):
         assert q.full(), q
         assert q.empty(), q
 
+    def test_wait_except(self):
+        # https://github.com/eventlet/eventlet/issues/407
+        q = eventlet.Queue()
 
-if __name__ == '__main__':
-    main()
+        def get():
+            q.get()
+            raise KeyboardInterrupt
+
+        eventlet.spawn(get)
+        eventlet.sleep()
+
+        with tests.assert_raises(KeyboardInterrupt):
+            q.put(None)
+            eventlet.sleep()

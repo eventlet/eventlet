@@ -1,12 +1,10 @@
 import os
 import sys
-from eventlet import patcher
+from eventlet import patcher, support
 from eventlet.support import six
 select = patcher.original('select')
 time = patcher.original('time')
-sleep = time.sleep
 
-from eventlet.support import clear_sys_exc_info
 from eventlet.hubs.hub import BaseHub, READ, WRITE, noop
 
 
@@ -21,7 +19,7 @@ FILTERS = {READ: select.KQ_FILTER_READ,
 class Hub(BaseHub):
     MAX_EVENTS = 100
 
-    def __init__(self, clock=time.time):
+    def __init__(self, clock=None):
         super(Hub, self).__init__(clock)
         self._events = {}
         self._init_kqueue()
@@ -73,9 +71,11 @@ class Hub(BaseHub):
         evtype = listener.evtype
         fileno = listener.fileno
         if not self.listeners[evtype].get(fileno):
-            event = self._events[fileno].pop(evtype)
+            event = self._events[fileno].pop(evtype, None)
+            if event is None:
+                return
             try:
-                self._delete_events([event])
+                self._delete_events((event,))
             except OSError:
                 pass
 
@@ -95,7 +95,7 @@ class Hub(BaseHub):
 
         if not readers and not writers:
             if seconds:
-                sleep(seconds)
+                time.sleep(seconds)
             return
         result = self._control([], self.MAX_EVENTS, seconds)
         SYSTEM_EXCEPTIONS = self.SYSTEM_EXCEPTIONS
@@ -111,4 +111,4 @@ class Hub(BaseHub):
                 raise
             except:
                 self.squelch_exception(fileno, sys.exc_info())
-                clear_sys_exc_info()
+                support.clear_sys_exc_info()

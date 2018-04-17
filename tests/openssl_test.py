@@ -12,6 +12,5 @@ def test_import():
 
     import eventlet.green.OpenSSL.SSL
     import eventlet.green.OpenSSL.crypto
-    import eventlet.green.OpenSSL.rand
     import eventlet.green.OpenSSL.tsafe
     import eventlet.green.OpenSSL.version

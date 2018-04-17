@@ -1,6 +1,5 @@
 import os
 import sys
-import warnings
 
 __import__('eventlet.green._socket_nodns')
 __socket = sys.modules['eventlet.green._socket_nodns']
@@ -18,18 +17,13 @@ from eventlet.patcher import slurp_properties
 slurp_properties(__socket, globals(), srckeys=dir(__socket))
 
 
-if os.environ.get("EVENTLET_NO_GREENDNS", '').lower() == "yes":
-    warnings.warn(
-        'EVENTLET_NO_GREENDNS is noop, dnspython is bundled and DNS resolution is always green',
-        DeprecationWarning,
-        stacklevel=2,
-    )
-
-from eventlet.support import greendns
-gethostbyname = greendns.gethostbyname
-getaddrinfo = greendns.getaddrinfo
-gethostbyname_ex = greendns.gethostbyname_ex
-getnameinfo = greendns.getnameinfo
+if os.environ.get("EVENTLET_NO_GREENDNS", '').lower() != 'yes':
+    from eventlet.support import greendns
+    gethostbyname = greendns.gethostbyname
+    getaddrinfo = greendns.getaddrinfo
+    gethostbyname_ex = greendns.gethostbyname_ex
+    getnameinfo = greendns.getnameinfo
+    del greendns
 
 
 def create_connection(address,

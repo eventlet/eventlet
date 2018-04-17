@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<!-- idea and code swiped from 
+<!-- idea and code swiped from
 http://assorted.svn.sourceforge.net/viewvc/assorted/real-time-plotter/trunk/src/rtp.html?view=markup -->
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.1/jquery.min.js"></script>
 <script src="http://people.iola.dk/olau/flot/jquery.flot.js"></script>
@@ -9,13 +9,12 @@ http://assorted.svn.sourceforge.net/viewvc/assorted/real-time-plotter/trunk/src/
 window.onload = function() {
     var data = {};
     var s = new WebSocket("ws://127.0.0.1:7000/data");
-    s.onopen = function() { 
+    s.onopen = function() {
         //alert('open');
         s.send('hi');
     };
-    s.onmessage = function(e) {
-      //alert('got ' + e.data);
-      var lines = e.data.split('\n');
+    var on_message_read = function(e) {
+      var lines = e.target.result.split('\n');
       for (var i = 0; i < lines.length - 1; i++) {
         var parts = lines[i].split(' ');
         var d = parts[0], x = parseFloat(parts[1]), y = parseFloat(parts[2]);
@@ -33,6 +32,12 @@ window.onload = function() {
               } );
 
       s.send('');
+    };
+    s.onmessage = function(e) {
+      //alert('got ' + e.data);
+      var reader = new FileReader();
+      reader.addEventListener("loadend", on_message_read);
+      reader.readAsText(e.data);
     };
 };
 </script>

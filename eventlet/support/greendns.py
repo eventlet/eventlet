@@ -32,9 +32,11 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import re
 import struct
 import sys
 
+import eventlet
 from eventlet import patcher
 from eventlet.green import _socket_nodns
 from eventlet.green import os
@@ -79,8 +81,14 @@ DNS_QUERY_TIMEOUT = 10.0
 HOSTS_TTL = 10.0
 
 EAI_EAGAIN_ERROR = socket.gaierror(socket.EAI_AGAIN, 'Lookup timed out')
-EAI_NODATA_ERROR = socket.gaierror(socket.EAI_NODATA, 'No address associated with hostname')
 EAI_NONAME_ERROR = socket.gaierror(socket.EAI_NONAME, 'Name or service not known')
+# EAI_NODATA was removed from RFC3493, it's now replaced with EAI_NONAME
+# socket.EAI_NODATA is not defined on FreeBSD, probably on some other platforms too.
+# https://lists.freebsd.org/pipermail/freebsd-ports/2003-October/005757.html
+EAI_NODATA_ERROR = EAI_NONAME_ERROR
+if (os.environ.get('EVENTLET_DEPRECATED_EAI_NODATA', '').lower() in ('1', 'y', 'yes')
+        and hasattr(socket, 'EAI_NODATA')):
+    EAI_NODATA_ERROR = socket.gaierror(socket.EAI_NODATA, 'No address associated with hostname')
 
 
 def is_ipv4_addr(host):
@@ -99,6 +107,7 @@ def is_ipv6_addr(host):
     """Return True if host is a valid IPv6 address"""
     if not isinstance(host, six.string_types):
         return False
+    host = host.split('%', 1)[0]
     try:
         dns.ipv6.inet_aton(host)
     except dns.exception.SyntaxError:
@@ -147,10 +156,18 @@ class HostsResolver(object):
     :interval: The time between checking for hosts file modification
     """
 
+    LINES_RE = re.compile(r"""
+        \s*  # Leading space
+        ([^\r\n#]+?)  # The actual match, non-greedy so as not to include trailing space
+        \s*  # Trailing space
+        (?:[#][^\r\n]+)?  # Comments
+        (?:$|[\r\n]+)  # EOF or newline
+    """, re.VERBOSE)
+
     def __init__(self, fname=None, interval=HOSTS_TTL):
         self._v4 = {}           # name -> ipv4
         self._v6 = {}           # name -> ipv6
-        self._aliases = {}      # name -> cannonical_name
+        self._aliases = {}      # name -> canonical_name
         self.interval = interval
         self.fname = fname
         if fname is None:
@@ -171,16 +188,15 @@ class HostsResolver(object):
 
         Note that this performs disk I/O so can be blocking.
         """
-        lines = []
         try:
-            with open(self.fname, 'rU') as fp:
-                for line in fp:
-                    line = line.strip()
-                    if line and line[0] != '#':
-                        lines.append(line)
+            with open(self.fname, 'rb') as fp:
+                fdata = fp.read()
         except (IOError, OSError):
-            pass
-        return lines
+            return []
+
+        udata = fdata.decode(errors='ignore')
+
+        return self.LINES_RE.findall(udata)
 
     def _load(self):
         """Load hosts file
@@ -206,9 +222,10 @@ class HostsResolver(object):
                 ipmap = self._v6
             else:
                 continue
-            cname = parts.pop(0)
+            cname = parts.pop(0).lower()
             ipmap[cname] = ip
             for alias in parts:
+                alias = alias.lower()
                 ipmap[alias] = ip
                 self._aliases[alias] = cname
         self._last_load = time.time()
@@ -235,6 +252,7 @@ class HostsResolver(object):
             qname = dns.name.from_text(qname)
         else:
             name = str(qname)
+        name = name.lower()
         rrset = dns.rrset.RRset(qname, rdclass, rdtype)
         rrset.ttl = self._last_load + self.interval - now
         if rdclass == dns.rdataclass.IN and rdtype == dns.rdatatype.A:
@@ -302,17 +320,66 @@ class ResolverProxy(object):
         self._resolver.cache = dns.resolver.LRUCache()
 
     def query(self, qname, rdtype=dns.rdatatype.A, rdclass=dns.rdataclass.IN,
-              tcp=False, source=None, raise_on_no_answer=True):
-        """Query the resolver, using /etc/hosts if enabled"""
+              tcp=False, source=None, raise_on_no_answer=True,
+              _hosts_rdtypes=(dns.rdatatype.A, dns.rdatatype.AAAA)):
+        """Query the resolver, using /etc/hosts if enabled.
+
+        Behavior:
+        1. if hosts is enabled and contains answer, return it now
+        2. query nameservers for qname
+        3. if qname did not contain dots, pretend it was top-level domain,
+           query "foobar." and append to previous result
+        """
+        result = [None, None, 0]
+
         if qname is None:
             qname = '0.0.0.0'
-        if rdclass == dns.rdataclass.IN and self._hosts:
+        if isinstance(qname, six.string_types):
+            qname = dns.name.from_text(qname, None)
+
+        def step(fun, *args, **kwargs):
             try:
-                return self._hosts.query(qname, rdtype)
-            except dns.resolver.NoAnswer:
-                pass
-        return self._resolver.query(qname, rdtype, rdclass,
-                                    tcp, source, raise_on_no_answer)
+                a = fun(*args, **kwargs)
+            except Exception as e:
+                result[1] = e
+                return False
+            if a.rrset is not None and len(a.rrset):
+                if result[0] is None:
+                    result[0] = a
+                else:
+                    result[0].rrset.union_update(a.rrset)
+                result[2] += len(a.rrset)
+            return True
+
+        def end():
+            if result[0] is not None:
+                if raise_on_no_answer and result[2] == 0:
+                    raise dns.resolver.NoAnswer
+                return result[0]
+            if result[1] is not None:
+                if raise_on_no_answer or not isinstance(result[1], dns.resolver.NoAnswer):
+                    raise result[1]
+            raise dns.resolver.NXDOMAIN(qnames=(qname,))
+
+        if (self._hosts and (rdclass == dns.rdataclass.IN) and (rdtype in _hosts_rdtypes)):
+            if step(self._hosts.query, qname, rdtype, raise_on_no_answer=False):
+                if (result[0] is not None) or (result[1] is not None):
+                    return end()
+
+        # Main query
+        step(self._resolver.query, qname, rdtype, rdclass, tcp, source, raise_on_no_answer=False)
+
+        # `resolv.conf` docs say unqualified names must resolve from search (or local) domain.
+        # However, common OS `getaddrinfo()` implementations append trailing dot (e.g. `db -> db.`)
+        # and ask nameservers, as if top-level domain was queried.
+        # This step follows established practice.
+        # https://github.com/nameko/nameko/issues/392
+        # https://github.com/eventlet/eventlet/issues/363
+        if len(qname) == 1:
+            step(self._resolver.query, qname.concatenate(dns.name.root),
+                 rdtype, rdclass, tcp, source, raise_on_no_answer=False)
+
+        return end()
 
     def getaliases(self, hostname):
         """Return a list of all the aliases of a given hostname"""
@@ -334,8 +401,8 @@ class ResolverProxy(object):
 resolver = ResolverProxy(hosts_resolver=HostsResolver())
 
 
-def resolve(name, family=socket.AF_INET, raises=True):
-    """Resolve a name for a given family using the global resolver proxy
+def resolve(name, family=socket.AF_INET, raises=True, _proxy=None):
+    """Resolve a name for a given family using the global resolver proxy.
 
     This method is called by the global getaddrinfo() function.
 
@@ -349,9 +416,12 @@ def resolve(name, family=socket.AF_INET, raises=True):
     else:
         raise socket.gaierror(socket.EAI_FAMILY,
                               'Address family not supported')
+
+    if _proxy is None:
+        _proxy = resolver
     try:
         try:
-            return resolver.query(name, rdtype, raise_on_no_answer=raises)
+            return _proxy.query(name, rdtype, raise_on_no_answer=raises)
         except dns.resolver.NXDOMAIN:
             if not raises:
                 return HostsAnswer(dns.name.Name(name),
@@ -401,10 +471,19 @@ def _getaddrinfo_lookup(host, family, flags):
         raise EAI_NONAME_ERROR
     addrs = []
     if family == socket.AF_UNSPEC:
+        err = None
         for qfamily in [socket.AF_INET6, socket.AF_INET]:
-            answer = resolve(host, qfamily, False)
-            if answer.rrset:
-                addrs.extend([rr.address for rr in answer.rrset])
+            try:
+                answer = resolve(host, qfamily, False)
+            except socket.gaierror as e:
+                if e.errno not in (socket.EAI_AGAIN, EAI_NONAME_ERROR.errno, EAI_NODATA_ERROR.errno):
+                    raise
+                err = e
+            else:
+                if answer.rrset:
+                    addrs.extend(rr.address for rr in answer.rrset)
+        if err is not None and not addrs:
+            raise err
     elif family == socket.AF_INET6 and flags & socket.AI_V4MAPPED:
         answer = resolve(host, socket.AF_INET6, False)
         if answer.rrset:
@@ -535,13 +614,13 @@ def getnameinfo(sockaddr, flags):
 
 
 def _net_read(sock, count, expiration):
-    """coro friendly replacement for dns.query._net_write
+    """coro friendly replacement for dns.query._net_read
     Read the specified number of bytes from sock.  Keep trying until we
     either get the desired amount, or we hit EOF.
     A Timeout exception will be raised if the operation is not completed
     by the expiration time.
     """
-    s = ''
+    s = bytearray()
     while count > 0:
         try:
             n = sock.recv(count)
@@ -549,10 +628,12 @@ def _net_read(sock, count, expiration):
             # Q: Do we also need to catch coro.CoroutineSocketWake and pass?
             if expiration - time.time() <= 0.0:
                 raise dns.exception.Timeout
-        if n == '':
+            eventlet.sleep(0.01)
+            continue
+        if n == b'':
             raise EOFError
         count = count - len(n)
-        s = s + n
+        s += n
     return s
 
 
@@ -622,19 +703,25 @@ def udp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
         expiration = dns.query._compute_expiration(timeout)
         if source is not None:
             s.bind(source)
-        try:
-            s.sendto(wire, destination)
-        except socket.timeout:
-            # Q: Do we also need to catch coro.CoroutineSocketWake and pass?
-            if expiration - time.time() <= 0.0:
-                raise dns.exception.Timeout
-        while 1:
+        while True:
+            try:
+                s.sendto(wire, destination)
+                break
+            except socket.timeout:
+                # Q: Do we also need to catch coro.CoroutineSocketWake and pass?
+                if expiration - time.time() <= 0.0:
+                    raise dns.exception.Timeout
+                eventlet.sleep(0.01)
+                continue
+        while True:
             try:
                 (wire, from_address) = s.recvfrom(65535)
             except socket.timeout:
                 # Q: Do we also need to catch coro.CoroutineSocketWake and pass?
                 if expiration - time.time() <= 0.0:
                     raise dns.exception.Timeout
+                eventlet.sleep(0.01)
+                continue
             if from_address == destination:
                 break
             if not ignore_unexpected:
@@ -695,12 +782,16 @@ def tcp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
         expiration = dns.query._compute_expiration(timeout)
         if source is not None:
             s.bind(source)
-        try:
-            s.connect(destination)
-        except socket.timeout:
-            # Q: Do we also need to catch coro.CoroutineSocketWake and pass?
-            if expiration - time.time() <= 0.0:
-                raise dns.exception.Timeout
+        while True:
+            try:
+                s.connect(destination)
+                break
+            except socket.timeout:
+                # Q: Do we also need to catch coro.CoroutineSocketWake and pass?
+                if expiration - time.time() <= 0.0:
+                    raise dns.exception.Timeout
+                eventlet.sleep(0.01)
+                continue
 
         l = len(wire)
         # copying the wire into tcpmsg is inefficient, but lets us

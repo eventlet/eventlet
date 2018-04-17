@@ -1,3 +1,82 @@
+0.22.1
+======
+* Fixed issue installing excess enum34 on Python3.4+ (rebuild with updated setuptools)
+* event: Event.wait() timeout=None argument to be compatible with upstream CPython
+* greendns: Treat /etc/hosts entries case-insensitive; Thanks to Ralf Haferkamp
+
+
+0.22.0
+======
+* convenience: (SO_REUSEPORT) socket.error is not OSError on Python 2; Thanks to JacoFourie@github
+* convenience: SO_REUSEPORT is not available on WSL platform (Linux on Windows)
+* convenience: skip SO_REUSEPORT for bind on random port (0)
+* dns: reading /etc/hosts raised DeprecationWarning for universal lines on Python 3.4+; Thanks to Chris Kerr
+* green.openssl: Drop OpenSSL.rand support; Thanks to Haikel Guemar
+* green.subprocess: keep CalledProcessError identity; Thanks to Linbing@github
+* greendns: be explicit about expecting bytes from sock.recv; Thanks to Matt Bennett
+* greendns: early socket.timeout was breaking IO retry loops
+* GreenSocket.accept does not notify_open; Thanks to orishoshan
+* patcher: set locked RLocks' owner only when patching existing locks; Thanks to Quan Tian
+* patcher: workaround for monotonic "no suitable implementation"; Thanks to Geoffrey Thomas
+* queue: empty except was catching too much
+* socket: context manager support; Thanks to Miguel Grinberg
+* support: update monotonic 1.3 (5c0322dc559bf)
+* support: upgrade bundled dnspython to 1.16.0 (22e9de1d7957e) https://github.com/eventlet/eventlet/issues/427
+* websocket: fd leak when client did not close connection properly; Thanks to Konstantin Enchant
+* websocket: support permessage-deflate extension; Thanks to Costas Christofi and Peter Kovary
+* wsgi: close idle connections (also applies to websockets)
+* wsgi: deprecated options are one step closer to removal
+* wsgi: handle remote connection resets; Thanks to Stefan Nica
+
+0.21.0
+======
+* New timeout error API: .is_timeout=True on exception object
+  It's now easy to test if network error is transient and retry is appropriate.
+  Please spread the word and invite other libraries to support this interface.
+* hubs: use monotonic clock by default (bundled package); Thanks to Roman Podoliaka and Victor Stinner
+* dns: EVENTLET_NO_GREENDNS option is back, green is still default
+* dns: hosts file was consulted after nameservers
+* ssl: RecursionError on Python3.6+; Thanks to justdoit0823@github and Gevent developers
+* wsgi: log_output=False was not disabling startup and accepted messages
+* greenio: Fixed OSError: [WinError 10038] Socket operation on nonsocket
+* dns: EAI_NODATA was removed from RFC3493 and FreeBSD
+* green.select: fix mark_as_closed() wrong number of args
+* green.zmq: socket.{recv,send}_* signatures did not match recent upstream pyzmq
+* New feature: Add zipkin tracing to eventlet
+* db_pool: proxy Connection.set_isolation_level()
+* green.zmq: support RCVTIMEO (receive timeout)
+* green.profile: Python3 compatibility; Thanks to Artur Stawiarski
+* support: upgrade bundled six to 1.10 (dbfbfc818e3d)
+* python3.6: http.client.request support chunked_encoding
+
+0.20.1
+======
+* dns: try unqualified queries as top level
+* test_import_patched_defaults bended to play with pyopenssl>=16.1.0
+* Explicit environ flag for importing eventlet.__version__ without ignoring import errors
+* Type check Semaphore, GreenPool arguments; Thanks to Matthew D. Pagel
+
+0.20.0
+======
+* IMPORTANT: removed select.poll() function
+* DNS resolving is always green with dnspython bundled in
+* greenio: only trampoline when we block
+* convenience: listen() sets SO_REUSEPORT when available; Thanks to Zhengwei Gao
+* ssl: Fix "TypeError: read() argument 2 must be read-write bytes-like object, not None"
+* greenio: _recv_loop behaviour with recv_into on closed sock
+* ipv6: getaddrinfo would fail with scope index
+* green.zmq: Support {send,recv}_{string,json,pyobj} wrappers
+* greendns: Return answers from /etc/hosts despite nameserver errors
+* patcher: fixed green existing locks fail (Python3)
+* Add DAGPool, a dependency-driven greenthread pool
+* wsgi: Unix socket address representation; Thanks to Samuel Merritt
+* tpool: isolate internal socket from default timeout; Thanks to Alex Villacís Lasso
+* wsgi: only skip Content-Type and Content-Length headers (GH-327)
+* wsgi: 400 on blank Content-Length headers (GH-334)
+* greenio: makefile related pypy socket ref counting
+* ssl: Fix recv_into blocking when reading chunks of data
+* websocket: support Gunicorn environ['gunicorn.socket']
+
 0.19.0
 ======
 * ssl: IMPORTANT DoS FIX do_handshake_connect=False in server accept(); Thanks to Garth Mollett

@@ -93,3 +93,9 @@ def test_check_call_without_timeout_works():
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
+
+
+def test_exception_identity():
+    # https://github.com/eventlet/eventlet/issues/413
+    # green module must keep exceptions classes as stdlib version
+    tests.run_isolated('subprocess_exception_identity.py')

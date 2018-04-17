@@ -1,6 +1,5 @@
 import array
 import errno
-import eventlet
 import fcntl
 import gc
 from io import DEFAULT_BUFFER_SIZE
@@ -16,8 +15,9 @@ import eventlet
 from eventlet import event, greenio, debug
 from eventlet.hubs import get_hub
 from eventlet.green import select, socket, time, ssl
-from eventlet.support import capture_stderr, get_errno, six
+from eventlet.support import get_errno, six
 import tests
+import tests.mock as mock
 
 
 def bufsized(sock, size=1):
@@ -321,6 +321,70 @@ class TestGreenSocket(tests.LimitedTestCase):
 
         killer.wait()
 
+    def test_blocking_accept_mark_as_reopened(self):
+        evt_hub = get_hub()
+        with mock.patch.object(evt_hub, "mark_as_reopened") as patched_mark_as_reopened:
+            def connect_once(listener):
+                # delete/overwrite the original conn
+                # object, only keeping the file object around
+                # closing the file object should close everything
+                client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                client.connect(('127.0.0.1', listener.getsockname()[1]))
+                client.close()
+
+            server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            server.bind(('127.0.0.1', 0))
+            server.listen(50)
+            acceptlet = eventlet.spawn(connect_once, server)
+            conn, addr = server.accept()
+            conn.sendall(b'hello\n')
+            connfileno = conn.fileno()
+            conn.close()
+            assert patched_mark_as_reopened.called
+            assert patched_mark_as_reopened.call_count == 3, "3 fds were opened, but the hub was " \
+                                                             "only notified {call_count} times" \
+                .format(call_count=patched_mark_as_reopened.call_count)
+            args, kwargs = patched_mark_as_reopened.call_args
+            assert args == (connfileno,), "Expected mark_as_reopened to be called " \
+                                          "with {expected_fileno}, but it was called " \
+                                          "with {fileno}".format(expected_fileno=connfileno,
+                                                                 fileno=args[0])
+        server.close()
+
+    def test_nonblocking_accept_mark_as_reopened(self):
+        evt_hub = get_hub()
+        with mock.patch.object(evt_hub, "mark_as_reopened") as patched_mark_as_reopened:
+            def connect_once(listener):
+                # delete/overwrite the original conn
+                # object, only keeping the file object around
+                # closing the file object should close everything
+                client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                client.connect(('127.0.0.1', listener.getsockname()[1]))
+                client.close()
+
+            server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            server.bind(('127.0.0.1', 0))
+            server.listen(50)
+            server.setblocking(False)
+            acceptlet = eventlet.spawn(connect_once, server)
+            out = select.select([server], [], [])
+            conn, addr = server.accept()
+            conn.sendall(b'hello\n')
+            connfileno = conn.fileno()
+            conn.close()
+            assert patched_mark_as_reopened.called
+            assert patched_mark_as_reopened.call_count == 3, "3 fds were opened, but the hub was " \
+                                                             "only notified {call_count} times" \
+                .format(call_count=patched_mark_as_reopened.call_count)
+            args, kwargs = patched_mark_as_reopened.call_args
+            assert args == (connfileno,), "Expected mark_as_reopened to be called " \
+                                          "with {expected_fileno}, but it was called " \
+                                          "with {fileno}".format(expected_fileno=connfileno,
+                                                                 fileno=args[0])
+        server.close()
+
     def test_full_duplex(self):
         large_data = b'*' * 10 * min_buf_size()
         listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -443,7 +507,7 @@ class TestGreenSocket(tests.LimitedTestCase):
             wrap_rfile = client.makefile()
             wrap_rfile.read(1)
             self.fail()
-        except eventlet.TimeoutError:
+        except eventlet.Timeout:
             pass
 
         result = evt.wait()
@@ -870,7 +934,7 @@ def test_socket_del_fails_gracefully_when_not_fully_initialized():
         def __init__(self):
             pass
 
-    with capture_stderr() as err:
+    with tests.capture_stderr() as err:
         SocketSubclass()
 
     assert err.getvalue() == ''

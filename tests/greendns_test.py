@@ -6,32 +6,33 @@ import socket
 import tempfile
 import time
 
-import tests
-from tests import mock
 from eventlet.support import greendns
 from eventlet.support.greendns import dns
+import tests
+import tests.mock
+
+
+def _make_host_resolver():
+    """Returns a HostResolver instance
+
+    The hosts file will be empty but accessible as a py.path.local
+    instance using the ``hosts`` attribute.
+    """
+    hosts = tempfile.NamedTemporaryFile()
+    hr = greendns.HostsResolver(fname=hosts.name)
+    hr.hosts = hosts
+    hr._last_stat = 0
+    return hr
 
 
 class TestHostsResolver(tests.LimitedTestCase):
-
-    def _make_host_resolver(self):
-        """Returns a HostResolver instance
-
-        The hosts file will be empty but accessible as a py.path.local
-        instance using the ``hosts`` attribute.
-        """
-        hosts = tempfile.NamedTemporaryFile()
-        hr = greendns.HostsResolver(fname=hosts.name)
-        hr.hosts = hosts
-        hr._last_stat = 0
-        return hr
 
     def test_default_fname(self):
         hr = greendns.HostsResolver()
         assert os.path.exists(hr.fname)
 
     def test_readlines_lines(self):
-        hr = self._make_host_resolver()
+        hr = _make_host_resolver()
         hr.hosts.write(b'line0\n')
         hr.hosts.flush()
         assert hr._readlines() == ['line0']
@@ -39,25 +40,36 @@ class TestHostsResolver(tests.LimitedTestCase):
         hr.hosts.write(b'line1\n')
         hr.hosts.flush()
         assert hr._readlines() == ['line0', 'line1']
+        # Test reading of varied newline styles
         hr._last_stat = 0
-        hr.hosts.write(b'#comment0\nline0\n #comment1\nline1')
-        assert hr._readlines() == ['line0', 'line1']
+        hr.hosts.seek(0)
+        hr.hosts.truncate()
+        hr.hosts.write(b'\naa\r\nbb\r  cc  \n\n\tdd ee')
+        hr.hosts.flush()
+        assert hr._readlines() == ['aa', 'bb', 'cc', 'dd ee']
+        # Test comments, including inline comments
+        hr._last_stat = 0
+        hr.hosts.seek(0)
+        hr.hosts.truncate()
+        hr.hosts.write(b' line1\n#comment\nline2 # inline comment\n')
+        hr.hosts.flush()
+        assert hr._readlines() == ['line1', 'line2']
 
     def test_readlines_missing_file(self):
-        hr = self._make_host_resolver()
+        hr = _make_host_resolver()
         hr.hosts.close()
         hr._last_stat = 0
         assert hr._readlines() == []
 
     def test_load_no_contents(self):
-        hr = self._make_host_resolver()
+        hr = _make_host_resolver()
         hr._load()
         assert not hr._v4
         assert not hr._v6
         assert not hr._aliases
 
     def test_load_v4_v6_cname_aliases(self):
-        hr = self._make_host_resolver()
+        hr = _make_host_resolver()
         hr.hosts.write(b'1.2.3.4 v4.example.com v4\n'
                        b'dead:beef::1 v6.example.com v6\n')
         hr.hosts.flush()
@@ -69,7 +81,7 @@ class TestHostsResolver(tests.LimitedTestCase):
                                'v6': 'v6.example.com'}
 
     def test_load_v6_link_local(self):
-        hr = self._make_host_resolver()
+        hr = _make_host_resolver()
         hr.hosts.write(b'fe80:: foo\n'
                        b'fe80:dead:beef::1 bar\n')
         hr.hosts.flush()
@@ -78,14 +90,14 @@ class TestHostsResolver(tests.LimitedTestCase):
         assert not hr._v6
 
     def test_query_A(self):
-        hr = self._make_host_resolver()
+        hr = _make_host_resolver()
         hr._v4 = {'v4.example.com': '1.2.3.4'}
         ans = hr.query('v4.example.com')
         assert ans[0].address == '1.2.3.4'
 
     def test_query_ans_types(self):
         # This assumes test_query_A above succeeds
-        hr = self._make_host_resolver()
+        hr = _make_host_resolver()
         hr._v4 = {'v4.example.com': '1.2.3.4'}
         hr._last_stat = time.time()
         ans = hr.query('v4.example.com')
@@ -108,18 +120,18 @@ class TestHostsResolver(tests.LimitedTestCase):
         assert rr.address == '1.2.3.4'
 
     def test_query_AAAA(self):
-        hr = self._make_host_resolver()
+        hr = _make_host_resolver()
         hr._v6 = {'v6.example.com': 'dead:beef::1'}
         ans = hr.query('v6.example.com', dns.rdatatype.AAAA)
         assert ans[0].address == 'dead:beef::1'
 
     def test_query_unknown_raises(self):
-        hr = self._make_host_resolver()
+        hr = _make_host_resolver()
         with tests.assert_raises(greendns.dns.resolver.NoAnswer):
             hr.query('example.com')
 
     def test_query_unknown_no_raise(self):
-        hr = self._make_host_resolver()
+        hr = _make_host_resolver()
         ans = hr.query('example.com', raise_on_no_answer=False)
         assert isinstance(ans, greendns.dns.resolver.Answer)
         assert ans.response is None
@@ -134,33 +146,47 @@ class TestHostsResolver(tests.LimitedTestCase):
         assert len(ans.rrset) == 0
 
     def test_query_CNAME(self):
-        hr = self._make_host_resolver()
+        hr = _make_host_resolver()
         hr._aliases = {'host': 'host.example.com'}
         ans = hr.query('host', dns.rdatatype.CNAME)
         assert ans[0].target == dns.name.from_text('host.example.com')
         assert str(ans[0].target) == 'host.example.com.'
 
     def test_query_unknown_type(self):
-        hr = self._make_host_resolver()
+        hr = _make_host_resolver()
         with tests.assert_raises(greendns.dns.resolver.NoAnswer):
             hr.query('example.com', dns.rdatatype.MX)
 
     def test_getaliases(self):
-        hr = self._make_host_resolver()
+        hr = _make_host_resolver()
         hr._aliases = {'host': 'host.example.com',
                        'localhost': 'host.example.com'}
         res = set(hr.getaliases('host'))
         assert res == set(['host.example.com', 'localhost'])
 
     def test_getaliases_unknown(self):
-        hr = self._make_host_resolver()
+        hr = _make_host_resolver()
         assert hr.getaliases('host.example.com') == []
 
     def test_getaliases_fqdn(self):
-        hr = self._make_host_resolver()
+        hr = _make_host_resolver()
         hr._aliases = {'host': 'host.example.com'}
         res = set(hr.getaliases('host.example.com'))
         assert res == set(['host'])
+
+    def test_hosts_case_insensitive(self):
+        name = 'example.com'
+        hr = _make_host_resolver()
+        hr.hosts.write(b'1.2.3.4 ExAmPlE.CoM\n')
+        hr.hosts.flush()
+        hr._load()
+
+        ans = hr.query(name)
+        rr = ans.rrset[0]
+        assert isinstance(rr, greendns.dns.rdtypes.IN.A.A)
+        assert rr.rdtype == dns.rdatatype.A
+        assert rr.rdclass == dns.rdataclass.IN
+        assert rr.address == '1.2.3.4'
 
 
 def _make_mock_base_resolver():
@@ -458,11 +484,11 @@ class TestGetaddrinfo(tests.LimitedTestCase):
         greendns.resolve = _make_mock_resolve()
         greendns.resolve.add('example.com', '127.0.0.2')
         greendns.resolve.add('example.com', '::1')
-        res = greendns.getaddrinfo('example.com', 'ssh')
-        addr = ('127.0.0.2', 22)
+        res = greendns.getaddrinfo('example.com', 'domain')
+        addr = ('127.0.0.2', 53)
         tcp = (socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP, addr)
         udp = (socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP, addr)
-        addr = ('::1', 22, 0, 0)
+        addr = ('::1', 53, 0, 0)
         tcp6 = (socket.AF_INET6, socket.SOCK_STREAM, socket.IPPROTO_TCP, addr)
         udp6 = (socket.AF_INET6, socket.SOCK_DGRAM, socket.IPPROTO_UDP, addr)
         filt_res = [ai[:3] + (ai[4],) for ai in res]
@@ -475,8 +501,8 @@ class TestGetaddrinfo(tests.LimitedTestCase):
         greendns.resolve = _make_mock_resolve()
         idn_name = u'евентлет.com'
         greendns.resolve.add(idn_name.encode('idna').decode('ascii'), '127.0.0.2')
-        res = greendns.getaddrinfo(idn_name, 'ssh')
-        addr = ('127.0.0.2', 22)
+        res = greendns.getaddrinfo(idn_name, 'domain')
+        addr = ('127.0.0.2', 53)
         tcp = (socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP, addr)
         udp = (socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP, addr)
         filt_res = [ai[:3] + (ai[4],) for ai in res]
@@ -486,8 +512,8 @@ class TestGetaddrinfo(tests.LimitedTestCase):
     def test_getaddrinfo_inet(self):
         greendns.resolve = _make_mock_resolve()
         greendns.resolve.add('example.com', '127.0.0.2')
-        res = greendns.getaddrinfo('example.com', 'ssh', socket.AF_INET)
-        addr = ('127.0.0.2', 22)
+        res = greendns.getaddrinfo('example.com', 'domain', socket.AF_INET)
+        addr = ('127.0.0.2', 53)
         tcp = (socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP, addr)
         udp = (socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP, addr)
         assert tcp in [ai[:3] + (ai[4],) for ai in res]
@@ -496,8 +522,8 @@ class TestGetaddrinfo(tests.LimitedTestCase):
     def test_getaddrinfo_inet6(self):
         greendns.resolve = _make_mock_resolve()
         greendns.resolve.add('example.com', '::1')
-        res = greendns.getaddrinfo('example.com', 'ssh', socket.AF_INET6)
-        addr = ('::1', 22, 0, 0)
+        res = greendns.getaddrinfo('example.com', 'domain', socket.AF_INET6)
+        addr = ('::1', 53, 0, 0)
         tcp = (socket.AF_INET6, socket.SOCK_STREAM, socket.IPPROTO_TCP, addr)
         udp = (socket.AF_INET6, socket.SOCK_DGRAM, socket.IPPROTO_UDP, addr)
         assert tcp in [ai[:3] + (ai[4],) for ai in res]
@@ -516,6 +542,62 @@ class TestGetaddrinfo(tests.LimitedTestCase):
         res = greendns.getaddrinfo('example.com', 0)
         addr = [('dead:beef::1', 0, 0, 0)] * len(res)
         assert addr == [ai[-1] for ai in res]
+
+    def test_getaddrinfo_hosts_only_ans_with_timeout(self):
+        def clear_raises(res_self):
+            res_self.raises = None
+            return greendns.dns.resolver.NoAnswer()
+
+        hostsres = _make_mock_base_resolver()
+        hostsres.raises = clear_raises
+        hostsres.rr.address = '1.2.3.4'
+        greendns.resolver = greendns.ResolverProxy(hostsres())
+        res = _make_mock_base_resolver()
+        res.raises = greendns.dns.exception.Timeout
+        greendns.resolver._resolver = res()
+
+        result = greendns.getaddrinfo('example.com', 0, 0)
+        addr = [('1.2.3.4', 0)] * len(result)
+        assert addr == [ai[-1] for ai in result]
+
+    def test_getaddrinfo_hosts_only_ans_with_error(self):
+        def clear_raises(res_self):
+            res_self.raises = None
+            return greendns.dns.resolver.NoAnswer()
+
+        hostsres = _make_mock_base_resolver()
+        hostsres.raises = clear_raises
+        hostsres.rr.address = '1.2.3.4'
+        greendns.resolver = greendns.ResolverProxy(hostsres())
+        res = _make_mock_base_resolver()
+        res.raises = greendns.dns.exception.DNSException
+        greendns.resolver._resolver = res()
+
+        result = greendns.getaddrinfo('example.com', 0, 0)
+        addr = [('1.2.3.4', 0)] * len(result)
+        assert addr == [ai[-1] for ai in result]
+
+    def test_getaddrinfo_hosts_only_timeout(self):
+        hostsres = _make_mock_base_resolver()
+        hostsres.raises = greendns.dns.resolver.NoAnswer
+        greendns.resolver = greendns.ResolverProxy(hostsres())
+        res = _make_mock_base_resolver()
+        res.raises = greendns.dns.exception.Timeout
+        greendns.resolver._resolver = res()
+
+        with tests.assert_raises(socket.gaierror):
+            greendns.getaddrinfo('example.com', 0, 0)
+
+    def test_getaddrinfo_hosts_only_dns_error(self):
+        hostsres = _make_mock_base_resolver()
+        hostsres.raises = greendns.dns.resolver.NoAnswer
+        greendns.resolver = greendns.ResolverProxy(hostsres())
+        res = _make_mock_base_resolver()
+        res.raises = greendns.dns.exception.DNSException
+        greendns.resolver._resolver = res()
+
+        with tests.assert_raises(socket.gaierror):
+            greendns.getaddrinfo('example.com', 0, 0)
 
     def test_canonname(self):
         greendns.resolve = _make_mock_resolve()
@@ -721,3 +803,43 @@ class TestGethostbyname_ex(tests.LimitedTestCase):
 
 def test_reverse_name():
     tests.run_isolated('greendns_from_address_203.py')
+
+
+def test_proxy_resolve_unqualified():
+    # https://github.com/eventlet/eventlet/issues/363
+    rp = greendns.ResolverProxy(filename=None)
+    rp._resolver.search.append(dns.name.from_text('example.com'))
+    with tests.mock.patch('dns.resolver.Resolver.query', side_effect=dns.resolver.NoAnswer) as m:
+        try:
+            rp.query('machine')
+            assert False, 'Expected NoAnswer exception'
+        except dns.resolver.NoAnswer:
+            pass
+        assert any(call[0][0] == dns.name.from_text('machine') for call in m.call_args_list)
+        assert any(call[0][0] == dns.name.from_text('machine.') for call in m.call_args_list)
+
+
+def test_hosts_priority():
+    name = 'example.com'
+    addr_from_ns = '1.0.2.0'
+
+    hr = _make_host_resolver()
+    rp = greendns.ResolverProxy(hosts_resolver=hr, filename=None)
+    base = _make_mock_base_resolver()
+    base.rr.address = addr_from_ns
+    rp._resolver = base()
+
+    # Default behavior
+    rrns = greendns.resolve(name, _proxy=rp).rrset[0]
+    assert rrns.address == addr_from_ns
+
+    # Hosts result must shadow that from nameservers
+    hr.hosts.write(b'1.2.3.4 example.com\ndead:beef::1 example.com\n')
+    hr.hosts.flush()
+    hr._load()
+    rrs4 = greendns.resolve(name, family=socket.AF_INET, _proxy=rp).rrset
+    assert len(rrs4) == 1
+    assert rrs4[0].address == '1.2.3.4', rrs4[0].address
+    rrs6 = greendns.resolve(name, family=socket.AF_INET6, _proxy=rp).rrset
+    assert len(rrs6) == 1
+    assert rrs6[0].address == 'dead:beef::1', rrs6[0].address

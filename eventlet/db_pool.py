@@ -327,98 +327,53 @@ class GenericConnectionWrapper(object):
     def __repr__(self):
         return self._base.__repr__()
 
-    def affected_rows(self):
-        return self._base.affected_rows()
-
-    def autocommit(self, *args, **kwargs):
-        return self._base.autocommit(*args, **kwargs)
-
-    def begin(self):
-        return self._base.begin()
-
-    def change_user(self, *args, **kwargs):
-        return self._base.change_user(*args, **kwargs)
-
-    def character_set_name(self, *args, **kwargs):
-        return self._base.character_set_name(*args, **kwargs)
-
-    def close(self, *args, **kwargs):
-        return self._base.close(*args, **kwargs)
-
-    def commit(self, *args, **kwargs):
-        return self._base.commit(*args, **kwargs)
-
-    def cursor(self, *args, **kwargs):
-        return self._base.cursor(*args, **kwargs)
-
-    def dump_debug_info(self, *args, **kwargs):
-        return self._base.dump_debug_info(*args, **kwargs)
-
-    def errno(self, *args, **kwargs):
-        return self._base.errno(*args, **kwargs)
-
-    def error(self, *args, **kwargs):
-        return self._base.error(*args, **kwargs)
-
-    def errorhandler(self, *args, **kwargs):
-        return self._base.errorhandler(*args, **kwargs)
-
-    def insert_id(self, *args, **kwargs):
-        return self._base.insert_id(*args, **kwargs)
-
-    def literal(self, *args, **kwargs):
-        return self._base.literal(*args, **kwargs)
-
-    def set_character_set(self, *args, **kwargs):
-        return self._base.set_character_set(*args, **kwargs)
-
-    def set_sql_mode(self, *args, **kwargs):
-        return self._base.set_sql_mode(*args, **kwargs)
-
-    def show_warnings(self):
-        return self._base.show_warnings()
-
-    def warning_count(self):
-        return self._base.warning_count()
-
-    def ping(self, *args, **kwargs):
-        return self._base.ping(*args, **kwargs)
-
-    def query(self, *args, **kwargs):
-        return self._base.query(*args, **kwargs)
-
-    def rollback(self, *args, **kwargs):
-        return self._base.rollback(*args, **kwargs)
-
-    def select_db(self, *args, **kwargs):
-        return self._base.select_db(*args, **kwargs)
-
-    def set_server_option(self, *args, **kwargs):
-        return self._base.set_server_option(*args, **kwargs)
-
-    def server_capabilities(self, *args, **kwargs):
-        return self._base.server_capabilities(*args, **kwargs)
-
-    def shutdown(self, *args, **kwargs):
-        return self._base.shutdown(*args, **kwargs)
-
-    def sqlstate(self, *args, **kwargs):
-        return self._base.sqlstate(*args, **kwargs)
-
-    def stat(self, *args, **kwargs):
-        return self._base.stat(*args, **kwargs)
-
-    def store_result(self, *args, **kwargs):
-        return self._base.store_result(*args, **kwargs)
-
-    def string_literal(self, *args, **kwargs):
-        return self._base.string_literal(*args, **kwargs)
-
-    def thread_id(self, *args, **kwargs):
-        return self._base.thread_id(*args, **kwargs)
-
-    def use_result(self, *args, **kwargs):
-        return self._base.use_result(*args, **kwargs)
+    _proxy_funcs = (
+        'affected_rows',
+        'autocommit',
+        'begin',
+        'change_user',
+        'character_set_name',
+        'close',
+        'commit',
+        'cursor',
+        'dump_debug_info',
+        'errno',
+        'error',
+        'errorhandler',
+        'insert_id',
+        'literal',
+        'ping',
+        'query',
+        'rollback',
+        'select_db',
+        'server_capabilities',
+        'set_character_set',
+        'set_isolation_level',
+        'set_server_option',
+        'set_sql_mode',
+        'show_warnings',
+        'shutdown',
+        'sqlstate',
+        'stat',
+        'store_result',
+        'string_literal',
+        'thread_id',
+        'use_result',
+        'warning_count',
+    )
+for _proxy_fun in GenericConnectionWrapper._proxy_funcs:
+    # excess wrapper for early binding (closure by value)
+    def _wrapper(_proxy_fun=_proxy_fun):
+        def _proxy_method(self, *args, **kwargs):
+            return getattr(self._base, _proxy_fun)(*args, **kwargs)
+        _proxy_method.func_name = _proxy_fun
+        _proxy_method.__name__ = _proxy_fun
+        _proxy_method.__qualname__ = 'GenericConnectionWrapper.' + _proxy_fun
+        return _proxy_method
+    setattr(GenericConnectionWrapper, _proxy_fun, _wrapper(_proxy_fun))
+del GenericConnectionWrapper._proxy_funcs
+del _proxy_fun
+del _wrapper
 
 
 class PooledConnectionWrapper(GenericConnectionWrapper):

@@ -1,0 +1,8 @@
+#!/bin/bash
+set -eux
+cd "$( dirname "${BASH_SOURCE[0]}" )/.."
+version=${1-"5c0322dc559bf961f7e111d97cd3ed9ab5c1a73b"}
+path="./eventlet/support/monotonic.py"
+url="https://raw.githubusercontent.com/atdt/monotonic/${version}/monotonic.py"
+rm -f ${path}
+curl --fail --location --silent --show-error -o${path} ${url}

@@ -1,13 +1,12 @@
 import sys
-from unittest import TestCase
 
 from eventlet import debug
-from eventlet.support import capture_stderr, six
-from tests import LimitedTestCase, main
+from eventlet.support import six
+import tests
 import eventlet
 
 
-class TestSpew(TestCase):
+class TestSpew(tests.LimitedTestCase):
     def setUp(self):
         self.orig_trace = sys.settrace
         sys.settrace = self._settrace
@@ -84,7 +83,7 @@ class TestSpew(TestCase):
         assert output == ""
 
 
-class TestDebug(LimitedTestCase):
+class TestDebug(tests.LimitedTestCase):
     def test_everything(self):
         debug.hub_exceptions(True)
         debug.hub_exceptions(False)
@@ -107,7 +106,7 @@ class TestDebug(LimitedTestCase):
             s.recv(1)
             {}[1]  # keyerror
 
-        with capture_stderr() as fake:
+        with tests.capture_stderr() as fake:
             gt = eventlet.spawn(hurl, client_2)
             eventlet.sleep(0)
             client.send(b' ')
@@ -119,6 +118,3 @@ class TestDebug(LimitedTestCase):
         debug.hub_exceptions(False)
         # look for the KeyError exception in the traceback
         assert 'KeyError: 1' in fake.getvalue(), "Traceback not in:\n" + fake.getvalue()
-
-if __name__ == "__main__":
-    main()

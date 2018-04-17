@@ -1,0 +1,16 @@
+[run]
+branch = True
+source = eventlet
+# concurrency=eventlet gives 0% report on CPython and start error on pypy
+#concurrency = eventlet
+omit =
+    eventlet/support/dns/*
+    eventlet/support/six.py
+    tests/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    raise NotImplementedError
+    if __name__ == .__main__.:
+ignore_errors = True
