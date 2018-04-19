@@ -1,6 +1,6 @@
 import imp
 import sys
-from importlib import import_module
+import importlib
 
 import eventlet
 from eventlet.support import six
@@ -92,7 +92,7 @@ def inject(module_name, new_globals, *additional_modules):
     # the specified modules are in place
     sys.modules.pop(module_name, None)
     try:
-        module = import_module(module_name)
+        module = importlib.import_module(module_name)
 
         if new_globals is not None:
             # Update the given globals dictionary with everything from this new module
@@ -193,7 +193,7 @@ def original(modname):
         saver.save(dependency)
         sys.modules[dependency] = original(dependency)
     try:
-        real_mod = import_module(modname)
+        real_mod = importlib.import_module(modname)
         if modname in ('Queue', 'queue') and not hasattr(real_mod, '_threading'):
             # tricky hack: Queue's constructor in <2.7 imports
             # threading on every instantiation; therefore we wrap
@@ -298,7 +298,7 @@ def monkey_patch(**on):
         for name, mod in modules_to_patch:
             orig_mod = sys.modules.get(name)
             if orig_mod is None:
-                orig_mod = import_module(name)
+                orig_mod = importlib.import_module(name)
             for attr_name in mod.__patched__:
                 patched_attr = getattr(mod, attr_name, None)
                 if patched_attr is not None:
