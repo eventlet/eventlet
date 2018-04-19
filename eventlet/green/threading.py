@@ -1,4 +1,5 @@
 """Implements the standard threading module, using greenthreads."""
+import importlib
 from eventlet import patcher
 from eventlet.green import thread
 from eventlet.green import time
@@ -80,7 +81,7 @@ def _fixup_thread(t):
     # class has been patched. This is why monkey patching can be bad...
     global __threading
     if not __threading:
-        __threading = __import__('threading')
+        __threading = importlib.import_module('threading')
 
     if (hasattr(__threading.Thread, 'get_name') and
             not hasattr(t, 'get_name')):

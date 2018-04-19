@@ -2,6 +2,7 @@ import base64
 import codecs
 import collections
 import errno
+import importlib
 from random import Random
 from socket import error as SocketError
 import string
@@ -30,7 +31,7 @@ for _mod in ('wsaccel.utf8validator', 'autobahn.utf8validator'):
     # this prefers to use wsaccel, a cython based implementation, if available.
     # wsaccel may also be installed w/out autobahn, or with a earlier version.
     try:
-        utf8validator = __import__(_mod, {}, {}, [''])
+        utf8validator = importlib.import_module(_mod)
     except ImportError:
         utf8validator = None
     else:

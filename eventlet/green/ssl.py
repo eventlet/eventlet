@@ -1,4 +1,5 @@
-__ssl = __import__('ssl')
+import importlib
+__ssl = importlib.import_module('ssl')
 
 from eventlet.patcher import slurp_properties
 slurp_properties(__ssl, globals(), srckeys=dir(__ssl))
@@ -14,7 +15,7 @@ from eventlet.greenio import (
 )
 from eventlet.hubs import trampoline, IOClosed
 from eventlet.support import get_errno, PY33, six
-orig_socket = __import__('socket')
+orig_socket = importlib.import_module('socket')
 socket = orig_socket.socket
 if sys.version_info >= (2, 7):
     has_ciphers = True

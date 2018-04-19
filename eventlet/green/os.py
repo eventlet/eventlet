@@ -1,6 +1,7 @@
-os_orig = __import__("os")
+import importlib
+os_orig = importlib.import_module("os")
 import errno
-socket = __import__("socket")
+socket = importlib.import_module("socket")
 
 from eventlet import greenio
 from eventlet.support import get_errno

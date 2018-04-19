@@ -18,6 +18,7 @@
 from io import BytesIO
 import base64
 import binascii
+import importlib
 
 import dns.exception
 import dns.name
@@ -305,7 +306,7 @@ _module_prefix = 'dns.rdtypes'
 def get_rdata_class(rdclass, rdtype):
 
     def import_module(name):
-        mod = __import__(name)
+        mod = importlib.import_module(name)
         components = name.split('.')
         for comp in components[1:]:
             mod = getattr(mod, comp)

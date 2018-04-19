@@ -10,6 +10,7 @@ Many of these tests make connections to external servers, and all.py tries to sk
 tests rather than failing them, so you can get some work done on a plane.
 """
 
+import importlib
 from eventlet import debug
 debug.hub_prevent_multiple_readers(False)
 
@@ -26,7 +27,7 @@ def restart_hub():
 
 def assimilate_patched(name):
     try:
-        modobj = __import__(name, globals(), locals(), ['test_main'])
+        modobj = importlib.import_module(name)
         restart_hub()
     except ImportError:
         print("Not importing %s, it doesn't exist in this installation/version of Python" % name)
