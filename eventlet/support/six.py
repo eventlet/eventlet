@@ -23,7 +23,6 @@
 from __future__ import absolute_import
 
 import functools
-import importlib
 import itertools
 import operator
 import sys
@@ -78,6 +77,16 @@ def _add_doc(func, doc):
     func.__doc__ = doc
 
 
+try:
+    from importlib import import_module as _import_module
+except ImportError:
+    # Python 2.6 doesn't yet support importlib
+    def _import_module(name):
+        """Import module, returning the module after the last dot."""
+        __import__(name)
+        return sys.modules[name]
+
+
 class _LazyDescr(object):
 
     def __init__(self, name):
@@ -107,7 +116,7 @@ class MovedModule(_LazyDescr):
             self.mod = old
 
     def _resolve(self):
-        return importlib.import_module(self.mod)
+        return _import_module(self.mod)
 
     def __getattr__(self, attr):
         _module = self._resolve()
@@ -152,7 +161,7 @@ class MovedAttribute(_LazyDescr):
             self.attr = old_attr
 
     def _resolve(self):
-        module = importlib.import_module(self.mod)
+        module = _import_module(self.mod)
         return getattr(module, self.attr)
 
 
