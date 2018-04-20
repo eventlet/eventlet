@@ -1081,6 +1081,25 @@ class Mock(CallableMixin, NonCallableMock):
     """
 
 
+def _dot_lookup(thing, comp, import_path):
+    try:
+        return getattr(thing, comp)
+    except AttributeError:
+        importlib.import_module(import_path)
+        return getattr(thing, comp)
+
+
+def _importer(target):
+    components = target.split('.')
+    import_path = components.pop(0)
+    thing = importlib.import_module(import_path)
+
+    for comp in components:
+        import_path += ".%s" % comp
+        thing = _dot_lookup(thing, comp, import_path)
+    return thing
+
+
 def _is_started(patcher):
     # XXXX horrible
     return hasattr(patcher, 'is_local')
@@ -1379,7 +1398,7 @@ def _get_target(target):
     except (TypeError, ValueError):
         raise TypeError("Need a valid target to patch. You supplied: %r" %
                         (target,))
-    getter = lambda: importlib.import_module(target)
+    getter = lambda: _importer(target)
     return getter, attribute
 
 
@@ -1434,7 +1453,7 @@ def _patch_multiple(target, spec=None, create=False, spec_set=None,
     for choosing which methods to wrap.
     """
     if type(target) in (unicode, str):
-        getter = lambda: importlib.import_module(target)
+        getter = lambda: _importer(target)
     else:
         getter = lambda: target
 
@@ -1567,7 +1586,7 @@ class _patch_dict(object):
 
     def __init__(self, in_dict, values=(), clear=False, **kwargs):
         if isinstance(in_dict, basestring):
-            in_dict = importlib.import_module(in_dict)
+            in_dict = _importer(in_dict)
         self.in_dict = in_dict
         # support any argument supported by dict(...) constructor
         self.values = dict(values)
