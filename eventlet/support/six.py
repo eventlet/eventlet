@@ -77,14 +77,10 @@ def _add_doc(func, doc):
     func.__doc__ = doc
 
 
-try:
-    from importlib import import_module as _import_module
-except ImportError:
-    # Python 2.6 doesn't yet support importlib
-    def _import_module(name):
-        """Import module, returning the module after the last dot."""
-        __import__(name)
-        return sys.modules[name]
+def _import_module(name):
+    """Import module, returning the module after the last dot."""
+    __import__(name)
+    return sys.modules[name]
 
 
 class _LazyDescr(object):
