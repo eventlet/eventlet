@@ -29,7 +29,8 @@ to profile Eventlet-based applications in preference to either :mod:`profile` or
 FIXME: No testcases for this module.
 """
 
-profile_orig = __import__('profile')
+import importlib
+profile_orig = importlib.import_module('profile')
 __all__ = profile_orig.__all__
 
 from eventlet.patcher import slurp_properties

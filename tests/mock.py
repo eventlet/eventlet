@@ -52,6 +52,7 @@ __all__ = (
 __version__ = '1.0.1'
 
 
+import importlib
 import pprint
 import sys
 
@@ -1084,14 +1085,14 @@ def _dot_lookup(thing, comp, import_path):
     try:
         return getattr(thing, comp)
     except AttributeError:
-        __import__(import_path)
+        importlib.import_module(import_path)
         return getattr(thing, comp)
 
 
 def _importer(target):
     components = target.split('.')
     import_path = components.pop(0)
-    thing = __import__(import_path)
+    thing = importlib.import_module(import_path)
 
     for comp in components:
         import_path += ".%s" % comp

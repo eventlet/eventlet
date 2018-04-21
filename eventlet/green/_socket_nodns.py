@@ -1,4 +1,5 @@
-__socket = __import__('socket')
+import importlib
+__socket = importlib.import_module('socket')
 
 __all__ = __socket.__all__
 __patched__ = ['fromfd', 'socketpair', 'ssl', 'socket', 'timeout']
@@ -6,7 +7,7 @@ __patched__ = ['fromfd', 'socketpair', 'ssl', 'socket', 'timeout']
 import eventlet.patcher
 eventlet.patcher.slurp_properties(__socket, globals(), ignore=__patched__, srckeys=dir(__socket))
 
-os = __import__('os')
+os = importlib.import_module('os')
 import sys
 from eventlet import greenio
 

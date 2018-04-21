@@ -5,7 +5,8 @@ found in :mod:`pyzmq <zmq>` to be non blocking
 
 from __future__ import with_statement
 
-__zmq__ = __import__('zmq')
+import importlib
+__zmq__ = importlib.import_module('zmq')
 from eventlet import hubs
 from eventlet.patcher import slurp_properties
 from eventlet.support import greenlets as greenlet

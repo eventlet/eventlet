@@ -61,18 +61,30 @@ def import_patched(module_name):
     return patcher.import_patched(module_name, **modules)
 
 
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
-dns = import_patched('dns')
-for pkg in dns.__all__:
-    setattr(dns, pkg, import_patched('dns.' + pkg))
-for pkg in dns.rdtypes.__all__:
-    setattr(dns.rdtypes, pkg, import_patched('dns.rdtypes.' + pkg))
-for pkg in dns.rdtypes.IN.__all__:
-    setattr(dns.rdtypes.IN, pkg, import_patched('dns.rdtypes.IN.' + pkg))
-for pkg in dns.rdtypes.ANY.__all__:
-    setattr(dns.rdtypes.ANY, pkg, import_patched('dns.rdtypes.ANY.' + pkg))
-del import_patched
-sys.path.pop(0)
+# In a frozen runtime environment such as PyInstaller one-file mode, sys will
+# have a frozen attribute set to True and an _MEIPASS attribute set to the
+# directory containing these modules. Notably, os.path.dirname(__file__) does
+# NOT point to that directory. Check for that environment, conflating "no such
+# attribute" with "not set that way" -- in other words, falling back to normal
+# behavior unless both attributes are present and set in that particular way.
+sys.path.insert(
+    0,
+    sys._MEIPASS
+    if getattr(sys, 'frozen', False) and getattr(sys, '_MEIPASS', None) else
+    os.path.abspath(os.path.dirname(__file__)))
+try:
+    dns = import_patched('dns')
+    for pkg in dns.__all__:
+        setattr(dns, pkg, import_patched('dns.' + pkg))
+    for pkg in dns.rdtypes.__all__:
+        setattr(dns.rdtypes, pkg, import_patched('dns.rdtypes.' + pkg))
+    for pkg in dns.rdtypes.IN.__all__:
+        setattr(dns.rdtypes.IN, pkg, import_patched('dns.rdtypes.IN.' + pkg))
+    for pkg in dns.rdtypes.ANY.__all__:
+        setattr(dns.rdtypes.ANY, pkg, import_patched('dns.rdtypes.ANY.' + pkg))
+finally:
+    del import_patched
+    sys.path.pop(0)
 
 
 socket = _socket_nodns

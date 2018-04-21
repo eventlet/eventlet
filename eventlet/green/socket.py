@@ -1,8 +1,8 @@
 import os
 import sys
 
-__import__('eventlet.green._socket_nodns')
-__socket = sys.modules['eventlet.green._socket_nodns']
+import importlib
+__socket = importlib.import_module('eventlet.green._socket_nodns')
 
 __all__ = __socket.__all__
 __patched__ = __socket.__patched__ + [

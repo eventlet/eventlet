@@ -9,6 +9,6 @@ if [[ ! -d "${upstream_path}" ]]; then
   rm dnspython.zip
 fi
 rm -rf eventlet/support/dns
-# patch --directory=eventlet/support -p1 --normal --forward -r/dev/null <./dns.patch
 mv ${upstream_path}/dns eventlet/support/
 rm -rf ${upstream_path}
+patch -p1 --forward -r/dev/null <./dns.patch

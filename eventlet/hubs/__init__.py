@@ -1,3 +1,4 @@
+import importlib
 import os
 
 from eventlet import patcher
@@ -74,7 +75,7 @@ def use_hub(mod=None):
         assert mod.strip(), "Need to specify a hub"
         if '.' in mod or ':' in mod:
             modulename, _, classname = mod.strip().partition(':')
-            mod = __import__(modulename, globals(), locals(), [classname])
+            mod = importlib.import_module(modulename)
             if classname:
                 mod = getattr(mod, classname)
         else:
@@ -94,8 +95,7 @@ def use_hub(mod=None):
                     mod, found = entry.load(), True
                     break
             if not found:
-                mod = __import__(
-                    'eventlet.hubs.' + mod, globals(), locals(), ['Hub'])
+                mod = importlib.import_module('eventlet.hubs.' + mod)
     if hasattr(mod, 'Hub'):
         _threadlocal.Hub = mod.Hub
     else:

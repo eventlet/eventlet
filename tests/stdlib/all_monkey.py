@@ -1,3 +1,4 @@
+import importlib
 import eventlet
 eventlet.sleep(0)
 from eventlet import patcher
@@ -7,7 +8,7 @@ patcher.monkey_patch()
 def assimilate_real(name):
     print("Assimilating", name)
     try:
-        modobj = __import__('test.' + name, globals(), locals(), ['test_main'])
+        modobj = importlib.import_module('test.' + name)
     except ImportError:
         print("Not importing %s, it doesn't exist in this installation/version of Python" % name)
         return
