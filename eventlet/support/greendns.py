@@ -67,7 +67,8 @@ def import_patched(module_name):
 # NOT point to that directory. Check for that environment, conflating "no such
 # attribute" with "not set that way" -- in other words, falling back to normal
 # behavior unless both attributes are present and set in that particular way.
-sys.path.insert(0,
+sys.path.insert(
+    0,
     sys._MEIPASS
     if getattr(sys, 'frozen', False) and getattr(sys, '_MEIPASS', None) else
     os.path.abspath(os.path.dirname(__file__)))
