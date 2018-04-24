@@ -32,6 +32,7 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import itertools
 import re
 import struct
 import sys
@@ -158,7 +159,7 @@ class HostsResolver(object):
 
     LINES_RE = re.compile(r"""
         \s*  # Leading space
-        ([^\r\n#]+?)  # The actual match, non-greedy so as not to include trailing space
+        ([^\r\n#]*?)  # The actual match, non-greedy so as not to include trailing space
         \s*  # Trailing space
         (?:[#][^\r\n]+)?  # Comments
         (?:$|[\r\n]+)  # EOF or newline
@@ -196,7 +197,7 @@ class HostsResolver(object):
 
         udata = fdata.decode(errors='ignore')
 
-        return self.LINES_RE.findall(udata)
+        return itertools.ifilter(None, self.LINES_RE.findall(udata))
 
     def _load(self):
         """Load hosts file
