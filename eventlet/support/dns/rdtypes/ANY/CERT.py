@@ -16,10 +16,12 @@
 import struct
 import base64
 
-import dns.exception
-import dns.dnssec
-import dns.rdata
-import dns.tokenizer
+# namespace these relative imports
+class dns(object):
+    from ... import exception
+    from ... import dnssec
+    from ... import rdata
+    from ... import tokenizer
 
 _ctype_by_value = {
     1: 'PKIX',

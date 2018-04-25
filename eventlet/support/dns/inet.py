@@ -17,8 +17,10 @@
 
 import socket
 
-import dns.ipv4
-import dns.ipv6
+# namespace these relative imports
+class dns(object):
+    from . import ipv4
+    from . import ipv6
 
 from ._compat import maybe_ord
 

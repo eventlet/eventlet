@@ -16,9 +16,12 @@
 import struct
 import base64
 
-import dns.exception
-import dns.inet
-import dns.name
+# namespace these relative imports
+class dns(object):
+    from ... import exception
+    from ... import inet
+    from ... import name
+    from ... import rdata
 
 
 class IPSECKEY(dns.rdata.Rdata):

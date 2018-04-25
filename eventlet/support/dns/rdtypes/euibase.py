@@ -16,8 +16,10 @@
 
 import binascii
 
-import dns.rdata
-from dns._compat import xrange
+# namespace these relative imports
+class dns(object):
+    from .. import rdata
+from .._compat import xrange
 
 
 class EUIBase(dns.rdata.Rdata):

@@ -16,9 +16,11 @@
 import socket
 import struct
 
-import dns.ipv4
-import dns.rdata
-from dns._compat import xrange
+# namespace these relative imports
+class dns(object):
+    from ... import ipv4
+    from ... import rdata
+from ..._compat import xrange
 
 _proto_tcp = socket.getprotobyname('tcp')
 _proto_udp = socket.getprotobyname('udp')

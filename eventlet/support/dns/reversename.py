@@ -18,9 +18,11 @@
 import binascii
 import sys
 
-import dns.name
-import dns.ipv6
-import dns.ipv4
+# namespace these relative imports
+class dns(object):
+    from . import name
+    from . import ipv6
+    from . import ipv4
 
 ipv4_reverse_domain = dns.name.from_text('in-addr.arpa.')
 ipv6_reverse_domain = dns.name.from_text('ip6.arpa.')

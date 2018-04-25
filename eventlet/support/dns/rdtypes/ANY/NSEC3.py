@@ -18,10 +18,12 @@ import binascii
 import string
 import struct
 
-import dns.exception
-import dns.rdata
-import dns.rdatatype
-from dns._compat import xrange, text_type
+# namespace these relative imports
+class dns(object):
+    from ... import exception
+    from ... import rdata
+    from ... import rdatatype
+from ..._compat import xrange, text_type
 
 try:
     b32_hex_to_normal = string.maketrans('0123456789ABCDEFGHIJKLMNOPQRSTUV',

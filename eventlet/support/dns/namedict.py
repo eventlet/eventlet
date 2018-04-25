@@ -26,7 +26,9 @@
 """DNS name dictionary"""
 
 import collections
-import dns.name
+# namespace these relative imports
+class dns(object):
+    from . import name
 from ._compat import xrange
 
 

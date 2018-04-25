@@ -16,13 +16,15 @@
 """DNS Dynamic Update Support"""
 
 
-import dns.message
-import dns.name
-import dns.opcode
-import dns.rdata
-import dns.rdataclass
-import dns.rdataset
-import dns.tsig
+# namespace these relative imports
+class dns(object):
+    from . import message
+    from . import name
+    from . import opcode
+    from . import rdata
+    from . import rdataclass
+    from . import rdataset
+    from . import tsig
 from ._compat import string_types
 
 

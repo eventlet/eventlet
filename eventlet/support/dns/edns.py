@@ -20,7 +20,9 @@ from __future__ import absolute_import
 import math
 import struct
 
-import dns.inet
+# namespace these relative imports
+class dns(object):
+    from . import inet
 
 #: NSID
 NSID = 3

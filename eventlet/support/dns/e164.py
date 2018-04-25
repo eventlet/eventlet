@@ -15,9 +15,11 @@
 
 """DNS E.164 helpers."""
 
-import dns.exception
-import dns.name
-import dns.resolver
+# namespace these relative imports
+class dns(object):
+    from . import exception
+    from . import name
+    from . import resolver
 from ._compat import string_types, maybe_decode
 
 #: The public E.164 domain.

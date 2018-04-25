@@ -15,11 +15,13 @@
 
 import struct
 
-import dns.exception
-import dns.rdata
-import dns.rdatatype
-import dns.name
-from dns._compat import xrange
+# namespace these relative imports
+class dns(object):
+    from ... import exception
+    from ... import rdata
+    from ... import rdatatype
+    from ... import name
+from ..._compat import xrange
 
 class CSYNC(dns.rdata.Rdata):
 

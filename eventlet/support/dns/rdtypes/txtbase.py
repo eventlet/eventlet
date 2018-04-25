@@ -17,10 +17,12 @@
 
 import struct
 
-import dns.exception
-import dns.rdata
-import dns.tokenizer
-from dns._compat import binary_type, string_types
+# namespace these relative imports
+class dns(object):
+    from .. import exception
+    from .. import rdata
+    from .. import tokenizer
+from .._compat import binary_type, string_types
 
 
 class TXTBase(dns.rdata.Rdata):

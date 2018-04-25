@@ -15,10 +15,12 @@
 
 import struct
 
-import dns.exception
-import dns.rdata
-import dns.tokenizer
-from dns._compat import text_type
+# namespace these relative imports
+class dns(object):
+    from ... import exception
+    from ... import rdata
+    from ... import tokenizer
+from ..._compat import text_type
 
 
 class HINFO(dns.rdata.Rdata):

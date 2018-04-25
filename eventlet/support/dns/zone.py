@@ -22,16 +22,18 @@ import re
 import os
 from io import BytesIO
 
-import dns.exception
-import dns.name
-import dns.node
-import dns.rdataclass
-import dns.rdatatype
-import dns.rdata
-import dns.rrset
-import dns.tokenizer
-import dns.ttl
-import dns.grange
+# namespace these relative imports
+class dns(object):
+    from . import exception
+    from . import name
+    from . import node
+    from . import rdataclass
+    from . import rdatatype
+    from . import rdata
+    from . import rrset
+    from . import tokenizer
+    from . import ttl
+    from . import grange
 from ._compat import string_types, text_type
 
 

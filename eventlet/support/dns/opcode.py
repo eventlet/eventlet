@@ -15,7 +15,9 @@
 
 """DNS Opcodes."""
 
-import dns.exception
+# namespace these relative imports
+class dns(object):
+    from . import exception
 
 #: Query
 QUERY = 0

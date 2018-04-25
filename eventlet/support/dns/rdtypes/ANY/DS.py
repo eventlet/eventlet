@@ -13,7 +13,10 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 # OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-import dns.rdtypes.dsbase
+# namespace these relative imports
+class dns(object):
+    class rdtypes(object):
+        from .. import dsbase
 
 
 class DS(dns.rdtypes.dsbase.DSBase):

@@ -17,9 +17,11 @@
 
 from io import StringIO
 
-import dns.rdataset
-import dns.rdatatype
-import dns.renderer
+# namespace these relative imports
+class dns(object):
+    from . import rdataset
+    from . import rdatatype
+    from . import renderer
 
 
 class Node(object):

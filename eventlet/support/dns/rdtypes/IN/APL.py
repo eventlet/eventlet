@@ -16,11 +16,13 @@
 import struct
 import binascii
 
-import dns.exception
-import dns.inet
-import dns.rdata
-import dns.tokenizer
-from dns._compat import xrange, maybe_chr
+# namespace these relative imports
+class dns(object):
+    from ... import exception
+    from ... import inet
+    from ... import rdata
+    from ... import tokenizer
+from ..._compat import xrange, maybe_chr
 
 
 class APLItem(object):

@@ -14,7 +14,10 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 # OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-import dns.rdtypes.euibase
+# namespace these relative imports
+class dns(object):
+    class rdtypes(object):
+        from .. import euibase
 
 
 class EUI64(dns.rdtypes.euibase.EUIBase):

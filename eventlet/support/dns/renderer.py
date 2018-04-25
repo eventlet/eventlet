@@ -20,8 +20,11 @@ import struct
 import random
 import time
 
-import dns.exception
-import dns.tsig
+# namespace these relative imports
+class dns(object):
+    from . import exception
+    from . import tsig
+    from . import rdataclass
 from ._compat import long
 
 

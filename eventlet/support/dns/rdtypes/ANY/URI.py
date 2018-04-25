@@ -16,10 +16,12 @@
 
 import struct
 
-import dns.exception
-import dns.rdata
-import dns.name
-from dns._compat import text_type
+# namespace these relative imports
+class dns(object):
+    from ... import exception
+    from ... import rdata
+    from ... import name
+from ..._compat import text_type
 
 
 class URI(dns.rdata.Rdata):

@@ -17,9 +17,11 @@ from __future__ import division
 
 import struct
 
-import dns.exception
-import dns.rdata
-from dns._compat import long, xrange, round_py2_compat
+# namespace these relative imports
+class dns(object):
+    from ... import exception
+    from ... import rdata
+from ..._compat import long, xrange, round_py2_compat
 
 
 _pows = tuple(long(10**i) for i in range(0, 11))
