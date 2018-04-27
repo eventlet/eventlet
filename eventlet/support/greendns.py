@@ -197,7 +197,7 @@ class HostsResolver(object):
 
         udata = fdata.decode(errors='ignore')
 
-        return itertools.ifilter(None, self.LINES_RE.findall(udata))
+        return six.itertools.ifilter(None, self.LINES_RE.findall(udata))
 
     def _load(self):
         """Load hosts file
