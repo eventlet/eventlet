@@ -129,7 +129,7 @@ index fcc0d93..094fffb 100644
  
  _leading_zero = re.compile('0+([0-9a-f]+)')
 diff --git a/eventlet/support/dns/message.py b/eventlet/support/dns/message.py
-index e7c6417..fdc62fc 100644
+index e7c6417..b9aa779 100644
 --- a/eventlet/support/dns/message.py
 +++ b/eventlet/support/dns/message.py
 @@ -21,20 +21,22 @@ from io import StringIO
@@ -169,6 +169,15 @@ index e7c6417..fdc62fc 100644
  
  from ._compat import long, xrange, string_types
  
+@@ -1158,7 +1160,7 @@ def make_response(query, recursion_available=False, our_payload=8192,
+ 
+     if query.flags & dns.flags.QR:
+         raise dns.exception.FormError('specified query message is not a query')
+-    response = dns.message.Message(query.id)
++    response = Message(query.id)
+     response.flags = dns.flags.QR | (query.flags & dns.flags.RD)
+     if recursion_available:
+         response.flags |= dns.flags.RA
 diff --git a/eventlet/support/dns/name.py b/eventlet/support/dns/name.py
 index 7537792..e86e0bf 100644
 --- a/eventlet/support/dns/name.py
@@ -279,7 +288,7 @@ index eb4d1d6..11c7ea0 100644
  
  #: No error
 diff --git a/eventlet/support/dns/rdata.py b/eventlet/support/dns/rdata.py
-index 5c6c34d..3db0d40 100644
+index 5c6c34d..463481d 100644
 --- a/eventlet/support/dns/rdata.py
 +++ b/eventlet/support/dns/rdata.py
 @@ -19,12 +19,14 @@ from io import BytesIO
@@ -303,6 +312,16 @@ index 5c6c34d..3db0d40 100644
  from ._compat import xrange, string_types, text_type
  
  _hex_chunksize = 32
+@@ -299,7 +301,8 @@ class GenericRdata(Rdata):
+         return cls(rdclass, rdtype, wire[current: current + rdlen])
+ 
+ _rdata_modules = {}
+-_module_prefix = 'dns.rdtypes'
++# We expect to be dns.rdata. Replace rdata with rdtypes.
++_module_prefix = '.'.join(__name__.split('.')[:-1] + ['rdtypes'])
+ 
+ 
+ def get_rdata_class(rdclass, rdtype):
 diff --git a/eventlet/support/dns/rdataclass.py b/eventlet/support/dns/rdataclass.py
 index 916dc61..68deb30 100644
 --- a/eventlet/support/dns/rdataclass.py
@@ -1430,10 +1449,10 @@ index e2ec77d..0930c72 100644
  ipv4_reverse_domain = dns.name.from_text('in-addr.arpa.')
  ipv6_reverse_domain = dns.name.from_text('ip6.arpa.')
 diff --git a/eventlet/support/dns/rrset.py b/eventlet/support/dns/rrset.py
-index 6774647..a0cf64a 100644
+index 6774647..fa129fb 100644
 --- a/eventlet/support/dns/rrset.py
 +++ b/eventlet/support/dns/rrset.py
-@@ -16,10 +16,13 @@
+@@ -16,10 +16,14 @@
  """DNS RRsets (an RRset is a named rdataset)"""
  
  
@@ -1444,6 +1463,7 @@ index 6774647..a0cf64a 100644
 +# namespace these relative imports
 +class dns(object):
 +    from . import name
++    from . import rdata
 +    from . import rdataset
 +    from . import rdataclass
 +    from . import rdatatype
