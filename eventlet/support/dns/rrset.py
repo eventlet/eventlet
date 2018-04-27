@@ -19,6 +19,7 @@
 # namespace these relative imports
 class dns(object):
     from . import name
+    from . import rdata
     from . import rdataset
     from . import rdataclass
     from . import rdatatype
