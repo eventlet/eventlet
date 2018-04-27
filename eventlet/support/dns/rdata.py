@@ -301,7 +301,8 @@ class GenericRdata(Rdata):
         return cls(rdclass, rdtype, wire[current: current + rdlen])
 
 _rdata_modules = {}
-_module_prefix = 'dns.rdtypes'
+# We expect to be dns.rdata. Replace rdata with rdtypes.
+_module_prefix = '.'.join(__name__.split('.')[:-1] + ['rdtypes'])
 
 
 def get_rdata_class(rdclass, rdtype):
