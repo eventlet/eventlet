@@ -6,8 +6,8 @@ if __name__ == '__main__':
     import socket
     import time
     from eventlet.support.dns import message as dns_message
-    from eventlet.support.dns import query   as dns_query
-    from eventlet.support.dns import rrset   as dns_rrset
+    from eventlet.support.dns import query as dns_query
+    from eventlet.support.dns import rrset as dns_rrset
 
     n = 10
     delay = 0.01
