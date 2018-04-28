@@ -18,8 +18,10 @@
 import re
 import binascii
 
-import dns.exception
-import dns.ipv4
+# namespace these relative imports
+class dns(object):
+    from . import exception
+    from . import ipv4
 from ._compat import xrange, binary_type, maybe_decode
 
 _leading_zero = re.compile('0+([0-9a-f]+)')

@@ -15,7 +15,10 @@
 
 import base64
 
-import dns.exception
+# namespace these relative imports
+class dns(object):
+    from ... import exception
+    from ... import rdata
 
 
 class DHCID(dns.rdata.Rdata):

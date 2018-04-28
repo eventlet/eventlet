@@ -15,10 +15,12 @@
 
 import struct
 
-import dns.exception
-import dns.name
-import dns.rdata
-from dns._compat import xrange, text_type
+# namespace these relative imports
+class dns(object):
+    from ... import exception
+    from ... import name
+    from ... import rdata
+from ..._compat import xrange, text_type
 
 
 def _write_string(file, s):

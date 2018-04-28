@@ -16,9 +16,11 @@
 import base64
 import struct
 
-import dns.exception
-import dns.dnssec
-import dns.rdata
+# namespace these relative imports
+class dns(object):
+    from .. import exception
+    from .. import dnssec
+    from .. import rdata
 
 # wildcard import
 __all__ = ["SEP", "REVOKE", "ZONE",

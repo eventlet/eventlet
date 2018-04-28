@@ -19,14 +19,19 @@ from io import BytesIO
 import struct
 import time
 
-import dns.exception
-import dns.hash
-import dns.name
-import dns.node
-import dns.rdataset
-import dns.rdata
-import dns.rdatatype
-import dns.rdataclass
+# Original code references these as (e.g.) dns.exception. But we want
+# to use relative imports. Can't use 'import .dns.exception'; can't use
+# 'from .. import dns'. Introduce a 'dns' class just to namespace these
+# relative imports.
+class dns(object):
+    from . import exception
+    from . import hash
+    from . import name
+    from . import node
+    from . import rdataset
+    from . import rdata
+    from . import rdatatype
+    from . import rdataclass
 from ._compat import string_types
 
 

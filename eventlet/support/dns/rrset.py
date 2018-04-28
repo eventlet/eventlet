@@ -16,10 +16,14 @@
 """DNS RRsets (an RRset is a named rdataset)"""
 
 
-import dns.name
-import dns.rdataset
-import dns.rdataclass
-import dns.renderer
+# namespace these relative imports
+class dns(object):
+    from . import name
+    from . import rdata
+    from . import rdataset
+    from . import rdataclass
+    from . import rdatatype
+    from . import renderer
 from ._compat import string_types
 
 

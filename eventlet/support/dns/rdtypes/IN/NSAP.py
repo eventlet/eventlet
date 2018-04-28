@@ -15,9 +15,11 @@
 
 import binascii
 
-import dns.exception
-import dns.rdata
-import dns.tokenizer
+# namespace these relative imports
+class dns(object):
+    from ... import exception
+    from ... import rdata
+    from ... import tokenizer
 
 
 class NSAP(dns.rdata.Rdata):

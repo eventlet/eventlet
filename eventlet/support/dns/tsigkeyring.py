@@ -15,11 +15,13 @@
 
 """A place to store TSIG keys."""
 
-from dns._compat import maybe_decode, maybe_encode
+from ._compat import maybe_decode, maybe_encode
 
 import base64
 
-import dns.name
+# namespace these relative imports
+class dns(object):
+    from . import name
 
 
 def from_text(textring):

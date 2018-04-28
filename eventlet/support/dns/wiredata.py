@@ -17,7 +17,9 @@
 
 import sys
 
-import dns.exception
+# namespace these relative imports
+class dns(object):
+    from . import exception
 from ._compat import binary_type, string_types
 
 # Figure out what constant python passes for an unspecified slice bound.

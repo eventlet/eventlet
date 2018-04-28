@@ -15,7 +15,9 @@
 
 """DNS GENERATE range conversion."""
 
-import dns
+# namespace these relative imports
+class dns(object):
+    from . import exception
 
 def from_text(text):
     """Convert the text form of a range in a ``$GENERATE`` statement to an

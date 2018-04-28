@@ -18,9 +18,11 @@
 from io import StringIO
 import sys
 
-import dns.exception
-import dns.name
-import dns.ttl
+# namespace these relative imports
+class dns(object):
+    from . import exception
+    from . import name
+    from . import ttl
 from ._compat import long, text_type, binary_type
 
 _DELIMITERS = {

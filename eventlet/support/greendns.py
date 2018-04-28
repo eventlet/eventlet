@@ -32,6 +32,7 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import itertools
 import re
 import struct
 import sys
@@ -61,18 +62,20 @@ def import_patched(module_name):
     return patcher.import_patched(module_name, **modules)
 
 
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
-dns = import_patched('dns')
-for pkg in dns.__all__:
-    setattr(dns, pkg, import_patched('dns.' + pkg))
-for pkg in dns.rdtypes.__all__:
-    setattr(dns.rdtypes, pkg, import_patched('dns.rdtypes.' + pkg))
-for pkg in dns.rdtypes.IN.__all__:
-    setattr(dns.rdtypes.IN, pkg, import_patched('dns.rdtypes.IN.' + pkg))
-for pkg in dns.rdtypes.ANY.__all__:
-    setattr(dns.rdtypes.ANY, pkg, import_patched('dns.rdtypes.ANY.' + pkg))
-del import_patched
-sys.path.pop(0)
+def patch_imports(target):
+    for pkg in target.__all__:
+        setattr(target, pkg, import_patched('.'.join((target.__name__, pkg))))
+
+
+try:
+    dns = import_patched('eventlet.support.dns')
+    patch_imports(dns)
+    patch_imports(dns.rdtypes)
+    patch_imports(dns.rdtypes.IN)
+    patch_imports(dns.rdtypes.ANY)
+finally:
+    del import_patched
+    del patch_imports
 
 
 socket = _socket_nodns
@@ -97,7 +100,7 @@ def is_ipv4_addr(host):
         return False
     try:
         dns.ipv4.inet_aton(host)
-    except dns.exception.SyntaxError:
+    except eventlet.support.dns.exception.SyntaxError:
         return False
     else:
         return True
@@ -110,7 +113,7 @@ def is_ipv6_addr(host):
     host = host.split('%', 1)[0]
     try:
         dns.ipv6.inet_aton(host)
-    except dns.exception.SyntaxError:
+    except eventlet.support.dns.exception.SyntaxError:
         return False
     else:
         return True
@@ -158,7 +161,7 @@ class HostsResolver(object):
 
     LINES_RE = re.compile(r"""
         \s*  # Leading space
-        ([^\r\n#]+?)  # The actual match, non-greedy so as not to include trailing space
+        ([^\r\n#]*?)  # The actual match, non-greedy so as not to include trailing space
         \s*  # Trailing space
         (?:[#][^\r\n]+)?  # Comments
         (?:$|[\r\n]+)  # EOF or newline
@@ -196,7 +199,7 @@ class HostsResolver(object):
 
         udata = fdata.decode(errors='ignore')
 
-        return self.LINES_RE.findall(udata)
+        return six.moves.filter(None, self.LINES_RE.findall(udata))
 
     def _load(self):
         """Load hosts file
@@ -422,14 +425,14 @@ def resolve(name, family=socket.AF_INET, raises=True, _proxy=None):
     try:
         try:
             return _proxy.query(name, rdtype, raise_on_no_answer=raises)
-        except dns.resolver.NXDOMAIN:
+        except eventlet.support.dns.resolver.NXDOMAIN:
             if not raises:
                 return HostsAnswer(dns.name.Name(name),
                                    rdtype, dns.rdataclass.IN, None, False)
             raise
-    except dns.exception.Timeout:
+    except eventlet.support.dns.exception.Timeout:
         raise EAI_EAGAIN_ERROR
-    except dns.exception.DNSException:
+    except eventlet.support.dns.exception.DNSException:
         raise EAI_NODATA_ERROR
 
 
@@ -437,11 +440,11 @@ def resolve_cname(host):
     """Return the canonical name of a hostname"""
     try:
         ans = resolver.query(host, dns.rdatatype.CNAME)
-    except dns.resolver.NoAnswer:
+    except eventlet.support.dns.resolver.NoAnswer:
         return host
-    except dns.exception.Timeout:
+    except eventlet.support.dns.exception.Timeout:
         raise EAI_EAGAIN_ERROR
-    except dns.exception.DNSException:
+    except eventlet.support.dns.exception.DNSException:
         raise EAI_NODATA_ERROR
     else:
         return str(ans[0].target)
@@ -456,9 +459,9 @@ def getaliases(host):
     """
     try:
         return resolver.getaliases(host)
-    except dns.exception.Timeout:
+    except eventlet.support.dns.exception.Timeout:
         raise EAI_EAGAIN_ERROR
-    except dns.exception.DNSException:
+    except eventlet.support.dns.exception.DNSException:
         raise EAI_NODATA_ERROR
 
 
@@ -587,10 +590,10 @@ def getnameinfo(sockaddr, flags):
             if len(rrset) > 1:
                 raise socket.error('sockaddr resolved to multiple addresses')
             host = rrset[0].target.to_text(omit_final_dot=True)
-        except dns.exception.Timeout:
+        except eventlet.support.dns.exception.Timeout:
             if flags & socket.NI_NAMEREQD:
                 raise EAI_EAGAIN_ERROR
-        except dns.exception.DNSException:
+        except eventlet.support.dns.exception.DNSException:
             if flags & socket.NI_NAMEREQD:
                 raise EAI_NONAME_ERROR
     else:
@@ -600,9 +603,9 @@ def getnameinfo(sockaddr, flags):
                 raise socket.error('sockaddr resolved to multiple addresses')
             if flags & socket.NI_NUMERICHOST:
                 host = rrset[0].address
-        except dns.exception.Timeout:
+        except eventlet.support.dns.exception.Timeout:
             raise EAI_EAGAIN_ERROR
-        except dns.exception.DNSException:
+        except eventlet.support.dns.exception.DNSException:
             raise socket.gaierror(
                 (socket.EAI_NODATA, 'No address associated with hostname'))
 

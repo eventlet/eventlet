@@ -5,8 +5,9 @@ if __name__ == '__main__':
     eventlet.monkey_patch(all=True)
     import socket
     import time
-    import dns.message
-    import dns.query
+    from eventlet.support.dns import message as dns_message
+    from eventlet.support.dns import query as dns_query
+    from eventlet.support.dns import rrset as dns_rrset
 
     n = 10
     delay = 0.01
@@ -15,16 +16,16 @@ if __name__ == '__main__':
     def slow_udp(q, *a, **kw):
         qname = q.question[0].name
         addr = addr_map[qname.to_text()]
-        r = dns.message.make_response(q)
+        r = dns_message.make_response(q)
         r.index = None
         r.flags = 256
-        r.answer.append(dns.rrset.from_text(str(qname), 60, 'IN', 'A', addr))
+        r.answer.append(dns_rrset.from_text(str(qname), 60, 'IN', 'A', addr))
         r.time = 0.001
         eventlet.sleep(delay)
         return r
 
-    dns.query.tcp = lambda: eventlet.Timeout(0)
-    dns.query.udp = slow_udp
+    dns_query.tcp = lambda: eventlet.Timeout(0)
+    dns_query.udp = slow_udp
     results = {}
 
     def fun(name):

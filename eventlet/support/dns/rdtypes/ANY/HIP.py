@@ -17,9 +17,11 @@ import struct
 import base64
 import binascii
 
-import dns.exception
-import dns.rdata
-import dns.rdatatype
+# namespace these relative imports
+class dns(object):
+    from ... import exception
+    from ... import rdata
+    from ... import rdatatype
 
 
 class HIP(dns.rdata.Rdata):

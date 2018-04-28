@@ -19,11 +19,13 @@ import random
 from io import StringIO
 import struct
 
-import dns.exception
-import dns.rdatatype
-import dns.rdataclass
-import dns.rdata
-import dns.set
+# namespace these relative imports
+class dns(object):
+    from . import exception
+    from . import rdatatype
+    from . import rdataclass
+    from . import rdata
+    from . import set
 from ._compat import string_types
 
 # define SimpleSet here for backwards compatibility

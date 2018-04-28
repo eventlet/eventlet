@@ -17,7 +17,9 @@
 
 import re
 
-import dns.exception
+# namespace these relative imports
+class dns(object):
+    from . import exception
 
 NONE = 0
 A = 1

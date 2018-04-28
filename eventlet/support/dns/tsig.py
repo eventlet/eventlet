@@ -18,10 +18,12 @@
 import hmac
 import struct
 
-import dns.exception
-import dns.hash
-import dns.rdataclass
-import dns.name
+# namespace these relative imports
+class dns(object):
+    from . import exception
+    from . import hash
+    from . import rdataclass
+    from . import name
 from ._compat import long, string_types, text_type
 
 class BadTime(dns.exception.DNSException):

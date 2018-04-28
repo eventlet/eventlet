@@ -17,7 +17,9 @@
 
 import struct
 
-import dns.exception
+# namespace these relative imports
+class dns(object):
+    from . import exception
 from ._compat import binary_type
 
 def inet_ntoa(address):

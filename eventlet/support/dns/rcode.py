@@ -15,7 +15,9 @@
 
 """DNS Result Codes."""
 
-import dns.exception
+# namespace these relative imports
+class dns(object):
+    from . import exception
 from ._compat import long
 
 #: No error

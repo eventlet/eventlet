@@ -25,18 +25,20 @@ try:
 except ImportError:
     import dummy_threading as _threading
 
-import dns.exception
-import dns.flags
-import dns.ipv4
-import dns.ipv6
-import dns.message
-import dns.name
-import dns.query
-import dns.rcode
-import dns.rdataclass
-import dns.rdatatype
-import dns.reversename
-import dns.tsig
+# namespace these relative imports
+class dns(object):
+    from . import exception
+    from . import flags
+    from . import ipv4
+    from . import ipv6
+    from . import message
+    from . import name
+    from . import query
+    from . import rcode
+    from . import rdataclass
+    from . import rdatatype
+    from . import reversename
+    from . import tsig
 from ._compat import xrange, string_types
 
 if sys.platform == 'win32':

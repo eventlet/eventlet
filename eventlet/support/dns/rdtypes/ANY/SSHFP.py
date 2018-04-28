@@ -16,8 +16,10 @@
 import struct
 import binascii
 
-import dns.rdata
-import dns.rdatatype
+# namespace these relative imports
+class dns(object):
+    from ... import rdata
+    from ... import rdatatype
 
 
 class SSHFP(dns.rdata.Rdata):

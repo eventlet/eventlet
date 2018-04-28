@@ -13,9 +13,11 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 # OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-import dns.exception
-import dns.rdata
-import dns.name
+# namespace these relative imports
+class dns(object):
+    from ... import exception
+    from ... import rdata
+    from ... import name
 
 
 class RP(dns.rdata.Rdata):

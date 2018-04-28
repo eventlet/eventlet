@@ -13,8 +13,11 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 # OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-import dns.rdtypes.dnskeybase
-from dns.rdtypes.dnskeybase import flags_to_text_set, flags_from_text_set
+# namespace these relative imports
+class dns(object):
+    class rdtypes(object):
+        from .. import dnskeybase
+from ..dnskeybase import flags_to_text_set, flags_from_text_set
 
 
 __all__ = ['flags_to_text_set', 'flags_from_text_set']

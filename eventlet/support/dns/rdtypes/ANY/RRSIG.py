@@ -18,10 +18,12 @@ import calendar
 import struct
 import time
 
-import dns.dnssec
-import dns.exception
-import dns.rdata
-import dns.rdatatype
+# namespace these relative imports
+class dns(object):
+    from ... import dnssec
+    from ... import exception
+    from ... import rdata
+    from ... import rdatatype
 
 
 class BadSigTime(dns.exception.DNSException):

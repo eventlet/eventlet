@@ -13,10 +13,12 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 # OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-import dns.exception
-import dns.inet
-import dns.rdata
-import dns.tokenizer
+# namespace these relative imports
+class dns(object):
+    from ... import exception
+    from ... import inet
+    from ... import rdata
+    from ... import tokenizer
 
 
 class AAAA(dns.rdata.Rdata):

@@ -16,9 +16,11 @@
 import struct
 import binascii
 
-import dns.exception
-import dns.rdata
-from dns._compat import text_type
+# namespace these relative imports
+class dns(object):
+    from ... import exception
+    from ... import rdata
+from ..._compat import text_type
 
 
 class NSEC3PARAM(dns.rdata.Rdata):

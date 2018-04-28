@@ -21,20 +21,22 @@ from io import StringIO
 import struct
 import time
 
-import dns.edns
-import dns.exception
-import dns.flags
-import dns.name
-import dns.opcode
-import dns.entropy
-import dns.rcode
-import dns.rdata
-import dns.rdataclass
-import dns.rdatatype
-import dns.rrset
-import dns.renderer
-import dns.tsig
-import dns.wiredata
+# namespace these relative imports
+class dns(object):
+    from . import edns
+    from . import exception
+    from . import flags
+    from . import name
+    from . import opcode
+    from . import entropy
+    from . import rcode
+    from . import rdata
+    from . import rdataclass
+    from . import rdatatype
+    from . import rrset
+    from . import renderer
+    from . import tsig
+    from . import wiredata
 
 from ._compat import long, xrange, string_types
 
@@ -1158,7 +1160,7 @@ def make_response(query, recursion_available=False, our_payload=8192,
 
     if query.flags & dns.flags.QR:
         raise dns.exception.FormError('specified query message is not a query')
-    response = dns.message.Message(query.id)
+    response = Message(query.id)
     response.flags = dns.flags.QR | (query.flags & dns.flags.RD)
     if recursion_available:
         response.flags |= dns.flags.RA

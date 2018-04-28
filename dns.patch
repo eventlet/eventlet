@@ -1,0 +1,1623 @@
+diff --git a/eventlet/support/dns/dnssec.py b/eventlet/support/dns/dnssec.py
+index b91a64f..d7905a8 100644
+--- a/eventlet/support/dns/dnssec.py
++++ b/eventlet/support/dns/dnssec.py
+@@ -19,14 +19,19 @@ from io import BytesIO
+ import struct
+ import time
+ 
+-import dns.exception
+-import dns.hash
+-import dns.name
+-import dns.node
+-import dns.rdataset
+-import dns.rdata
+-import dns.rdatatype
+-import dns.rdataclass
++# Original code references these as (e.g.) dns.exception. But we want
++# to use relative imports. Can't use 'import .dns.exception'; can't use
++# 'from .. import dns'. Introduce a 'dns' class just to namespace these
++# relative imports.
++class dns(object):
++    from . import exception
++    from . import hash
++    from . import name
++    from . import node
++    from . import rdataset
++    from . import rdata
++    from . import rdatatype
++    from . import rdataclass
+ from ._compat import string_types
+ 
+ 
+diff --git a/eventlet/support/dns/e164.py b/eventlet/support/dns/e164.py
+index 0dbd3ff..3e0af1f 100644
+--- a/eventlet/support/dns/e164.py
++++ b/eventlet/support/dns/e164.py
+@@ -15,9 +15,11 @@
+ 
+ """DNS E.164 helpers."""
+ 
+-import dns.exception
+-import dns.name
+-import dns.resolver
++# namespace these relative imports
++class dns(object):
++    from . import exception
++    from . import name
++    from . import resolver
+ from ._compat import string_types, maybe_decode
+ 
+ #: The public E.164 domain.
+diff --git a/eventlet/support/dns/edns.py b/eventlet/support/dns/edns.py
+index 22104d8..ef6e583 100644
+--- a/eventlet/support/dns/edns.py
++++ b/eventlet/support/dns/edns.py
+@@ -20,7 +20,9 @@ from __future__ import absolute_import
+ import math
+ import struct
+ 
+-import dns.inet
++# namespace these relative imports
++class dns(object):
++    from . import inet
+ 
+ #: NSID
+ NSID = 3
+diff --git a/eventlet/support/dns/grange.py b/eventlet/support/dns/grange.py
+index 752858d..30e40c0 100644
+--- a/eventlet/support/dns/grange.py
++++ b/eventlet/support/dns/grange.py
+@@ -15,7 +15,9 @@
+ 
+ """DNS GENERATE range conversion."""
+ 
+-import dns
++# namespace these relative imports
++class dns(object):
++    from . import exception
+ 
+ def from_text(text):
+     """Convert the text form of a range in a ``$GENERATE`` statement to an
+diff --git a/eventlet/support/dns/inet.py b/eventlet/support/dns/inet.py
+index f417749..33d6d7a 100644
+--- a/eventlet/support/dns/inet.py
++++ b/eventlet/support/dns/inet.py
+@@ -17,8 +17,10 @@
+ 
+ import socket
+ 
+-import dns.ipv4
+-import dns.ipv6
++# namespace these relative imports
++class dns(object):
++    from . import ipv4
++    from . import ipv6
+ 
+ from ._compat import maybe_ord
+ 
+diff --git a/eventlet/support/dns/ipv4.py b/eventlet/support/dns/ipv4.py
+index a67a84b..0f30272 100644
+--- a/eventlet/support/dns/ipv4.py
++++ b/eventlet/support/dns/ipv4.py
+@@ -17,7 +17,9 @@
+ 
+ import struct
+ 
+-import dns.exception
++# namespace these relative imports
++class dns(object):
++    from . import exception
+ from ._compat import binary_type
+ 
+ def inet_ntoa(address):
+diff --git a/eventlet/support/dns/ipv6.py b/eventlet/support/dns/ipv6.py
+index fcc0d93..094fffb 100644
+--- a/eventlet/support/dns/ipv6.py
++++ b/eventlet/support/dns/ipv6.py
+@@ -18,8 +18,10 @@
+ import re
+ import binascii
+ 
+-import dns.exception
+-import dns.ipv4
++# namespace these relative imports
++class dns(object):
++    from . import exception
++    from . import ipv4
+ from ._compat import xrange, binary_type, maybe_decode
+ 
+ _leading_zero = re.compile('0+([0-9a-f]+)')
+diff --git a/eventlet/support/dns/message.py b/eventlet/support/dns/message.py
+index e7c6417..b9aa779 100644
+--- a/eventlet/support/dns/message.py
++++ b/eventlet/support/dns/message.py
+@@ -21,20 +21,22 @@ from io import StringIO
+ import struct
+ import time
+ 
+-import dns.edns
+-import dns.exception
+-import dns.flags
+-import dns.name
+-import dns.opcode
+-import dns.entropy
+-import dns.rcode
+-import dns.rdata
+-import dns.rdataclass
+-import dns.rdatatype
+-import dns.rrset
+-import dns.renderer
+-import dns.tsig
+-import dns.wiredata
++# namespace these relative imports
++class dns(object):
++    from . import edns
++    from . import exception
++    from . import flags
++    from . import name
++    from . import opcode
++    from . import entropy
++    from . import rcode
++    from . import rdata
++    from . import rdataclass
++    from . import rdatatype
++    from . import rrset
++    from . import renderer
++    from . import tsig
++    from . import wiredata
+ 
+ from ._compat import long, xrange, string_types
+ 
+@@ -1158,7 +1160,7 @@ def make_response(query, recursion_available=False, our_payload=8192,
+ 
+     if query.flags & dns.flags.QR:
+         raise dns.exception.FormError('specified query message is not a query')
+-    response = dns.message.Message(query.id)
++    response = Message(query.id)
+     response.flags = dns.flags.QR | (query.flags & dns.flags.RD)
+     if recursion_available:
+         response.flags |= dns.flags.RA
+diff --git a/eventlet/support/dns/name.py b/eventlet/support/dns/name.py
+index 7537792..e86e0bf 100644
+--- a/eventlet/support/dns/name.py
++++ b/eventlet/support/dns/name.py
+@@ -27,8 +27,10 @@ try:
+ except ImportError:
+     have_idna_2008 = False
+ 
+-import dns.exception
+-import dns.wiredata
++# namespace these imported sibling modules
++class dns(object):
++    from . import exception
++    from . import wiredata
+ 
+ from ._compat import long, binary_type, text_type, unichr, maybe_decode
+ 
+diff --git a/eventlet/support/dns/namedict.py b/eventlet/support/dns/namedict.py
+index 2215af7..1ee54ed 100644
+--- a/eventlet/support/dns/namedict.py
++++ b/eventlet/support/dns/namedict.py
+@@ -26,7 +26,9 @@
+ """DNS name dictionary"""
+ 
+ import collections
+-import dns.name
++# namespace these relative imports
++class dns(object):
++    from . import name
+ from ._compat import xrange
+ 
+ 
+diff --git a/eventlet/support/dns/node.py b/eventlet/support/dns/node.py
+index cc507b5..7155591 100644
+--- a/eventlet/support/dns/node.py
++++ b/eventlet/support/dns/node.py
+@@ -17,9 +17,11 @@
+ 
+ from io import StringIO
+ 
+-import dns.rdataset
+-import dns.rdatatype
+-import dns.renderer
++# namespace these relative imports
++class dns(object):
++    from . import rdataset
++    from . import rdatatype
++    from . import renderer
+ 
+ 
+ class Node(object):
+diff --git a/eventlet/support/dns/opcode.py b/eventlet/support/dns/opcode.py
+index 5dcd2ab..caa7d27 100644
+--- a/eventlet/support/dns/opcode.py
++++ b/eventlet/support/dns/opcode.py
+@@ -15,7 +15,9 @@
+ 
+ """DNS Opcodes."""
+ 
+-import dns.exception
++# namespace these relative imports
++class dns(object):
++    from . import exception
+ 
+ #: Query
+ QUERY = 0
+diff --git a/eventlet/support/dns/query.py b/eventlet/support/dns/query.py
+index f1f656e..e029683 100644
+--- a/eventlet/support/dns/query.py
++++ b/eventlet/support/dns/query.py
+@@ -24,13 +24,16 @@ import struct
+ import sys
+ import time
+ 
+-import dns.exception
+-import dns.inet
+-import dns.name
+-import dns.message
+-import dns.rcode
+-import dns.rdataclass
+-import dns.rdatatype
++# namespace these relative imports
++class dns(object):
++    from . import exception
++    from . import inet
++    from . import name
++    from . import message
++    from . import rcode
++    from . import rdataclass
++    from . import rdatatype
++    from . import tsig
+ from ._compat import long, string_types
+ 
+ if sys.version_info > (3,):
+diff --git a/eventlet/support/dns/rcode.py b/eventlet/support/dns/rcode.py
+index eb4d1d6..11c7ea0 100644
+--- a/eventlet/support/dns/rcode.py
++++ b/eventlet/support/dns/rcode.py
+@@ -15,7 +15,9 @@
+ 
+ """DNS Result Codes."""
+ 
+-import dns.exception
++# namespace these relative imports
++class dns(object):
++    from . import exception
+ from ._compat import long
+ 
+ #: No error
+diff --git a/eventlet/support/dns/rdata.py b/eventlet/support/dns/rdata.py
+index 5c6c34d..463481d 100644
+--- a/eventlet/support/dns/rdata.py
++++ b/eventlet/support/dns/rdata.py
+@@ -19,12 +19,14 @@ from io import BytesIO
+ import base64
+ import binascii
+ 
+-import dns.exception
+-import dns.name
+-import dns.rdataclass
+-import dns.rdatatype
+-import dns.tokenizer
+-import dns.wiredata
++# namespace these relative imports
++class dns(object):
++    from . import exception
++    from . import name
++    from . import rdataclass
++    from . import rdatatype
++    from . import tokenizer
++    from . import wiredata
+ from ._compat import xrange, string_types, text_type
+ 
+ _hex_chunksize = 32
+@@ -299,7 +301,8 @@ class GenericRdata(Rdata):
+         return cls(rdclass, rdtype, wire[current: current + rdlen])
+ 
+ _rdata_modules = {}
+-_module_prefix = 'dns.rdtypes'
++# We expect to be dns.rdata. Replace rdata with rdtypes.
++_module_prefix = '.'.join(__name__.split('.')[:-1] + ['rdtypes'])
+ 
+ 
+ def get_rdata_class(rdclass, rdtype):
+diff --git a/eventlet/support/dns/rdataclass.py b/eventlet/support/dns/rdataclass.py
+index 916dc61..68deb30 100644
+--- a/eventlet/support/dns/rdataclass.py
++++ b/eventlet/support/dns/rdataclass.py
+@@ -17,7 +17,9 @@
+ 
+ import re
+ 
+-import dns.exception
++# namespace these relative imports
++class dns(object):
++    from . import exception
+ 
+ RESERVED0 = 0
+ IN = 1
+diff --git a/eventlet/support/dns/rdataset.py b/eventlet/support/dns/rdataset.py
+index bd8cfab..07dcabf 100644
+--- a/eventlet/support/dns/rdataset.py
++++ b/eventlet/support/dns/rdataset.py
+@@ -19,11 +19,13 @@ import random
+ from io import StringIO
+ import struct
+ 
+-import dns.exception
+-import dns.rdatatype
+-import dns.rdataclass
+-import dns.rdata
+-import dns.set
++# namespace these relative imports
++class dns(object):
++    from . import exception
++    from . import rdatatype
++    from . import rdataclass
++    from . import rdata
++    from . import set
+ from ._compat import string_types
+ 
+ # define SimpleSet here for backwards compatibility
+diff --git a/eventlet/support/dns/rdatatype.py b/eventlet/support/dns/rdatatype.py
+index 48d2aa6..fd6139a 100644
+--- a/eventlet/support/dns/rdatatype.py
++++ b/eventlet/support/dns/rdatatype.py
+@@ -17,7 +17,9 @@
+ 
+ import re
+ 
+-import dns.exception
++# namespace these relative imports
++class dns(object):
++    from . import exception
+ 
+ NONE = 0
+ A = 1
+diff --git a/eventlet/support/dns/rdtypes/ANY/AFSDB.py b/eventlet/support/dns/rdtypes/ANY/AFSDB.py
+index f3d5154..8a179ef 100644
+--- a/eventlet/support/dns/rdtypes/ANY/AFSDB.py
++++ b/eventlet/support/dns/rdtypes/ANY/AFSDB.py
+@@ -13,7 +13,10 @@
+ # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ # OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ 
+-import dns.rdtypes.mxbase
++# namespace these relative imports
++class dns(object):
++    class rdtypes(object):
++        from .. import mxbase
+ 
+ 
+ class AFSDB(dns.rdtypes.mxbase.UncompressedDowncasingMX):
+diff --git a/eventlet/support/dns/rdtypes/ANY/AVC.py b/eventlet/support/dns/rdtypes/ANY/AVC.py
+index 137c9de..4fa3358 100644
+--- a/eventlet/support/dns/rdtypes/ANY/AVC.py
++++ b/eventlet/support/dns/rdtypes/ANY/AVC.py
+@@ -13,7 +13,10 @@
+ # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ # OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ 
+-import dns.rdtypes.txtbase
++# namespace these relative imports
++class dns(object):
++    class rdtypes(object):
++        from .. import txtbase
+ 
+ 
+ class AVC(dns.rdtypes.txtbase.TXTBase):
+diff --git a/eventlet/support/dns/rdtypes/ANY/CAA.py b/eventlet/support/dns/rdtypes/ANY/CAA.py
+index f2e41ad..7421299 100644
+--- a/eventlet/support/dns/rdtypes/ANY/CAA.py
++++ b/eventlet/support/dns/rdtypes/ANY/CAA.py
+@@ -15,9 +15,11 @@
+ 
+ import struct
+ 
+-import dns.exception
+-import dns.rdata
+-import dns.tokenizer
++# namespace these relative imports
++class dns(object):
++    from ... import exception
++    from ... import rdata
++    from ... import tokenizer
+ 
+ 
+ class CAA(dns.rdata.Rdata):
+diff --git a/eventlet/support/dns/rdtypes/ANY/CDNSKEY.py b/eventlet/support/dns/rdtypes/ANY/CDNSKEY.py
+index 83f3d51..d22a8ad 100644
+--- a/eventlet/support/dns/rdtypes/ANY/CDNSKEY.py
++++ b/eventlet/support/dns/rdtypes/ANY/CDNSKEY.py
+@@ -13,8 +13,11 @@
+ # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ # OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ 
+-import dns.rdtypes.dnskeybase
+-from dns.rdtypes.dnskeybase import flags_to_text_set, flags_from_text_set
++# namespace these relative imports
++class dns(object):
++    class rdtypes(object):
++        from .. import dnskeybase
++from ..dnskeybase import flags_to_text_set, flags_from_text_set
+ 
+ 
+ __all__ = ['flags_to_text_set', 'flags_from_text_set']
+diff --git a/eventlet/support/dns/rdtypes/ANY/CDS.py b/eventlet/support/dns/rdtypes/ANY/CDS.py
+index e1abfc3..c8636ea 100644
+--- a/eventlet/support/dns/rdtypes/ANY/CDS.py
++++ b/eventlet/support/dns/rdtypes/ANY/CDS.py
+@@ -13,7 +13,10 @@
+ # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ # OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ 
+-import dns.rdtypes.dsbase
++# namespace these relative imports
++class dns(object):
++    class rdtypes(object):
++        from .. import dsbase
+ 
+ 
+ class CDS(dns.rdtypes.dsbase.DSBase):
+diff --git a/eventlet/support/dns/rdtypes/ANY/CERT.py b/eventlet/support/dns/rdtypes/ANY/CERT.py
+index 1c35c23..21a2f96 100644
+--- a/eventlet/support/dns/rdtypes/ANY/CERT.py
++++ b/eventlet/support/dns/rdtypes/ANY/CERT.py
+@@ -16,10 +16,12 @@
+ import struct
+ import base64
+ 
+-import dns.exception
+-import dns.dnssec
+-import dns.rdata
+-import dns.tokenizer
++# namespace these relative imports
++class dns(object):
++    from ... import exception
++    from ... import dnssec
++    from ... import rdata
++    from ... import tokenizer
+ 
+ _ctype_by_value = {
+     1: 'PKIX',
+diff --git a/eventlet/support/dns/rdtypes/ANY/CNAME.py b/eventlet/support/dns/rdtypes/ANY/CNAME.py
+index 65cf570..783c40b 100644
+--- a/eventlet/support/dns/rdtypes/ANY/CNAME.py
++++ b/eventlet/support/dns/rdtypes/ANY/CNAME.py
+@@ -13,7 +13,10 @@
+ # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ # OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ 
+-import dns.rdtypes.nsbase
++# namespace these relative imports
++class dns(object):
++    class rdtypes(object):
++        from .. import nsbase
+ 
+ 
+ class CNAME(dns.rdtypes.nsbase.NSBase):
+diff --git a/eventlet/support/dns/rdtypes/ANY/CSYNC.py b/eventlet/support/dns/rdtypes/ANY/CSYNC.py
+index bf95cb2..4db000e 100644
+--- a/eventlet/support/dns/rdtypes/ANY/CSYNC.py
++++ b/eventlet/support/dns/rdtypes/ANY/CSYNC.py
+@@ -15,11 +15,13 @@
+ 
+ import struct
+ 
+-import dns.exception
+-import dns.rdata
+-import dns.rdatatype
+-import dns.name
+-from dns._compat import xrange
++# namespace these relative imports
++class dns(object):
++    from ... import exception
++    from ... import rdata
++    from ... import rdatatype
++    from ... import name
++from ..._compat import xrange
+ 
+ class CSYNC(dns.rdata.Rdata):
+ 
+diff --git a/eventlet/support/dns/rdtypes/ANY/DLV.py b/eventlet/support/dns/rdtypes/ANY/DLV.py
+index cd1244c..43e906d 100644
+--- a/eventlet/support/dns/rdtypes/ANY/DLV.py
++++ b/eventlet/support/dns/rdtypes/ANY/DLV.py
+@@ -13,7 +13,10 @@
+ # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ # OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ 
+-import dns.rdtypes.dsbase
++# namespace these relative imports
++class dns(object):
++    class rdtypes(object):
++        from .. import dsbase
+ 
+ 
+ class DLV(dns.rdtypes.dsbase.DSBase):
+diff --git a/eventlet/support/dns/rdtypes/ANY/DNAME.py b/eventlet/support/dns/rdtypes/ANY/DNAME.py
+index dac9721..eda5a99 100644
+--- a/eventlet/support/dns/rdtypes/ANY/DNAME.py
++++ b/eventlet/support/dns/rdtypes/ANY/DNAME.py
+@@ -13,7 +13,10 @@
+ # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ # OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ 
+-import dns.rdtypes.nsbase
++# namespace these relative imports
++class dns(object):
++    class rdtypes(object):
++        from .. import nsbase
+ 
+ 
+ class DNAME(dns.rdtypes.nsbase.UncompressedNS):
+diff --git a/eventlet/support/dns/rdtypes/ANY/DNSKEY.py b/eventlet/support/dns/rdtypes/ANY/DNSKEY.py
+index e915e98..3025ac4 100644
+--- a/eventlet/support/dns/rdtypes/ANY/DNSKEY.py
++++ b/eventlet/support/dns/rdtypes/ANY/DNSKEY.py
+@@ -13,8 +13,11 @@
+ # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ # OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ 
+-import dns.rdtypes.dnskeybase
+-from dns.rdtypes.dnskeybase import flags_to_text_set, flags_from_text_set
++# namespace these relative imports
++class dns(object):
++    class rdtypes(object):
++        from .. import dnskeybase
++from ..dnskeybase import flags_to_text_set, flags_from_text_set
+ 
+ 
+ __all__ = ['flags_to_text_set', 'flags_from_text_set']
+diff --git a/eventlet/support/dns/rdtypes/ANY/DS.py b/eventlet/support/dns/rdtypes/ANY/DS.py
+index 577c8d8..eb6515b 100644
+--- a/eventlet/support/dns/rdtypes/ANY/DS.py
++++ b/eventlet/support/dns/rdtypes/ANY/DS.py
+@@ -13,7 +13,10 @@
+ # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ # OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ 
+-import dns.rdtypes.dsbase
++# namespace these relative imports
++class dns(object):
++    class rdtypes(object):
++        from .. import dsbase
+ 
+ 
+ class DS(dns.rdtypes.dsbase.DSBase):
+diff --git a/eventlet/support/dns/rdtypes/ANY/EUI48.py b/eventlet/support/dns/rdtypes/ANY/EUI48.py
+index aa260e2..bb305db 100644
+--- a/eventlet/support/dns/rdtypes/ANY/EUI48.py
++++ b/eventlet/support/dns/rdtypes/ANY/EUI48.py
+@@ -14,7 +14,10 @@
+ # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ # OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ 
+-import dns.rdtypes.euibase
++# namespace these relative imports
++class dns(object):
++    class rdtypes(object):
++        from .. import euibase
+ 
+ 
+ class EUI48(dns.rdtypes.euibase.EUIBase):
+diff --git a/eventlet/support/dns/rdtypes/ANY/EUI64.py b/eventlet/support/dns/rdtypes/ANY/EUI64.py
+index 5eba350..039932a 100644
+--- a/eventlet/support/dns/rdtypes/ANY/EUI64.py
++++ b/eventlet/support/dns/rdtypes/ANY/EUI64.py
+@@ -14,7 +14,10 @@
+ # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ # OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ 
+-import dns.rdtypes.euibase
++# namespace these relative imports
++class dns(object):
++    class rdtypes(object):
++        from .. import euibase
+ 
+ 
+ class EUI64(dns.rdtypes.euibase.EUIBase):
+diff --git a/eventlet/support/dns/rdtypes/ANY/GPOS.py b/eventlet/support/dns/rdtypes/ANY/GPOS.py
+index a359a77..5f12f56 100644
+--- a/eventlet/support/dns/rdtypes/ANY/GPOS.py
++++ b/eventlet/support/dns/rdtypes/ANY/GPOS.py
+@@ -15,10 +15,12 @@
+ 
+ import struct
+ 
+-import dns.exception
+-import dns.rdata
+-import dns.tokenizer
+-from dns._compat import long, text_type
++# namespace these relative imports
++class dns(object):
++    from ... import exception
++    from ... import rdata
++    from ... import tokenizer
++from ..._compat import long, text_type
+ 
+ 
+ def _validate_float_string(what):
+diff --git a/eventlet/support/dns/rdtypes/ANY/HINFO.py b/eventlet/support/dns/rdtypes/ANY/HINFO.py
+index e5a1bea..77fd431 100644
+--- a/eventlet/support/dns/rdtypes/ANY/HINFO.py
++++ b/eventlet/support/dns/rdtypes/ANY/HINFO.py
+@@ -15,10 +15,12 @@
+ 
+ import struct
+ 
+-import dns.exception
+-import dns.rdata
+-import dns.tokenizer
+-from dns._compat import text_type
++# namespace these relative imports
++class dns(object):
++    from ... import exception
++    from ... import rdata
++    from ... import tokenizer
++from ..._compat import text_type
+ 
+ 
+ class HINFO(dns.rdata.Rdata):
+diff --git a/eventlet/support/dns/rdtypes/ANY/HIP.py b/eventlet/support/dns/rdtypes/ANY/HIP.py
+index fbe955c..03e9093 100644
+--- a/eventlet/support/dns/rdtypes/ANY/HIP.py
++++ b/eventlet/support/dns/rdtypes/ANY/HIP.py
+@@ -17,9 +17,11 @@ import struct
+ import base64
+ import binascii
+ 
+-import dns.exception
+-import dns.rdata
+-import dns.rdatatype
++# namespace these relative imports
++class dns(object):
++    from ... import exception
++    from ... import rdata
++    from ... import rdatatype
+ 
+ 
+ class HIP(dns.rdata.Rdata):
+diff --git a/eventlet/support/dns/rdtypes/ANY/ISDN.py b/eventlet/support/dns/rdtypes/ANY/ISDN.py
+index da2ae3a..eefaea3 100644
+--- a/eventlet/support/dns/rdtypes/ANY/ISDN.py
++++ b/eventlet/support/dns/rdtypes/ANY/ISDN.py
+@@ -15,10 +15,12 @@
+ 
+ import struct
+ 
+-import dns.exception
+-import dns.rdata
+-import dns.tokenizer
+-from dns._compat import text_type
++# namespace these relative imports
++class dns(object):
++    from ... import exception
++    from ... import rdata
++    from ... import tokenizer
++from ..._compat import text_type
+ 
+ 
+ class ISDN(dns.rdata.Rdata):
+diff --git a/eventlet/support/dns/rdtypes/ANY/LOC.py b/eventlet/support/dns/rdtypes/ANY/LOC.py
+index b433da9..d95c2b7 100644
+--- a/eventlet/support/dns/rdtypes/ANY/LOC.py
++++ b/eventlet/support/dns/rdtypes/ANY/LOC.py
+@@ -17,9 +17,11 @@ from __future__ import division
+ 
+ import struct
+ 
+-import dns.exception
+-import dns.rdata
+-from dns._compat import long, xrange, round_py2_compat
++# namespace these relative imports
++class dns(object):
++    from ... import exception
++    from ... import rdata
++from ..._compat import long, xrange, round_py2_compat
+ 
+ 
+ _pows = tuple(long(10**i) for i in range(0, 11))
+diff --git a/eventlet/support/dns/rdtypes/ANY/MX.py b/eventlet/support/dns/rdtypes/ANY/MX.py
+index 3a6735d..4184ef7 100644
+--- a/eventlet/support/dns/rdtypes/ANY/MX.py
++++ b/eventlet/support/dns/rdtypes/ANY/MX.py
+@@ -13,7 +13,10 @@
+ # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ # OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ 
+-import dns.rdtypes.mxbase
++# namespace these relative imports
++class dns(object):
++    class rdtypes(object):
++        from .. import mxbase
+ 
+ 
+ class MX(dns.rdtypes.mxbase.MXBase):
+diff --git a/eventlet/support/dns/rdtypes/ANY/NS.py b/eventlet/support/dns/rdtypes/ANY/NS.py
+index ae56d81..0617174 100644
+--- a/eventlet/support/dns/rdtypes/ANY/NS.py
++++ b/eventlet/support/dns/rdtypes/ANY/NS.py
+@@ -13,7 +13,10 @@
+ # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ # OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ 
+-import dns.rdtypes.nsbase
++# namespace these relative imports
++class dns(object):
++    class rdtypes(object):
++        from .. import nsbase
+ 
+ 
+ class NS(dns.rdtypes.nsbase.NSBase):
+diff --git a/eventlet/support/dns/rdtypes/ANY/NSEC.py b/eventlet/support/dns/rdtypes/ANY/NSEC.py
+index dfe9685..4129af0 100644
+--- a/eventlet/support/dns/rdtypes/ANY/NSEC.py
++++ b/eventlet/support/dns/rdtypes/ANY/NSEC.py
+@@ -15,11 +15,13 @@
+ 
+ import struct
+ 
+-import dns.exception
+-import dns.rdata
+-import dns.rdatatype
+-import dns.name
+-from dns._compat import xrange
++# namespace these relative imports
++class dns(object):
++    from ... import exception
++    from ... import rdata
++    from ... import rdatatype
++    from ... import name
++from ..._compat import xrange
+ 
+ 
+ class NSEC(dns.rdata.Rdata):
+diff --git a/eventlet/support/dns/rdtypes/ANY/NSEC3.py b/eventlet/support/dns/rdtypes/ANY/NSEC3.py
+index 9a15687..c70ec71 100644
+--- a/eventlet/support/dns/rdtypes/ANY/NSEC3.py
++++ b/eventlet/support/dns/rdtypes/ANY/NSEC3.py
+@@ -18,10 +18,12 @@ import binascii
+ import string
+ import struct
+ 
+-import dns.exception
+-import dns.rdata
+-import dns.rdatatype
+-from dns._compat import xrange, text_type
++# namespace these relative imports
++class dns(object):
++    from ... import exception
++    from ... import rdata
++    from ... import rdatatype
++from ..._compat import xrange, text_type
+ 
+ try:
+     b32_hex_to_normal = string.maketrans('0123456789ABCDEFGHIJKLMNOPQRSTUV',
+diff --git a/eventlet/support/dns/rdtypes/ANY/NSEC3PARAM.py b/eventlet/support/dns/rdtypes/ANY/NSEC3PARAM.py
+index 36bf740..57c01a2 100644
+--- a/eventlet/support/dns/rdtypes/ANY/NSEC3PARAM.py
++++ b/eventlet/support/dns/rdtypes/ANY/NSEC3PARAM.py
+@@ -16,9 +16,11 @@
+ import struct
+ import binascii
+ 
+-import dns.exception
+-import dns.rdata
+-from dns._compat import text_type
++# namespace these relative imports
++class dns(object):
++    from ... import exception
++    from ... import rdata
++from ..._compat import text_type
+ 
+ 
+ class NSEC3PARAM(dns.rdata.Rdata):
+diff --git a/eventlet/support/dns/rdtypes/ANY/OPENPGPKEY.py b/eventlet/support/dns/rdtypes/ANY/OPENPGPKEY.py
+index 70f57f0..bd109f1 100644
+--- a/eventlet/support/dns/rdtypes/ANY/OPENPGPKEY.py
++++ b/eventlet/support/dns/rdtypes/ANY/OPENPGPKEY.py
+@@ -15,9 +15,11 @@
+ 
+ import base64
+ 
+-import dns.exception
+-import dns.rdata
+-import dns.tokenizer
++# namespace these relative imports
++class dns(object):
++    from ... import exception
++    from ... import rdata
++    from ... import tokenizer
+ 
+ class OPENPGPKEY(dns.rdata.Rdata):
+ 
+diff --git a/eventlet/support/dns/rdtypes/ANY/PTR.py b/eventlet/support/dns/rdtypes/ANY/PTR.py
+index 250187a..1290593 100644
+--- a/eventlet/support/dns/rdtypes/ANY/PTR.py
++++ b/eventlet/support/dns/rdtypes/ANY/PTR.py
+@@ -13,7 +13,10 @@
+ # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ # OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ 
+-import dns.rdtypes.nsbase
++# namespace these relative imports
++class dns(object):
++    class rdtypes(object):
++        from .. import nsbase
+ 
+ 
+ class PTR(dns.rdtypes.nsbase.NSBase):
+diff --git a/eventlet/support/dns/rdtypes/ANY/RP.py b/eventlet/support/dns/rdtypes/ANY/RP.py
+index e9071c7..5f5af7f 100644
+--- a/eventlet/support/dns/rdtypes/ANY/RP.py
++++ b/eventlet/support/dns/rdtypes/ANY/RP.py
+@@ -13,9 +13,11 @@
+ # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ # OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ 
+-import dns.exception
+-import dns.rdata
+-import dns.name
++# namespace these relative imports
++class dns(object):
++    from ... import exception
++    from ... import rdata
++    from ... import name
+ 
+ 
+ class RP(dns.rdata.Rdata):
+diff --git a/eventlet/support/dns/rdtypes/ANY/RRSIG.py b/eventlet/support/dns/rdtypes/ANY/RRSIG.py
+index 953dfb9..8397c82 100644
+--- a/eventlet/support/dns/rdtypes/ANY/RRSIG.py
++++ b/eventlet/support/dns/rdtypes/ANY/RRSIG.py
+@@ -18,10 +18,12 @@ import calendar
+ import struct
+ import time
+ 
+-import dns.dnssec
+-import dns.exception
+-import dns.rdata
+-import dns.rdatatype
++# namespace these relative imports
++class dns(object):
++    from ... import dnssec
++    from ... import exception
++    from ... import rdata
++    from ... import rdatatype
+ 
+ 
+ class BadSigTime(dns.exception.DNSException):
+diff --git a/eventlet/support/dns/rdtypes/ANY/RT.py b/eventlet/support/dns/rdtypes/ANY/RT.py
+index 88b7548..8b0ab39 100644
+--- a/eventlet/support/dns/rdtypes/ANY/RT.py
++++ b/eventlet/support/dns/rdtypes/ANY/RT.py
+@@ -13,7 +13,10 @@
+ # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ # OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ 
+-import dns.rdtypes.mxbase
++# namespace these relative imports
++class dns(object):
++    class rdtypes(object):
++        from .. import mxbase
+ 
+ 
+ class RT(dns.rdtypes.mxbase.UncompressedDowncasingMX):
+diff --git a/eventlet/support/dns/rdtypes/ANY/SOA.py b/eventlet/support/dns/rdtypes/ANY/SOA.py
+index cc0098e..2bc32d2 100644
+--- a/eventlet/support/dns/rdtypes/ANY/SOA.py
++++ b/eventlet/support/dns/rdtypes/ANY/SOA.py
+@@ -15,9 +15,11 @@
+ 
+ import struct
+ 
+-import dns.exception
+-import dns.rdata
+-import dns.name
++# namespace these relative imports
++class dns(object):
++    from ... import exception
++    from ... import rdata
++    from ... import name
+ 
+ 
+ class SOA(dns.rdata.Rdata):
+diff --git a/eventlet/support/dns/rdtypes/ANY/SPF.py b/eventlet/support/dns/rdtypes/ANY/SPF.py
+index f3e0904..1126afd 100644
+--- a/eventlet/support/dns/rdtypes/ANY/SPF.py
++++ b/eventlet/support/dns/rdtypes/ANY/SPF.py
+@@ -13,7 +13,10 @@
+ # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ # OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ 
+-import dns.rdtypes.txtbase
++# namespace these relative imports
++class dns(object):
++    class rdtypes(object):
++        from .. import txtbase
+ 
+ 
+ class SPF(dns.rdtypes.txtbase.TXTBase):
+diff --git a/eventlet/support/dns/rdtypes/ANY/SSHFP.py b/eventlet/support/dns/rdtypes/ANY/SSHFP.py
+index 7e846b3..5576ac9 100644
+--- a/eventlet/support/dns/rdtypes/ANY/SSHFP.py
++++ b/eventlet/support/dns/rdtypes/ANY/SSHFP.py
+@@ -16,8 +16,10 @@
+ import struct
+ import binascii
+ 
+-import dns.rdata
+-import dns.rdatatype
++# namespace these relative imports
++class dns(object):
++    from ... import rdata
++    from ... import rdatatype
+ 
+ 
+ class SSHFP(dns.rdata.Rdata):
+diff --git a/eventlet/support/dns/rdtypes/ANY/TLSA.py b/eventlet/support/dns/rdtypes/ANY/TLSA.py
+index 790a93b..c41d8de 100644
+--- a/eventlet/support/dns/rdtypes/ANY/TLSA.py
++++ b/eventlet/support/dns/rdtypes/ANY/TLSA.py
+@@ -16,8 +16,10 @@
+ import struct
+ import binascii
+ 
+-import dns.rdata
+-import dns.rdatatype
++# namespace these relative imports
++class dns(object):
++    from ... import rdata
++    from ... import rdatatype
+ 
+ 
+ class TLSA(dns.rdata.Rdata):
+diff --git a/eventlet/support/dns/rdtypes/ANY/TXT.py b/eventlet/support/dns/rdtypes/ANY/TXT.py
+index 6c7fa45..17e3a8c 100644
+--- a/eventlet/support/dns/rdtypes/ANY/TXT.py
++++ b/eventlet/support/dns/rdtypes/ANY/TXT.py
+@@ -13,7 +13,10 @@
+ # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ # OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ 
+-import dns.rdtypes.txtbase
++# namespace these relative imports
++class dns(object):
++    class rdtypes(object):
++        from .. import txtbase
+ 
+ 
+ class TXT(dns.rdtypes.txtbase.TXTBase):
+diff --git a/eventlet/support/dns/rdtypes/ANY/URI.py b/eventlet/support/dns/rdtypes/ANY/URI.py
+index b5595b5..46e79e4 100644
+--- a/eventlet/support/dns/rdtypes/ANY/URI.py
++++ b/eventlet/support/dns/rdtypes/ANY/URI.py
+@@ -16,10 +16,12 @@
+ 
+ import struct
+ 
+-import dns.exception
+-import dns.rdata
+-import dns.name
+-from dns._compat import text_type
++# namespace these relative imports
++class dns(object):
++    from ... import exception
++    from ... import rdata
++    from ... import name
++from ..._compat import text_type
+ 
+ 
+ class URI(dns.rdata.Rdata):
+diff --git a/eventlet/support/dns/rdtypes/ANY/X25.py b/eventlet/support/dns/rdtypes/ANY/X25.py
+index 8732ccf..03bbbb8 100644
+--- a/eventlet/support/dns/rdtypes/ANY/X25.py
++++ b/eventlet/support/dns/rdtypes/ANY/X25.py
+@@ -15,10 +15,12 @@
+ 
+ import struct
+ 
+-import dns.exception
+-import dns.rdata
+-import dns.tokenizer
+-from dns._compat import text_type
++# namespace these relative imports
++class dns(object):
++    from ... import exception
++    from ... import rdata
++    from ... import tokenizer
++from ..._compat import text_type
+ 
+ 
+ class X25(dns.rdata.Rdata):
+diff --git a/eventlet/support/dns/rdtypes/IN/A.py b/eventlet/support/dns/rdtypes/IN/A.py
+index 31f3e7f..b16523d 100644
+--- a/eventlet/support/dns/rdtypes/IN/A.py
++++ b/eventlet/support/dns/rdtypes/IN/A.py
+@@ -13,10 +13,12 @@
+ # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ # OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ 
+-import dns.exception
+-import dns.ipv4
+-import dns.rdata
+-import dns.tokenizer
++# namespace these relative imports
++class dns(object):
++    from ... import exception
++    from ... import ipv4
++    from ... import rdata
++    from ... import tokenizer
+ 
+ 
+ class A(dns.rdata.Rdata):
+diff --git a/eventlet/support/dns/rdtypes/IN/AAAA.py b/eventlet/support/dns/rdtypes/IN/AAAA.py
+index 4352404..97eaf68 100644
+--- a/eventlet/support/dns/rdtypes/IN/AAAA.py
++++ b/eventlet/support/dns/rdtypes/IN/AAAA.py
+@@ -13,10 +13,12 @@
+ # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ # OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ 
+-import dns.exception
+-import dns.inet
+-import dns.rdata
+-import dns.tokenizer
++# namespace these relative imports
++class dns(object):
++    from ... import exception
++    from ... import inet
++    from ... import rdata
++    from ... import tokenizer
+ 
+ 
+ class AAAA(dns.rdata.Rdata):
+diff --git a/eventlet/support/dns/rdtypes/IN/APL.py b/eventlet/support/dns/rdtypes/IN/APL.py
+index ac9c1f0..f483436 100644
+--- a/eventlet/support/dns/rdtypes/IN/APL.py
++++ b/eventlet/support/dns/rdtypes/IN/APL.py
+@@ -16,11 +16,13 @@
+ import struct
+ import binascii
+ 
+-import dns.exception
+-import dns.inet
+-import dns.rdata
+-import dns.tokenizer
+-from dns._compat import xrange, maybe_chr
++# namespace these relative imports
++class dns(object):
++    from ... import exception
++    from ... import inet
++    from ... import rdata
++    from ... import tokenizer
++from ..._compat import xrange, maybe_chr
+ 
+ 
+ class APLItem(object):
+diff --git a/eventlet/support/dns/rdtypes/IN/DHCID.py b/eventlet/support/dns/rdtypes/IN/DHCID.py
+index 5b8626a..fab80e7 100644
+--- a/eventlet/support/dns/rdtypes/IN/DHCID.py
++++ b/eventlet/support/dns/rdtypes/IN/DHCID.py
+@@ -15,7 +15,10 @@
+ 
+ import base64
+ 
+-import dns.exception
++# namespace these relative imports
++class dns(object):
++    from ... import exception
++    from ... import rdata
+ 
+ 
+ class DHCID(dns.rdata.Rdata):
+diff --git a/eventlet/support/dns/rdtypes/IN/IPSECKEY.py b/eventlet/support/dns/rdtypes/IN/IPSECKEY.py
+index c673e83..a1d2264 100644
+--- a/eventlet/support/dns/rdtypes/IN/IPSECKEY.py
++++ b/eventlet/support/dns/rdtypes/IN/IPSECKEY.py
+@@ -16,9 +16,12 @@
+ import struct
+ import base64
+ 
+-import dns.exception
+-import dns.inet
+-import dns.name
++# namespace these relative imports
++class dns(object):
++    from ... import exception
++    from ... import inet
++    from ... import name
++    from ... import rdata
+ 
+ 
+ class IPSECKEY(dns.rdata.Rdata):
+diff --git a/eventlet/support/dns/rdtypes/IN/KX.py b/eventlet/support/dns/rdtypes/IN/KX.py
+index adbfe34..3a32370 100644
+--- a/eventlet/support/dns/rdtypes/IN/KX.py
++++ b/eventlet/support/dns/rdtypes/IN/KX.py
+@@ -13,7 +13,10 @@
+ # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ # OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ 
+-import dns.rdtypes.mxbase
++# namespace these relative imports
++class dns(object):
++    class rdtypes(object):
++        from .. import mxbase
+ 
+ 
+ class KX(dns.rdtypes.mxbase.UncompressedMX):
+diff --git a/eventlet/support/dns/rdtypes/IN/NAPTR.py b/eventlet/support/dns/rdtypes/IN/NAPTR.py
+index 5ae2feb..beee873 100644
+--- a/eventlet/support/dns/rdtypes/IN/NAPTR.py
++++ b/eventlet/support/dns/rdtypes/IN/NAPTR.py
+@@ -15,10 +15,12 @@
+ 
+ import struct
+ 
+-import dns.exception
+-import dns.name
+-import dns.rdata
+-from dns._compat import xrange, text_type
++# namespace these relative imports
++class dns(object):
++    from ... import exception
++    from ... import name
++    from ... import rdata
++from ..._compat import xrange, text_type
+ 
+ 
+ def _write_string(file, s):
+diff --git a/eventlet/support/dns/rdtypes/IN/NSAP.py b/eventlet/support/dns/rdtypes/IN/NSAP.py
+index 05d0745..c1e1bf3 100644
+--- a/eventlet/support/dns/rdtypes/IN/NSAP.py
++++ b/eventlet/support/dns/rdtypes/IN/NSAP.py
+@@ -15,9 +15,11 @@
+ 
+ import binascii
+ 
+-import dns.exception
+-import dns.rdata
+-import dns.tokenizer
++# namespace these relative imports
++class dns(object):
++    from ... import exception
++    from ... import rdata
++    from ... import tokenizer
+ 
+ 
+ class NSAP(dns.rdata.Rdata):
+diff --git a/eventlet/support/dns/rdtypes/IN/NSAP_PTR.py b/eventlet/support/dns/rdtypes/IN/NSAP_PTR.py
+index 56967df..1e13e8a 100644
+--- a/eventlet/support/dns/rdtypes/IN/NSAP_PTR.py
++++ b/eventlet/support/dns/rdtypes/IN/NSAP_PTR.py
+@@ -13,7 +13,10 @@
+ # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ # OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ 
+-import dns.rdtypes.nsbase
++# namespace these relative imports
++class dns(object):
++    class rdtypes(object):
++        from .. import nsbase
+ 
+ 
+ class NSAP_PTR(dns.rdtypes.nsbase.UncompressedNS):
+diff --git a/eventlet/support/dns/rdtypes/IN/PX.py b/eventlet/support/dns/rdtypes/IN/PX.py
+index e1ef102..5c70dbe 100644
+--- a/eventlet/support/dns/rdtypes/IN/PX.py
++++ b/eventlet/support/dns/rdtypes/IN/PX.py
+@@ -15,9 +15,11 @@
+ 
+ import struct
+ 
+-import dns.exception
+-import dns.rdata
+-import dns.name
++# namespace these relative imports
++class dns(object):
++    from ... import exception
++    from ... import rdata
++    from ... import name
+ 
+ 
+ class PX(dns.rdata.Rdata):
+diff --git a/eventlet/support/dns/rdtypes/IN/SRV.py b/eventlet/support/dns/rdtypes/IN/SRV.py
+index f4396d6..a2c1bb0 100644
+--- a/eventlet/support/dns/rdtypes/IN/SRV.py
++++ b/eventlet/support/dns/rdtypes/IN/SRV.py
+@@ -15,9 +15,11 @@
+ 
+ import struct
+ 
+-import dns.exception
+-import dns.rdata
+-import dns.name
++# namespace these relative imports
++class dns(object):
++    from ... import exception
++    from ... import rdata
++    from ... import name
+ 
+ 
+ class SRV(dns.rdata.Rdata):
+diff --git a/eventlet/support/dns/rdtypes/IN/WKS.py b/eventlet/support/dns/rdtypes/IN/WKS.py
+index 1d4012c..7a4819e 100644
+--- a/eventlet/support/dns/rdtypes/IN/WKS.py
++++ b/eventlet/support/dns/rdtypes/IN/WKS.py
+@@ -16,9 +16,11 @@
+ import socket
+ import struct
+ 
+-import dns.ipv4
+-import dns.rdata
+-from dns._compat import xrange
++# namespace these relative imports
++class dns(object):
++    from ... import ipv4
++    from ... import rdata
++from ..._compat import xrange
+ 
+ _proto_tcp = socket.getprotobyname('tcp')
+ _proto_udp = socket.getprotobyname('udp')
+diff --git a/eventlet/support/dns/rdtypes/dnskeybase.py b/eventlet/support/dns/rdtypes/dnskeybase.py
+index 85c4b23..0dfd70a 100644
+--- a/eventlet/support/dns/rdtypes/dnskeybase.py
++++ b/eventlet/support/dns/rdtypes/dnskeybase.py
+@@ -16,9 +16,11 @@
+ import base64
+ import struct
+ 
+-import dns.exception
+-import dns.dnssec
+-import dns.rdata
++# namespace these relative imports
++class dns(object):
++    from .. import exception
++    from .. import dnssec
++    from .. import rdata
+ 
+ # wildcard import
+ __all__ = ["SEP", "REVOKE", "ZONE",
+diff --git a/eventlet/support/dns/rdtypes/dsbase.py b/eventlet/support/dns/rdtypes/dsbase.py
+index 1ee28e4..6b14693 100644
+--- a/eventlet/support/dns/rdtypes/dsbase.py
++++ b/eventlet/support/dns/rdtypes/dsbase.py
+@@ -16,8 +16,10 @@
+ import struct
+ import binascii
+ 
+-import dns.rdata
+-import dns.rdatatype
++# namespace these relative imports
++class dns(object):
++    from .. import rdata
++    from .. import rdatatype
+ 
+ 
+ class DSBase(dns.rdata.Rdata):
+diff --git a/eventlet/support/dns/rdtypes/euibase.py b/eventlet/support/dns/rdtypes/euibase.py
+index cc5fdaa..8ebea81 100644
+--- a/eventlet/support/dns/rdtypes/euibase.py
++++ b/eventlet/support/dns/rdtypes/euibase.py
+@@ -16,8 +16,10 @@
+ 
+ import binascii
+ 
+-import dns.rdata
+-from dns._compat import xrange
++# namespace these relative imports
++class dns(object):
++    from .. import rdata
++from .._compat import xrange
+ 
+ 
+ class EUIBase(dns.rdata.Rdata):
+diff --git a/eventlet/support/dns/rdtypes/mxbase.py b/eventlet/support/dns/rdtypes/mxbase.py
+index 5ac8cef..cdf55a4 100644
+--- a/eventlet/support/dns/rdtypes/mxbase.py
++++ b/eventlet/support/dns/rdtypes/mxbase.py
+@@ -18,9 +18,11 @@
+ from io import BytesIO
+ import struct
+ 
+-import dns.exception
+-import dns.rdata
+-import dns.name
++# namespace these relative imports
++class dns(object):
++    from .. import exception
++    from .. import rdata
++    from .. import name
+ 
+ 
+ class MXBase(dns.rdata.Rdata):
+diff --git a/eventlet/support/dns/rdtypes/nsbase.py b/eventlet/support/dns/rdtypes/nsbase.py
+index 79333a1..ada6352 100644
+--- a/eventlet/support/dns/rdtypes/nsbase.py
++++ b/eventlet/support/dns/rdtypes/nsbase.py
+@@ -17,9 +17,11 @@
+ 
+ from io import BytesIO
+ 
+-import dns.exception
+-import dns.rdata
+-import dns.name
++# namespace these relative imports
++class dns(object):
++    from .. import exception
++    from .. import rdata
++    from .. import name
+ 
+ 
+ class NSBase(dns.rdata.Rdata):
+diff --git a/eventlet/support/dns/rdtypes/txtbase.py b/eventlet/support/dns/rdtypes/txtbase.py
+index aa341f1..3f42241 100644
+--- a/eventlet/support/dns/rdtypes/txtbase.py
++++ b/eventlet/support/dns/rdtypes/txtbase.py
+@@ -17,10 +17,12 @@
+ 
+ import struct
+ 
+-import dns.exception
+-import dns.rdata
+-import dns.tokenizer
+-from dns._compat import binary_type, string_types
++# namespace these relative imports
++class dns(object):
++    from .. import exception
++    from .. import rdata
++    from .. import tokenizer
++from .._compat import binary_type, string_types
+ 
+ 
+ class TXTBase(dns.rdata.Rdata):
+diff --git a/eventlet/support/dns/renderer.py b/eventlet/support/dns/renderer.py
+index 2025f68..446f829 100644
+--- a/eventlet/support/dns/renderer.py
++++ b/eventlet/support/dns/renderer.py
+@@ -20,8 +20,11 @@ import struct
+ import random
+ import time
+ 
+-import dns.exception
+-import dns.tsig
++# namespace these relative imports
++class dns(object):
++    from . import exception
++    from . import tsig
++    from . import rdataclass
+ from ._compat import long
+ 
+ 
+diff --git a/eventlet/support/dns/resolver.py b/eventlet/support/dns/resolver.py
+index 0032383..cbf0377 100644
+--- a/eventlet/support/dns/resolver.py
++++ b/eventlet/support/dns/resolver.py
+@@ -25,18 +25,20 @@ try:
+ except ImportError:
+     import dummy_threading as _threading
+ 
+-import dns.exception
+-import dns.flags
+-import dns.ipv4
+-import dns.ipv6
+-import dns.message
+-import dns.name
+-import dns.query
+-import dns.rcode
+-import dns.rdataclass
+-import dns.rdatatype
+-import dns.reversename
+-import dns.tsig
++# namespace these relative imports
++class dns(object):
++    from . import exception
++    from . import flags
++    from . import ipv4
++    from . import ipv6
++    from . import message
++    from . import name
++    from . import query
++    from . import rcode
++    from . import rdataclass
++    from . import rdatatype
++    from . import reversename
++    from . import tsig
+ from ._compat import xrange, string_types
+ 
+ if sys.platform == 'win32':
+diff --git a/eventlet/support/dns/reversename.py b/eventlet/support/dns/reversename.py
+index e2ec77d..0930c72 100644
+--- a/eventlet/support/dns/reversename.py
++++ b/eventlet/support/dns/reversename.py
+@@ -18,9 +18,11 @@
+ import binascii
+ import sys
+ 
+-import dns.name
+-import dns.ipv6
+-import dns.ipv4
++# namespace these relative imports
++class dns(object):
++    from . import name
++    from . import ipv6
++    from . import ipv4
+ 
+ ipv4_reverse_domain = dns.name.from_text('in-addr.arpa.')
+ ipv6_reverse_domain = dns.name.from_text('ip6.arpa.')
+diff --git a/eventlet/support/dns/rrset.py b/eventlet/support/dns/rrset.py
+index 6774647..fa129fb 100644
+--- a/eventlet/support/dns/rrset.py
++++ b/eventlet/support/dns/rrset.py
+@@ -16,10 +16,14 @@
+ """DNS RRsets (an RRset is a named rdataset)"""
+ 
+ 
+-import dns.name
+-import dns.rdataset
+-import dns.rdataclass
+-import dns.renderer
++# namespace these relative imports
++class dns(object):
++    from . import name
++    from . import rdata
++    from . import rdataset
++    from . import rdataclass
++    from . import rdatatype
++    from . import renderer
+ from ._compat import string_types
+ 
+ 
+diff --git a/eventlet/support/dns/tokenizer.py b/eventlet/support/dns/tokenizer.py
+index 3c9bd37..804bd60 100644
+--- a/eventlet/support/dns/tokenizer.py
++++ b/eventlet/support/dns/tokenizer.py
+@@ -18,9 +18,11 @@
+ from io import StringIO
+ import sys
+ 
+-import dns.exception
+-import dns.name
+-import dns.ttl
++# namespace these relative imports
++class dns(object):
++    from . import exception
++    from . import name
++    from . import ttl
+ from ._compat import long, text_type, binary_type
+ 
+ _DELIMITERS = {
+diff --git a/eventlet/support/dns/tsig.py b/eventlet/support/dns/tsig.py
+index c57d879..3261774 100644
+--- a/eventlet/support/dns/tsig.py
++++ b/eventlet/support/dns/tsig.py
+@@ -18,10 +18,12 @@
+ import hmac
+ import struct
+ 
+-import dns.exception
+-import dns.hash
+-import dns.rdataclass
+-import dns.name
++# namespace these relative imports
++class dns(object):
++    from . import exception
++    from . import hash
++    from . import rdataclass
++    from . import name
+ from ._compat import long, string_types, text_type
+ 
+ class BadTime(dns.exception.DNSException):
+diff --git a/eventlet/support/dns/tsigkeyring.py b/eventlet/support/dns/tsigkeyring.py
+index 01f8702..9f5ce11 100644
+--- a/eventlet/support/dns/tsigkeyring.py
++++ b/eventlet/support/dns/tsigkeyring.py
+@@ -15,11 +15,13 @@
+ 
+ """A place to store TSIG keys."""
+ 
+-from dns._compat import maybe_decode, maybe_encode
++from ._compat import maybe_decode, maybe_encode
+ 
+ import base64
+ 
+-import dns.name
++# namespace these relative imports
++class dns(object):
++    from . import name
+ 
+ 
+ def from_text(textring):
+diff --git a/eventlet/support/dns/ttl.py b/eventlet/support/dns/ttl.py
+index 4690728..61538a2 100644
+--- a/eventlet/support/dns/ttl.py
++++ b/eventlet/support/dns/ttl.py
+@@ -15,7 +15,9 @@
+ 
+ """DNS TTL conversion."""
+ 
+-import dns.exception
++# namespace these relative imports
++class dns(object):
++    from . import exception
+ from ._compat import long
+ 
+ 
+diff --git a/eventlet/support/dns/update.py b/eventlet/support/dns/update.py
+index db0a61d..8519e5e 100644
+--- a/eventlet/support/dns/update.py
++++ b/eventlet/support/dns/update.py
+@@ -16,13 +16,15 @@
+ """DNS Dynamic Update Support"""
+ 
+ 
+-import dns.message
+-import dns.name
+-import dns.opcode
+-import dns.rdata
+-import dns.rdataclass
+-import dns.rdataset
+-import dns.tsig
++# namespace these relative imports
++class dns(object):
++    from . import message
++    from . import name
++    from . import opcode
++    from . import rdata
++    from . import rdataclass
++    from . import rdataset
++    from . import tsig
+ from ._compat import string_types
+ 
+ 
+diff --git a/eventlet/support/dns/wiredata.py b/eventlet/support/dns/wiredata.py
+index 6a058c6..c97e551 100644
+--- a/eventlet/support/dns/wiredata.py
++++ b/eventlet/support/dns/wiredata.py
+@@ -17,7 +17,9 @@
+ 
+ import sys
+ 
+-import dns.exception
++# namespace these relative imports
++class dns(object):
++    from . import exception
+ from ._compat import binary_type, string_types
+ 
+ # Figure out what constant python passes for an unspecified slice bound.
+diff --git a/eventlet/support/dns/zone.py b/eventlet/support/dns/zone.py
+index 468618f..01d0e19 100644
+--- a/eventlet/support/dns/zone.py
++++ b/eventlet/support/dns/zone.py
+@@ -22,16 +22,18 @@ import re
+ import os
+ from io import BytesIO
+ 
+-import dns.exception
+-import dns.name
+-import dns.node
+-import dns.rdataclass
+-import dns.rdatatype
+-import dns.rdata
+-import dns.rrset
+-import dns.tokenizer
+-import dns.ttl
+-import dns.grange
++# namespace these relative imports
++class dns(object):
++    from . import exception
++    from . import name
++    from . import node
++    from . import rdataclass
++    from . import rdatatype
++    from . import rdata
++    from . import rrset
++    from . import tokenizer
++    from . import ttl
++    from . import grange
+ from ._compat import string_types, text_type
+ 
+ 

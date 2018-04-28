@@ -18,9 +18,11 @@
 from io import BytesIO
 import struct
 
-import dns.exception
-import dns.rdata
-import dns.name
+# namespace these relative imports
+class dns(object):
+    from .. import exception
+    from .. import rdata
+    from .. import name
 
 
 class MXBase(dns.rdata.Rdata):

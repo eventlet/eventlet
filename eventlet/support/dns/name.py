@@ -27,8 +27,10 @@ try:
 except ImportError:
     have_idna_2008 = False
 
-import dns.exception
-import dns.wiredata
+# namespace these imported sibling modules
+class dns(object):
+    from . import exception
+    from . import wiredata
 
 from ._compat import long, binary_type, text_type, unichr, maybe_decode
 
