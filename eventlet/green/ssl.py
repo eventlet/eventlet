@@ -471,6 +471,7 @@ if hasattr(__ssl, 'SSLContext'):
 
     if hasattr(__ssl, 'create_default_context'):
         _original_create_default_context = __ssl.create_default_context
+        _original_create_default_https_context = __ssl._create_default_https_context
 
         def green_create_default_context(*a, **kw):
             # We can't just monkey-patch on the green version of `wrap_socket`
@@ -481,5 +482,14 @@ if hasattr(__ssl, 'SSLContext'):
             context.__class__ = GreenSSLContext
             return context
 
+        def green_create_default_https_context(*a, **kw):
+            # We can't just monkey-patch on the green version of `wrap_socket`
+            # on to SSLContext instances, but SSLContext.create_default_context
+            # does a bunch of work. Rather than re-implementing it all, just
+            # switch out the __class__ to get our `wrap_socket` implementation
+            context = _original_create_default_https_context(*a, **kw)
+            context.__class__ = GreenSSLContext
+            return context
+
         create_default_context = green_create_default_context
-        _create_default_https_context = green_create_default_context
+        _create_default_https_context = green_create_default_https_context
