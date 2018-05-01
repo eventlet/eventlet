@@ -51,7 +51,13 @@ class TestHostsResolver(tests.LimitedTestCase):
         hr._last_stat = 0
         hr.hosts.seek(0)
         hr.hosts.truncate()
-        hr.hosts.write(b' line1\n#comment\nline2 # inline comment\n')
+        hr.hosts.write(b'''\
+# First couple lines
+# are comments.
+line1
+#comment
+line2 # inline comment
+''')
         hr.hosts.flush()
         assert_equal(list(hr._readlines()), ['line1', 'line2'])
 
