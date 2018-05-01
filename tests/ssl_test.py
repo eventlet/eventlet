@@ -1,5 +1,3 @@
-import contextlib
-import socket
 import warnings
 
 import eventlet
@@ -325,3 +323,8 @@ class SSLTest(tests.LimitedTestCase):
                 server_to_client.close()
 
                 listener.close()
+
+
+def test_pythonhttpsverify():
+    # https://github.com/eventlet/eventlet/pull/485
+    tests.run_isolated('green_ssl_pythonhttpsverify.py', env={'PYTHONHTTPSVERIFY': '0'})
