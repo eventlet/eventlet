@@ -815,7 +815,7 @@ def test_proxy_resolve_unqualified():
     # https://github.com/eventlet/eventlet/issues/363
     rp = greendns.ResolverProxy(filename=None)
     rp._resolver.search.append(dns.name.from_text('example.com'))
-    with tests.mock.patch('eventlet.support.dns.resolver.Resolver.query', side_effect=dns.resolver.NoAnswer) as m:
+    with tests.mock.patch('dns.resolver.Resolver.query', side_effect=dns.resolver.NoAnswer) as m:
         try:
             rp.query('machine')
             assert False, 'Expected NoAnswer exception'
