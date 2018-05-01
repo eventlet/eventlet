@@ -24,7 +24,7 @@ from nose.plugins.skip import SkipTest
 
 import eventlet
 from eventlet import tpool
-from eventlet.support import six
+import six
 
 
 # convenience for importers

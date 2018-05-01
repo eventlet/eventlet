@@ -2,7 +2,8 @@
 import eventlet
 from eventlet.green import thread
 from eventlet.green import time
-from eventlet.support import greenlets as greenlet, six
+from eventlet.support import greenlets as greenlet
+import six
 
 __patched__ = ['_start_new_thread', '_allocate_lock',
                '_sleep', 'local', 'stack_size', 'Lock', 'currentThread',

@@ -4,7 +4,7 @@ if __name__ == '__main__':
     import eventlet
     eventlet.monkey_patch()
 
-    from eventlet.support.six.moves.BaseHTTPServer import (
+    from six.moves.BaseHTTPServer import (
         HTTPServer,
         BaseHTTPRequestHandler,
     )

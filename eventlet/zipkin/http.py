@@ -1,6 +1,6 @@
 import warnings
 
-from eventlet.support import six
+import six
 from eventlet.green import httplib
 from eventlet.zipkin import api
 

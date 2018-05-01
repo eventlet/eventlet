@@ -21,7 +21,7 @@ import traceback
 
 import eventlet
 from eventlet import event, greenio, greenthread, patcher, timeout
-from eventlet.support import six
+import six
 
 __all__ = ['execute', 'Proxy', 'killall', 'set_num_threads']
 

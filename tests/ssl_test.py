@@ -9,7 +9,7 @@ try:
     from eventlet.green import ssl
 except ImportError:
     __test__ = False
-from eventlet.support import six
+import six
 import tests
 
 

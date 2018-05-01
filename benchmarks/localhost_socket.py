@@ -4,7 +4,7 @@ from __future__ import print_function
 import time
 
 import benchmarks
-from eventlet.support import six
+import six
 
 
 BYTES = 1000

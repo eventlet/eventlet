@@ -7,7 +7,8 @@ from tests import skip_with_pyevent, skip_if_no_itimer, skip_unless
 from tests.patcher_test import ProcessBase
 import eventlet
 from eventlet import hubs
-from eventlet.support import greenlets, six
+from eventlet.support import greenlets
+import six
 
 
 DELAY = 0.001
@@ -379,7 +380,7 @@ try:
 except AttributeError:
     pass
 
-from eventlet.support.six.moves import builtins
+from six.moves import builtins
 
 original_import = builtins.__import__
 

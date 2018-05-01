@@ -1,4 +1,4 @@
-from eventlet.support import six
+import six
 
 from eventlet.greenio.base import *  # noqa
 

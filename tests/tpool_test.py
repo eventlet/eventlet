@@ -21,7 +21,7 @@ import time
 
 import eventlet
 from eventlet import tpool
-from eventlet.support import six
+import six
 import tests
 
 

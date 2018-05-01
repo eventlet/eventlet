@@ -3,7 +3,8 @@ import traceback
 import event
 import types
 
-from eventlet.support import greenlets as greenlet, six
+from eventlet.support import greenlets as greenlet
+import six
 from eventlet.hubs.hub import BaseHub, READ, WRITE
 
 

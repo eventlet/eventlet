@@ -4,7 +4,7 @@ import warnings
 import eventlet
 from eventlet import convenience, debug
 from eventlet.green import socket
-from eventlet.support import six
+import six
 import tests
 import tests.mock
 

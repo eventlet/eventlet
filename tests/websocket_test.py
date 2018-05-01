@@ -6,7 +6,7 @@ import eventlet
 from eventlet import event
 from eventlet import greenio
 from eventlet.green import httplib
-from eventlet.support import six
+import six
 from eventlet.websocket import WebSocket, WebSocketWSGI
 
 import tests

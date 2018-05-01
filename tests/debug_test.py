@@ -1,7 +1,7 @@
 import sys
 
 from eventlet import debug
-from eventlet.support import six
+import six
 import tests
 import eventlet
 

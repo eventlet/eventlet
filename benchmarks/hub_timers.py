@@ -9,7 +9,7 @@ import random
 import time
 
 from eventlet.hubs import timer, get_hub
-from eventlet.support import six
+import six
 
 
 timer_count = 100000

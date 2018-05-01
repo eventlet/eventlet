@@ -20,7 +20,8 @@ from eventlet import tpool
 from eventlet import wsgi
 from eventlet.green import socket as greensocket
 from eventlet.green import ssl
-from eventlet.support import bytes_to_str, six
+from eventlet.support import bytes_to_str
+import six
 import tests
 
 

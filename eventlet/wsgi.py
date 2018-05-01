@@ -11,8 +11,8 @@ from eventlet import greenio
 from eventlet import support
 from eventlet.green import BaseHTTPServer
 from eventlet.green import socket
-from eventlet.support import six
-from eventlet.support.six.moves import urllib
+import six
+from six.moves import urllib
 
 
 DEFAULT_MAX_SIMULTANEOUS_REQUESTS = 1024

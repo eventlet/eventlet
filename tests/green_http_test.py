@@ -1,5 +1,5 @@
 import eventlet
-from eventlet.support import six
+import six
 import tests
 
 __test__ = six.PY3
