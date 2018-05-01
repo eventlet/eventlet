@@ -15,11 +15,11 @@ setuptools.setup(
     url='http://eventlet.net',
     packages=setuptools.find_packages(exclude=['benchmarks', 'tests', 'tests.*']),
     install_requires=(
-        'dnspython == 1.16.0',   # as of 2018-05-01, not yet published to PyPI
+        'dnspython >= 1.16.0',   # as of 2018-05-01, not yet published to PyPI
         'enum34;python_version<"3.4"',
         'greenlet >= 0.3',
-        'monotonic == 1.4',
-        'six == 1.10.0',
+        'monotonic >= 1.4',
+        'six >= 1.10.0',
     ),
     # this works IF you specify pip install --process-dependency-links ...
     dependency_links=[
