@@ -312,23 +312,6 @@ print(len(_threading._active))
         assert lines[1] == '1', lines
         assert lines[2] == '1', lines
 
-    def test_threading(self):
-        new_mod = """import eventlet
-eventlet.monkey_patch()
-import threading
-def test():
-    print(repr(threading.currentThread()))
-t = threading.Thread(target=test)
-t.start()
-t.join()
-print(len(threading._active))
-"""
-        self.write_to_tempfile("newmod", new_mod)
-        output, lines = self.launch_subprocess('newmod.py')
-        self.assertEqual(len(lines), 3, "\n".join(lines))
-        assert lines[0].startswith('<_MainThread'), lines[0]
-        self.assertEqual(lines[1], "1", lines[1])
-
     def test_tpool(self):
         new_mod = """import eventlet
 eventlet.monkey_patch()
@@ -520,3 +503,7 @@ def test_blocking_select_methods_are_deleted():
 
 def test_regular_file_readall():
     tests.run_isolated('regular_file_readall.py')
+
+
+def test_threading_current():
+    tests.run_isolated('patcher_threading_current.py')
