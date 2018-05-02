@@ -12,6 +12,7 @@ import tests
 import tests.mock
 from nose.tools import assert_equal
 
+
 def _make_host_resolver():
     """Returns a HostResolver instance
 
