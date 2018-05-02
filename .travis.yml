@@ -60,7 +60,7 @@ addons:
     - libzmq3-dev
 
 install:
-  - pip install --upgrade --process-dependency-links pip setuptools tox virtualenv codecov
+  - pip install --upgrade pip setuptools tox virtualenv codecov
 before_script:
   - "export EVENTLET_DB_TEST_AUTH='{\"psycopg2\": {\"user\": \"postgres\"}, \"MySQLdb\": {\"passwd\": \"\", \"host\": \"localhost\", \"user\": \"root\"}}'"
   - "export PATH=/usr/lib/ccache:$PATH"
