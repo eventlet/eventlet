@@ -12,14 +12,6 @@ import tests
 import tests.mock
 
 
-# We don't use nose.tools.assert_equal() because the -d flag makes up for any
-# convenience built into assert_equal(). But for debugging, it's useful to
-# display the mismatched values.
-def assert_equal(left, right):
-    if left != right:
-        raise AssertionError("{!r} != {!r}".format(left, right))
-
-
 def _make_host_resolver():
     """Returns a HostResolver instance
 
@@ -43,18 +35,18 @@ class TestHostsResolver(tests.LimitedTestCase):
         hr = _make_host_resolver()
         hr.hosts.write(b'line0\n')
         hr.hosts.flush()
-        assert_equal(list(hr._readlines()), ['line0'])
+        assert list(hr._readlines()) == ['line0']
         hr._last_stat = 0
         hr.hosts.write(b'line1\n')
         hr.hosts.flush()
-        assert_equal(list(hr._readlines()), ['line0', 'line1'])
+        assert list(hr._readlines()) == ['line0', 'line1']
         # Test reading of varied newline styles
         hr._last_stat = 0
         hr.hosts.seek(0)
         hr.hosts.truncate()
         hr.hosts.write(b'\naa\r\nbb\r  cc  \n\n\tdd ee')
         hr.hosts.flush()
-        assert_equal(list(hr._readlines()), ['aa', 'bb', 'cc', 'dd ee'])
+        assert list(hr._readlines()) == ['aa', 'bb', 'cc', 'dd ee']
         # Test comments, including inline comments
         hr._last_stat = 0
         hr.hosts.seek(0)
@@ -67,13 +59,13 @@ line1
 line2 # inline comment
 ''')
         hr.hosts.flush()
-        assert_equal(list(hr._readlines()), ['line1', 'line2'])
+        assert list(hr._readlines()) == ['line1', 'line2']
 
     def test_readlines_missing_file(self):
         hr = _make_host_resolver()
         hr.hosts.close()
         hr._last_stat = 0
-        assert_equal(list(hr._readlines()), [])
+        assert list(hr._readlines()) == []
 
     def test_load_no_contents(self):
         hr = _make_host_resolver()
@@ -88,11 +80,11 @@ line2 # inline comment
                        b'dead:beef::1 v6.example.com v6\n')
         hr.hosts.flush()
         hr._load()
-        assert_equal(hr._v4, {'v4.example.com': '1.2.3.4', 'v4': '1.2.3.4'})
-        assert_equal(hr._v6, {'v6.example.com': 'dead:beef::1',
-                              'v6': 'dead:beef::1'})
-        assert_equal(hr._aliases, {'v4': 'v4.example.com',
-                                   'v6': 'v6.example.com'})
+        assert hr._v4 == {'v4.example.com': '1.2.3.4', 'v4': '1.2.3.4'}
+        assert hr._v6 == {'v6.example.com': 'dead:beef::1',
+                          'v6': 'dead:beef::1'}
+        assert hr._aliases == {'v4': 'v4.example.com',
+                               'v6': 'v6.example.com'}
 
     def test_load_v6_link_local(self):
         hr = _make_host_resolver()
@@ -107,7 +99,7 @@ line2 # inline comment
         hr = _make_host_resolver()
         hr._v4 = {'v4.example.com': '1.2.3.4'}
         ans = hr.query('v4.example.com')
-        assert_equal(ans[0].address, '1.2.3.4')
+        assert ans[0].address == '1.2.3.4'
 
     def test_query_ans_types(self):
         # This assumes test_query_A above succeeds
@@ -116,28 +108,28 @@ line2 # inline comment
         hr._last_stat = time.time()
         ans = hr.query('v4.example.com')
         assert isinstance(ans, greendns.dns.resolver.Answer)
-        assert_equal(ans.response, None)
-        assert_equal(ans.qname, dns.name.from_text('v4.example.com'))
-        assert_equal(ans.rdtype, dns.rdatatype.A)
-        assert_equal(ans.rdclass, dns.rdataclass.IN)
-        assert_equal(ans.canonical_name, dns.name.from_text('v4.example.com'))
+        assert ans.response is None
+        assert ans.qname == dns.name.from_text('v4.example.com')
+        assert ans.rdtype == dns.rdatatype.A
+        assert ans.rdclass == dns.rdataclass.IN
+        assert ans.canonical_name == dns.name.from_text('v4.example.com')
         assert ans.expiration
         assert isinstance(ans.rrset, dns.rrset.RRset)
-        assert_equal(ans.rrset.rdtype, dns.rdatatype.A)
-        assert_equal(ans.rrset.rdclass, dns.rdataclass.IN)
+        assert ans.rrset.rdtype == dns.rdatatype.A
+        assert ans.rrset.rdclass == dns.rdataclass.IN
         ttl = greendns.HOSTS_TTL
         assert ttl - 1 <= ans.rrset.ttl <= ttl + 1
         rr = ans.rrset[0]
         assert isinstance(rr, greendns.dns.rdtypes.IN.A.A)
-        assert_equal(rr.rdtype, dns.rdatatype.A)
-        assert_equal(rr.rdclass, dns.rdataclass.IN)
-        assert_equal(rr.address, '1.2.3.4')
+        assert rr.rdtype == dns.rdatatype.A
+        assert rr.rdclass == dns.rdataclass.IN
+        assert rr.address == '1.2.3.4'
 
     def test_query_AAAA(self):
         hr = _make_host_resolver()
         hr._v6 = {'v6.example.com': 'dead:beef::1'}
         ans = hr.query('v6.example.com', dns.rdatatype.AAAA)
-        assert_equal(ans[0].address, 'dead:beef::1')
+        assert ans[0].address == 'dead:beef::1'
 
     def test_query_unknown_raises(self):
         hr = _make_host_resolver()
@@ -149,22 +141,22 @@ line2 # inline comment
         ans = hr.query('example.com', raise_on_no_answer=False)
         assert isinstance(ans, greendns.dns.resolver.Answer)
         assert ans.response is None
-        assert_equal(ans.qname, dns.name.from_text('example.com'))
-        assert_equal(ans.rdtype, dns.rdatatype.A)
-        assert_equal(ans.rdclass, dns.rdataclass.IN)
-        assert_equal(ans.canonical_name, dns.name.from_text('example.com'))
+        assert ans.qname == dns.name.from_text('example.com')
+        assert ans.rdtype == dns.rdatatype.A
+        assert ans.rdclass == dns.rdataclass.IN
+        assert ans.canonical_name == dns.name.from_text('example.com')
         assert ans.expiration
         assert isinstance(ans.rrset, greendns.dns.rrset.RRset)
-        assert_equal(ans.rrset.rdtype, dns.rdatatype.A)
-        assert_equal(ans.rrset.rdclass, dns.rdataclass.IN)
-        assert_equal(len(ans.rrset), 0)
+        assert ans.rrset.rdtype == dns.rdatatype.A
+        assert ans.rrset.rdclass == dns.rdataclass.IN
+        assert len(ans.rrset) == 0
 
     def test_query_CNAME(self):
         hr = _make_host_resolver()
         hr._aliases = {'host': 'host.example.com'}
         ans = hr.query('host', dns.rdatatype.CNAME)
-        assert_equal(ans[0].target, dns.name.from_text('host.example.com'))
-        assert_equal(str(ans[0].target), 'host.example.com.')
+        assert ans[0].target == dns.name.from_text('host.example.com')
+        assert str(ans[0].target) == 'host.example.com.'
 
     def test_query_unknown_type(self):
         hr = _make_host_resolver()
@@ -176,17 +168,17 @@ line2 # inline comment
         hr._aliases = {'host': 'host.example.com',
                        'localhost': 'host.example.com'}
         res = set(hr.getaliases('host'))
-        assert_equal(res, set(['host.example.com', 'localhost']))
+        assert res == set(['host.example.com', 'localhost'])
 
     def test_getaliases_unknown(self):
         hr = _make_host_resolver()
-        assert_equal(hr.getaliases('host.example.com'), [])
+        assert hr.getaliases('host.example.com') == []
 
     def test_getaliases_fqdn(self):
         hr = _make_host_resolver()
         hr._aliases = {'host': 'host.example.com'}
         res = set(hr.getaliases('host.example.com'))
-        assert_equal(res, set(['host']))
+        assert res == set(['host'])
 
     def test_hosts_case_insensitive(self):
         name = 'example.com'
@@ -198,9 +190,9 @@ line2 # inline comment
         ans = hr.query(name)
         rr = ans.rrset[0]
         assert isinstance(rr, greendns.dns.rdtypes.IN.A.A)
-        assert_equal(rr.rdtype, dns.rdatatype.A)
-        assert_equal(rr.rdclass, dns.rdataclass.IN)
-        assert_equal(rr.address, '1.2.3.4')
+        assert rr.rdtype == dns.rdatatype.A
+        assert rr.rdclass == dns.rdataclass.IN
+        assert rr.address == '1.2.3.4'
 
 
 def _make_mock_base_resolver():
@@ -254,7 +246,7 @@ class TestProxyResolver(tests.LimitedTestCase):
         hostsres = self._make_mock_hostsresolver()
         rp = greendns.ResolverProxy(hostsres)
         ans = rp.query('host.example.com')
-        assert_equal(ans[0].address, '1.2.3.4')
+        assert ans[0].address == '1.2.3.4'
 
     def test_hosts_noanswer(self):
         hostsres = self._make_mock_hostsresolver()
@@ -263,14 +255,14 @@ class TestProxyResolver(tests.LimitedTestCase):
         rp._resolver = res
         hostsres.raises = greendns.dns.resolver.NoAnswer
         ans = rp.query('host.example.com')
-        assert_equal(ans[0].address, '5.6.7.8')
+        assert ans[0].address == '5.6.7.8'
 
     def test_resolver(self):
         res = self._make_mock_resolver()
         rp = greendns.ResolverProxy()
         rp._resolver = res
         ans = rp.query('host.example.com')
-        assert_equal(ans[0].address, '5.6.7.8')
+        assert ans[0].address == '5.6.7.8'
 
     def test_noanswer(self):
         res = self._make_mock_resolver()
@@ -323,14 +315,14 @@ class TestProxyResolver(tests.LimitedTestCase):
         rp = greendns.ResolverProxy()
         rp._resolver = aliases_res
         aliases = set(rp.getaliases('alias.example.com'))
-        assert_equal(aliases, set(['host.example.com']))
+        assert aliases == set(['host.example.com'])
 
     def test_getaliases_fqdn(self):
         aliases_res = self._make_mock_resolver_aliases()
         rp = greendns.ResolverProxy()
         rp._resolver = aliases_res
         rp._resolver.call_count = 1
-        assert_equal(rp.getaliases('host.example.com'), [])
+        assert rp.getaliases('host.example.com') == []
 
     def test_getaliases_nxdomain(self):
         aliases_res = self._make_mock_resolver_aliases()
@@ -338,7 +330,7 @@ class TestProxyResolver(tests.LimitedTestCase):
         rp._resolver = aliases_res
         rp._resolver.call_count = 1
         rp._resolver.exc_type = greendns.dns.resolver.NXDOMAIN
-        assert_equal(rp.getaliases('host.example.com'), [])
+        assert rp.getaliases('host.example.com') == []
 
 
 class TestResolve(tests.LimitedTestCase):
@@ -354,14 +346,14 @@ class TestResolve(tests.LimitedTestCase):
 
     def test_A(self):
         ans = greendns.resolve('host.example.com', socket.AF_INET)
-        assert_equal(ans[0].address, '1.2.3.4')
-        assert_equal(greendns.resolver.args, ('host.example.com', dns.rdatatype.A))
+        assert ans[0].address == '1.2.3.4'
+        assert greendns.resolver.args == ('host.example.com', dns.rdatatype.A)
 
     def test_AAAA(self):
         greendns.resolver.rr.address = 'dead:beef::1'
         ans = greendns.resolve('host.example.com', socket.AF_INET6)
-        assert_equal(ans[0].address, 'dead:beef::1')
-        assert_equal(greendns.resolver.args, ('host.example.com', dns.rdatatype.AAAA))
+        assert ans[0].address == 'dead:beef::1'
+        assert greendns.resolver.args == ('host.example.com', dns.rdatatype.AAAA)
 
     def test_unknown_rdtype(self):
         with tests.assert_raises(socket.gaierror):
@@ -401,7 +393,7 @@ class TestResolveCname(tests.LimitedTestCase):
 
     def test_success(self):
         cname = greendns.resolve_cname('alias.example.com')
-        assert_equal(cname, 'cname.example.com')
+        assert cname == 'cname.example.com'
 
     def test_timeout(self):
         greendns.resolver.raises = greendns.dns.exception.Timeout
@@ -415,7 +407,7 @@ class TestResolveCname(tests.LimitedTestCase):
 
     def test_no_answer(self):
         greendns.resolver.raises = greendns.dns.resolver.NoAnswer
-        assert_equal(greendns.resolve_cname('host.example.com'), 'host.example.com')
+        assert greendns.resolve_cname('host.example.com') == 'host.example.com'
 
 
 def _make_mock_resolve():
@@ -548,14 +540,14 @@ class TestGetaddrinfo(tests.LimitedTestCase):
         greendns.resolve.add('example.com', '1.2.3.4')
         res = greendns.getaddrinfo('example.com', 0)
         addr = [('1.2.3.4', 0)] * len(res)
-        assert_equal(addr, [ai[-1] for ai in res])
+        assert addr == [ai[-1] for ai in res]
 
     def test_getaddrinfo_only_aaaa_ans(self):
         greendns.resolve = _make_mock_resolve()
         greendns.resolve.add('example.com', 'dead:beef::1')
         res = greendns.getaddrinfo('example.com', 0)
         addr = [('dead:beef::1', 0, 0, 0)] * len(res)
-        assert_equal(addr, [ai[-1] for ai in res])
+        assert addr == [ai[-1] for ai in res]
 
     def test_getaddrinfo_hosts_only_ans_with_timeout(self):
         def clear_raises(res_self):
@@ -572,7 +564,7 @@ class TestGetaddrinfo(tests.LimitedTestCase):
 
         result = greendns.getaddrinfo('example.com', 0, 0)
         addr = [('1.2.3.4', 0)] * len(result)
-        assert_equal(addr, [ai[-1] for ai in result])
+        assert addr == [ai[-1] for ai in result]
 
     def test_getaddrinfo_hosts_only_ans_with_error(self):
         def clear_raises(res_self):
@@ -589,7 +581,7 @@ class TestGetaddrinfo(tests.LimitedTestCase):
 
         result = greendns.getaddrinfo('example.com', 0, 0)
         addr = [('1.2.3.4', 0)] * len(result)
-        assert_equal(addr, [ai[-1] for ai in result])
+        assert addr == [ai[-1] for ai in result]
 
     def test_getaddrinfo_hosts_only_timeout(self):
         hostsres = _make_mock_base_resolver()
@@ -619,7 +611,7 @@ class TestGetaddrinfo(tests.LimitedTestCase):
         greendns.resolve_cname = self._make_mock_resolve_cname()
         res = greendns.getaddrinfo('host.example.com', 0,
                                    0, 0, 0, socket.AI_CANONNAME)
-        assert_equal(res[0][3], 'cname.example.com')
+        assert res[0][3] == 'cname.example.com'
 
     def test_host_none(self):
         res = greendns.getaddrinfo(None, 80)
@@ -637,7 +629,7 @@ class TestGetaddrinfo(tests.LimitedTestCase):
         res = greendns.getaddrinfo('example.com', 80,
                                    socket.AF_INET6, 0, 0, socket.AI_V4MAPPED)
         addrs = set(ai[-1] for ai in res)
-        assert_equal(addrs, set([('::ffff:1.2.3.4', 80, 0, 0)]))
+        assert addrs == set([('::ffff:1.2.3.4', 80, 0, 0)])
 
     def test_v4mapped_all(self):
         greendns.resolve = _make_mock_resolve()
@@ -666,7 +658,7 @@ class TestGetaddrinfo(tests.LimitedTestCase):
         greendns.resolve = _make_mock_resolve()
         greendns.resolve.add('example.com', '1.2.3.4')
         ai = greendns.getaddrinfo('example.com', None)
-        assert_equal(ai[0][-1][1], 0)
+        assert ai[0][-1][1] == 0
 
     def test_AI_ADDRCONFIG(self):
         # When the users sets AI_ADDRCONFIG but only has an IPv4
@@ -688,7 +680,7 @@ class TestGetaddrinfo(tests.LimitedTestCase):
         greendns.resolve.add('localhost', '::1')
         res = greendns.getaddrinfo('localhost', None,
                                    0, 0, 0, socket.AI_ADDRCONFIG)
-        assert_equal(res, [(socket.AF_INET, 1, 0, '', ('127.0.0.1', 0))])
+        assert res == [(socket.AF_INET, 1, 0, '', ('127.0.0.1', 0))]
 
     def test_AI_ADDRCONFIG_noaddr(self):
         # If AI_ADDRCONFIG is used but there is no address we need to
@@ -701,7 +693,7 @@ class TestGetaddrinfo(tests.LimitedTestCase):
         try:
             greendns.getaddrinfo('::1', None, 0, 0, 0, socket.AI_ADDRCONFIG)
         except socket.error as e:
-            assert_equal(e.errno, socket.EAI_ADDRFAMILY)
+            assert e.errno == socket.EAI_ADDRFAMILY
 
 
 class TestIsIpAddr(tests.LimitedTestCase):
@@ -747,11 +739,11 @@ class TestGethostbyname(tests.LimitedTestCase):
         greendns.resolve = self._old_resolve
 
     def test_ipaddr(self):
-        assert_equal(greendns.gethostbyname('1.2.3.4'), '1.2.3.4')
+        assert greendns.gethostbyname('1.2.3.4') == '1.2.3.4'
 
     def test_name(self):
         greendns.resolve.add('host.example.com', '1.2.3.4')
-        assert_equal(greendns.gethostbyname('host.example.com'), '1.2.3.4')
+        assert greendns.gethostbyname('host.example.com') == '1.2.3.4'
 
 
 class TestGetaliases(tests.LimitedTestCase):
@@ -770,7 +762,7 @@ class TestGetaliases(tests.LimitedTestCase):
         greendns.resolver = self._old_resolver
 
     def test_getaliases(self):
-        assert_equal(greendns.getaliases('host.example.com'), ['cname.example.com'])
+        assert greendns.getaliases('host.example.com') == ['cname.example.com']
 
 
 class TestGethostbyname_ex(tests.LimitedTestCase):
@@ -797,14 +789,14 @@ class TestGethostbyname_ex(tests.LimitedTestCase):
 
     def test_ipaddr(self):
         res = greendns.gethostbyname_ex('1.2.3.4')
-        assert_equal(res, ('1.2.3.4', [], ['1.2.3.4']))
+        assert res == ('1.2.3.4', [], ['1.2.3.4'])
 
     def test_name(self):
         greendns.resolve.add('host.example.com', '1.2.3.4')
         greendns.getaliases = self._make_mock_getaliases()
         greendns.getaliases.aliases = []
         res = greendns.gethostbyname_ex('host.example.com')
-        assert_equal(res, ('host.example.com', [], ['1.2.3.4']))
+        assert res == ('host.example.com', [], ['1.2.3.4'])
 
     def test_multiple_addrs(self):
         greendns.resolve.add('host.example.com', '1.2.3.4')
@@ -812,7 +804,7 @@ class TestGethostbyname_ex(tests.LimitedTestCase):
         greendns.getaliases = self._make_mock_getaliases()
         greendns.getaliases.aliases = []
         res = greendns.gethostbyname_ex('host.example.com')
-        assert_equal(res, ('host.example.com', [], ['1.2.3.4', '1.2.3.5']))
+        assert res == ('host.example.com', [], ['1.2.3.4', '1.2.3.5'])
 
 
 def test_reverse_name():
@@ -845,15 +837,15 @@ def test_hosts_priority():
 
     # Default behavior
     rrns = greendns.resolve(name, _proxy=rp).rrset[0]
-    assert_equal(rrns.address, addr_from_ns)
+    assert rrns.address == addr_from_ns
 
     # Hosts result must shadow that from nameservers
     hr.hosts.write(b'1.2.3.4 example.com\ndead:beef::1 example.com\n')
     hr.hosts.flush()
     hr._load()
     rrs4 = greendns.resolve(name, family=socket.AF_INET, _proxy=rp).rrset
-    assert_equal(len(rrs4), 1)
-    assert_equal(rrs4[0].address, '1.2.3.4')
+    assert len(rrs4) == 1
+    assert rrs4[0].address == '1.2.3.4', rrs4[0].address
     rrs6 = greendns.resolve(name, family=socket.AF_INET6, _proxy=rp).rrset
-    assert_equal(len(rrs6), 1)
-    assert_equal(rrs6[0].address, 'dead:beef::1')
+    assert len(rrs6) == 1
+    assert rrs6[0].address == 'dead:beef::1', rrs6[0].address
