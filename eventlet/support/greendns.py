@@ -158,7 +158,7 @@ class HostsResolver(object):
 
     LINES_RE = re.compile(r"""
         \s*  # Leading space
-        ([^\r\n#]+?)  # The actual match, non-greedy so as not to include trailing space
+        ([^\r\n#]*?)  # The actual match, non-greedy so as not to include trailing space
         \s*  # Trailing space
         (?:[#][^\r\n]+)?  # Comments
         (?:$|[\r\n]+)  # EOF or newline
@@ -196,7 +196,7 @@ class HostsResolver(object):
 
         udata = fdata.decode(errors='ignore')
 
-        return self.LINES_RE.findall(udata)
+        return six.moves.filter(None, self.LINES_RE.findall(udata))
 
     def _load(self):
         """Load hosts file
