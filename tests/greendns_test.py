@@ -10,7 +10,14 @@ from eventlet.support import greendns
 from eventlet.support.greendns import dns
 import tests
 import tests.mock
-from nose.tools import assert_equal
+
+
+# We don't use nose.tools.assert_equal() because the -d flag makes up for any
+# convenience built into assert_equal(). But for debugging, it's useful to
+# display the mismatched values.
+def assert_equal(left, right):
+    if left != right:
+        raise AssertionError("{!r} != {!r}".format(left, right))
 
 
 def _make_host_resolver():
