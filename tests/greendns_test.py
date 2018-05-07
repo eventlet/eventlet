@@ -35,31 +35,37 @@ class TestHostsResolver(tests.LimitedTestCase):
         hr = _make_host_resolver()
         hr.hosts.write(b'line0\n')
         hr.hosts.flush()
-        assert hr._readlines() == ['line0']
+        assert list(hr._readlines()) == ['line0']
         hr._last_stat = 0
         hr.hosts.write(b'line1\n')
         hr.hosts.flush()
-        assert hr._readlines() == ['line0', 'line1']
+        assert list(hr._readlines()) == ['line0', 'line1']
         # Test reading of varied newline styles
         hr._last_stat = 0
         hr.hosts.seek(0)
         hr.hosts.truncate()
         hr.hosts.write(b'\naa\r\nbb\r  cc  \n\n\tdd ee')
         hr.hosts.flush()
-        assert hr._readlines() == ['aa', 'bb', 'cc', 'dd ee']
+        assert list(hr._readlines()) == ['aa', 'bb', 'cc', 'dd ee']
         # Test comments, including inline comments
         hr._last_stat = 0
         hr.hosts.seek(0)
         hr.hosts.truncate()
-        hr.hosts.write(b' line1\n#comment\nline2 # inline comment\n')
+        hr.hosts.write(b'''\
+# First couple lines
+# are comments.
+line1
+#comment
+line2 # inline comment
+''')
         hr.hosts.flush()
-        assert hr._readlines() == ['line1', 'line2']
+        assert list(hr._readlines()) == ['line1', 'line2']
 
     def test_readlines_missing_file(self):
         hr = _make_host_resolver()
         hr.hosts.close()
         hr._last_stat = 0
-        assert hr._readlines() == []
+        assert list(hr._readlines()) == []
 
     def test_load_no_contents(self):
         hr = _make_host_resolver()

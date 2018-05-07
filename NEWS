@@ -1,3 +1,9 @@
+0.23.0
+======
+* green.threading: current_thread() did not see new monkey-patched threads; Thanks to Jake Tesler
+* tpool: exception in tpool-ed call leaked memory via backtrace
+* wsgi: latin-1 encoding dance for environ[PATH_INFO]
+
 0.22.1
 ======
 * Fixed issue installing excess enum34 on Python3.4+ (rebuild with updated setuptools)
