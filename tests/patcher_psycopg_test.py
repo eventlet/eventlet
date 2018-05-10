@@ -1,6 +1,6 @@
 import os
 
-from eventlet.support import six
+import six
 
 from tests import patcher_test, skip_unless
 from tests import get_database_auth

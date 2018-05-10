@@ -6,7 +6,8 @@ from eventlet import hubs
 from eventlet import support
 from eventlet import timeout
 from eventlet.hubs import timer
-from eventlet.support import greenlets as greenlet, six
+from eventlet.support import greenlets as greenlet
+import six
 import warnings
 
 __all__ = ['getcurrent', 'sleep', 'spawn', 'spawn_n',

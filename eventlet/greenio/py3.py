@@ -19,7 +19,8 @@ from eventlet.greenio.base import (
     SOCKET_BLOCKING,
 )
 from eventlet.hubs import notify_close, notify_opened, IOClosed, trampoline
-from eventlet.support import get_errno, six
+from eventlet.support import get_errno
+import six
 
 __all__ = ['_fileobject', 'GreenPipe']
 

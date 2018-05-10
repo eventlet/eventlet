@@ -20,7 +20,9 @@ else:
         arm_alarm = alarm_signal
 
 from eventlet.hubs import timer, IOClosed
-from eventlet.support import greenlets as greenlet, clear_sys_exc_info, monotonic, six
+from eventlet.support import greenlets as greenlet, clear_sys_exc_info
+import monotonic
+import six
 
 g_prevent_multiple_readers = True
 

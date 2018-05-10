@@ -2,7 +2,7 @@ import gc
 import timeit
 import random
 
-from eventlet.support import six
+import six
 
 
 def measure_best(repeat, iters,

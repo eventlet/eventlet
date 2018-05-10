@@ -25,7 +25,7 @@ connection makefile() file objects - ExplodingSocketFile <-- these raise
 import socket
 
 import eventlet
-from eventlet.support import six
+import six
 import tests.wsgi_test
 
 

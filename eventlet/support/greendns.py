@@ -42,7 +42,7 @@ from eventlet.green import _socket_nodns
 from eventlet.green import os
 from eventlet.green import time
 from eventlet.green import select
-from eventlet.support import six
+import six
 
 
 def import_patched(module_name):
@@ -50,8 +50,6 @@ def import_patched(module_name):
     # regular evenlet.green.socket imports *this* module and if we imported
     # it back we'd end with an import cycle (socket -> greendns -> socket).
     # We break this import cycle by providing a restricted socket module.
-    # if (module_name + '.').startswith('dns.'):
-    #     module_name = 'eventlet.support.' + module_name
     modules = {
         'select': select,
         'time': time,
@@ -61,7 +59,6 @@ def import_patched(module_name):
     return patcher.import_patched(module_name, **modules)
 
 
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 dns = import_patched('dns')
 for pkg in dns.__all__:
     setattr(dns, pkg, import_patched('dns.' + pkg))
@@ -72,7 +69,6 @@ for pkg in dns.rdtypes.IN.__all__:
 for pkg in dns.rdtypes.ANY.__all__:
     setattr(dns.rdtypes.ANY, pkg, import_patched('dns.rdtypes.ANY.' + pkg))
 del import_patched
-sys.path.pop(0)
 
 
 socket = _socket_nodns

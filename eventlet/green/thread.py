@@ -1,6 +1,7 @@
 """Implements the standard thread module, using greenthreads."""
-from eventlet.support.six.moves import _thread as __thread
-from eventlet.support import greenlets as greenlet, six
+from six.moves import _thread as __thread
+import six
+from eventlet.support import greenlets as greenlet
 from eventlet import greenthread
 from eventlet.semaphore import Semaphore as LockType
 import sys

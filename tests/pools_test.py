@@ -3,7 +3,7 @@ from unittest import TestCase, main
 import eventlet
 from eventlet import Queue
 from eventlet import pools
-from eventlet.support import six
+import six
 
 
 class IntPool(pools.Pool):

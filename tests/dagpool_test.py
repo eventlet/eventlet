@@ -8,7 +8,7 @@
 from nose.tools import *
 import eventlet
 from eventlet.dagpool import DAGPool, Collision, PropagateError
-from eventlet.support import six
+import six
 from contextlib import contextmanager
 import itertools
 

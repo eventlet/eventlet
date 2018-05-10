@@ -4,7 +4,7 @@ import sys
 import traceback
 
 from eventlet import db_pool
-from eventlet.support import six
+import six
 import eventlet
 import eventlet.tpool
 import tests

@@ -7,7 +7,7 @@ from eventlet import event
 from eventlet import websocket
 from eventlet.green import httplib
 from eventlet.green import socket
-from eventlet.support import six
+import six
 
 import tests.wsgi_test
 

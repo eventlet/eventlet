@@ -3,7 +3,7 @@ import traceback
 import eventlet
 from eventlet import queue
 from eventlet.support import greenlets as greenlet
-from eventlet.support import six
+import six
 
 __all__ = ['GreenPool', 'GreenPile']
 

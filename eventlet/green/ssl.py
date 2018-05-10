@@ -13,7 +13,8 @@ from eventlet.greenio import (
     set_nonblocking, GreenSocket, CONNECT_ERR, CONNECT_SUCCESS,
 )
 from eventlet.hubs import trampoline, IOClosed
-from eventlet.support import get_errno, PY33, six
+from eventlet.support import get_errno, PY33
+import six
 orig_socket = __import__('socket')
 socket = orig_socket.socket
 if sys.version_info >= (2, 7):

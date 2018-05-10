@@ -1,6 +1,7 @@
 import traceback
 
-from eventlet.support import greenlets as greenlet, six
+from eventlet.support import greenlets as greenlet
+import six
 from eventlet.hubs import get_hub
 
 """ If true, captures a stack trace for each timer when constructed.  This is
