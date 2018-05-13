@@ -849,3 +849,8 @@ def test_hosts_priority():
     rrs6 = greendns.resolve(name, family=socket.AF_INET6, _proxy=rp).rrset
     assert len(rrs6) == 1
     assert rrs6[0].address == 'dead:beef::1', rrs6[0].address
+
+
+def test_import_rdtypes_then_eventlet():
+    # https://github.com/eventlet/eventlet/issues/479
+    tests.run_isolated('greendns_import_rdtypes_then_eventlet.py')
