@@ -225,15 +225,23 @@ class BaseHub(object):
 
         fileno = listener.fileno
         evtype = listener.evtype
-        self.listeners[evtype].pop(fileno, None)
-        # migrate a secondary listener to be the primary listener
-        if fileno in self.secondaries[evtype]:
-            sec = self.secondaries[evtype].get(fileno, None)
-            if not sec:
-                return
-            self.listeners[evtype][fileno] = sec.pop(0)
-            if not sec:
-                del self.secondaries[evtype][fileno]
+        if listener is self.listeners[evtype].get(fileno):
+            self.listeners[evtype].pop(fileno, None)
+            # migrate a secondary listener to be the primary listener
+            if fileno in self.secondaries[evtype]:
+                sec = self.secondaries[evtype].get(fileno, None)
+                if not sec:
+                    return
+                self.listeners[evtype][fileno] = sec.pop(0)
+                if not sec:
+                    del self.secondaries[evtype][fileno]
+        else:
+            sec = [l for l in self.secondaries[evtype].get(fileno, [])
+                   if l is not listener]
+            if sec:
+                self.secondaries[evtype][fileno] = sec
+            else:
+                self.secondaries[evtype].pop(fileno, None)
 
     def mark_as_reopened(self, fileno):
         """ If a file descriptor is returned by the OS as the result of some
