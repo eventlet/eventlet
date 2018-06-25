@@ -407,9 +407,9 @@ print('ok')
         # See https://github.com/eventlet/eventlet/issues/466
 
         threads = [threading.Thread(target=eventlet.hubs.get_default_hub) for i in range(10)]
-        
+
         for thread in threads:
             thread.start()
-            
+
         for thread in threads:
             thread.join()
