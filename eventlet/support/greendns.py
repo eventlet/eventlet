@@ -798,7 +798,7 @@ def tcp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
         _net_write(s, tcpmsg, expiration)
         ldata = _net_read(s, 2, expiration)
         (l,) = struct.unpack("!H", ldata)
-        wire = _net_read(s, l, expiration)
+        wire = bytes(_net_read(s, l, expiration))
     finally:
         s.close()
     r = dns.message.from_wire(wire, keyring=q.keyring, request_mac=q.mac)

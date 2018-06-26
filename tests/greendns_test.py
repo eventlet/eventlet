@@ -5,6 +5,9 @@ import os
 import socket
 import tempfile
 import time
+import dns.resolver
+from dns.resolver import query, Answer, Resolver
+import dns.resolver
 
 from eventlet.support import greendns
 from eventlet.support.greendns import dns
@@ -854,3 +857,28 @@ def test_hosts_priority():
 def test_import_rdtypes_then_eventlet():
     # https://github.com/eventlet/eventlet/issues/479
     tests.run_isolated('greendns_import_rdtypes_then_eventlet.py')
+
+
+def test_raise_dns_tcp():
+    # https://github.com/eventlet/eventlet/issues/499
+    try:
+        dns.resolver.query('host.example.com', 'a', tcp=True)
+        assert False, "Should have arisen NXDOMAIN or NoNameservers"
+    except (dns.resolver.NXDOMAIN, dns.resolver.NoNameservers):
+        pass
+
+
+def test_noraise_dns_tcp():
+    # https://github.com/eventlet/eventlet/issues/499
+    resolver = Resolver()
+    resolver.nameservers = ["127.0.0.1"]
+    try:
+        tiny_server = tests.TinyDNSServerTCP("192.168.1.1")
+        tiny_server.start()
+        resolver.nameserver_ports["127.0.0.1"] = tiny_server.get_port()
+        response = resolver.query('host.example.com', 'a', tcp=True)
+
+        assert isinstance(response, Answer)
+    finally:
+        tiny_server.stop()
+        pass
