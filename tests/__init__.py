@@ -26,7 +26,7 @@ import eventlet
 from eventlet import tpool
 import six
 import socket
-from threading import Thread, Event
+from threading import Thread
 import struct
 
 
@@ -411,86 +411,77 @@ def test_run_python_pythonpath_extend():
     assert b'/dirb\n' in output
 
 
-class TinyDNSServerTCP:
-    """
-    DNS server with a very limited set of replies. Sets same
-    ID, same question, same domain in the response and the rest
-    is fixed
-    """
-    def __init__(self, always_ip):
-        self.always_ip = always_ip
-        self.port = 0
-        self.data = None
-        self.domain = None
-        self.domain_length = 0
-        self.socket = None
-        self.event = Event()
-        self.t = Thread(target=self.serve)
+@contextlib.contextmanager
+def dns_tcp_server(ip_to_give, request_count=1):
+    state = [0]  # request count storage writable by thread
+    host = "localhost"
+    death_pill = b"DEATH_PILL"
 
-    def init_domain(self):
-        self.data = bytearray(self.data)
-        self.domain = b''
-
-        kind = (self.data[4] >> 3) & 15  # Opcode bits
+    def extract_domain(data):
+        domain = b''
+        kind = (data[4] >> 3) & 15  # Opcode bits
         if kind == 0:  # Standard query
             ini = 14
-            length = self.data[ini]
+            length = data[ini]
             while length != 0:
-                self.domain += self.data[ini + 1:ini + length + 1] + b'.'
+                domain += data[ini + 1:ini + length + 1] + b'.'
                 ini += length + 1
-                length = self.data[ini]
-            self.domain_length = len(self.domain)
+                length = data[ini]
+        return domain
 
-    def answer(self):
+    def answer(data, domain):
+        domain_length = len(domain)
         packet = b''
-        if self.domain:
-            packet += self.data[2:4] + b'\x81\x80'
-            packet += self.data[6:8] + self.data[6:8] + b'\x00\x00\x00\x00'  # Questions and answers counts
-            packet += self.data[14: 14 + self.domain_length + 1]  # Original domain name question
-            packet += b'\x00\x01\x00\x01' # type and class
-            packet += b'\xc0\x0c\x00\x01'  # TTL
-            packet += b'\x00\x01'  # resource data length -> 4 bytes
-            packet += bytearray(int(x) for x in self.always_ip.split("."))
-            packet += b'\x00\x04\xac\xd9\x10$'
+        if domain:
+            # If an ip was given we return it in the answer
+            if ip_to_give:
+                packet += data[2:4] + b'\x81\x80'
+                packet += data[6:8] + data[6:8] + b'\x00\x00\x00\x00'  # Questions and answers counts
+                packet += data[14: 14 + domain_length + 1]  # Original domain name question
+                packet += b'\x00\x01\x00\x01' # Type and class
+                packet += b'\xc0\x0c\x00\x01'  # TTL
+                packet += b'\x00\x01'
+                packet += b'\x00\x00\x00\x08'
+                packet += b'\x00\x04' # Resource data length -> 4 bytes
+                packet += bytearray(int(x) for x in ip_to_give.split("."))
+            else:
+                packet += data[2:4] + b'\x85\x80'
+                packet += data[6:8] + b'\x00\x00' + b'\x00\x00\x00\x00'  # Questions and answers counts
+                packet += data[14: 14 + domain_length + 1]  # Original domain name question
+                packet += b'\x00\x01\x00\x01'  # Type and class
 
         sz = struct.pack('>H', len(packet))
         return sz + packet
 
-    def serve(self):
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.socket.bind(("localhost", 0))
-        self.socket.listen(5)
-        self.port = self.socket.getsockname()[1]
-        self.event.set()
-
-        try:
-            while 1:
-                client_sock, address = self.socket.accept()
-                self.data = client_sock.recv(1024)
-                if bytearray(self.data) == b"DEATH_PILL":
-                    client_sock.close()
-                    break
-
-                self.init_domain()
-                client_sock.send(self.answer())
+    def serve(server_socket):  # thread target
+        client_sock, address = server_socket.accept()
+        state[0] += 1
+        if state[0] <= request_count:
+            data = bytearray(client_sock.recv(1024))
+            if data == death_pill:
                 client_sock.close()
-        except socket.error:
-            pass
-        finally:
-            self.socket.close()
+                return
 
-    def start(self):
-        self.t.start()
+            domain = extract_domain(data)
+            client_sock.sendall(answer(data, domain))
+        client_sock.close()
 
-    def get_port(self):
-        self.event.wait(5)
-        return self.port
+    # Server starts
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server_socket.bind((host, 0))
+    server_socket.listen(5)
+    server_addr = server_socket.getsockname()
 
-    def stop(self):
-        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server_address = ('localhost', self.port)
-        client.connect(server_address)
-        client.send(b"DEATH_PILL")
-        client.close()
-        self.t.join(timeout=4)
+    thread = Thread(target=serve, args=(server_socket, ))
+    thread.start()
+
+    yield server_addr
+
+    # Stop the server
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.connect(server_addr)
+    client.send(death_pill)
+    client.close()
+    thread.join()
+    server_socket.close()

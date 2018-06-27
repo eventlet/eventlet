@@ -5,9 +5,7 @@ import os
 import socket
 import tempfile
 import time
-import dns.resolver
-from dns.resolver import query, Answer, Resolver
-import dns.resolver
+from dns.resolver import NoAnswer, Answer, Resolver
 
 from eventlet.support import greendns
 from eventlet.support.greendns import dns
@@ -810,6 +808,31 @@ class TestGethostbyname_ex(tests.LimitedTestCase):
         assert res == ('host.example.com', [], ['1.2.3.4', '1.2.3.5'])
 
 
+class TinyDNSTests(tests.LimitedTestCase):
+
+    def test_raise_dns_tcp(self):
+        # https://github.com/eventlet/eventlet/issues/499
+        # None means we don't want the server to find the IP
+        with tests.dns_tcp_server(None) as dnsaddr:
+            resolver = Resolver()
+            resolver.nameservers = [dnsaddr[0]]
+            resolver.nameserver_ports[dnsaddr[0]] = dnsaddr[1]
+
+            with self.assertRaises(NoAnswer):
+                resolver.query('host.example.com', 'a', tcp=True)
+
+    def test_noraise_dns_tcp(self):
+        # https://github.com/eventlet/eventlet/issues/499
+        expected_ip = "192.168.1.1"
+        with tests.dns_tcp_server(expected_ip) as dnsaddr:
+            resolver = Resolver()
+            resolver.nameservers = [dnsaddr[0]]
+            resolver.nameserver_ports[dnsaddr[0]] = dnsaddr[1]
+            response = resolver.query('host.example.com', 'a', tcp=True)
+            self.assertIsInstance(response, Answer)
+            self.assertEqual(response.rrset.items[0].address, expected_ip)
+
+
 def test_reverse_name():
     tests.run_isolated('greendns_from_address_203.py')
 
@@ -857,28 +880,3 @@ def test_hosts_priority():
 def test_import_rdtypes_then_eventlet():
     # https://github.com/eventlet/eventlet/issues/479
     tests.run_isolated('greendns_import_rdtypes_then_eventlet.py')
-
-
-def test_raise_dns_tcp():
-    # https://github.com/eventlet/eventlet/issues/499
-    try:
-        dns.resolver.query('host.example.com', 'a', tcp=True)
-        assert False, "Should have arisen NXDOMAIN or NoNameservers"
-    except (dns.resolver.NXDOMAIN, dns.resolver.NoNameservers):
-        pass
-
-
-def test_noraise_dns_tcp():
-    # https://github.com/eventlet/eventlet/issues/499
-    resolver = Resolver()
-    resolver.nameservers = ["127.0.0.1"]
-    try:
-        tiny_server = tests.TinyDNSServerTCP("192.168.1.1")
-        tiny_server.start()
-        resolver.nameserver_ports["127.0.0.1"] = tiny_server.get_port()
-        response = resolver.query('host.example.com', 'a', tcp=True)
-
-        assert isinstance(response, Answer)
-    finally:
-        tiny_server.stop()
-        pass
