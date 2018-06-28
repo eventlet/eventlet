@@ -5,6 +5,7 @@ import os
 import socket
 import tempfile
 import time
+from dns.resolver import NoAnswer, Answer, Resolver
 
 from eventlet.support import greendns
 from eventlet.support.greendns import dns
@@ -805,6 +806,31 @@ class TestGethostbyname_ex(tests.LimitedTestCase):
         greendns.getaliases.aliases = []
         res = greendns.gethostbyname_ex('host.example.com')
         assert res == ('host.example.com', [], ['1.2.3.4', '1.2.3.5'])
+
+
+class TinyDNSTests(tests.LimitedTestCase):
+
+    def test_raise_dns_tcp(self):
+        # https://github.com/eventlet/eventlet/issues/499
+        # None means we don't want the server to find the IP
+        with tests.dns_tcp_server(None) as dnsaddr:
+            resolver = Resolver()
+            resolver.nameservers = [dnsaddr[0]]
+            resolver.nameserver_ports[dnsaddr[0]] = dnsaddr[1]
+
+            with self.assertRaises(NoAnswer):
+                resolver.query('host.example.com', 'a', tcp=True)
+
+    def test_noraise_dns_tcp(self):
+        # https://github.com/eventlet/eventlet/issues/499
+        expected_ip = "192.168.1.1"
+        with tests.dns_tcp_server(expected_ip) as dnsaddr:
+            resolver = Resolver()
+            resolver.nameservers = [dnsaddr[0]]
+            resolver.nameserver_ports[dnsaddr[0]] = dnsaddr[1]
+            response = resolver.query('host.example.com', 'a', tcp=True)
+            self.assertIsInstance(response, Answer)
+            self.assertEqual(response.rrset.items[0].address, expected_ip)
 
 
 def test_reverse_name():
