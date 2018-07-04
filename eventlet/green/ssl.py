@@ -366,7 +366,7 @@ SSLSocket = GreenSSLSocket
 
 
 def wrap_socket(sock, *a, **kw):
-    return GreenSSLSocket(sock, *a, **kw)
+    return GreenSSLSocket.wrap_socket(sock, *a, **kw)
 
 
 if hasattr(__ssl, 'sslwrap_simple'):
