@@ -24,6 +24,7 @@ __patched__ = [
     'create_default_context', '_create_default_https_context']
 
 _original_sslsocket = __ssl.SSLSocket
+_original_wrap_socket = __ssl.wrap_socket
 
 
 class GreenSSLSocket(_original_sslsocket):
@@ -57,11 +58,41 @@ class GreenSSLSocket(_original_sslsocket):
             # this assignment
             self._timeout = sock.gettimeout()
 
-        # nonblocking socket handshaking on connect got disabled so let's pretend it's disabled
-        # even when it's on
-        super(GreenSSLSocket, self).__init__(
-            sock.fd, keyfile, certfile, server_side, cert_reqs, ssl_version,
-            ca_certs, do_handshake_on_connect and six.PY2, *args, **kw)
+        if sys.version_info >= (3, 7):
+            # Monkey-patch the sslsocket so our modified self gets
+            # injected into its _create method.
+            def fake_new(self, cls, *args, **kwargs):
+                return self
+
+            orig_new = _original_sslsocket.__new__
+            try:
+                _original_sslsocket.__new__ = fake_new.__get__(self, GreenSSLSocket)
+
+                self = _original_wrap_socket(
+                    sock=sock.fd,
+                    keyfile=keyfile,
+                    certfile=certfile,
+                    server_side=server_side,
+                    cert_reqs=cert_reqs,
+                    ssl_version=ssl_version,
+                    ca_certs=ca_certs,
+                    do_handshake_on_connect=do_handshake_on_connect and six.PY2,
+                    *args, **kw
+                )
+                self.keyfile = keyfile
+                self.certfile = certfile
+                self.cert_reqs = cert_reqs
+                self.ssl_version = ssl_version
+                self.ca_certs = ca_certs
+            finally:
+                # Unpatch
+                _original_sslsocket.__new__ = orig_new
+        else:
+            # nonblocking socket handshaking on connect got disabled so let's pretend it's disabled
+            # even when it's on
+            super(GreenSSLSocket, self).__init__(
+                sock.fd, keyfile, certfile, server_side, cert_reqs, ssl_version,
+                ca_certs, do_handshake_on_connect and six.PY2, *args, **kw)
 
         # the superclass initializer trashes the methods so we remove
         # the local-object versions of them and let the actual class
@@ -323,7 +354,10 @@ class GreenSSLSocket(_original_sslsocket):
         except NameError:
             self._sslobj = sslobj
         else:
-            self._sslobj = SSLObject(sslobj, owner=self)
+            if sys.version_info < (3, 7):
+                self._sslobj = SSLObject(sslobj, owner=self)
+            else:
+                self._sslobj = sslobj
 
         if self.do_handshake_on_connect:
             self.do_handshake()
