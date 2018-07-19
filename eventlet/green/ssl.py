@@ -76,7 +76,6 @@ class GreenSSLSocket(_original_sslsocket):
                     cert_reqs=cert_reqs,
                     ssl_version=ssl_version,
                     ca_certs=ca_certs,
-                    do_handshake_on_connect=do_handshake_on_connect and six.PY2,
                     *args, **kw
                 )
                 self.keyfile = keyfile
