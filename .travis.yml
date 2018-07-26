@@ -22,9 +22,9 @@ matrix:
     - {python: 3.6, env: TOXENV=py36-poll}
     - {python: 3.6, env: TOXENV=py36-selects}
 
-    - {python: 3.7-dev, env: TOXENV=py37-epolls}
-    - {python: 3.7-dev, env: TOXENV=py37-poll}
-    - {python: 3.7-dev, env: TOXENV=py37-selects}
+    - {python: 3.7, env: TOXENV=py37-epolls}
+    - {python: 3.7, env: TOXENV=py37-poll}
+    - {python: 3.7, env: TOXENV=py37-selects}
 
     - {python: pypy, env: TOXENV=pypy-epolls}
     - {python: pypy, env: TOXENV=pypy-poll}
