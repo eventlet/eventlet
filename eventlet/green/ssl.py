@@ -76,6 +76,7 @@ class GreenSSLSocket(_original_sslsocket):
                     cert_reqs=cert_reqs,
                     ssl_version=ssl_version,
                     ca_certs=ca_certs,
+                    do_handshake_on_connect=False,
                     *args, **kw
                 )
                 self.keyfile = keyfile
