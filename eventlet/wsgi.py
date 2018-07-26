@@ -62,6 +62,8 @@ def addr_to_host_port(addr):
 def encode_dance(s):
     if not isinstance(s, bytes):
         s = s.encode('utf-8', 'replace')
+    if six.PY2:
+        return s
     return s.decode('latin1')
 
 
