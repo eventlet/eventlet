@@ -690,7 +690,12 @@ def udp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
         if source is not None:
             source = (source, source_port)
     elif af == dns.inet.AF_INET6:
-        destination = (where, port, 0, 0)
+        # Purge any stray zeroes in source address.  When doing the tuple comparison
+        # below, we need to always ensure both our target and where we receive replies
+        # from are compared with all zeroes removed so that we don't erroneously fail.
+        #   e.g. ('00::1', 53, 0, 0) != ('::1', 53, 0, 0)
+        where_trunc = dns.ipv6.inet_ntoa(dns.ipv6.inet_aton(where))
+        destination = (where_trunc, port, 0, 0)
         if source is not None:
             source = (source, source_port, 0, 0)
 
@@ -719,6 +724,11 @@ def udp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
                     raise dns.exception.Timeout
                 eventlet.sleep(0.01)
                 continue
+            if dns.inet.af_for_address(from_address[0]) == dns.inet.AF_INET6:
+                # Purge all possible zeroes for ipv6 to match above logic
+                addr = from_address[0]
+                addr = dns.ipv6.inet_ntoa(dns.ipv6.inet_aton(addr))
+                from_address = (addr, from_address[1], from_address[2], from_address[3])
             if from_address == destination:
                 break
             if not ignore_unexpected:
