@@ -715,14 +715,23 @@ def udp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
                     raise dns.exception.Timeout
                 eventlet.sleep(0.01)
                 continue
+
+        tried = False
         while True:
+            # If we've tried to receive at least once, check to see if our
+            # timer expired
+            if tried and (expiration - time.time() <= 0.0):
+                raise dns.exception.Timeout
+            # Sleep if we are retrying the operation due to a bad source
+            # address or a socket timeout.
+            if tried:
+                eventlet.sleep(0.01)
+            tried = True
+
             try:
                 (wire, from_address) = s.recvfrom(65535)
             except socket.timeout:
                 # Q: Do we also need to catch coro.CoroutineSocketWake and pass?
-                if expiration - time.time() <= 0.0:
-                    raise dns.exception.Timeout
-                eventlet.sleep(0.01)
                 continue
             if dns.inet.af_for_address(from_address[0]) == dns.inet.AF_INET6:
                 # Purge all possible zeroes for ipv6 to match above logic
