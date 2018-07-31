@@ -223,6 +223,47 @@ def _make_mock_base_resolver():
     return Resolver
 
 
+class TestUdp(tests.LimitedTestCase):
+
+    def setUp(self):
+        # Store this so we can reuse it for each test
+        self.query = greendns.dns.message.Message()
+        self.query.flags = greendns.dns.flags.QR
+        self.query_wire = self.query.to_wire()
+        super(TestUdp, self).setUp()
+
+    def test_udp_ipv6(self):
+        with tests.mock.patch('eventlet.support.greendns.socket.socket.recvfrom',
+                              return_value=(self.query_wire,
+                                            ('::1', 53, 0, 0))):
+            greendns.udp(self.query, '::1')
+
+    def test_udp_ipv6_timeout(self):
+        with tests.mock.patch('eventlet.support.greendns.socket.socket.recvfrom',
+                              side_effect=socket.timeout):
+            with tests.assert_raises(dns.exception.Timeout):
+                greendns.udp(self.query, '::1', timeout=0.1)
+
+    def test_udp_ipv6_addr_zeroes(self):
+        with tests.mock.patch('eventlet.support.greendns.socket.socket.recvfrom',
+                              return_value=(self.query_wire,
+                                            ('0:00:0000::1', 53, 0, 0))):
+            greendns.udp(self.query, '::1')
+
+    def test_udp_ipv6_wrong_addr_ignore(self):
+        with tests.mock.patch('eventlet.support.greendns.socket.socket.recvfrom',
+                              side_effect=socket.timeout):
+            with tests.assert_raises(dns.exception.Timeout):
+                greendns.udp(self.query, '::1', timeout=0.1, ignore_unexpected=True)
+
+    def test_udp_ipv6_wrong_addr(self):
+        with tests.mock.patch('eventlet.support.greendns.socket.socket.recvfrom',
+                              return_value=(self.query_wire,
+                                            ('ffff:0000::1', 53, 0, 0))):
+            with tests.assert_raises(dns.query.UnexpectedSource):
+                greendns.udp(self.query, '::1')
+
+
 class TestProxyResolver(tests.LimitedTestCase):
 
     def test_clear(self):
