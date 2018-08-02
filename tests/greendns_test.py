@@ -205,6 +205,7 @@ def _make_mock_base_resolver():
         aliases = ['cname.example.com']
         raises = None
         rr = RR()
+        rr6 = RR()
 
         def query(self, *args, **kwargs):
             self.args = args
@@ -214,7 +215,10 @@ def _make_mock_base_resolver():
             if hasattr(self, 'rrset'):
                 rrset = self.rrset
             else:
-                rrset = [self.rr]
+                if self.rr6 and self.args[1] == dns.rdatatype.AAAA:
+                    rrset = [self.rr6]
+                else:
+                    rrset = [self.rr]
             return greendns.HostsAnswer('foo', 1, 1, rrset, False)
 
         def getaliases(self, *args, **kwargs):
@@ -392,7 +396,7 @@ class TestResolve(tests.LimitedTestCase):
         assert greendns.resolver.args == ('host.example.com', dns.rdatatype.A)
 
     def test_AAAA(self):
-        greendns.resolver.rr.address = 'dead:beef::1'
+        greendns.resolver.rr6.address = 'dead:beef::1'
         ans = greendns.resolve('host.example.com', socket.AF_INET6)
         assert ans[0].address == 'dead:beef::1'
         assert greendns.resolver.args == ('host.example.com', dns.rdatatype.AAAA)
@@ -467,7 +471,8 @@ def _make_mock_resolve():
         def __init__(self):
             self.answers = {}
 
-        def __call__(self, name, family=socket.AF_INET, raises=True):
+        def __call__(self, name, family=socket.AF_INET, raises=True,
+                     _proxy=None, use_network=True):
             qname = dns.name.from_text(name)
             try:
                 rrset = self.answers[name][family]
@@ -916,6 +921,58 @@ def test_hosts_priority():
     rrs6 = greendns.resolve(name, family=socket.AF_INET6, _proxy=rp).rrset
     assert len(rrs6) == 1
     assert rrs6[0].address == 'dead:beef::1', rrs6[0].address
+
+
+def test_hosts_no_network():
+
+    name = 'example.com'
+    addr_from_ns = '1.0.2.0'
+    addr6_from_ns = 'dead:beef::1'
+
+    hr = _make_host_resolver()
+    rp = greendns.ResolverProxy(hosts_resolver=hr, filename=None)
+    base = _make_mock_base_resolver()
+    base.rr.address = addr_from_ns
+    base.rr6.address = addr6_from_ns
+    rp._resolver = base()
+
+    with tests.mock.patch.object(greendns, 'resolver',
+                                 new_callable=tests.mock.PropertyMock(return_value=rp)):
+        res = greendns.getaddrinfo('example.com', 'domain', socket.AF_UNSPEC)
+        # Default behavior
+        addr = (addr_from_ns, 53)
+        tcp = (socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP, addr)
+        udp = (socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP, addr)
+        addr = (addr6_from_ns, 53, 0, 0)
+        tcp6 = (socket.AF_INET6, socket.SOCK_STREAM, socket.IPPROTO_TCP, addr)
+        udp6 = (socket.AF_INET6, socket.SOCK_DGRAM, socket.IPPROTO_UDP, addr)
+        filt_res = [ai[:3] + (ai[4],) for ai in res]
+        assert tcp in filt_res
+        assert udp in filt_res
+        assert tcp6 in filt_res
+        assert udp6 in filt_res
+
+        # Hosts result must shadow that from nameservers
+        hr = _make_host_resolver()
+        hr.hosts.write(b'1.2.3.4 example.com')
+        hr.hosts.flush()
+        hr._load()
+        greendns.resolver._hosts = hr
+
+        res = greendns.getaddrinfo('example.com', 'domain', socket.AF_UNSPEC)
+        filt_res = [ai[:3] + (ai[4],) for ai in res]
+
+        # Make sure that only IPv4 entry from hosts is present.
+        assert tcp not in filt_res
+        assert udp not in filt_res
+        assert tcp6 not in filt_res
+        assert udp6 not in filt_res
+
+        addr = ('1.2.3.4', 53)
+        tcp = (socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP, addr)
+        udp = (socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP, addr)
+        assert tcp in filt_res
+        assert udp in filt_res
 
 
 def test_import_rdtypes_then_eventlet():
