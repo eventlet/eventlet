@@ -318,12 +318,13 @@ class ResolverProxy(object):
 
     def query(self, qname, rdtype=dns.rdatatype.A, rdclass=dns.rdataclass.IN,
               tcp=False, source=None, raise_on_no_answer=True,
-              _hosts_rdtypes=(dns.rdatatype.A, dns.rdatatype.AAAA)):
+              _hosts_rdtypes=(dns.rdatatype.A, dns.rdatatype.AAAA),
+              use_network=True):
         """Query the resolver, using /etc/hosts if enabled.
 
         Behavior:
         1. if hosts is enabled and contains answer, return it now
-        2. query nameservers for qname
+        2. query nameservers for qname if use_network is True
         3. if qname did not contain dots, pretend it was top-level domain,
            query "foobar." and append to previous result
         """
@@ -360,7 +361,7 @@ class ResolverProxy(object):
 
         if (self._hosts and (rdclass == dns.rdataclass.IN) and (rdtype in _hosts_rdtypes)):
             if step(self._hosts.query, qname, rdtype, raise_on_no_answer=False):
-                if (result[0] is not None) or (result[1] is not None):
+                if (result[0] is not None) or (result[1] is not None) or (not use_network):
                     return end()
 
         # Main query
@@ -398,10 +399,12 @@ class ResolverProxy(object):
 resolver = ResolverProxy(hosts_resolver=HostsResolver())
 
 
-def resolve(name, family=socket.AF_INET, raises=True, _proxy=None):
+def resolve(name, family=socket.AF_INET, raises=True, _proxy=None,
+            use_network=True):
     """Resolve a name for a given family using the global resolver proxy.
 
-    This method is called by the global getaddrinfo() function.
+    This method is called by the global getaddrinfo() function. If use_network
+    is False, only resolution via hosts file will be performed.
 
     Return a dns.resolver.Answer instance.  If there is no answer it's
     rrset will be emtpy.
@@ -418,7 +421,8 @@ def resolve(name, family=socket.AF_INET, raises=True, _proxy=None):
         _proxy = resolver
     try:
         try:
-            return _proxy.query(name, rdtype, raise_on_no_answer=raises)
+            return _proxy.query(name, rdtype, raise_on_no_answer=raises,
+                                use_network=use_network)
         except dns.resolver.NXDOMAIN:
             if not raises:
                 return HostsAnswer(dns.name.Name(name),
@@ -469,16 +473,19 @@ def _getaddrinfo_lookup(host, family, flags):
     addrs = []
     if family == socket.AF_UNSPEC:
         err = None
-        for qfamily in [socket.AF_INET6, socket.AF_INET]:
-            try:
-                answer = resolve(host, qfamily, False)
-            except socket.gaierror as e:
-                if e.errno not in (socket.EAI_AGAIN, EAI_NONAME_ERROR.errno, EAI_NODATA_ERROR.errno):
-                    raise
-                err = e
-            else:
-                if answer.rrset:
-                    addrs.extend(rr.address for rr in answer.rrset)
+        for use_network in [False, True]:
+            for qfamily in [socket.AF_INET6, socket.AF_INET]:
+                try:
+                    answer = resolve(host, qfamily, False, use_network=use_network)
+                except socket.gaierror as e:
+                    if e.errno not in (socket.EAI_AGAIN, EAI_NONAME_ERROR.errno, EAI_NODATA_ERROR.errno):
+                        raise
+                    err = e
+                else:
+                    if answer.rrset:
+                        addrs.extend(rr.address for rr in answer.rrset)
+            if addrs:
+                break
         if err is not None and not addrs:
             raise err
     elif family == socket.AF_INET6 and flags & socket.AI_V4MAPPED:
