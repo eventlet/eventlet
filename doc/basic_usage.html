@@ -6,7 +6,7 @@
   <head>
         <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Basic Usage &#8212; Eventlet 0.22.1 documentation</title>
+    <title>Basic Usage &#8212; Eventlet 0.24.1 documentation</title>
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="_static/documentation_options.js"></script>
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="index.html" title="Eventlet Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.22.1 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.24.1 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -138,7 +138,7 @@ See <a class="reference internal" href="modules/timeout.html#eventlet.timeout.Ti
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>addr</strong> – Address of the server to connect to.  For TCP sockets, this is a (host, port) tuple.</li>
-<li><strong>family</strong> – Socket family, optional.  See <a class="reference external" href="https://docs.python.org/2/library/socket.html#module-socket" title="(in Python v2.7)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">socket</span></code></a> documentation for available families.</li>
+<li><strong>family</strong> – Socket family, optional.  See <a class="reference external" href="https://docs.python.org/3/library/socket.html#module-socket" title="(in Python v3.7)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">socket</span></code></a> documentation for available families.</li>
 <li><strong>bind</strong> – Local address to bind to, optional.</li>
 </ul>
 </td>
@@ -162,7 +162,7 @@ socket can be used in <a class="reference internal" href="#eventlet.serve" title
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>addr</strong> – Address to listen on.  For TCP sockets, this is a (host, port)  tuple.</li>
-<li><strong>family</strong> – Socket family, optional.  See <a class="reference external" href="https://docs.python.org/2/library/socket.html#module-socket" title="(in Python v2.7)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">socket</span></code></a> documentation for available families.</li>
+<li><strong>family</strong> – Socket family, optional.  See <a class="reference external" href="https://docs.python.org/3/library/socket.html#module-socket" title="(in Python v3.7)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">socket</span></code></a> documentation for available families.</li>
 <li><strong>backlog</strong> – The maximum number of queued connections. Should be at least 1; the maximum
 value is system-dependent.</li>
 </ul>
@@ -179,7 +179,7 @@ value is system-dependent.</li>
 <dt id="eventlet.wrap_ssl">
 <code class="descclassname">eventlet.</code><code class="descname">wrap_ssl</code><span class="sig-paren">(</span><em>sock</em>, <em>*a</em>, <em>**kw</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.wrap_ssl" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convenience function for converting a regular socket into an
-SSL socket.  Has the same interface as <a class="reference external" href="https://docs.python.org/2/library/ssl.html#ssl.wrap_socket" title="(in Python v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">ssl.wrap_socket()</span></code></a>,
+SSL socket.  Has the same interface as <a class="reference external" href="https://docs.python.org/3/library/ssl.html#ssl.wrap_socket" title="(in Python v3.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">ssl.wrap_socket()</span></code></a>,
 but can also use PyOpenSSL. Though, note that it ignores the
 <cite>cert_reqs</cite>, <cite>ssl_version</cite>, <cite>ca_certs</cite>, <cite>do_handshake_on_connect</cite>,
 and <cite>suppress_ragged_eofs</cite> arguments when using PyOpenSSL.</p>
@@ -292,7 +292,7 @@ connections until the existing ones complete.</p>
         <li class="right" >
           <a href="index.html" title="Eventlet Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.22.1 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.24.1 documentation</a> &#187;</li> 
       </ul>
     </div>
 

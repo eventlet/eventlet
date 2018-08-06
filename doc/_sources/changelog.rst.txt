@@ -1,3 +1,26 @@
+0.24.1
+======
+* greendns: don't contact nameservers if one entry is returned from hosts file; Thanks to Daniel Alvarez
+
+0.24.0
+======
+* greendns: Fix infinite loop when UDP source address mismatch; Thanks to Lon Hohberger
+* greendns: Fix bad ipv6 comparison; Thanks to Lon Hohberger
+* wsgi: Use byte strings on py2 and unicode strings on py3; Thanks to Tim Burke
+* pools: put to empty pool would block sometimes; Thanks to Sam Merritt
+* greendns: resolving over TCP produced ValueError; Thanks to Jaume Marhuenda
+* support.greendns: ImportError when dns.rdtypes was imported before eventlet; Thanks to Jaume Marhuenda
+* greendns: full comment lines were not skipped; Thanks to nat-goodspeed
+* Drop support for Python3.3; Python2.6 and python-epoll package
+* external dependencies for six, monotonic, dnspython; Thanks to nat-goodspeed
+* wsgi: Don't strip all Unicode whitespace from headers on py3; Thanks to Tim Burke
+
+0.23.0
+======
+* green.threading: current_thread() did not see new monkey-patched threads; Thanks to Jake Tesler
+* tpool: exception in tpool-ed call leaked memory via backtrace
+* wsgi: latin-1 encoding dance for environ[PATH_INFO]
+
 0.22.1
 ======
 * Fixed issue installing excess enum34 on Python3.4+ (rebuild with updated setuptools)

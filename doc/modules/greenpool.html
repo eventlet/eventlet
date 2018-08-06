@@ -6,7 +6,7 @@
   <head>
         <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>greenpool – Green Thread Pools &#8212; Eventlet 0.22.1 documentation</title>
+    <title>greenpool – Green Thread Pools &#8212; Eventlet 0.24.1 documentation</title>
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../_static/documentation_options.js"></script>
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="event.html" title="event – Cross-greenthread primitive"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.22.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.24.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &#187;</li> 
       </ul>
     </div>  
@@ -60,7 +60,7 @@ block the calling greenthread until a slot becomes available.</p>
 <dl class="method">
 <dt id="eventlet.greenpool.GreenPool.imap">
 <code class="descname">imap</code><span class="sig-paren">(</span><em>function</em>, <em>*iterables</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.greenpool.GreenPool.imap" title="Permalink to this definition">¶</a></dt>
-<dd><p>This is the same as <a class="reference external" href="https://docs.python.org/2/library/itertools.html#itertools.imap" title="(in Python v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">itertools.imap()</span></code></a>, and has the same
+<dd><p>This is the same as <code class="xref py py-func docutils literal notranslate"><span class="pre">itertools.imap()</span></code>, and has the same
 concurrency and memory behavior as <a class="reference internal" href="#eventlet.greenpool.GreenPool.starmap" title="eventlet.greenpool.GreenPool.starmap"><code class="xref py py-meth docutils literal notranslate"><span class="pre">starmap()</span></code></a>.</p>
 <p>It’s quite convenient for, e.g., farming out jobs from a file:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">worker</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
@@ -114,7 +114,7 @@ None; the results of <em>function</em> are not retrievable.</p>
 <dl class="method">
 <dt id="eventlet.greenpool.GreenPool.starmap">
 <code class="descname">starmap</code><span class="sig-paren">(</span><em>function</em>, <em>iterable</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.greenpool.GreenPool.starmap" title="Permalink to this definition">¶</a></dt>
-<dd><p>This is the same as <a class="reference external" href="https://docs.python.org/2/library/itertools.html#itertools.starmap" title="(in Python v2.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">itertools.starmap()</span></code></a>, except that <em>func</em> is
+<dd><p>This is the same as <a class="reference external" href="https://docs.python.org/3/library/itertools.html#itertools.starmap" title="(in Python v3.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">itertools.starmap()</span></code></a>, except that <em>func</em> is
 executed in a separate green thread for each item, with the concurrency
 limited by the pool’s size. In operation, starmap consumes a constant
 amount of memory, proportional to the size of the pool, and is thus
@@ -216,7 +216,7 @@ iterating over the GreenPile object.</p>
         <li class="right" >
           <a href="event.html" title="event – Cross-greenthread primitive"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.22.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.24.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &#187;</li> 
       </ul>
     </div>

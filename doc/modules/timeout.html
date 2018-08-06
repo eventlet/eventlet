@@ -6,7 +6,7 @@
   <head>
         <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>timeout – Universal Timeouts &#8212; Eventlet 0.22.1 documentation</title>
+    <title>timeout – Universal Timeouts &#8212; Eventlet 0.24.1 documentation</title>
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../_static/documentation_options.js"></script>
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="semaphore.html" title="semaphore – Semaphore classes"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.22.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.24.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &#187;</li> 
       </ul>
     </div>  
@@ -88,7 +88,7 @@ and is only useful if you’re planning to raise it directly.</p>
 <p>There are two Timeout caveats to be aware of:</p>
 <ul class="simple">
 <li>If the code block in the try/finally or with-block never cooperatively yields, the timeout cannot be raised.  In Eventlet, this should rarely be a problem, but be aware that you cannot time out CPU-only operations with this class.</li>
-<li>If the code block catches and doesn’t re-raise <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseException</span></code>  (for example, with <code class="docutils literal notranslate"><span class="pre">except:</span></code>), then it will catch the Timeout exception, and might not abort as intended.</li>
+<li>If the code block catches and doesn’t re-raise <a class="reference external" href="https://docs.python.org/3/library/exceptions.html#BaseException" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseException</span></code></a>  (for example, with <code class="docutils literal notranslate"><span class="pre">except:</span></code>), then it will catch the Timeout exception, and might not abort as intended.</li>
 </ul>
 <p>When catching timeouts, keep in mind that the one you catch may not be the
 one you set; if you plan on silencing a timeout, always check that it’s the
@@ -130,7 +130,7 @@ value.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>seconds</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) – seconds before timeout occurs</li>
+<li><strong>seconds</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><em>float</em></a>) – seconds before timeout occurs</li>
 <li><strong>func</strong> – the callable to execute with a timeout; it must cooperatively yield, or else the timeout will not be able to trigger</li>
 <li><strong>*args</strong> – positional arguments to pass to <em>func</em></li>
 <li><strong>**kwds</strong> – keyword arguments to pass to <em>func</em></li>
@@ -213,7 +213,7 @@ is passed through to the caller.</p>
         <li class="right" >
           <a href="semaphore.html" title="semaphore – Semaphore classes"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.22.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.24.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &#187;</li> 
       </ul>
     </div>
