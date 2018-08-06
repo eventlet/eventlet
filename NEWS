@@ -1,3 +1,7 @@
+0.24.1
+======
+* greendns: don't contact nameservers if one entry is returned from hosts file; Thanks to Daniel Alvarez
+
 0.24.0
 ======
 * greendns: Fix infinite loop when UDP source address mismatch; Thanks to Lon Hohberger
