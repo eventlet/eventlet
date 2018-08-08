@@ -236,6 +236,31 @@ class TestUdp(tests.LimitedTestCase):
         self.query_wire = self.query.to_wire()
         super(TestUdp, self).setUp()
 
+    def test_udp_ipv4(self):
+        with tests.mock.patch('eventlet.support.greendns.socket.socket.recvfrom',
+                              return_value=(self.query_wire,
+                                            ('127.0.0.1', 53))):
+            greendns.udp(self.query, '127.0.0.1')
+
+    def test_udp_ipv4_timeout(self):
+        with tests.mock.patch('eventlet.support.greendns.socket.socket.recvfrom',
+                              side_effect=socket.timeout):
+            with tests.assert_raises(dns.exception.Timeout):
+                greendns.udp(self.query, '127.0.0.1', timeout=0.1)
+
+    def test_udp_ipv4_wrong_addr_ignore(self):
+        with tests.mock.patch('eventlet.support.greendns.socket.socket.recvfrom',
+                              side_effect=socket.timeout):
+            with tests.assert_raises(dns.exception.Timeout):
+                greendns.udp(self.query, '127.0.0.1', timeout=0.1, ignore_unexpected=True)
+
+    def test_udp_ipv4_wrong_addr(self):
+        with tests.mock.patch('eventlet.support.greendns.socket.socket.recvfrom',
+                              return_value=(self.query_wire,
+                                            ('127.0.0.2', 53))):
+            with tests.assert_raises(dns.query.UnexpectedSource):
+                greendns.udp(self.query, '127.0.0.1')
+
     def test_udp_ipv6(self):
         with tests.mock.patch('eventlet.support.greendns.socket.socket.recvfrom',
                               return_value=(self.query_wire,
