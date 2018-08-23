@@ -11,7 +11,7 @@ import six
 __all__ = ['GreenPool', 'GreenPile']
 
 DEBUG = True
-getcurrent = eventlet.getcurrent
+getcurrent = greenlet.getcurrent
 spawn = eventlet.spawn
 spawn_n = eventlet.spawn_n
 
