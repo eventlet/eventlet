@@ -32,6 +32,8 @@ class Hub(BaseHub):
             return
         if secs is not None:
             ev_sleep(secs)
+            if not readers and not writers:
+                return
             secs = 0
 
         for fd in readers:
