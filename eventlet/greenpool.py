@@ -1,7 +1,8 @@
 import traceback
 
-import eventlet
-from eventlet import queue
+from eventlet import Semaphore, Event, getcurrent, spawn, spawn_n
+from eventlet.greenthread import GreenThread
+from eventlet.queue import LightQueue
 from eventlet.support import greenlets as greenlet
 import six
 
@@ -13,6 +14,7 @@ DEBUG = True
 class GreenPool(object):
     """The GreenPool class is a pool of green threads.
     """
+    __slots__ = ['size', 'coroutines_running', 'sem', 'no_coros_running']
 
     def __init__(self, size=1000):
         try:
@@ -25,8 +27,8 @@ class GreenPool(object):
             raise ValueError(msg)
         self.size = size
         self.coroutines_running = set()
-        self.sem = eventlet.Semaphore(size)
-        self.no_coros_running = eventlet.Event()
+        self.sem = Semaphore(size)
+        self.no_coros_running = Event()
 
     def resize(self, new_size):
         """ Change the max number of greenthreads doing work at any given time.
@@ -66,17 +68,17 @@ class GreenPool(object):
         """
         # if reentering an empty pool, don't try to wait on a coroutine freeing
         # itself -- instead, just execute in the current coroutine
-        current = eventlet.getcurrent()
+        current = getcurrent()
         if self.sem.locked() and current in self.coroutines_running:
             # a bit hacky to use the GT without switching to it
-            gt = eventlet.greenthread.GreenThread(current)
+            gt = GreenThread(current)
             gt.main(function, args, kwargs)
             return gt
         else:
             self.sem.acquire()
-            gt = eventlet.spawn(function, *args, **kwargs)
+            gt = spawn(function, *args, **kwargs)
             if not self.coroutines_running:
-                self.no_coros_running = eventlet.Event()
+                self.no_coros_running = Event()
             self.coroutines_running.add(gt)
             gt.link(self._spawn_done)
         return gt
@@ -93,7 +95,7 @@ class GreenPool(object):
         finally:
             if coro is None:
                 return
-            self._spawn_done(eventlet.getcurrent())
+            self._spawn_done(getcurrent())
 
     def spawn_n(self, function, *args, **kwargs):
         """Create a greenthread to run the *function*, the same as
@@ -102,18 +104,18 @@ class GreenPool(object):
         """
         # if reentering an empty pool, don't try to wait on a coroutine freeing
         # itself -- instead, just execute in the current coroutine
-        if self.sem.locked() and eventlet.getcurrent() in self.coroutines_running:
+        if self.sem.locked() and getcurrent() in self.coroutines_running:
             self._spawn_n_impl(function, args, kwargs, None)
         else:
             self.sem.acquire()
-            g = eventlet.spawn_n(self._spawn_n_impl, function, args, kwargs, True)
+            g = spawn_n(self._spawn_n_impl, function, args, kwargs, True)
             if not self.coroutines_running:
-                self.no_coros_running = eventlet.Event()
+                self.no_coros_running = Event()
             self.coroutines_running.add(g)
 
     def waitall(self):
         """Waits until all greenthreads in the pool are finished working."""
-        assert eventlet.getcurrent() not in self.coroutines_running, \
+        assert getcurrent() not in self.coroutines_running, \
             "Calling waitall() from within one of the " \
             "GreenPool's greenthreads will never terminate."
         if self.running():
@@ -151,7 +153,7 @@ class GreenPool(object):
         if function is None:
             function = lambda *a: a
         gi = GreenMap(self.size)
-        eventlet.spawn_n(self._do_map, function, iterable, gi)
+        spawn_n(self._do_map, function, iterable, gi)
         return gi
 
     def imap(self, function, *iterables):
@@ -194,7 +196,7 @@ class GreenPile(object):
             self.pool = size_or_pool
         else:
             self.pool = GreenPool(size_or_pool)
-        self.waiters = queue.LightQueue()
+        self.waiters = LightQueue()
         self.used = False
         self.counter = 0
 
@@ -231,7 +233,7 @@ class GreenPile(object):
 class GreenMap(GreenPile):
     def __init__(self, size_or_pool):
         super(GreenMap, self).__init__(size_or_pool)
-        self.waiters = queue.LightQueue(maxsize=self.pool.size)
+        self.waiters = LightQueue(maxsize=self.pool.size)
 
     def next(self):
         try:
