@@ -1,9 +1,10 @@
 import traceback
 
-from eventlet import Event, getcurrent, spawn, spawn_n
+from eventlet import getcurrent, spawn, spawn_n
 from eventlet.greenthread import GreenThread
 from eventlet.queue import LightQueue
 from eventlet.semaphore import Semaphore
+from eventlet.event import Event
 from eventlet.support import greenlets as greenlet
 import six
 
