@@ -1,6 +1,6 @@
 import traceback
 
-from eventlet import getcurrent, spawn, spawn_n
+import eventlet
 from eventlet.greenthread import GreenThread
 from eventlet.queue import LightQueue
 from eventlet.semaphore import Semaphore
@@ -11,6 +11,9 @@ import six
 __all__ = ['GreenPool', 'GreenPile']
 
 DEBUG = True
+getcurrent = eventlet.getcurrent
+spawn = eventlet.spawn
+spawn_n = eventlet.spawn_n
 
 
 class GreenPool(object):

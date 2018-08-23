@@ -1,9 +1,10 @@
 from __future__ import print_function
 
 from eventlet import hubs
-from eventlet.support.greenlets import getcurrent
+from eventlet.support import greenlets
 
 __all__ = ['Event']
+getcurrent = greenlets.getcurrent
 
 
 class NOT_USED:
