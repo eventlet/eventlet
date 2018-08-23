@@ -21,13 +21,17 @@ else:
 
 from eventlet.hubs import timer, IOClosed
 from eventlet.support import greenlets as greenlet, clear_sys_exc_info
+from eventlet.support.greenlets import getcurrent
 import monotonic
-import six
 
 g_prevent_multiple_readers = True
 
 READ = "read"
 WRITE = "write"
+
+heapify = heapq.heapify
+heappush = heapq.heappush
+heappop = heapq.heappop
 
 
 def closed_callback(fileno):
@@ -60,7 +64,7 @@ class FdListener(object):
         self.tb = tb
         self.mark_as_closed = mark_as_closed
         self.spent = False
-        self.greenlet = greenlet.getcurrent()
+        self.greenlet = getcurrent()
 
     def __repr__(self):
         return "%s(%r, %r, %r, %r)" % (type(self).__name__, self.evtype, self.fileno,
@@ -84,7 +88,7 @@ class DebugListener(FdListener):
 
     def __init__(self, evtype, fileno, cb, tb, mark_as_closed):
         self.where_called = traceback.format_stack()
-        self.greenlet = greenlet.getcurrent()
+        self.greenlet = getcurrent()
         super(DebugListener, self).__init__(evtype, fileno, cb, tb, mark_as_closed)
 
     def __repr__(self):
@@ -109,7 +113,6 @@ class BaseHub(object):
     specific to a particular underlying event architecture. """
 
     SYSTEM_EXCEPTIONS = (KeyboardInterrupt, SystemExit)
-
     READ = READ
     WRITE = WRITE
 
@@ -190,17 +193,16 @@ class BaseHub(object):
             their greenlets queued up to send.
         """
         found = False
-        for evtype, bucket in six.iteritems(self.secondaries):
+        for bucket in self.secondaries.values():
             if fileno in bucket:
-                for listener in bucket[fileno]:
+                for listener in bucket.pop(fileno):
                     found = True
                     self.closed.append(listener)
                     listener.defang()
-                del bucket[fileno]
 
         # For the primary listeners, we actually need to call remove,
         # which may modify the underlying OS polling objects.
-        for evtype, bucket in six.iteritems(self.listeners):
+        for bucket in self.listeners.values():
             if fileno in bucket:
                 listener = bucket[fileno]
                 found = True
@@ -226,13 +228,12 @@ class BaseHub(object):
         evtype = listener.evtype
         self.listeners[evtype].pop(fileno, None)
         # migrate a secondary listener to be the primary listener
-        if fileno in self.secondaries[evtype]:
-            sec = self.secondaries[evtype].get(fileno, None)
-            if not sec:
-                return
-            self.listeners[evtype][fileno] = sec.pop(0)
-            if not sec:
-                del self.secondaries[evtype][fileno]
+        sec = self.secondaries[evtype].get(fileno, None)
+        if sec is None:
+            return
+        self.listeners[evtype][fileno] = sec.pop(0)
+        if not sec:
+            self.secondaries[evtype].pop(fileno)
 
     def mark_as_reopened(self, fileno):
         """ If a file descriptor is returned by the OS as the result of some
@@ -246,9 +247,7 @@ class BaseHub(object):
     def remove_descriptor(self, fileno):
         """ Completely remove all listeners for this fileno.  For internal use
         only."""
-        listeners = []
-        listeners.append(self.listeners[READ].pop(fileno, noop))
-        listeners.append(self.listeners[WRITE].pop(fileno, noop))
+        listeners = [self.listeners[READ].pop(fileno, noop), self.listeners[WRITE].pop(fileno, noop)]
         listeners.extend(self.secondaries[READ].pop(fileno, ()))
         listeners.extend(self.secondaries[WRITE].pop(fileno, ()))
         for listener in listeners:
@@ -279,7 +278,7 @@ class BaseHub(object):
             self.greenlet = new
 
     def switch(self):
-        cur = greenlet.getcurrent()
+        cur = getcurrent()
         assert cur is not self.greenlet, 'Cannot switch to MAINLOOP from MAINLOOP'
         switch_out = getattr(cur, 'switch_out', None)
         if switch_out is not None:
@@ -369,7 +368,7 @@ class BaseHub(object):
         if self.running:
             self.stopping = True
         if wait:
-            assert self.greenlet is not greenlet.getcurrent(
+            assert self.greenlet is not getcurrent(
             ), "Can't abort with wait from inside the hub's greenlet."
             # schedule an immediate timer just so the hub doesn't sleep
             self.schedule_call_global(0, lambda: None)
@@ -383,37 +382,38 @@ class BaseHub(object):
             sys.stderr.flush()
             clear_sys_exc_info()
 
-    def squelch_timer_exception(self, timer, exc_info):
+    def squelch_timer_exception(self, tmr, exc_info):
         if self.debug_exceptions:
             traceback.print_exception(*exc_info)
             sys.stderr.flush()
             clear_sys_exc_info()
 
-    def add_timer(self, timer):
-        scheduled_time = self.clock() + timer.seconds
-        self.next_timers.append((scheduled_time, timer))
+    def add_timer(self, tmr):
+        scheduled_time = self.clock() + tmr.seconds
+        self.next_timers.append((scheduled_time, tmr))
         return scheduled_time
 
-    def timer_canceled(self, timer):
+    def timer_canceled(self, tmr):
+        heappop(tmr)
         self.timers_canceled += 1
+        # + gc
         len_timers = len(self.timers) + len(self.next_timers)
         if len_timers > 1000 and len_timers / 2 <= self.timers_canceled:
             self.timers_canceled = 0
             self.timers = [t for t in self.timers if not t[1].called]
             self.next_timers = [t for t in self.next_timers if not t[1].called]
-            heapq.heapify(self.timers)
+            heapify(self.timers)
 
     def prepare_timers(self):
-        heappush = heapq.heappush
         t = self.timers
-        for item in self.next_timers:
+        while self.next_timers:
+            item = self.next_timers.pop(-1)
             if item[1].called:
                 self.timers_canceled -= 1
-            else:
-                heappush(t, item)
-        del self.next_timers[:]
+                continue
+            heappush(t, item)
 
-    def schedule_call_local(self, seconds, cb, *args, **kw):
+    def schedule_call_local(self, secs, cb, *args, **kw):
         """Schedule a callable to be called after 'seconds' seconds have
         elapsed. Cancel the timer if greenlet has exited.
             seconds: The number of seconds to wait.
@@ -421,11 +421,11 @@ class BaseHub(object):
             *args: Arguments to pass to the callable when called.
             **kw: Keyword arguments to pass to the callable when called.
         """
-        t = timer.LocalTimer(seconds, cb, *args, **kw)
+        t = timer.LocalTimer(secs, cb, *args, **kw)
         self.add_timer(t)
         return t
 
-    def schedule_call_global(self, seconds, cb, *args, **kw):
+    def schedule_call_global(self, secs, cb, *args, **kw):
         """Schedule a callable to be called after 'seconds' seconds have
         elapsed. The timer will NOT be canceled if the current greenlet has
         exited before the timer fires.
@@ -434,34 +434,27 @@ class BaseHub(object):
             *args: Arguments to pass to the callable when called.
             **kw: Keyword arguments to pass to the callable when called.
         """
-        t = timer.Timer(seconds, cb, *args, **kw)
+        t = timer.Timer(secs, cb, *args, **kw)
         self.add_timer(t)
         return t
 
     def fire_timers(self, when):
         t = self.timers
-        heappop = heapq.heappop
 
         while t:
-            next = t[0]
-
-            exp = next[0]
-            timer = next[1]
-
-            if when < exp:
+            if when < t[0][0]:
                 break
-
-            heappop(t)
+            tmr = heappop(t)[0][1]
 
             try:
-                if timer.called:
+                if tmr.called:
                     self.timers_canceled -= 1
                 else:
-                    timer()
+                    tmr()
             except self.SYSTEM_EXCEPTIONS:
                 raise
             except:
-                self.squelch_timer_exception(timer, sys.exc_info())
+                self.squelch_timer_exception(tmr, sys.exc_info())
                 clear_sys_exc_info()
 
     # for debugging:
@@ -472,14 +465,11 @@ class BaseHub(object):
     def get_writers(self):
         return self.listeners[WRITE].values()
 
-    def get_timers_count(hub):
-        return len(hub.timers) + len(hub.next_timers)
+    def get_timers_count(self):
+        return len(self.timers) + len(self.next_timers)
 
     def set_debug_listeners(self, value):
-        if value:
-            self.lclass = DebugListener
-        else:
-            self.lclass = FdListener
+        self.lclass = DebugListener if value else FdListener
 
     def set_timer_exceptions(self, value):
         self.debug_exceptions = value
