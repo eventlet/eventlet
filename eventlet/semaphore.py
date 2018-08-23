@@ -31,14 +31,13 @@ class Semaphore(object):
     """
 
     def __init__(self, value=1):
-        try:
-            value = int(value)
-        except ValueError as e:
-            msg = 'Semaphore() expect value :: int, actual: {0} {1}'.format(type(value), str(e))
-            raise TypeError(msg)
-        if value < 0:
-            msg = 'Semaphore() expect value >= 0, actual: {0}'.format(repr(value))
-            raise ValueError(msg)
+        """
+            Initiate a new Semaphore.
+            Keyword Args
+            ----------
+            value : int
+                Semaphore Size only positive integer
+        """
         self.counter = value
         self._waiters = collections.deque()
 
@@ -82,17 +81,21 @@ class Semaphore(object):
         same thing as when called without arguments, and return true.
 
         Timeout value must be strictly positive.
+
+        Parameters
+        ----------
+        blocking : bool
+            blocking
+        timeout : int
+            Timeout, None or only positive integer
         """
-        if timeout == -1:
-            timeout = None
-        if timeout is not None and timeout < 0:
-            raise ValueError("timeout value must be strictly positive")
+
         if not blocking:
             if timeout is not None:
                 raise ValueError("can't specify timeout for non-blocking acquire")
-            timeout = 0
-        if not blocking and self.locked():
-            return False
+
+            if self.locked():
+                return False
 
         current_thread = eventlet.getcurrent()
 
@@ -313,3 +316,4 @@ class CappedSemaphore(object):
         are currently blocking in :meth:`acquire` and :meth:`release`.
         """
         return self.lower_bound.balance - self.upper_bound.balance
+
