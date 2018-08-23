@@ -22,7 +22,7 @@ else:
 from eventlet.hubs import timer, IOClosed
 from eventlet.support import greenlets as greenlet, clear_sys_exc_info
 from eventlet.support.greenlets import getcurrent
-import time
+import monotonic
 
 g_prevent_multiple_readers = True
 
@@ -122,7 +122,7 @@ class BaseHub(object):
         self.closed = []
 
         if clock is None:
-            clock = time.time
+            clock = monotonic.time.time
         self.clock = clock
 
         self.greenlet = greenlet.greenlet(self.run)
