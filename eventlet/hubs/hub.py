@@ -440,9 +440,10 @@ class BaseHub(object):
         t = self.timers
 
         while t:
-            if when < t[0][0]:
+            exp, tmr = t[0]
+            if when < exp:
                 break
-            tmr = heappop(t)[0][1]
+            heappop(t)
 
             try:
                 if tmr.called:
