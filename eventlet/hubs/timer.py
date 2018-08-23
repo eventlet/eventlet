@@ -20,6 +20,7 @@ class Timer(object):
         This timer will not be run unless it is scheduled in a runloop by
         calling timer.schedule() or runloop.add_timer(timer).
         """
+        self.scheduled_time = 0
         self.seconds = seconds
         self.tpl = cb, args, kw
         self.called = False
