@@ -3,7 +3,7 @@ import sys
 from eventlet import patcher
 from eventlet.support import get_errno, clear_sys_exc_info
 select = patcher.original('select')
-time = patcher.original('time')
+ev_sleep = patcher.original('time').sleep
 
 from eventlet.hubs.hub import BaseHub, READ, WRITE, noop
 
@@ -18,43 +18,64 @@ class Hub(BaseHub):
         """ Iterate through fds, removing the ones that are bad per the
         operating system.
         """
-        all_fds = list(self.listeners[READ]) + list(self.listeners[WRITE])
-        for fd in all_fds:
+        for fd in list(self.listeners[READ]) + list(self.listeners[WRITE]):
             try:
                 select.select([fd], [], [], 0)
             except select.error as e:
                 if get_errno(e) in BAD_SOCK:
                     self.remove_descriptor(fd)
 
-    def wait(self, seconds=None):
+    def wait(self, secs=None):
         readers = self.listeners[READ]
         writers = self.listeners[WRITE]
         if not readers and not writers:
-            if seconds:
-                time.sleep(seconds)
             return
-        all_fds = list(readers) + list(writers)
-        try:
-            r, w, er = select.select(readers.keys(), writers.keys(), all_fds, seconds)
-        except select.error as e:
-            if get_errno(e) == errno.EINTR:
-                return
-            elif get_errno(e) in BAD_SOCK:
-                self._remove_bad_fds()
-                return
-            else:
-                raise
+        if secs is not None:
+            ev_sleep(secs)
+            secs = 0
 
-        for fileno in er:
-            readers.get(fileno, noop).cb(fileno)
-            writers.get(fileno, noop).cb(fileno)
-
-        for listeners, events in ((readers, r), (writers, w)):
-            for fileno in events:
+        for fd in readers:
+            try:
+                r, w, er = select.select([fd], [], [fd], secs)
+                secs = 0
                 try:
-                    listeners.get(fileno, noop).cb(fileno)
+                    if er:
+                        readers[fd].cb(fd)
+                    elif r:
+                        readers[fd].cb(fd)
                 except self.SYSTEM_EXCEPTIONS:
-                    raise
+                    continue
                 except:
-                    self.squelch_exception(fileno, sys.exc_info())
+                    self.squelch_exception(fd, sys.exc_info())
                     clear_sys_exc_info()
+
+            except select.error as e:
+                if get_errno(e) == errno.EINTR:
+                    pass
+                elif get_errno(e) in BAD_SOCK:
+                    self.remove_descriptor(fd)
+                else:
+                    raise
+
+        for fd in writers:
+            try:
+                r, w, er = select.select([], [fd], [fd], secs)
+                secs = 0
+                try:
+                    if er:
+                        writers[fd].cb(fd)
+                    elif w:
+                        writers[fd].cb(fd)
+                except self.SYSTEM_EXCEPTIONS:
+                    continue
+                except:
+                    self.squelch_exception(fd, sys.exc_info())
+                    clear_sys_exc_info()
+
+            except select.error as e:
+                if get_errno(e) == errno.EINTR:
+                    pass
+                elif get_errno(e) in BAD_SOCK:
+                    self.remove_descriptor(fd)
+                else:
+                    raise
