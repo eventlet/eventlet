@@ -1,10 +1,8 @@
 import collections
 
-import eventlet
+from eventlet.support.greenlets import getcurrent
 from eventlet.timeout import Timeout
 from eventlet.hubs import get_hub
-
-getcurrent = eventlet.getcurrent
 
 
 class Semaphore(object):
