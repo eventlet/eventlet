@@ -1,6 +1,10 @@
 import collections
 
-from eventlet import hubs, Timeout, getcurrent
+import eventlet
+from eventlet.timeout import Timeout
+from eventlet.hubs import get_hub
+
+getcurrent = eventlet.getcurrent
 
 
 class Semaphore(object):
@@ -106,7 +110,7 @@ class Semaphore(object):
                     ok = False
                     with Timeout(timeout, False):
                         while self.counter <= 0:
-                            hubs.get_hub().switch()
+                            get_hub().switch()
                         ok = True
                     if not ok:
                         return False
@@ -114,7 +118,7 @@ class Semaphore(object):
                     # If someone else is already in this wait loop, give them
                     # a chance to get out.
                     while True:
-                        hubs.get_hub().switch()
+                        get_hub().switch()
                         if self.counter > 0:
                             break
             finally:
@@ -140,7 +144,7 @@ class Semaphore(object):
         """
         self.counter += 1
         if self._waiters:
-            hubs.get_hub().schedule_call_global(0, self._do_acquire)
+            get_hub().schedule_call_global(0, self._do_acquire)
         return True
 
     def _do_acquire(self):
