@@ -394,7 +394,6 @@ class BaseHub(object):
         return scheduled_time
 
     def timer_canceled(self, tmr):
-        heappop((tmr.scheduled_time, tmr))
         self.timers_canceled += 1
         len_timers = len(self.timers) + len(self.next_timers)
         if len_timers > 1000 and len_timers / 2 <= self.timers_canceled:
