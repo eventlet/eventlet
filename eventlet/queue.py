@@ -50,7 +50,6 @@ from eventlet.event import Event
 from eventlet.greenthread import getcurrent
 from eventlet.hubs import get_hub
 import six
-from six.moves import queue as Stdlib_Queue
 from eventlet.timeout import Timeout
 
 

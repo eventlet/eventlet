@@ -1,7 +1,6 @@
 import collections
 
-import eventlet
-from eventlet import hubs
+from eventlet import hubs, Timeout, getcurrent
 
 
 class Semaphore(object):
@@ -97,7 +96,7 @@ class Semaphore(object):
             if self.locked():
                 return False
 
-        current_thread = eventlet.getcurrent()
+        current_thread = getcurrent()
 
         if self.counter <= 0 or self._waiters:
             if current_thread not in self._waiters:
@@ -105,7 +104,7 @@ class Semaphore(object):
             try:
                 if timeout is not None:
                     ok = False
-                    with eventlet.Timeout(timeout, False):
+                    with Timeout(timeout, False):
                         while self.counter <= 0:
                             hubs.get_hub().switch()
                         ok = True
