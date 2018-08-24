@@ -118,8 +118,13 @@ class BaseHub(object):
     WRITE = WRITE
 
     def __init__(self, clock=None):
-        self.listeners = {READ: {}, WRITE: {}}
-        self.secondaries = {READ: {}, WRITE: {}}
+        self.listeners_r = {}
+        self.listeners_w = {}
+        self.secondaries_r = {}
+        self.secondaries_w = {}
+
+        self.listeners = {READ: self.listeners_r, WRITE: self.listeners_w}  # for compatibilities usages
+        self.secondaries = {READ: self.secondaries_r, WRITE: self.secondaries_w}
         self.closed = []
 
         if clock is None:
@@ -194,22 +199,31 @@ class BaseHub(object):
             their greenlets queued up to send.
         """
         found = False
-        for evtype, bucket in six.iteritems(self.secondaries):
-            if fileno in bucket:
-                for listener in bucket.pop(fileno):
-                    found = True
-                    self.closed.append(listener)
-                    listener.defang()
+        if fileno in self.secondaries_w:
+            for listener in self.secondaries_w.pop(fileno):
+                found = True
+                self.closed.append(listener)
+                listener.defang()
+        if fileno in self.secondaries_r:
+            for listener in self.secondaries_r.pop(fileno):
+                found = True
+                self.closed.append(listener)
+                listener.defang()
 
         # For the primary listeners, we actually need to call remove,
         # which may modify the underlying OS polling objects.
-        for evtype, bucket in six.iteritems(self.listeners):
-            if fileno in bucket:
-                listener = bucket[fileno]
-                found = True
-                self.closed.append(listener)
-                self.remove(listener)
-                listener.defang()
+        if fileno in self.listeners_w:
+            listener = self.listeners_w[fileno]
+            found = True
+            self.closed.append(listener)
+            self.remove(listener)
+            listener.defang()
+        if fileno in self.listeners_r:
+            listener = self.listeners_r[fileno]
+            found = True
+            self.closed.append(listener)
+            self.remove(listener)
+            listener.defang()
 
         return found
 
@@ -248,9 +262,9 @@ class BaseHub(object):
     def remove_descriptor(self, fileno):
         """ Completely remove all listeners for this fileno.  For internal use
         only."""
-        listeners = [self.listeners[READ].pop(fileno, noop), self.listeners[WRITE].pop(fileno, noop)]
-        listeners.extend(self.secondaries[READ].pop(fileno, ()))
-        listeners.extend(self.secondaries[WRITE].pop(fileno, ()))
+        listeners = [self.listeners_r.pop(fileno, noop), self.listeners_w.pop(fileno, noop)]
+        listeners.extend(self.secondaries_r.pop(fileno, ()))
+        listeners.extend(self.secondaries_w.pop(fileno, ()))
         for listener in listeners:
             try:
                 listener.cb(fileno)
@@ -460,10 +474,10 @@ class BaseHub(object):
     # for debugging:
 
     def get_readers(self):
-        return self.listeners[READ].values()
+        return self.listeners_r.values()
 
     def get_writers(self):
-        return self.listeners[WRITE].values()
+        return self.listeners_w.values()
 
     def get_timers_count(self):
         return len(self.timers) + len(self.next_timers)
