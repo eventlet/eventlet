@@ -90,27 +90,41 @@ class Hub(BaseHub):
         # of callbacks in sync with the events we've just
         # polled for. It prevents one handler from invalidating
         # another.
-        callbacks = set()
+        # Invalidating can happen only follow a next call to wait with new set of presult, ain't?
+
+        # callbacks = set()
+        # for fileno, event in presult:
+        #     if event & READ_MASK:
+        #        callbacks.add((readers.get(fileno, noop), fileno))
+        #    if event & WRITE_MASK:
+        #        callbacks.add((writers.get(fileno, noop), fileno))
+        #    if event & select.POLLNVAL:
+        #        self.remove_descriptor(fileno)
+        #        continue
+        #    if event & EXC_MASK:
+        #        callbacks.add((readers.get(fileno, noop), fileno))
+        #        callbacks.add((writers.get(fileno, noop), fileno))
+
+        # for listener, fileno in callbacks:
+        #    try:
+        #        listener.cb(fileno)
+        #    except self.SYSTEM_EXCEPTIONS:
+        #        raise
+        #    except:
+        #        self.squelch_exception(fileno, sys.exc_info())
+        #        clear_sys_exc_info()
+
         for fileno, event in presult:
             if event & READ_MASK:
-                callbacks.add((readers.get(fileno, noop), fileno))
+                readers.get(fileno, noop).cb(fileno)
             if event & WRITE_MASK:
-                callbacks.add((writers.get(fileno, noop), fileno))
+                writers.get(fileno, noop).cb(fileno)
             if event & select.POLLNVAL:
                 self.remove_descriptor(fileno)
                 continue
             if event & EXC_MASK:
-                callbacks.add((readers.get(fileno, noop), fileno))
-                callbacks.add((writers.get(fileno, noop), fileno))
-
-        for listener, fileno in callbacks:
-            try:
-                listener.cb(fileno)
-            except self.SYSTEM_EXCEPTIONS:
-                raise
-            except:
-                self.squelch_exception(fileno, sys.exc_info())
-                clear_sys_exc_info()
+                readers.get(fileno, noop).cb(fileno)
+                writers.get(fileno, noop).cb(fileno)
 
         if self.debug_blocking:
             self.block_detect_post()
