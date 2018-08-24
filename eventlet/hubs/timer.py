@@ -1,8 +1,8 @@
 import traceback
 
 from eventlet.support import greenlets as greenlet
+from eventlet import hubs
 import six
-from eventlet.hubs import get_hub
 
 """ If true, captures a stack trace for each timer when constructed.  This is
 useful for debugging leaking timers, to find out where the timer was set up. """
@@ -49,7 +49,7 @@ class Timer(object):
         """Schedule this timer to run in the current runloop.
         """
         self.called = False
-        self.scheduled_time = get_hub().add_timer(self)
+        self.scheduled_time = hubs.get_hub().add_timer(self)
         return self
 
     def __call__(self, *args):
@@ -70,7 +70,7 @@ class Timer(object):
         """
         if not self.called:
             self.called = True
-            get_hub().timer_canceled(self)
+            hubs.get_hub().timer_canceled(self)
             try:
                 del self.tpl
             except AttributeError:

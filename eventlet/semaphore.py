@@ -2,7 +2,7 @@ import collections
 
 from eventlet.support.greenlets import getcurrent
 from eventlet.timeout import Timeout
-from eventlet.hubs import get_hub
+from eventlet import hubs
 
 
 class Semaphore(object):
@@ -12,33 +12,27 @@ class Semaphore(object):
     :meth:`release` resources as needed. Attempting to :meth:`acquire` when
     *count* is zero suspends the calling greenthread until *count* becomes
     nonzero again.
-
     This is API-compatible with :class:`threading.Semaphore`.
-
     It is a context manager, and thus can be used in a with block::
-
       sem = Semaphore(2)
       with sem:
         do_some_stuff()
-
     If not specified, *value* defaults to 1.
-
     It is possible to limit acquire time::
-
       sem = Semaphore()
       ok = sem.acquire(timeout=0.1)
       # True if acquired, False if timed out.
-
     """
 
     def __init__(self, value=1):
-        """
-            Initiate a new Semaphore.
-            Keyword Args
-            ----------
-            value : int
-                Semaphore Size only positive integer
-        """
+        try:
+            value = int(value)
+        except ValueError as e:
+            msg = 'Semaphore() expect value :: int, actual: {0} {1}'.format(type(value), str(e))
+            raise TypeError(msg)
+        if value < 0:
+            msg = 'Semaphore() expect value >= 0, actual: {0}'.format(repr(value))
+            raise ValueError(msg)
         self.counter = value
         self._waiters = collections.deque()
 
@@ -82,13 +76,6 @@ class Semaphore(object):
         same thing as when called without arguments, and return true.
 
         Timeout value must be strictly positive.
-
-        Parameters
-        ----------
-        blocking : bool
-            blocking
-        timeout : int
-            Timeout, None or only positive integer
         """
 
         if not blocking:
@@ -98,17 +85,24 @@ class Semaphore(object):
             if self.locked():
                 return False
 
+        if timeout is not None:
+            if timeout == -1:
+                timeout = None
+            elif timeout < 0:
+                raise ValueError("timeout value must be strictly positive")
+
         current_thread = getcurrent()
 
         if self.counter <= 0 or self._waiters:
             if current_thread not in self._waiters:
                 self._waiters.append(current_thread)
             try:
+                switch = hubs.get_hub().switch()
                 if timeout is not None:
                     ok = False
                     with Timeout(timeout, False):
                         while self.counter <= 0:
-                            get_hub().switch()
+                            switch()
                         ok = True
                     if not ok:
                         return False
@@ -116,7 +110,7 @@ class Semaphore(object):
                     # If someone else is already in this wait loop, give them
                     # a chance to get out.
                     while True:
-                        get_hub().switch()
+                        switch()
                         if self.counter > 0:
                             break
             finally:
@@ -142,7 +136,7 @@ class Semaphore(object):
         """
         self.counter += 1
         if self._waiters:
-            get_hub().schedule_call_global(0, self._do_acquire)
+            hubs.get_hub().schedule_call_global(0, self._do_acquire)
         return True
 
     def _do_acquire(self):

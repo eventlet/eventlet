@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-from eventlet.hubs import get_hub
+from eventlet import hubs
 from eventlet.support.greenlets import getcurrent
 
 __all__ = ['Event']
@@ -116,7 +116,7 @@ class Event(object):
         """
         current = getcurrent()
         if self._result is NOT_USED:
-            hub = get_hub()
+            hub = hubs.get_hub()
             self._waiters.add(current)
             timer = None
             if timeout is not None:
@@ -164,7 +164,7 @@ class Event(object):
         if exc is not None and not isinstance(exc, tuple):
             exc = (exc, )
         self._exc = exc
-        hub = get_hub()
+        hub = hubs.get_hub()
         for waiter in self._waiters:
             hub.schedule_call_global(
                 0, self._do_send, self._result, self._exc, waiter)
