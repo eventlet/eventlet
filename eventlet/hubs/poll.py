@@ -19,7 +19,7 @@ class Hub(BaseHub):
         self.poll = select.poll()
 
     def add(self, evtype, fileno, cb, tb, mac):
-        listener = self.add(evtype, fileno, cb, tb, mac)
+        listener = BaseHub.add(self, evtype, fileno, cb, tb, mac)
         self.register(fileno, new=True)
         return listener
 
@@ -29,26 +29,26 @@ class Hub(BaseHub):
 
     def register(self, fileno, new=False):
         mask = 0
-        if self.listeners[READ].get(fileno):
+        if self.listeners_r.get(fileno):
             mask |= READ_MASK | EXC_MASK
-        if self.listeners[WRITE].get(fileno):
+        if self.listeners_w.get(fileno):
             mask |= WRITE_MASK | EXC_MASK
         try:
             if mask:
                 if new:
                     self.poll.register(fileno, mask)
-                else:
-                    try:
-                        self.poll.modify(fileno, mask)
-                    except (IOError, OSError):
-                        self.poll.register(fileno, mask)
-            else:
+                    return
                 try:
-                    self.poll.unregister(fileno)
-                except (KeyError, IOError, OSError):
-                    # raised if we try to remove a fileno that was
-                    # already removed/invalid
-                    pass
+                    self.poll.modify(fileno, mask)
+                except (IOError, OSError):
+                    self.poll.register(fileno, mask)
+                return
+            try:
+                self.poll.unregister(fileno)
+            except (KeyError, IOError, OSError):
+                # raised if we try to remove a fileno that was
+                # already removed/invalid
+                pass
         except ValueError:
             # fileno is bad, issue 74
             self.remove_descriptor(fileno)
