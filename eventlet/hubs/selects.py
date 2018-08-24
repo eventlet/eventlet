@@ -35,7 +35,7 @@ class Hub(BaseHub):
             else:
                 return
 
-        for fd in self.listeners_r:
+        for fd in list(self.listeners_r.keys()):  # in-case, size change
             try:
                 r, w, er = select.select([fd], [], [fd], seconds)
                 seconds = 0
@@ -56,7 +56,7 @@ class Hub(BaseHub):
                 else:
                     raise
 
-        for fd in self.listeners_w:
+        for fd in list(self.listeners_w.keys()):  # in-case, size change
             try:
                 r, w, er = select.select([], [fd], [fd], seconds)
                 seconds = 0
