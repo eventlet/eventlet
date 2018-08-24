@@ -12,16 +12,23 @@ class Semaphore(object):
     :meth:`release` resources as needed. Attempting to :meth:`acquire` when
     *count* is zero suspends the calling greenthread until *count* becomes
     nonzero again.
+
     This is API-compatible with :class:`threading.Semaphore`.
+
     It is a context manager, and thus can be used in a with block::
+
       sem = Semaphore(2)
       with sem:
         do_some_stuff()
+
     If not specified, *value* defaults to 1.
+
     It is possible to limit acquire time::
+
       sem = Semaphore()
       ok = sem.acquire(timeout=0.1)
       # True if acquired, False if timed out.
+
     """
 
     def __init__(self, value=1):
