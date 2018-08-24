@@ -24,7 +24,7 @@ class Hub(BaseHub):
         return listener
 
     def remove(self, listener):
-        self.remove(listener)
+        BaseHub.remove(self, listener)
         self.register(listener.fileno)
 
     def register(self, fileno, new=False):
@@ -55,7 +55,7 @@ class Hub(BaseHub):
             raise
 
     def remove_descriptor(self, fileno):
-        self.remove_descriptor(fileno)
+        BaseHub.remove_descriptor(self, fileno)
         try:
             self.poll.unregister(fileno)
         except (KeyError, ValueError, IOError, OSError):
