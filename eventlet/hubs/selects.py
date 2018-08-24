@@ -29,12 +29,13 @@ class Hub(BaseHub):
         readers = self.listeners[READ]
         writers = self.listeners[WRITE]
         if not readers and not writers:
-            return
-        if seconds is not None:
-            ev_sleep(seconds)
-            if not readers and not writers:
+            if seconds is not None:
+                ev_sleep(seconds)
+                if not readers and not writers:
+                    return
+                seconds = 0
+            else:
                 return
-            seconds = 0
 
         for fd in readers:
             try:
