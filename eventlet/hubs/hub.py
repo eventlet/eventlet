@@ -23,7 +23,7 @@ from eventlet.hubs import timer, IOClosed
 from eventlet.support import greenlets as greenlet, clear_sys_exc_info
 from eventlet.support.greenlets import getcurrent
 import monotonic
-import six
+import inspect
 
 g_prevent_multiple_readers = True
 
@@ -43,8 +43,9 @@ def closed_callback(fileno):
 
 
 class FdListener(object):
+    __slots__ = ['evtype', 'fileno', 'cb', 'tb', 'mark_as_closed', 'spent', 'greenlet', 'where_called']
 
-    def __init__(self, evtype, fileno, cb, tb, mark_as_closed):
+    def __init__(self, *args):
         """ The following are required:
         cb - the standard callback, which will switch into the
             listening greenlet to indicate that the event waited upon
@@ -58,18 +59,13 @@ class FdListener(object):
             underlying filehandle-wrapping objects that they've been
             closed.
         """
-        assert (evtype is READ or evtype is WRITE)
-        self.evtype = evtype
-        self.fileno = fileno
-        self.cb = cb
-        self.tb = tb
-        self.mark_as_closed = mark_as_closed
+        self.evtype, self.fileno, self.cb, self.tb, self.mark_as_closed = args
+        assert (self.evtype is READ or self.evtype is WRITE)
         self.spent = False
         self.greenlet = getcurrent()
 
     def __repr__(self):
-        return "%s(%r, %r, %r, %r)" % (type(self).__name__, self.evtype, self.fileno,
-                                       self.cb, self.tb)
+        return "%s(%r, %r, %r, %r)" % (type(self).__name__, self.evtype, self.fileno, self.cb, self.tb)
     __str__ = __repr__
 
     def defang(self):
@@ -88,9 +84,8 @@ noop = FdListener(READ, 0, lambda x: None, lambda x: None, None)
 class DebugListener(FdListener):
 
     def __init__(self, evtype, fileno, cb, tb, mark_as_closed):
-        self.where_called = traceback.format_stack()
-        self.greenlet = getcurrent()
         super(DebugListener, self).__init__(evtype, fileno, cb, tb, mark_as_closed)
+        self.where_called = traceback.format_stack()
 
     def __repr__(self):
         return "DebugListener(%r, %r, %r, %r, %r, %r)\n%sEndDebugFdListener" % (
@@ -105,11 +100,10 @@ class DebugListener(FdListener):
 
 
 def alarm_handler(signum, frame):
-    import inspect
     raise RuntimeError("Blocking detector ALARMED at" + str(inspect.getframeinfo(frame)))
 
 
-class BaseHub(object):
+class BaseHub:
     """ Base hub class for easing the implementation of subclasses that are
     specific to a particular underlying event architecture. """
 
@@ -123,7 +117,7 @@ class BaseHub(object):
         self.secondaries_r = {}
         self.secondaries_w = {}
 
-        self.listeners = {READ: self.listeners_r, WRITE: self.listeners_w}  # for compatibilities usages
+        self.listeners = {READ: self.listeners_r, WRITE: self.listeners_w}  # compatibilities usages / ev_type access
         self.secondaries = {READ: self.secondaries_r, WRITE: self.secondaries_w}
         self.closed = []
 
@@ -141,6 +135,7 @@ class BaseHub(object):
         self.debug_exceptions = True
         self.debug_blocking = False
         self.debug_blocking_resolution = 1
+        self._old_signal_handler = False
 
     def block_detect_pre(self):
         # shortest alarm we can possibly raise is one second
@@ -151,8 +146,7 @@ class BaseHub(object):
         arm_alarm(self.debug_blocking_resolution)
 
     def block_detect_post(self):
-        if (hasattr(self, "_old_signal_handler") and
-                self._old_signal_handler):
+        if self._old_signal_handler:
             signal.signal(signal.SIGALRM, self._old_signal_handler)
         signal.alarm(0)
 
@@ -327,10 +321,9 @@ class BaseHub(object):
         return 60.0
 
     def sleep_until(self):
-        t = self.timers
-        if not t:
+        if not self.timers:
             return None
-        return t[0][0]
+        return self.timers[0][0]
 
     def run(self, *a, **kw):
         """Run the runloop until abort is called.
@@ -383,8 +376,7 @@ class BaseHub(object):
         if self.running:
             self.stopping = True
         if wait:
-            assert self.greenlet is not getcurrent(
-            ), "Can't abort with wait from inside the hub's greenlet."
+            assert self.greenlet is not getcurrent(), "Can't abort with wait from inside the hub's greenlet."
             # schedule an immediate timer just so the hub doesn't sleep
             self.schedule_call_global(0, lambda: None)
             # switch to it; when done the hub will switch back to its parent,
