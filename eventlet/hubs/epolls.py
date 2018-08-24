@@ -12,7 +12,6 @@ epoll = select.epoll
 
 from eventlet.hubs.hub import BaseHub
 from eventlet.hubs import poll
-from eventlet.hubs.poll import READ, WRITE
 
 # NOTE: we rely on the fact that the epoll flag constants
 # are identical in value to the poll constants
@@ -24,15 +23,12 @@ class Hub(poll.Hub):
         self.poll = epoll()
 
     def add(self, evtype, fileno, cb, tb, mac):
-        oldlisteners = bool(self.listeners[READ].get(fileno) or
-                            self.listeners[WRITE].get(fileno))
+        not_new = not(fileno in self.listeners_r or fileno in self.listeners_w)
         listener = BaseHub.add(self, evtype, fileno, cb, tb, mac)
         try:
-            if not oldlisteners:
-                # Means we've added a new listener
-                self.register(fileno, new=True)
-            else:
-                self.register(fileno, new=False)
+            # new=True, Means we've added a new listener
+            self.register(fileno, new=not_new)
+
         except IOError as ex:    # ignore EEXIST, #80
             if get_errno(ex) != errno.EEXIST:
                 raise
