@@ -1,5 +1,8 @@
 import errno
+
 from eventlet.support import get_errno
+from eventlet.hubs.hub import BaseHub
+from eventlet.hubs import poll
 from eventlet import patcher
 select = patcher.original('select')
 if not hasattr(select, 'epoll'):
@@ -9,8 +12,6 @@ if not hasattr(select, 'epoll'):
                       ' please open issue on https://github.com/eventlet/eventlet/'
                       ' if you must use epoll outside stdlib.')
 
-from eventlet.hubs.hub import BaseHub
-from eventlet.hubs import poll
 
 # NOTE: we rely on the fact that the epoll flag constants
 # are identical in value to the poll constants
