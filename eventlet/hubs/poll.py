@@ -1,6 +1,6 @@
 import errno
 
-from eventlet.hubs.hub import BaseHub, READ, WRITE, noop
+from eventlet.hubs.hub import BaseHub
 from eventlet.support import get_errno
 from eventlet import patcher
 
@@ -78,7 +78,7 @@ class Hub(BaseHub):
                 return
 
         try:
-            presult = self.do_poll(seconds)
+            p_result = self.do_poll(seconds)
         except (IOError, select.error) as e:
             if get_errno(e) == errno.EINTR:
                 return
@@ -92,10 +92,10 @@ class Hub(BaseHub):
         # of callbacks in sync with the events we've just
         # polled for. It prevents one handler from invalidating
         # another.
-        # Invalidating can happen only follow a next call to wait with new set of presult, ain't?
+        # Invalidating can happen only follow a next call to wait with new set of p_result, ain't?
 
         # callbacks = set()
-        # for fileno, event in presult:
+        # for fileno, event in p_result:
         #     if event & READ_MASK:
         #        callbacks.add((readers.get(fileno, noop), fileno))
         #    if event & WRITE_MASK:
@@ -116,22 +116,22 @@ class Hub(BaseHub):
         #        self.squelch_exception(fileno, sys.exc_info())
         #        clear_sys_exc_info()
 
-        for fd, event in presult:
-            w = self.listeners_w.get(fd)
-            r = self.listeners_r.get(fd)
-            
-            if event & READ_MASK and r:
-                r.cb(fd)
-            elif event & WRITE_MASK and w:
-                w.cb(fd)
-            elif event & select.POLLNVAL:
+        for fd, event in p_result:
+            if event & select.POLLNVAL:
                 self.remove_descriptor(fd)
                 continue
+
+            if event & READ_MASK and fd in self.listeners_r:
+                self.listeners_r[fd].cb(fd)
+
+            elif event & WRITE_MASK and fd in self.listeners_w:
+                self.listeners_w[fd].cb(fd)
+
             elif event & EXC_MASK:
-                if r:
-                    r.cb(fd)
-                if w:
-                    w.cb(fd)
+                if fd in self.listeners_r:
+                    self.listeners_r[fd].cb(fd)
+                if fd in self.listeners_w:
+                    self.listeners_w[fd].cb(fd)
 
         if self.debug_blocking:
             self.block_detect_post()
