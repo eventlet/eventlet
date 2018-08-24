@@ -29,7 +29,7 @@ class Hub(BaseHub):
 
         if not self.listeners_r and not self.listeners_w:
             if seconds is not None:
-                ev_sleep(0)
+                ev_sleep(seconds)
                 if not self.listeners_r and not self.listeners_w:
                     return
                 seconds = 0
