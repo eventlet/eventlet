@@ -26,24 +26,22 @@ class Hub(BaseHub):
                     self.remove_descriptor(fd)
 
     def wait(self, seconds=None):
-        readers = self.listeners[READ]
-        writers = self.listeners[WRITE]
-        if not readers and not writers:
+        if not self.listeners_r and not self.listeners_w:
             if seconds is not None:
                 ev_sleep(seconds)
-                if not readers and not writers:
+                if not self.listeners_r and not self.listeners_w:
                     return
                 seconds = 0
             else:
                 return
 
-        for fd in readers:
+        for fd in self.listeners_r:
             try:
                 r, w, er = select.select([fd], [], [fd], seconds)
                 seconds = 0
                 try:
                     if r or er:
-                        readers.get(fd, noop).cb(fd)  # in-case, fd no longer exists
+                        self.listeners_r.get(fd, noop).cb(fd)  # in-case, fd no longer exists
                 except self.SYSTEM_EXCEPTIONS:
                     continue
                 except:
@@ -58,13 +56,13 @@ class Hub(BaseHub):
                 else:
                     raise
 
-        for fd in writers:
+        for fd in self.listeners_w:
             try:
                 r, w, er = select.select([], [fd], [fd], seconds)
                 seconds = 0
                 try:
                     if w or er:
-                        writers.get(fd, noop).cb(fd)
+                        self.listeners_w.get(fd, noop).cb(fd)
                 except self.SYSTEM_EXCEPTIONS:
                     continue
                 except:
