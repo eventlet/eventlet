@@ -117,19 +117,21 @@ class Hub(BaseHub):
         #        clear_sys_exc_info()
 
         for fd, event in presult:
-            if event & select.POLLNVAL:
+            w = self.listeners_w.get(fd)
+            r = self.listeners_r.get(fd)
+            
+            if event & READ_MASK and r:
+                r.cb(fd)
+            elif event & WRITE_MASK and w:
+                w.cb(fd)
+            elif event & select.POLLNVAL:
                 self.remove_descriptor(fd)
                 continue
-
-            if event & READ_MASK:
-                self.listeners_r.get(fd, noop).cb(fd)
-
-            if event & WRITE_MASK:
-                self.listeners_w.get(fd, noop).cb(fd)
-
-            if event & EXC_MASK:
-                self.listeners_r.get(fd, noop).cb(fd)
-                self.listeners_w.get(fd, noop).cb(fd)
+            elif event & EXC_MASK:
+                if r:
+                    r.cb(fd)
+                if w:
+                    w.cb(fd)
 
         if self.debug_blocking:
             self.block_detect_post()
