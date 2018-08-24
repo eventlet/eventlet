@@ -36,7 +36,7 @@ class Hub(BaseHub):
                 return
             seconds = 0
 
-        for fd in readers[:]:  # in-case, size change
+        for fd in readers:
             try:
                 r, w, er = select.select([fd], [], [fd], seconds)
                 seconds = 0
@@ -57,7 +57,7 @@ class Hub(BaseHub):
                 else:
                     raise
 
-        for fd in writers[:]:
+        for fd in writers:
             try:
                 r, w, er = select.select([], [fd], [fd], seconds)
                 seconds = 0
