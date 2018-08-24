@@ -34,7 +34,6 @@ def get_default_hub():
     # except:
     #    pass
 
-    select = patcher.original('select')
     try:
         import eventlet.hubs.epolls
         return eventlet.hubs.epolls
@@ -43,7 +42,7 @@ def get_default_hub():
             import eventlet.hubs.kqueue
             return eventlet.hubs.kqueue
         except ImportError:
-            if hasattr(select, 'poll'):
+            if hasattr(patcher.original('select'), 'poll'):
                 import eventlet.hubs.poll
                 return eventlet.hubs.poll
             else:
