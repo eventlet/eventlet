@@ -18,7 +18,7 @@ class Hub(BaseHub):
         """ Iterate through fds, removing the ones that are bad per the
         operating system.
         """
-        for fd in list(self.listeners[READ]) + list(self.listeners[WRITE]):
+        for fd in list(self.listeners_r) + list(self.listeners_w):
             try:
                 select.select([fd], [], [], 0)
             except select.error as e:
@@ -26,6 +26,7 @@ class Hub(BaseHub):
                     self.remove_descriptor(fd)
 
     def wait(self, seconds=None):
+
         if not self.listeners_r and not self.listeners_w:
             if seconds is not None:
                 ev_sleep(0)
@@ -35,33 +36,33 @@ class Hub(BaseHub):
             else:
                 return
 
-        for fd in list(self.listeners_r.keys()):  # in-case, size change
-            try:
-                r, w, er = select.select([fd], [], [fd], seconds)
-                seconds = 0
+        try:
+            r, w, er = select.select(list(self.listeners_r), list(self.listeners_w),
+                                     list(self.listeners_r)+list(self.listeners_w),
+                                     seconds)
+            for fd in r:
                 try:
-                    if r or er:
-                        self.listeners_r.get(fd, noop).cb(fd)  # in-case, fd no longer exists
+                    self.listeners_r.get(fd, noop).cb(fd)
                 except self.SYSTEM_EXCEPTIONS:
                     continue
                 except:
                     self.squelch_exception(fd, sys.exc_info())
                     clear_sys_exc_info()
 
-            except select.error as e:
-                if get_errno(e) == errno.EINTR:
-                    pass
-                elif get_errno(e) in BAD_SOCK:
-                    self.remove_descriptor(fd)
-                else:
-                    raise
-
-        for fd in list(self.listeners_w.keys()):  # in-case, size change
-            try:
-                r, w, er = select.select([], [fd], [fd], seconds)
-                seconds = 0
+            for fd in w:
                 try:
-                    if w or er:
+                    self.listeners_w.get(fd, noop).cb(fd)
+                except self.SYSTEM_EXCEPTIONS:
+                    continue
+                except:
+                    self.squelch_exception(fd, sys.exc_info())
+                    clear_sys_exc_info()
+
+            for fd in er:
+                try:
+                    if fd in self.listeners_r:
+                        self.listeners_r.get(fd, noop).cb(fd)
+                    if fd in self.listeners_w:
                         self.listeners_w.get(fd, noop).cb(fd)
                 except self.SYSTEM_EXCEPTIONS:
                     continue
@@ -69,10 +70,10 @@ class Hub(BaseHub):
                     self.squelch_exception(fd, sys.exc_info())
                     clear_sys_exc_info()
 
-            except select.error as e:
+        except select.error as e:
                 if get_errno(e) == errno.EINTR:
                     pass
                 elif get_errno(e) in BAD_SOCK:
-                    self.remove_descriptor(fd)
+                    self._remove_bad_fds()
                 else:
                     raise
