@@ -10,6 +10,8 @@ _g_debug = False
 
 
 class Timer(object):
+    __slots__ = ['scheduled_time', 'seconds', 'tpl', 'called', 'traceback']
+
     def __init__(self, seconds, cb, *args, **kw):
         """Create a timer.
             seconds: The minimum number of seconds to wait before calling
@@ -59,10 +61,7 @@ class Timer(object):
             try:
                 cb(*args, **kw)
             finally:
-                try:
-                    del self.tpl
-                except AttributeError:
-                    pass
+                self.tpl = None
 
     def cancel(self):
         """Prevent this timer from being called. If the timer has already
@@ -71,10 +70,7 @@ class Timer(object):
         if not self.called:
             self.called = True
             hubs.get_hub().timer_canceled(self)
-            try:
-                del self.tpl
-            except AttributeError:
-                pass
+            self.tpl = None
 
     # No default ordering in 3.x. heapq uses <
     # FIXME should full set be added?
@@ -83,6 +79,7 @@ class Timer(object):
 
 
 class LocalTimer(Timer):
+    __slots__ = Timer.__slots__+['greenlet']
 
     def __init__(self, *args, **kwargs):
         self.greenlet = greenlet.getcurrent()
