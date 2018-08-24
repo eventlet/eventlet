@@ -8,7 +8,6 @@ if not hasattr(select, 'epoll'):
                       ' python-epoll (or similar) package support was removed,'
                       ' please open issue on https://github.com/eventlet/eventlet/'
                       ' if you must use epoll outside stdlib.')
-epoll = select.epoll
 
 from eventlet.hubs.hub import BaseHub
 from eventlet.hubs import poll
@@ -20,7 +19,7 @@ from eventlet.hubs import poll
 class Hub(poll.Hub):
     def __init__(self, clock=None):
         BaseHub.__init__(self, clock)
-        self.poll = epoll()
+        self.poll = select.epoll()
 
     def add(self, evtype, fileno, cb, tb, mac):
         not_new = not(fileno in self.listeners_r or fileno in self.listeners_w)
