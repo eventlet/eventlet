@@ -37,43 +37,44 @@ class Hub(BaseHub):
                 return
 
         try:
-            r, w, er = select.select(list(self.listeners_r), list(self.listeners_w),
-                                     list(self.listeners_r)+list(self.listeners_w),
+            r, w, er = select.select(self.listeners_r.keys(), self.listeners_w.keys(),
+                                     list(self.listeners_r.keys())+list(self.listeners_w.keys()),
                                      seconds)
-            for fd in r:
-                try:
-                    self.listeners_r.get(fd, noop).cb(fd)
-                except self.SYSTEM_EXCEPTIONS:
-                    continue
-                except:
-                    self.squelch_exception(fd, sys.exc_info())
-                    clear_sys_exc_info()
-
-            for fd in w:
-                try:
-                    self.listeners_w.get(fd, noop).cb(fd)
-                except self.SYSTEM_EXCEPTIONS:
-                    continue
-                except:
-                    self.squelch_exception(fd, sys.exc_info())
-                    clear_sys_exc_info()
-
-            for fd in er:
-                try:
-                    if fd in self.listeners_r:
-                        self.listeners_r.get(fd, noop).cb(fd)
-                    if fd in self.listeners_w:
-                        self.listeners_w.get(fd, noop).cb(fd)
-                except self.SYSTEM_EXCEPTIONS:
-                    continue
-                except:
-                    self.squelch_exception(fd, sys.exc_info())
-                    clear_sys_exc_info()
-
         except select.error as e:
-                if get_errno(e) == errno.EINTR:
-                    pass
-                elif get_errno(e) in BAD_SOCK:
-                    self._remove_bad_fds()
-                else:
-                    raise
+            if get_errno(e) == errno.EINTR:
+                return
+            elif get_errno(e) in BAD_SOCK:
+                self._remove_bad_fds()
+                return
+            else:
+                raise
+
+        for fd in r:
+            try:
+                self.listeners_r.get(fd, noop).cb(fd)
+            except self.SYSTEM_EXCEPTIONS:
+                raise
+            except:
+                self.squelch_exception(fd, sys.exc_info())
+                clear_sys_exc_info()
+
+        for fd in w:
+            try:
+                self.listeners_w.get(fd, noop).cb(fd)
+            except self.SYSTEM_EXCEPTIONS:
+                raise
+            except:
+                self.squelch_exception(fd, sys.exc_info())
+                clear_sys_exc_info()
+
+        for fd in er:
+            try:
+                if fd in self.listeners_r:
+                    self.listeners_r.get(fd, noop).cb(fd)
+                if fd in self.listeners_w:
+                    self.listeners_w.get(fd, noop).cb(fd)
+            except self.SYSTEM_EXCEPTIONS:
+                raise
+            except:
+                self.squelch_exception(fd, sys.exc_info())
+                clear_sys_exc_info()
