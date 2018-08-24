@@ -1,7 +1,6 @@
 import collections
 
-from eventlet.support.greenlets import getcurrent
-from eventlet.timeout import Timeout
+import eventlet
 from eventlet import hubs
 
 
@@ -98,7 +97,7 @@ class Semaphore(object):
             elif timeout < 0:
                 raise ValueError("timeout value must be strictly positive")
 
-        current_thread = getcurrent()
+        current_thread = eventlet.getcurrent()
 
         if self.counter <= 0 or self._waiters:
             if current_thread not in self._waiters:
@@ -107,7 +106,7 @@ class Semaphore(object):
                 switch = hubs.get_hub().switch
                 if timeout is not None:
                     ok = False
-                    with Timeout(timeout, False):
+                    with eventlet.Timeout(timeout, False):
                         while self.counter <= 0:
                             switch()
                         ok = True
