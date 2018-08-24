@@ -1,12 +1,11 @@
 import errno
-import sys
-
-from eventlet import patcher
-select = patcher.original('select')
-time = patcher.original('time')
 
 from eventlet.hubs.hub import BaseHub, READ, WRITE, noop
-from eventlet.support import get_errno, clear_sys_exc_info
+from eventlet.support import get_errno
+from eventlet import patcher
+
+ev_sleep = patcher.original('time').sleep
+select = patcher.original('select')
 
 EXC_MASK = select.POLLERR | select.POLLHUP
 READ_MASK = select.POLLIN | select.POLLPRI
@@ -68,13 +67,16 @@ class Hub(BaseHub):
         return self.poll.poll(int(seconds * 1000.0))
 
     def wait(self, seconds=None):
-        readers = self.listeners[READ]
-        writers = self.listeners[WRITE]
 
-        if not readers and not writers:
-            if seconds:
-                time.sleep(seconds)
-            return
+        if not self.listeners_r and not self.listeners_w:
+            if seconds is not None:
+                ev_sleep(seconds)
+                if not self.listeners_r and not self.listeners_w:
+                    return
+                seconds = 0
+            else:
+                return
+
         try:
             presult = self.do_poll(seconds)
         except (IOError, select.error) as e:
@@ -114,17 +116,21 @@ class Hub(BaseHub):
         #        self.squelch_exception(fileno, sys.exc_info())
         #        clear_sys_exc_info()
 
-        for fileno, event in presult:
-            if event & READ_MASK:
-                readers.get(fileno, noop).cb(fileno)
-            if event & WRITE_MASK:
-                writers.get(fileno, noop).cb(fileno)
+        for fd, event in presult:
             if event & select.POLLNVAL:
-                self.remove_descriptor(fileno)
+                self.remove_descriptor(fd)
                 continue
+            if event & READ_MASK and fd in self.listeners_r:
+                self.listeners_r.get(fd, noop).cb(fd)
+
+            if event & WRITE_MASK and fd in self.listeners_w:
+                self.listeners_w.get(fd, noop).cb(fd)
+
             if event & EXC_MASK:
-                readers.get(fileno, noop).cb(fileno)
-                writers.get(fileno, noop).cb(fileno)
+                if fd in self.listeners_r:
+                    self.listeners_r.get(fd, noop).cb(fd)
+                if fd in self.listeners_w:
+                    self.listeners_w.get(fd, noop).cb(fd)
 
         if self.debug_blocking:
             self.block_detect_post()
