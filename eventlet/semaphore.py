@@ -97,7 +97,7 @@ class Semaphore(object):
             if current_thread not in self._waiters:
                 self._waiters.append(current_thread)
             try:
-                switch = hubs.get_hub().switch()
+                switch = hubs.get_hub().switch
                 if timeout is not None:
                     ok = False
                     with Timeout(timeout, False):
