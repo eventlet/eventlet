@@ -106,7 +106,11 @@ def alarm_handler(signum, frame):
 class BaseHub(object):
     """ Base hub class for easing the implementation of subclasses that are
     specific to a particular underlying event architecture. """
-
+    __slots__ = ['listeners_r', 'listeners_w', 'secondaries_r', 'secondaries_w', 'listeners', 'secondaries',
+                 'closed', 'clock', 'greenlet', 'stopping', 'running', 'timers', 'next_timers', 'lclass',
+                 'timers_canceled', '_old_signal_handler',
+                 'debug_exceptions', 'debug_blocking', 'debug_blocking_resolution',
+                 'poll']
     SYSTEM_EXCEPTIONS = (KeyboardInterrupt, SystemExit)
     READ = READ
     WRITE = WRITE
@@ -132,10 +136,10 @@ class BaseHub(object):
         self.next_timers = []
         self.lclass = FdListener
         self.timers_canceled = 0
+        self._old_signal_handler = False
         self.debug_exceptions = True
         self.debug_blocking = False
         self.debug_blocking_resolution = 1
-        self._old_signal_handler = False
 
     def block_detect_pre(self):
         # shortest alarm we can possibly raise is one second
