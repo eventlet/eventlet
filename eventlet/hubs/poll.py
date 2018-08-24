@@ -120,17 +120,16 @@ class Hub(BaseHub):
             if event & select.POLLNVAL:
                 self.remove_descriptor(fd)
                 continue
-            if event & READ_MASK and fd in self.listeners_r:
+
+            if event & READ_MASK:
                 self.listeners_r.get(fd, noop).cb(fd)
 
-            if event & WRITE_MASK and fd in self.listeners_w:
+            if event & WRITE_MASK:
                 self.listeners_w.get(fd, noop).cb(fd)
 
             if event & EXC_MASK:
-                if fd in self.listeners_r:
-                    self.listeners_r.get(fd, noop).cb(fd)
-                if fd in self.listeners_w:
-                    self.listeners_w.get(fd, noop).cb(fd)
+                self.listeners_r.get(fd, noop).cb(fd)
+                self.listeners_w.get(fd, noop).cb(fd)
 
         if self.debug_blocking:
             self.block_detect_post()
