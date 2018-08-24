@@ -174,5 +174,4 @@ def wrap_is_timeout(base):
 
 
 def is_timeout(obj):
-    py3err = getattr(__builtins__, 'TimeoutError', Timeout)
-    return bool(getattr(obj, 'is_timeout', False)) or isinstance(obj, py3err)
+    return bool(getattr(obj, 'is_timeout', False)) or isinstance(obj, getattr(__builtins__, 'TimeoutError', Timeout))
