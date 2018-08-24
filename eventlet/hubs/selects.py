@@ -28,7 +28,7 @@ class Hub(BaseHub):
     def wait(self, seconds=None):
         if not self.listeners_r and not self.listeners_w:
             if seconds is not None:
-                ev_sleep(seconds)
+                ev_sleep(0)
                 if not self.listeners_r and not self.listeners_w:
                     return
                 seconds = 0
