@@ -1,6 +1,7 @@
 import traceback
 
-from eventlet.greenthread import GreenThread, spawn, spawn_n
+import eventlet
+from eventlet.greenthread import GreenThread
 from eventlet.queue import LightQueue
 from eventlet.semaphore import Semaphore
 from eventlet.event import Event
@@ -78,7 +79,7 @@ class GreenPool(object):
             return gt
         else:
             self.sem.acquire()
-            gt = spawn(function, *args, **kwargs)
+            gt = eventlet.spawn(function, *args, **kwargs)
             if not self.coroutines_running:
                 self.no_coros_running = Event()
             self.coroutines_running.add(gt)
@@ -110,7 +111,7 @@ class GreenPool(object):
             self._spawn_n_impl(function, args, kwargs, None)
         else:
             self.sem.acquire()
-            g = spawn_n(self._spawn_n_impl, function, args, kwargs, True)
+            g = eventlet.spawn_n(self._spawn_n_impl, function, args, kwargs, True)
             if not self.coroutines_running:
                 self.no_coros_running = Event()
             self.coroutines_running.add(g)
@@ -155,7 +156,7 @@ class GreenPool(object):
         if function is None:
             function = lambda *a: a
         gi = GreenMap(self.size)
-        spawn_n(self._do_map, function, iterable, gi)
+        eventlet.spawn_n(self._do_map, function, iterable, gi)
         return gi
 
     def imap(self, function, *iterables):

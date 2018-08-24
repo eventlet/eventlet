@@ -25,26 +25,24 @@ class Hub(BaseHub):
                 if get_errno(e) in BAD_SOCK:
                     self.remove_descriptor(fd)
 
-    def wait(self, secs=None):
+    def wait(self, seconds=None):
         readers = self.listeners[READ]
         writers = self.listeners[WRITE]
         if not readers and not writers:
             return
-        if secs is not None:
-            ev_sleep(secs)
+        if seconds is not None:
+            ev_sleep(seconds)
             if not readers and not writers:
                 return
-            secs = 0
+            seconds = 0
 
-        for fd in readers:
+        for fd in readers[:]:  # in-case, size change
             try:
-                r, w, er = select.select([fd], [], [fd], secs)
-                secs = 0
+                r, w, er = select.select([fd], [], [fd], seconds)
+                seconds = 0
                 try:
-                    if er:
-                        readers[fd].cb(fd)
-                    elif r:
-                        readers[fd].cb(fd)
+                    if r or er:
+                        readers.get(fd, noop).cb(fd)  # in-case, fd no longer exists
                 except self.SYSTEM_EXCEPTIONS:
                     continue
                 except:
@@ -59,15 +57,13 @@ class Hub(BaseHub):
                 else:
                     raise
 
-        for fd in writers:
+        for fd in writers[:]:
             try:
-                r, w, er = select.select([], [fd], [fd], secs)
-                secs = 0
+                r, w, er = select.select([], [fd], [fd], seconds)
+                seconds = 0
                 try:
-                    if er:
-                        writers[fd].cb(fd)
-                    elif w:
-                        writers[fd].cb(fd)
+                    if w or er:
+                        writers.get(fd, noop).cb(fd)
                 except self.SYSTEM_EXCEPTIONS:
                     continue
                 except:

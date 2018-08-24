@@ -23,6 +23,7 @@ from eventlet.hubs import timer, IOClosed
 from eventlet.support import greenlets as greenlet, clear_sys_exc_info
 from eventlet.support.greenlets import getcurrent
 import monotonic
+import six
 
 g_prevent_multiple_readers = True
 
@@ -193,7 +194,7 @@ class BaseHub(object):
             their greenlets queued up to send.
         """
         found = False
-        for bucket in self.secondaries.values():
+        for evtype, bucket in six.iteritems(self.secondaries):
             if fileno in bucket:
                 for listener in bucket.pop(fileno):
                     found = True
@@ -202,7 +203,7 @@ class BaseHub(object):
 
         # For the primary listeners, we actually need to call remove,
         # which may modify the underlying OS polling objects.
-        for bucket in self.listeners.values():
+        for evtype, bucket in six.iteritems(self.listeners):
             if fileno in bucket:
                 listener = bucket[fileno]
                 found = True

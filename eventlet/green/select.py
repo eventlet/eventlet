@@ -1,5 +1,5 @@
 import eventlet
-from eventlet.hubs import get_hub
+from eventlet import hubs
 import six
 __select = eventlet.patcher.original('select')
 error = __select.error
@@ -34,7 +34,7 @@ def select(read_list, write_list, error_list, timeout=None):
             timeout = float(timeout)
         except ValueError:
             raise TypeError("Expected number for timeout")
-    hub = get_hub()
+    hub = hubs.get_hub()
     timers = []
     current = eventlet.getcurrent()
     assert hub.greenlet is not current, 'do not call blocking functions from the mainloop'
