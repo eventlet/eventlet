@@ -356,15 +356,10 @@ class BaseHub(object):
                 if self.debug_blocking:
                     self.block_detect_post()
                 self.prepare_timers()
-                wakeup_when = self.sleep_until()
-                if wakeup_when is None:
-                    sleep_time = self.default_sleep()
-                else:
-                    sleep_time = wakeup_when - self.clock()
-                if sleep_time > 0:
-                    self.wait(sleep_time)
-                else:
-                    self.wait(0)
+
+                sleep_time = self.timers[0][0] - self.clock() if self.timers else 60.0
+                self.wait(sleep_time if sleep_time > 0 else 0)
+
             else:
                 self.timers_canceled = 0
                 del self.timers[:]
