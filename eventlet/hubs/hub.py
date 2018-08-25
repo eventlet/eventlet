@@ -122,9 +122,8 @@ class BaseHub(object):
         self.closed = []
 
         if clock is None:
-            clock_m = os.environ.get('EVENTLET_CLOCK', None)
-            clock = getattr(patcher.original('monotonic' if clock_m is None else clock_m),
-                            os.environ.get('EVENTLET_CLOCK_METH', clock_m))
+            clock_m = os.environ.get('EVENTLET_CLOCK', 'monotonic')
+            clock = getattr(patcher.original(clock_m), os.environ.get('EVENTLET_CLOCK_METH', clock_m))
 
         self.clock = clock
 
