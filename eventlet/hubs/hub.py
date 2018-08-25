@@ -120,9 +120,7 @@ class BaseHub(object):
         self.secondaries = {READ: self.secondaries_r, WRITE: self.secondaries_w}
         self.closed = []
 
-        if clock is None:
-            clock = 'monotonic.monotonic'
-        self.clock = patcher.import_patched(clock)
+        self.clock = patcher.import_patched('monotonic.monotonic' if clock is None else clock)
 
         self.greenlet = greenlet.greenlet(self.run)
         self.stopping = False
