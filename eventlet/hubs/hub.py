@@ -428,7 +428,6 @@ class BaseHub(object):
                         self.timers_canceled -= 1
                         if not self.timers:
                             break
-                        i -= 1
                         continue
                     if exp < scheduled_time:
                         continue
