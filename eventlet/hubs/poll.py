@@ -124,10 +124,10 @@ class Hub(BaseHub):
             if event & READ_MASK and fd in self.listeners_r:
                 self.listeners_r[fd].cb(fd)
 
-            elif event & WRITE_MASK and fd in self.listeners_w:
+            if event & WRITE_MASK and fd in self.listeners_w:
                 self.listeners_w[fd].cb(fd)
 
-            elif event & EXC_MASK:
+            if event & EXC_MASK:
                 if fd in self.listeners_r:
                     self.listeners_r[fd].cb(fd)
                 if fd in self.listeners_w:
