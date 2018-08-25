@@ -23,8 +23,8 @@
 import functools
 import inspect
 
-from eventlet.support import greenlets as greenlet
-from eventlet.hubs import get_hub
+import eventlet
+from eventlet import hubs
 
 __all__ = ['Timeout', 'with_timeout', 'wrap_is_timeout', 'is_timeout']
 
@@ -62,11 +62,11 @@ class Timeout(BaseException):
         if self.seconds is None:  # "fake" timeout (never expires)
             self.timer = None
         elif self.exception is None or isinstance(self.exception, bool):  # timeout that raises self
-            self.timer = get_hub().schedule_call_global(
-                self.seconds, greenlet.getcurrent().throw, self)
+            self.timer = hubs.get_hub().schedule_call_global(
+                self.seconds, eventlet.getcurrent().throw, self)
         else:  # regular timeout with user-provided exception
-            self.timer = get_hub().schedule_call_global(
-                self.seconds, greenlet.getcurrent().throw, self.exception)
+            self.timer = hubs.get_hub().schedule_call_global(
+                self.seconds, eventlet.getcurrent().throw, self.exception)
         return self
 
     @property

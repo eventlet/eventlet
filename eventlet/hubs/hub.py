@@ -21,7 +21,6 @@ else:
 
 from eventlet.hubs import timer, IOClosed
 from eventlet.support import greenlets as greenlet, clear_sys_exc_info
-from eventlet.support.greenlets import getcurrent
 import monotonic
 import inspect
 
@@ -62,7 +61,7 @@ class FdListener(object):
         self.evtype, self.fileno, self.cb, self.tb, self.mark_as_closed = args
         assert (self.evtype is READ or self.evtype is WRITE)
         self.spent = False
-        self.greenlet = getcurrent()
+        self.greenlet = greenlet.getcurrent()
 
     def __repr__(self):
         return "%s(%r, %r, %r, %r)" % (type(self).__name__, self.evtype, self.fileno, self.cb, self.tb)
@@ -106,11 +105,7 @@ def alarm_handler(signum, frame):
 class BaseHub(object):
     """ Base hub class for easing the implementation of subclasses that are
     specific to a particular underlying event architecture. """
-    __slots__ = ['listeners_r', 'listeners_w', 'secondaries_r', 'secondaries_w', 'listeners', 'secondaries',
-                 'closed', 'clock', 'greenlet', 'stopping', 'running', 'timers', 'next_timers', 'lclass',
-                 'timers_canceled', '_old_signal_handler',
-                 'debug_exceptions', 'debug_blocking', 'debug_blocking_resolution',
-                 'poll']
+
     SYSTEM_EXCEPTIONS = (KeyboardInterrupt, SystemExit)
     READ = READ
     WRITE = WRITE
@@ -126,7 +121,7 @@ class BaseHub(object):
         self.closed = []
 
         if clock is None:
-            clock = monotonic.time.time
+            clock = monotonic.monotonic
         self.clock = clock
 
         self.greenlet = greenlet.greenlet(self.run)
@@ -291,7 +286,7 @@ class BaseHub(object):
             self.greenlet = new
 
     def switch(self):
-        cur = getcurrent()
+        cur = greenlet.getcurrent()
         assert cur is not self.greenlet, 'Cannot switch to MAINLOOP from MAINLOOP'
         switch_out = getattr(cur, 'switch_out', None)
         if switch_out is not None:
@@ -380,7 +375,7 @@ class BaseHub(object):
         if self.running:
             self.stopping = True
         if wait:
-            assert self.greenlet is not getcurrent(), "Can't abort with wait from inside the hub's greenlet."
+            assert self.greenlet is not greenlet.getcurrent(), "Can't abort with wait from inside the hub's greenlet."
             # schedule an immediate timer just so the hub doesn't sleep
             self.schedule_call_global(0, lambda: None)
             # switch to it; when done the hub will switch back to its parent,
@@ -422,7 +417,7 @@ class BaseHub(object):
                 continue
             heappush(t, item)
 
-    def schedule_call_local(self, secs, cb, *args, **kw):
+    def schedule_call_local(self, seconds, cb, *args, **kw):
         """Schedule a callable to be called after 'seconds' seconds have
         elapsed. Cancel the timer if greenlet has exited.
             seconds: The number of seconds to wait.
@@ -430,11 +425,11 @@ class BaseHub(object):
             *args: Arguments to pass to the callable when called.
             **kw: Keyword arguments to pass to the callable when called.
         """
-        t = timer.LocalTimer(secs, cb, *args, **kw)
+        t = timer.LocalTimer(seconds, cb, *args, **kw)
         self.add_timer(t)
         return t
 
-    def schedule_call_global(self, secs, cb, *args, **kw):
+    def schedule_call_global(self, seconds, cb, *args, **kw):
         """Schedule a callable to be called after 'seconds' seconds have
         elapsed. The timer will NOT be canceled if the current greenlet has
         exited before the timer fires.
@@ -443,7 +438,7 @@ class BaseHub(object):
             *args: Arguments to pass to the callable when called.
             **kw: Keyword arguments to pass to the callable when called.
         """
-        t = timer.Timer(secs, cb, *args, **kw)
+        t = timer.Timer(seconds, cb, *args, **kw)
         self.add_timer(t)
         return t
 

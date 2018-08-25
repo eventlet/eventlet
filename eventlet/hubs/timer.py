@@ -35,10 +35,9 @@ class Timer(object):
         return not self.called
 
     def __repr__(self):
-        secs = getattr(self, 'seconds', None)
-        cb, args, kw = getattr(self, 'tpl', (None, None, None))
-        retval = "Timer(%s, %s, *%s, **%s)" % (
-            secs, cb, args, kw)
+        cb, args, kw = self.tpl if self.tpl is not None else (None, None, None)
+        retval = "Timer(%s, %s, *%s, **%s)" % \
+                 (self.seconds, cb, args, kw)
         if _g_debug and hasattr(self, 'traceback'):
             retval += '\n' + self.traceback.getvalue()
         return retval
@@ -70,7 +69,7 @@ class Timer(object):
         if not self.called:
             self.called = True
             hubs.get_hub().timer_canceled(self)
-            self.tpl = None
+            self.tpl = (None, None, None)
 
     # No default ordering in 3.x. heapq uses <
     # FIXME should full set be added?

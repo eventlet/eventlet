@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 from eventlet import hubs
-from eventlet.support.greenlets import getcurrent
+from eventlet.support import greenlets as greenlet
 
 __all__ = ['Event']
 
@@ -114,7 +114,7 @@ class Event(object):
         When the timeout argument is present and not None, it should be a floating point number
         specifying a timeout for the operation in seconds (or fractions thereof).
         """
-        current = getcurrent()
+        current = greenlet.getcurrent()
         if self._result is NOT_USED:
             hub = hubs.get_hub()
             self._waiters.add(current)

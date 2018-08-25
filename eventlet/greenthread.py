@@ -206,7 +206,7 @@ class GreenThread(greenlet.greenlet):
 
         Remove successfully return True, otherwise False
         """
-        if self._exit_funcs is None or not self._exit_funcs:
+        if not self._exit_funcs:
             return False
         try:
             self._exit_funcs.remove((func, curried_args, curried_kwargs))
