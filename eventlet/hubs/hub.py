@@ -42,10 +42,13 @@ def closed_callback(fileno):
 
 
 class FdListener(object):
-    __slots__ = ['evtype', 'fileno', 'cb', 'tb', 'mark_as_closed', 'spent', 'greenlet', 'where_called']
+    __slots__ = ['evtype', 'fileno', 'cb', 'tb', 'mark_as_closed', 'spent', 'greenlet']
 
     def __init__(self, *args):
-        """ The following are required:
+        """
+        *args: 'evtype', 'fileno', 'cb', 'tb', 'mark_as_closed'
+
+        The following are required:
         cb - the standard callback, which will switch into the
             listening greenlet to indicate that the event waited upon
             is ready
@@ -81,6 +84,7 @@ noop = FdListener(READ, 0, lambda x: None, lambda x: None, None)
 
 
 class DebugListener(FdListener):
+    __slots__ = FdListener.__slots__ + ['where_called']
 
     def __init__(self, evtype, fileno, cb, tb, mark_as_closed):
         super(DebugListener, self).__init__(evtype, fileno, cb, tb, mark_as_closed)
@@ -120,9 +124,7 @@ class BaseHub(object):
         self.secondaries = {READ: self.secondaries_r, WRITE: self.secondaries_w}
         self.closed = []
 
-        if clock is None:
-            clock = green_time.monotonic
-        self.clock = clock
+        self.clock = green_time.monotonic if clock is None else clock
 
         self.greenlet = greenlet.greenlet(self.run)
         self.stopping = False
@@ -255,7 +257,15 @@ class BaseHub(object):
     def remove_descriptor(self, fileno):
         """ Completely remove all listeners for this fileno.  For internal use
         only."""
-        listeners = [self.listeners_r.pop(fileno, noop), self.listeners_w.pop(fileno, noop)]
+
+        listeners = []
+        listener = self.listeners_r.pop(fileno, None)
+        if listener:
+            listeners.append(listener)
+        listener = self.listeners_w.pop(fileno, None)
+        if listener:
+            listeners.append(listener)
+
         listeners.extend(self.secondaries_r.pop(fileno, ()))
         listeners.extend(self.secondaries_w.pop(fileno, ()))
         for listener in listeners:
@@ -404,8 +414,12 @@ class BaseHub(object):
         len_timers = len(self.timers) + len(self.next_timers)
         if len_timers > 1000 and len_timers / 2 <= self.timers_canceled:
             self.timers_canceled = 0
-            self.timers = [t for t in self.timers if not t[1].called]
-            self.next_timers = [t for t in self.next_timers if not t[1].called]
+            timers = [t for t in self.timers if not t[1].called]
+            del self.timers[:]
+            self.timers += timers
+            timers = [t for t in self.next_timers if not t[1].called]
+            del self.next_timers[:]
+            self.next_timers += timers
             heapify(self.timers)
 
     def prepare_timers(self):
