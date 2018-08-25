@@ -429,9 +429,10 @@ class BaseHub(object):
                         if not self.timers:
                             break
                         continue
+                    i += 1
+                    
                     if exp < scheduled_time:
                         continue
-                    i += 1
                     self.timers.insert(i, (scheduled_time, tmr))
                     added = True
                     break
