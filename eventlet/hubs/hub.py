@@ -406,7 +406,6 @@ class BaseHub(object):
         return scheduled_time
 
     def timer_canceled(self, tmr):
-        self.canceled_timers.append(id(tmr))
         self.timers_canceled += 1
 
     def prepare_timers(self):
@@ -415,6 +414,7 @@ class BaseHub(object):
             scheduled_time, tmr = nxt_timers.pop(-1)
             if id(tmr) in self.canceled_timers:  # timer got cancelled before assigned
                 continue
+
             added = False
             if self.timers:
                 skip = 0
@@ -425,11 +425,14 @@ class BaseHub(object):
                         skip -= 1
                         self.timers_canceled -= 1
                         continue
+
                     if self.timers[i - skip][0] < scheduled_time:
                         continue
+
                     added = True
                     self.timers.insert(i - skip, (scheduled_time, tmr))
                     break
+
             if not added:
                 self.timers.append((scheduled_time, tmr))
             self.timers_count += 1
