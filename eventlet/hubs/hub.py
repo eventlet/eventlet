@@ -467,7 +467,6 @@ class BaseHub(object):
         return t
 
     def fire_timers(self, when):
-        when += 0.000000001
         t = self.timers
         while t:
             exp, tmr = t[0]
