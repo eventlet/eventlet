@@ -404,9 +404,9 @@ class BaseHub(object):
                 added = True
                 self.timers.insert(i, (scheduled_time, tmr))
                 break
-
         if not added:
             self.timers.append((scheduled_time, tmr))
+
         self.timers_count += 1
         return scheduled_time
 
@@ -455,6 +455,7 @@ class BaseHub(object):
             if when < exp:
                 break
             t.pop(0)
+            self.timers_count -= 1
             try:
                 tmr()
             except self.SYSTEM_EXCEPTIONS:
