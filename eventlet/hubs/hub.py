@@ -127,7 +127,6 @@ class BaseHub(object):
         self.timers = []
         self.timers_count = 0
         self.next_timers = []
-        self.canceled_timers = []
         self.timers_canceled = 0
 
         self.lclass = FdListener
@@ -351,7 +350,7 @@ class BaseHub(object):
                 self.prepare_timers()
                 if self.debug_blocking:
                     self.block_detect_pre()
-                    
+
                 self.fire_timers(self.clock())
 
                 if self.debug_blocking:
@@ -363,7 +362,9 @@ class BaseHub(object):
 
             else:
                 self.timers_count = 0
+                self.timers_canceled = 0
                 del self.timers[:]
+                del self.next_timers[:]
         finally:
             self.running = False
             self.stopping = False
@@ -411,23 +412,23 @@ class BaseHub(object):
     def prepare_timers(self):
         nxt_timers = self.next_timers
         while nxt_timers:
-            scheduled_time, tmr = nxt_timers.pop()
-            if id(tmr) in self.canceled_timers:  # timer got cancelled before called
+            scheduled_time, tmr = nxt_timers.pop(-1)
+            if id(tmr) in self.canceled_timers:  # timer got cancelled before assigned
                 continue
             added = False
             if self.timers:
                 skip = 0
                 for i in range(0, self.timers_count):  # one range to clean and assign next
-                    if id(self.timers[i]) in self.canceled_timers:  # GC
+                    if self.timers[i][1].called:     # GC
                         self.timers_count -= 1
                         self.timers.pop(i)
                         skip -= 1
                         self.timers_canceled -= 1
                         continue
-                    if self.timers[i-skip][0] < scheduled_time:
+                    if self.timers[i - skip][0] < scheduled_time:
                         continue
                     added = True
-                    self.timers.insert(i-skip, (scheduled_time, tmr))
+                    self.timers.insert(i - skip, (scheduled_time, tmr))
                     break
             if not added:
                 self.timers.append((scheduled_time, tmr))
@@ -484,7 +485,7 @@ class BaseHub(object):
         return self.listeners_w.values()
 
     def get_timers_count(self):
-        return len(self.timers)
+        return len(self.timers) + len(self.next_timers)
 
     def set_debug_listeners(self, value):
         self.lclass = DebugListener if value else FdListener
