@@ -413,6 +413,7 @@ class BaseHub(object):
         while nxt_timers:
             scheduled_time, tmr = nxt_timers.pop(-1)
             if tmr.called:  # timer got cancelled before assigned
+                self.timers_canceled -= 1
                 continue
 
             added = False
@@ -420,10 +421,12 @@ class BaseHub(object):
                 skip = 0
                 for i in range(0, self.timers_count):  # one range to clean and assign next
                     i -= skip
-                    if self.timers[i][1].called:     # GC
-                        self.timers_count -= 1
+                    if self.timers[i][1].called:   # clear called
                         self.timers.pop(i)
+                        self.timers_count -= 1
                         self.timers_canceled -= 1
+                        if not self.timers:
+                            break
                         skip -= 1
                         continue
 
