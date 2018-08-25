@@ -37,9 +37,9 @@ class Hub(BaseHub):
                 return
 
         try:
-            r, w, er = select.select(self.listeners_r.keys(), self.listeners_w.keys(),
-                                     list(self.listeners_r.keys()) + list(self.listeners_w.keys()),
-                                     seconds)
+            rs, ws, er = select.select(self.listeners_r.keys(), self.listeners_w.keys(),
+                                       list(self.listeners_r.keys()) + list(self.listeners_w.keys()),
+                                       seconds)
         except select.error as e:
             if get_errno(e) == errno.EINTR:
                 return
@@ -49,32 +49,40 @@ class Hub(BaseHub):
             else:
                 raise
 
-        for fd in er:
+        for fileno in er:
+            r = self.listeners_r.get(fileno)
+            w = self.listeners_w.get(fileno)
             try:
-                if fd in self.listeners_r:
-                    self.listeners_r.get(fd, noop).cb(fd)
-                if fd in self.listeners_w:
-                    self.listeners_w.get(fd, noop).cb(fd)
+                if r:
+                    r.cb(fileno)
+                if w:
+                    w.cb(fileno)
             except self.SYSTEM_EXCEPTIONS:
                 raise
             except:
-                self.squelch_exception(fd, sys.exc_info())
+                self.squelch_exception(fileno, sys.exc_info())
                 clear_sys_exc_info()
 
-        for fd in r:
+        for fileno in rs:
+            r = self.listeners_r.get(fileno)
+            if not r:
+                continue
             try:
-                self.listeners_r.get(fd, noop).cb(fd)
+                r.cb(fileno)
             except self.SYSTEM_EXCEPTIONS:
                 raise
             except:
-                self.squelch_exception(fd, sys.exc_info())
+                self.squelch_exception(fileno, sys.exc_info())
                 clear_sys_exc_info()
 
-        for fd in w:
+        for fileno in ws:
+            w = self.listeners_w.get(fileno)
+            if not w:
+                continue
             try:
-                self.listeners_w.get(fd, noop).cb(fd)
+                w.cb(fileno)
             except self.SYSTEM_EXCEPTIONS:
                 raise
             except:
-                self.squelch_exception(fd, sys.exc_info())
+                self.squelch_exception(fileno, sys.exc_info())
                 clear_sys_exc_info()
