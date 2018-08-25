@@ -2,10 +2,10 @@ import errno
 import sys
 from eventlet import patcher
 from eventlet.support import get_errno, clear_sys_exc_info
+from eventlet.hubs.hub import BaseHub, noop
+
 select = patcher.original('select')
 ev_sleep = patcher.original('time').sleep
-
-from eventlet.hubs.hub import BaseHub, READ, WRITE, noop
 
 try:
     BAD_SOCK = set((errno.EBADF, errno.WSAENOTSOCK))
@@ -49,6 +49,18 @@ class Hub(BaseHub):
             else:
                 raise
 
+        for fd in er:
+            try:
+                if fd in self.listeners_r:
+                    self.listeners_r.get(fd, noop).cb(fd)
+                if fd in self.listeners_w:
+                    self.listeners_w.get(fd, noop).cb(fd)
+            except self.SYSTEM_EXCEPTIONS:
+                raise
+            except:
+                self.squelch_exception(fd, sys.exc_info())
+                clear_sys_exc_info()
+
         for fd in r:
             try:
                 self.listeners_r.get(fd, noop).cb(fd)
@@ -61,18 +73,6 @@ class Hub(BaseHub):
         for fd in w:
             try:
                 self.listeners_w.get(fd, noop).cb(fd)
-            except self.SYSTEM_EXCEPTIONS:
-                raise
-            except:
-                self.squelch_exception(fd, sys.exc_info())
-                clear_sys_exc_info()
-
-        for fd in er:
-            try:
-                if fd in self.listeners_r:
-                    self.listeners_r.get(fd, noop).cb(fd)
-                if fd in self.listeners_w:
-                    self.listeners_w.get(fd, noop).cb(fd)
             except self.SYSTEM_EXCEPTIONS:
                 raise
             except:

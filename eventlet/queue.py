@@ -46,12 +46,9 @@ import heapq
 import collections
 import traceback
 
-from eventlet.event import Event
-from eventlet.greenthread import getcurrent
+import eventlet
 from eventlet import hubs
 import six
-from eventlet.timeout import Timeout
-
 
 __all__ = ['Queue', 'PriorityQueue', 'LifoQueue', 'LightQueue', 'Full', 'Empty']
 
@@ -110,7 +107,7 @@ class Waiter(object):
         """Wake up the greenlet that is calling wait() currently (if there is one).
         Can only be called from Hub's greenlet.
         """
-        assert getcurrent() is hubs.get_hub(
+        assert eventlet.getcurrent() is hubs.get_hub(
         ).greenlet, "Can only use Waiter.switch method from the mainloop"
         if self.greenlet is not None:
             try:
@@ -122,7 +119,7 @@ class Waiter(object):
         """Make greenlet calling wait() wake up (if there is a wait()).
         Can only be called from Hub's greenlet.
         """
-        assert getcurrent() is hubs.get_hub(
+        assert eventlet.getcurrent() is hubs.get_hub(
         ).greenlet, "Can only use Waiter.switch method from the mainloop"
         if self.greenlet is not None:
             try:
@@ -135,7 +132,7 @@ class Waiter(object):
         """Wait until switch() or throw() is called.
         """
         assert self.greenlet is None, 'This Waiter is already used by %r' % (self.greenlet, )
-        self.greenlet = getcurrent()
+        self.greenlet = eventlet.getcurrent()
         try:
             return hubs.get_hub().switch()
         finally:
@@ -242,7 +239,7 @@ class LightQueue(object):
             self._put(item)
             if self.getters:
                 self._schedule_unlock()
-        elif not block and hubs.get_hub().greenlet is getcurrent():
+        elif not block and hubs.get_hub().greenlet is eventlet.getcurrent():
             # we're in the mainloop, so we cannot wait; we can switch() to other greenlets though
             # find a getter and deliver an item to it
             while self.getters:
@@ -256,7 +253,7 @@ class LightQueue(object):
         elif block:
             waiter = ItemWaiter(item, block)
             self.putters.add(waiter)
-            timeout = Timeout(timeout, Full)
+            timeout = eventlet.Timeout(timeout, Full)
             try:
                 if self.getters:
                     self._schedule_unlock()
@@ -300,7 +297,7 @@ class LightQueue(object):
             if self.putters:
                 self._schedule_unlock()
             return self._get()
-        elif not block and hubs.get_hub().greenlet is getcurrent():
+        elif not block and hubs.get_hub().greenlet is eventlet.getcurrent():
             # special case to make get_nowait() runnable in the mainloop greenlet
             # there are no items in the queue; try to fix the situation by unlocking putters
             while self.putters:
@@ -312,7 +309,7 @@ class LightQueue(object):
             raise Empty
         elif block:
             waiter = Waiter()
-            timeout = Timeout(timeout, Empty)
+            timeout = eventlet.Timeout(timeout, Empty)
             try:
                 self.getters.add(waiter)
                 if self.putters:
@@ -413,7 +410,7 @@ class Queue(LightQueue):
     def __init__(self, maxsize=None):
         LightQueue.__init__(self, maxsize)
         self.unfinished_tasks = 0
-        self._cond = Event()
+        self._cond = eventlet.Event()
 
     def _format(self):
         result = LightQueue._format(self)
