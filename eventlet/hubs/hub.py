@@ -427,7 +427,7 @@ class BaseHub(object):
                         self.timers_canceled -= 1
                         if not self.timers:
                             break
-                        skip -= 1
+                        skip += 1
                         continue
 
                     if self.timers[i][0] < scheduled_time:
