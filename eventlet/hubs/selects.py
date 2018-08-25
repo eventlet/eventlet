@@ -38,7 +38,7 @@ class Hub(BaseHub):
 
         try:
             r, w, er = select.select(self.listeners_r.keys(), self.listeners_w.keys(),
-                                     list(self.listeners_r.keys())+list(self.listeners_w.keys()),
+                                     list(self.listeners_r.keys()) + list(self.listeners_w.keys()),
                                      seconds)
         except select.error as e:
             if get_errno(e) == errno.EINTR:
