@@ -4,6 +4,7 @@ import math
 import signal
 import sys
 import traceback
+import os
 
 arm_alarm = None
 if hasattr(signal, 'setitimer'):
@@ -19,9 +20,9 @@ else:
             signal.alarm(math.ceil(seconds))
         arm_alarm = alarm_signal
 
-from eventlet import patcher
 from eventlet.hubs import timer, IOClosed
 from eventlet.support import greenlets as greenlet, clear_sys_exc_info
+from eventlet import patcher
 import inspect
 
 g_prevent_multiple_readers = True
@@ -120,7 +121,12 @@ class BaseHub(object):
         self.secondaries = {READ: self.secondaries_r, WRITE: self.secondaries_w}
         self.closed = []
 
-        self.clock = patcher.import_patched('monotonic.monotonic' if clock is None else clock)
+        if clock is None:
+            clock_m = os.environ.get('EVENTLET_CLOCK', None)
+            clock = getattr(patcher.original('monotonic' if clock_m is None else clock_m),
+                            os.environ.get('EVENTLET_CLOCK_METH', clock_m))
+
+        self.clock = clock
 
         self.greenlet = greenlet.greenlet(self.run)
         self.stopping = False

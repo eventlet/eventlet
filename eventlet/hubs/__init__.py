@@ -113,7 +113,7 @@ def get_hub():
             _threadlocal.Hub
         except AttributeError:
             use_hub()
-        hub = _threadlocal.hub = _threadlocal.Hub(os.environ.get('EVENTLET_CLOCK', None))
+        hub = _threadlocal.hub = _threadlocal.Hub()
     return hub
 
 
