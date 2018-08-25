@@ -410,6 +410,7 @@ class BaseHub(object):
 
     def prepare_timers(self):
         nxt_timers = self.next_timers
+        timers = self.timers
         while nxt_timers:
             scheduled_time, tmr = nxt_timers.pop(-1)
             if tmr.called:  # timer got cancelled before assigned
@@ -417,28 +418,28 @@ class BaseHub(object):
                 continue
 
             added = False
-            if self.timers:
+            if timers:
                 i = 0
                 while self.timers_count > i:  # one loop to clean and assign next
-                    exp, t = self.timers[i]
+                    exp, t = timers[i]
 
                     if t.called:   # clear called
-                        self.timers.pop(i)
+                        timers.pop(i)
                         self.timers_count -= 1
                         self.timers_canceled -= 1
-                        if not self.timers:
+                        if not timers:
                             break
                         continue
                     i += 1
 
                     if exp < scheduled_time:
                         continue
-                    self.timers.insert(i, (scheduled_time, tmr))
+                    timers.insert(i-1, (scheduled_time, tmr))
                     added = True
                     break
 
             if not added:
-                self.timers.append((scheduled_time, tmr))
+                timers.append((scheduled_time, tmr))
             self.timers_count += 1
 
     def schedule_call_local(self, seconds, cb, *args, **kw):
