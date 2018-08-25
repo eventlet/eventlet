@@ -96,16 +96,18 @@ class Hub(BaseHub):
 
         callbacks = set()
         for fileno, event in presult:
-            if event & READ_MASK:
-                callbacks.add((self.listeners_r.get(fileno, noop), fileno))
-            if event & WRITE_MASK:
-                callbacks.add((self.listeners_w.get(fileno, noop), fileno))
+            if event & READ_MASK and fileno in self.listeners_r:
+                callbacks.add((self.listeners_r[fileno], fileno))
+            if event & WRITE_MASK and fileno in self.listeners_w:
+                callbacks.add((self.listeners_w[fileno], fileno))
             if event & select.POLLNVAL:
                 self.remove_descriptor(fileno)
                 continue
             if event & EXC_MASK:
-                callbacks.add((self.listeners_r.get(fileno, noop), fileno))
-                callbacks.add((self.listeners_w.get(fileno, noop), fileno))
+                if fileno in self.listeners_r:
+                    callbacks.add((self.listeners_r.get(fileno, noop), fileno))
+                if fileno in self.listeners_w:
+                    callbacks.add((self.listeners_w[fileno], fileno))
 
         for listener, fileno in callbacks:
             try:
