@@ -397,16 +397,17 @@ class BaseHub(object):
         scheduled_time = self.clock() + tmr.seconds
 
         added = False
-        for i in range(0, self.timers_count):
-            if self.timers[i][0] < scheduled_time:
-                continue
-            added = True
-            self.timers.insert(i, (scheduled_time, tmr))
-            break
-        self.timers_count += 1
+        if self.timers:
+            for i in range(0, self.timers_count):
+                if self.timers[i][0] < scheduled_time:
+                    continue
+                added = True
+                self.timers.insert(i, (scheduled_time, tmr))
+                break
 
         if not added:
             self.timers.append((scheduled_time, tmr))
+        self.timers_count += 1
         return scheduled_time
 
     def timer_canceled(self, tmr):
