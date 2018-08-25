@@ -424,8 +424,9 @@ class BaseHub(object):
 
     def prepare_timers(self):
         t = self.timers
-        while self.next_timers:
-            item = self.next_timers.pop(-1)
+        nxt_t = self.next_timers
+        while nxt_t:
+            item = nxt_t.pop(-1)
             if item[1].called:
                 self.timers_canceled -= 1
                 continue
