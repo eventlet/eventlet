@@ -419,18 +419,19 @@ class BaseHub(object):
             if self.timers:
                 skip = 0
                 for i in range(0, self.timers_count):  # one range to clean and assign next
+                    i -= skip
                     if self.timers[i][1].called:     # GC
                         self.timers_count -= 1
                         self.timers.pop(i)
-                        skip -= 1
                         self.timers_canceled -= 1
+                        skip -= 1
                         continue
 
-                    if self.timers[i - skip][0] < scheduled_time:
+                    if self.timers[i][0] < scheduled_time:
                         continue
 
                     added = True
-                    self.timers.insert(i - skip, (scheduled_time, tmr))
+                    self.timers.insert(i, (scheduled_time, tmr))
                     break
 
             if not added:
