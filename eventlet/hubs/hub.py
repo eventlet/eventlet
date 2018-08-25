@@ -443,7 +443,7 @@ class BaseHub(object):
         t = self.timers
         while t:
             exp, tmr = t[0]
-            if when > exp:
+            if when < exp:
                 break
             t.pop(0)
             try:
