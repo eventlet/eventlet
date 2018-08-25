@@ -78,7 +78,7 @@ class Timer(object):
 
 
 class LocalTimer(Timer):
-    __slots__ = Timer.__slots__+['greenlet']
+    __slots__ = Timer.__slots__ + ['greenlet']
 
     def __init__(self, *args, **kwargs):
         self.greenlet = greenlet.getcurrent()
