@@ -126,6 +126,10 @@ class BaseHub(object):
         self.running = False
         self.timers = []
         self.timers_count = 0
+        self.next_timers = []
+        self.canceled_timers = []
+        self.timers_canceled = 0
+
         self.lclass = FdListener
         self._old_signal_handler = False
         self.debug_exceptions = True
@@ -344,13 +348,15 @@ class BaseHub(object):
                     # We ditch all of these first.
                     self.close_one()
 
+                self.prepare_timers()
                 if self.debug_blocking:
                     self.block_detect_pre()
-
+                    
                 self.fire_timers(self.clock())
 
                 if self.debug_blocking:
                     self.block_detect_post()
+                self.prepare_timers()
 
                 sleep_time = self.timers[0][0] - self.clock() if self.timers else 60.0
                 self.wait(sleep_time if sleep_time > 0 else 0)
@@ -395,32 +401,37 @@ class BaseHub(object):
 
     def add_timer(self, tmr):
         scheduled_time = self.clock() + tmr.seconds
-
-        added = False
-        if self.timers:
-            for i in range(0, self.timers_count):
-                if self.timers[i][0] < scheduled_time:
-                    continue
-                added = True
-                self.timers.insert(i, (scheduled_time, tmr))
-                break
-        if not added:
-            self.timers.append((scheduled_time, tmr))
-
-        self.timers_count += 1
+        self.next_timers.append((scheduled_time, tmr))
         return scheduled_time
 
     def timer_canceled(self, tmr):
-        tmr_id = id(tmr)
-        for i in range(0, self.timers_count):
-            if tmr_id != id(self.timers[i]):  # tmr.scheduled_time != self.timers[i][0]:
-                continue
-            self.timers_count -= 1
-            self.timers.pop(i)
-            break
+        self.canceled_timers.append(id(tmr))
+        self.timers_canceled += 1
 
     def prepare_timers(self):
-        return
+        nxt_timers = self.next_timers
+        while nxt_timers:
+            scheduled_time, tmr = nxt_timers.pop()
+            if id(tmr) in self.canceled_timers:  # timer got cancelled before called
+                continue
+            added = False
+            if self.timers:
+                skip = 0
+                for i in range(0, self.timers_count):  # one range to clean and assign next
+                    if id(self.timers[i]) in self.canceled_timers:  # GC
+                        self.timers_count -= 1
+                        self.timers.pop(i)
+                        skip -= 1
+                        self.timers_canceled -= 1
+                        continue
+                    if self.timers[i-skip][0] < scheduled_time:
+                        continue
+                    added = True
+                    self.timers.insert(i-skip, (scheduled_time, tmr))
+                    break
+            if not added:
+                self.timers.append((scheduled_time, tmr))
+            self.timers_count += 1
 
     def schedule_call_local(self, seconds, cb, *args, **kw):
         """Schedule a callable to be called after 'seconds' seconds have
