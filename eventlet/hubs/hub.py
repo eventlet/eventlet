@@ -105,7 +105,7 @@ def alarm_handler(signum, frame):
 class BaseHub(object):
     """ Base hub class for easing the implementation of subclasses that are
     specific to a particular underlying event architecture. """
-    _
+
     SYSTEM_EXCEPTIONS = (KeyboardInterrupt, SystemExit)
     READ = READ
     WRITE = WRITE
