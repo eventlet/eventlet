@@ -99,15 +99,19 @@ class Hub(BaseHub):
             if event & select.POLLNVAL:
                 self.remove_descriptor(fileno)
                 continue
-            r = self.listeners_r.get(fileno)
-            w = self.listeners_w.get(fileno)
-            if event & READ_MASK and r:
-                callbacks.add((r, fileno))
-            if event & WRITE_MASK and w:
-                callbacks.add((w, fileno))
-            if event & EXC_MASK:
+            if event & READ_MASK:
+                r = self.listeners_r.get(fileno)
                 if r:
                     callbacks.add((r, fileno))
+            if event & WRITE_MASK:
+                w = self.listeners_w.get(fileno)
+                if w:
+                    callbacks.add((w, fileno))
+            if event & EXC_MASK:
+                r = self.listeners_r.get(fileno)
+                if r:
+                    callbacks.add((r, fileno))
+                w = self.listeners_w.get(fileno)
                 if w:
                     callbacks.add((w, fileno))
 
