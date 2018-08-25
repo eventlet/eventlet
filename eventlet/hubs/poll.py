@@ -93,7 +93,6 @@ class Hub(BaseHub):
         # of callbacks in sync with the events we've just
         # polled for. It prevents one handler from invalidating
         # another.
-        # Invalidating can happen only follow a next call to wait with new set of p_result, ain't?
 
         callbacks = set()
         for fileno, event in presult:
