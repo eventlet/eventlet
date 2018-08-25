@@ -1,8 +1,8 @@
 import errno
 import sys
 
-from eventlet.hubs.hub import BaseHub, noop, clear_sys_exc_info
-from eventlet.support import get_errno
+from eventlet.hubs.hub import BaseHub, noop
+from eventlet.support import get_errno, clear_sys_exc_info
 from eventlet import patcher
 
 ev_sleep = patcher.original('time').sleep
