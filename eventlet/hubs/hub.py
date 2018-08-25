@@ -422,7 +422,6 @@ class BaseHub(object):
                 i = 0
                 while self.timers_count > i:  # one loop to clean and assign next
                     exp, t = timers[i]
-
                     if t.called:   # clear called
                         timers.pop(i)
                         self.timers_count -= 1
@@ -430,14 +429,11 @@ class BaseHub(object):
                         if not timers:
                             break
                         continue
+                    if exp > scheduled_time:
+                        timers.insert(i, (scheduled_time, tmr))
+                        added = True
+                        break
                     i += 1
-
-                    if exp < scheduled_time:
-                        continue
-                    timers.insert(i-1, (scheduled_time, tmr))
-                    added = True
-                    break
-
             if not added:
                 timers.append((scheduled_time, tmr))
             self.timers_count += 1
