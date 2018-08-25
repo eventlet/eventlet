@@ -12,7 +12,6 @@ DEBUG = True
 class GreenPool(object):
     """The GreenPool class is a pool of green threads.
     """
-    __slots__ = ['size', 'coroutines_running', 'sem', 'no_coros_running']
 
     def __init__(self, size=1000):
         try:
