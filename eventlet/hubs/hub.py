@@ -128,7 +128,7 @@ class BaseHub(object):
         self.lclass = FdListener
         self._old_signal_handler = False
         self.debug_exceptions = True
-        self.debug_blocking = True
+        self.debug_blocking = False
         self.debug_blocking_resolution = 1
 
     def block_detect_pre(self):
@@ -349,7 +349,7 @@ class BaseHub(object):
                     self.block_detect_post()
 
                 sleep_time = self.timers[0][0] - self.clock() if self.timers else 5.0
-                self.wait(sleep_time if 5.0 > sleep_time > 0 else 5.0)
+                self.wait(sleep_time if 5.0 > sleep_time > 0 else 0.001)
 
             else:
                 del self.timers[:]
@@ -397,7 +397,7 @@ class BaseHub(object):
         for i in range(0, len(self.timers)):
             nxt_sche = self.timers[i][0]
             if nxt_sche == scheduled_time:
-                scheduled_time += 0.000000000001  # pico uniqueness in case an eq happen
+                scheduled_time += 0.000000001  # nano uniqueness in case an eq happen
             if nxt_sche < scheduled_time:
                 continue
             self.timers.insert(i, (scheduled_time, tmr))
