@@ -352,7 +352,7 @@ class BaseHub(object):
                     self.block_detect_post()
 
                 sleep_time = self.timers[0][0] - self.clock() if self.timers else 60.0
-                self.wait(sleep_time if sleep_time > 0 else None)
+                self.wait(sleep_time if sleep_time > 0 else 0)
 
             else:
                 del self.timers[:]
