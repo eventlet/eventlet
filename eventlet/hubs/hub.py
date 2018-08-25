@@ -412,7 +412,7 @@ class BaseHub(object):
         nxt_timers = self.next_timers
         while nxt_timers:
             scheduled_time, tmr = nxt_timers.pop(-1)
-            if id(tmr) in self.canceled_timers:  # timer got cancelled before assigned
+            if tmr.called:  # timer got cancelled before assigned
                 continue
 
             added = False
