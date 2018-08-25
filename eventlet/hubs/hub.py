@@ -420,8 +420,8 @@ class BaseHub(object):
             if self.timers:
                 i = 0
                 while self.timers_count > i:  # one loop to clean and assign next
-                    i += 1
                     exp, t = self.timers[i]
+                    i += 1
 
                     if t.called:   # clear called
                         self.timers.pop(i)
