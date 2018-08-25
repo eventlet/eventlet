@@ -444,16 +444,17 @@ class BaseHub(object):
         when = self.clock()
 
         while t:
-            if when < t[0][0]:
+            exp, tmr = t[0]
+            if when < exp:
                 break
+            t.pop(0)
             try:
-                t[0][1]()
+                tmr()
             except self.SYSTEM_EXCEPTIONS:
                 raise
             except:
-                self.squelch_timer_exception(t[0], sys.exc_info())
+                self.squelch_timer_exception(tmr, sys.exc_info())
                 clear_sys_exc_info()
-            t.pop(0)
 
     # for debugging:
 
