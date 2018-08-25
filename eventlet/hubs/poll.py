@@ -68,15 +68,8 @@ class Hub(BaseHub):
         return self.poll.poll(int(seconds * 1000.0))
 
     def wait(self, seconds=None):
-
-        if not self.listeners_r and not self.listeners_w:
-            if seconds is not None:
-                ev_sleep(seconds)
-                if not self.listeners_r and not self.listeners_w:
-                    return
-                seconds = 0
-            else:
-                return
+        if not self.listeners_r and not self.listeners_w and seconds is None:
+            return
 
         try:
             presult = self.do_poll(seconds)
