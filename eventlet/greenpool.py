@@ -7,7 +7,6 @@ import six
 __all__ = ['GreenPool', 'GreenPile']
 
 DEBUG = True
-getcurrent = greenlet.getcurrent
 
 
 class GreenPool(object):
@@ -67,7 +66,7 @@ class GreenPool(object):
         """
         # if reentering an empty pool, don't try to wait on a coroutine freeing
         # itself -- instead, just execute in the current coroutine
-        current = getcurrent()
+        current = eventlet.getcurrent()
         if self.sem.locked() and current in self.coroutines_running:
             # a bit hacky to use the GT without switching to it
             gt = eventlet.greenthread.GreenThread(current)
@@ -94,7 +93,7 @@ class GreenPool(object):
         finally:
             if coro is None:
                 return
-            self._spawn_done(getcurrent())
+            self._spawn_done(eventlet.getcurrent())
 
     def spawn_n(self, function, *args, **kwargs):
         """Create a greenthread to run the *function*, the same as
@@ -103,7 +102,7 @@ class GreenPool(object):
         """
         # if reentering an empty pool, don't try to wait on a coroutine freeing
         # itself -- instead, just execute in the current coroutine
-        if self.sem.locked() and getcurrent() in self.coroutines_running:
+        if self.sem.locked() and eventlet.getcurrent() in self.coroutines_running:
             self._spawn_n_impl(function, args, kwargs, None)
         else:
             self.sem.acquire()
@@ -114,7 +113,7 @@ class GreenPool(object):
 
     def waitall(self):
         """Waits until all greenthreads in the pool are finished working."""
-        assert getcurrent() not in self.coroutines_running, \
+        assert eventlet.getcurrent() not in self.coroutines_running, \
             "Calling waitall() from within one of the " \
             "GreenPool's greenthreads will never terminate."
         if self.running():
