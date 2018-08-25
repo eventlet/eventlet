@@ -421,7 +421,9 @@ class BaseHub(object):
                 skip = 0
                 for i in range(0, self.timers_count):  # one range to clean and assign next
                     i -= skip
-                    if self.timers[i][1].called:   # clear called
+                    exp, t = self.timers[i]
+
+                    if t.called:   # clear called
                         self.timers.pop(i)
                         self.timers_count -= 1
                         self.timers_canceled -= 1
@@ -429,12 +431,11 @@ class BaseHub(object):
                             break
                         skip += 1
                         continue
-
-                    if self.timers[i][0] < scheduled_time:
+                    if exp < scheduled_time:
                         continue
 
-                    added = True
                     self.timers.insert(i, (scheduled_time, tmr))
+                    added = True
                     break
 
             if not added:
