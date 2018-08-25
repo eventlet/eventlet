@@ -128,7 +128,7 @@ class BaseHub(object):
         self.lclass = FdListener
         self._old_signal_handler = False
         self.debug_exceptions = True
-        self.debug_blocking = False
+        self.debug_blocking = True
         self.debug_blocking_resolution = 1
 
     def block_detect_pre(self):
