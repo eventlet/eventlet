@@ -400,7 +400,7 @@ class BaseHub(object):
                 scheduled_time += 0.000000000001  # pico uniqueness in case an eq happen
             if nxt_sche < scheduled_time:
                 continue
-            self.timers.insert(i-1, (scheduled_time, tmr))
+            self.timers.insert(i, (scheduled_time, tmr))
             break
         return scheduled_time
 
