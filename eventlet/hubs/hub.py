@@ -402,8 +402,9 @@ class BaseHub(object):
         return scheduled_time
 
     def timer_canceled(self, tmr):
+        tmr_id = id(tmr)
         for i in range(0, len(self.timers)):
-            if id(tmr) != id(self.timers[i]):  # tmr.scheduled_time != self.timers[i][0]:
+            if tmr_id != id(self.timers[i]):  # tmr.scheduled_time != self.timers[i][0]:
                 continue
             self.timers.pop(i)
             break
