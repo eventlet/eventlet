@@ -394,17 +394,19 @@ class BaseHub(object):
             clear_sys_exc_info()
 
     def add_timer(self, tmr):
-        self.timers_count += 1
         scheduled_time = self.clock() + tmr.seconds
-        if not self.timers:
-            self.timers.append((scheduled_time, tmr))
-            return scheduled_time
 
+        added = False
         for i in range(0, self.timers_count):
             if self.timers[i][0] < scheduled_time:
                 continue
+            added = True
             self.timers.insert(i, (scheduled_time, tmr))
             break
+        self.timers_count += 1
+
+        if not added:
+            self.timers.append((scheduled_time, tmr))
         return scheduled_time
 
     def timer_canceled(self, tmr):
@@ -412,8 +414,8 @@ class BaseHub(object):
         for i in range(0, self.timers_count):
             if tmr_id != id(self.timers[i]):  # tmr.scheduled_time != self.timers[i][0]:
                 continue
-            self.timers.pop(i)
             self.timers_count -= 1
+            self.timers.pop(i)
             break
 
     def prepare_timers(self):
