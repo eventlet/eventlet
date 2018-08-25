@@ -15,12 +15,11 @@ from eventlet.greenio import (
 from eventlet.hubs import trampoline, IOClosed
 from eventlet.support import get_errno, PY33
 import six
-import monotonic
+from eventlet.green import time as green_time
 
 orig_socket = __import__('socket')
 socket = orig_socket.socket
 timeout_exc = SSLError
-ts_now = monotonic.time.time
 
 __patched__ = [
     'SSLSocket', 'SSLContext', 'wrap_socket', 'sslwrap_simple',
@@ -282,7 +281,7 @@ class GreenSSLSocket(_original_sslsocket):
                         else:
                             raise
             else:
-                end = ts_now() + self.gettimeout()
+                end = green_time.monotonic() + self.gettimeout()
                 while True:
                     try:
                         real_connect(self, addr)
@@ -290,12 +289,12 @@ class GreenSSLSocket(_original_sslsocket):
                         if get_errno(exc) in CONNECT_ERR:
                             trampoline(
                                 self, write=True,
-                                timeout=end - ts_now(), timeout_exc=timeout_exc('timed out'))
+                                timeout=end - green_time.monotonic(), timeout_exc=timeout_exc('timed out'))
                         elif get_errno(exc) in CONNECT_SUCCESS:
                             return
                         else:
                             raise
-                    if ts_now() >= end:
+                    if green_time.monotonic() >= end:
                         raise timeout_exc('timed out')
 
     def connect(self, addr):
