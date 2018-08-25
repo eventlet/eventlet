@@ -344,7 +344,7 @@ class BaseHub(object):
                     self.close_one()
                 if self.debug_blocking:
                     self.block_detect_pre()
-                self.fire_timers()
+                self.fire_timers(self.clock())
                 if self.debug_blocking:
                     self.block_detect_post()
 
@@ -439,10 +439,8 @@ class BaseHub(object):
         self.add_timer(t)
         return t
 
-    def fire_timers(self):
+    def fire_timers(self, when):
         t = self.timers
-        when = self.clock()
-
         while t:
             exp, tmr = t[0]
             if when < exp:
