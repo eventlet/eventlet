@@ -14,7 +14,8 @@ if not mod:
     monotonic = getattr(__time, method) if hasattr(__time, method) else getattr(patcher.original(method), method)
     del method
 else:
-    monotonic = getattr(patcher.original(mod), os.environ.get('EVENTLET_CLOCK_METHOD', mod))
+    mod = mod.rsplit('.', 1)
+    monotonic = getattr(patcher.original(mod[0]), mod[1])
 del os
 del mod
 del patcher
