@@ -395,10 +395,7 @@ class BaseHub(object):
             return scheduled_time
 
         for i in range(0, len(self.timers)):
-            nxt_sche = self.timers[i][0]
-            if nxt_sche == scheduled_time:
-                scheduled_time += 0.000000001  # nano uniqueness in case an eq happen
-            if nxt_sche < scheduled_time:
+            if self.timers[i][0] < scheduled_time:
                 continue
             self.timers.insert(i, (scheduled_time, tmr))
             break
@@ -406,7 +403,7 @@ class BaseHub(object):
 
     def timer_canceled(self, tmr):
         for i in range(0, len(self.timers)):
-            if tmr.scheduled_time != self.timers[i][0]:
+            if id(tmr) != id(self.timers[i]):  # tmr.scheduled_time != self.timers[i][0]:
                 continue
             self.timers.pop(i)
             break
