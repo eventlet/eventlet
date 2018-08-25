@@ -418,9 +418,9 @@ class BaseHub(object):
 
             added = False
             if self.timers:
-                skip = 0
-                for i in range(0, self.timers_count):  # one range to clean and assign next
-                    i -= skip
+                i = 0
+                while self.timers_count > i:  # one loop to clean and assign next
+                    i += 1
                     exp, t = self.timers[i]
 
                     if t.called:   # clear called
@@ -429,7 +429,7 @@ class BaseHub(object):
                         self.timers_canceled -= 1
                         if not self.timers:
                             break
-                        skip += 1
+                        i -= 1
                         continue
                     if exp < scheduled_time:
                         continue
