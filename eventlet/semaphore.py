@@ -317,4 +317,3 @@ class CappedSemaphore(object):
         are currently blocking in :meth:`acquire` and :meth:`release`.
         """
         return self.lower_bound.balance - self.upper_bound.balance
-
