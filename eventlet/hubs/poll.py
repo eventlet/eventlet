@@ -1,6 +1,7 @@
 import errno
+import sys
 
-from eventlet.hubs.hub import BaseHub, noop
+from eventlet.hubs.hub import BaseHub, noop, clear_sys_exc_info
 from eventlet.support import get_errno
 from eventlet import patcher
 
@@ -78,7 +79,7 @@ class Hub(BaseHub):
                 return
 
         try:
-            p_result = self.do_poll(seconds)
+            presult = self.do_poll(seconds)
         except (IOError, select.error) as e:
             if get_errno(e) == errno.EINTR:
                 return
@@ -94,42 +95,27 @@ class Hub(BaseHub):
         # another.
         # Invalidating can happen only follow a next call to wait with new set of p_result, ain't?
 
-        # callbacks = set()
-        # for fileno, event in p_result:
-        #     if event & READ_MASK:
-        #        callbacks.add((readers.get(fileno, noop), fileno))
-        #    if event & WRITE_MASK:
-        #        callbacks.add((writers.get(fileno, noop), fileno))
-        #    if event & select.POLLNVAL:
-        #        self.remove_descriptor(fileno)
-        #        continue
-        #    if event & EXC_MASK:
-        #        callbacks.add((readers.get(fileno, noop), fileno))
-        #        callbacks.add((writers.get(fileno, noop), fileno))
-
-        # for listener, fileno in callbacks:
-        #    try:
-        #        listener.cb(fileno)
-        #    except self.SYSTEM_EXCEPTIONS:
-        #        raise
-        #    except:
-        #        self.squelch_exception(fileno, sys.exc_info())
-        #        clear_sys_exc_info()
-
-        for fd, event in p_result:
-            if event & select.POLLNVAL:
-                self.remove_descriptor(fd)
-                continue
-
+        callbacks = set()
+        for fileno, event in presult:
             if event & READ_MASK:
-                self.listeners_r.get(fd, noop).cb(fd)
-
+                callbacks.add((self.listeners_r.get(fileno, noop), fileno))
             if event & WRITE_MASK:
-                self.listeners_w.get(fd, noop).cb(fd)
-
+                callbacks.add((self.listeners_w.get(fileno, noop), fileno))
+            if event & select.POLLNVAL:
+                self.remove_descriptor(fileno)
+                continue
             if event & EXC_MASK:
-                self.listeners_r.get(fd, noop).cb(fd)
-                self.listeners_w.get(fd, noop).cb(fd)
+                callbacks.add((self.listeners_r.get(fileno, noop), fileno))
+                callbacks.add((self.listeners_w.get(fileno, noop), fileno))
+
+        for listener, fileno in callbacks:
+            try:
+                listener.cb(fileno)
+            except self.SYSTEM_EXCEPTIONS:
+                raise
+            except:
+                self.squelch_exception(fileno, sys.exc_info())
+                clear_sys_exc_info()
 
         if self.debug_blocking:
             self.block_detect_post()
