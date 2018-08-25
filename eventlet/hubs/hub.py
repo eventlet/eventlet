@@ -125,6 +125,7 @@ class BaseHub(object):
         self.stopping = False
         self.running = False
         self.timers = []
+        self.timers_count = 0
         self.lclass = FdListener
         self._old_signal_handler = False
         self.debug_exceptions = True
@@ -355,6 +356,7 @@ class BaseHub(object):
                 self.wait(sleep_time if sleep_time > 0 else 0)
 
             else:
+                self.timers_count = 0
                 del self.timers[:]
         finally:
             self.running = False
@@ -392,12 +394,13 @@ class BaseHub(object):
             clear_sys_exc_info()
 
     def add_timer(self, tmr):
+        self.timers_count += 1
         scheduled_time = self.clock() + tmr.seconds
         if not self.timers:
             self.timers.append((scheduled_time, tmr))
             return scheduled_time
 
-        for i in range(0, len(self.timers)):
+        for i in range(0, self.timers_count):
             if self.timers[i][0] < scheduled_time:
                 continue
             self.timers.insert(i, (scheduled_time, tmr))
@@ -406,10 +409,11 @@ class BaseHub(object):
 
     def timer_canceled(self, tmr):
         tmr_id = id(tmr)
-        for i in range(0, len(self.timers)):
+        for i in range(0, self.timers_count):
             if tmr_id != id(self.timers[i]):  # tmr.scheduled_time != self.timers[i][0]:
                 continue
             self.timers.pop(i)
+            self.timers_count -= 1
             break
 
     def prepare_timers(self):
