@@ -1,8 +1,8 @@
 import traceback
 
-from eventlet.support import greenlets as greenlet
 import six
-from eventlet.hubs import get_hub
+from eventlet.support import greenlets as greenlet
+from eventlet import hubs
 
 """ If true, captures a stack trace for each timer when constructed.  This is
 useful for debugging leaking timers, to find out where the timer was set up. """
@@ -23,6 +23,8 @@ class Timer(object):
         self.seconds = seconds
         self.tpl = cb, args, kw
         self.called = False
+        self.scheduled_time = 0
+
         if _g_debug:
             self.traceback = six.StringIO()
             traceback.print_stack(file=self.traceback)
@@ -32,10 +34,9 @@ class Timer(object):
         return not self.called
 
     def __repr__(self):
-        secs = getattr(self, 'seconds', None)
-        cb, args, kw = getattr(self, 'tpl', (None, None, None))
+        cb, args, kw = self.tpl if self.tpl is not None else (None, None, None)
         retval = "Timer(%s, %s, *%s, **%s)" % (
-            secs, cb, args, kw)
+            self.seconds, cb, args, kw)
         if _g_debug and hasattr(self, 'traceback'):
             retval += '\n' + self.traceback.getvalue()
         return retval
@@ -48,32 +49,28 @@ class Timer(object):
         """Schedule this timer to run in the current runloop.
         """
         self.called = False
-        self.scheduled_time = get_hub().add_timer(self)
+        self.scheduled_time = hubs.get_hub().add_timer(self)
         return self
 
     def __call__(self, *args):
-        if not self.called:
-            self.called = True
-            cb, args, kw = self.tpl
-            try:
-                cb(*args, **kw)
-            finally:
-                try:
-                    del self.tpl
-                except AttributeError:
-                    pass
+        if self.called:
+            return
+        self.called = True
+        cb, args, kw = self.tpl
+        try:
+            cb(*args, **kw)
+        finally:
+            self.tpl = None
 
     def cancel(self):
         """Prevent this timer from being called. If the timer has already
         been called or canceled, has no effect.
         """
-        if not self.called:
-            self.called = True
-            get_hub().timer_canceled(self)
-            try:
-                del self.tpl
-            except AttributeError:
-                pass
+        if self.called:
+            return
+        self.called = True
+        hubs.get_hub().timer_canceled(self)
+        self.tpl = None
 
     # No default ordering in 3.x. heapq uses <
     # FIXME should full set be added?
@@ -94,12 +91,13 @@ class LocalTimer(Timer):
         return not self.called
 
     def __call__(self, *args):
-        if not self.called:
-            self.called = True
-            if self.greenlet is not None and self.greenlet.dead:
-                return
-            cb, args, kw = self.tpl
-            cb(*args, **kw)
+        if self.called:
+            return
+        self.called = True
+        if self.greenlet is not None and self.greenlet.dead:
+            return
+        cb, args, kw = self.tpl
+        cb(*args, **kw)
 
     def cancel(self):
         self.greenlet = None

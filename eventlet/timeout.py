@@ -24,12 +24,9 @@ import functools
 import inspect
 
 import eventlet
-from eventlet.support import greenlets as greenlet
 from eventlet.hubs import get_hub
 
 __all__ = ['Timeout', 'with_timeout', 'wrap_is_timeout', 'is_timeout']
-
-_MISSING = object()
 
 # deriving from BaseException so that "except Exception as e" doesn't catch
 # Timeout exceptions.
@@ -64,10 +61,10 @@ class Timeout(BaseException):
             self.timer = None
         elif self.exception is None or isinstance(self.exception, bool):  # timeout that raises self
             self.timer = get_hub().schedule_call_global(
-                self.seconds, greenlet.getcurrent().throw, self)
+                self.seconds, eventlet.getcurrent().throw, self)
         else:  # regular timeout with user-provided exception
             self.timer = get_hub().schedule_call_global(
-                self.seconds, greenlet.getcurrent().throw, self.exception)
+                self.seconds, eventlet.getcurrent().throw, self.exception)
         return self
 
     @property
@@ -141,13 +138,13 @@ def with_timeout(seconds, function, *args, **kwds):
     function fails to return before the timeout, cancel it and return a flag
     value.
     """
-    timeout_value = kwds.pop("timeout_value", _MISSING)
+    timeout_value = kwds.pop("timeout_value", None)
     timeout = Timeout(seconds)
     try:
         try:
             return function(*args, **kwds)
         except Timeout as ex:
-            if ex is timeout and timeout_value is not _MISSING:
+            if ex is timeout and timeout_value is not None:
                 return timeout_value
             raise
     finally:
@@ -175,5 +172,5 @@ def wrap_is_timeout(base):
 
 
 def is_timeout(obj):
-    py3err = getattr(__builtins__, 'TimeoutError', Timeout)
-    return bool(getattr(obj, 'is_timeout', False)) or isinstance(obj, py3err)
+    return bool(getattr(obj, 'is_timeout', False)) \
+           or isinstance(obj, getattr(__builtins__, 'TimeoutError', Timeout))
