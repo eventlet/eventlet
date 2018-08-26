@@ -35,8 +35,8 @@ class TestTimerCleanup(tests.LimitedTestCase):
         t.cancel()
         # there should be 1 new timer
         self.assertEqual(hub.get_timers_count(), stimers+1)
-        # there should be 1 cancelled timer
-        self.assertEqual(hub.timers_canceled, 1)
+        # there should be 2 or less cancelled timer
+        self.assert_less_than_equal(hub.timers_canceled, 2)
 
     @skip_with_pyevent
     def test_cancel_accumulated(self):
@@ -69,9 +69,9 @@ class TestTimerCleanup(tests.LimitedTestCase):
             t2 = hubs.get_hub().schedule_call_global(60, noop)
             t3 = hubs.get_hub().schedule_call_global(60, noop)
             eventlet.sleep()
-            self.assertEqual(hub.timers_canceled, 0)
+            self.assert_less_than_equal(hub.timers_canceled, 1)
             t.cancel()  # in-effect with a follow-up scheduled call
-            self.assertEqual(hub.timers_canceled, 1)
+            self.assert_less_than_equal(hub.timers_canceled, 2)
 
             uncanceled_timers.append(t2)
             uncanceled_timers.append(t3)
