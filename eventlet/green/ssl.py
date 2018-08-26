@@ -6,9 +6,8 @@ slurp_properties(__ssl, globals(), srckeys=dir(__ssl))
 import errno
 import functools
 import sys
-import time
 
-from eventlet import greenio
+from eventlet import greenio, hubs
 from eventlet.greenio import (
     set_nonblocking, GreenSocket, CONNECT_ERR, CONNECT_SUCCESS,
 )
@@ -264,6 +263,7 @@ class GreenSSLSocket(_original_sslsocket):
         if self.act_non_blocking:
             return real_connect(self, addr)
         else:
+            clock = hubs.get_hub().clock
             # *NOTE: gross, copied code from greenio because it's not factored
             # well enough to reuse
             if self.gettimeout() is None:
@@ -278,7 +278,7 @@ class GreenSSLSocket(_original_sslsocket):
                         else:
                             raise
             else:
-                end = time.time() + self.gettimeout()
+                end = clock() + self.gettimeout()
                 while True:
                     try:
                         real_connect(self, addr)
@@ -286,12 +286,12 @@ class GreenSSLSocket(_original_sslsocket):
                         if get_errno(exc) in CONNECT_ERR:
                             trampoline(
                                 self, write=True,
-                                timeout=end - time.time(), timeout_exc=timeout_exc('timed out'))
+                                timeout=end - clock(), timeout_exc=timeout_exc('timed out'))
                         elif get_errno(exc) in CONNECT_SUCCESS:
                             return
                         else:
                             raise
-                    if time.time() >= end:
+                    if clock() >= end:
                         raise timeout_exc('timed out')
 
     def connect(self, addr):
