@@ -78,7 +78,7 @@ class TestTimerCleanup(tests.LimitedTestCase):
                                     hub.get_timers_count())
 
         eventlet.sleep(1)
-        self.assertEqual(hub.timers_canceled, 0)
+        self.assertEqual(hub.timers_canceled, scanceled)
         eventlet.sleep()
 
 
