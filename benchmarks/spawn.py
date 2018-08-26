@@ -1,86 +1,79 @@
-"""Compare spawn to spawn_n"""
-from __future__ import print_function
+import contextlib
 
 import eventlet
 import benchmarks
-
-
-def cleanup():
-    eventlet.sleep(0.2)
-
-
-iters = 10000
-best = benchmarks.measure_best(
-    5, iters,
-    'pass',
-    cleanup,
-    eventlet.sleep)
-print("eventlet.sleep (main)", best[eventlet.sleep])
-
-gt = eventlet.spawn(
-    benchmarks.measure_best, 5, iters,
-    'pass',
-    cleanup,
-    eventlet.sleep)
-best = gt.wait()
-print("eventlet.sleep (gt)", best[eventlet.sleep])
 
 
 def dummy(i=None):
     return i
 
 
-def run_spawn():
+def linked(gt, arg):
+    return arg
+
+
+def benchmark_sleep():
+    eventlet.sleep()
+
+
+def benchmark_spawn_link1():
+    t = eventlet.spawn(dummy)
+    t.link(linked, 1)
+    t.wait()
+
+
+def benchmark_spawn_link5():
+    t = eventlet.spawn(dummy)
+    t.link(linked, 1)
+    t.link(linked, 2)
+    t.link(linked, 3)
+    t.link(linked, 4)
+    t.link(linked, 5)
+    t.wait()
+
+
+def benchmark_spawn_link5_unlink3():
+    t = eventlet.spawn(dummy)
+    t.link(linked, 1)
+    t.link(linked, 2)
+    t.link(linked, 3)
+    t.link(linked, 4)
+    t.link(linked, 5)
+    t.unlink(linked, 3)
+    t.wait()
+
+
+@benchmarks.configure(max_iters=1e5)
+def benchmark_spawn_nowait():
     eventlet.spawn(dummy, 1)
 
 
-def run_spawn_n():
+def benchmark_spawn():
+    eventlet.spawn(dummy, 1).wait()
+
+
+@benchmarks.configure(max_iters=1e5)
+def benchmark_spawn_n():
     eventlet.spawn_n(dummy, 1)
 
 
-def run_spawn_n_kw():
+@benchmarks.configure(max_iters=1e5)
+def benchmark_spawn_n_kw():
     eventlet.spawn_n(dummy, i=1)
 
 
-best = benchmarks.measure_best(
-    5, iters,
-    'pass',
-    cleanup,
-    run_spawn_n,
-    run_spawn,
-    run_spawn_n_kw)
-print("eventlet.spawn", best[run_spawn])
-print("eventlet.spawn_n", best[run_spawn_n])
-print("eventlet.spawn_n(**kw)", best[run_spawn_n_kw])
-print("%% %0.1f" % ((best[run_spawn] - best[run_spawn_n]) / best[run_spawn_n] * 100))
-
-pool = None
-
-
-def setup():
-    global pool
+@contextlib.contextmanager
+def pool_setup(iters):
     pool = eventlet.GreenPool(iters)
-
-
-def run_pool_spawn():
-    pool.spawn(dummy, 1)
-
-
-def run_pool_spawn_n():
-    pool.spawn_n(dummy, 1)
-
-
-def cleanup_pool():
+    yield pool
     pool.waitall()
 
 
-best = benchmarks.measure_best(
-    3, iters,
-    setup,
-    cleanup_pool,
-    run_pool_spawn,
-    run_pool_spawn_n,
-)
-print("eventlet.GreenPool.spawn", best[run_pool_spawn])
-print("eventlet.GreenPool.spawn_n", best[run_pool_spawn_n])
-print("%% %0.1f" % ((best[run_pool_spawn] - best[run_pool_spawn_n]) / best[run_pool_spawn_n] * 100))
+@benchmarks.configure(manager=pool_setup)
+def benchmark_pool_spawn(pool):
+    pool.spawn(dummy, 1)
+
+
+@benchmarks.configure(manager=pool_setup, max_iters=1e5)
+def benchmark_pool_spawn_n(pool):
+    pool.spawn_n(dummy, 1)
