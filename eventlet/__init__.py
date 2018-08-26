@@ -21,8 +21,10 @@ if os.environ.get('EVENTLET_IMPORT_VERSION_ONLY') != '1':
     # Helpful when CPython < 3.5 on Linux blocked in `os.waitpid(-1)` before first use of hub.
     # Example: gunicorn
     # https://github.com/eventlet/eventlet/issues/401#issuecomment-327500352
-    import monotonic
-    del monotonic
+    import time
+    if not hasattr(time, 'monotonic'):
+        import monotonic
+        del monotonic
 
     connect = convenience.connect
     listen = convenience.listen
