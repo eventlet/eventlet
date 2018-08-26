@@ -27,10 +27,7 @@ import six
 
 mod = os.environ.get('EVENTLET_CLOCK')
 if not mod:
-    time = patcher.original('time')
-    eventlet_clock = getattr(time, 'monotonic') if hasattr(time, 'monotonic')\
-        else getattr(patcher.original('monotonic'), 'monotonic')
-    del time
+    from monotonic import monotonic as eventlet_clock
 else:
     mod = mod.rsplit('.', 1)
     eventlet_clock = getattr(patcher.original(mod[0]), mod[1])
