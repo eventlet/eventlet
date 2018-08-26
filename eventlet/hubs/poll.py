@@ -1,12 +1,12 @@
 import errno
 import sys
 
-from eventlet import patcher
-select = patcher.original('select')
-time = patcher.original('time')
-
-from eventlet.hubs.hub import BaseHub, READ, WRITE, noop
+from eventlet.hubs.hub import BaseHub, noop
 from eventlet.support import get_errno, clear_sys_exc_info
+from eventlet import patcher
+
+ev_sleep = patcher.original('time').sleep
+select = patcher.original('select')
 
 EXC_MASK = select.POLLERR | select.POLLHUP
 READ_MASK = select.POLLIN | select.POLLPRI
@@ -29,26 +29,26 @@ class Hub(BaseHub):
 
     def register(self, fileno, new=False):
         mask = 0
-        if self.listeners[READ].get(fileno):
+        if self.listeners_r.get(fileno):
             mask |= READ_MASK | EXC_MASK
-        if self.listeners[WRITE].get(fileno):
+        if self.listeners_w.get(fileno):
             mask |= WRITE_MASK | EXC_MASK
         try:
             if mask:
                 if new:
                     self.poll.register(fileno, mask)
-                else:
-                    try:
-                        self.poll.modify(fileno, mask)
-                    except (IOError, OSError):
-                        self.poll.register(fileno, mask)
-            else:
+                    return
                 try:
-                    self.poll.unregister(fileno)
-                except (KeyError, IOError, OSError):
-                    # raised if we try to remove a fileno that was
-                    # already removed/invalid
-                    pass
+                    self.poll.modify(fileno, mask)
+                except (IOError, OSError):
+                    self.poll.register(fileno, mask)
+                return
+            try:
+                self.poll.unregister(fileno)
+            except (KeyError, IOError, OSError):
+                # raised if we try to remove a fileno that was
+                # already removed/invalid
+                pass
         except ValueError:
             # fileno is bad, issue 74
             self.remove_descriptor(fileno)
@@ -68,20 +68,15 @@ class Hub(BaseHub):
         return self.poll.poll(int(seconds * 1000.0))
 
     def wait(self, seconds=None):
-        readers = self.listeners[READ]
-        writers = self.listeners[WRITE]
-
-        if not readers and not writers:
-            if seconds:
-                time.sleep(seconds)
+        if not self.listeners_r and not self.listeners_w and seconds is None:
             return
+
         try:
             presult = self.do_poll(seconds)
         except (IOError, select.error) as e:
             if get_errno(e) == errno.EINTR:
                 return
             raise
-        SYSTEM_EXCEPTIONS = self.SYSTEM_EXCEPTIONS
 
         if self.debug_blocking:
             self.block_detect_pre()
@@ -91,23 +86,32 @@ class Hub(BaseHub):
         # of callbacks in sync with the events we've just
         # polled for. It prevents one handler from invalidating
         # another.
+
         callbacks = set()
         for fileno, event in presult:
-            if event & READ_MASK:
-                callbacks.add((readers.get(fileno, noop), fileno))
-            if event & WRITE_MASK:
-                callbacks.add((writers.get(fileno, noop), fileno))
             if event & select.POLLNVAL:
                 self.remove_descriptor(fileno)
                 continue
+            if event & READ_MASK:
+                r = self.listeners_r.get(fileno)
+                if r:
+                    callbacks.add((r, fileno))
+            if event & WRITE_MASK:
+                w = self.listeners_w.get(fileno)
+                if w:
+                    callbacks.add((w, fileno))
             if event & EXC_MASK:
-                callbacks.add((readers.get(fileno, noop), fileno))
-                callbacks.add((writers.get(fileno, noop), fileno))
+                r = self.listeners_r.get(fileno)
+                if r:
+                    callbacks.add((r, fileno))
+                w = self.listeners_w.get(fileno)
+                if w:
+                    callbacks.add((w, fileno))
 
         for listener, fileno in callbacks:
             try:
                 listener.cb(fileno)
-            except SYSTEM_EXCEPTIONS:
+            except self.SYSTEM_EXCEPTIONS:
                 raise
             except:
                 self.squelch_exception(fileno, sys.exc_info())

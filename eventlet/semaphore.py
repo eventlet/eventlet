@@ -83,16 +83,19 @@ class Semaphore(object):
 
         Timeout value must be strictly positive.
         """
-        if timeout == -1:
-            timeout = None
-        if timeout is not None and timeout < 0:
-            raise ValueError("timeout value must be strictly positive")
+
         if not blocking:
             if timeout is not None:
                 raise ValueError("can't specify timeout for non-blocking acquire")
-            timeout = 0
-        if not blocking and self.locked():
-            return False
+
+            if self.locked():
+                return False
+
+        if timeout is not None:
+            if timeout == -1:
+                timeout = None
+            elif timeout < 0:
+                raise ValueError("timeout value must be strictly positive")
 
         current_thread = eventlet.getcurrent()
 
@@ -100,11 +103,12 @@ class Semaphore(object):
             if current_thread not in self._waiters:
                 self._waiters.append(current_thread)
             try:
+                switch = hubs.get_hub().switch
                 if timeout is not None:
                     ok = False
                     with eventlet.Timeout(timeout, False):
                         while self.counter <= 0:
-                            hubs.get_hub().switch()
+                            switch()
                         ok = True
                     if not ok:
                         return False
@@ -112,7 +116,7 @@ class Semaphore(object):
                     # If someone else is already in this wait loop, give them
                     # a chance to get out.
                     while True:
-                        hubs.get_hub().switch()
+                        switch()
                         if self.counter > 0:
                             break
             finally:

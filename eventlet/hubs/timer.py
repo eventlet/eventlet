@@ -1,8 +1,8 @@
 import traceback
 
 from eventlet.support import greenlets as greenlet
+from eventlet import hubs
 import six
-from eventlet.hubs import get_hub
 
 """ If true, captures a stack trace for each timer when constructed.  This is
 useful for debugging leaking timers, to find out where the timer was set up. """
@@ -10,6 +10,8 @@ _g_debug = False
 
 
 class Timer(object):
+    __slots__ = ['scheduled_time', 'seconds', 'tpl', 'called', 'traceback']
+
     def __init__(self, seconds, cb, *args, **kw):
         """Create a timer.
             seconds: The minimum number of seconds to wait before calling
@@ -20,6 +22,7 @@ class Timer(object):
         This timer will not be run unless it is scheduled in a runloop by
         calling timer.schedule() or runloop.add_timer(timer).
         """
+        self.scheduled_time = 0
         self.seconds = seconds
         self.tpl = cb, args, kw
         self.called = False
@@ -32,10 +35,9 @@ class Timer(object):
         return not self.called
 
     def __repr__(self):
-        secs = getattr(self, 'seconds', None)
-        cb, args, kw = getattr(self, 'tpl', (None, None, None))
-        retval = "Timer(%s, %s, *%s, **%s)" % (
-            secs, cb, args, kw)
+        cb, args, kw = self.tpl if self.tpl is not None else (None, None, None)
+        retval = "Timer(%s, %s, *%s, **%s)" % \
+                 (self.seconds, cb, args, kw)
         if _g_debug and hasattr(self, 'traceback'):
             retval += '\n' + self.traceback.getvalue()
         return retval
@@ -48,7 +50,7 @@ class Timer(object):
         """Schedule this timer to run in the current runloop.
         """
         self.called = False
-        self.scheduled_time = get_hub().add_timer(self)
+        self.scheduled_time = hubs.get_hub().add_timer(self)
         return self
 
     def __call__(self, *args):
@@ -58,10 +60,7 @@ class Timer(object):
             try:
                 cb(*args, **kw)
             finally:
-                try:
-                    del self.tpl
-                except AttributeError:
-                    pass
+                self.tpl = None
 
     def cancel(self):
         """Prevent this timer from being called. If the timer has already
@@ -69,11 +68,8 @@ class Timer(object):
         """
         if not self.called:
             self.called = True
-            get_hub().timer_canceled(self)
-            try:
-                del self.tpl
-            except AttributeError:
-                pass
+            hubs.get_hub().timer_canceled(self)
+            self.tpl = (None, None, None)
 
     # No default ordering in 3.x. heapq uses <
     # FIXME should full set be added?
@@ -82,6 +78,7 @@ class Timer(object):
 
 
 class LocalTimer(Timer):
+    __slots__ = Timer.__slots__ + ['greenlet']
 
     def __init__(self, *args, **kwargs):
         self.greenlet = greenlet.getcurrent()

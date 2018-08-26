@@ -25,15 +25,18 @@ class TestTimerCleanup(tests.LimitedTestCase):
     def test_cancel_immediate(self):
         hub = hubs.get_hub()
         stimers = hub.get_timers_count()
-        scanceled = hub.timers_canceled
         for i in six.moves.range(2000):
             t = hubs.get_hub().schedule_call_global(60, noop)
             t.cancel()
             self.assert_less_than_equal(hub.timers_canceled,
                                         hub.get_timers_count() + 1)
-        # there should be fewer than 1000 new timers and canceled
-        self.assert_less_than_equal(hub.get_timers_count(), 1000 + stimers)
-        self.assert_less_than_equal(hub.timers_canceled, 1000)
+        eventlet.sleep()
+        t = hubs.get_hub().schedule_call_global(60, noop)
+        t.cancel()
+        # there should be 1 new timer
+        self.assertEqual(hub.get_timers_count(), stimers + 1)
+        # there should be 2 or less cancelled timer
+        self.assert_less_than_equal(hub.timers_canceled, 2)
 
     @skip_with_pyevent
     def test_cancel_accumulated(self):
@@ -57,30 +60,25 @@ class TestTimerCleanup(tests.LimitedTestCase):
         # if fewer than half the pending timers are canceled, it should
         # not clean them out
         hub = hubs.get_hub()
-        uncanceled_timers = []
         stimers = hub.get_timers_count()
         scanceled = hub.timers_canceled
         for i in six.moves.range(1000):
-            # 2/3rds of new timers are uncanceled
             t = hubs.get_hub().schedule_call_global(60, noop)
-            t2 = hubs.get_hub().schedule_call_global(60, noop)
-            t3 = hubs.get_hub().schedule_call_global(60, noop)
-            eventlet.sleep()
-            self.assert_less_than_equal(hub.timers_canceled,
-                                        hub.get_timers_count() + 1)
-            t.cancel()
-            self.assert_less_than_equal(hub.timers_canceled,
-                                        hub.get_timers_count() + 1)
-            uncanceled_timers.append(t2)
-            uncanceled_timers.append(t3)
-        # 3000 new timers, plus a few extras
-        self.assert_less_than_equal(stimers + 3000,
-                                    stimers + hub.get_timers_count())
-        self.assertEqual(hub.timers_canceled, 1000)
-        for t in uncanceled_timers:
-            t.cancel()
-            self.assert_less_than_equal(hub.timers_canceled,
-                                        hub.get_timers_count())
+            hubs.get_hub().schedule_call_global(1, noop)
+            hubs.get_hub().schedule_call_global(1, noop)
+            self.assert_less_than_equal(hub.timers_canceled, 1000 + scanceled)
+            prev_c = hub.timers_canceled
+            t.cancel()  # in-effect with a follow-up scheduled call
+            self.assertEqual(hub.timers_canceled, prev_c + 1)
+
+        self.assertEqual(hub.timers_canceled, 1000 + scanceled)
+        eventlet.sleep()
+        # 2x1000 new timers, plus a few extras
+        self.assert_less_than_equal(stimers + 2000,
+                                    hub.get_timers_count())
+
+        eventlet.sleep(1)
+        self.assertEqual(hub.timers_canceled, scanceled)
         eventlet.sleep()
 
 

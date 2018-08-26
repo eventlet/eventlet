@@ -1,7 +1,6 @@
 import traceback
 
 import eventlet
-from eventlet import queue
 from eventlet.support import greenlets as greenlet
 import six
 
@@ -37,8 +36,7 @@ class GreenPool(object):
         their tasks to drop the overall quantity below *new_size*.  Until
         then, the return value of free() will be negative.
         """
-        size_delta = new_size - self.size
-        self.sem.counter += size_delta
+        self.sem.counter += new_size - self.size
         self.size = new_size
 
     def running(self):
@@ -94,9 +92,7 @@ class GreenPool(object):
         finally:
             if coro is None:
                 return
-            else:
-                coro = eventlet.getcurrent()
-                self._spawn_done(coro)
+            self._spawn_done(eventlet.getcurrent())
 
     def spawn_n(self, function, *args, **kwargs):
         """Create a greenthread to run the *function*, the same as
@@ -105,14 +101,11 @@ class GreenPool(object):
         """
         # if reentering an empty pool, don't try to wait on a coroutine freeing
         # itself -- instead, just execute in the current coroutine
-        current = eventlet.getcurrent()
-        if self.sem.locked() and current in self.coroutines_running:
+        if self.sem.locked() and eventlet.getcurrent() in self.coroutines_running:
             self._spawn_n_impl(function, args, kwargs, None)
         else:
             self.sem.acquire()
-            g = eventlet.spawn_n(
-                self._spawn_n_impl,
-                function, args, kwargs, True)
+            g = eventlet.spawn_n(self._spawn_n_impl, function, args, kwargs, True)
             if not self.coroutines_running:
                 self.no_coros_running = eventlet.Event()
             self.coroutines_running.add(g)
@@ -200,7 +193,7 @@ class GreenPile(object):
             self.pool = size_or_pool
         else:
             self.pool = GreenPool(size_or_pool)
-        self.waiters = queue.LightQueue()
+        self.waiters = eventlet.queue.LightQueue()
         self.used = False
         self.counter = 0
 
@@ -237,7 +230,7 @@ class GreenPile(object):
 class GreenMap(GreenPile):
     def __init__(self, size_or_pool):
         super(GreenMap, self).__init__(size_or_pool)
-        self.waiters = queue.LightQueue(maxsize=self.pool.size)
+        self.waiters = eventlet.queue.LightQueue(maxsize=self.pool.size)
 
     def next(self):
         try:

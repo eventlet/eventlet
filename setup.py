@@ -1,10 +1,19 @@
 #!/usr/bin/env python
 import os
 import setuptools
-
+import time
 
 os.environ.setdefault('EVENTLET_IMPORT_VERSION_ONLY', '1')
 import eventlet
+
+install_requires = [
+        'dnspython >= 1.15.0',
+        'enum34;python_version<"3.4"',
+        'greenlet >= 0.3',
+        'six >= 1.10.0',
+    ]
+if not hasattr(time, 'monotonic'):
+    install_requires.append('monotonic >= 1.4')
 
 setuptools.setup(
     name='eventlet',
@@ -14,13 +23,7 @@ setuptools.setup(
     author_email='eventletdev@lists.secondlife.com',
     url='http://eventlet.net',
     packages=setuptools.find_packages(exclude=['benchmarks', 'tests', 'tests.*']),
-    install_requires=(
-        'dnspython >= 1.15.0',
-        'enum34;python_version<"3.4"',
-        'greenlet >= 0.3',
-        'monotonic >= 1.4',
-        'six >= 1.10.0',
-    ),
+    install_requires=install_requires,
     zip_safe=False,
     long_description=open(
         os.path.join(

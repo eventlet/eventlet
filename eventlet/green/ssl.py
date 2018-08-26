@@ -6,7 +6,7 @@ slurp_properties(__ssl, globals(), srckeys=dir(__ssl))
 import errno
 import functools
 import sys
-import time
+
 
 from eventlet import greenio
 from eventlet.greenio import (
@@ -15,6 +15,8 @@ from eventlet.greenio import (
 from eventlet.hubs import trampoline, IOClosed
 from eventlet.support import get_errno, PY33
 import six
+from eventlet.green import time as green_time
+
 orig_socket = __import__('socket')
 socket = orig_socket.socket
 timeout_exc = SSLError
@@ -137,6 +139,7 @@ class GreenSSLSocket(_original_sslsocket):
             return b''
 
     def send(self, data, flags=0):
+        # *NOTE: overflow on big data
         if self._sslobj:
             return self._call_trampolining(
                 super(GreenSSLSocket, self).send, data, flags)
@@ -278,7 +281,7 @@ class GreenSSLSocket(_original_sslsocket):
                         else:
                             raise
             else:
-                end = time.time() + self.gettimeout()
+                end = green_time.monotonic() + self.gettimeout()
                 while True:
                     try:
                         real_connect(self, addr)
@@ -286,12 +289,12 @@ class GreenSSLSocket(_original_sslsocket):
                         if get_errno(exc) in CONNECT_ERR:
                             trampoline(
                                 self, write=True,
-                                timeout=end - time.time(), timeout_exc=timeout_exc('timed out'))
+                                timeout=end - green_time.monotonic(), timeout_exc=timeout_exc('timed out'))
                         elif get_errno(exc) in CONNECT_SUCCESS:
                             return
                         else:
                             raise
-                    if time.time() >= end:
+                    if green_time.monotonic() >= end:
                         raise timeout_exc('timed out')
 
     def connect(self, addr):

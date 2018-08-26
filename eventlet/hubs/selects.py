@@ -2,10 +2,10 @@ import errno
 import sys
 from eventlet import patcher
 from eventlet.support import get_errno, clear_sys_exc_info
-select = patcher.original('select')
-time = patcher.original('time')
+from eventlet.hubs.hub import BaseHub, noop
 
-from eventlet.hubs.hub import BaseHub, READ, WRITE, noop
+select = patcher.original('select')
+ev_sleep = patcher.original('time').sleep
 
 try:
     BAD_SOCK = set((errno.EBADF, errno.WSAENOTSOCK))
@@ -18,8 +18,7 @@ class Hub(BaseHub):
         """ Iterate through fds, removing the ones that are bad per the
         operating system.
         """
-        all_fds = list(self.listeners[READ]) + list(self.listeners[WRITE])
-        for fd in all_fds:
+        for fd in list(self.listeners_r) + list(self.listeners_w):
             try:
                 select.select([fd], [], [], 0)
             except select.error as e:
@@ -27,15 +26,20 @@ class Hub(BaseHub):
                     self.remove_descriptor(fd)
 
     def wait(self, seconds=None):
-        readers = self.listeners[READ]
-        writers = self.listeners[WRITE]
-        if not readers and not writers:
-            if seconds:
-                time.sleep(seconds)
-            return
-        all_fds = list(readers) + list(writers)
+
+        if not self.listeners_r and not self.listeners_w:
+            if seconds is not None:
+                ev_sleep(0.00001)
+                if not self.listeners_r and not self.listeners_w:
+                    return
+                seconds = 0
+            else:
+                return
+
         try:
-            r, w, er = select.select(readers.keys(), writers.keys(), all_fds, seconds)
+            rs, ws, er = select.select(self.listeners_r.keys(), self.listeners_w.keys(),
+                                       list(self.listeners_r.keys()) + list(self.listeners_w.keys()),
+                                       seconds)
         except select.error as e:
             if get_errno(e) == errno.EINTR:
                 return
@@ -46,15 +50,39 @@ class Hub(BaseHub):
                 raise
 
         for fileno in er:
-            readers.get(fileno, noop).cb(fileno)
-            writers.get(fileno, noop).cb(fileno)
+            r = self.listeners_r.get(fileno)
+            w = self.listeners_w.get(fileno)
+            try:
+                if r:
+                    r.cb(fileno)
+                if w:
+                    w.cb(fileno)
+            except self.SYSTEM_EXCEPTIONS:
+                raise
+            except:
+                self.squelch_exception(fileno, sys.exc_info())
+                clear_sys_exc_info()
 
-        for listeners, events in ((readers, r), (writers, w)):
-            for fileno in events:
-                try:
-                    listeners.get(fileno, noop).cb(fileno)
-                except self.SYSTEM_EXCEPTIONS:
-                    raise
-                except:
-                    self.squelch_exception(fileno, sys.exc_info())
-                    clear_sys_exc_info()
+        for fileno in rs:
+            r = self.listeners_r.get(fileno)
+            if not r:
+                continue
+            try:
+                r.cb(fileno)
+            except self.SYSTEM_EXCEPTIONS:
+                raise
+            except:
+                self.squelch_exception(fileno, sys.exc_info())
+                clear_sys_exc_info()
+
+        for fileno in ws:
+            w = self.listeners_w.get(fileno)
+            if not w:
+                continue
+            try:
+                w.cb(fileno)
+            except self.SYSTEM_EXCEPTIONS:
+                raise
+            except:
+                self.squelch_exception(fileno, sys.exc_info())
+                clear_sys_exc_info()

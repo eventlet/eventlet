@@ -24,7 +24,6 @@ import functools
 import inspect
 
 import eventlet
-from eventlet.support import greenlets as greenlet
 from eventlet.hubs import get_hub
 
 __all__ = ['Timeout', 'with_timeout', 'wrap_is_timeout', 'is_timeout']
@@ -64,10 +63,10 @@ class Timeout(BaseException):
             self.timer = None
         elif self.exception is None or isinstance(self.exception, bool):  # timeout that raises self
             self.timer = get_hub().schedule_call_global(
-                self.seconds, greenlet.getcurrent().throw, self)
+                self.seconds, eventlet.getcurrent().throw, self)
         else:  # regular timeout with user-provided exception
             self.timer = get_hub().schedule_call_global(
-                self.seconds, greenlet.getcurrent().throw, self.exception)
+                self.seconds, eventlet.getcurrent().throw, self.exception)
         return self
 
     @property
@@ -175,5 +174,4 @@ def wrap_is_timeout(base):
 
 
 def is_timeout(obj):
-    py3err = getattr(__builtins__, 'TimeoutError', Timeout)
-    return bool(getattr(obj, 'is_timeout', False)) or isinstance(obj, py3err)
+    return bool(getattr(obj, 'is_timeout', False)) or isinstance(obj, getattr(__builtins__, 'TimeoutError', Timeout))

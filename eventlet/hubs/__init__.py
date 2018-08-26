@@ -34,7 +34,6 @@ def get_default_hub():
     # except:
     #    pass
 
-    select = patcher.original('select')
     try:
         import eventlet.hubs.epolls
         return eventlet.hubs.epolls
@@ -43,7 +42,7 @@ def get_default_hub():
             import eventlet.hubs.kqueue
             return eventlet.hubs.kqueue
         except ImportError:
-            if hasattr(select, 'poll'):
+            if hasattr(patcher.original('select'), 'poll'):
                 import eventlet.hubs.poll
                 return eventlet.hubs.poll
             else:
@@ -95,8 +94,7 @@ def use_hub(mod=None):
                     mod, found = entry.load(), True
                     break
             if not found:
-                mod = __import__(
-                    'eventlet.hubs.' + mod, globals(), locals(), ['Hub'])
+                mod = __import__('eventlet.hubs.' + mod, globals(), locals(), ['Hub'])
     if hasattr(mod, 'Hub'):
         _threadlocal.Hub = mod.Hub
     else:
@@ -174,8 +172,7 @@ def notify_close(fd):
     A particular file descriptor has been explicitly closed. Register for any
     waiting listeners to be notified on the next run loop.
     """
-    hub = get_hub()
-    hub.notify_close(fd)
+    get_hub().notify_close(fd)
 
 
 def notify_opened(fd):
@@ -187,8 +184,7 @@ def notify_opened(fd):
     We let the hub know that the old file descriptor is dead; any stuck listeners
     will be disabled and notified in turn.
     """
-    hub = get_hub()
-    hub.mark_as_reopened(fd)
+    get_hub().mark_as_reopened(fd)
 
 
 class IOClosed(IOError):
