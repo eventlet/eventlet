@@ -68,10 +68,10 @@ class TestTimerCleanup(tests.LimitedTestCase):
             t = hubs.get_hub().schedule_call_global(60, noop)
             t2 = hubs.get_hub().schedule_call_global(60, noop)
             t3 = hubs.get_hub().schedule_call_global(60, noop)
-            eventlet.sleep()
             self.assert_less_than_equal(hub.timers_canceled, 1)
+            prev_c = hub.timers_canceled
             t.cancel()  # in-effect with a follow-up scheduled call
-            self.assert_less_than_equal(hub.timers_canceled, 2)
+            self.assert_less_than_equal(hub.timers_canceled, prev_c+1)
 
             uncanceled_timers.append(t2)
             uncanceled_timers.append(t3)
