@@ -409,10 +409,9 @@ class BaseHub(object):
         self.timers_canceled += 1
 
     def prepare_timers(self):
-        nxt_timers = self.next_timers
         timers = self.timers
-        while nxt_timers:
-            scheduled_time, tmr = nxt_timers.pop(-1)
+
+        for scheduled_time, tmr in self.next_timers:
             if tmr.called:  # timer got cancelled before assigned
                 self.timers_canceled -= 1
                 continue
@@ -422,14 +421,14 @@ class BaseHub(object):
                 i = 0
                 while self.timers_count > i:  # one loop to clean and assign next
                     exp, t = timers[i]
-                    if t.called:   # clear called
-                        timers.pop(i)
+                    if t.called:                # clear called
+                        del timers[i]
                         self.timers_count -= 1
                         self.timers_canceled -= 1
                         if not timers:
                             break
                         continue
-                    if exp > scheduled_time:
+                    if exp > scheduled_time:    # assign next
                         timers.insert(i, (scheduled_time, tmr))
                         added = True
                         break
@@ -437,6 +436,8 @@ class BaseHub(object):
             if not added:
                 timers.append((scheduled_time, tmr))
             self.timers_count += 1
+
+        del self.next_timers[:]
 
     def schedule_call_local(self, seconds, cb, *args, **kw):
         """Schedule a callable to be called after 'seconds' seconds have
@@ -470,7 +471,7 @@ class BaseHub(object):
             exp, tmr = t[0]
             if when < exp:
                 break
-            t.pop(0)
+            del t[0]
             self.timers_count -= 1
             try:
                 tmr()
