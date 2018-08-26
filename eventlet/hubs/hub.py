@@ -25,13 +25,12 @@ from eventlet.support import greenlets as greenlet, clear_sys_exc_info
 from eventlet import patcher
 import six
 
-mod = os.environ.get('EVENTLET_CLOCK')
-if not mod:
-    from monotonic import monotonic as eventlet_clock
+if os.environ.get('EVENTLET_CLOCK'):
+    mod = os.environ.get('EVENTLET_CLOCK').rsplit('.', 1)
+    default_clock = getattr(patcher.original(mod[0]), mod[1])
+    del mod
 else:
-    mod = mod.rsplit('.', 1)
-    eventlet_clock = getattr(patcher.original(mod[0]), mod[1])
-del mod
+    import monotonic.monotonic as default_clock
 
 g_prevent_multiple_readers = True
 
@@ -128,7 +127,7 @@ class BaseHub(object):
         self.closed = []
 
         if clock is None:
-            clock = eventlet_clock
+            clock = default_clock
         self.clock = clock
 
         self.greenlet = greenlet.greenlet(self.run)
