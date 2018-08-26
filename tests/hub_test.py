@@ -25,15 +25,18 @@ class TestTimerCleanup(tests.LimitedTestCase):
     def test_cancel_immediate(self):
         hub = hubs.get_hub()
         stimers = hub.get_timers_count()
-        scanceled = hub.timers_canceled
         for i in six.moves.range(2000):
             t = hubs.get_hub().schedule_call_global(60, noop)
             t.cancel()
             self.assert_less_than_equal(hub.timers_canceled,
                                         hub.get_timers_count() + 1)
-        # there should be fewer than 1000 new timers and canceled
-        self.assert_less_than_equal(hub.get_timers_count(), 1000 + stimers)
-        self.assert_less_than_equal(hub.timers_canceled, 1000)
+        eventlet.sleep()
+        t = hubs.get_hub().schedule_call_global(60, noop)
+        t.cancel()
+        # there should be 1 new timer
+        self.assertEqual(hub.get_timers_count(), stimers+1)
+        # there should be 1 cancelled timer
+        self.assertEqual(hub.timers_canceled, 1)
 
     @skip_with_pyevent
     def test_cancel_accumulated(self):
@@ -66,21 +69,20 @@ class TestTimerCleanup(tests.LimitedTestCase):
             t2 = hubs.get_hub().schedule_call_global(60, noop)
             t3 = hubs.get_hub().schedule_call_global(60, noop)
             eventlet.sleep()
-            self.assert_less_than_equal(hub.timers_canceled,
-                                        hub.get_timers_count() + 1)
-            t.cancel()
-            self.assert_less_than_equal(hub.timers_canceled,
-                                        hub.get_timers_count() + 1)
+            self.assertEqual(hub.timers_canceled, 0)
+            t.cancel()  # in-effect with a follow-up scheduled call
+            self.assertEqual(hub.timers_canceled, 1)
+
             uncanceled_timers.append(t2)
             uncanceled_timers.append(t3)
-        # 3000 new timers, plus a few extras
-        self.assert_less_than_equal(stimers + 3000,
-                                    stimers + hub.get_timers_count())
-        self.assertEqual(hub.timers_canceled, 1000)
+        # 2x1000+1 new timers, plus a few extras
+        self.assertEqual(stimers + 2001,
+                         hub.get_timers_count())
         for t in uncanceled_timers:
             t.cancel()
             self.assert_less_than_equal(hub.timers_canceled,
                                         hub.get_timers_count())
+        self.assertEqual(hub.timers_canceled, 2001)
         eventlet.sleep()
 
 
