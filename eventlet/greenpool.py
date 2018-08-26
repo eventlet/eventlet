@@ -37,8 +37,7 @@ class GreenPool(object):
         their tasks to drop the overall quantity below *new_size*.  Until
         then, the return value of free() will be negative.
         """
-        size_delta = new_size - self.size
-        self.sem.counter += size_delta
+        self.sem.counter += new_size - self.size
         self.size = new_size
 
     def running(self):
@@ -94,9 +93,7 @@ class GreenPool(object):
         finally:
             if coro is None:
                 return
-            else:
-                coro = eventlet.getcurrent()
-                self._spawn_done(coro)
+            self._spawn_done(eventlet.getcurrent())
 
     def spawn_n(self, function, *args, **kwargs):
         """Create a greenthread to run the *function*, the same as
@@ -105,8 +102,7 @@ class GreenPool(object):
         """
         # if reentering an empty pool, don't try to wait on a coroutine freeing
         # itself -- instead, just execute in the current coroutine
-        current = eventlet.getcurrent()
-        if self.sem.locked() and current in self.coroutines_running:
+        if self.sem.locked() and eventlet.getcurrent() in self.coroutines_running:
             self._spawn_n_impl(function, args, kwargs, None)
         else:
             self.sem.acquire()
