@@ -2,6 +2,7 @@ import errno
 import heapq
 import math
 import signal
+import os
 import sys
 import traceback
 
@@ -21,8 +22,19 @@ else:
 
 from eventlet.hubs import timer, IOClosed
 from eventlet.support import greenlets as greenlet, clear_sys_exc_info
-import monotonic
+from eventlet import patcher
 import six
+
+mod = os.environ.get('EVENTLET_CLOCK')
+if not mod:
+    time = patcher.original('time')
+    eventlet_clock = getattr(time, 'monotonic') if hasattr(time, 'monotonic')\
+        else getattr(patcher.original('monotonic'), 'monotonic')
+    del time
+else:
+    mod = mod.rsplit('.', 1)
+    eventlet_clock = getattr(patcher.original(mod[0]), mod[1])
+del mod
 
 g_prevent_multiple_readers = True
 
@@ -119,7 +131,7 @@ class BaseHub(object):
         self.closed = []
 
         if clock is None:
-            clock = monotonic.monotonic
+            clock = eventlet_clock
         self.clock = clock
 
         self.greenlet = greenlet.greenlet(self.run)
