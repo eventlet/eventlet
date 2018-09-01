@@ -1,11 +1,19 @@
 import sys
 import traceback
-import event
 import types
 
 from eventlet.support import greenlets as greenlet
 import six
 from eventlet.hubs.hub import BaseHub, READ, WRITE
+
+try:
+    import event
+except ImportError:
+    event = None
+
+
+def is_available():
+    return event is not None
 
 
 class event_wrapper(object):
