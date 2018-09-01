@@ -4,7 +4,6 @@ import time
 
 import tests
 from tests import skip_with_pyevent, skip_if_no_itimer, skip_unless
-from tests.patcher_test import ProcessBase
 import eventlet
 from eventlet import hubs
 from eventlet.support import greenlets
@@ -205,17 +204,6 @@ class TestExceptionInGreenthread(tests.LimitedTestCase):
             g.kill()
 
 
-class TestHubSelection(tests.LimitedTestCase):
-
-    def test_explicit_hub(self):
-        oldhub = hubs.get_hub()
-        try:
-            hubs.use_hub(Foo)
-            assert isinstance(hubs.get_hub(), Foo), hubs.get_hub()
-        finally:
-            hubs._threadlocal.hub = oldhub
-
-
 class TestHubBlockingDetector(tests.LimitedTestCase):
     TEST_TIMEOUT = 10
 
@@ -361,43 +349,11 @@ class TestDeadRunLoop(tests.LimitedTestCase):
         assert g.dead  # sanity check that dummyproc has completed
 
 
-class Foo(object):
-    pass
+def test_use_hub_class():
+    tests.run_isolated('hub_use_hub_class.py')
 
 
-class TestDefaultHub(ProcessBase):
-
-    def test_kqueue_unsupported(self):
-        # https://github.com/eventlet/eventlet/issues/38
-        # get_hub on windows broken by kqueue
-        module_source = r'''
-from __future__ import print_function
-
-# Simulate absence of kqueue even on platforms that support it.
-import select
-try:
-    del select.kqueue
-except AttributeError:
-    pass
-
-from six.moves import builtins
-
-original_import = builtins.__import__
-
-def fail_import(name, *args, **kwargs):
-    if 'epoll' in name:
-        raise ImportError('disabled for test')
-    if 'kqueue' in name:
-        print('kqueue tried')
-    return original_import(name, *args, **kwargs)
-
-builtins.__import__ = fail_import
-
-
-import eventlet.hubs
-eventlet.hubs.get_default_hub()
-print('ok')
-'''
-        self.write_to_tempfile('newmod', module_source)
-        output, _ = self.launch_subprocess('newmod.py')
-        self.assertEqual(output, 'kqueue tried\nok\n')
+def test_kqueue_unsupported():
+    # https://github.com/eventlet/eventlet/issues/38
+    # get_hub on windows broken by kqueue
+    tests.run_isolated('hub_kqueue_unsupported.py')

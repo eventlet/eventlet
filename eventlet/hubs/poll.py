@@ -1,21 +1,22 @@
 import errno
 import sys
 
-from eventlet import patcher
+from eventlet import patcher, support
+from eventlet.hubs import hub
 select = patcher.original('select')
 time = patcher.original('time')
 
-from eventlet.hubs.hub import BaseHub, READ, WRITE, noop
-from eventlet.support import get_errno, clear_sys_exc_info
 
-EXC_MASK = select.POLLERR | select.POLLHUP
-READ_MASK = select.POLLIN | select.POLLPRI
-WRITE_MASK = select.POLLOUT
+def is_available():
+    return hasattr(select, 'poll')
 
 
-class Hub(BaseHub):
+class Hub(hub.BaseHub):
     def __init__(self, clock=None):
         super(Hub, self).__init__(clock)
+        self.EXC_MASK = select.POLLERR | select.POLLHUP
+        self.READ_MASK = select.POLLIN | select.POLLPRI
+        self.WRITE_MASK = select.POLLOUT
         self.poll = select.poll()
 
     def add(self, evtype, fileno, cb, tb, mac):
@@ -29,10 +30,10 @@ class Hub(BaseHub):
 
     def register(self, fileno, new=False):
         mask = 0
-        if self.listeners[READ].get(fileno):
-            mask |= READ_MASK | EXC_MASK
-        if self.listeners[WRITE].get(fileno):
-            mask |= WRITE_MASK | EXC_MASK
+        if self.listeners[self.READ].get(fileno):
+            mask |= self.READ_MASK | self.EXC_MASK
+        if self.listeners[self.WRITE].get(fileno):
+            mask |= self.WRITE_MASK | self.EXC_MASK
         try:
             if mask:
                 if new:
@@ -68,8 +69,8 @@ class Hub(BaseHub):
         return self.poll.poll(int(seconds * 1000.0))
 
     def wait(self, seconds=None):
-        readers = self.listeners[READ]
-        writers = self.listeners[WRITE]
+        readers = self.listeners[self.READ]
+        writers = self.listeners[self.WRITE]
 
         if not readers and not writers:
             if seconds:
@@ -78,7 +79,7 @@ class Hub(BaseHub):
         try:
             presult = self.do_poll(seconds)
         except (IOError, select.error) as e:
-            if get_errno(e) == errno.EINTR:
+            if support.get_errno(e) == errno.EINTR:
                 return
             raise
         SYSTEM_EXCEPTIONS = self.SYSTEM_EXCEPTIONS
@@ -92,15 +93,16 @@ class Hub(BaseHub):
         # polled for. It prevents one handler from invalidating
         # another.
         callbacks = set()
+        noop = hub.noop  # shave getattr
         for fileno, event in presult:
-            if event & READ_MASK:
+            if event & self.READ_MASK:
                 callbacks.add((readers.get(fileno, noop), fileno))
-            if event & WRITE_MASK:
+            if event & self.WRITE_MASK:
                 callbacks.add((writers.get(fileno, noop), fileno))
             if event & select.POLLNVAL:
                 self.remove_descriptor(fileno)
                 continue
-            if event & EXC_MASK:
+            if event & self.EXC_MASK:
                 callbacks.add((readers.get(fileno, noop), fileno))
                 callbacks.add((writers.get(fileno, noop), fileno))
 
@@ -111,7 +113,7 @@ class Hub(BaseHub):
                 raise
             except:
                 self.squelch_exception(fileno, sys.exc_info())
-                clear_sys_exc_info()
+                support.clear_sys_exc_info()
 
         if self.debug_blocking:
             self.block_detect_post()
