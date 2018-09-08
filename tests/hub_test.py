@@ -1,6 +1,7 @@
 from __future__ import with_statement
 import sys
 import time
+import threading
 
 import tests
 from tests import skip_with_pyevent, skip_if_no_itimer, skip_unless
@@ -401,3 +402,14 @@ print('ok')
         self.write_to_tempfile('newmod', module_source)
         output, _ = self.launch_subprocess('newmod.py')
         self.assertEqual(output, 'kqueue tried\nok\n')
+
+    def test_attribute_error(self):
+        # See https://github.com/eventlet/eventlet/issues/466
+
+        threads = [threading.Thread(target=eventlet.hubs.get_default_hub) for i in range(10)]
+
+        for thread in threads:
+            thread.start()
+
+        for thread in threads:
+            thread.join()

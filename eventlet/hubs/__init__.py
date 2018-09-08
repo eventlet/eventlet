@@ -10,6 +10,8 @@ __all__ = ["use_hub", "get_hub", "get_default_hub", "trampoline"]
 threading = patcher.original('threading')
 _threadlocal = threading.local()
 
+_get_default_hub_lock = threading.Lock()
+
 
 def get_default_hub():
     """Select the default hub implementation based on what multiplexing
@@ -34,21 +36,23 @@ def get_default_hub():
     # except:
     #    pass
 
-    select = patcher.original('select')
-    try:
-        import eventlet.hubs.epolls
-        return eventlet.hubs.epolls
-    except ImportError:
+    # Fix for https://github.com/eventlet/eventlet/issues/466
+    with _get_default_hub_lock:
+        select = patcher.original('select')
         try:
-            import eventlet.hubs.kqueue
-            return eventlet.hubs.kqueue
+            import eventlet.hubs.epolls
+            return eventlet.hubs.epolls
         except ImportError:
-            if hasattr(select, 'poll'):
-                import eventlet.hubs.poll
-                return eventlet.hubs.poll
-            else:
-                import eventlet.hubs.selects
-                return eventlet.hubs.selects
+            try:
+                import eventlet.hubs.kqueue
+                return eventlet.hubs.kqueue
+            except ImportError:
+                if hasattr(select, 'poll'):
+                    import eventlet.hubs.poll
+                    return eventlet.hubs.poll
+                else:
+                    import eventlet.hubs.selects
+                    return eventlet.hubs.selects
 
 
 def use_hub(mod=None):
