@@ -684,7 +684,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             else:
                 env[envk] = v
 
-        if env.get('HTTP_EXPECT') == '100-continue':
+        if env.get('HTTP_EXPECT', '').lower() == '100-continue':
             wfile = self.wfile
             wfile_line = b'HTTP/1.1 100 Continue\r\n'
         else:

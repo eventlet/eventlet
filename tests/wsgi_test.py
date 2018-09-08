@@ -748,27 +748,29 @@ class TestHttpd(_TestBase):
         result = read_http(sock)
         self.assertEqual(result.status, 'HTTP/1.1 417 Expectation Failed')
         self.assertEqual(result.body, b'failure')
-        fd.write(
-            b'PUT / HTTP/1.1\r\nHost: localhost\r\nContent-length: 7\r\n'
-            b'Expect: 100-continue\r\n\r\ntesting')
-        fd.flush()
-        header_lines = []
-        while True:
-            line = fd.readline()
-            if line == b'\r\n':
-                break
-            else:
-                header_lines.append(line)
-        assert header_lines[0].startswith(b'HTTP/1.1 100 Continue')
-        header_lines = []
-        while True:
-            line = fd.readline()
-            if line == b'\r\n':
-                break
-            else:
-                header_lines.append(line)
-        assert header_lines[0].startswith(b'HTTP/1.1 200 OK')
-        assert fd.read(7) == b'testing'
+
+        for expect_value in ('100-continue', '100-Continue'):
+            fd.write(
+                'PUT / HTTP/1.1\r\nHost: localhost\r\nContent-length: 7\r\n'
+                'Expect: {}\r\n\r\ntesting'.format(expect_value).encode())
+            fd.flush()
+            header_lines = []
+            while True:
+                line = fd.readline()
+                if line == b'\r\n':
+                    break
+                else:
+                    header_lines.append(line)
+            assert header_lines[0].startswith(b'HTTP/1.1 100 Continue')
+            header_lines = []
+            while True:
+                line = fd.readline()
+                if line == b'\r\n':
+                    break
+                else:
+                    header_lines.append(line)
+            assert header_lines[0].startswith(b'HTTP/1.1 200 OK')
+            assert fd.read(7) == b'testing'
         fd.close()
         sock.close()
 
