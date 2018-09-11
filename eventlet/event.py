@@ -38,10 +38,10 @@ class Event(object):
     >>> evt.wait()
     4
     """
-    _result = None
-    _exc = None
 
     def __init__(self):
+        self._result = None
+        self._exc = None
         self._waiters = set()
         self.reset()
 
@@ -128,8 +128,6 @@ class Event(object):
                 return result
             finally:
                 self._waiters.discard(current)
-        if self._exc is not None:
-            current.throw(*self._exc)
         return self._result
 
     def send(self, result=None, exc=None):
@@ -161,13 +159,14 @@ class Event(object):
         """
         assert self._result is NOT_USED, 'Trying to re-send() an already-triggered event.'
         self._result = result
-        if exc is not None and not isinstance(exc, tuple):
-            exc = (exc, )
-        self._exc = exc
-        hub = hubs.get_hub()
+        if exc is not None:
+            if not isinstance(exc, tuple):
+                exc = (exc, )
+            self._exc = True
+
+        schedule_call_global = hubs.get_hub().schedule_call_global
         for waiter in self._waiters:
-            hub.schedule_call_global(
-                0, self._do_send, self._result, self._exc, waiter)
+            schedule_call_global(0, self._do_send, self._result, exc, waiter)
 
     def _do_send(self, result, exc, waiter):
         if waiter in self._waiters:
