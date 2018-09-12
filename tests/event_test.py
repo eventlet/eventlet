@@ -115,7 +115,7 @@ def test_no_mem_leaks():
     threads = {}
 
     class Foo(object):
-        def __init__(self, idx):
+        def __init__(self, idx, ):
             self.thread = threads[idx]
 
     def target(idx):
