@@ -128,7 +128,14 @@ class Event(object):
                 return result
             finally:
                 self._waiters.discard(current)
-        return self._result
+
+        if self._exc is not None:
+            current.throw(*self._exc)
+        try:
+            return self._result
+        finally:
+            if len(self._waiters) == 1:
+                self._exc = None
 
     def send(self, result=None, exc=None):
         """Makes arrangements for the waiters to be woken with the
@@ -162,11 +169,11 @@ class Event(object):
         if exc is not None:
             if not isinstance(exc, tuple):
                 exc = (exc, )
-            self._exc = True
+            self._exc = exc
 
         schedule_call_global = hubs.get_hub().schedule_call_global
         for waiter in self._waiters:
-            schedule_call_global(0, self._do_send, self._result, exc, waiter)
+            schedule_call_global(0, self._do_send, self._result, self._exc, waiter)
 
     def _do_send(self, result, exc, waiter):
         if waiter in self._waiters:
