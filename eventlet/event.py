@@ -128,7 +128,8 @@ class Event(object):
                 return result
             finally:
                 self._waiters.discard(current)
-
+        if self._exc:
+            current.throw()  # how with be the case without actual exception
         return self._result
 
     def send(self, result=None, exc=None):
