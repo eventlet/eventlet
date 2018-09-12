@@ -106,10 +106,12 @@ def test_wait_timeout_exceed():
 
 
 def test_no_mem_leaks():
+
     import objgraph
     import gc
     import sys
     eventlet.hubs.get_hub().g_prevent_multiple_readers = False
+
     threads = {}
 
     class Foo(object):
@@ -129,6 +131,7 @@ def test_no_mem_leaks():
     del threads
     while gc.collect():
         pass
+
     if sys.version.major == 2:
         assert objgraph.count('Foo') == 1
         assert objgraph.count('eventlet.greenthread.GreenThread') == 2
