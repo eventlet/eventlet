@@ -141,8 +141,8 @@ def test_no_mem_leaks():
     if sys.version_info.major == 2:
         ref_c_foo += 1
         ref_c_gt += 1
-        
+
     c_foo = objgraph.count('Foo')
     c_gt = objgraph.count('eventlet.greenthread.GreenThread')
-    assert c_foo == ref_c_foo, 'expected: '+str(ref_c_foo)+' counted: '+c_foo
-    assert c_gt == ref_c_gt, 'expected: '+str(ref_c_gt)+' counted: '+c_gt
+    assert c_foo == ref_c_foo, 'expected: ' + str(ref_c_foo) + ' counted: ' + str(c_foo)
+    assert c_gt == ref_c_gt, 'expected: ' + str(ref_c_gt) + ' counted: ' + str(c_gt)
