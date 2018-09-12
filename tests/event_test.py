@@ -139,5 +139,5 @@ def test_no_mem_leaks():
         assert objgraph.count('Foo') == ref_c_foo+1
         assert objgraph.count('eventlet.greenthread.GreenThread') == ref_c_gt+2
     else:
-        assert objgraph.count('Foo') == 0
-        assert objgraph.count('eventlet.greenthread.GreenThread') == 1
+        assert objgraph.count('Foo') == ref_c_foo
+        assert objgraph.count('eventlet.greenthread.GreenThread') == ref_c_gt+1
