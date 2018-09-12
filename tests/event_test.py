@@ -128,7 +128,7 @@ def test_no_mem_leaks():
         threads[index] = gt
 
     eventlet.sleep()
-    del threads
+    threads.clear()
     while gc.collect():
         pass
 
