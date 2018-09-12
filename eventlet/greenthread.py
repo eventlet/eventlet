@@ -218,10 +218,12 @@ class GreenThread(greenlet.greenlet):
 
     def main(self, function, args, kwargs):
         try:
-            self._exit_event.send(function(*args, **kwargs))
+            function = function(*args, **kwargs)
         except:
             self._exit_event.send_exception(*sys.exc_info())
             raise
+        else:
+            self._exit_event.send(function)
         finally:
             self._resolve_links()
 
