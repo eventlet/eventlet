@@ -110,7 +110,7 @@ def test_no_mem_leaks():
     import objgraph
     import gc
     import sys
-    eventlet.hubs.get_hub().g_prevent_multiple_readers = False
+    eventlet.hubs.get_hub().set_timer_exceptions(False)
 
     ref_c_foo = objgraph.count('Foo')
     ref_c_gt = objgraph.count('eventlet.greenthread.GreenThread')
@@ -135,9 +135,14 @@ def test_no_mem_leaks():
     while gc.collect():
         pass
 
+    eventlet.hubs.get_hub().set_timer_exceptions(True)
+
     ref_c_gt += 1
     if sys.version_info.major == 2:
         ref_c_foo += 1
         ref_c_gt += 1
-    assert objgraph.count('Foo') == ref_c_foo
-    assert objgraph.count('eventlet.greenthread.GreenThread') == ref_c_gt
+        
+    c_foo = objgraph.count('Foo')
+    c_gt = objgraph.count('eventlet.greenthread.GreenThread')
+    assert c_foo == ref_c_foo, 'expected: '+str(ref_c_foo)+' counted: '+c_foo
+    assert c_gt == ref_c_gt, 'expected: '+str(ref_c_gt)+' counted: '+c_gt
