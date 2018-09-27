@@ -1,25 +1,24 @@
 import os
 import sys
 from eventlet import patcher, support
+from eventlet.hubs import hub
 import six
 select = patcher.original('select')
 time = patcher.original('time')
 
-from eventlet.hubs.hub import BaseHub, READ, WRITE, noop
+
+def is_available():
+    return hasattr(select, 'kqueue')
 
 
-if getattr(select, 'kqueue', None) is None:
-    raise ImportError('No kqueue implementation found in select module')
-
-
-FILTERS = {READ: select.KQ_FILTER_READ,
-           WRITE: select.KQ_FILTER_WRITE}
-
-
-class Hub(BaseHub):
+class Hub(hub.BaseHub):
     MAX_EVENTS = 100
 
     def __init__(self, clock=None):
+        self.FILTERS = {
+            hub.READ: select.KQ_FILTER_READ,
+            hub.WRITE: select.KQ_FILTER_WRITE,
+        }
         super(Hub, self).__init__(clock)
         self._events = {}
         self._init_kqueue()
@@ -31,10 +30,9 @@ class Hub(BaseHub):
     def _reinit_kqueue(self):
         self.kqueue.close()
         self._init_kqueue()
-        kqueue = self.kqueue
         events = [e for i in six.itervalues(self._events)
                   for e in six.itervalues(i)]
-        kqueue.control(events, 0, 0)
+        self.kqueue.control(events, 0, 0)
 
     def _control(self, events, max_events, timeout):
         try:
@@ -51,7 +49,7 @@ class Hub(BaseHub):
         events = self._events.setdefault(fileno, {})
         if evtype not in events:
             try:
-                event = select.kevent(fileno, FILTERS.get(evtype), select.KQ_EV_ADD)
+                event = select.kevent(fileno, self.FILTERS.get(evtype), select.KQ_EV_ADD)
                 self._control([event], 0, 0)
                 events[evtype] = event
             except ValueError:
@@ -90,8 +88,8 @@ class Hub(BaseHub):
             pass
 
     def wait(self, seconds=None):
-        readers = self.listeners[READ]
-        writers = self.listeners[WRITE]
+        readers = self.listeners[self.READ]
+        writers = self.listeners[self.WRITE]
 
         if not readers and not writers:
             if seconds:
@@ -103,10 +101,10 @@ class Hub(BaseHub):
             fileno = event.ident
             evfilt = event.filter
             try:
-                if evfilt == FILTERS[READ]:
-                    readers.get(fileno, noop).cb(fileno)
-                if evfilt == FILTERS[WRITE]:
-                    writers.get(fileno, noop).cb(fileno)
+                if evfilt == select.KQ_FILTER_READ:
+                    readers.get(fileno, hub.noop).cb(fileno)
+                if evfilt == select.KQ_FILTER_WRITE:
+                    writers.get(fileno, hub.noop).cb(fileno)
             except SYSTEM_EXCEPTIONS:
                 raise
             except:

@@ -1,0 +1,79 @@
+#!/bin/bash
+set -eu
+cd "$( dirname "${BASH_SOURCE[0]}" )/.."
+
+main() {
+	local python="$(which python)"
+	local base="master"
+	while [[ $# -gt 0 ]] ; do
+		case $1 in
+		-h*|--help)
+			echo "usage: $(basename $0) [-python $python] [-base master] [-- benchmarks runner args]" >&2
+			exit 0
+			;;
+		-base)
+			shift
+			base="$1"
+			;;
+		-python)
+			shift
+			python="$1"
+			if [[ -d "$python" ]] ; then
+				echo ". assume $python is virtualenv" >&2
+				python="$python/bin/python"
+			fi
+			if [[ ! -x "$python" ]] ; then
+				echo "error: invalid python path: $python" >&2
+				exit 1
+			fi
+			;;
+		--)
+			shift
+			break
+			;;
+		esac
+		shift
+	done
+
+	local benchmark_args="$@"
+	local run_benchmarks="$python -m benchmarks $benchmark_args"
+	local bnames=""
+	if ! bnames=$($run_benchmarks -collect) ; then
+		echo "$bnames" >&2
+		exit 1
+	fi
+
+	echo "- run benchmarks for new code" >&2
+	for n in $bnames ; do $run_benchmarks -filter "$n\$" ; done >.bench-new.txt
+
+	local stashed=0
+	if [[ -n "$(git status --short -uall)" ]] ; then
+		echo ". git tree is not clean, will stash." >&2
+		echo ". If stash is not working for you, commit changes first." >&2
+		git stash save --include-untracked
+		stashed=1
+		echo "" >&2
+	fi
+	echo "- checkout baseline code" >&2
+	git checkout "$base" -- eventlet/
+	echo "- run benchmarks for baseline code" >&2
+	for n in $bnames ; do $run_benchmarks -filter "$n\$" ; done >.bench-base.txt
+
+	echo "- return new code back" >&2
+	git checkout .
+	[[ "$stashed" -eq 1 ]] && git stash pop
+
+	echo "- benchcmp" >&2
+	if ! which benchcmp &>/dev/null ; then
+		echo "! benchcmp is not installed, trying go get" >&2
+		if ! which go &>/dev/null ; then
+			echo "! go is not installed https://golang.org/doc/install" >&2
+			exit 1
+		fi
+		go get golang.org/x/tools/cmd/benchcmp
+	fi
+	benchcmp .bench-{base,new}.txt
+	rm .bench-{base,new}.txt
+}
+
+main "$@"

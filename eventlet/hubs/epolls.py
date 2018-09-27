@@ -1,40 +1,29 @@
 import errno
-from eventlet.support import get_errno
-from eventlet import patcher
+from eventlet import patcher, support
+from eventlet.hubs import hub, poll
 select = patcher.original('select')
-if not hasattr(select, 'epoll'):
-    # TODO: remove mention of python-epoll on 2019-01
-    raise ImportError('No epoll implementation found in select module.'
-                      ' python-epoll (or similar) package support was removed,'
-                      ' please open issue on https://github.com/eventlet/eventlet/'
-                      ' if you must use epoll outside stdlib.')
-epoll = select.epoll
 
-from eventlet.hubs.hub import BaseHub
-from eventlet.hubs import poll
-from eventlet.hubs.poll import READ, WRITE
+
+def is_available():
+    return hasattr(select, 'epoll')
+
 
 # NOTE: we rely on the fact that the epoll flag constants
 # are identical in value to the poll constants
-
-
 class Hub(poll.Hub):
     def __init__(self, clock=None):
-        BaseHub.__init__(self, clock)
-        self.poll = epoll()
+        super(Hub, self).__init__(clock=clock)
+        self.poll = select.epoll()
 
     def add(self, evtype, fileno, cb, tb, mac):
-        oldlisteners = bool(self.listeners[READ].get(fileno) or
-                            self.listeners[WRITE].get(fileno))
-        listener = BaseHub.add(self, evtype, fileno, cb, tb, mac)
+        oldlisteners = bool(self.listeners[self.READ].get(fileno) or
+                            self.listeners[self.WRITE].get(fileno))
+        # not super() to avoid double register()
+        listener = hub.BaseHub.add(self, evtype, fileno, cb, tb, mac)
         try:
-            if not oldlisteners:
-                # Means we've added a new listener
-                self.register(fileno, new=True)
-            else:
-                self.register(fileno, new=False)
+            self.register(fileno, new=not oldlisteners)
         except IOError as ex:    # ignore EEXIST, #80
-            if get_errno(ex) != errno.EEXIST:
+            if support.get_errno(ex) != errno.EEXIST:
                 raise
         return listener
 

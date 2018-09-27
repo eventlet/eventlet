@@ -170,6 +170,7 @@ class GreenThread(greenlet.greenlet):
         greenlet.greenlet.__init__(self, self.main, parent)
         self._exit_event = event.Event()
         self._resolving_links = False
+        self._exit_funcs = None
 
     def wait(self):
         """ Returns the result of the main function of this GreenThread.  If the
@@ -196,7 +197,8 @@ class GreenThread(greenlet.greenlet):
         functions by doing things like switching explicitly to another
         greenthread.
         """
-        self._exit_funcs = getattr(self, '_exit_funcs', deque())
+        if self._exit_funcs is None:
+            self._exit_funcs = deque()
         self._exit_funcs.append((func, curried_args, curried_kwargs))
         if self._exit_event.ready():
             self._resolve_links()
@@ -206,7 +208,7 @@ class GreenThread(greenlet.greenlet):
 
         Remove successfully return True, otherwise False
         """
-        if not getattr(self, '_exit_funcs', None):
+        if not self._exit_funcs:
             return False
         try:
             self._exit_funcs.remove((func, curried_args, curried_kwargs))
@@ -229,11 +231,12 @@ class GreenThread(greenlet.greenlet):
         # ca and ckw are the curried function arguments
         if self._resolving_links:
             return
+        if not self._exit_funcs:
+            return
         self._resolving_links = True
         try:
-            exit_funcs = getattr(self, '_exit_funcs', deque())
-            while exit_funcs:
-                f, ca, ckw = exit_funcs.popleft()
+            while self._exit_funcs:
+                f, ca, ckw = self._exit_funcs.popleft()
                 f(self, *ca, **ckw)
         finally:
             self._resolving_links = False

@@ -5,7 +5,7 @@ The backdoor module is convenient for inspecting the state of a long-running pro
 
 In the application, spawn a greenthread running backdoor_server on a listening socket::
 
-    eventlet.spawn(backdoor.backdoor_server, eventlet.listen(('localhost', 3000)))
+    eventlet.spawn(backdoor.backdoor_server, eventlet.listen(('localhost', 3000)), locals())
 
 When this is running, the backdoor is accessible via telnet to the specified port.
 

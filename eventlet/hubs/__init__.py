@@ -1,4 +1,7 @@
+import importlib
+import inspect
 import os
+import warnings
 
 from eventlet import patcher
 from eventlet.support import greenlets as greenlet
@@ -9,6 +12,15 @@ __all__ = ["use_hub", "get_hub", "get_default_hub", "trampoline"]
 
 threading = patcher.original('threading')
 _threadlocal = threading.local()
+
+
+# order is important, get_default_hub returns first available from here
+builtin_hub_names = ('epolls', 'kqueue', 'poll', 'selects')
+builtin_hub_modules = tuple(importlib.import_module('eventlet.hubs.' + name) for name in builtin_hub_names)
+
+
+class HubError(Exception):
+    pass
 
 
 def get_default_hub():
@@ -26,44 +38,33 @@ def get_default_hub():
     .. include:: ../doc/common.txt
     .. note :: |internal|
     """
+    for mod in builtin_hub_modules:
+        if mod.is_available():
+            return mod
 
-    # pyevent hub disabled for now because it is not thread-safe
-    # try:
-    #    import eventlet.hubs.pyevent
-    #    return eventlet.hubs.pyevent
-    # except:
-    #    pass
-
-    select = patcher.original('select')
-    try:
-        import eventlet.hubs.epolls
-        return eventlet.hubs.epolls
-    except ImportError:
-        try:
-            import eventlet.hubs.kqueue
-            return eventlet.hubs.kqueue
-        except ImportError:
-            if hasattr(select, 'poll'):
-                import eventlet.hubs.poll
-                return eventlet.hubs.poll
-            else:
-                import eventlet.hubs.selects
-                return eventlet.hubs.selects
+    raise HubError('no built-in hubs are available: {}'.format(builtin_hub_modules))
 
 
 def use_hub(mod=None):
     """Use the module *mod*, containing a class called Hub, as the
     event hub. Usually not required; the default hub is usually fine.
 
-    Mod can be an actual module, a string, or None.  If *mod* is a module,
-    it uses it directly.   If *mod* is a string and contains either '.' or ':'
-    use_hub tries to import the hub using the 'package.subpackage.module:Class'
-    convention, otherwise use_hub looks for a matching setuptools entry point
-    in the 'eventlet.hubs' group to load or finally tries to import
-    `eventlet.hubs.mod` and use that as the hub module.  If *mod* is None,
-    use_hub uses the default hub.  Only call use_hub during application
-    initialization,  because it resets the hub's state and any existing
+    `mod` can be an actual hub class, a module, a string, or None.
+
+    If `mod` is a class, use it directly.
+    If `mod` is a module, use `module.Hub` class
+    If `mod` is a string and contains either '.' or ':'
+    then `use_hub` uses 'package.subpackage.module:Class' convention,
+    otherwise imports `eventlet.hubs.mod`.
+    If `mod` is None, `use_hub` uses the default hub.
+
+    Only call use_hub during application initialization,
+    because it resets the hub's state and any existing
     timers or listeners will never be resumed.
+
+    These two threadlocal attributes are not part of Eventlet public API:
+    - `threadlocal.Hub` (capital H) is hub constructor, used when no hub is currently active
+    - `threadlocal.hub` (lowercase h) is active hub instance
     """
     if mod is None:
         mod = os.environ.get('EVENTLET_HUB', None)
@@ -71,36 +72,30 @@ def use_hub(mod=None):
         mod = get_default_hub()
     if hasattr(_threadlocal, 'hub'):
         del _threadlocal.hub
+
+    classname = ''
     if isinstance(mod, six.string_types):
         assert mod.strip(), "Need to specify a hub"
         if '.' in mod or ':' in mod:
             modulename, _, classname = mod.strip().partition(':')
-            mod = __import__(modulename, globals(), locals(), [classname])
-            if classname:
-                mod = getattr(mod, classname)
         else:
-            found = False
+            modulename = 'eventlet.hubs.' + mod
+        mod = importlib.import_module(modulename)
 
-            # setuptools 5.4.1 test_import_patched_defaults fail
-            # https://github.com/eventlet/eventlet/issues/177
-            try:
-                # try and import pkg_resources ...
-                import pkg_resources
-            except ImportError:
-                # ... but do not depend on it
-                pkg_resources = None
-            if pkg_resources is not None:
-                for entry in pkg_resources.iter_entry_points(
-                        group='eventlet.hubs', name=mod):
-                    mod, found = entry.load(), True
-                    break
-            if not found:
-                mod = __import__(
-                    'eventlet.hubs.' + mod, globals(), locals(), ['Hub'])
-    if hasattr(mod, 'Hub'):
-        _threadlocal.Hub = mod.Hub
+    if hasattr(mod, 'is_available'):
+        if not mod.is_available():
+            raise Exception('selected hub is not available on this system mod={}'.format(mod))
     else:
-        _threadlocal.Hub = mod
+        msg = '''Please provide `is_available()` function in your custom Eventlet hub {mod}.
+It must return bool: whether hub supports current platform. See eventlet/hubs/{{epoll,kqueue}} for example.
+'''.format(mod=mod)
+        warnings.warn(msg, DeprecationWarning, stacklevel=3)
+
+    hubclass = mod
+    if not inspect.isclass(mod):
+        hubclass = getattr(mod, classname or 'Hub')
+
+    _threadlocal.Hub = hubclass
 
 
 def get_hub():
