@@ -29,6 +29,11 @@ class TestSpew(tests.LimitedTestCase):
         assert self.tracer is None
 
     def test_line(self):
+        if sys.version_info >= (3, 7):
+            frame_str = "f=<frame at"
+        else:
+            frame_str = "f=<frame object at"
+
         sys.stdout = six.StringIO()
         s = debug.Spew()
         f = sys._getframe()
@@ -36,7 +41,7 @@ class TestSpew(tests.LimitedTestCase):
         lineno = f.f_lineno - 1  # -1 here since we called with frame f in the line above
         output = sys.stdout.getvalue()
         assert "%s:%i" % (__name__, lineno) in output, "Didn't find line %i in %s" % (lineno, output)
-        assert "f=<frame object at" in output
+        assert frame_str in output
 
     def test_line_nofile(self):
         sys.stdout = six.StringIO()
@@ -51,6 +56,11 @@ class TestSpew(tests.LimitedTestCase):
         assert "VM instruction #" in output, output
 
     def test_line_global(self):
+        if sys.version_info >= (3, 7):
+            frame_str = "f=<frame at"
+        else:
+            frame_str = "f=<frame object at"
+
         global GLOBAL_VAR
         sys.stdout = six.StringIO()
         GLOBAL_VAR = debug.Spew()
@@ -59,7 +69,7 @@ class TestSpew(tests.LimitedTestCase):
         lineno = f.f_lineno - 1  # -1 here since we called with frame f in the line above
         output = sys.stdout.getvalue()
         assert "%s:%i" % (__name__, lineno) in output, "Didn't find line %i in %s" % (lineno, output)
-        assert "f=<frame object at" in output
+        assert frame_str in output
         assert "GLOBAL_VAR" in f.f_globals
         assert "GLOBAL_VAR=<eventlet.debug.Spew object at" in output
         del GLOBAL_VAR
