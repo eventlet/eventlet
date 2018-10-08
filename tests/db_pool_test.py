@@ -587,3 +587,59 @@ class Test01Psycopg2Tpool(Psycopg2ConnectionPool, TpoolConnectionPool, TestPsyco
 
 class Test02Psycopg2Raw(Psycopg2ConnectionPool, RawConnectionPool, TestPsycopg2Base):
     __test__ = True
+
+
+class DelayedPool(db_pool.RawConnectionPool):
+    delay = 0
+
+    def create(self):
+        result = super(DelayedPool, self).create()
+        if self.delay:
+            eventlet.sleep(self.delay)
+        return result
+
+
+def test_db_pool_create_timeout():
+    pool = DelayedPool(DummyDBModule(),
+                       max_size=1,
+                       max_age=0,
+                       max_idle=60,
+                       connect_timeout=60)
+
+    def thread_task(name):
+        with eventlet.Timeout(1):
+            try:
+                with pool.item() as conn:
+                    pass
+                return True
+            except eventlet.Timeout:
+                return False
+
+    DelayedPool.delay = 0
+    with pool.item() as conn:
+        # The next time we open a connection, there will be a long
+        # delay in the create function (i.e. as if the database were
+        # unreachable).
+        DelayedPool.delay = 10
+
+        # Start a thread which will try to get a connection from the
+        # pool.
+        t = eventlet.spawn(thread_task, 'test1')
+
+        # Allow the other thread to run.  It should get as far as calling
+        # pool.item(), and then it will wait because we have the connection
+        # checked out from the pool already (and max_size=1).
+        eventlet.sleep(0)
+        assert pool.waiting() == 1
+
+    t.wait()
+
+    # At this point we have no connections checked out, and no
+    # background threads running.  We'll also set the connection
+    # delay to zero.  So the next test ought to be able to create
+    # a new connection immediately.  If it times out instead, it
+    # will return False and the test will fail.
+    DelayedPool.delay = 0
+    t = eventlet.spawn(thread_task, 'test2')
+
+    assert t.wait()
