@@ -2,7 +2,7 @@ import imp
 import sys
 
 import eventlet
-from eventlet.support import six
+import six
 
 
 __all__ = ['inject', 'import_patched', 'monkey_patch', 'is_monkey_patched']

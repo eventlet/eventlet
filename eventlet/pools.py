@@ -121,12 +121,16 @@ class Pool(object):
             return
 
         if self.waiting():
-            self.channel.put(item)
+            try:
+                self.channel.put(item, block=False)
+                return
+            except queue.Full:
+                pass
+
+        if self.order_as_stack:
+            self.free_items.appendleft(item)
         else:
-            if self.order_as_stack:
-                self.free_items.appendleft(item)
-            else:
-                self.free_items.append(item)
+            self.free_items.append(item)
 
     def resize(self, new_size):
         """Resize the pool to *new_size*.

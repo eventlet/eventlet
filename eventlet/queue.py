@@ -49,8 +49,8 @@ import traceback
 from eventlet.event import Event
 from eventlet.greenthread import getcurrent
 from eventlet.hubs import get_hub
-from eventlet.support import six
-from eventlet.support.six.moves import queue as Stdlib_Queue
+import six
+from six.moves import queue as Stdlib_Queue
 from eventlet.timeout import Timeout
 
 
@@ -255,7 +255,7 @@ class LightQueue(object):
                     return
             raise Full
         elif block:
-            waiter = ItemWaiter(item)
+            waiter = ItemWaiter(item, block)
             self.putters.add(waiter)
             timeout = Timeout(timeout, Full)
             try:
@@ -268,6 +268,14 @@ class LightQueue(object):
             finally:
                 timeout.cancel()
                 self.putters.discard(waiter)
+        elif self.getters:
+            waiter = ItemWaiter(item, block)
+            self.putters.add(waiter)
+            self._schedule_unlock()
+            result = waiter.wait()
+            assert result is waiter, "Invalid switch into Queue.put: %r" % (result, )
+            if waiter.item is not _NONE:
+                raise Full
         else:
             raise Full
 
@@ -310,7 +318,11 @@ class LightQueue(object):
                 self.getters.add(waiter)
                 if self.putters:
                     self._schedule_unlock()
-                return waiter.wait()
+                try:
+                    return waiter.wait()
+                except:
+                    self._schedule_unlock()
+                    raise
             finally:
                 self.getters.discard(waiter)
                 timeout.cancel()
@@ -356,6 +368,14 @@ class LightQueue(object):
                                        self.qsize() < self.maxsize):
                     putter = self.putters.pop()
                     putter.switch(putter)
+                elif self.putters and not self.getters:
+                    full = [p for p in self.putters if not p.block]
+                    if not full:
+                        break
+                    for putter in full:
+                        self.putters.discard(putter)
+                        get_hub().schedule_call_global(
+                            0, putter.greenlet.throw, Full)
                 else:
                     break
         finally:
@@ -370,11 +390,12 @@ class LightQueue(object):
 
 
 class ItemWaiter(Waiter):
-    __slots__ = ['item']
+    __slots__ = ['item', 'block']
 
-    def __init__(self, item):
+    def __init__(self, item, block):
         Waiter.__init__(self)
         self.item = item
+        self.block = block
 
 
 class Queue(LightQueue):

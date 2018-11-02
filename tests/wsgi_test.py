@@ -20,7 +20,8 @@ from eventlet import tpool
 from eventlet import wsgi
 from eventlet.green import socket as greensocket
 from eventlet.green import ssl
-from eventlet.support import bytes_to_str, six
+from eventlet.support import bytes_to_str
+import six
 import tests
 
 
@@ -747,27 +748,29 @@ class TestHttpd(_TestBase):
         result = read_http(sock)
         self.assertEqual(result.status, 'HTTP/1.1 417 Expectation Failed')
         self.assertEqual(result.body, b'failure')
-        fd.write(
-            b'PUT / HTTP/1.1\r\nHost: localhost\r\nContent-length: 7\r\n'
-            b'Expect: 100-continue\r\n\r\ntesting')
-        fd.flush()
-        header_lines = []
-        while True:
-            line = fd.readline()
-            if line == b'\r\n':
-                break
-            else:
-                header_lines.append(line)
-        assert header_lines[0].startswith(b'HTTP/1.1 100 Continue')
-        header_lines = []
-        while True:
-            line = fd.readline()
-            if line == b'\r\n':
-                break
-            else:
-                header_lines.append(line)
-        assert header_lines[0].startswith(b'HTTP/1.1 200 OK')
-        assert fd.read(7) == b'testing'
+
+        for expect_value in ('100-continue', '100-Continue'):
+            fd.write(
+                'PUT / HTTP/1.1\r\nHost: localhost\r\nContent-length: 7\r\n'
+                'Expect: {}\r\n\r\ntesting'.format(expect_value).encode())
+            fd.flush()
+            header_lines = []
+            while True:
+                line = fd.readline()
+                if line == b'\r\n':
+                    break
+                else:
+                    header_lines.append(line)
+            assert header_lines[0].startswith(b'HTTP/1.1 100 Continue')
+            header_lines = []
+            while True:
+                line = fd.readline()
+                if line == b'\r\n':
+                    break
+                else:
+                    header_lines.append(line)
+            assert header_lines[0].startswith(b'HTTP/1.1 200 OK')
+            assert fd.read(7) == b'testing'
         fd.close()
         sock.close()
 
@@ -1422,8 +1425,13 @@ class TestHttpd(_TestBase):
         # in all WSGI environment strings application must observe either bytes in latin-1 (ISO-8859-1)
         # or unicode code points \u0000..\u00ff
         # wsgi_decoding_dance from Werkzeug to emulate concerned application
-        decoded = g[0].encode('latin1').decode('utf-8', 'replace')
-        assert decoded == u'/你好'
+        msg = 'Expected PATH_INFO to be a native string, not {0}'.format(type(g[0]))
+        assert isinstance(g[0], str), msg
+        if six.PY2:
+            assert g[0] == u'/你好'.encode('utf-8')
+        else:
+            decoded = g[0].encode('latin1').decode('utf-8', 'replace')
+            assert decoded == u'/你好'
 
     @tests.skip_if_no_ipv6
     def test_ipv6(self):
@@ -1596,6 +1604,34 @@ class TestHttpd(_TestBase):
         assert result.status == 'HTTP/1.1 200 OK', 'Received status {0!r}'.format(result.status)
         assert result.body == (b'HTTP_HOST: localhost\nHTTP_HTTP_X_ANY_K: two\n'
                                b'HTTP_PATH_INFO: foo\nHTTP_X_ANY_K: one\n')
+
+    def test_env_header_stripping(self):
+        def app(environ, start_response):
+            start_response('200 OK', [])
+            # On py3, headers get parsed as Latin-1, so send them back out as Latin-1, too
+            return [line if isinstance(line, bytes) else line.encode('latin1')
+                    for kv in sorted(environ.items())
+                    if kv[0].startswith('HTTP_')
+                    for line in ('{0}: {1}\n'.format(*kv),)]
+
+        self.spawn_server(site=app)
+        sock = eventlet.connect(self.server_addr)
+        sock.sendall(
+            b'GET / HTTP/1.1\r\n'
+            b'Host: localhost\r\n'
+            b'spaced:   o   u   t   \r\n'
+            b'trailing: tab\t\r\n'
+            b'trailing-nbsp: \xc2\xa0\r\n'
+            b'null-set: \xe2\x88\x85\r\n\r\n')
+        result = read_http(sock)
+        sock.close()
+        assert result.status == 'HTTP/1.1 200 OK', 'Received status {0!r}'.format(result.status)
+        assert result.body == (
+            b'HTTP_HOST: localhost\n'
+            b'HTTP_NULL_SET: \xe2\x88\x85\n'
+            b'HTTP_SPACED: o   u   t\n'
+            b'HTTP_TRAILING: tab\n'
+            b'HTTP_TRAILING_NBSP: \xc2\xa0\n')
 
     def test_log_disable(self):
         self.spawn_server(log_output=False)

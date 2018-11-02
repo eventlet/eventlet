@@ -42,7 +42,7 @@ from eventlet.green import _socket_nodns
 from eventlet.green import os
 from eventlet.green import time
 from eventlet.green import select
-from eventlet.support import six
+import six
 
 
 def import_patched(module_name):
@@ -50,8 +50,6 @@ def import_patched(module_name):
     # regular evenlet.green.socket imports *this* module and if we imported
     # it back we'd end with an import cycle (socket -> greendns -> socket).
     # We break this import cycle by providing a restricted socket module.
-    # if (module_name + '.').startswith('dns.'):
-    #     module_name = 'eventlet.support.' + module_name
     modules = {
         'select': select,
         'time': time,
@@ -61,10 +59,10 @@ def import_patched(module_name):
     return patcher.import_patched(module_name, **modules)
 
 
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 dns = import_patched('dns')
 for pkg in dns.__all__:
     setattr(dns, pkg, import_patched('dns.' + pkg))
+dns.rdtypes.__all__.extend(['dnskeybase', 'dsbase', 'txtbase'])
 for pkg in dns.rdtypes.__all__:
     setattr(dns.rdtypes, pkg, import_patched('dns.rdtypes.' + pkg))
 for pkg in dns.rdtypes.IN.__all__:
@@ -72,7 +70,6 @@ for pkg in dns.rdtypes.IN.__all__:
 for pkg in dns.rdtypes.ANY.__all__:
     setattr(dns.rdtypes.ANY, pkg, import_patched('dns.rdtypes.ANY.' + pkg))
 del import_patched
-sys.path.pop(0)
 
 
 socket = _socket_nodns
@@ -321,12 +318,13 @@ class ResolverProxy(object):
 
     def query(self, qname, rdtype=dns.rdatatype.A, rdclass=dns.rdataclass.IN,
               tcp=False, source=None, raise_on_no_answer=True,
-              _hosts_rdtypes=(dns.rdatatype.A, dns.rdatatype.AAAA)):
+              _hosts_rdtypes=(dns.rdatatype.A, dns.rdatatype.AAAA),
+              use_network=True):
         """Query the resolver, using /etc/hosts if enabled.
 
         Behavior:
         1. if hosts is enabled and contains answer, return it now
-        2. query nameservers for qname
+        2. query nameservers for qname if use_network is True
         3. if qname did not contain dots, pretend it was top-level domain,
            query "foobar." and append to previous result
         """
@@ -363,7 +361,7 @@ class ResolverProxy(object):
 
         if (self._hosts and (rdclass == dns.rdataclass.IN) and (rdtype in _hosts_rdtypes)):
             if step(self._hosts.query, qname, rdtype, raise_on_no_answer=False):
-                if (result[0] is not None) or (result[1] is not None):
+                if (result[0] is not None) or (result[1] is not None) or (not use_network):
                     return end()
 
         # Main query
@@ -401,10 +399,12 @@ class ResolverProxy(object):
 resolver = ResolverProxy(hosts_resolver=HostsResolver())
 
 
-def resolve(name, family=socket.AF_INET, raises=True, _proxy=None):
+def resolve(name, family=socket.AF_INET, raises=True, _proxy=None,
+            use_network=True):
     """Resolve a name for a given family using the global resolver proxy.
 
-    This method is called by the global getaddrinfo() function.
+    This method is called by the global getaddrinfo() function. If use_network
+    is False, only resolution via hosts file will be performed.
 
     Return a dns.resolver.Answer instance.  If there is no answer it's
     rrset will be emtpy.
@@ -421,7 +421,8 @@ def resolve(name, family=socket.AF_INET, raises=True, _proxy=None):
         _proxy = resolver
     try:
         try:
-            return _proxy.query(name, rdtype, raise_on_no_answer=raises)
+            return _proxy.query(name, rdtype, raise_on_no_answer=raises,
+                                use_network=use_network)
         except dns.resolver.NXDOMAIN:
             if not raises:
                 return HostsAnswer(dns.name.Name(name),
@@ -472,16 +473,19 @@ def _getaddrinfo_lookup(host, family, flags):
     addrs = []
     if family == socket.AF_UNSPEC:
         err = None
-        for qfamily in [socket.AF_INET6, socket.AF_INET]:
-            try:
-                answer = resolve(host, qfamily, False)
-            except socket.gaierror as e:
-                if e.errno not in (socket.EAI_AGAIN, EAI_NONAME_ERROR.errno, EAI_NODATA_ERROR.errno):
-                    raise
-                err = e
-            else:
-                if answer.rrset:
-                    addrs.extend(rr.address for rr in answer.rrset)
+        for use_network in [False, True]:
+            for qfamily in [socket.AF_INET6, socket.AF_INET]:
+                try:
+                    answer = resolve(host, qfamily, False, use_network=use_network)
+                except socket.gaierror as e:
+                    if e.errno not in (socket.EAI_AGAIN, EAI_NONAME_ERROR.errno, EAI_NODATA_ERROR.errno):
+                        raise
+                    err = e
+                else:
+                    if answer.rrset:
+                        addrs.extend(rr.address for rr in answer.rrset)
+            if addrs:
+                break
         if err is not None and not addrs:
             raise err
     elif family == socket.AF_INET6 and flags & socket.AI_V4MAPPED:
@@ -693,7 +697,12 @@ def udp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
         if source is not None:
             source = (source, source_port)
     elif af == dns.inet.AF_INET6:
-        destination = (where, port, 0, 0)
+        # Purge any stray zeroes in source address.  When doing the tuple comparison
+        # below, we need to always ensure both our target and where we receive replies
+        # from are compared with all zeroes removed so that we don't erroneously fail.
+        #   e.g. ('00::1', 53, 0, 0) != ('::1', 53, 0, 0)
+        where_trunc = dns.ipv6.inet_ntoa(dns.ipv6.inet_aton(where))
+        destination = (where_trunc, port, 0, 0)
         if source is not None:
             source = (source, source_port, 0, 0)
 
@@ -713,15 +722,29 @@ def udp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
                     raise dns.exception.Timeout
                 eventlet.sleep(0.01)
                 continue
+
+        tried = False
         while True:
+            # If we've tried to receive at least once, check to see if our
+            # timer expired
+            if tried and (expiration - time.time() <= 0.0):
+                raise dns.exception.Timeout
+            # Sleep if we are retrying the operation due to a bad source
+            # address or a socket timeout.
+            if tried:
+                eventlet.sleep(0.01)
+            tried = True
+
             try:
                 (wire, from_address) = s.recvfrom(65535)
             except socket.timeout:
                 # Q: Do we also need to catch coro.CoroutineSocketWake and pass?
-                if expiration - time.time() <= 0.0:
-                    raise dns.exception.Timeout
-                eventlet.sleep(0.01)
                 continue
+            if dns.inet.af_for_address(from_address[0]) == dns.inet.AF_INET6:
+                # Purge all possible zeroes for ipv6 to match above logic
+                addr = from_address[0]
+                addr = dns.ipv6.inet_ntoa(dns.ipv6.inet_aton(addr))
+                from_address = (addr, from_address[1], from_address[2], from_address[3])
             if from_address == destination:
                 break
             if not ignore_unexpected:
@@ -801,7 +824,7 @@ def tcp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
         _net_write(s, tcpmsg, expiration)
         ldata = _net_read(s, 2, expiration)
         (l,) = struct.unpack("!H", ldata)
-        wire = _net_read(s, l, expiration)
+        wire = bytes(_net_read(s, l, expiration))
     finally:
         s.close()
     r = dns.message.from_wire(wire, keyring=q.keyring, request_mac=q.mac)

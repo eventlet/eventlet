@@ -11,8 +11,8 @@ from eventlet import greenio
 from eventlet import support
 from eventlet.green import BaseHTTPServer
 from eventlet.green import socket
-from eventlet.support import six
-from eventlet.support.six.moves import urllib
+import six
+from six.moves import urllib
 
 
 DEFAULT_MAX_SIMULTANEOUS_REQUESTS = 1024
@@ -62,6 +62,8 @@ def addr_to_host_port(addr):
 def encode_dance(s):
     if not isinstance(s, bytes):
         s = s.encode('utf-8', 'replace')
+    if six.PY2:
+        return s
     return s.decode('latin1')
 
 
@@ -670,7 +672,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         else:
             headers = [h.split(':', 1) for h in headers]
 
-        env['headers_raw'] = headers_raw = tuple((k, v.strip()) for k, v in headers)
+        env['headers_raw'] = headers_raw = tuple((k, v.strip(' \t\n\r')) for k, v in headers)
         for k, v in headers_raw:
             k = k.replace('-', '_').upper()
             if k in ('CONTENT_TYPE', 'CONTENT_LENGTH'):
@@ -682,7 +684,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             else:
                 env[envk] = v
 
-        if env.get('HTTP_EXPECT') == '100-continue':
+        if env.get('HTTP_EXPECT', '').lower() == '100-continue':
             wfile = self.wfile
             wfile_line = b'HTTP/1.1 100 Continue\r\n'
         else:

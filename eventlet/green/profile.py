@@ -40,7 +40,7 @@ import functools
 
 from eventlet import greenthread
 from eventlet import patcher
-from eventlet.support import six
+import six
 
 thread = patcher.original(six.moves._thread.__name__)  # non-monkeypatched module needed
 

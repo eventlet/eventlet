@@ -20,7 +20,8 @@ except ImportError:  # pragma NO COVER
 from eventlet import semaphore
 from eventlet import wsgi
 from eventlet.green import socket
-from eventlet.support import get_errno, six
+from eventlet.support import get_errno
+import six
 
 # Python 2's utf8 decoding is more lenient than we'd like
 # In order to pass autobahn's testsuite we need stricter validation

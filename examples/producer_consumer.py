@@ -9,8 +9,6 @@ GreenPool handles any exceptions raised and arranges so that there's a set
 number of "workers", so you don't have to write that tedious management code
 yourself.
 """
-from __future__ import with_statement
-
 from eventlet.green import urllib2
 import eventlet
 import re

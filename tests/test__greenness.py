@@ -4,7 +4,7 @@ If either operation blocked the whole script would block and timeout.
 """
 import eventlet
 from eventlet.green import BaseHTTPServer
-from eventlet.support import six
+import six
 
 if six.PY2:
     from eventlet.green.urllib2 import HTTPError, urlopen

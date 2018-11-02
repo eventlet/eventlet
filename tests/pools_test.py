@@ -2,8 +2,9 @@ from unittest import TestCase, main
 
 import eventlet
 from eventlet import Queue
+from eventlet import hubs
 from eventlet import pools
-from eventlet.support import six
+import six
 
 
 class IntPool(pools.Pool):
@@ -163,6 +164,25 @@ class TestIntPool(TestCase):
             gp.spawn_n(do_get)
         gp.waitall()
         self.assertEqual(creates[0], 4)
+
+    def test_put_with_timed_out_getters(self):
+        p = IntPool(max_size=2)
+        hub = hubs.get_hub()
+        # check out all the items
+        p.get()
+        p.get()
+
+        # all getting greenthreads are blocked and have Timeouts that are
+        # ready to fire, but have not fired yet
+        getters = [eventlet.spawn(p.get) for _ in range(5)]
+        eventlet.sleep()
+        for getter in getters:
+            hub.schedule_call_global(0, getter.throw, eventlet.Timeout(None))
+
+        # put one item back; this should not block since the pool is empty
+        with eventlet.Timeout(10):  # don't hang if unblocking fails
+            p.put(0)
+        self.assertEqual(len(p.free_items), 1)
 
 
 class TestAbstract(TestCase):

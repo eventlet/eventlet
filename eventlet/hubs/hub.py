@@ -19,8 +19,11 @@ else:
             signal.alarm(math.ceil(seconds))
         arm_alarm = alarm_signal
 
-from eventlet.hubs import timer, IOClosed
-from eventlet.support import greenlets as greenlet, clear_sys_exc_info, monotonic, six
+import eventlet.hubs
+from eventlet.hubs import timer
+from eventlet.support import greenlets as greenlet, clear_sys_exc_info
+import monotonic
+import six
 
 g_prevent_multiple_readers = True
 
@@ -263,7 +266,7 @@ class BaseHub(object):
         listener = self.closed.pop()
         if not listener.greenlet.dead:
             # There's no point signalling a greenlet that's already dead.
-            listener.tb(IOClosed(errno.ENOTCONN, "Operation on closed file"))
+            listener.tb(eventlet.hubs.IOClosed(errno.ENOTCONN, "Operation on closed file"))
 
     def ensure_greenlet(self):
         if self.greenlet.dead:

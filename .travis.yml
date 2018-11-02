@@ -6,17 +6,9 @@ matrix:
   include:
     - {python: 3.6, env: TOXENV=pep8}
 
-    - {python: 2.6, env: TOXENV=py26-epolls}
-    - {python: 2.6, env: TOXENV=py26-poll}
-    - {python: 2.6, env: TOXENV=py26-selects}
-
     - {python: 2.7, env: TOXENV=py27-epolls}
     - {python: 2.7, env: TOXENV=py27-poll}
     - {python: 2.7, env: TOXENV=py27-selects}
-
-    - {python: 3.3, env: TOXENV=py33-epolls}
-    - {python: 3.3, env: TOXENV=py33-poll}
-    - {python: 3.3, env: TOXENV=py33-selects}
 
     - {python: 3.4, env: TOXENV=py34-epolls}
     - {python: 3.4, env: TOXENV=py34-poll}
@@ -30,9 +22,9 @@ matrix:
     - {python: 3.6, env: TOXENV=py36-poll}
     - {python: 3.6, env: TOXENV=py36-selects}
 
-    - {python: 3.7-dev, env: TOXENV=py37-epolls}
-    - {python: 3.7-dev, env: TOXENV=py37-poll}
-    - {python: 3.7-dev, env: TOXENV=py37-selects}
+    - {python: 3.7, sudo: required, dist: xenial, env: TOXENV=py37-epolls}
+    - {python: 3.7, sudo: required, dist: xenial, env: TOXENV=py37-poll}
+    - {python: 3.7, sudo: required, dist: xenial, env: TOXENV=py37-selects}
 
     - {python: pypy, env: TOXENV=pypy-epolls}
     - {python: pypy, env: TOXENV=pypy-poll}
@@ -40,7 +32,6 @@ matrix:
 
     - {python: 3.6, env: TOXENV=ipv6}
   allow_failures:
-    - python: 2.6
     - python: 3.7-dev
     - python: pypy
 

@@ -3,7 +3,7 @@ from eventlet.green import socket
 from eventlet.green import time
 from eventlet.green import httplib
 from eventlet.green import ftplib
-from eventlet.support import six
+import six
 
 if six.PY2:
     to_patch = [('socket', socket), ('httplib', httplib),

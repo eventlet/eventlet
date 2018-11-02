@@ -6,28 +6,24 @@ slurp_properties(__ssl, globals(), srckeys=dir(__ssl))
 import errno
 import functools
 import sys
-import time
 
-from eventlet import greenio
+from eventlet import greenio, hubs
 from eventlet.greenio import (
     set_nonblocking, GreenSocket, CONNECT_ERR, CONNECT_SUCCESS,
 )
 from eventlet.hubs import trampoline, IOClosed
-from eventlet.support import get_errno, PY33, six
+from eventlet.support import get_errno, PY33
+import six
 orig_socket = __import__('socket')
 socket = orig_socket.socket
-if sys.version_info >= (2, 7):
-    has_ciphers = True
-    timeout_exc = SSLError
-else:
-    has_ciphers = False
-    timeout_exc = orig_socket.timeout
+timeout_exc = SSLError
 
 __patched__ = [
     'SSLSocket', 'SSLContext', 'wrap_socket', 'sslwrap_simple',
     'create_default_context', '_create_default_https_context']
 
 _original_sslsocket = __ssl.SSLSocket
+_original_wrap_socket = __ssl.wrap_socket
 
 
 class GreenSSLSocket(_original_sslsocket):
@@ -61,11 +57,41 @@ class GreenSSLSocket(_original_sslsocket):
             # this assignment
             self._timeout = sock.gettimeout()
 
-        # nonblocking socket handshaking on connect got disabled so let's pretend it's disabled
-        # even when it's on
-        super(GreenSSLSocket, self).__init__(
-            sock.fd, keyfile, certfile, server_side, cert_reqs, ssl_version,
-            ca_certs, do_handshake_on_connect and six.PY2, *args, **kw)
+        if sys.version_info >= (3, 7):
+            # Monkey-patch the sslsocket so our modified self gets
+            # injected into its _create method.
+            def fake_new(self, cls, *args, **kwargs):
+                return self
+
+            orig_new = _original_sslsocket.__new__
+            try:
+                _original_sslsocket.__new__ = fake_new.__get__(self, GreenSSLSocket)
+
+                self = _original_wrap_socket(
+                    sock=sock.fd,
+                    keyfile=keyfile,
+                    certfile=certfile,
+                    server_side=server_side,
+                    cert_reqs=cert_reqs,
+                    ssl_version=ssl_version,
+                    ca_certs=ca_certs,
+                    do_handshake_on_connect=False,
+                    *args, **kw
+                )
+                self.keyfile = keyfile
+                self.certfile = certfile
+                self.cert_reqs = cert_reqs
+                self.ssl_version = ssl_version
+                self.ca_certs = ca_certs
+            finally:
+                # Unpatch
+                _original_sslsocket.__new__ = orig_new
+        else:
+            # nonblocking socket handshaking on connect got disabled so let's pretend it's disabled
+            # even when it's on
+            super(GreenSSLSocket, self).__init__(
+                sock.fd, keyfile, certfile, server_side, cert_reqs, ssl_version,
+                ca_certs, do_handshake_on_connect and six.PY2, *args, **kw)
 
         # the superclass initializer trashes the methods so we remove
         # the local-object versions of them and let the actual class
@@ -215,13 +241,7 @@ class GreenSSLSocket(_original_sslsocket):
                 raise ValueError(
                     "non-zero flags not allowed in calls to %s() on %s" %
                     plain_socket_function.__name__, self.__class__)
-            if sys.version_info < (2, 7) and into:
-                # Python 2.6 SSLSocket.read() doesn't support reading into
-                # a given buffer so we need to emulate
-                data = self.read(nbytes)
-                buffer_[:len(data)] = data
-                read = len(data)
-            elif into:
+            if into:
                 read = self.read(nbytes, buffer_)
             else:
                 read = self.read(nbytes)
@@ -274,6 +294,7 @@ class GreenSSLSocket(_original_sslsocket):
         if self.act_non_blocking:
             return real_connect(self, addr)
         else:
+            clock = hubs.get_hub().clock
             # *NOTE: gross, copied code from greenio because it's not factored
             # well enough to reuse
             if self.gettimeout() is None:
@@ -288,7 +309,7 @@ class GreenSSLSocket(_original_sslsocket):
                         else:
                             raise
             else:
-                end = time.time() + self.gettimeout()
+                end = clock() + self.gettimeout()
                 while True:
                     try:
                         real_connect(self, addr)
@@ -296,12 +317,12 @@ class GreenSSLSocket(_original_sslsocket):
                         if get_errno(exc) in CONNECT_ERR:
                             trampoline(
                                 self, write=True,
-                                timeout=end - time.time(), timeout_exc=timeout_exc('timed out'))
+                                timeout=end - clock(), timeout_exc=timeout_exc('timed out'))
                         elif get_errno(exc) in CONNECT_SUCCESS:
                             return
                         else:
                             raise
-                    if time.time() >= end:
+                    if clock() >= end:
                         raise timeout_exc('timed out')
 
     def connect(self, addr):
@@ -325,7 +346,7 @@ class GreenSSLSocket(_original_sslsocket):
         else:
             sslobj = sslwrap(self._sock, server_side, self.keyfile, self.certfile,
                              self.cert_reqs, self.ssl_version,
-                             self.ca_certs, *([self.ciphers] if has_ciphers else []))
+                             self.ca_certs, *self.ciphers)
 
         try:
             # This is added in Python 3.5, http://bugs.python.org/issue21965
@@ -333,7 +354,10 @@ class GreenSSLSocket(_original_sslsocket):
         except NameError:
             self._sslobj = sslobj
         else:
-            self._sslobj = SSLObject(sslobj, owner=self)
+            if sys.version_info < (3, 7):
+                self._sslobj = SSLObject(sslobj, owner=self)
+            else:
+                self._sslobj = sslobj
 
         if self.do_handshake_on_connect:
             self.do_handshake()

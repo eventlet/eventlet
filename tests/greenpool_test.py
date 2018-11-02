@@ -3,7 +3,8 @@ import random
 
 import eventlet
 from eventlet import hubs, pools
-from eventlet.support import greenlets as greenlet, six
+from eventlet.support import greenlets as greenlet
+import six
 import tests
 
 

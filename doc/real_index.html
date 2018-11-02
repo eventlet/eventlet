@@ -1,9 +1,7 @@
 <!doctype html>
-
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-
     <title>Eventlet Networking Library</title>
     <link rel="stylesheet" href="doc/_static/default.css" type="text/css" />
     <link rel="stylesheet" href="doc/_static/pygments.css" type="text/css" />
@@ -39,23 +37,31 @@
 
 <p>It's easy to get started using Eventlet, and easy to convert existing applications to use it. Start off by looking at <a href="doc/examples.html">examples</a>, <a href="doc/design_patterns.html">common design patterns</a>, and the list of the <a href="doc/basic_usage.html">basic API primitives</a>.</p>
 
-<p>License: MIT.</p>
+<p>License: <a class="reference external" target="_blank" href="https://opensource.org/licenses/MIT">MIT</a></p>
 
 <h3><a href="doc/">API Documentation</a></h3>
 
 
 <h3>Installation</h3>
 
-<p>To install Eventlet, simply:
-<pre>
-pip install eventlet
-</pre></p>
-
-<p>Alternately, you can download the source archive:</p>
 <ul>
-<li>latest release from <a class="reference external" target="_blank" href="https://pypi.python.org/pypi/eventlet/">PyPi</a>:
-  <a class="reference external" href="https://pypi.python.org/packages/source/e/eventlet/eventlet-0.23.0.tar.gz">eventlet-0.23.0.tar.gz</a></li>
-<li>or <a class="reference external" href="https://github.com/eventlet/eventlet/archive/master.zip">latest development version</a></li>
+    <li><p>To install latest PyPI release:
+        <code><pre>pip install eventlet</pre></code>
+        </p>
+        <p>Manually lock version in requirements, if your build/development process doesn't automate it:
+        <code><pre># requirements.txt
+eventlet==x.y</pre></code></p>
+    </li>
+
+    <li><p>Eventlet team is commited to have only stable code in master branch, so recommended way to install is from latest master commit:
+        <code><pre>pip install https://github.com/eventlet/eventlet/archive/master.zip</pre></code>
+        </p>
+        <p>Beware, http…zip link in requirements.txt will repeat download and installation even if you specify link to particular commit.</p>
+    </li>
+
+    <li><p>Earlier versions available at <a class="reference external" target="_blank" href="https://pypi.org/project/eventlet/">Eventlet on PyPI</a>
+        </p>
+    </li>
 </ul>
 
 
@@ -73,13 +79,8 @@ pip install eventlet
 
 <h3>Development</h3>
 
-<ul>
-<li><a class="reference" target="_blank" href="https://github.com/eventlet/eventlet/">Eventlet on Github</a></li>
-<li><a class="reference external" target="_blank" href="https://bitbucket.org/eventlet/eventlet/">Mercurial on Bitbucket</a>, "eventually consistent" mirror.</li>
-</ul>
-<p>Both repositories are equal and kept in sync.
-  You can use whichever you fancy for downloading, forking, reporting issues and submitting pull requests.</p>
-<p>Mercurial repository used to be the main one, but most of the contribution and discussions happen on Github nowadays.</p>
+<p>Development, issue tracking happens at <a class="reference" target="_blank" href="https://github.com/eventlet/eventlet/">Eventlet on Github</a></p>
+<p>We had <a class="reference external" target="_blank" href="https://bitbucket.org/eventlet/eventlet/">Mercurial repository on Bitbucket</a>, but it's not used anymore.</p>
 
 <h4>Pull request policy</h4>
 <ul>
@@ -89,7 +90,9 @@ pip install eventlet
 <pre>
 subsystem: description of why the change is useful
 
-optional details or links to related issues or websites
+optional details
+
+links to related issues or websites
 </pre>
     The <em>why</em> part is very important. Diff already says <em>what</em> you have done. But nobody knows why.
   </li>

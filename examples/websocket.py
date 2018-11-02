@@ -1,7 +1,7 @@
 import eventlet
 from eventlet import wsgi
 from eventlet import websocket
-from eventlet.support import six
+import six
 
 # demo app
 import os

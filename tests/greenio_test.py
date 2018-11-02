@@ -15,7 +15,8 @@ import eventlet
 from eventlet import event, greenio, debug
 from eventlet.hubs import get_hub
 from eventlet.green import select, socket, time, ssl
-from eventlet.support import get_errno, six
+from eventlet.support import get_errno
+import six
 import tests
 import tests.mock as mock
 

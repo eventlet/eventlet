@@ -9,11 +9,12 @@ if __name__ == '__main__':
         g[0] = True
 
     with warnings.catch_warnings(record=True) as ws:
-        warnings.simplefilter('always')
+        warnings.simplefilter('always', category=RuntimeWarning)
 
         tpool.execute(do)
 
-        assert len(ws) == 1
+        msgs = [str(w) for w in ws]
+        assert len(ws) == 1, msgs
         msg = str(ws[0].message)
         assert 'Zero threads in tpool' in msg
         assert 'EVENTLET_THREADPOOL_SIZE' in msg

@@ -24,7 +24,10 @@ from nose.plugins.skip import SkipTest
 
 import eventlet
 from eventlet import tpool
-from eventlet.support import six
+import six
+import socket
+from threading import Thread
+import struct
 
 
 # convenience for importers
@@ -406,3 +409,79 @@ def test_run_python_pythonpath_extend():
     output = run_python('', args=('-c', code), pythonpath_extend=('dira', 'dirb'))
     assert b'/dira\n' in output
     assert b'/dirb\n' in output
+
+
+@contextlib.contextmanager
+def dns_tcp_server(ip_to_give, request_count=1):
+    state = [0]  # request count storage writable by thread
+    host = "localhost"
+    death_pill = b"DEATH_PILL"
+
+    def extract_domain(data):
+        domain = b''
+        kind = (data[4] >> 3) & 15  # Opcode bits
+        if kind == 0:  # Standard query
+            ini = 14
+            length = data[ini]
+            while length != 0:
+                domain += data[ini + 1:ini + length + 1] + b'.'
+                ini += length + 1
+                length = data[ini]
+        return domain
+
+    def answer(data, domain):
+        domain_length = len(domain)
+        packet = b''
+        if domain:
+            # If an ip was given we return it in the answer
+            if ip_to_give:
+                packet += data[2:4] + b'\x81\x80'
+                packet += data[6:8] + data[6:8] + b'\x00\x00\x00\x00'  # Questions and answers counts
+                packet += data[14: 14 + domain_length + 1]  # Original domain name question
+                packet += b'\x00\x01\x00\x01' # Type and class
+                packet += b'\xc0\x0c\x00\x01'  # TTL
+                packet += b'\x00\x01'
+                packet += b'\x00\x00\x00\x08'
+                packet += b'\x00\x04' # Resource data length -> 4 bytes
+                packet += bytearray(int(x) for x in ip_to_give.split("."))
+            else:
+                packet += data[2:4] + b'\x85\x80'
+                packet += data[6:8] + b'\x00\x00' + b'\x00\x00\x00\x00'  # Questions and answers counts
+                packet += data[14: 14 + domain_length + 1]  # Original domain name question
+                packet += b'\x00\x01\x00\x01'  # Type and class
+
+        sz = struct.pack('>H', len(packet))
+        return sz + packet
+
+    def serve(server_socket):  # thread target
+        client_sock, address = server_socket.accept()
+        state[0] += 1
+        if state[0] <= request_count:
+            data = bytearray(client_sock.recv(1024))
+            if data == death_pill:
+                client_sock.close()
+                return
+
+            domain = extract_domain(data)
+            client_sock.sendall(answer(data, domain))
+        client_sock.close()
+
+    # Server starts
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server_socket.bind((host, 0))
+    server_socket.listen(5)
+    server_addr = server_socket.getsockname()
+
+    thread = Thread(target=serve, args=(server_socket, ))
+    thread.start()
+
+    yield server_addr
+
+    # Stop the server
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.connect(server_addr)
+    client.send(death_pill)
+    client.close()
+    thread.join()
+    server_socket.close()

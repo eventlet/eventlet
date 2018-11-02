@@ -6,7 +6,7 @@ from eventlet import corolocal
 from eventlet import event
 from eventlet import greenthread
 from eventlet.green import thread
-from eventlet.support import six
+import six
 
 from tests import LimitedTestCase
 

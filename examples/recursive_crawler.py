@@ -9,8 +9,6 @@ searching for new urls, and dispatching new fetches.  The GreenPool
 acts as sort of a job coordinator (and concurrency controller of
 course).
 """
-from __future__ import with_statement
-
 from eventlet.green import urllib2
 import eventlet
 import re

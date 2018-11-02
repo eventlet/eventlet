@@ -1,7 +1,7 @@
 Using SSL With Eventlet
 ========================
 
-Eventlet makes it easy to use non-blocking SSL sockets.  If you're using Python 2.6 or later, you're all set, eventlet wraps the built-in ssl module.  If on Python 2.5 or 2.4, you have to install pyOpenSSL_ to use eventlet.
+Eventlet makes it easy to use non-blocking SSL sockets.  If you're using Python 2.7 or later, you're all set, eventlet wraps the built-in ssl module.
 
 In either case, the ``green`` modules handle SSL sockets transparently, just like their standard counterparts.  As an example, :mod:`eventlet.green.urllib2` can be used to fetch https urls in as non-blocking a fashion as you please::
 
@@ -13,18 +13,6 @@ In either case, the ``green`` modules handle SSL sockets transparently, just lik
         print(b.wait().read())
 
 
-With Python 2.6
-----------------
-
-To use ssl sockets directly in Python 2.6, use :mod:`eventlet.green.ssl`, which is a non-blocking wrapper around the standard Python :mod:`ssl` module, and which has the same interface.  See the standard documentation for instructions on use.
-
-With Python 2.5 or Earlier
----------------------------
-
-Prior to Python 2.6, there is no :mod:`ssl`, so SSL support is much weaker.  Eventlet relies on pyOpenSSL to implement its SSL support on these older versions, so be sure to install pyOpenSSL, or you'll get an ImportError whenever your system tries to make an SSL connection.
-
-Once pyOpenSSL is installed, you can then use the ``eventlet.green`` modules, like :mod:`eventlet.green.httplib` to fetch https urls.  You can also use :func:`eventlet.green.socket.ssl`, which is a nonblocking wrapper for :func:`socket.ssl`.
-
 PyOpenSSL
 ----------
 
@@ -33,7 +21,7 @@ PyOpenSSL
 For testing purpose first create self-signed certificate using following commands ::
 
     $ openssl genrsa 1024 > server.key
-    $ openssl req -new -x509 -nodes -sha1 -days 365 -key server.key > server.cert 
+    $ openssl req -new -x509 -nodes -sha1 -days 365 -key server.key > server.cert
 
 Keep these Private key and Self-signed certificate in same directory as `server.py` and `client.py` for simplicity sake.
 
@@ -66,7 +54,7 @@ Here's an example of a server (`server.py`) ::
     connection.close()
 
 Here's an example of a client (`client.py`) ::
-	
+
     import socket
     # Create socket
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -85,7 +73,7 @@ In first terminal
 
     $ python server.py
 
-In another terminal 
+In another terminal
 
     $ python client.py
 

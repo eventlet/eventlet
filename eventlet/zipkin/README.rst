@@ -2,10 +2,10 @@ eventlet.zipkin
 ===============
 
 `Zipkin <http://twitter.github.io/zipkin/>`_ is a distributed tracing system developed at Twitter.
-This package provides a WSGI application using eventlet 
+This package provides a WSGI application using eventlet
 with tracing facility that complies with Zipkin.
 
-Why use it? 
+Why use it?
 From the http://twitter.github.io/zipkin/:
 
 "Collecting traces helps developers gain deeper knowledge about how
@@ -20,14 +20,14 @@ that service the issue is happening."
 Screenshot
 ----------
 
-Zipkin web ui screenshots obtained when applying this module to 
+Zipkin web ui screenshots obtained when applying this module to
 `OpenStack swift <https://github.com/openstack/swift>`_  are in example/.
 
 
 Requirement
 -----------
 
-A eventlet.zipkin needs `python scribe client <https://pypi.python.org/pypi/facebook-scribe/>`_ 
+A eventlet.zipkin needs `python scribe client <https://pypi.python.org/pypi/facebook-scribe/>`_
 and `thrift <https://thrift.apache.org/>`_ (>=0.9),
 because the zipkin collector speaks `scribe <https://github.com/facebookarchive/scribe>`_ protocol.
 Below command will install both scribe client and thrift.
@@ -38,12 +38,7 @@ Install facebook-scribe:
 
     pip install facebook-scribe
 
-
-
-
-**Python**: ``2.6``, ``2.7`` (Because the current Python Thrift release doesn't
-support Python 3)
-
+**Python**: ``2.7`` (Because the current Python Thrift release doesn't support Python 3)
 
 
 How to use
@@ -51,14 +46,14 @@ How to use
 
 Add tracing facility to your application
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Apply the monkey patch before you start wsgi server. 
+Apply the monkey patch before you start wsgi server.
 
 .. code:: python
 
     # Add only 2 lines to your code
     from eventlet.zipkin import patcher
     patcher.enable_trace_patch()
-    
+
     # existing code
     from eventlet import wsgi
     wsgi.server(sock, app)
@@ -73,13 +68,13 @@ You can pass some parameters to ``enable_trace_patch()``
 
 (Option) Annotation API
 ~~~~~~~~~~~~~~~~~~~~~~~
-If you want to record additional information, 
+If you want to record additional information,
 you can use below API from anywhere in your code.
 
 .. code:: python
 
    from eventlet.zipkin import api
-   
+
    api.put_annotation('Cache miss for %s' % request)
    api.put_key_value('key', 'value')
 
@@ -103,7 +98,7 @@ Access http://localhost:8080 from your browser.
 
 (Option) fluentd
 ----------------
-If you want to buffer the tracing data for performance, 
+If you want to buffer the tracing data for performance,
 `fluentd scribe plugin <http://docs.fluentd.org/articles/in_scribe>`_ is available.
 Since ``out_scribe plugin`` extends `Buffer Plugin <http://docs.fluentd.org/articles/buffer-plugin-overview>`_ ,
 you can customize buffering parameters in the manner of fluentd.
@@ -119,7 +114,7 @@ Sample: ``/etc/td-agent/td-agent.conf``
      type scribe
      port 9999
    </source>
-   
+
    # out_scribe
    <match zipkin.**>
      type scribe
@@ -128,8 +123,8 @@ Sample: ``/etc/td-agent/td-agent.conf``
      flush_interval 60s
      buffer_chunk_limit 256m
    </match>
-  
+
 | And, you need to specify ``patcher.enable_trace_patch(port=9999)`` for in_scribe.
 | In this case, trace data is passed like below.
-| Your application => Local fluentd in_scribe (9999) => Local fluentd out_scribe <buffering> =====> Remote zipkin collector (9410) 
+| Your application => Local fluentd in_scribe (9999) => Local fluentd out_scribe <buffering> =====> Remote zipkin collector (9410)
 

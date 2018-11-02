@@ -260,6 +260,25 @@ class TestQueue(tests.LimitedTestCase):
         queue = eventlet.Queue()
         queue.join()
 
+    def test_zero_length_queue_nonblocking_put(self):
+        hub = hubs.get_hub()
+        queue = eventlet.Queue(0)
+        got = []
+
+        def fetch_item():
+            got.append(queue.get())
+
+        for _ in range(10):
+            good_getter = eventlet.spawn(fetch_item)
+            bad_getter = eventlet.spawn(fetch_item)
+            hub.schedule_call_global(0, bad_getter.throw, Exception("kaboom"))
+        eventlet.sleep(0)
+
+        for i in range(10):
+            queue.put(i)
+
+        self.assertEqual(got, list(range(10)))
+
 
 def store_result(result, func, *args):
     try:
