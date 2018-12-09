@@ -66,6 +66,7 @@ class TestApi(tests.LimitedTestCase):
             tests.certificate_file,
             server_side=True
         )
+
         eventlet.spawn_n(accept_once, server)
 
         raw_client = eventlet.connect(('127.0.0.1', server.getsockname()[1]))
