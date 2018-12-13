@@ -1359,6 +1359,32 @@ class TestHttpd(_TestBase):
         self.assertEqual(read_content.wait(), b'ok')
         assert blew_up[0]
 
+    def test_aborted_post_io_error(self):
+        ran_post_req_hook = [False]
+
+        def post_req_hook(env):
+            ran_post_req_hook[0] = True
+
+        def early_responder(env, start_response):
+            env['eventlet.posthooks'] = [(post_req_hook, (), {})]
+            start_response('200 OK', [('Content-Type', 'text/plain')])
+            return ['ok']
+
+        self.site.application = early_responder
+        data = "\r\n".join(['PUT /somefile HTTP/1.1',
+                            'Transfer-Encoding: chunked',
+                            '',
+                            '20',
+                            'not 32 bytes'])
+        sock = eventlet.connect(self.server_addr)
+        sock.sendall(data.encode())
+        sock.close()
+        # Give the server a chance to wrap things up
+        eventlet.sleep(0.01)
+        # Unexpected EOF shouldn't kill the server;
+        # post-request processing should still happen
+        assert ran_post_req_hook[0]
+
     def test_exceptions_close_connection(self):
         def wsgi_app(environ, start_response):
             raise RuntimeError("intentional error")
