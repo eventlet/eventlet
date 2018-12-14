@@ -145,6 +145,8 @@ class GreenSocket(object):
         except AttributeError:
             self._timeout = socket.getdefaulttimeout()
 
+        # Filter fd.fileno() != -1 so that won't call set non-blocking on
+        # closed socket
         if should_set_nonblocking and fd.fileno() != -1:
             set_nonblocking(fd)
         self.fd = fd

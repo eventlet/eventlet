@@ -4,7 +4,6 @@ from eventlet.patcher import slurp_properties
 slurp_properties(__ssl, globals(), srckeys=dir(__ssl))
 
 import sys
-import imp
 from eventlet import greenio, hubs
 from eventlet.greenio import (
     set_nonblocking, GreenSocket, CONNECT_ERR, CONNECT_SUCCESS,
@@ -12,6 +11,8 @@ from eventlet.greenio import (
 from eventlet.hubs import trampoline, IOClosed
 from eventlet.support import get_errno, PY33
 import six
+from contextlib import contextmanager
+
 orig_socket = __import__('socket')
 socket = orig_socket.socket
 timeout_exc = SSLError
@@ -22,7 +23,20 @@ __patched__ = [
 
 _original_sslsocket = __ssl.SSLSocket
 _original_wrap_socket = __ssl.wrap_socket
-_original_sslcontext = __ssl.SSLContext if hasattr(__ssl, 'SSLContext') else None
+_original_sslcontext = getattr(__ssl, 'SSLContext', None)
+
+
+@contextmanager
+def _original_ssl_context(*args, **kwargs):
+    tmp_sslcontext = _original_wrap_socket.__globals__.get('SSLContext', None)
+    tmp_sslsocket = _original_sslsocket._create.__globals__.get('SSLSocket', None)
+    _original_sslsocket._create.__globals__['SSLSocket'] = _original_sslsocket
+    _original_wrap_socket.__globals__['SSLContext'] = _original_sslcontext
+    try:
+        yield
+    finally:
+        _original_wrap_socket.__globals__['SSLContext'] = tmp_sslcontext
+        _original_sslsocket._create.__globals__['SSLSocket'] = tmp_sslsocket
 
 
 class GreenSSLSocket(_original_sslsocket):
@@ -39,42 +53,16 @@ class GreenSSLSocket(_original_sslsocket):
     settimeout(), and to close/reopen the connection when a timeout
     occurs at an unexpected juncture in the code.
     """
-
-    class SwapBackOriginal:
-        SYMBOLS = ['SSLSocket', 'SSLContext']
-
-        def __init__(self):
-            self.need_swap = False
-            self.temp_objs = {}
-
-        def __enter__(self):
-            self.need_swap = 'ssl' in sys.modules
-
-            if not self.need_swap:
-                return
-            imp.acquire_lock()
-            ssl_imported = sys.modules.get('ssl')
-            for sym in GreenSSLSocket.SwapBackOriginal.SYMBOLS:
-                self.temp_objs[sym] = getattr(ssl_imported, sym, None)
-                setattr(ssl_imported, 'SSLSocket', _original_sslsocket)
-                setattr(ssl_imported, 'SSLContext', _original_sslcontext)
-
-        def __exit__(self, *args):
-            if not self.need_swap:
-                return
-            ssl_imported = sys.modules.get('ssl')
-            for sym in GreenSSLSocket.SwapBackOriginal.SYMBOLS:
-                setattr(ssl_imported, sym, self.temp_objs[sym])
-            imp.release_lock()
-
     def __new__(cls, sock=None, keyfile=None, certfile=None,
                 server_side=False, cert_reqs=CERT_NONE,
                 ssl_version=PROTOCOL_SSLv23, ca_certs=None,
                 do_handshake_on_connect=True, *args, **kw):
-        if sys.version_info >= (3, 7):
+        if sys.version_info < (3, 7):
+            return super(GreenSSLSocket, cls).__new__(cls)
+        else:
             if not isinstance(sock, GreenSocket):
                 sock = GreenSocket(sock)
-            with GreenSSLSocket.SwapBackOriginal():
+            with _original_ssl_context():
                 ret = _original_wrap_socket(
                     sock=sock.fd,
                     keyfile=keyfile,
@@ -93,12 +81,9 @@ class GreenSSLSocket(_original_sslsocket):
             ret.ca_certs = ca_certs
             ret.__class__ = GreenSSLSocket
             return ret
-        else:
-            return super(GreenSSLSocket, cls).__new__(cls)
 
     # we are inheriting from SSLSocket because its constructor calls
     # do_handshake whose behavior we wish to override
-
     def __init__(self, sock, keyfile=None, certfile=None,
                  server_side=False, cert_reqs=CERT_NONE,
                  ssl_version=PROTOCOL_SSLv23, ca_certs=None,
