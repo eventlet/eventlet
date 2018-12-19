@@ -1289,6 +1289,11 @@ class HTTPConnection:
         request.
         """
         encode_chunked = kwds.pop('encode_chunked', False)
+        if kwds:
+            # mimic interpreter error for unrecognized keyword
+            raise TypeError("endheaders() got an unexpected keyword argument '{0}'"
+                            .format(kwds.popitem()[0]))
+
         if self.__state == _CS_REQ_STARTED:
             self.__state = _CS_REQ_SENT
         else:
@@ -1298,6 +1303,10 @@ class HTTPConnection:
     def request(self, method, url, body=None, headers={}, **kwds):
         """Send a complete request to the server."""
         encode_chunked = kwds.pop('encode_chunked', False)
+        if kwds:
+            # mimic interpreter error for unrecognized keyword
+            raise TypeError("request() got an unexpected keyword argument '{0}'"
+                            .format(kwds.popitem()[0]))
         self._send_request(method, url, body, headers, encode_chunked)
 
     def _set_content_length(self, body, method):
