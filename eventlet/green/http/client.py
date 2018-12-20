@@ -1281,22 +1281,32 @@ class HTTPConnection:
         header = header + b': ' + value
         self._output(header)
 
-    def endheaders(self, message_body=None, *, encode_chunked=False):
+    def endheaders(self, message_body=None, **kwds):
         """Indicate that the last header line has been sent to the server.
 
         This method sends the request to the server.  The optional message_body
         argument can be used to pass a message body associated with the
         request.
         """
+        encode_chunked = kwds.pop('encode_chunked', False)
+        if kwds:
+            # mimic interpreter error for unrecognized keyword
+            raise TypeError("endheaders() got an unexpected keyword argument '{0}'"
+                            .format(kwds.popitem()[0]))
+
         if self.__state == _CS_REQ_STARTED:
             self.__state = _CS_REQ_SENT
         else:
             raise CannotSendHeader()
         self._send_output(message_body, encode_chunked=encode_chunked)
 
-    def request(self, method, url, body=None, headers={}, *,
-                encode_chunked=False):
+    def request(self, method, url, body=None, headers={}, **kwds):
         """Send a complete request to the server."""
+        encode_chunked = kwds.pop('encode_chunked', False)
+        if kwds:
+            # mimic interpreter error for unrecognized keyword
+            raise TypeError("request() got an unexpected keyword argument '{0}'"
+                            .format(kwds.popitem()[0]))
         self._send_request(method, url, body, headers, encode_chunked)
 
     def _set_content_length(self, body, method):
