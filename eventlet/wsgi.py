@@ -605,6 +605,13 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                             + ' client={0} request="{1}" error="{2}"').format(
                                 self.get_client_address()[0], self.requestline, e,
                         ))
+                    except IOError as e:
+                        self.close_connection = 1
+                        self.server.log.error((
+                            'I/O error while discarding request body.'
+                            + ' client={0} request="{1}" error="{2}"').format(
+                                self.get_client_address()[0], self.requestline, e,
+                        ))
             finish = time.time()
 
             for hook, args, kwargs in self.environ['eventlet.posthooks']:
