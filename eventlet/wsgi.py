@@ -436,8 +436,10 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         content_length = self.headers.get('content-length')
         if content_length is not None:
             try:
-                int(content_length)
+                if int(content_length) < 0:
+                    raise ValueError
             except ValueError:
+                # Negative, or not an int at all
                 self.wfile.write(
                     b"HTTP/1.0 400 Bad Request\r\n"
                     b"Connection: close\r\nContent-length: 0\r\n\r\n")
