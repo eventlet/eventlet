@@ -87,6 +87,10 @@ def test_import_patched_defaults():
     tests.run_isolated('patcher_import_patched_defaults.py')
 
 
+def test_import_patched_handles_sub_modules():
+    tests.run_isolated('test_sub_module_in_import_patched/test.py')
+
+
 class MonkeyPatch(ProcessBase):
     def test_patched_modules(self):
         new_mod = """
