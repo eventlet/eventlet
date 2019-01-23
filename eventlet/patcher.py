@@ -90,6 +90,12 @@ def inject(module_name, new_globals, *additional_modules):
     # Remove the old module from sys.modules and reimport it while
     # the specified modules are in place
     sys.modules.pop(module_name, None)
+    # Also remove sub modules and reimport. Use copy the keys to list
+    # because of the pop operations will change the content of sys.modules
+    # within th loop
+    for imported_module_name in list(sys.modules.keys()):
+        if imported_module_name.startswith(module_name + '.'):
+            sys.modules.pop(imported_module_name, None)
     try:
         module = __import__(module_name, {}, {}, module_name.split('.')[:-1])
 
