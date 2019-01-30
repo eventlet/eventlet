@@ -9,6 +9,7 @@ import warnings
 import eventlet
 from eventlet import greenio
 from eventlet import support
+from eventlet.corolocal import local
 from eventlet.green import BaseHTTPServer
 from eventlet.green import socket
 import six
@@ -69,19 +70,7 @@ class ChunkReadError(ValueError):
     pass
 
 
-# special flag return value for apps
-class _AlreadyHandled(object):
-
-    def __iter__(self):
-        return self
-
-    def next(self):
-        raise StopIteration
-
-    __next__ = next
-
-
-ALREADY_HANDLED = _AlreadyHandled()
+WSGI_LOCAL = local()
 
 
 class Input(object):
@@ -570,14 +559,12 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
         try:
             try:
+                WSGI_LOCAL.already_handled = False
                 result = self.application(self.environ, start_response)
-                if (isinstance(result, _AlreadyHandled)
-                        or isinstance(getattr(result, '_obj', None), _AlreadyHandled)):
-                    self.close_connection = 1
-                    return
 
                 # Set content-length if possible
-                if not headers_sent and hasattr(result, '__len__') and \
+                if headers_set and \
+                        not headers_sent and hasattr(result, '__len__') and \
                         'Content-Length' not in [h for h, _v in headers_set[1]]:
                     headers_set[1].append(('Content-Length', str(sum(map(len, result)))))
 
@@ -599,6 +586,9 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                         towrite = []
                         just_written_size = towrite_size
                         towrite_size = 0
+                if WSGI_LOCAL.already_handled:
+                    self.close_connection = 1
+                    return
                 if towrite:
                     just_written_size = towrite_size
                     write(b''.join(towrite))
