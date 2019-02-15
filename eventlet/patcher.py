@@ -353,17 +353,26 @@ def _green_existing_locks():
     import eventlet.green.thread
     lock_type = type(threading.Lock())
     rlock_type = type(threading.RLock())
-    if sys.version_info[0] >= 3:
+    if hasattr(threading, '_PyRLock'):
+        # this happens on CPython3 and PyPy >= 7.0.0: "py3-style" rlocks, they
+        # are implemented natively in C and RPython respectively
+        py3_style = True
         pyrlock_type = type(threading._PyRLock())
+    else:
+        # this happens on CPython2.7 and PyPy < 7.0.0: "py2-style" rlocks,
+        # they are implemented in pure-python
+        py3_style = False
+        pyrlock_type = None
+
     # We're monkey-patching so there can't be any greenlets yet, ergo our thread
     # ID is the only valid owner possible.
     tid = eventlet.green.thread.get_ident()
     for obj in gc.get_objects():
         if isinstance(obj, rlock_type):
-            if (sys.version_info[0] == 2 and
+            if (not py3_style and
                     isinstance(obj._RLock__block, lock_type)):
                 _fix_py2_rlock(obj, tid)
-            elif (sys.version_info[0] >= 3 and
+            elif (py3_style and
                     not isinstance(obj, pyrlock_type)):
                 _fix_py3_rlock(obj)
 
