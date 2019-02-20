@@ -1773,6 +1773,9 @@ class TestChunkedInput(_TestBase):
         elif pi == "/lines":
             for x in input:
                 response.append(x)
+        elif pi == "/readline":
+            response.extend(iter(input.readline, b''))
+            response.append(('\nread %d lines' % len(response)).encode())
         elif pi == "/ping":
             input.read()
             response.append(b"pong")
@@ -1874,6 +1877,16 @@ class TestChunkedInput(_TestBase):
         fd = self.connect()
         fd.sendall(req.encode())
         self.assertEqual(read_http(fd).body, b'this is chunked\nline 2\nline3')
+        fd.close()
+
+    def test_chunked_readline_from_input(self):
+        body = self.body()
+        req = "POST /readline HTTP/1.1\r\nContent-Length: %s\r\n" \
+              "transfer-encoding: Chunked\r\n\r\n%s" % (len(body), body)
+
+        fd = self.connect()
+        fd.sendall(req.encode())
+        self.assertEqual(read_http(fd).body, b'this is chunked\nline 2\nline3\nread 3 lines')
         fd.close()
 
     def test_chunked_readline_wsgi_override_minimum_chunk_size(self):
