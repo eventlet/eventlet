@@ -216,7 +216,17 @@ class Input(object):
             return self._do_read(self.rfile.readline, size)
 
     def readlines(self, hint=None):
-        return self._do_read(self.rfile.readlines, hint)
+        if self.chunked_input:
+            lines = []
+            for line in iter(self.readline, b''):
+                lines.append(line)
+                if hint and hint > 0:
+                    hint -= len(line)
+                    if hint <= 0:
+                        break
+            return lines
+        else:
+            return self._do_read(self.rfile.readlines, hint)
 
     def __iter__(self):
         return iter(self.read, b'')
