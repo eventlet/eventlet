@@ -165,7 +165,7 @@ class Input(object):
             self.is_hundred_continue_response_sent = True
         try:
             if length == 0:
-                return ""
+                return b""
 
             if length and length < 0:
                 length = None
@@ -198,7 +198,7 @@ class Input(object):
                         length -= datalen
                         if length == 0:
                             break
-                    if use_readline and data[-1] == "\n":
+                    if use_readline and data[-1:] == b"\n":
                         break
                 else:
                     try:
