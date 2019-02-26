@@ -42,6 +42,7 @@ def test_select_read_and_write():
 
     select.select([sd], [], [])
     r, w, __ = select.select([sd], [sd], [], 0)
+
     def check_both_flags_returned():
         assert r and w
     yield check_both_flags_returned
