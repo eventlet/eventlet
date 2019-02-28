@@ -1443,21 +1443,28 @@ class TestHttpd(_TestBase):
 
         self.site.application = wsgi_app
         sock = eventlet.connect(self.server_addr)
-        sock.sendall(b'GET /%E4%BD%A0%E5%A5%BD HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
+        # This is a properly-quoted request for the UTF-8 path /你好
+        sock.sendall(b'GET /%E4%BD%A0%E5%A5%BD HTTP/1.1\r\nHost: localhost\r\n\r\n')
         result = read_http(sock)
         assert result.status == 'HTTP/1.1 200 OK'
-        # that was only preparation, actual test below
+        # Like above, but the octets are reversed before being quoted,
+        # so the result should *not* be interpreted as UTF-8
+        sock.sendall(b'GET /%BD%A5%E5%A0%BD%E4 HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
+        result = read_http(sock)
+        assert result.status == 'HTTP/1.1 200 OK'
+
+        # that was only preparation, actual tests below
         # Per PEP-0333 https://www.python.org/dev/peps/pep-0333/#unicode-issues
         # in all WSGI environment strings application must observe either bytes in latin-1 (ISO-8859-1)
         # or unicode code points \u0000..\u00ff
-        # wsgi_decoding_dance from Werkzeug to emulate concerned application
         msg = 'Expected PATH_INFO to be a native string, not {0}'.format(type(g[0]))
         assert isinstance(g[0], str), msg
-        if six.PY2:
-            assert g[0] == u'/你好'.encode('utf-8')
-        else:
-            decoded = g[0].encode('latin1').decode('utf-8', 'replace')
-            assert decoded == u'/你好'
+        # Fortunately, WSGI strings have the same literal representation on both py2 and py3
+        assert g[0] == '/\xe4\xbd\xa0\xe5\xa5\xbd'
+
+        msg = 'Expected PATH_INFO to be a native string, not {0}'.format(type(g[1]))
+        assert isinstance(g[1], str), msg
+        assert g[1] == '/\xbd\xa5\xe5\xa0\xbd\xe4'
 
     @tests.skip_if_no_ipv6
     def test_ipv6(self):
