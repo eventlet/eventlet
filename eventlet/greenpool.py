@@ -145,7 +145,7 @@ class GreenPool(object):
     def _do_map(self, func, it, gi):
         for args in it:
             gi.spawn(func, *args)
-        gi.spawn(return_stop_iteration)
+        gi.done_spawning()
 
     def starmap(self, function, iterable):
         """This is the same as :func:`itertools.starmap`, except that *func* is
@@ -156,6 +156,15 @@ class GreenPool(object):
         """
         if function is None:
             function = lambda *a: a
+        # We use a whole separate greenthread so its spawn() calls can block
+        # without blocking OUR caller. On the other hand, we must assume that
+        # our caller will immediately start trying to iterate over whatever we
+        # return. If that were a GreenPile, our caller would always see an
+        # empty sequence because the hub hasn't even entered _do_map() yet --
+        # _do_map() hasn't had a chance to spawn a single greenthread on this
+        # GreenPool! A GreenMap is safe to use with different producer and
+        # consumer greenthreads, because it doesn't raise StopIteration until
+        # the producer has explicitly called done_spawning().
         gi = GreenMap(self.size)
         eventlet.spawn_n(self._do_map, function, iterable, gi)
         return gi
@@ -173,10 +182,6 @@ class GreenPool(object):
                print(result)
         """
         return self.starmap(function, six.moves.zip(*iterables))
-
-
-def return_stop_iteration():
-    return StopIteration()
 
 
 class GreenPile(object):
@@ -201,13 +206,11 @@ class GreenPile(object):
         else:
             self.pool = GreenPool(size_or_pool)
         self.waiters = queue.LightQueue()
-        self.used = False
         self.counter = 0
 
     def spawn(self, func, *args, **kw):
         """Runs *func* in its own green thread, with the result available by
         iterating over the GreenPile object."""
-        self.used = True
         self.counter += 1
         try:
             gt = self.pool.spawn(func, *args, **kw)
@@ -222,13 +225,16 @@ class GreenPile(object):
     def next(self):
         """Wait for the next result, suspending the current greenthread until it
         is available.  Raises StopIteration when there are no more results."""
-        if self.counter == 0 and self.used:
+        if self.counter == 0:
             raise StopIteration()
+        return self._next()
+    __next__ = next
+
+    def _next(self):
         try:
             return self.waiters.get().wait()
         finally:
             self.counter -= 1
-    __next__ = next
 
 
 # this is identical to GreenPile but it blocks on spawn if the results
@@ -239,13 +245,13 @@ class GreenMap(GreenPile):
         super(GreenMap, self).__init__(size_or_pool)
         self.waiters = queue.LightQueue(maxsize=self.pool.size)
 
+    def done_spawning(self):
+        self.spawn(lambda: StopIteration())
+
     def next(self):
-        try:
-            val = self.waiters.get().wait()
-            if isinstance(val, StopIteration):
-                raise val
-            else:
-                return val
-        finally:
-            self.counter -= 1
+        val = self._next()
+        if isinstance(val, StopIteration):
+            raise val
+        else:
+            return val
     __next__ = next
