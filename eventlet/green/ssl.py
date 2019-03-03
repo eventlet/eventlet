@@ -3,10 +3,7 @@ __ssl = __import__('ssl')
 from eventlet.patcher import slurp_properties
 slurp_properties(__ssl, globals(), srckeys=dir(__ssl))
 
-import errno
-import functools
 import sys
-
 from eventlet import greenio, hubs
 from eventlet.greenio import (
     set_nonblocking, GreenSocket, CONNECT_ERR, CONNECT_SUCCESS,
@@ -14,6 +11,8 @@ from eventlet.greenio import (
 from eventlet.hubs import trampoline, IOClosed
 from eventlet.support import get_errno, PY33
 import six
+from contextlib import contextmanager
+
 orig_socket = __import__('socket')
 socket = orig_socket.socket
 timeout_exc = SSLError
@@ -24,6 +23,21 @@ __patched__ = [
 
 _original_sslsocket = __ssl.SSLSocket
 _original_wrap_socket = __ssl.wrap_socket
+_original_sslcontext = getattr(__ssl, 'SSLContext', None)
+_is_under_py_3_7 = sys.version_info < (3, 7)
+
+
+@contextmanager
+def _original_ssl_context(*args, **kwargs):
+    tmp_sslcontext = _original_wrap_socket.__globals__.get('SSLContext', None)
+    tmp_sslsocket = _original_sslsocket._create.__globals__.get('SSLSocket', None)
+    _original_sslsocket._create.__globals__['SSLSocket'] = _original_sslsocket
+    _original_wrap_socket.__globals__['SSLContext'] = _original_sslcontext
+    try:
+        yield
+    finally:
+        _original_wrap_socket.__globals__['SSLContext'] = tmp_sslcontext
+        _original_sslsocket._create.__globals__['SSLSocket'] = tmp_sslsocket
 
 
 class GreenSSLSocket(_original_sslsocket):
@@ -40,34 +54,17 @@ class GreenSSLSocket(_original_sslsocket):
     settimeout(), and to close/reopen the connection when a timeout
     occurs at an unexpected juncture in the code.
     """
-    # we are inheriting from SSLSocket because its constructor calls
-    # do_handshake whose behavior we wish to override
-
-    def __init__(self, sock, keyfile=None, certfile=None,
-                 server_side=False, cert_reqs=CERT_NONE,
-                 ssl_version=PROTOCOL_SSLv23, ca_certs=None,
-                 do_handshake_on_connect=True, *args, **kw):
-        if not isinstance(sock, GreenSocket):
-            sock = GreenSocket(sock)
-
-        self.act_non_blocking = sock.act_non_blocking
-
-        if six.PY2:
-            # On Python 2 SSLSocket constructor queries the timeout, it'd break without
-            # this assignment
-            self._timeout = sock.gettimeout()
-
-        if sys.version_info >= (3, 7):
-            # Monkey-patch the sslsocket so our modified self gets
-            # injected into its _create method.
-            def fake_new(self, cls, *args, **kwargs):
-                return self
-
-            orig_new = _original_sslsocket.__new__
-            try:
-                _original_sslsocket.__new__ = fake_new.__get__(self, GreenSSLSocket)
-
-                self = _original_wrap_socket(
+    def __new__(cls, sock=None, keyfile=None, certfile=None,
+                server_side=False, cert_reqs=CERT_NONE,
+                ssl_version=PROTOCOL_SSLv23, ca_certs=None,
+                do_handshake_on_connect=True, *args, **kw):
+        if _is_under_py_3_7:
+            return super(GreenSSLSocket, cls).__new__(cls)
+        else:
+            if not isinstance(sock, GreenSocket):
+                sock = GreenSocket(sock)
+            with _original_ssl_context():
+                ret = _original_wrap_socket(
                     sock=sock.fd,
                     keyfile=keyfile,
                     certfile=certfile,
@@ -78,21 +75,35 @@ class GreenSSLSocket(_original_sslsocket):
                     do_handshake_on_connect=False,
                     *args, **kw
                 )
-                self.keyfile = keyfile
-                self.certfile = certfile
-                self.cert_reqs = cert_reqs
-                self.ssl_version = ssl_version
-                self.ca_certs = ca_certs
-            finally:
-                # Unpatch
-                _original_sslsocket.__new__ = orig_new
-        else:
+            ret.keyfile = keyfile
+            ret.certfile = certfile
+            ret.cert_reqs = cert_reqs
+            ret.ssl_version = ssl_version
+            ret.ca_certs = ca_certs
+            ret.__class__ = GreenSSLSocket
+            return ret
+
+    # we are inheriting from SSLSocket because its constructor calls
+    # do_handshake whose behavior we wish to override
+    def __init__(self, sock, keyfile=None, certfile=None,
+                 server_side=False, cert_reqs=CERT_NONE,
+                 ssl_version=PROTOCOL_SSLv23, ca_certs=None,
+                 do_handshake_on_connect=True, *args, **kw):
+        if not isinstance(sock, GreenSocket):
+            sock = GreenSocket(sock)
+        self.act_non_blocking = sock.act_non_blocking
+
+        if six.PY2:
+            # On Python 2 SSLSocket constructor queries the timeout, it'd break without
+            # this assignment
+            self._timeout = sock.gettimeout()
+
+        if _is_under_py_3_7:
             # nonblocking socket handshaking on connect got disabled so let's pretend it's disabled
             # even when it's on
             super(GreenSSLSocket, self).__init__(
                 sock.fd, keyfile, certfile, server_side, cert_reqs, ssl_version,
                 ca_certs, do_handshake_on_connect and six.PY2, *args, **kw)
-
         # the superclass initializer trashes the methods so we remove
         # the local-object versions of them and let the actual class
         # methods shine through
@@ -354,7 +365,7 @@ class GreenSSLSocket(_original_sslsocket):
         except NameError:
             self._sslobj = sslobj
         else:
-            if sys.version_info < (3, 7):
+            if _is_under_py_3_7:
                 self._sslobj = SSLObject(sslobj, owner=self)
             else:
                 self._sslobj = sslobj
@@ -395,6 +406,7 @@ class GreenSSLSocket(_original_sslsocket):
 
     def dup(self):
         raise NotImplementedError("Can't dup an ssl object")
+
 
 SSLSocket = GreenSSLSocket
 

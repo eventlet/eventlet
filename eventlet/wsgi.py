@@ -59,14 +59,6 @@ def addr_to_host_port(addr):
     return (host, port)
 
 
-def encode_dance(s):
-    if not isinstance(s, bytes):
-        s = s.encode('utf-8', 'replace')
-    if six.PY2:
-        return s
-    return s.decode('latin1')
-
-
 # Collections of error codes to compare against.  Not all attributes are set
 # on errno module on all platforms, so some are literals :(
 BAD_SOCK = set((errno.EBADF, 10053))
@@ -165,7 +157,7 @@ class Input(object):
             self.is_hundred_continue_response_sent = True
         try:
             if length == 0:
-                return ""
+                return b""
 
             if length and length < 0:
                 length = None
@@ -198,7 +190,7 @@ class Input(object):
                         length -= datalen
                         if length == 0:
                             break
-                    if use_readline and data[-1] == "\n":
+                    if use_readline and data[-1:] == b"\n":
                         break
                 else:
                     try:
@@ -224,7 +216,17 @@ class Input(object):
             return self._do_read(self.rfile.readline, size)
 
     def readlines(self, hint=None):
-        return self._do_read(self.rfile.readlines, hint)
+        if self.chunked_input:
+            lines = []
+            for line in iter(self.readline, b''):
+                lines.append(line)
+                if hint and hint > 0:
+                    hint -= len(line)
+                    if hint <= 0:
+                        break
+            return lines
+        else:
+            return self._do_read(self.rfile.readlines, hint)
 
     def __iter__(self):
         return iter(self.read, b'')
@@ -646,7 +648,10 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
         pq = self.path.split('?', 1)
         env['RAW_PATH_INFO'] = pq[0]
-        env['PATH_INFO'] = encode_dance(urllib.parse.unquote(pq[0]))
+        if six.PY2:
+            env['PATH_INFO'] = urllib.parse.unquote(pq[0])
+        else:
+            env['PATH_INFO'] = urllib.parse.unquote(pq[0], encoding='latin1')
         if len(pq) > 1:
             env['QUERY_STRING'] = pq[1]
 
