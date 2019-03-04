@@ -730,6 +730,13 @@ class TestHttpd(_TestBase):
         assert b'400 Bad Request' in result, result
         assert b'500' not in result, result
 
+        sock = eventlet.connect(self.server_addr)
+        sock.sendall(b'GET / HTTP/1.0\r\nHost: localhost\r\nContent-length: -10\r\n\r\n')
+        result = recvall(sock)
+        assert result.startswith(b'HTTP'), result
+        assert b'400 Bad Request' in result, result
+        assert b'500' not in result, result
+
     def test_024_expect_100_continue(self):
         def wsgi_app(environ, start_response):
             if int(environ['CONTENT_LENGTH']) > 1024:
