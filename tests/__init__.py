@@ -236,7 +236,7 @@ def check_idle_cpu_usage(duration, allowed_part):
     # resources being quite restricted by the build environment. The workaround
     # is to apply an arbitrary factor that should be enough to make it work nicely.
     if os.environ.get('TRAVIS') == 'true':
-        allowed_part *= 1.2
+        allowed_part *= 5
 
     assert utime + stime < duration * allowed_part, \
         "CPU usage over limit: user %.0f%% sys %.0f%% allowed %.0f%%" % (
