@@ -92,7 +92,8 @@ class Input(object):
                  sock,
                  wfile=None,
                  wfile_line=None,
-                 chunked_input=False):
+                 chunked_input=False,
+                 headers_sent=None):
 
         self.rfile = rfile
         self._sock = sock
@@ -112,7 +113,18 @@ class Input(object):
         self.hundred_continue_headers = None
         self.is_hundred_continue_response_sent = False
 
+        # Hold on to a ref to the response state so we know whether we can
+        # still send the 100 Continue
+        self.headers_sent = headers_sent
+
     def send_hundred_continue_response(self):
+        if self.headers_sent:
+            # To late; application has already started sending data back
+            # to the client
+            # TODO: maybe log a warning if self.hundred_continue_headers
+            #       is not None?
+            return
+
         towrite = []
 
         # 100 Continue status line
@@ -436,20 +448,23 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         content_length = self.headers.get('content-length')
         if content_length is not None:
             try:
-                int(content_length)
+                if int(content_length) < 0:
+                    raise ValueError
             except ValueError:
+                # Negative, or not an int at all
                 self.wfile.write(
                     b"HTTP/1.0 400 Bad Request\r\n"
                     b"Connection: close\r\nContent-length: 0\r\n\r\n")
                 self.close_connection = 1
                 return
 
-        self.environ = self.get_environ()
+        headers_sent = []
+        self.environ = self.get_environ(headers_sent)
         self.application = self.server.app
         try:
             self.server.outstanding_requests += 1
             try:
-                self.handle_one_response()
+                self.handle_one_response(headers_sent)
             except socket.error as e:
                 # Broken pipe, connection reset by peer
                 if support.get_errno(e) not in BROKEN_SOCK:
@@ -457,10 +472,9 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         finally:
             self.server.outstanding_requests -= 1
 
-    def handle_one_response(self):
+    def handle_one_response(self, headers_sent):
         start = time.time()
         headers_set = []
-        headers_sent = []
 
         wfile = self.wfile
         result = None
@@ -641,7 +655,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 host = forward + ',' + host
         return (host, port)
 
-    def get_environ(self):
+    def get_environ(self, headers_sent):
         env = self.server.get_environ()
         env['REQUEST_METHOD'] = self.command
         env['SCRIPT_NAME'] = ''
@@ -705,7 +719,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         chunked = env.get('HTTP_TRANSFER_ENCODING', '').lower() == 'chunked'
         env['wsgi.input'] = env['eventlet.input'] = Input(
             self.rfile, length, self.connection, wfile=wfile, wfile_line=wfile_line,
-            chunked_input=chunked)
+            chunked_input=chunked, headers_sent=headers_sent)
         env['eventlet.posthooks'] = []
 
         return env

@@ -730,6 +730,13 @@ class TestHttpd(_TestBase):
         assert b'400 Bad Request' in result, result
         assert b'500' not in result, result
 
+        sock = eventlet.connect(self.server_addr)
+        sock.sendall(b'GET / HTTP/1.0\r\nHost: localhost\r\nContent-length: -10\r\n\r\n')
+        result = recvall(sock)
+        assert result.startswith(b'HTTP'), result
+        assert b'400 Bad Request' in result, result
+        assert b'500' not in result, result
+
     def test_024_expect_100_continue(self):
         def wsgi_app(environ, start_response):
             if int(environ['CONTENT_LENGTH']) > 1024:
@@ -978,6 +985,67 @@ class TestHttpd(_TestBase):
         assert header_lines[0].startswith(b'HTTP/1.1 200 OK')
 
         self.assertEqual(fd.read(29), b'first message, second message')
+        fd.close()
+        sock.close()
+
+    def test_024d_expect_100_continue_with_eager_app_chunked(self):
+        def wsgi_app(environ, start_response):
+            # app knows it's going to do some time-intensive thing and doesn't
+            # want clients to time out, so it's protocol says to:
+            # * generally expect a successful status code,
+            # * be prepared to eat some whitespace that will get dribbled out
+            #   periodically, and
+            # * parse the final status from the response body.
+            environ['eventlet.minimum_write_chunk_size'] = 0
+            start_response('202 Accepted', [])
+
+            def resp_gen():
+                yield b' '
+                environ['wsgi.input'].read()
+                yield b' '
+                yield b'\n503 Service Unavailable\n\nOops!\n'
+
+            return resp_gen()
+
+        self.site.application = wsgi_app
+        sock = eventlet.connect(self.server_addr)
+        fd = sock.makefile('rwb')
+        fd.write(b'PUT /a HTTP/1.1\r\n'
+                 b'Host: localhost\r\nConnection: close\r\n'
+                 b'Transfer-Encoding: chunked\r\n'
+                 b'Expect: 100-continue\r\n\r\n')
+        fd.flush()
+
+        # Expect the optimistic response
+        header_lines = []
+        while True:
+            line = fd.readline()
+            if line == b'\r\n':
+                break
+            else:
+                header_lines.append(line.strip())
+        self.assertEqual(header_lines[0], b'HTTP/1.1 202 Accepted')
+
+        def chunkify(data):
+            return '{:x}'.format(len(data)).encode('ascii') + b'\r\n' + data + b'\r\n'
+
+        def expect_chunk(data):
+            expected = chunkify(data)
+            self.assertEqual(expected, fd.read(len(expected)))
+
+        # Can even see that initial whitespace
+        expect_chunk(b' ')
+
+        # Send message
+        fd.write(chunkify(b'some data'))
+        fd.write(chunkify(b''))  # end-of-message
+        fd.flush()
+
+        # Expect final response
+        expect_chunk(b' ')
+        expect_chunk(b'\n503 Service Unavailable\n\nOops!\n')
+        expect_chunk(b'')  # end-of-message
+
         fd.close()
         sock.close()
 
