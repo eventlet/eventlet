@@ -435,6 +435,8 @@ if hasattr(__ssl, 'SSLContext'):
         __slots__ = ()
 
         def wrap_socket(self, sock, *a, **kw):
+            # Issue https://github.com/eventlet/eventlet/issues/526:
+            # Python 3.7.3's ssl.wrap_socket() no longer has a _context param.
             return GreenSSLSocket(sock, *a, _context=self, **kw)
 
         # https://github.com/eventlet/eventlet/issues/371
