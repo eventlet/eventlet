@@ -57,3 +57,19 @@ class BackdoorTest(tests.LimitedTestCase):
         client = socket.socket(socket.AF_UNIX)
         client.connect(SOCKET_PATH)
         self._run_test_on_client_and_server(client, serv)
+
+    def test_quick_client_disconnect(self):
+        listener = socket.socket()
+        listener.bind(('localhost', 0))
+        listener.listen(50)
+        serv = eventlet.spawn(backdoor.backdoor_server, listener)
+        client = socket.socket()
+        client.connect(('localhost', listener.getsockname()[1]))
+        client.close()
+        # can still reconnect; server is running
+        client = socket.socket()
+        client.connect(('localhost', listener.getsockname()[1]))
+        client.close()
+        serv.kill()
+        # wait for the console to discover that it's dead
+        eventlet.sleep(0.1)
