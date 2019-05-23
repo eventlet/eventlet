@@ -92,8 +92,7 @@ class Input(object):
                  sock,
                  wfile=None,
                  wfile_line=None,
-                 chunked_input=False,
-                 headers_sent=None):
+                 chunked_input=False):
 
         self.rfile = rfile
         self._sock = sock
@@ -113,9 +112,10 @@ class Input(object):
         self.hundred_continue_headers = None
         self.is_hundred_continue_response_sent = False
 
-        # Hold on to a ref to the response state so we know whether we can
-        # still send the 100 Continue
-        self.headers_sent = headers_sent
+        # handle_one_response should give us a ref to the response state so we
+        # know whether we can still send the 100 Continue; until then, though,
+        # we're flying blind
+        self.headers_sent = None
 
     def send_hundred_continue_response(self):
         if self.headers_sent:
@@ -458,13 +458,12 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.close_connection = 1
                 return
 
-        headers_sent = []
-        self.environ = self.get_environ(headers_sent)
+        self.environ = self.get_environ()
         self.application = self.server.app
         try:
             self.server.outstanding_requests += 1
             try:
-                self.handle_one_response(headers_sent)
+                self.handle_one_response()
             except socket.error as e:
                 # Broken pipe, connection reset by peer
                 if support.get_errno(e) not in BROKEN_SOCK:
@@ -472,9 +471,13 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         finally:
             self.server.outstanding_requests -= 1
 
-    def handle_one_response(self, headers_sent):
+    def handle_one_response(self):
         start = time.time()
         headers_set = []
+        headers_sent = []
+        # Push the headers-sent state into the Input so it won't send a
+        # 100 Continue response if we've already started a response.
+        self.environ['wsgi.input'].headers_sent = headers_sent
 
         wfile = self.wfile
         result = None
@@ -655,7 +658,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 host = forward + ',' + host
         return (host, port)
 
-    def get_environ(self, headers_sent):
+    def get_environ(self):
         env = self.server.get_environ()
         env['REQUEST_METHOD'] = self.command
         env['SCRIPT_NAME'] = ''
@@ -719,7 +722,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         chunked = env.get('HTTP_TRANSFER_ENCODING', '').lower() == 'chunked'
         env['wsgi.input'] = env['eventlet.input'] = Input(
             self.rfile, length, self.connection, wfile=wfile, wfile_line=wfile_line,
-            chunked_input=chunked, headers_sent=headers_sent)
+            chunked_input=chunked)
         env['eventlet.posthooks'] = []
 
         return env
