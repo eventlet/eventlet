@@ -674,10 +674,13 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
         ct = self.headers.get('content-type')
         if ct is None:
+            ct_was_none = True
             try:
                 ct = self.headers.type
             except AttributeError:
                 ct = self.headers.get_content_type()
+        else:
+            ct_was_none = False
         env['CONTENT_TYPE'] = ct
 
         length = self.headers.get('content-length')
@@ -694,16 +697,33 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         env['REMOTE_PORT'] = str(client_addr[1])
         env['GATEWAY_INTERFACE'] = 'CGI/1.1'
 
-        try:
+        if six.PY2:
             headers = self.headers.headers
-        except AttributeError:
-            headers = self.headers._headers
-        else:
             headers = [h.split(':', 1) for h in headers]
+        else:
+            headers = self.headers._headers
+            payload = self.headers.get_payload()
+            if payload:
+                # There shouldn't be a message associated with the headers;
+                # must've bumped up against https://bugs.python.org/issue37093
+                for line in payload.rstrip('\r\n').split('\n'):
+                    if ':' not in line or line[:1] in ' \t':
+                        # Well, we're no more broken than we were before...
+                        # Should we support line folding? Should we 400 a bad header line?
+                        break
+                    header, value = line.split(':', 1)
+                    headers.append((header, value))
+                    if ct_was_none and header.lower() == 'content-type':
+                        env['CONTENT_TYPE'] = value.strip(' \t\n\r')
+                    elif length is None and header.lower() == 'content-length':
+                        length = env['CONTENT_LENGTH'] = value.strip(' \t\n\r')
 
         env['headers_raw'] = headers_raw = tuple((k, v.strip(' \t\n\r')) for k, v in headers)
         for k, v in headers_raw:
-            k = k.replace('-', '_').upper()
+            if six.PY2:
+                k = k.replace('-', '_').upper()
+            else:
+                k = k.replace('-', '_').encode('latin1').upper().decode('latin1')
             if k in ('CONTENT_TYPE', 'CONTENT_LENGTH'):
                 # These do not get the HTTP_ prefix and were handled above
                 continue
