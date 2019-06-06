@@ -1,6 +1,7 @@
 import contextlib
 import random
 import socket
+import sys
 import warnings
 
 import eventlet
@@ -371,3 +372,26 @@ class SSLTest(tests.LimitedTestCase):
         peer, _ = server_tls.accept()
         assert peer.recv(64) == expected
         peer.close()
+
+    def test_client_check_hostname(self):
+        # stdlib API compatibility
+        # https://github.com/eventlet/eventlet/issues/567
+        def serve(listener):
+            sock, addr = listener.accept()
+            sock.recv(64)
+            sock.sendall(b"response")
+            sock.close()
+
+        listener = listen_ssl_socket()
+        server_coro = eventlet.spawn(serve, listener)
+        ctx = ssl.create_default_context()
+        ctx.verify_mode = ssl.CERT_REQUIRED
+        ctx.check_hostname = True
+        ctx.load_verify_locations(tests.certificate_file)
+        ctx.load_cert_chain(tests.certificate_file, tests.private_key_file)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client = ctx.wrap_socket(sock, server_hostname="Test")
+        client.connect(listener.getsockname())
+        client.send(b"check_hostname works")
+        client.recv(64)
+        server_coro.wait()
