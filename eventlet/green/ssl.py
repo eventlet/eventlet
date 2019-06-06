@@ -353,7 +353,7 @@ class GreenSSLSocket(_original_sslsocket):
                 sslobj = self._context._wrap_socket(self._sock, server_side, ssl_sock=self)
             else:
                 context = self.context if PY33 else self._context
-                sslobj = context._wrap_socket(self, server_side)
+                sslobj = context._wrap_socket(self, server_side, server_hostname=server_hostname)
         else:
             sslobj = sslwrap(self._sock, server_side, self.keyfile, self.certfile,
                              self.cert_reqs, self.ssl_version,
