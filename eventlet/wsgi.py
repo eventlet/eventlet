@@ -134,8 +134,12 @@ class Input(object):
         # Reinitialize chunk_length (expect more data)
         self.chunk_length = -1
 
+    @property
+    def should_send_hundred_continue(self):
+        return self.wfile is not None and not self.is_hundred_continue_response_sent
+
     def _do_read(self, reader, length=None):
-        if self.wfile is not None and not self.is_hundred_continue_response_sent:
+        if self.should_send_hundred_continue:
             # 100 Continue response
             self.send_hundred_continue_response()
             self.is_hundred_continue_response_sent = True
@@ -152,7 +156,7 @@ class Input(object):
         return read
 
     def _chunked_read(self, rfile, length=None, use_readline=False):
-        if self.wfile is not None and not self.is_hundred_continue_response_sent:
+        if self.should_send_hundred_continue:
             # 100 Continue response
             self.send_hundred_continue_response()
             self.is_hundred_continue_response_sent = True
@@ -464,9 +468,11 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         start = time.time()
         headers_set = []
         headers_sent = []
+        # Grab the request input now; app may try to replace it in the environ
+        request_input = self.environ['eventlet.input']
         # Push the headers-sent state into the Input so it won't send a
         # 100 Continue response if we've already started a response.
-        self.environ['wsgi.input'].headers_sent = headers_sent
+        request_input.headers_sent = headers_sent
 
         wfile = self.wfile
         result = None
@@ -563,10 +569,15 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 result = self.application(self.environ, start_response)
 
                 # Set content-length if possible
-                if headers_set and \
-                        not headers_sent and hasattr(result, '__len__') and \
-                        'Content-Length' not in [h for h, _v in headers_set[1]]:
-                    headers_set[1].append(('Content-Length', str(sum(map(len, result)))))
+                if headers_set and not headers_sent and hasattr(result, '__len__'):
+                    # We've got a complete final response
+                    if 'Content-Length' not in [h for h, _v in headers_set[1]]:
+                        headers_set[1].append(('Content-Length', str(sum(map(len, result)))))
+                    if request_input.should_send_hundred_continue:
+                        # We've got a complete final response, and never sent a 100 Continue.
+                        # There's no chance we'll need to read the body as we stream out the
+                        # response, so we can be nice and send a Connection: close header.
+                        self.close_connection = 1
 
                 towrite = []
                 towrite_size = 0
@@ -607,11 +618,22 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         finally:
             if hasattr(result, 'close'):
                 result.close()
-            request_input = self.environ['eventlet.input']
+            if request_input.should_send_hundred_continue:
+                # We just sent the final response, no 100 Continue. Client may or
+                # may not have started to send a body, and if we keep the connection
+                # open we've seen clients either
+                #   * send a body, then start a new request
+                #   * skip the body and go straight to a new request
+                # Looks like the most broadly compatible option is to close the
+                # connection and let the client retry.
+                # https://curl.se/mail/lib-2004-08/0002.html
+                # Note that we likely *won't* send a Connection: close header at this point
+                self.close_connection = 1
+
             if (request_input.chunked_input or
                     request_input.position < (request_input.content_length or 0)):
-                # Read and discard body if there was no pending 100-continue
-                if not request_input.wfile and self.close_connection == 0:
+                # Read and discard body if connection is going to be reused
+                if self.close_connection == 0:
                     try:
                         request_input.discard()
                     except ChunkReadError as e:

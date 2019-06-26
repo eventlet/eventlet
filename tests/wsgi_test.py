@@ -608,6 +608,57 @@ class TestHttpd(_TestBase):
         self.assertEqual('keep-alive', result2.headers_lower['connection'])
         sock.close()
 
+    def test_018b_http_10_keepalive_framing(self):
+        # verify that if an http/1.0 client sends connection: keep-alive
+        # that we don't mangle the request framing if the app doesn't read the request
+        def app(environ, start_response):
+            resp_body = {
+                '/1': b'first response',
+                '/2': b'second response',
+                '/3': b'third response',
+            }.get(environ['PATH_INFO'])
+            if resp_body is None:
+                resp_body = 'Unexpected path: ' + environ['PATH_INFO']
+                if six.PY3:
+                    resp_body = resp_body.encode('latin1')
+            # Never look at wsgi.input!
+            start_response('200 OK', [('Content-type', 'text/plain')])
+            return [resp_body]
+
+        self.site.application = app
+        sock = eventlet.connect(self.server_addr)
+        req_body = b'GET /tricksy HTTP/1.1\r\n'
+        body_len = str(len(req_body)).encode('ascii')
+
+        sock.sendall(b'PUT /1 HTTP/1.0\r\nHost: localhost\r\nConnection: keep-alive\r\n'
+                     b'Content-Length: ' + body_len + b'\r\n\r\n' + req_body)
+        result1 = read_http(sock)
+        self.assertEqual(b'first response', result1.body)
+        self.assertEqual(result1.headers_original.get('Connection'), 'keep-alive')
+
+        sock.sendall(b'PUT /2 HTTP/1.0\r\nHost: localhost\r\nConnection: keep-alive\r\n'
+                     b'Content-Length: ' + body_len + b'\r\nExpect: 100-continue\r\n\r\n')
+        # Client may have a short timeout waiting on that 100 Continue
+        # and basically immediately send its body
+        sock.sendall(req_body)
+        result2 = read_http(sock)
+        self.assertEqual(b'second response', result2.body)
+        self.assertEqual(result2.headers_original.get('Connection'), 'close')
+
+        sock.sendall(b'PUT /3 HTTP/1.0\r\nHost: localhost\r\nConnection: close\r\n\r\n')
+        with self.assertRaises(ConnectionClosed):
+            read_http(sock)
+        sock.close()
+
+        # retry
+        sock = eventlet.connect(self.server_addr)
+        sock.sendall(b'PUT /3 HTTP/1.0\r\nHost: localhost\r\nConnection: close\r\n\r\n')
+        result3 = read_http(sock)
+        self.assertEqual(b'third response', result3.body)
+        self.assertEqual(result3.headers_original.get('Connection'), 'close')
+
+        sock.close()
+
     def test_019_fieldstorage_compat(self):
         def use_fieldstorage(environ, start_response):
             cgi.FieldStorage(fp=environ['wsgi.input'], environ=environ)
@@ -756,9 +807,23 @@ class TestHttpd(_TestBase):
                  b'Expect: 100-continue\r\n\r\n')
         fd.flush()
         result = read_http(sock)
+        # No "100 Continue" -- straight to final response
         self.assertEqual(result.status, 'HTTP/1.1 417 Expectation Failed')
         self.assertEqual(result.body, b'failure')
+        self.assertEqual(result.headers_original.get('Connection'), 'close')
+        # Client may still try to send the body
+        fd.write(b'x' * 25)
+        fd.flush()
+        # But if they keep using this socket, it's going to close on them eventually
+        fd.write(b'x' * 25)
+        with self.assertRaises(socket.error) as caught:
+            fd.flush()
+        self.assertEqual(caught.exception.errno, errno.EPIPE)
+        sock.close()
 
+        sock = eventlet.connect(self.server_addr)
+        fd = sock.makefile('rwb')
+        # If we send the "100 Continue", we can pipeline requests through the one connection
         for expect_value in ('100-continue', '100-Continue'):
             fd.write(
                 'PUT / HTTP/1.1\r\nHost: localhost\r\nContent-length: 7\r\n'
@@ -767,6 +832,8 @@ class TestHttpd(_TestBase):
             header_lines = []
             while True:
                 line = fd.readline()
+                if not line:
+                    raise ConnectionClosed
                 if line == b'\r\n':
                     break
                 else:
@@ -775,11 +842,14 @@ class TestHttpd(_TestBase):
             header_lines = []
             while True:
                 line = fd.readline()
+                if not line:
+                    raise ConnectionClosed
                 if line == b'\r\n':
                     break
                 else:
                     header_lines.append(line)
             assert header_lines[0].startswith(b'HTTP/1.1 200 OK')
+            assert 'Connection: close' not in header_lines
             assert fd.read(7) == b'testing'
         fd.close()
         sock.close()
@@ -806,6 +876,14 @@ class TestHttpd(_TestBase):
         result = read_http(sock)
         self.assertEqual(result.status, 'HTTP/1.1 417 Expectation Failed')
         self.assertEqual(result.body, b'failure')
+        self.assertEqual(result.headers_original.get('Connection'), 'close')
+        # At this point, the client needs to either kill the connection or send the bytes
+        # because even though the server sent the response without reading the body,
+        # it has no way of knowing whether the client already started sending or not
+        sock.close()
+        sock = eventlet.connect(self.server_addr)
+        fd = sock.makefile('rwb')
+
         fd.write(
             b'PUT / HTTP/1.1\r\nHost: localhost\r\nContent-length: 7\r\n'
             b'Expect: 100-continue\r\n\r\ntesting')
