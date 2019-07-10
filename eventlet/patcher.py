@@ -1,4 +1,7 @@
-import imp
+try:
+    import _imp as imp
+except ImportError:
+    import imp
 import sys
 try:
     # Only for this purpose, it's irrelevant if `os` was already patched.
