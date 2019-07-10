@@ -22,6 +22,7 @@ from eventlet.green import socket as greensocket
 from eventlet.green import ssl
 from eventlet.support import bytes_to_str
 import six
+from six.moves.urllib import parse
 import tests
 
 
@@ -318,7 +319,7 @@ class TestHttpd(_TestBase):
         # define a new handler that does a get_arg as well as a read_body
         def new_app(env, start_response):
             body = bytes_to_str(env['wsgi.input'].read())
-            a = cgi.parse_qs(body).get('a', [1])[0]
+            a = parse.parse_qs(body).get('a', [1])[0]
             start_response('200 OK', [('Content-type', 'text/plain')])
             return [six.b('a is %s, body is %s' % (a, body))]
 
