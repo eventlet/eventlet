@@ -554,8 +554,15 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             # Per HTTP RFC standard, header name is case-insensitive.
             # Please, fix your client to ignore header case if possible.
             if self.capitalize_response_headers:
+                if six.PY2:
+                    def cap(x):
+                        return x.capitalize()
+                else:
+                    def cap(x):
+                        return x.encode('latin1').capitalize().decode('latin1')
+
                 response_headers = [
-                    ('-'.join([x.capitalize() for x in key.split('-')]), value)
+                    ('-'.join([cap(x) for x in key.split('-')]), value)
                     for key, value in response_headers]
 
             headers_set[:] = [status, response_headers]
