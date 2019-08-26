@@ -190,7 +190,7 @@ def read_http(sock):
         x = x.strip()
         if not x:
             continue
-        key, value = bytes_to_str(x).split(':', 1)
+        key, value = bytes_to_str(x, encoding='latin1').split(':', 1)
         key = key.rstrip()
         value = value.lstrip()
         key_lower = key.lower()
@@ -1628,6 +1628,26 @@ class TestHttpd(_TestBase):
             assert False, 'Expected ConnectionClosed exception'
         except ConnectionClosed:
             pass
+
+    def test_header_name_capitalization(self):
+        def wsgi_app(environ, start_response):
+            start_response('200 oK', [
+                ('sOMe-WEirD', 'cAsE'),
+                ('wiTH-\xdf-LATIN1-\xff', 'chars'),
+            ])
+            return [b'']
+
+        self.spawn_server(site=wsgi_app)
+
+        sock = eventlet.connect(self.server_addr)
+        sock.sendall(b'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+        result = read_http(sock)
+        sock.close()
+        self.assertEqual(result.status, 'HTTP/1.1 200 oK')
+        self.assertIn('Some-Weird', result.headers_original)
+        self.assertEqual(result.headers_original['Some-Weird'], 'cAsE')
+        self.assertIn('With-\xdf-Latin1-\xff', result.headers_original)
+        self.assertEqual(result.headers_original['With-\xdf-Latin1-\xff'], 'chars')
 
     def test_disable_header_name_capitalization(self):
         # Disable HTTP header name capitalization
