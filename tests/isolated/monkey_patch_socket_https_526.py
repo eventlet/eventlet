@@ -63,7 +63,7 @@ def create_cert(certfile, keyfile):
                ]
     subjectAltName = u'subjectAltName=DNS:{},IP:127.0.0.1'.format(fqdn)
     # Unfortunately, as of 2019-09-12, we can't (yet) count on the shorthand form:
-    ## command.extend(['-addext', subjectAltName])
+    # command.extend(['-addext', subjectAltName])
     # so create a separate config file
     with tempfile.NamedTemporaryFile(mode='w', delete=False) as config:
         config_name = config.name
