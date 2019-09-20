@@ -146,7 +146,7 @@ def client(port):
 
 def main():
     # server stuff: get a Queue by which the server process will send the port
-    # number back to use, and an Event by which we can tell it to stop.
+    # number back to us, and an Event by which we can tell it to stop.
     portqueue = Queue()
     stop = Event()
     server = Process(target=serve, args=(portqueue, stop))
