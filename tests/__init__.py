@@ -414,7 +414,7 @@ def test_run_python_timeout():
         output = str(err)
     else:
         raise AssertionError('run_python() failed to time out')
-    assert output.endswith('FAIL - timed out')
+    assert output.endswith('FAIL - timed out'), 'Unexpected output: {}'.format(output)
 
 
 def test_run_python_pythonpath_extend():
