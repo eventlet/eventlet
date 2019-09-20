@@ -359,20 +359,24 @@ def run_python(path, env=None, args=None, timeout=None, pythonpath_extend=None, 
         output, _ = p.communicate(timeout=timeout)
         raise AssertionError('{0}\nFAIL - timed out'.format(output).encode())
 
+    if output.startswith(b'skip'):
+        # Split on leftmost colon, take everything to the right as the
+        # SkipTest message. If there's no colon, the list returned by
+        # split() has only one entry, so [1:] produces an empty list,
+        # which constructs SkipTest with no argument.
+        raise SkipTest(*output.rstrip().split(b':', 1)[1:])
+
     if expect_pass:
-        if output.startswith(b'skip'):
-            # Split on leftmost colon, take everything to the right as the
-            # SkipTest message. If there's no colon, the list returned by
-            # split() has only one entry, so [1:] produces an empty list,
-            # which constructs SkipTest with no argument.
-            raise SkipTest(*output.rstrip().split(b':', 1)[1:])
         ok = output.rstrip() == b'pass'
         if not ok:
             sys.stderr.write('Program {0} output:\n---\n{1}\n---\n'.format(path, output.decode()))
         assert ok, 'Expected single line "pass" in stdout'
 
     rc = p.wait()
-    assert rc in allow, 'Program {0} terminated with {1}'.format(path, rc)
+    if rc not in allow:
+        print('Program {0} terminated with {1} -- output:\n---\n{2}\n---'
+              .format(path, rc, output.decode()), file=sys.stderr)
+        raise AssertionError('Terminated with rc {0}, not {1}'.format(rc, allow))
 
     return output
 
@@ -405,10 +409,12 @@ private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
 
 def test_run_python_timeout():
     try:
-        output = run_python('', args=('-c', 'import time; time.sleep(0.5)'), timeout=0.1)
+        run_python('', args=('-c', 'import time; time.sleep(0.5)'), timeout=0.1)
     except AssertionError as err:
         output = str(err)
-    assert output.endswith(b'FAIL - timed out')
+    else:
+        raise AssertionError('run_python() failed to time out')
+    assert output.endswith('FAIL - timed out')
 
 
 def test_run_python_pythonpath_extend():
