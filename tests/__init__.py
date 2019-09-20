@@ -357,7 +357,7 @@ def run_python(path, env=None, args=None, timeout=None, pythonpath_extend=None, 
     except subprocess.TimeoutExpired:
         p.kill()
         output, _ = p.communicate(timeout=timeout)
-        raise AssertionError('{0}\nFAIL - timed out'.format(output).encode())
+        raise AssertionError('{0}\nFAIL - timed out'.format(output.decode()))
 
     if output.startswith(b'skip'):
         # Split on leftmost colon, take everything to the right as the
