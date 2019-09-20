@@ -49,9 +49,9 @@ class ProcessBase(tests.LimitedTestCase):
         with open(filename, "w") as fd:
             fd.write(contents)
 
-    def launch_subprocess(self, filename):
+    def launch_subprocess(self, filename, **kwds):
         path = os.path.join(self.tempdir, filename)
-        output = tests.run_python(path)
+        output = tests.run_python(path, **kwds)
         if six.PY3:
             output = output.decode('utf-8')
             separator = '\n'
@@ -141,7 +141,7 @@ from eventlet import patcher
 patcher.monkey_patch(finagle=True)
 """
         self.write_to_tempfile("newmod", new_mod)
-        output, lines = self.launch_subprocess('newmod.py')
+        output, lines = self.launch_subprocess('newmod.py', allow=[1])
         assert lines[-2].startswith('TypeError'), repr(output)
         assert 'finagle' in lines[-2], repr(output)
 
