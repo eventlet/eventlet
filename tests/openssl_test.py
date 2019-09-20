@@ -14,3 +14,7 @@ def test_import():
     import eventlet.green.OpenSSL.crypto
     import eventlet.green.OpenSSL.tsafe
     import eventlet.green.OpenSSL.version
+
+
+def test_https():
+    tests.run_isolated('monkey_patch_socket_https_526.py', expect_pass=False)
