@@ -54,34 +54,100 @@ class GreenSSLSocket(_original_sslsocket):
     settimeout(), and to close/reopen the connection when a timeout
     occurs at an unexpected juncture in the code.
     """
-    def __new__(cls, sock=None, keyfile=None, certfile=None,
-                server_side=False, cert_reqs=CERT_NONE,
-                ssl_version=PROTOCOL_SSLv23, ca_certs=None,
-                do_handshake_on_connect=True, *args, **kw):
-        if _is_under_py_3_7:
+    if _is_under_py_3_7:
+        # Issue #526: In Python 3.7, SSLSocket._create() instantiates
+        # GreenSSLContext.sslsocket_class -- in other words, this class,
+        # GreenSSLSocket -- by calling its __new__() and then SSLSocket's base
+        # class (socket's) __init__(), passing only family, type, proto and
+        # fileno. Importantly, it lets sock default to None! SSLSocket does not
+        # override the default object.__new__() Try not overriding it in this
+        # class either.
+        def __new__(cls, sock=None, keyfile=None, certfile=None,
+                    server_side=False, cert_reqs=CERT_NONE,
+                    ssl_version=PROTOCOL_SSLv23, ca_certs=None,
+                    do_handshake_on_connect=True, *args, **kw):
             return super(GreenSSLSocket, cls).__new__(cls)
-        else:
-            if not isinstance(sock, GreenSocket):
-                sock = GreenSocket(sock)
-            with _original_ssl_context():
-                ret = _original_wrap_socket(
-                    sock=sock.fd,
-                    keyfile=keyfile,
-                    certfile=certfile,
-                    server_side=server_side,
-                    cert_reqs=cert_reqs,
-                    ssl_version=ssl_version,
-                    ca_certs=ca_certs,
-                    do_handshake_on_connect=False,
-                    *args, **kw
-                )
-            ret.keyfile = keyfile
-            ret.certfile = certfile
-            ret.cert_reqs = cert_reqs
-            ret.ssl_version = ssl_version
-            ret.ca_certs = ca_certs
-            ret.__class__ = GreenSSLSocket
-            return ret
+
+    else:
+        # The following override is cloned-and-edited from Python 3.7.4's
+        # ssl.SSLSocket._create() method. This is admittedly vulnerable to any
+        # future upstream maintenance to SSLSocket._create(), or indeed any
+        # SSLSocket method that interacts with instance creation. Better
+        # solutions are invited!!
+        @classmethod
+        def _create(cls, sock, server_side=False, do_handshake_on_connect=True,
+                    suppress_ragged_eofs=True, server_hostname=None,
+                    context=None, session=None):
+            if sock.getsockopt(SOL_SOCKET, SO_TYPE) != SOCK_STREAM:
+                raise NotImplementedError("only stream sockets are supported")
+            if server_side:
+                if server_hostname:
+                    raise ValueError("server_hostname can only be specified "
+                                     "in client mode")
+                if session is not None:
+                    raise ValueError("session can only be specified in "
+                                     "client mode")
+            if context.check_hostname and not server_hostname:
+                raise ValueError("check_hostname requires server_hostname")
+
+            kwargs = dict(
+                family=sock.family, type=sock.type, proto=sock.proto,
+                fileno=sock.fileno()
+            )
+            self = cls.__new__(cls, **kwargs)
+            ##################
+            # This diverges from ssl.SSLSocket._create(), which calls
+            # super(SSLSocket, self).__init__(**kwargs). For reasons we don't
+            # understand, without this override, that call reaches
+            # SSLSocket.__init__(), which unconditionally raises TypeError
+            # because you're supposed to use wrap_socket() instead of directly
+            # constructing SSLSocket. Since SSLSocket is derived from socket,
+            # super(SSLSocket, self).__init__ is intended to reference
+            # socket.__init__. Use an old-style base-class call instead.
+            socket.__init__(self, **kwargs)
+            # copied from __init__() below
+            self.act_non_blocking = sock.act_non_blocking
+            ##################
+            self.settimeout(sock.gettimeout())
+            sock.detach()
+
+            self._context = context
+            self._session = session
+            self._closed = False
+            self._sslobj = None
+            self.server_side = server_side
+            self.server_hostname = context._encode_hostname(server_hostname)
+            self.do_handshake_on_connect = do_handshake_on_connect
+            self.suppress_ragged_eofs = suppress_ragged_eofs
+
+            # See if we are connected
+            try:
+                self.getpeername()
+            except OSError as e:
+                if e.errno != errno.ENOTCONN:
+                    raise
+                connected = False
+            else:
+                connected = True
+
+            self._connected = connected
+            if connected:
+                # create the SSL object
+                try:
+                    self._sslobj = self._context._wrap_socket(
+                        self, server_side, self.server_hostname,
+                        owner=self, session=self._session,
+                    )
+                    if do_handshake_on_connect:
+                        timeout = self.gettimeout()
+                        if timeout == 0.0:
+                            # non-blocking
+                            raise ValueError("do_handshake_on_connect should not be specified for non-blocking sockets")
+                        self.do_handshake()
+                except (OSError, ValueError):
+                    self.close()
+                    raise
+            return self
 
     # we are inheriting from SSLSocket because its constructor calls
     # do_handshake whose behavior we wish to override
@@ -434,10 +500,18 @@ if hasattr(__ssl, 'SSLContext'):
     class GreenSSLContext(_original_sslcontext):
         __slots__ = ()
 
-        def wrap_socket(self, sock, *a, **kw):
-            # Issue https://github.com/eventlet/eventlet/issues/526:
-            # Python 3.7.3's ssl.wrap_socket() no longer has a _context param.
-            return GreenSSLSocket(sock, *a, _context=self, **kw)
+        # As of Python 3.7, SSLContext.wrap_socket() instantiates its
+        # sslsocket_class instead of hard-coding SSLSocket. Set that
+        # unconditionally; it's ineffective but harmless for older versions.
+        sslsocket_class = GreenSSLSocket
+
+        if _is_under_py_3_7:
+            # Because of the above, only override SSLContext.wrap_socket() for
+            # older versions.
+            def wrap_socket(self, sock, *a, **kw):
+                # Issue https://github.com/eventlet/eventlet/issues/526:
+                # Python 3.7's ssl.wrap_socket() no longer has a _context param.
+                return GreenSSLSocket(sock, *a, _context=self, **kw)
 
         # https://github.com/eventlet/eventlet/issues/371
         # Thanks to Gevent developers for sharing patch to this problem.
