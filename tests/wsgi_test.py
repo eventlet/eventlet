@@ -1761,13 +1761,16 @@ class TestHttpd(_TestBase):
         self.site.application = echo_server
         pool = eventlet.GreenPool()
         self.spawn_server(custom_pool=pool, debug=True)
+        eventlet.sleep(0)  # need to enter server loop
         # https://github.com/eventlet/eventlet/issues/188
         # We want to close idle connections
         sock = eventlet.connect(self.server_addr)
 
         body = b'ABC' * 10
-        sock.sendall(b'PUT /foo-bar HTTP/1.1\r\nHost: localhost\r\n'
-                     b'Content-Length: %d\r\n\r\n' % len(body))
+        method_and_headers = (
+            'PUT /foo-bar HTTP/1.1\r\nHost: localhost\r\n'
+            'Content-Length: %d\r\n\r\n' % len(body))
+        sock.sendall(method_and_headers.encode('utf8'))
         sock.sendall(body)
         result = read_http(sock)
         self.assertEqual('HTTP/1.1 200 OK', result.status,
@@ -1794,31 +1797,33 @@ class TestHttpd(_TestBase):
         # https://github.com/eventlet/eventlet/issues/188
         # We want to NOT close NON-idle connections
         sock = eventlet.connect(self.server_addr)
-        eventlet.sleep(0)  # need to enter server loop
+        eventlet.sleep(0)
 
         body = b'ABC' * 10
-        sock.sendall(b'PUT /foo-bar HTTP/1.1\r\nHost: localhost\r\n'
-                     b'Content-Length: %d\r\n\r\n' % len(body))
-        eventlet.sleep(0)  # need to enter server loop
+        method_and_headers = (
+            'PUT /foo-bar HTTP/1.1\r\nHost: localhost\r\n'
+            'Content-Length: %d\r\n\r\n' % len(body))
+        sock.sendall(method_and_headers.encode('utf8'))
+        eventlet.sleep(0)
         sock.sendall(body)
-        eventlet.sleep(0)  # need to enter server loop
+        eventlet.sleep(0)
         result = read_http(sock)
         self.assertEqual('HTTP/1.1 200 OK', result.status,
                          'Received status {0!r}; {1!r}'.format(
                              result.status, self.logfile.getvalue()))
         self.assertEqual(body, result.body)
         self.assertEqual('/foo-bar', result.headers_lower['x-path'])
-        eventlet.sleep(0)  # need to enter server loop
+        eventlet.sleep(0)
 
         listen_sock.shutdown(socket.SHUT_RDWR)
-        eventlet.sleep(0)  # need to enter server loop
+        eventlet.sleep(0)
         listen_sock.close()
-        eventlet.sleep(0)  # need to enter server loop
+        eventlet.sleep(0)
         try:
             with eventlet.Timeout(1):
                 pool.waitall()
         except eventlet.Timeout:
-            eventlet.sleep(0)  # need to enter server loop
+            eventlet.sleep(0)
             assert False, self.logfile.getvalue()
 
     def test_do_not_close_non_idle_connections(self):
@@ -1833,41 +1838,43 @@ class TestHttpd(_TestBase):
         # https://github.com/eventlet/eventlet/issues/188
         # We want to NOT close NON-idle connections
         sock = eventlet.connect(self.server_addr)
-        eventlet.sleep(0)  # need to enter server loop
+        eventlet.sleep(0)
 
         body = b'ABC' * 10
-        sock.sendall(b'PUT /foo-bar HTTP/1.1\r\nHost: localhost\r\n'
-                     b'Content-Length: %d\r\n\r\n' % len(body))
-        eventlet.sleep(0)  # need to enter server loop
+        method_and_headers = (
+            'PUT /foo-bar HTTP/1.1\r\nHost: localhost\r\n'
+            'Content-Length: %d\r\n\r\n' % len(body))
+        sock.sendall(method_and_headers.encode('utf8'))
+        eventlet.sleep(0)
 
         listen_sock.shutdown(socket.SHUT_RDWR)
-        eventlet.sleep(0)  # need to enter server loop
+        eventlet.sleep(0)
         listen_sock.close()
-        eventlet.sleep(0)  # need to enter server loop
+        eventlet.sleep(0)
         try:
             with eventlet.Timeout(1):
                 pool.waitall()
         except eventlet.Timeout:
             pass  # we should not exit while that request is still in-flight.
         else:
-            eventlet.sleep(0)  # need to enter server loop
+            eventlet.sleep(0)
             assert False, 'failed to Timeout: %r' % self.logfile.getvalue()
 
         # Can now finish the request
         sock.sendall(body)
-        eventlet.sleep(0)  # need to enter server loop
+        eventlet.sleep(0)
         result = read_http(sock)
         self.assertEqual('HTTP/1.1 200 OK', result.status,
                          'Received status {0!r}; {1!r}'.format(
                              result.status, self.logfile.getvalue()))
         self.assertEqual(body, result.body)
         self.assertEqual('/foo-bar', result.headers_lower['x-path'])
-        eventlet.sleep(0)  # need to enter server loop
+        eventlet.sleep(0)
 
         try:
-            eventlet.sleep(0)  # need to enter server loop
+            eventlet.sleep(0)
             with eventlet.Timeout(1):
-                eventlet.sleep(0)  # need to enter server loop
+                eventlet.sleep(0)
                 pool.waitall()
         except (eventlet.Timeout, Exception):
             assert False, self.logfile.getvalue()
