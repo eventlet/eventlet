@@ -390,6 +390,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             self.handle_one_request()
             if self.conn_state[2] == STATE_CLOSE:
                 self.close_connection = 1
+            else:
+                self.conn_state[2] = STATE_IDLE
             if self.close_connection:
                 break
 
@@ -417,6 +419,9 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             self.protocol_version = self.server.max_http_version
 
         self.raw_requestline = self._read_request_line()
+        # WebSocketWSGI needs us, here, to consider the connection always idle
+        if not getattr(self.server.app, '_WSGI_APP_ALWAYS_IDLE', False):
+            self.conn_state[2] = STATE_REQUEST
         if not self.raw_requestline:
             self.close_connection = 1
             return
