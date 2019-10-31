@@ -1852,7 +1852,9 @@ class TestHttpd(_TestBase):
         listen_sock.close()
         eventlet.sleep(0)
         try:
-            with eventlet.Timeout(1):
+            # We use 2s here to reduce odds of missing a regression in the
+            # future.
+            with eventlet.Timeout(2):
                 pool.waitall()
         except eventlet.Timeout:
             pass  # we should not exit while that request is still in-flight.
@@ -1878,6 +1880,13 @@ class TestHttpd(_TestBase):
                 pool.waitall()
         except (eventlet.Timeout, Exception):
             assert False, self.logfile.getvalue()
+
+        # Sanity-check that client's socket no longer works
+        with self.assertRaises(socket.error) as cm:
+            # It takes 2 writes to trigger the exception for some reason.
+            sock.sendall(b'abc')
+            sock.sendall(b'def')
+        self.assertEqual(errno.EPIPE, cm.exception.errno)
 
 
 def read_headers(sock):
