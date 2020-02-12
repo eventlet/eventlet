@@ -331,7 +331,6 @@ class GreenSocket(object):
             timeout_exc=socket_timeout('timed out'))
 
     def _recv_loop(self, recv_meth, empty_val, *args):
-        fd = self.fd
         if self.act_non_blocking:
             return recv_meth(*args)
 
