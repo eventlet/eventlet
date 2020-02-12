@@ -101,6 +101,10 @@ line2 # inline comment
         hr._v4 = {'v4.example.com': '1.2.3.4'}
         ans = hr.query('v4.example.com')
         assert ans[0].address == '1.2.3.4'
+        ans = hr.query(u'v4.example.com')
+        assert ans[0].address == '1.2.3.4'
+        ans = hr.query(b'v4.example.com')
+        assert ans[0].address == '1.2.3.4'
 
     def test_query_ans_types(self):
         # This assumes test_query_A above succeeds
@@ -321,6 +325,10 @@ class TestProxyResolver(tests.LimitedTestCase):
         rp = greendns.ResolverProxy(hostsres)
         ans = rp.query('host.example.com')
         assert ans[0].address == '1.2.3.4'
+        ans = rp.query(u'host.example.com')
+        assert ans[0].address == '1.2.3.4'
+        ans = rp.query(b'host.example.com')
+        assert ans[0].address == '1.2.3.4'
 
     def test_hosts_noanswer(self):
         hostsres = self._make_mock_hostsresolver()
@@ -337,6 +345,15 @@ class TestProxyResolver(tests.LimitedTestCase):
         rp._resolver = res
         ans = rp.query('host.example.com')
         assert ans[0].address == '5.6.7.8'
+        assert isinstance(res.args[0], dns.name.Name)
+
+        ans = rp.query(u'host.example.com')
+        assert ans[0].address == '5.6.7.8'
+        assert isinstance(res.args[0], dns.name.Name)
+
+        ans = rp.query(b'host.example.com')
+        assert ans[0].address == '5.6.7.8'
+        assert isinstance(res.args[0], dns.name.Name)
 
     def test_noanswer(self):
         res = self._make_mock_resolver()
@@ -657,6 +674,13 @@ class TestGetaddrinfo(tests.LimitedTestCase):
         result = greendns.getaddrinfo('example.com', 0, 0)
         addr = [('1.2.3.4', 0)] * len(result)
         assert addr == [ai[-1] for ai in result]
+
+    def test_getaddrinfo_bytes(self):
+        greendns.resolve = _make_mock_resolve()
+        greendns.resolve.add('example.com', '1.2.3.4')
+        res = greendns.getaddrinfo(b'example.com', b'0')
+        addr = [('1.2.3.4', 0)] * len(res)
+        assert addr == [ai[-1] for ai in res]
 
     def test_getaddrinfo_hosts_only_timeout(self):
         hostsres = _make_mock_base_resolver()
