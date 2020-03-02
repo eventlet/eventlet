@@ -384,7 +384,6 @@ class GreenSSLSocket(_original_sslsocket):
             while True:
                 try:
                     newsock, addr = socket.accept(self)
-                    set_nonblocking(newsock)
                     break
                 except orig_socket.error as e:
                     if get_errno(e) not in greenio.SOCKET_BLOCKING:
