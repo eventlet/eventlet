@@ -77,11 +77,6 @@ class WebSocketWSGI(object):
     the time of closure.
     """
 
-    # This tells the wsgi server code that handling a "request" for this WSGI
-    # app should always be considered "idle" and thus able to be shutdown "mid
-    # request" which for websockets means all the time, I guess.
-    _WSGI_APP_ALWAYS_IDLE = True
-
     def __init__(self, handler):
         self.handler = handler
         self.protocol_version = None
@@ -130,6 +125,10 @@ class WebSocketWSGI(object):
             start_response(status,
                            [('Connection', 'close'), ] + headers)
             return [body]
+
+        # We're ready to switch protocols; flag the connection
+        # as idle to play well with a graceful stop
+        environ['eventlet.set_idle']()
 
         try:
             self.handler(ws)

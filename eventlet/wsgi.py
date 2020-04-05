@@ -419,9 +419,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             self.protocol_version = self.server.max_http_version
 
         self.raw_requestline = self._read_request_line()
-        # WebSocketWSGI needs us, here, to consider the connection always idle
-        if not getattr(self.server.app, '_WSGI_APP_ALWAYS_IDLE', False):
-            self.conn_state[2] = STATE_REQUEST
+        self.conn_state[2] = STATE_REQUEST
         if not self.raw_requestline:
             self.close_connection = 1
             return
@@ -729,6 +727,12 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             self.rfile, length, self.connection, wfile=wfile, wfile_line=wfile_line,
             chunked_input=chunked)
         env['eventlet.posthooks'] = []
+
+        # WebSocketWSGI needs a way to flag the connection as idle,
+        # since it may never fall out of handle_one_request
+        def set_idle():
+            self.conn_state[2] = STATE_IDLE
+        env['eventlet.set_idle'] = set_idle
 
         return env
 
