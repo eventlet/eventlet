@@ -1,4 +1,9 @@
+0.25.2
+======
+* green.ssl: redundant set_nonblocking() caused SSLWantReadError
+
 0.25.1
+======
 * wsgi (tests): Stop using deprecated cgi.parse_qs() to support Python 3.8; Thanks to Miro Hrončok
 * os: Add workaround to `open` for pathlib on py 3.7; Thanks to David Szotten
 
