@@ -356,6 +356,9 @@ def run_python(path, env=None, args=None, timeout=None, pythonpath_extend=None, 
     except subprocess.TimeoutExpired:
         p.kill()
         output, _ = p.communicate(timeout=timeout)
+        if expect_pass:
+            sys.stderr.write('Program {0} output:\n---\n{1}\n---\n'.format(path, output.decode()))
+            assert False, 'timed out'
         return '{0}\nFAIL - timed out'.format(output).encode()
 
     if expect_pass:
