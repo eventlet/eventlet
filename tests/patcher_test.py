@@ -511,3 +511,7 @@ def test_regular_file_readall():
 
 def test_threading_current():
     tests.run_isolated('patcher_threading_current.py')
+
+
+def test_threadpoolexecutor():
+    tests.run_isolated('patcher_threadpoolexecutor.py')

@@ -328,6 +328,12 @@ def monkey_patch(**on):
         import threading
         threading.RLock = threading._PyRLock
 
+    # Issue #508: Since Python 3.7 queue.SimpleQueue is implemented in C,
+    # causing a deadlock.  Replace the C implementation with the Python one.
+    if sys.version_info >= (3, 7):
+        import queue
+        queue.SimpleQueue = queue._PySimpleQueue
+
 
 def is_monkey_patched(module):
     """Returns True if the given module is monkeypatched currently, False if
