@@ -634,13 +634,15 @@ class TestGreenSocket(tests.LimitedTestCase):
         sock1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         fd = sock1.fd.fileno()
         flags = fcntl.fcntl(fd, fcntl.F_GETFL)
-        fcntl.fcntl(fd, fcntl.F_SETFL, flags & ~os.O_NONBLOCK)
+        # on SPARC, nonblocking mode sets O_NDELAY as well
+        fcntl.fcntl(fd, fcntl.F_SETFL, flags & ~(os.O_NONBLOCK
+                                                 | os.O_NDELAY))
         flags = fcntl.fcntl(fd, fcntl.F_GETFL)
-        assert flags & os.O_NONBLOCK == 0
+        assert flags & (os.O_NONBLOCK | os.O_NDELAY) == 0
 
         sock2 = socket.socket(sock1.fd, set_nonblocking=False)
         flags = fcntl.fcntl(sock2.fd.fileno(), fcntl.F_GETFL)
-        assert flags & os.O_NONBLOCK == 0
+        assert flags & (os.O_NONBLOCK | os.O_NDELAY) == 0
 
     def test_sockopt_interface(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
