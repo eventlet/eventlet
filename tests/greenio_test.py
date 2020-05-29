@@ -634,7 +634,8 @@ class TestGreenSocket(tests.LimitedTestCase):
         sock1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         fd = sock1.fd.fileno()
         flags = fcntl.fcntl(fd, fcntl.F_GETFL)
-        flags = fcntl.fcntl(fd, fcntl.F_SETFL, flags & ~os.O_NONBLOCK)
+        fcntl.fcntl(fd, fcntl.F_SETFL, flags & ~os.O_NONBLOCK)
+        flags = fcntl.fcntl(fd, fcntl.F_GETFL)
         assert flags & os.O_NONBLOCK == 0
 
         sock2 = socket.socket(sock1.fd, set_nonblocking=False)
