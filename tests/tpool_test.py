@@ -366,7 +366,7 @@ class TpoolLongTests(tests.LimitedTestCase):
 
 
 def test_isolate_from_socket_default_timeout():
-    tests.run_isolated('tpool_isolate_socket_default_timeout.py', timeout=1)
+    tests.run_isolated('tpool_isolate_socket_default_timeout.py', timeout=5)
 
 
 def test_exception_leak():
