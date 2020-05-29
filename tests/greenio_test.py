@@ -925,7 +925,10 @@ def test_set_nonblocking():
     assert orig_flags & os.O_NONBLOCK == 0
     greenio.set_nonblocking(sock)
     new_flags = fcntl.fcntl(fileno, fcntl.F_GETFL)
-    assert new_flags == (orig_flags | os.O_NONBLOCK)
+    # on SPARC, O_NDELAY is set as well, and it might be a superset
+    # of O_NONBLOCK
+    assert (new_flags == (orig_flags | os.O_NONBLOCK)
+            or new_flags == (orig_flags | os.O_NONBLOCK | os.O_NDELAY))
 
 
 def test_socket_del_fails_gracefully_when_not_fully_initialized():
