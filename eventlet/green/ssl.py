@@ -64,17 +64,28 @@ class GreenSSLSocket(_original_sslsocket):
             if not isinstance(sock, GreenSocket):
                 sock = GreenSocket(sock)
             with _original_ssl_context():
-                ret = _original_wrap_socket(
-                    sock=sock.fd,
-                    keyfile=keyfile,
-                    certfile=certfile,
-                    server_side=server_side,
-                    cert_reqs=cert_reqs,
-                    ssl_version=ssl_version,
-                    ca_certs=ca_certs,
-                    do_handshake_on_connect=False,
-                    *args, **kw
-                )
+                context = kw.get('_context')
+                if context:
+                    ret = _original_sslsocket._create(
+                        sock=sock.fd,
+                        server_side=server_side,
+                        do_handshake_on_connect=False,
+                        suppress_ragged_eofs=kw.get('suppress_ragged_eofs'),
+                        server_hostname=kw.get('server_hostname'),
+                        context=context,
+                        session=kw.get('session'),
+                    )
+                else:
+                    ret = _original_wrap_socket(
+                        sock=sock.fd,
+                        keyfile=keyfile,
+                        certfile=certfile,
+                        server_side=server_side,
+                        cert_reqs=cert_reqs,
+                        ssl_version=ssl_version,
+                        ca_certs=ca_certs,
+                        do_handshake_on_connect=False,
+                    )
             ret.keyfile = keyfile
             ret.certfile = certfile
             ret.cert_reqs = cert_reqs
