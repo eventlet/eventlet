@@ -51,6 +51,28 @@ class SSLTest(tests.LimitedTestCase):
         self.assertEqual(client.recv(8192), b'response')
         server_coro.wait()
 
+    def test_ssl_context(self):
+        def serve(listener):
+            sock, addr = listener.accept()
+            sock.recv(8192)
+            sock.sendall(b'response')
+
+        sock = listen_ssl_socket()
+
+        server_coro = eventlet.spawn(serve, sock)
+
+        context = ssl.create_default_context()
+        context.verify_mode = ssl.CERT_REQUIRED
+        context.check_hostname = True
+        context.load_verify_locations(tests.certificate_file)
+
+        client = context.wrap_socket(
+            eventlet.connect(sock.getsockname()),
+            server_hostname='Test')
+        client.sendall(b'line 1\r\nline 2\r\n\r\n')
+        self.assertEqual(client.recv(8192), b'response')
+        server_coro.wait()
+
     def test_ssl_close(self):
         def serve(listener):
             sock, addr = listener.accept()
