@@ -16,7 +16,6 @@ setuptools.setup(
     packages=setuptools.find_packages(exclude=['benchmarks', 'tests', 'tests.*']),
     install_requires=(
         'dnspython >= 1.15.0',
-        'enum34;python_version<"3.4"',
         'greenlet >= 0.3',
         'monotonic >= 1.4',
         'six >= 1.10.0',
@@ -39,7 +38,6 @@ setuptools.setup(
         "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",

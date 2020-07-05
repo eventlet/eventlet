@@ -10,10 +10,6 @@ matrix:
     - {python: 2.7, env: TOXENV=py27-poll}
     - {python: 2.7, env: TOXENV=py27-selects}
 
-    - {python: 3.4, env: TOXENV=py34-epolls}
-    - {python: 3.4, env: TOXENV=py34-poll}
-    - {python: 3.4, env: TOXENV=py34-selects}
-
     - {python: 3.5, env: TOXENV=py35-epolls}
     - {python: 3.5, env: TOXENV=py35-poll}
     - {python: 3.5, env: TOXENV=py35-selects}
