@@ -1,0 +1,32 @@
+---
+name: lint
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    # We want to run on external PRs, but not on our own internal PRs as they'll be run by the push to the branch.
+    # https://github.community/t/duplicate-checks-on-push-and-pull-request-simultaneous-event/18012
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != 'eventlet/eventlet'
+    strategy:
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: black
+        uses: lgeiger/black-action@v1.0.1
+        continue-on-error: true
+        with:
+          args: "--check --diff ."
+
+      - name: super-linter
+        uses: docker://github/super-linter:v3
+        env:
+          VALIDATE_ALL_CODEBASE: true
+          # too many false errors from pylint
+          # - import-error, even for eventlet module
+          # - tests/stdlib/ executed in special patched environment
+          VALIDATE_PYTHON: false
