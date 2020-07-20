@@ -118,6 +118,15 @@ def is_ip_addr(host):
     return is_ipv4_addr(host) or is_ipv6_addr(host)
 
 
+def compute_expiration(query, timeout):
+    # NOTE(ralonsoh): in dnspython v2.0.0, "_compute_expiration" was replaced
+    # by "_compute_times".
+    if hasattr(query, '_compute_expiration'):
+        return query._compute_expiration(timeout)
+    else:
+        return query._compute_times(timeout)[1]
+
+
 class HostsAnswer(dns.resolver.Answer):
     """Answer class for HostsResolver object"""
 
@@ -709,7 +718,7 @@ def udp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
     s = socket.socket(af, socket.SOCK_DGRAM)
     s.settimeout(timeout)
     try:
-        expiration = dns.query._compute_expiration(timeout)
+        expiration = compute_expiration(dns.query, timeout)
         if source is not None:
             s.bind(source)
         while True:
@@ -802,7 +811,7 @@ def tcp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
     s = socket.socket(af, socket.SOCK_STREAM)
     s.settimeout(timeout)
     try:
-        expiration = dns.query._compute_expiration(timeout)
+        expiration = compute_expiration(dns.query, timeout)
         if source is not None:
             s.bind(source)
         while True:
