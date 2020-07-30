@@ -1,3 +1,7 @@
+0.26.1
+======
+* pin dnspython <2.0.0 https://github.com/eventlet/eventlet/issues/619
+
 0.26.0
 ======
 * Fix compatibility with SSLContext usage >= Python 3.7
