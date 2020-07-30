@@ -1,3 +1,12 @@
+0.26.0
+======
+* Fix compatibility with SSLContext usage >= Python 3.7
+* wsgi: Fix header capitalization on py3
+* Fix #508: Py37 Deadlock ThreadPoolExecutor (#598)
+* drop Python 3.4 support
+* Fix misc SyntaxWarning's under Python 3.8
+* Remove unnecessary assignment in _recv_loop (#601)
+
 0.25.2
 ======
 * green.ssl: redundant set_nonblocking() caused SSLWantReadError
