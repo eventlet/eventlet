@@ -1,18 +1,19 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-        <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Basic Usage &#8212; Eventlet 0.24.1 documentation</title>
+    <meta charset="utf-8" />
+    <title>Basic Usage &#8212; Eventlet 0.26.0 documentation</title>
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Design Patterns" href="design_patterns.html" />
@@ -33,7 +34,7 @@
         <li class="right" >
           <a href="index.html" title="Eventlet Documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.24.1 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.26.0 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -47,8 +48,8 @@
 <p>If it’s your first time to Eventlet, you may find the illuminated examples in the <a class="reference internal" href="design_patterns.html#design-patterns"><span class="std std-ref">Design Patterns</span></a> document to be a good starting point.</p>
 <p>Eventlet is built around the concept of green threads (i.e. coroutines, we use the terms interchangeably) that are launched to do network-related work.  Green threads differ from normal threads in two main ways:</p>
 <ul class="simple">
-<li>Green threads are so cheap they are nearly free.  You do not have to conserve green threads like you would normal threads.  In general, there will be at least one green thread per network connection.</li>
-<li>Green threads cooperatively yield to each other instead of preemptively being scheduled.  The major advantage from this behavior is that shared data structures don’t need locks, because only if a yield is explicitly called can another green thread have access to the data structure.  It is also possible to inspect primitives such as queues to see if they have any pending data.</li>
+<li><p>Green threads are so cheap they are nearly free.  You do not have to conserve green threads like you would normal threads.  In general, there will be at least one green thread per network connection.</p></li>
+<li><p>Green threads cooperatively yield to each other instead of preemptively being scheduled.  The major advantage from this behavior is that shared data structures don’t need locks, because only if a yield is explicitly called can another green thread have access to the data structure.  It is also possible to inspect primitives such as queues to see if they have any pending data.</p></li>
 </ul>
 </div>
 <div class="section" id="primary-api">
@@ -57,54 +58,54 @@
 <p>Though Eventlet has many modules, much of the most-used stuff is accessible simply by doing <code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">eventlet</span></code>.  Here’s a quick summary of the functionality available in the <code class="docutils literal notranslate"><span class="pre">eventlet</span></code> module, with links to more verbose documentation on each.</p>
 <div class="section" id="greenthread-spawn">
 <h2>Greenthread Spawn<a class="headerlink" href="#greenthread-spawn" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
+<dl class="py function">
 <dt id="eventlet.spawn">
-<code class="descclassname">eventlet.</code><code class="descname">spawn</code><span class="sig-paren">(</span><em>func</em>, <em>*args</em>, <em>**kw</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.spawn" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">eventlet.</code><code class="sig-name descname">spawn</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">func</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.spawn" title="Permalink to this definition">¶</a></dt>
 <dd><p>This launches a greenthread to call <em>func</em>.  Spawning off multiple greenthreads gets work done in parallel.  The return value from <code class="docutils literal notranslate"><span class="pre">spawn</span></code> is a <a class="reference internal" href="modules/greenthread.html#eventlet.greenthread.GreenThread" title="eventlet.greenthread.GreenThread"><code class="xref py py-class docutils literal notranslate"><span class="pre">greenthread.GreenThread</span></code></a> object, which can be used to retrieve the return value of <em>func</em>.  See <a class="reference internal" href="modules/greenthread.html#eventlet.greenthread.spawn" title="eventlet.greenthread.spawn"><code class="xref py py-func docutils literal notranslate"><span class="pre">spawn</span></code></a> for more details.</p>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="eventlet.spawn_n">
-<code class="descclassname">eventlet.</code><code class="descname">spawn_n</code><span class="sig-paren">(</span><em>func</em>, <em>*args</em>, <em>**kw</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.spawn_n" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">eventlet.</code><code class="sig-name descname">spawn_n</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">func</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.spawn_n" title="Permalink to this definition">¶</a></dt>
 <dd><p>The same as <a class="reference internal" href="#eventlet.spawn" title="eventlet.spawn"><code class="xref py py-func docutils literal notranslate"><span class="pre">spawn()</span></code></a>, but it’s not possible to know how the function terminated (i.e. no return value or exceptions).  This makes execution faster.  See <a class="reference internal" href="modules/greenthread.html#eventlet.greenthread.spawn_n" title="eventlet.greenthread.spawn_n"><code class="xref py py-func docutils literal notranslate"><span class="pre">spawn_n</span></code></a> for more details.</p>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="eventlet.spawn_after">
-<code class="descclassname">eventlet.</code><code class="descname">spawn_after</code><span class="sig-paren">(</span><em>seconds</em>, <em>func</em>, <em>*args</em>, <em>**kw</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.spawn_after" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">eventlet.</code><code class="sig-name descname">spawn_after</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">seconds</span></em>, <em class="sig-param"><span class="n">func</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.spawn_after" title="Permalink to this definition">¶</a></dt>
 <dd><p>Spawns <em>func</em> after <em>seconds</em> have elapsed; a delayed version of <a class="reference internal" href="#eventlet.spawn" title="eventlet.spawn"><code class="xref py py-func docutils literal notranslate"><span class="pre">spawn()</span></code></a>.   To abort the spawn and prevent <em>func</em> from being called, call <code class="xref py py-meth docutils literal notranslate"><span class="pre">GreenThread.cancel()</span></code> on the return value of <a class="reference internal" href="#eventlet.spawn_after" title="eventlet.spawn_after"><code class="xref py py-func docutils literal notranslate"><span class="pre">spawn_after()</span></code></a>.  See <a class="reference internal" href="modules/greenthread.html#eventlet.greenthread.spawn_after" title="eventlet.greenthread.spawn_after"><code class="xref py py-func docutils literal notranslate"><span class="pre">spawn_after</span></code></a> for more details.</p>
 </dd></dl>
 
 </div>
 <div class="section" id="greenthread-control">
 <h2>Greenthread Control<a class="headerlink" href="#greenthread-control" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
+<dl class="py function">
 <dt id="eventlet.sleep">
-<code class="descclassname">eventlet.</code><code class="descname">sleep</code><span class="sig-paren">(</span><em>seconds=0</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.sleep" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">eventlet.</code><code class="sig-name descname">sleep</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">seconds</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.sleep" title="Permalink to this definition">¶</a></dt>
 <dd><p>Suspends the current greenthread and allows others a chance to process.  See <a class="reference internal" href="modules/greenthread.html#eventlet.greenthread.sleep" title="eventlet.greenthread.sleep"><code class="xref py py-func docutils literal notranslate"><span class="pre">sleep</span></code></a> for more details.</p>
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="eventlet.GreenPool">
-<em class="property">class </em><code class="descclassname">eventlet.</code><code class="descname">GreenPool</code><a class="headerlink" href="#eventlet.GreenPool" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">eventlet.</code><code class="sig-name descname">GreenPool</code><a class="headerlink" href="#eventlet.GreenPool" title="Permalink to this definition">¶</a></dt>
 <dd><p>Pools control concurrency.  It’s very common in applications to want to consume only a finite amount of memory, or to restrict the amount of connections that one part of the code holds open so as to leave more for the rest, or to behave consistently in the face of unpredictable input data.  GreenPools provide this control.  See <a class="reference internal" href="modules/greenpool.html#eventlet.greenpool.GreenPool" title="eventlet.greenpool.GreenPool"><code class="xref py py-class docutils literal notranslate"><span class="pre">GreenPool</span></code></a> for more on how to use these.</p>
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="eventlet.GreenPile">
-<em class="property">class </em><code class="descclassname">eventlet.</code><code class="descname">GreenPile</code><a class="headerlink" href="#eventlet.GreenPile" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">eventlet.</code><code class="sig-name descname">GreenPile</code><a class="headerlink" href="#eventlet.GreenPile" title="Permalink to this definition">¶</a></dt>
 <dd><p>GreenPile objects represent chunks of work.  In essence a GreenPile is an iterator that can be stuffed with work, and the results read out later. See <a class="reference internal" href="modules/greenpool.html#eventlet.greenpool.GreenPile" title="eventlet.greenpool.GreenPile"><code class="xref py py-class docutils literal notranslate"><span class="pre">GreenPile</span></code></a> for more details.</p>
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="eventlet.Queue">
-<em class="property">class </em><code class="descclassname">eventlet.</code><code class="descname">Queue</code><a class="headerlink" href="#eventlet.Queue" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">eventlet.</code><code class="sig-name descname">Queue</code><a class="headerlink" href="#eventlet.Queue" title="Permalink to this definition">¶</a></dt>
 <dd><p>Queues are a fundamental construct for communicating data between execution units.  Eventlet’s Queue class is used to communicate between greenthreads, and provides a bunch of useful features for doing that.  See <a class="reference internal" href="modules/queue.html#eventlet.queue.Queue" title="eventlet.queue.Queue"><code class="xref py py-class docutils literal notranslate"><span class="pre">Queue</span></code></a> for more details.</p>
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="eventlet.Timeout">
-<em class="property">class </em><code class="descclassname">eventlet.</code><code class="descname">Timeout</code><a class="headerlink" href="#eventlet.Timeout" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">eventlet.</code><code class="sig-name descname">Timeout</code><a class="headerlink" href="#eventlet.Timeout" title="Permalink to this definition">¶</a></dt>
 <dd><p>This class is a way to add timeouts to anything.  It raises <em>exception</em> in the current greenthread after <em>timeout</em> seconds.  When <em>exception</em> is omitted or <code class="docutils literal notranslate"><span class="pre">None</span></code>, the Timeout instance itself is raised.</p>
 <p>Timeout objects are context managers, and so can be used in with statements.
 See <a class="reference internal" href="modules/timeout.html#eventlet.timeout.Timeout" title="eventlet.timeout.Timeout"><code class="xref py py-class docutils literal notranslate"><span class="pre">Timeout</span></code></a> for more details.</p>
@@ -113,73 +114,65 @@ See <a class="reference internal" href="modules/timeout.html#eventlet.timeout.Ti
 </div>
 <div class="section" id="patching-functions">
 <h2>Patching Functions<a class="headerlink" href="#patching-functions" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
+<dl class="py function">
 <dt id="eventlet.import_patched">
-<code class="descclassname">eventlet.</code><code class="descname">import_patched</code><span class="sig-paren">(</span><em>modulename</em>, <em>*additional_modules</em>, <em>**kw_additional_modules</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.import_patched" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">eventlet.</code><code class="sig-name descname">import_patched</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">modulename</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">additional_modules</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw_additional_modules</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.import_patched" title="Permalink to this definition">¶</a></dt>
 <dd><p>Imports a module in a way that ensures that the module uses “green” versions of the standard library modules, so that everything works nonblockingly.  The only required argument is the name of the module to be imported.  For more information see <a class="reference internal" href="patching.html#import-green"><span class="std std-ref">Import Green</span></a>.</p>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="eventlet.monkey_patch">
-<code class="descclassname">eventlet.</code><code class="descname">monkey_patch</code><span class="sig-paren">(</span><em>all=True</em>, <em>os=False</em>, <em>select=False</em>, <em>socket=False</em>, <em>thread=False</em>, <em>time=False</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.monkey_patch" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">eventlet.</code><code class="sig-name descname">monkey_patch</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">all</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">os</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">select</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">socket</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">thread</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">time</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.monkey_patch" title="Permalink to this definition">¶</a></dt>
 <dd><p>Globally patches certain system modules to be greenthread-friendly. The keyword arguments afford some control over which modules are patched. If <em>all</em> is True, then all modules are patched regardless of the other arguments. If it’s False, then the rest of the keyword arguments control patching of specific subsections of the standard library.  Most patch the single module of the same name (os, time, select).  The exceptions are socket, which also patches the ssl module if present; and thread, which patches thread, threading, and Queue.  It’s safe to call monkey_patch multiple times.  For more information see <a class="reference internal" href="patching.html#monkey-patch"><span class="std std-ref">Monkeypatching the Standard Library</span></a>.</p>
 </dd></dl>
 
 </div>
 <div class="section" id="network-convenience-functions">
 <h2>Network Convenience Functions<a class="headerlink" href="#network-convenience-functions" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
+<dl class="py function">
 <dt id="eventlet.connect">
-<code class="descclassname">eventlet.</code><code class="descname">connect</code><span class="sig-paren">(</span><em>addr</em>, <em>family=&lt;AddressFamily.AF_INET: 2&gt;</em>, <em>bind=None</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.connect" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">eventlet.</code><code class="sig-name descname">connect</code><span class="sig-paren">(</span><em class="sig-param">addr</em>, <em class="sig-param">family=&lt;AddressFamily.AF_INET: 2&gt;</em>, <em class="sig-param">bind=None</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.connect" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convenience function for opening client sockets.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>addr</strong> – Address of the server to connect to.  For TCP sockets, this is a (host, port) tuple.</li>
-<li><strong>family</strong> – Socket family, optional.  See <a class="reference external" href="https://docs.python.org/3/library/socket.html#module-socket" title="(in Python v3.7)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">socket</span></code></a> documentation for available families.</li>
-<li><strong>bind</strong> – Local address to bind to, optional.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>addr</strong> – Address of the server to connect to.  For TCP sockets, this is a (host, port) tuple.</p></li>
+<li><p><strong>family</strong> – Socket family, optional.  See <a class="reference external" href="https://docs.python.org/3/library/socket.html#module-socket" title="(in Python v3.8)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">socket</span></code></a> documentation for available families.</p></li>
+<li><p><strong>bind</strong> – Local address to bind to, optional.</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The connected green socket object.</p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The connected green socket object.</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="eventlet.listen">
-<code class="descclassname">eventlet.</code><code class="descname">listen</code><span class="sig-paren">(</span><em>addr</em>, <em>family=&lt;AddressFamily.AF_INET: 2&gt;</em>, <em>backlog=50</em>, <em>reuse_addr=True</em>, <em>reuse_port=None</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.listen" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">eventlet.</code><code class="sig-name descname">listen</code><span class="sig-paren">(</span><em class="sig-param">addr</em>, <em class="sig-param">family=&lt;AddressFamily.AF_INET: 2&gt;</em>, <em class="sig-param">backlog=50</em>, <em class="sig-param">reuse_addr=True</em>, <em class="sig-param">reuse_port=None</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.listen" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convenience function for opening server sockets.  This
 socket can be used in <a class="reference internal" href="#eventlet.serve" title="eventlet.serve"><code class="xref py py-func docutils literal notranslate"><span class="pre">serve()</span></code></a> or a custom <code class="docutils literal notranslate"><span class="pre">accept()</span></code> loop.</p>
 <p>Sets SO_REUSEADDR on the socket to save on annoyance.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>addr</strong> – Address to listen on.  For TCP sockets, this is a (host, port)  tuple.</li>
-<li><strong>family</strong> – Socket family, optional.  See <a class="reference external" href="https://docs.python.org/3/library/socket.html#module-socket" title="(in Python v3.7)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">socket</span></code></a> documentation for available families.</li>
-<li><strong>backlog</strong> – The maximum number of queued connections. Should be at least 1; the maximum
-value is system-dependent.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>addr</strong> – Address to listen on.  For TCP sockets, this is a (host, port)  tuple.</p></li>
+<li><p><strong>family</strong> – Socket family, optional.  See <a class="reference external" href="https://docs.python.org/3/library/socket.html#module-socket" title="(in Python v3.8)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">socket</span></code></a> documentation for available families.</p></li>
+<li><p><strong>backlog</strong> – The maximum number of queued connections. Should be at least 1; the maximum
+value is system-dependent.</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The listening green socket object.</p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The listening green socket object.</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="eventlet.wrap_ssl">
-<code class="descclassname">eventlet.</code><code class="descname">wrap_ssl</code><span class="sig-paren">(</span><em>sock</em>, <em>*a</em>, <em>**kw</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.wrap_ssl" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">eventlet.</code><code class="sig-name descname">wrap_ssl</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sock</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">a</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.wrap_ssl" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convenience function for converting a regular socket into an
-SSL socket.  Has the same interface as <a class="reference external" href="https://docs.python.org/3/library/ssl.html#ssl.wrap_socket" title="(in Python v3.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">ssl.wrap_socket()</span></code></a>,
+SSL socket.  Has the same interface as <a class="reference external" href="https://docs.python.org/3/library/ssl.html#ssl.wrap_socket" title="(in Python v3.8)"><code class="xref py py-func docutils literal notranslate"><span class="pre">ssl.wrap_socket()</span></code></a>,
 but can also use PyOpenSSL. Though, note that it ignores the
 <cite>cert_reqs</cite>, <cite>ssl_version</cite>, <cite>ca_certs</cite>, <cite>do_handshake_on_connect</cite>,
 and <cite>suppress_ragged_eofs</cite> arguments when using PyOpenSSL.</p>
@@ -191,9 +184,9 @@ session.</p>
 <p>:return Green SSL object.</p>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="eventlet.serve">
-<code class="descclassname">eventlet.</code><code class="descname">serve</code><span class="sig-paren">(</span><em>sock</em>, <em>handle</em>, <em>concurrency=1000</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.serve" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">eventlet.</code><code class="sig-name descname">serve</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sock</span></em>, <em class="sig-param"><span class="n">handle</span></em>, <em class="sig-param"><span class="n">concurrency</span><span class="o">=</span><span class="default_value">1000</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.serve" title="Permalink to this definition">¶</a></dt>
 <dd><p>Runs a server on the supplied socket.  Calls the function <em>handle</em> in a
 separate greenthread for every incoming client connection.  <em>handle</em> takes
 two arguments: the client socket object, and the client address:</p>
@@ -220,9 +213,9 @@ the server hits the concurrency limit, it stops accepting new
 connections until the existing ones complete.</p>
 </dd></dl>
 
-<dl class="class">
+<dl class="py class">
 <dt id="eventlet.StopServe">
-<em class="property">class </em><code class="descclassname">eventlet.</code><code class="descname">StopServe</code><a class="headerlink" href="#eventlet.StopServe" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">eventlet.</code><code class="sig-name descname">StopServe</code><a class="headerlink" href="#eventlet.StopServe" title="Permalink to this definition">¶</a></dt>
 <dd><p>Exception class used for quitting <a class="reference internal" href="#eventlet.serve" title="eventlet.serve"><code class="xref py py-func docutils literal notranslate"><span class="pre">serve()</span></code></a> gracefully.</p>
 </dd></dl>
 
@@ -236,7 +229,7 @@ connections until the existing ones complete.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table Of Contents</a></h3>
+  <h3><a href="index.html">Table of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Basic Usage</a></li>
 <li><a class="reference internal" href="#primary-api">Primary API</a><ul>
@@ -262,17 +255,15 @@ connections until the existing ones complete.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -292,13 +283,13 @@ connections until the existing ones complete.</p>
         <li class="right" >
           <a href="index.html" title="Eventlet Documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.24.1 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.26.0 documentation</a> &#187;</li> 
       </ul>
     </div>
 
     <div class="footer" role="contentinfo">
         &#169; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.0.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.0.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

@@ -1,18 +1,19 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-        <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>History &#8212; Eventlet 0.24.1 documentation</title>
+    <meta charset="utf-8" />
+    <title>History &#8212; Eventlet 0.26.0 documentation</title>
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="prev" title="Authors" href="authors.html" /> 
@@ -29,7 +30,7 @@
         <li class="right" >
           <a href="authors.html" title="Authors"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.24.1 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.26.0 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -42,7 +43,7 @@
 <h1>History<a class="headerlink" href="#history" title="Permalink to this headline">¶</a></h1>
 <p>Eventlet began life as Donovan Preston was talking to Bob Ippolito about coroutine-based non-blocking networking frameworks in Python. Most non-blocking frameworks require you to run the “main loop” in order to perform all network operations, but Donovan wondered if a library written using a trampolining style could get away with transparently running the main loop any time i/o was required, stopping the main loop once no more i/o was scheduled. Bob spent a few days during PyCon 2006 writing a proof-of-concept. He named it eventlet, after the coroutine implementation it used, <a class="reference external" href="http://cheeseshop.python.org/pypi/greenletgreenlet">greenlet</a>. Donovan began using eventlet as a light-weight network library for his spare-time project <a class="reference external" href="http://soundfarmer.com/Pavel/trunk/Pavel">Pavel</a>, and also began writing some unittests.</p>
 <ul class="simple">
-<li><a class="reference external" href="http://svn.red-bean.com/bob/eventlet/trunk/">http://svn.red-bean.com/bob/eventlet/trunk/</a></li>
+<li><p><a class="reference external" href="http://svn.red-bean.com/bob/eventlet/trunk/">http://svn.red-bean.com/bob/eventlet/trunk/</a></p></li>
 </ul>
 <p>When Donovan started at Linden Lab in May of 2006, he added eventlet as an svn external in the <code class="docutils literal notranslate"><span class="pre">indra/lib/python</span> <span class="pre">directory</span></code>, to be a dependency of the yet-to-be-named backbone project (at the time, it was named restserv). However, including eventlet as an svn external meant that any time the externally hosted project had hosting issues, Linden developers were not able to perform svn updates. Thus, the eventlet source was imported into the linden source tree at the same location, and became a fork.</p>
 <p>Bob Ippolito has ceased working on eventlet and has stated his desire for Linden to take it’s fork forward to the open source world as “the” eventlet.</p>
@@ -65,17 +66,15 @@
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -92,13 +91,13 @@
         <li class="right" >
           <a href="authors.html" title="Authors"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.24.1 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.26.0 documentation</a> &#187;</li> 
       </ul>
     </div>
 
     <div class="footer" role="contentinfo">
         &#169; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.0.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.0.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
