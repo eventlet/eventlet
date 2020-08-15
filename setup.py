@@ -15,7 +15,7 @@ setuptools.setup(
     url='http://eventlet.net',
     packages=setuptools.find_packages(exclude=['benchmarks', 'tests', 'tests.*']),
     install_requires=(
-        'dnspython >= 1.15.0, < 2.0.0',
+        'dnspython >= 1.15.0',
         'greenlet >= 0.3',
         'monotonic >= 1.4',
         'six >= 1.10.0',
