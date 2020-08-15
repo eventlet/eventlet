@@ -22,6 +22,10 @@ matrix:
     - {python: 3.7, sudo: required, dist: xenial, env: TOXENV=py37-poll}
     - {python: 3.7, sudo: required, dist: xenial, env: TOXENV=py37-selects}
 
+    - {python: 3.8, env: TOXENV=py38-epolls}
+    - {python: 3.8, env: TOXENV=py38-poll}
+    - {python: 3.8, env: TOXENV=py38-selects}
+
     - {python: pypy, env: TOXENV=pypy-epolls}
     - {python: pypy, env: TOXENV=pypy-poll}
     - {python: pypy, env: TOXENV=pypy-selects}
