@@ -32,22 +32,28 @@ jobs:
           - { py: 2.7, toxenv: py27-epolls, ignore-error: false }
           - { py: 2.7, toxenv: py27-poll, ignore-error: false }
           - { py: 2.7, toxenv: py27-selects, ignore-error: false }
+          - { py: 2.7, toxenv: py27-dnspython1, ignore-error: false }
           - { py: 3.5, toxenv: py35-epolls, ignore-error: false }
           - { py: 3.5, toxenv: py35-poll, ignore-error: false }
           - { py: 3.5, toxenv: py35-selects, ignore-error: false }
+          - { py: 3.5, toxenv: py35-dnspython1, ignore-error: false }
           - { py: 3.6, toxenv: py36-epolls, ignore-error: false }
           - { py: 3.6, toxenv: py36-poll, ignore-error: false }
           - { py: 3.6, toxenv: py36-selects, ignore-error: false }
+          - { py: 3.6, toxenv: py36-dnspython1, ignore-error: false }
           - { py: 3.7, toxenv: py37-epolls, ignore-error: false }
           - { py: 3.7, toxenv: py37-poll, ignore-error: false }
           - { py: 3.7, toxenv: py37-selects, ignore-error: false }
+          - { py: 3.7, toxenv: py37-dnspython1, ignore-error: false }
           - { py: 3.8, toxenv: py38-epolls, ignore-error: false }
           - { py: 3.8, toxenv: py38-openssl, ignore-error: false }
           - { py: 3.8, toxenv: py38-poll, ignore-error: false }
           - { py: 3.8, toxenv: py38-selects, ignore-error: false }
+          - { py: 3.8, toxenv: py38-dnspython1, ignore-error: false }
           - { py: 3.9, toxenv: py39-epolls, ignore-error: false }
           - { py: 3.9, toxenv: py39-poll, ignore-error: false }
           - { py: 3.9, toxenv: py39-selects, ignore-error: false }
+          - { py: 3.9, toxenv: py39-dnspython1, ignore-error: false }
           - { py: 3.x, toxenv: ipv6, ignore-error: false }
           - { py: pypy2, toxenv: pypy2-epolls, ignore-error: true }
           - { py: pypy3, toxenv: pypy3-epolls, ignore-error: true }
