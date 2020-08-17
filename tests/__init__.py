@@ -322,6 +322,13 @@ def get_database_auth():
 
 
 def run_python(path, env=None, args=None, timeout=None, pythonpath_extend=None, expect_pass=False):
+    try:
+        SubprocessTimeoutExpired = subprocess.TimeoutExpired
+    except AttributeError:
+        # Unmatchable exception so it isnt caught
+        class SubprocessTimeoutExpired(Exception):
+            pass
+
     new_argv = [sys.executable]
     if sys.version_info[:2] <= (2, 6):
         new_argv += ['-W', 'ignore::DeprecationWarning']
@@ -352,8 +359,11 @@ def run_python(path, env=None, args=None, timeout=None, pythonpath_extend=None, 
     if timeout is None:
         timeout = 10
     try:
-        output, _ = p.communicate(timeout=timeout)
-    except subprocess.TimeoutExpired:
+        if six.PY2:
+            output, _ = p.communicate()
+        else:
+            output, _ = p.communicate(timeout=timeout)
+    except SubprocessTimeoutExpired:
         p.kill()
         output, _ = p.communicate(timeout=timeout)
         if expect_pass:
