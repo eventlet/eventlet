@@ -323,8 +323,8 @@ def get_database_auth():
 
 def run_python(path, env=None, args=None, timeout=None, pythonpath_extend=None, expect_pass=False):
     new_argv = [sys.executable]
-    if sys.version_info[:2] <= (2, 6):
-        new_argv += ['-W', 'ignore::DeprecationWarning']
+    if sys.version_info[:2] <= (2, 7):
+        new_argv += ['-W', 'ignore:Python 2 is no longer supported']
     new_env = os.environ.copy()
     new_env.setdefault('eventlet_test_in_progress', 'yes')
     src_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
