@@ -1,3 +1,8 @@
+0.27.0
+======
+* patcher: Clean up threading book-keeping at fork when monkey-patched
+* backdoor: handle disconnects better
+
 0.26.1
 ======
 * pin dnspython <2.0.0 https://github.com/eventlet/eventlet/issues/619
