@@ -225,23 +225,19 @@ class BaseHub(object):
 
         fileno = listener.fileno
         evtype = listener.evtype
-        if listener is self.listeners[evtype].get(fileno):
-            self.listeners[evtype].pop(fileno, None)
+        if listener is self.listeners[evtype][fileno]:
+            del self.listeners[evtype][fileno]
             # migrate a secondary listener to be the primary listener
             if fileno in self.secondaries[evtype]:
-                sec = self.secondaries[evtype].get(fileno, None)
-                if not sec:
-                    return
-                self.listeners[evtype][fileno] = sec.pop(0)
+                sec = self.secondaries[evtype][fileno]
+                if sec:
+                    self.listeners[evtype][fileno] = sec.pop(0)
                 if not sec:
                     del self.secondaries[evtype][fileno]
         else:
-            sec = [l for l in self.secondaries[evtype].get(fileno, [])
-                   if l is not listener]
-            if sec:
-                self.secondaries[evtype][fileno] = sec
-            else:
-                self.secondaries[evtype].pop(fileno, None)
+            self.secondaries[evtype][fileno].remove(listener)
+            if not self.secondaries[evtype][fileno]:
+                del self.secondaries[evtype][fileno]
 
     def mark_as_reopened(self, fileno):
         """ If a file descriptor is returned by the OS as the result of some
@@ -255,16 +251,23 @@ class BaseHub(object):
     def remove_descriptor(self, fileno):
         """ Completely remove all listeners for this fileno.  For internal use
         only."""
+        # gather any listeners we have
         listeners = []
-        listeners.append(self.listeners[READ].pop(fileno, noop))
-        listeners.append(self.listeners[WRITE].pop(fileno, noop))
-        listeners.extend(self.secondaries[READ].pop(fileno, ()))
-        listeners.extend(self.secondaries[WRITE].pop(fileno, ()))
+        listeners.append(self.listeners[READ].get(fileno, noop))
+        listeners.append(self.listeners[WRITE].get(fileno, noop))
+        listeners.extend(self.secondaries[READ].get(fileno, ()))
+        listeners.extend(self.secondaries[WRITE].get(fileno, ()))
         for listener in listeners:
             try:
+                # listener.cb may want to remove(listener)
                 listener.cb(fileno)
             except Exception:
                 self.squelch_generic_exception(sys.exc_info())
+        # NOW this fileno is now dead to all
+        self.listeners[READ].pop(fileno, None)
+        self.listeners[WRITE].pop(fileno, None)
+        self.secondaries[READ].pop(fileno, None)
+        self.secondaries[WRITE].pop(fileno, None)
 
     def close_one(self):
         """ Triggered from the main run loop. If a listener's underlying FD was
