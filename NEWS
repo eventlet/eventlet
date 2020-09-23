@@ -1,3 +1,7 @@
+0.28.0
+======
+* Always remove the right listener from the hub https://github.com/eventlet/eventlet/pull/645
+
 0.27.0
 ======
 * patcher: Clean up threading book-keeping at fork when monkey-patched
