@@ -11,3 +11,4 @@ venv*
 website-build/
 ## Unit test / coverage reports
 .coverage
+.tox
