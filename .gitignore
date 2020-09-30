@@ -9,3 +9,5 @@ dist/
 doc/changelog.rst
 venv*
 website-build/
+## Unit test / coverage reports
+.coverage
