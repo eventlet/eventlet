@@ -313,9 +313,9 @@ def monkey_patch(**on):
                 if hasattr(orig_mod, attr_name):
                     delattr(orig_mod, attr_name)
 
-            if name == 'threading' and sys.version_info >= (3, 7):
+            _os = original('os')
+            if name == 'threading' and hasattr(_os, 'register_at_fork'):
                 def fix_threading_active(
-                    _os=original('os'),
                     _global_dict=original('threading').current_thread.__globals__,
                     _patched=orig_mod
                 ):
