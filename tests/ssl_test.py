@@ -1,4 +1,5 @@
 import contextlib
+import random
 import socket
 import warnings
 
@@ -325,3 +326,48 @@ class SSLTest(tests.LimitedTestCase):
                 server_to_client.close()
 
                 listener.close()
+
+    def test_context_wrapped_accept(self):
+        context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+        context.load_cert_chain(tests.certificate_file, tests.private_key_file)
+        expected = "success:{}".format(random.random()).encode()
+
+        def client(addr):
+            client_tls = ssl.wrap_socket(
+                eventlet.connect(addr),
+                cert_reqs=ssl.CERT_REQUIRED,
+                ca_certs=tests.certificate_file,
+            )
+            client_tls.send(expected)
+
+        server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_sock.bind(('localhost', 0))
+        server_sock.listen(1)
+        eventlet.spawn(client, server_sock.getsockname())
+        server_tls = context.wrap_socket(server_sock, server_side=True)
+        peer, _ = server_tls.accept()
+        assert peer.recv(64) == expected
+        peer.close()
+
+    def test_explicit_keys_accept(self):
+        expected = "success:{}".format(random.random()).encode()
+
+        def client(addr):
+            client_tls = ssl.wrap_socket(
+                eventlet.connect(addr),
+                cert_reqs=ssl.CERT_REQUIRED,
+                ca_certs=tests.certificate_file,
+            )
+            client_tls.send(expected)
+
+        server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_sock.bind(('localhost', 0))
+        server_sock.listen(1)
+        eventlet.spawn(client, server_sock.getsockname())
+        server_tls = ssl.wrap_socket(
+            server_sock, server_side=True,
+            keyfile=tests.private_key_file, certfile=tests.certificate_file,
+        )
+        peer, _ = server_tls.accept()
+        assert peer.recv(64) == expected
+        peer.close()

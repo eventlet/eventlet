@@ -404,14 +404,11 @@ class GreenSSLSocket(_original_sslsocket):
 
         new_ssl = type(self)(
             newsock,
-            keyfile=self.keyfile,
-            certfile=self.certfile,
             server_side=True,
-            cert_reqs=self.cert_reqs,
-            ssl_version=self.ssl_version,
-            ca_certs=self.ca_certs,
             do_handshake_on_connect=False,
-            suppress_ragged_eofs=self.suppress_ragged_eofs)
+            suppress_ragged_eofs=self.suppress_ragged_eofs,
+            _context=self._context,
+        )
         return (new_ssl, addr)
 
     def dup(self):
