@@ -1,7 +1,8 @@
-sudo: required
+os: linux
+dist: xenial
 language: python
 
-matrix:
+jobs:
   fast_finish: true
   include:
     - {python: 3.6, env: TOXENV=pep8}
@@ -64,6 +65,3 @@ script:
 after_failure:
   - for X in .tox/$TOXENV/log/*; do echo "$X\n"; cat "$X"; echo "\n\n"; done
   - echo "pip.log\n"; cat $HOME/.pip/pip.log
-
-notifications:
-  slack: eventlet-net:OYrQ1JE3hdTD78yQY1yZJnnc
