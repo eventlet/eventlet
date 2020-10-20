@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>semaphore – Semaphore classes &#8212; Eventlet 0.26.0 documentation</title>
+    <title>semaphore – Semaphore classes &#8212; Eventlet 0.28.1 documentation</title>
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
@@ -34,7 +34,7 @@
         <li class="right" >
           <a href="queue.html" title="queue – Queue class"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.26.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.28.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &#187;</li> 
       </ul>
     </div>  
@@ -54,7 +54,7 @@ Optionally initialize with a resource <em>count</em>, then <a class="reference i
 <a class="reference internal" href="#eventlet.semaphore.Semaphore.release" title="eventlet.semaphore.Semaphore.release"><code class="xref py py-meth docutils literal notranslate"><span class="pre">release()</span></code></a> resources as needed. Attempting to <a class="reference internal" href="#eventlet.semaphore.Semaphore.acquire" title="eventlet.semaphore.Semaphore.acquire"><code class="xref py py-meth docutils literal notranslate"><span class="pre">acquire()</span></code></a> when
 <em>count</em> is zero suspends the calling greenthread until <em>count</em> becomes
 nonzero again.</p>
-<p>This is API-compatible with <a class="reference external" href="https://docs.python.org/3/library/threading.html#threading.Semaphore" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">threading.Semaphore</span></code></a>.</p>
+<p>This is API-compatible with <a class="reference external" href="https://docs.python.org/3/library/threading.html#threading.Semaphore" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">threading.Semaphore</span></code></a>.</p>
 <p>It is a context manager, and thus can be used in a with block:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sem</span> <span class="o">=</span> <span class="n">Semaphore</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="k">with</span> <span class="n">sem</span><span class="p">:</span>
@@ -157,10 +157,10 @@ and is ignored</p>
 again.  Attempting to <a class="reference internal" href="#eventlet.semaphore.CappedSemaphore.release" title="eventlet.semaphore.CappedSemaphore.release"><code class="xref py py-meth docutils literal notranslate"><span class="pre">release()</span></code></a> after <em>count</em> has reached <em>limit</em>
 suspends the calling greenthread until <em>count</em> becomes less than <em>limit</em>
 again.</p>
-<p>This has the same API as <a class="reference external" href="https://docs.python.org/3/library/threading.html#threading.Semaphore" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">threading.Semaphore</span></code></a>, though its
+<p>This has the same API as <a class="reference external" href="https://docs.python.org/3/library/threading.html#threading.Semaphore" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">threading.Semaphore</span></code></a>, though its
 semantics and behavior differ subtly due to the upper limit on calls
 to <a class="reference internal" href="#eventlet.semaphore.CappedSemaphore.release" title="eventlet.semaphore.CappedSemaphore.release"><code class="xref py py-meth docutils literal notranslate"><span class="pre">release()</span></code></a>.  It is <strong>not</strong> compatible with
-<a class="reference external" href="https://docs.python.org/3/library/threading.html#threading.BoundedSemaphore" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">threading.BoundedSemaphore</span></code></a> because it blocks when reaching <em>limit</em>
+<a class="reference external" href="https://docs.python.org/3/library/threading.html#threading.BoundedSemaphore" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">threading.BoundedSemaphore</span></code></a> because it blocks when reaching <em>limit</em>
 instead of raising a ValueError.</p>
 <p>It is a context manager, and thus can be used in a with block:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sem</span> <span class="o">=</span> <span class="n">CappedSemaphore</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
@@ -274,7 +274,7 @@ counter is greater than or equal to <em>limit</em>.</p>
         <li class="right" >
           <a href="queue.html" title="queue – Queue class"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.26.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.28.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &#187;</li> 
       </ul>
     </div>

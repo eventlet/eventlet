@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>event – Cross-greenthread primitive &#8212; Eventlet 0.26.0 documentation</title>
+    <title>event – Cross-greenthread primitive &#8212; Eventlet 0.28.1 documentation</title>
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
@@ -34,7 +34,7 @@
         <li class="right" >
           <a href="db_pool.html" title="db_pool – DBAPI 2 database connection pooling"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.26.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.28.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &#187;</li> 
       </ul>
     </div>  
@@ -132,7 +132,7 @@ new stacktrace.</p>
 </pre></div>
 </div>
 <p>If it’s important to preserve the entire original stack trace,
-you must pass in the entire <a class="reference external" href="https://docs.python.org/3/library/sys.html#sys.exc_info" title="(in Python v3.8)"><code class="xref py py-func docutils literal notranslate"><span class="pre">sys.exc_info()</span></code></a> tuple.</p>
+you must pass in the entire <a class="reference external" href="https://docs.python.org/3/library/sys.html#sys.exc_info" title="(in Python v3.9)"><code class="xref py py-func docutils literal notranslate"><span class="pre">sys.exc_info()</span></code></a> tuple.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">sys</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">evt</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">try</span><span class="p">:</span>
@@ -151,7 +151,7 @@ you must pass in the entire <a class="reference external" href="https://docs.pyt
 </div>
 <p>Note that doing so stores a traceback object directly on the
 Event object, which may cause reference cycles. See the
-<a class="reference external" href="https://docs.python.org/3/library/sys.html#sys.exc_info" title="(in Python v3.8)"><code class="xref py py-func docutils literal notranslate"><span class="pre">sys.exc_info()</span></code></a> documentation.</p>
+<a class="reference external" href="https://docs.python.org/3/library/sys.html#sys.exc_info" title="(in Python v3.9)"><code class="xref py py-func docutils literal notranslate"><span class="pre">sys.exc_info()</span></code></a> documentation.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -231,7 +231,7 @@ specifying a timeout for the operation in seconds (or fractions thereof).</p>
         <li class="right" >
           <a href="db_pool.html" title="db_pool – DBAPI 2 database connection pooling"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.26.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.28.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &#187;</li> 
       </ul>
     </div>

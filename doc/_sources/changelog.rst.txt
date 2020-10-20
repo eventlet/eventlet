@@ -1,3 +1,22 @@
+0.28.1
+======
+* Sorry, Eventlet was broken on Windows for versions 0.27-0.28
+  patcher: no os.register_at_fork on Windows (#654)
+* Clean up TypeError in __del__
+
+0.28.0
+======
+* Always remove the right listener from the hub https://github.com/eventlet/eventlet/pull/645
+
+0.27.0
+======
+* patcher: Clean up threading book-keeping at fork when monkey-patched
+* backdoor: handle disconnects better
+
+0.26.1
+======
+* pin dnspython <2.0.0 https://github.com/eventlet/eventlet/issues/619
+
 0.26.0
 ======
 * Fix compatibility with SSLContext usage >= Python 3.7

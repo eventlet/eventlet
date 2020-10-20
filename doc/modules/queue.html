@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>queue – Queue class &#8212; Eventlet 0.26.0 documentation</title>
+    <title>queue – Queue class &#8212; Eventlet 0.28.1 documentation</title>
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     
@@ -34,7 +34,7 @@
         <li class="right" >
           <a href="pools.html" title="pools - Generic pools of resources"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.26.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.28.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &#187;</li> 
       </ul>
     </div>  
@@ -45,11 +45,11 @@
           <div class="body" role="main">
             
   <div class="section" id="module-eventlet.queue">
-<span id="queue-queue-class"></span><h1><a class="reference external" href="https://docs.python.org/3/library/queue.html#module-queue" title="(in Python v3.8)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">queue</span></code></a> – Queue class<a class="headerlink" href="#module-eventlet.queue" title="Permalink to this headline">¶</a></h1>
+<span id="queue-queue-class"></span><h1><a class="reference external" href="https://docs.python.org/3/library/queue.html#module-queue" title="(in Python v3.9)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">queue</span></code></a> – Queue class<a class="headerlink" href="#module-eventlet.queue" title="Permalink to this headline">¶</a></h1>
 <p>Synchronized queues.</p>
 <p>The <a class="reference internal" href="#module-eventlet.queue" title="eventlet.queue"><code class="xref py py-mod docutils literal notranslate"><span class="pre">eventlet.queue</span></code></a> module implements multi-producer, multi-consumer
 queues that work across greenlets, with the API similar to the classes found in
-the standard <code class="xref py py-mod docutils literal notranslate"><span class="pre">Queue</span></code> and <a class="reference external" href="https://docs.python.org/3/library/multiprocessing.html#multiprocessing.Queue" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">multiprocessing</span></code></a>
+the standard <code class="xref py py-mod docutils literal notranslate"><span class="pre">Queue</span></code> and <a class="reference external" href="https://docs.python.org/3/library/multiprocessing.html#multiprocessing.Queue" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">multiprocessing</span></code></a>
 modules.</p>
 <p>A major difference is that queues in this module operate as channels when
 initialized with <em>maxsize</em> of zero. In such case, both <code class="xref py py-meth docutils literal notranslate"><span class="pre">Queue.empty()</span></code>
@@ -90,7 +90,7 @@ For each <code class="xref py py-meth docutils literal notranslate"><span class=
 <p>If a <a class="reference internal" href="#eventlet.queue.Queue.join" title="eventlet.queue.Queue.join"><code class="xref py py-meth docutils literal notranslate"><span class="pre">join()</span></code></a> is currently blocking, it will resume when all items have been processed
 (meaning that a <a class="reference internal" href="#eventlet.queue.Queue.task_done" title="eventlet.queue.Queue.task_done"><code class="xref py py-meth docutils literal notranslate"><span class="pre">task_done()</span></code></a> call was received for every item that had been
 <code class="xref py py-meth docutils literal notranslate"><span class="pre">put</span></code> into the queue).</p>
-<p>Raises a <a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.8)"><code class="xref py py-exc docutils literal notranslate"><span class="pre">ValueError</span></code></a> if called more times than there were items placed in the queue.</p>
+<p>Raises a <a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.9)"><code class="xref py py-exc docutils literal notranslate"><span class="pre">ValueError</span></code></a> if called more times than there were items placed in the queue.</p>
 </dd></dl>
 
 </dd></dl>
@@ -261,7 +261,7 @@ items into the queue.</p>
         <li class="right" >
           <a href="pools.html" title="pools - Generic pools of resources"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.26.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.28.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &#187;</li> 
       </ul>
     </div>
