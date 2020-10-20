@@ -1,3 +1,9 @@
+0.28.1
+======
+* Sorry, Eventlet was broken on Windows for versions 0.27-0.28
+  patcher: no os.register_at_fork on Windows (#654)
+* Clean up TypeError in __del__
+
 0.28.0
 ======
 * Always remove the right listener from the hub https://github.com/eventlet/eventlet/pull/645
