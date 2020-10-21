@@ -124,7 +124,7 @@ class BaseHub(object):
         self.closed = []
 
         if clock is None:
-            clock = now
+            clock = monotonic
         self.clock = clock
 
         self.greenlet = greenlet.greenlet(self.run)
