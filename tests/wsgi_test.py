@@ -23,6 +23,7 @@ from eventlet.green import socket as greensocket
 from eventlet.green import ssl
 from eventlet.support import bytes_to_str
 import six
+from six.moves.urllib import parse
 import tests
 
 
@@ -190,7 +191,7 @@ def read_http(sock):
         x = x.strip()
         if not x:
             continue
-        key, value = bytes_to_str(x).split(':', 1)
+        key, value = bytes_to_str(x, encoding='latin1').split(':', 1)
         key = key.rstrip()
         value = value.lstrip()
         key_lower = key.lower()
@@ -319,7 +320,7 @@ class TestHttpd(_TestBase):
         # define a new handler that does a get_arg as well as a read_body
         def new_app(env, start_response):
             body = bytes_to_str(env['wsgi.input'].read())
-            a = six.moves.urllib.parse.parse_qs(body).get('a', [1])[0]
+            a = parse.parse_qs(body).get('a', [1])[0]
             start_response('200 OK', [('Content-type', 'text/plain')])
             return [six.b('a is %s, body is %s' % (a, body))]
 
@@ -989,6 +990,67 @@ class TestHttpd(_TestBase):
         fd.close()
         sock.close()
 
+    def test_024d_expect_100_continue_with_eager_app_chunked(self):
+        def wsgi_app(environ, start_response):
+            # app knows it's going to do some time-intensive thing and doesn't
+            # want clients to time out, so it's protocol says to:
+            # * generally expect a successful status code,
+            # * be prepared to eat some whitespace that will get dribbled out
+            #   periodically, and
+            # * parse the final status from the response body.
+            environ['eventlet.minimum_write_chunk_size'] = 0
+            start_response('202 Accepted', [])
+
+            def resp_gen():
+                yield b' '
+                environ['wsgi.input'].read()
+                yield b' '
+                yield b'\n503 Service Unavailable\n\nOops!\n'
+
+            return resp_gen()
+
+        self.site.application = wsgi_app
+        sock = eventlet.connect(self.server_addr)
+        fd = sock.makefile('rwb')
+        fd.write(b'PUT /a HTTP/1.1\r\n'
+                 b'Host: localhost\r\nConnection: close\r\n'
+                 b'Transfer-Encoding: chunked\r\n'
+                 b'Expect: 100-continue\r\n\r\n')
+        fd.flush()
+
+        # Expect the optimistic response
+        header_lines = []
+        while True:
+            line = fd.readline()
+            if line == b'\r\n':
+                break
+            else:
+                header_lines.append(line.strip())
+        self.assertEqual(header_lines[0], b'HTTP/1.1 202 Accepted')
+
+        def chunkify(data):
+            return '{:x}'.format(len(data)).encode('ascii') + b'\r\n' + data + b'\r\n'
+
+        def expect_chunk(data):
+            expected = chunkify(data)
+            self.assertEqual(expected, fd.read(len(expected)))
+
+        # Can even see that initial whitespace
+        expect_chunk(b' ')
+
+        # Send message
+        fd.write(chunkify(b'some data'))
+        fd.write(chunkify(b''))  # end-of-message
+        fd.flush()
+
+        # Expect final response
+        expect_chunk(b' ')
+        expect_chunk(b'\n503 Service Unavailable\n\nOops!\n')
+        expect_chunk(b'')  # end-of-message
+
+        fd.close()
+        sock.close()
+
     def test_025_accept_errors(self):
         debug.hub_exceptions(True)
         listener = greensocket.socket()
@@ -1567,6 +1629,26 @@ class TestHttpd(_TestBase):
             assert False, 'Expected ConnectionClosed exception'
         except ConnectionClosed:
             pass
+
+    def test_header_name_capitalization(self):
+        def wsgi_app(environ, start_response):
+            start_response('200 oK', [
+                ('sOMe-WEirD', 'cAsE'),
+                ('wiTH-\xdf-LATIN1-\xff', 'chars'),
+            ])
+            return [b'']
+
+        self.spawn_server(site=wsgi_app)
+
+        sock = eventlet.connect(self.server_addr)
+        sock.sendall(b'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+        result = read_http(sock)
+        sock.close()
+        self.assertEqual(result.status, 'HTTP/1.1 200 oK')
+        self.assertIn('Some-Weird', result.headers_original)
+        self.assertEqual(result.headers_original['Some-Weird'], 'cAsE')
+        self.assertIn('With-\xdf-Latin1-\xff', result.headers_original)
+        self.assertEqual(result.headers_original['With-\xdf-Latin1-\xff'], 'chars')
 
     def test_disable_header_name_capitalization(self):
         # Disable HTTP header name capitalization

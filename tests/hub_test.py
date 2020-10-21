@@ -1,11 +1,14 @@
 from __future__ import with_statement
+import errno
+import fcntl
+import os
 import sys
 import time
 
 import tests
 from tests import skip_with_pyevent, skip_if_no_itimer, skip_unless
 import eventlet
-from eventlet import hubs
+from eventlet import debug, hubs
 from eventlet.support import greenlets
 import six
 
@@ -81,6 +84,48 @@ class TestTimerCleanup(tests.LimitedTestCase):
             self.assert_less_than_equal(hub.timers_canceled,
                                         hub.get_timers_count())
         eventlet.sleep()
+
+
+class TestMultipleListenersCleanup(tests.LimitedTestCase):
+    def setUp(self):
+        super(TestMultipleListenersCleanup, self).setUp()
+        debug.hub_prevent_multiple_readers(False)
+        debug.hub_exceptions(False)
+
+    def tearDown(self):
+        super(TestMultipleListenersCleanup, self).tearDown()
+        debug.hub_prevent_multiple_readers(True)
+        debug.hub_exceptions(True)
+
+    def test_cleanup(self):
+        r, w = os.pipe()
+        self.addCleanup(os.close, r)
+        self.addCleanup(os.close, w)
+
+        fcntl.fcntl(r, fcntl.F_SETFL,
+                    fcntl.fcntl(r, fcntl.F_GETFL) | os.O_NONBLOCK)
+
+        def readfd(fd):
+            while True:
+                try:
+                    return os.read(fd, 1)
+                except OSError as e:
+                    if e.errno != errno.EAGAIN:
+                        raise
+                    hubs.trampoline(fd, read=True)
+
+        first_listener = eventlet.spawn(readfd, r)
+        eventlet.sleep()
+
+        second_listener = eventlet.spawn(readfd, r)
+        eventlet.sleep()
+
+        hubs.get_hub().schedule_call_global(0, second_listener.throw,
+                                            eventlet.Timeout(None))
+        eventlet.sleep()
+
+        os.write(w, b'.')
+        self.assertEqual(first_listener.wait(), b'.')
 
 
 class TestScheduleCall(tests.LimitedTestCase):

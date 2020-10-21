@@ -1,3 +1,63 @@
+0.29.0
+======
+* ssl: context wrapped listener fails accept() https://github.com/eventlet/eventlet/issues/651
+
+0.28.1
+======
+* Sorry, Eventlet was broken on Windows for versions 0.27-0.28
+  patcher: no os.register_at_fork on Windows (#654)
+* Clean up TypeError in __del__
+
+0.28.0
+======
+* Always remove the right listener from the hub https://github.com/eventlet/eventlet/pull/645
+
+0.27.0
+======
+* patcher: Clean up threading book-keeping at fork when monkey-patched
+* backdoor: handle disconnects better
+
+0.26.1
+======
+* pin dnspython <2.0.0 https://github.com/eventlet/eventlet/issues/619
+
+0.26.0
+======
+* Fix compatibility with SSLContext usage >= Python 3.7
+* wsgi: Fix header capitalization on py3
+* Fix #508: Py37 Deadlock ThreadPoolExecutor (#598)
+* drop Python 3.4 support
+* Fix misc SyntaxWarning's under Python 3.8
+* Remove unnecessary assignment in _recv_loop (#601)
+
+0.25.2
+======
+* green.ssl: redundant set_nonblocking() caused SSLWantReadError
+
+0.25.1
+======
+* wsgi (tests): Stop using deprecated cgi.parse_qs() to support Python 3.8; Thanks to Miro Hrončok
+* os: Add workaround to `open` for pathlib on py 3.7; Thanks to David Szotten
+
+0.25.0
+======
+* wsgi: Only send 100 Continue response if no response has been sent yet; Thanks to Tim Burke
+* wsgi: Return 400 on negative Content-Length request headers; Thanks to Tim Burke
+* Make a GreenPile with no spawn()s an empty sequence; Thanks to nat-goodspeed
+* wsgi: fix Input.readlines when dealing with chunked input; Thanks to Tim Burke
+* wsgi: fix Input.readline on Python 3; Thanks to Tim Burke
+* wsgi: Stop replacing invalid UTF-8 on py3; Thanks to Tim Burke
+* ssl: Fix compatibility with Python 3.7 ssl.SSLSocket; Thanks to Junyi
+* reimport submodule as well in patcher.inject; Thanks to Junyi
+* use Python 2 compatible syntax for keyword-only args; Thanks to nat-goodspeed
+* wsgi: Catch and swallow IOErrors during discard(); Thanks to Tim Burke
+* Fix for Python 3.7; Thanks to Marcel Plch
+* Fix race that could cause using epolls as default hub even when platform does not support it; Thanks to Sergey Shepelev
+* wsgi: make Expect 100-continue field-value case-insensitive; Thanks to Julien Kasarherou
+* greenthread: optimize _exit_funcs getattr/del dance; Thanks to Alex Kashirin
+* New benchmarks runner; Thanks to Sergey Shepelev
+* ssl: fix connect to use monotonic clock for timeout; Thanks to Sergey Shepelev
+
 0.24.1
 ======
 * greendns: don't contact nameservers if one entry is returned from hosts file; Thanks to Daniel Alvarez

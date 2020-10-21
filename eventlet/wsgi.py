@@ -112,7 +112,19 @@ class Input(object):
         self.hundred_continue_headers = None
         self.is_hundred_continue_response_sent = False
 
+        # handle_one_response should give us a ref to the response state so we
+        # know whether we can still send the 100 Continue; until then, though,
+        # we're flying blind
+        self.headers_sent = None
+
     def send_hundred_continue_response(self):
+        if self.headers_sent:
+            # To late; application has already started sending data back
+            # to the client
+            # TODO: maybe log a warning if self.hundred_continue_headers
+            #       is not None?
+            return
+
         towrite = []
 
         # 100 Continue status line
@@ -463,6 +475,9 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         start = time.time()
         headers_set = []
         headers_sent = []
+        # Push the headers-sent state into the Input so it won't send a
+        # 100 Continue response if we've already started a response.
+        self.environ['wsgi.input'].headers_sent = headers_sent
 
         wfile = self.wfile
         result = None
@@ -539,8 +554,15 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             # Per HTTP RFC standard, header name is case-insensitive.
             # Please, fix your client to ignore header case if possible.
             if self.capitalize_response_headers:
+                if six.PY2:
+                    def cap(x):
+                        return x.capitalize()
+                else:
+                    def cap(x):
+                        return x.encode('latin1').capitalize().decode('latin1')
+
                 response_headers = [
-                    ('-'.join([x.capitalize() for x in key.split('-')]), value)
+                    ('-'.join([cap(x) for x in key.split('-')]), value)
                     for key, value in response_headers]
 
             headers_set[:] = [status, response_headers]

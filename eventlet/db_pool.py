@@ -75,7 +75,7 @@ class BaseConnectionPool(Pool):
 
         If max_age or max_idle is 0, _schedule_expiration likewise does nothing.
         """
-        if self.max_age is 0 or self.max_idle is 0:
+        if self.max_age == 0 or self.max_idle == 0:
             # expiration is unnecessary because all connections will be expired
             # on put
             return
