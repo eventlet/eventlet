@@ -1,5 +1,11 @@
 import imp
 import sys
+try:
+    # Only for this purpose, it's irrelevant if `os` was already patched.
+    # https://github.com/eventlet/eventlet/pull/661
+    from os import register_at_fork
+except ImportError:
+    register_at_fork = None
 
 import eventlet
 import six
@@ -298,6 +304,7 @@ def monkey_patch(**on):
             # tell us whether or not we succeeded
             pass
 
+    _threading = original('threading')
     imp.acquire_lock()
     try:
         for name, mod in modules_to_patch:
@@ -313,11 +320,13 @@ def monkey_patch(**on):
                 if hasattr(orig_mod, attr_name):
                     delattr(orig_mod, attr_name)
 
-            _os = original('os')
-            if name == 'threading' and hasattr(_os, 'register_at_fork'):
+            # https://github.com/eventlet/eventlet/issues/592
+            if name == 'threading' and register_at_fork:
                 def fix_threading_active(
-                    _global_dict=original('threading').current_thread.__globals__,
-                    _patched=orig_mod
+                    _global_dict=_threading.current_thread.__globals__,
+                    # alias orig_mod as patched to reflect its new state
+                    # https://github.com/eventlet/eventlet/pull/661#discussion_r509877481
+                    _patched=orig_mod,
                 ):
                     _prefork_active = [None]
 
@@ -328,7 +337,7 @@ def monkey_patch(**on):
                     def after_fork():
                         _global_dict['_active'] = _prefork_active[0]
 
-                    _os.register_at_fork(
+                    register_at_fork(
                         before=before_fork,
                         after_in_parent=after_fork)
                 fix_threading_active()
