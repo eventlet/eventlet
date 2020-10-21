@@ -145,7 +145,9 @@ class GreenSocket(object):
         except AttributeError:
             self._timeout = socket.getdefaulttimeout()
 
-        if should_set_nonblocking:
+        # Filter fd.fileno() != -1 so that won't call set non-blocking on
+        # closed socket
+        if should_set_nonblocking and fd.fileno() != -1:
             set_nonblocking(fd)
         self.fd = fd
         # when client calls setblocking(0) or settimeout(0) the socket must
@@ -329,7 +331,6 @@ class GreenSocket(object):
             timeout_exc=socket_timeout('timed out'))
 
     def _recv_loop(self, recv_meth, empty_val, *args):
-        fd = self.fd
         if self.act_non_blocking:
             return recv_meth(*args)
 

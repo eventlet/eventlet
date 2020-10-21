@@ -312,6 +312,26 @@ def monkey_patch(**on):
             for attr_name in deleted:
                 if hasattr(orig_mod, attr_name):
                     delattr(orig_mod, attr_name)
+
+            _os = original('os')
+            if name == 'threading' and hasattr(_os, 'register_at_fork'):
+                def fix_threading_active(
+                    _global_dict=original('threading').current_thread.__globals__,
+                    _patched=orig_mod
+                ):
+                    _prefork_active = [None]
+
+                    def before_fork():
+                        _prefork_active[0] = _global_dict['_active']
+                        _global_dict['_active'] = _patched._active
+
+                    def after_fork():
+                        _global_dict['_active'] = _prefork_active[0]
+
+                    _os.register_at_fork(
+                        before=before_fork,
+                        after_in_parent=after_fork)
+                fix_threading_active()
     finally:
         imp.release_lock()
 
@@ -327,6 +347,12 @@ def monkey_patch(**on):
         # calls threading.get_ident() and so is compatible with eventlet.
         import threading
         threading.RLock = threading._PyRLock
+
+    # Issue #508: Since Python 3.7 queue.SimpleQueue is implemented in C,
+    # causing a deadlock.  Replace the C implementation with the Python one.
+    if sys.version_info >= (3, 7):
+        import queue
+        queue.SimpleQueue = queue._PySimpleQueue
 
 
 def is_monkey_patched(module):

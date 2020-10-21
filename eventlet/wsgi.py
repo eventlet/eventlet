@@ -59,14 +59,6 @@ def addr_to_host_port(addr):
     return (host, port)
 
 
-def encode_dance(s):
-    if not isinstance(s, bytes):
-        s = s.encode('utf-8', 'replace')
-    if six.PY2:
-        return s
-    return s.decode('latin1')
-
-
 # Collections of error codes to compare against.  Not all attributes are set
 # on errno module on all platforms, so some are literals :(
 BAD_SOCK = set((errno.EBADF, 10053))
@@ -120,7 +112,19 @@ class Input(object):
         self.hundred_continue_headers = None
         self.is_hundred_continue_response_sent = False
 
+        # handle_one_response should give us a ref to the response state so we
+        # know whether we can still send the 100 Continue; until then, though,
+        # we're flying blind
+        self.headers_sent = None
+
     def send_hundred_continue_response(self):
+        if self.headers_sent:
+            # To late; application has already started sending data back
+            # to the client
+            # TODO: maybe log a warning if self.hundred_continue_headers
+            #       is not None?
+            return
+
         towrite = []
 
         # 100 Continue status line
@@ -165,7 +169,7 @@ class Input(object):
             self.is_hundred_continue_response_sent = True
         try:
             if length == 0:
-                return ""
+                return b""
 
             if length and length < 0:
                 length = None
@@ -198,7 +202,7 @@ class Input(object):
                         length -= datalen
                         if length == 0:
                             break
-                    if use_readline and data[-1] == "\n":
+                    if use_readline and data[-1:] == b"\n":
                         break
                 else:
                     try:
@@ -224,7 +228,17 @@ class Input(object):
             return self._do_read(self.rfile.readline, size)
 
     def readlines(self, hint=None):
-        return self._do_read(self.rfile.readlines, hint)
+        if self.chunked_input:
+            lines = []
+            for line in iter(self.readline, b''):
+                lines.append(line)
+                if hint and hint > 0:
+                    hint -= len(line)
+                    if hint <= 0:
+                        break
+            return lines
+        else:
+            return self._do_read(self.rfile.readlines, hint)
 
     def __iter__(self):
         return iter(self.read, b'')
@@ -434,8 +448,10 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         content_length = self.headers.get('content-length')
         if content_length is not None:
             try:
-                int(content_length)
+                if int(content_length) < 0:
+                    raise ValueError
             except ValueError:
+                # Negative, or not an int at all
                 self.wfile.write(
                     b"HTTP/1.0 400 Bad Request\r\n"
                     b"Connection: close\r\nContent-length: 0\r\n\r\n")
@@ -459,6 +475,9 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         start = time.time()
         headers_set = []
         headers_sent = []
+        # Push the headers-sent state into the Input so it won't send a
+        # 100 Continue response if we've already started a response.
+        self.environ['wsgi.input'].headers_sent = headers_sent
 
         wfile = self.wfile
         result = None
@@ -535,8 +554,15 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             # Per HTTP RFC standard, header name is case-insensitive.
             # Please, fix your client to ignore header case if possible.
             if self.capitalize_response_headers:
+                if six.PY2:
+                    def cap(x):
+                        return x.capitalize()
+                else:
+                    def cap(x):
+                        return x.encode('latin1').capitalize().decode('latin1')
+
                 response_headers = [
-                    ('-'.join([x.capitalize() for x in key.split('-')]), value)
+                    ('-'.join([cap(x) for x in key.split('-')]), value)
                     for key, value in response_headers]
 
             headers_set[:] = [status, response_headers]
@@ -646,7 +672,10 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
         pq = self.path.split('?', 1)
         env['RAW_PATH_INFO'] = pq[0]
-        env['PATH_INFO'] = encode_dance(urllib.parse.unquote(pq[0]))
+        if six.PY2:
+            env['PATH_INFO'] = urllib.parse.unquote(pq[0])
+        else:
+            env['PATH_INFO'] = urllib.parse.unquote(pq[0], encoding='latin1')
         if len(pq) > 1:
             env['QUERY_STRING'] = pq[1]
 

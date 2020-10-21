@@ -1,4 +1,5 @@
 import contextlib
+import random
 import socket
 import warnings
 
@@ -47,6 +48,28 @@ class SSLTest(tests.LimitedTestCase):
         server_coro = eventlet.spawn(serve, sock)
 
         client = ssl.wrap_socket(eventlet.connect(sock.getsockname()))
+        client.sendall(b'line 1\r\nline 2\r\n\r\n')
+        self.assertEqual(client.recv(8192), b'response')
+        server_coro.wait()
+
+    def test_ssl_context(self):
+        def serve(listener):
+            sock, addr = listener.accept()
+            sock.recv(8192)
+            sock.sendall(b'response')
+
+        sock = listen_ssl_socket()
+
+        server_coro = eventlet.spawn(serve, sock)
+
+        context = ssl.create_default_context()
+        context.verify_mode = ssl.CERT_REQUIRED
+        context.check_hostname = True
+        context.load_verify_locations(tests.certificate_file)
+
+        client = context.wrap_socket(
+            eventlet.connect(sock.getsockname()),
+            server_hostname='Test')
         client.sendall(b'line 1\r\nline 2\r\n\r\n')
         self.assertEqual(client.recv(8192), b'response')
         server_coro.wait()
@@ -303,3 +326,48 @@ class SSLTest(tests.LimitedTestCase):
                 server_to_client.close()
 
                 listener.close()
+
+    def test_context_wrapped_accept(self):
+        context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+        context.load_cert_chain(tests.certificate_file, tests.private_key_file)
+        expected = "success:{}".format(random.random()).encode()
+
+        def client(addr):
+            client_tls = ssl.wrap_socket(
+                eventlet.connect(addr),
+                cert_reqs=ssl.CERT_REQUIRED,
+                ca_certs=tests.certificate_file,
+            )
+            client_tls.send(expected)
+
+        server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_sock.bind(('localhost', 0))
+        server_sock.listen(1)
+        eventlet.spawn(client, server_sock.getsockname())
+        server_tls = context.wrap_socket(server_sock, server_side=True)
+        peer, _ = server_tls.accept()
+        assert peer.recv(64) == expected
+        peer.close()
+
+    def test_explicit_keys_accept(self):
+        expected = "success:{}".format(random.random()).encode()
+
+        def client(addr):
+            client_tls = ssl.wrap_socket(
+                eventlet.connect(addr),
+                cert_reqs=ssl.CERT_REQUIRED,
+                ca_certs=tests.certificate_file,
+            )
+            client_tls.send(expected)
+
+        server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_sock.bind(('localhost', 0))
+        server_sock.listen(1)
+        eventlet.spawn(client, server_sock.getsockname())
+        server_tls = ssl.wrap_socket(
+            server_sock, server_side=True,
+            keyfile=tests.private_key_file, certfile=tests.certificate_file,
+        )
+        peer, _ = server_tls.accept()
+        assert peer.recv(64) == expected
+        peer.close()

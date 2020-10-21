@@ -1,7 +1,8 @@
-sudo: required
+os: linux
+dist: xenial
 language: python
 
-matrix:
+jobs:
   fast_finish: true
   include:
     - {python: 3.6, env: TOXENV=pep8}
@@ -9,10 +10,6 @@ matrix:
     - {python: 2.7, env: TOXENV=py27-epolls}
     - {python: 2.7, env: TOXENV=py27-poll}
     - {python: 2.7, env: TOXENV=py27-selects}
-
-    - {python: 3.4, env: TOXENV=py34-epolls}
-    - {python: 3.4, env: TOXENV=py34-poll}
-    - {python: 3.4, env: TOXENV=py34-selects}
 
     - {python: 3.5, env: TOXENV=py35-epolls}
     - {python: 3.5, env: TOXENV=py35-poll}
@@ -22,9 +19,13 @@ matrix:
     - {python: 3.6, env: TOXENV=py36-poll}
     - {python: 3.6, env: TOXENV=py36-selects}
 
-    - {python: 3.7, sudo: required, dist: xenial, env: TOXENV=py37-epolls}
-    - {python: 3.7, sudo: required, dist: xenial, env: TOXENV=py37-poll}
-    - {python: 3.7, sudo: required, dist: xenial, env: TOXENV=py37-selects}
+    - {python: 3.7, env: TOXENV=py37-epolls}
+    - {python: 3.7, env: TOXENV=py37-poll}
+    - {python: 3.7, env: TOXENV=py37-selects}
+
+    - {python: 3.8, env: TOXENV=py38-epolls}
+    - {python: 3.8, env: TOXENV=py38-poll}
+    - {python: 3.8, env: TOXENV=py38-selects}
 
     - {python: pypy, env: TOXENV=pypy-epolls}
     - {python: pypy, env: TOXENV=pypy-poll}
@@ -64,6 +65,3 @@ script:
 after_failure:
   - for X in .tox/$TOXENV/log/*; do echo "$X\n"; cat "$X"; echo "\n\n"; done
   - echo "pip.log\n"; cat $HOME/.pip/pip.log
-
-notifications:
-  slack: eventlet-net:OYrQ1JE3hdTD78yQY1yZJnnc
