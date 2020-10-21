@@ -25,8 +25,7 @@ from eventlet.support import greenlets as greenlet, clear_sys_exc_info
 try:
     from monotonic import monotonic
 except ImportError:
-    import time
-    now = time.monotonic
+    from time import monotonic
 
 import six
 
