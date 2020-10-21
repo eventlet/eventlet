@@ -18,7 +18,7 @@ setuptools.setup(
         'dnspython >= 1.15.0',
         'enum34;python_version<"3.4"',
         'greenlet >= 0.3',
-        'monotonic >= 1.4;python_version<"3.3"',
+        'monotonic >= 1.4;python_version<"3.5"',
         'six >= 1.10.0',
     ),
     zip_safe=False,
