@@ -25,8 +25,7 @@ if os.environ.get('EVENTLET_IMPORT_VERSION_ONLY') != '1':
         import monotonic
         del monotonic
     except ImportError:
-        import time
-        del time
+        pass
 
     connect = convenience.connect
     listen = convenience.listen
