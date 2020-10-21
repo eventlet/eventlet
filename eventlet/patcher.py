@@ -369,11 +369,9 @@ def _green_existing_locks():
     tid = eventlet.green.thread.get_ident()
     for obj in gc.get_objects():
         if isinstance(obj, rlock_type):
-            if (not py3_style and
-                    isinstance(obj._RLock__block, lock_type)):
+            if not py3_style and isinstance(obj._RLock__block, lock_type):
                 _fix_py2_rlock(obj, tid)
-            elif (py3_style and
-                    not isinstance(obj, pyrlock_type)):
+            elif py3_style and not isinstance(obj, pyrlock_type):
                 _fix_py3_rlock(obj)
 
 
