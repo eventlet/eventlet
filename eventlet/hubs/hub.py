@@ -23,7 +23,7 @@ import eventlet.hubs
 from eventlet.hubs import timer
 from eventlet.support import greenlets as greenlet, clear_sys_exc_info
 try:
-    from monotonic import monotonic as now
+    from monotonic import monotonic
 except ImportError:
     import time
     now = time.monotonic
