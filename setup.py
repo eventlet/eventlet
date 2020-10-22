@@ -17,7 +17,7 @@ setuptools.setup(
     install_requires=(
         'dnspython >= 1.15.0, < 2.0.0',
         'greenlet >= 0.3',
-        'monotonic >= 1.4',
+        'monotonic >= 1.4;python_version<"3.5"',
         'six >= 1.10.0',
     ),
     zip_safe=False,
