@@ -39,6 +39,7 @@ class Semaphore(object):
         if value < 0:
             msg = 'Semaphore() expect value >= 0, actual: {0}'.format(repr(value))
             raise ValueError(msg)
+        self._original_value = value
         self.counter = value
         self._waiters = collections.deque()
 
@@ -50,6 +51,10 @@ class Semaphore(object):
     def __str__(self):
         params = (self.__class__.__name__, self.counter, len(self._waiters))
         return '<%s c=%s _w[%s]>' % params
+
+    def _at_fork_reinit(self):
+        self.counter = self._original_value
+        self._waiters.clear()
 
     def locked(self):
         """Returns true if a call to acquire would block.
