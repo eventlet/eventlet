@@ -42,6 +42,27 @@ class TestSemaphore(tests.LimitedTestCase):
         sem = eventlet.Semaphore()
         self.assertRaises(ValueError, sem.acquire, blocking=False, timeout=1)
 
+    def test_reinit(self):
+        # py39+ expects locks to have a _at_fork_reinit() method; since we
+        # patch in Semaphores in eventlet.green.thread, they need it, too
+        sem = eventlet.Semaphore()
+        sem.acquire()
+        sem._at_fork_reinit()
+        self.assertEqual(sem.acquire(blocking=False), True)
+        self.assertEqual(sem.acquire(blocking=False), False)
+
+        sem = eventlet.Semaphore(0)
+        sem.release()
+        sem._at_fork_reinit()
+        self.assertEqual(sem.acquire(blocking=False), False)
+
+        sem = eventlet.Semaphore(2)
+        sem.acquire()
+        sem._at_fork_reinit()
+        self.assertEqual(sem.acquire(blocking=False), True)
+        self.assertEqual(sem.acquire(blocking=False), True)
+        self.assertEqual(sem.acquire(blocking=False), False)
+
 
 def test_semaphore_contention():
     g_mutex = eventlet.Semaphore()
