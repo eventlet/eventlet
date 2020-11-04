@@ -27,14 +27,23 @@ jobs:
     - {python: 3.8, env: TOXENV=py38-poll}
     - {python: 3.8, env: TOXENV=py38-selects}
 
+    - {python: 3.9, env: TOXENV=py39-epolls}
+    - {python: 3.9, env: TOXENV=py39-poll}
+    - {python: 3.9, env: TOXENV=py39-selects}
+
     - {python: pypy, env: TOXENV=pypy-epolls}
     - {python: pypy, env: TOXENV=pypy-poll}
     - {python: pypy, env: TOXENV=pypy-selects}
+
+    - {python: pypy3, env: TOXENV=pypy3-epolls}
+    - {python: pypy3, env: TOXENV=pypy3-poll}
+    - {python: pypy3, env: TOXENV=pypy3-selects}
 
     - {python: 3.6, env: TOXENV=ipv6}
   allow_failures:
     - python: 3.7-dev
     - python: pypy
+    - python: pypy3
 
 cache:
   apt: true
