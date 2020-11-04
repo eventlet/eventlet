@@ -1,5 +1,12 @@
 import os
+import sys
+import warnings
 
+if sys.version_info < (3, 5):
+    warnings.warn(
+        "Support for your Python version is deprecated and will be removed in the future",
+        DeprecationWarning,
+    )
 
 version_info = (0, 29, 1)
 __version__ = '.'.join(map(str, version_info))
