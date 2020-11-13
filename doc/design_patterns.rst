@@ -11,14 +11,14 @@ Client Pattern
 The canonical client-side example is a web crawler.  This use case is given a list of urls and wants to retrieve their bodies for later processing.  Here is a very simple example::
 
     import eventlet
-    from eventlet.green import urllib2
+    from eventlet.green.urllib.request import urlopen
 
     urls = ["http://www.google.com/intl/en_ALL/images/logo.gif",
            "https://www.python.org/static/img/python-logo.png",
            "http://us.i1.yimg.com/us.yimg.com/i/ww/beta/y3.gif"]
 
     def fetch(url):
-        return urllib2.urlopen(url).read()
+        return urlopen(url).read()
 
     pool = eventlet.GreenPool()
     for body in pool.imap(fetch, urls):
@@ -26,7 +26,7 @@ The canonical client-side example is a web crawler.  This use case is given a li
 
 There is a slightly more complex version of this in the :ref:`web crawler example <web_crawler_example>`.  Here's a tour of the interesting lines in this crawler.
 
-``from eventlet.green import urllib2`` is how you import a cooperatively-yielding version of urllib2.  It is the same in all respects to the standard version, except that it uses green sockets for its communication.  This is an example of the :ref:`import-green` pattern.
+``from eventlet.green... import urlopen`` is how you import a cooperatively-yielding version of urllib.  It is the same in all respects to the standard version, except that it uses green sockets for its communication.  This is an example of the :ref:`import-green` pattern.
 
 ``pool = eventlet.GreenPool()`` constructs a :class:`GreenPool <eventlet.greenpool.GreenPool>` of a thousand green threads.  Using a pool is good practice because it provides an upper limit on the amount of work that this crawler will be doing simultaneously, which comes in handy when the input data changes dramatically.
 
