@@ -9,7 +9,7 @@ searching for new urls, and dispatching new fetches.  The GreenPool
 acts as sort of a job coordinator (and concurrency controller of
 course).
 """
-from eventlet.green import urllib2
+from eventlet.green.urllib.request import urlopen
 import eventlet
 import re
 
@@ -23,7 +23,7 @@ def fetch(url, seen, pool):
     print("fetching", url)
     data = ''
     with eventlet.Timeout(5, False):
-        data = urllib2.urlopen(url).read()
+        data = urlopen(url).read().decode()
     for url_match in url_regex.finditer(data):
         new_url = url_match.group(0)
         # only send requests to eventlet.net so as not to destroy the internet

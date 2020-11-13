@@ -16,11 +16,11 @@ Quick Example
 
 Here's something you can try right on the command line::
 
-    % python
+    % python3
     >>> import eventlet
-    >>> from eventlet.green import urllib2
-    >>> gt = eventlet.spawn(urllib2.urlopen, 'http://eventlet.net')
-    >>> gt2 = eventlet.spawn(urllib2.urlopen, 'http://secondlife.com')
+    >>> from eventlet.green.urllib.request import urlopen
+    >>> gt = eventlet.spawn(urlopen, 'http://eventlet.net')
+    >>> gt2 = eventlet.spawn(urlopen, 'http://secondlife.com')
     >>> gt2.wait()
     >>> gt.wait()
 
