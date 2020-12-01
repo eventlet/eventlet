@@ -32,6 +32,7 @@ jobs:
     - {python: pypy, env: TOXENV=pypy-selects}
 
     - {python: 3.6, env: TOXENV=ipv6}
+    - {python: 3.8, env: TOXENV=py38-openssl}
   allow_failures:
     - python: 3.7-dev
     - python: pypy
