@@ -70,6 +70,9 @@ Currently CPython 2.7 and 3.4+ are supported, but **2.7 and 3.4 support is depre
 Flair
 =====
 
+.. image:: https://img.shields.io/pypi/v/eventlet
+    :target: https://pypi.org/project/eventlet/
+
 .. image:: https://travis-ci.org/eventlet/eventlet.svg?branch=master
     :target: https://travis-ci.org/eventlet/eventlet
 
