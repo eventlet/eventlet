@@ -232,10 +232,10 @@ def check_idle_cpu_usage(duration, allowed_part):
     utime = r2.ru_utime - r1.ru_utime
     stime = r2.ru_stime - r1.ru_stime
 
-    # This check is reliably unreliable on Travis, presumably because of CPU
+    # This check is reliably unreliable on Travis/Github Actions, presumably because of CPU
     # resources being quite restricted by the build environment. The workaround
     # is to apply an arbitrary factor that should be enough to make it work nicely.
-    if os.environ.get('TRAVIS') == 'true':
+    if os.environ.get('CI') == 'true':
         allowed_part *= 5
 
     assert utime + stime < duration * allowed_part, \
