@@ -1,3 +1,14 @@
+0.29.1
+======
+patcher: [py27] recursion error in pytest/python2.7 installing register_at_fork https://github.com/eventlet/eventlet/issues/660
+patcher: monkey_patch(builtins=True) failed on py3 because `file` class is gone https://github.com/eventlet/eventlet/issues/541
+don't crash on PyPy 7.0.0 https://github.com/eventlet/eventlet/pull/547
+Only install monotonic on python2 https://github.com/eventlet/eventlet/pull/583
+
+0.29.0
+======
+* ssl: context wrapped listener fails accept() https://github.com/eventlet/eventlet/issues/651
+
 0.28.1
 ======
 * Sorry, Eventlet was broken on Windows for versions 0.27-0.28
