@@ -1,3 +1,10 @@
+0.30.0
+======
+* pyopenssl tsafe module was deprecated and removed in v20.0.0
+* deprecate pyevent hub
+* Deprecate CPython 2.7 and 3.4 support
+* py39: Add _at_fork_reinit method to Semaphores
+
 0.29.1
 ======
 patcher: [py27] recursion error in pytest/python2.7 installing register_at_fork https://github.com/eventlet/eventlet/issues/660
