@@ -454,7 +454,7 @@ def _operation_on_closed_file(*args, **kwargs):
 greenpipe_doc = """
     GreenPipe is a cooperative replacement for file class.
     It will cooperate on pipes. It will block on regular file.
-    Differneces from file class:
+    Differences from file class:
     - mode is r/w property. Should re r/o
     - encoding property not implemented
     - write/writelines will not raise TypeError exception when non-string data is written
