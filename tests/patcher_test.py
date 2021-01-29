@@ -523,3 +523,7 @@ def test_fork_after_monkey_patch():
 
 def test_builtin():
     tests.run_isolated('patcher_builtin.py')
+
+
+def test_open_kwargs():
+    tests.run_isolated("patcher_open_kwargs.py")

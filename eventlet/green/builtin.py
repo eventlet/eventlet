@@ -38,9 +38,9 @@ __original_open = open
 __opening = False
 
 
-def open(*args):
+def open(*args, **kwargs):
     global __opening
-    result = __original_open(*args)
+    result = __original_open(*args, **kwargs)
     if not __opening:
         # This is incredibly ugly. 'open' is used under the hood by
         # the import process. So, ensure we don't wind up in an
