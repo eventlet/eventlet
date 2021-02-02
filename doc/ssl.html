@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>Using SSL With Eventlet &#8212; Eventlet 0.29.1 documentation</title>
+    <title>Using SSL With Eventlet &#8212; Eventlet 0.30.1 documentation</title>
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
@@ -34,7 +34,7 @@
         <li class="right" >
           <a href="examples.html" title="Examples"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.29.1 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.30.1 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -47,9 +47,9 @@
 <h1>Using SSL With Eventlet<a class="headerlink" href="#using-ssl-with-eventlet" title="Permalink to this headline">¶</a></h1>
 <p>Eventlet makes it easy to use non-blocking SSL sockets.  If you’re using Python 2.7 or later, you’re all set, eventlet wraps the built-in ssl module.</p>
 <p>In either case, the <code class="docutils literal notranslate"><span class="pre">green</span></code> modules handle SSL sockets transparently, just like their standard counterparts.  As an example, <code class="xref py py-mod docutils literal notranslate"><span class="pre">eventlet.green.urllib2</span></code> can be used to fetch https urls in as non-blocking a fashion as you please:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">eventlet.green</span> <span class="kn">import</span> <span class="n">urllib2</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">eventlet.green.urllib.request</span> <span class="kn">import</span> <span class="n">urlopen</span>
 <span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">spawn</span>
-<span class="n">bodies</span> <span class="o">=</span> <span class="p">[</span><span class="n">spawn</span><span class="p">(</span><span class="n">urllib2</span><span class="o">.</span><span class="n">urlopen</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
+<span class="n">bodies</span> <span class="o">=</span> <span class="p">[</span><span class="n">spawn</span><span class="p">(</span><span class="n">urlopen</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
      <span class="k">for</span> <span class="n">url</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;https://secondlife.com&quot;</span><span class="p">,</span><span class="s2">&quot;https://google.com&quot;</span><span class="p">)]</span>
 <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">bodies</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
@@ -174,7 +174,7 @@ $ openssl req -new -x509 -nodes -sha1 -days 365 -key server.key &gt; server.cert
         <li class="right" >
           <a href="examples.html" title="Examples"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.29.1 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.30.1 documentation</a> &#187;</li> 
       </ul>
     </div>
 

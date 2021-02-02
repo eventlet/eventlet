@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>Eventlet Documentation &#8212; Eventlet 0.29.1 documentation</title>
+    <title>Eventlet Documentation &#8212; Eventlet 0.30.1 documentation</title>
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
@@ -30,7 +30,7 @@
         <li class="right" >
           <a href="basic_usage.html" title="Basic Usage"
              accesskey="N">next</a> |</li>
-        <li class="nav-item nav-item-0"><a href="#">Eventlet 0.29.1 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="#">Eventlet 0.30.1 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -49,10 +49,10 @@
 <span class="p">]</span>
 
 <span class="kn">import</span> <span class="nn">eventlet</span>
-<span class="kn">from</span> <span class="nn">eventlet.green</span> <span class="kn">import</span> <span class="n">urllib2</span>
+<span class="kn">from</span> <span class="nn">eventlet.green.urllib.request</span> <span class="kn">import</span> <span class="n">urlopen</span>
 
 <span class="k">def</span> <span class="nf">fetch</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">urllib2</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 
 <span class="n">pool</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">GreenPool</span><span class="p">()</span>
 <span class="k">for</span> <span class="n">body</span> <span class="ow">in</span> <span class="n">pool</span><span class="o">.</span><span class="n">imap</span><span class="p">(</span><span class="n">fetch</span><span class="p">,</span> <span class="n">urls</span><span class="p">):</span>
@@ -225,7 +225,7 @@
         <li class="right" >
           <a href="basic_usage.html" title="Basic Usage"
              >next</a> |</li>
-        <li class="nav-item nav-item-0"><a href="#">Eventlet 0.29.1 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="#">Eventlet 0.30.1 documentation</a> &#187;</li> 
       </ul>
     </div>
 

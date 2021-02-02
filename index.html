@@ -105,7 +105,8 @@ links to related issues or websites
 <p>This is a simple web &#8220;crawler&#8221; that fetches a bunch of urls using a coroutine pool.  It has as much concurrency (i.e. pages being fetched simultaneously) as coroutines in the pool.</p>
 
 <pre><code class="language-python">import eventlet
-from eventlet.green import urllib2
+# note: this urllib import doesn't work in Python2
+from eventlet.green.urllib.request import urlopen
 
 
 urls = [
@@ -116,7 +117,7 @@ urls = [
 
 
 def fetch(url):
-    return urllib2.urlopen(url).read()
+    return urlopen(url).read()
 
 
 pool = eventlet.GreenPool()
