@@ -42,6 +42,7 @@ from eventlet.green import _socket_nodns
 from eventlet.green import os
 from eventlet.green import time
 from eventlet.green import select
+from eventlet.green import ssl
 import six
 
 
@@ -55,6 +56,7 @@ def import_patched(module_name):
         'time': time,
         'os': os,
         'socket': _socket_nodns,
+        'ssl': ssl,
     }
     return patcher.import_patched(module_name, **modules)
 
