@@ -167,7 +167,7 @@ class GreenThread(greenlet.greenlet):
     """
 
     def __init__(self, parent):
-        greenlet.greenlet.__init__(self, self.main, parent)
+        super(GreenThread, self).__init__(self.main, parent)
         self._exit_event = event.Event()
         self._resolving_links = False
         self._exit_funcs = None

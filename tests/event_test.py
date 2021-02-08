@@ -103,3 +103,46 @@ def test_wait_timeout_exceed():
         td = eventlet.hubs.get_hub().clock() - t1
         assert not result
         assert td >= delay
+
+
+def test_no_mem_leaks():
+
+    import objgraph
+    import gc
+    import sys
+    eventlet.hubs.get_hub().set_timer_exceptions(False)
+
+    ref_c_foo = objgraph.count('Foo')
+    ref_c_gt = objgraph.count('eventlet.greenthread.GreenThread')
+
+    threads = {}
+
+    class Foo(object):
+        def __init__(self, idx):
+            self.thread = threads[idx]
+
+    def target(idx):
+        foo = Foo(idx)
+        if idx % 2 == 0:
+            raise Exception("boom")
+
+    for index in range(10):
+        gt = eventlet.spawn(target, index)
+        threads[index] = gt
+
+    eventlet.sleep()
+    threads.clear()
+    while gc.collect():
+        pass
+
+    eventlet.hubs.get_hub().set_timer_exceptions(True)
+
+    ref_c_gt += 1
+    if sys.version_info.major == 2:
+        ref_c_foo += 1
+        ref_c_gt += 1
+
+    c_foo = objgraph.count('Foo')
+    c_gt = objgraph.count('eventlet.greenthread.GreenThread')
+    assert c_foo == ref_c_foo, 'expected: ' + str(ref_c_foo) + ' counted: ' + str(c_foo)
+    assert c_gt == ref_c_gt, 'expected: ' + str(ref_c_gt) + ' counted: ' + str(c_gt)

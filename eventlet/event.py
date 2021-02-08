@@ -38,10 +38,10 @@ class Event(object):
     >>> evt.wait()
     4
     """
-    _result = None
-    _exc = None
 
     def __init__(self):
+        self._result = None
+        self._exc = None
         self._waiters = set()
         self.reset()
 
