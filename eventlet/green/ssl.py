@@ -70,7 +70,7 @@ class GreenSSLSocket(_original_sslsocket):
                         sock=sock.fd,
                         server_side=server_side,
                         do_handshake_on_connect=False,
-                        suppress_ragged_eofs=kw.get('suppress_ragged_eofs'),
+                        suppress_ragged_eofs=kw.get('suppress_ragged_eofs', True),
                         server_hostname=kw.get('server_hostname'),
                         context=context,
                         session=kw.get('session'),
