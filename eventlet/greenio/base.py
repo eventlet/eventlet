@@ -279,6 +279,7 @@ class GreenSocket(object):
                     return get_errno(ex)
                 except IOClosed:
                     return errno.EBADFD
+                return 0
         else:
             end = time.time() + self.gettimeout()
             timeout_exc = socket.timeout(errno.EAGAIN)
@@ -295,6 +296,7 @@ class GreenSocket(object):
                     return get_errno(ex)
                 except IOClosed:
                     return errno.EBADFD
+                return 0
 
     def dup(self, *args, **kw):
         sock = self.fd.dup(*args, **kw)
