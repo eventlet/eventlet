@@ -766,7 +766,17 @@ class RFC6455WebSocket(WebSocket):
 
         compress_bit = 0
         compressor = self._get_permessage_deflate_enc()
-        if message and compressor:
+        # Control frames are identified by opcodes where the most significant
+        # bit of the opcode is 1.  Currently defined opcodes for control frames
+        # include 0x8 (Close), 0x9 (Ping), and 0xA (Pong).  Opcodes 0xB-0xF are
+        # reserved for further control frames yet to be defined.
+        # https://datatracker.ietf.org/doc/html/rfc6455#section-5.5
+        is_control_frame = (control_code or 0) & 8
+        # An endpoint MUST NOT set the "Per-Message Compressed" bit of control
+        # frames and non-first fragments of a data message.  An endpoint
+        # receiving such a frame MUST _Fail the WebSocket Connection_.
+        # https://datatracker.ietf.org/doc/html/rfc7692#section-6.1
+        if message and compressor and not is_control_frame:
             message = compressor.compress(message)
             message += compressor.flush(zlib.Z_SYNC_FLUSH)
             assert message[-4:] == b"\x00\x00\xff\xff"
