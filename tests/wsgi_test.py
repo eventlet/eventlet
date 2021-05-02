@@ -103,7 +103,8 @@ def chunked_post(env, start_response):
 
 def already_handled(env, start_response):
     start_response('200 OK', [('Content-type', 'text/plain')])
-    return wsgi.ALREADY_HANDLED
+    wsgi.WSGI_LOCAL.already_handled = True
+    return []
 
 
 class Site(object):
@@ -115,8 +116,7 @@ class Site(object):
 
 
 class IterableApp(object):
-
-    def __init__(self, send_start_response=False, return_val=wsgi.ALREADY_HANDLED):
+    def __init__(self, send_start_response=False, return_val=()):
         self.send_start_response = send_start_response
         self.return_val = return_val
         self.env = {}
@@ -125,6 +125,8 @@ class IterableApp(object):
         self.env = env
         if self.send_start_response:
             start_response('200 OK', [('Content-type', 'text/plain')])
+        else:
+            wsgi.WSGI_LOCAL.already_handled = True
         return self.return_val
 
 

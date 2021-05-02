@@ -135,7 +135,8 @@ class WebSocketWSGI(object):
         ws._send_closing_frame(True)
         # use this undocumented feature of eventlet.wsgi to ensure that it
         # doesn't barf on the fact that we didn't call start_response
-        return wsgi.ALREADY_HANDLED
+        wsgi.WSGI_LOCAL.already_handled = True
+        return []
 
     def _handle_legacy_request(self, environ):
         if 'eventlet.input' in environ:
