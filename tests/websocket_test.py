@@ -552,7 +552,7 @@ class TestWebSocket(tests.wsgi_test._TestBase):
         headers, result = resp.split(b"\r\n\r\n")
         msgs = [result.strip(b"\x00\xff")]
         msgs.extend(sock.recv(20).strip(b"\x00\xff") for _ in range(10))
-        assert msgs == [six.b("msg %d" % i) for i in range(10)]
+        assert msgs == [six.b("msg {}".format(i)) for i in range(10)]
         # In case of server error, server will write HTTP 500 response to the socket
         msg = sock.recv(20)
         assert not msg
