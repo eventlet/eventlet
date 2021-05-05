@@ -1,3 +1,10 @@
+0.30.3
+======
+* wsgi: websocket ALREADY_HANDLED flag on corolocal
+* green.ssl: Set suppress_ragged_eofs default based on SSLSocket defaults
+* greenio: socket.connect_ex returned None instead of 0 on success
+* Use _imp instead of deprecated imp
+
 0.30.2
 ======
 * greendns: patch ssl to fix RecursionError on SSLContext.options.__set__ https://github.com/eventlet/eventlet/issues/677
