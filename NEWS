@@ -1,3 +1,7 @@
+0.31.0
+======
+* IMPORTANT: websocket: Limit maximum uncompressed frame length to 8MiB https://github.com/eventlet/eventlet/security/advisories/GHSA-9p9m-jm8w-94p2
+
 0.30.3
 ======
 * wsgi: websocket ALREADY_HANDLED flag on corolocal
