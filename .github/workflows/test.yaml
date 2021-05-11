@@ -55,9 +55,25 @@ jobs:
     steps:
       - name: install system packages
         run: sudo apt install -y --no-install-recommends ccache libffi-dev default-libmysqlclient-dev libpq-dev libssl-dev libzmq3-dev
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
+
+      - name: cache pip
+        uses: actions/cache@v2
         with:
-          fetch-depth: 1
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ matrix.toxenv }}-${{ hashFiles('.github/workflows/test.yaml', 'setup.py') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            ${{ runner.os }}-
+      - name: cache tox
+        uses: actions/cache@v2
+        with:
+          path: .tox
+          key: ${{ runner.os }}-tox-${{ matrix.toxenv }}-${{ hashFiles('tox.ini') }}
+          restore-keys: |
+            ${{ runner.os }}-tox-
+            ${{ runner.os }}-
+
       - name: setup python ${{ matrix.py }}
         uses: actions/setup-python@v2
         with:
