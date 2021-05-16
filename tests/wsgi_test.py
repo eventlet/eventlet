@@ -397,7 +397,7 @@ class TestHttpd(_TestBase):
         # Eventlet issue: "Python 3: wsgi doesn't handle correctly partial
         # write of socket send() when using writelines()".
         #
-        # The bug was caused by the default writelines() implementaiton
+        # The bug was caused by the default writelines() implementation
         # (used by the wsgi module) which doesn't check if write()
         # successfully completed sending *all* data therefore data could be
         # lost and the client could be left hanging forever.

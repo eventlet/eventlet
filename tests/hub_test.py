@@ -362,7 +362,7 @@ class TestDeadRunLoop(tests.LimitedTestCase):
         # kill dummyproc, this schedules a timer to return execution to
         # this greenlet before throwing an exception in dummyproc.
         # it is from this timer that execution should be returned to this
-        # greenlet, and not by propogating of the terminating greenlet.
+        # greenlet, and not by propagating of the terminating greenlet.
         g.kill()
         with eventlet.Timeout(0.5, self.CustomException()):
             # we now switch to the hub, there should be no existing timers
