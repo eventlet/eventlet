@@ -579,7 +579,8 @@ class TestHttpd(_TestBase):
         sock = eventlet.wrap_ssl(
             eventlet.listen(('localhost', 0)),
             certfile=certificate_file, keyfile=private_key_file,
-            server_side=True)
+            server_side=True,
+            ssl_version=ssl.PROTOCOL_TLSv1_2)
         server_coro = eventlet.spawn(server, sock, wsgi_app, self.logfile)
 
         client = eventlet.connect(('localhost', sock.getsockname()[1]))
