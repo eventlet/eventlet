@@ -1,3 +1,7 @@
+0.31.1
+======
+* ssl: py3.6 using client certificates raised ValueError: check_hostname needs server_hostname argument https://github.com/eventlet/eventlet/pull/705
+
 0.31.0
 ======
 * IMPORTANT: websocket: Limit maximum uncompressed frame length to 8MiB https://github.com/eventlet/eventlet/security/advisories/GHSA-9p9m-jm8w-94p2
