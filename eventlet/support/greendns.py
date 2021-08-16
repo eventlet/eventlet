@@ -120,12 +120,13 @@ def is_ip_addr(host):
     return is_ipv4_addr(host) or is_ipv6_addr(host)
 
 
-def compute_expiration(query, timeout):
-    # NOTE(ralonsoh): in dnspython v2.0.0, "_compute_expiration" was replaced
-    # by "_compute_times".
-    if hasattr(query, '_compute_expiration'):
+# NOTE(ralonsoh): in dnspython v2.0.0, "_compute_expiration" was replaced
+# by "_compute_times".
+if hasattr(dns.query, '_compute_expiration'):
+    def compute_expiration(query, timeout):
         return query._compute_expiration(timeout)
-    else:
+else:
+    def compute_expiration(query, timeout):
         return query._compute_times(timeout)[1]
 
 
