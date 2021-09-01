@@ -7,6 +7,7 @@ if __name__ == '__main__':
     import time
     import dns.message
     import dns.query
+    import dns.flags
 
     n = 10
     delay = 0.01
@@ -17,7 +18,7 @@ if __name__ == '__main__':
         addr = addr_map[qname.to_text()]
         r = dns.message.make_response(q)
         r.index = None
-        r.flags = 256
+        r.flags = dns.flags.QR | dns.flags.RD
         r.answer.append(dns.rrset.from_text(str(qname), 60, 'IN', 'A', addr))
         r.time = 0.001
         eventlet.sleep(delay)

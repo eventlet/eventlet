@@ -901,7 +901,7 @@ class TinyDNSTests(tests.LimitedTestCase):
             resolver.nameserver_ports[dnsaddr[0]] = dnsaddr[1]
             response = resolver.query('host.example.com', 'a', tcp=True)
             self.assertIsInstance(response, Answer)
-            self.assertEqual(response.rrset.items[0].address, expected_ip)
+            self.assertEqual(list(response.rrset.items)[0].address, expected_ip)
 
 
 def test_reverse_name():
