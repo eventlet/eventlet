@@ -1,18 +1,19 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
-    <title>Testing Eventlet &#8212; Eventlet 0.31.0 documentation</title>
-    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Testing Eventlet &#8212; Eventlet 0.32.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
     
-    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
-    <script src="_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -34,7 +35,8 @@
         <li class="right" >
           <a href="hubs.html" title="Understanding Eventlet Hubs"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.31.0 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.32.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Testing Eventlet</a></li> 
       </ul>
     </div>  
 
@@ -43,7 +45,7 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="testing-eventlet">
+  <section id="testing-eventlet">
 <h1>Testing Eventlet<a class="headerlink" href="#testing-eventlet" title="Permalink to this headline">¶</a></h1>
 <p>Eventlet is tested using <a class="reference external" href="http://somethingaboutorange.com/mrl/projects/nose/">Nose</a>.  To run tests, simply install nose, and then, in the eventlet tree, do:</p>
 <div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ python setup.py <span class="nb">test</span>
@@ -59,15 +61,15 @@
 </div>
 <p>That’s it!  The output from running nose is the same as unittest’s output, if the entire directory was one big test file.</p>
 <p>Many tests are skipped based on environmental factors; for example, it makes no sense to test kqueue-specific functionality when your OS does not support it.  These are printed as S’s during execution, and in the summary printed after the tests run it will tell you how many were skipped.</p>
-<div class="section" id="doctests">
+<section id="doctests">
 <h2>Doctests<a class="headerlink" href="#doctests" title="Permalink to this headline">¶</a></h2>
 <p>To run the doctests included in many of the eventlet modules, use this command:</p>
 <div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ nosetests --with-doctest eventlet/*.py
 </pre></div>
 </div>
 <p>Currently there are 16 doctests.</p>
-</div>
-<div class="section" id="standard-library-tests">
+</section>
+<section id="standard-library-tests">
 <h2>Standard Library Tests<a class="headerlink" href="#standard-library-tests" title="Permalink to this headline">¶</a></h2>
 <p>Eventlet provides the ability to test itself with the standard Python networking tests.  This verifies that the libraries it wraps work at least as well as the standard ones do.  The directory tests/stdlib contains a bunch of stubs that import the standard lib tests from your system and run them.  If you do not have any tests in your python distribution, they’ll simply fail to import.</p>
 <p>There’s a convenience module called all.py designed to handle the impedance mismatch between Nose and the standard tests:</p>
@@ -76,16 +78,16 @@
 </div>
 <p>That will run all the tests, though the output will be a little weird because it will look like Nose is running about 20 tests, each of which consists of a bunch of sub-tests.  Not all test modules are present in all versions of Python, so there will be an occasional printout of “Not importing %s, it doesn’t exist in this installation/version of Python”.</p>
 <p>If you see “Ran 0 tests in 0.001s”, it means that your Python installation lacks its own tests.  This is usually the case for Linux distributions.  One way to get the missing tests is to download a source tarball (of the same version you have installed on your system!) and copy its Lib/test directory into the correct place on your PYTHONPATH.</p>
-</div>
-<div class="section" id="testing-eventlet-hubs">
+</section>
+<section id="testing-eventlet-hubs">
 <h2>Testing Eventlet Hubs<a class="headerlink" href="#testing-eventlet-hubs" title="Permalink to this headline">¶</a></h2>
 <p>When you run the tests, Eventlet will use the most appropriate hub for the current platform to do its dispatch.  It’s sometimes useful when making changes to Eventlet to test those changes on hubs other than the default.  You can do this with the <code class="docutils literal notranslate"><span class="pre">EVENTLET_HUB</span></code> environment variable.</p>
 <div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ <span class="nv">EVENTLET_HUB</span><span class="o">=</span>epolls nosetests
 </pre></div>
 </div>
 <p>See <a class="reference internal" href="hubs.html#understanding-hubs"><span class="std std-ref">Understanding Eventlet Hubs</span></a> for the full list of hubs.</p>
-</div>
-<div class="section" id="writing-tests">
+</section>
+<section id="writing-tests">
 <h2>Writing Tests<a class="headerlink" href="#writing-tests" title="Permalink to this headline">¶</a></h2>
 <p>What follows are some notes on writing tests, in no particular order.</p>
 <p>The filename convention when writing a test for module <cite>foo</cite> is to name the test <cite>foo_test.py</cite>.  We don’t yet have a convention for tests that are of finer granularity, but a sensible one might be <cite>foo_class_test.py</cite>.</p>
@@ -94,8 +96,8 @@
 <span class="n">client_sock</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">connect</span><span class="p">((</span><span class="s1">&#39;localhost&#39;</span><span class="p">,</span> <span class="n">server_sock</span><span class="o">.</span><span class="n">getsockname</span><span class="p">()[</span><span class="mi">1</span><span class="p">]))</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="coverage">
+</section>
+<section id="coverage">
 <h2>Coverage<a class="headerlink" href="#coverage" title="Permalink to this headline">¶</a></h2>
 <p>Coverage.py is an awesome tool for evaluating how much code was exercised by unit tests.  Nose supports it if both are installed, so it’s easy to generate coverage reports for eventlet.  Here’s how:</p>
 <div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>nosetests --with-coverage --cover-package<span class="o">=</span>eventlet
@@ -107,10 +109,11 @@
 </pre></div>
 </div>
 <p>(<code class="docutils literal notranslate"><span class="pre">tempmod</span></code> and <code class="docutils literal notranslate"><span class="pre">console</span></code> are omitted because they get thrown away at the completion of their unit tests and coverage.py isn’t smart enough to detect this.)</p>
-</div>
-</div>
+</section>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -145,7 +148,7 @@
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
@@ -170,13 +173,14 @@
         <li class="right" >
           <a href="hubs.html" title="Understanding Eventlet Hubs"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.31.0 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.32.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Testing Eventlet</a></li> 
       </ul>
     </div>
 
     <div class="footer" role="contentinfo">
         &#169; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.2.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

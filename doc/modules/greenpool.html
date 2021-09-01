@@ -1,18 +1,19 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
-    <title>greenpool – Green Thread Pools &#8212; Eventlet 0.31.0 documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>greenpool – Green Thread Pools &#8212; Eventlet 0.32.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
     <script src="../_static/doctools.js"></script>
-    <script src="../_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -34,8 +35,9 @@
         <li class="right" >
           <a href="event.html" title="event – Cross-greenthread primitive"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.31.0 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.32.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">greenpool</span></code> – Green Thread Pools</a></li> 
       </ul>
     </div>  
 
@@ -44,23 +46,52 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="module-eventlet.greenpool">
+  <section id="module-eventlet.greenpool">
 <span id="greenpool-green-thread-pools"></span><h1><code class="xref py py-mod docutils literal notranslate"><span class="pre">greenpool</span></code> – Green Thread Pools<a class="headerlink" href="#module-eventlet.greenpool" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
-<dt id="eventlet.greenpool.GreenPool">
-<em class="property">class </em><code class="sig-prename descclassname">eventlet.greenpool.</code><code class="sig-name descname">GreenPool</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">size</span><span class="o">=</span><span class="default_value">1000</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.greenpool.GreenPool" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.greenpool.GreenPile">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">eventlet.greenpool.</span></span><span class="sig-name descname"><span class="pre">GreenPile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size_or_pool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.greenpool.GreenPile" title="Permalink to this definition">¶</a></dt>
+<dd><p>GreenPile is an abstraction representing a bunch of I/O-related tasks.</p>
+<p>Construct a GreenPile with an existing GreenPool object.  The GreenPile will
+then use that pool’s concurrency as it processes its jobs.  There can be
+many GreenPiles associated with a single GreenPool.</p>
+<p>A GreenPile can also be constructed standalone, not associated with any
+GreenPool.  To do this, construct it with an integer size parameter instead
+of a GreenPool.</p>
+<p>It is not advisable to iterate over a GreenPile in a different greenthread
+than the one which is calling spawn.  The iterator will exit early in that
+situation.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="eventlet.greenpool.GreenPile.next">
+<span class="sig-name descname"><span class="pre">next</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.greenpool.GreenPile.next" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wait for the next result, suspending the current greenthread until it
+is available.  Raises StopIteration when there are no more results.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="eventlet.greenpool.GreenPile.spawn">
+<span class="sig-name descname"><span class="pre">spawn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.greenpool.GreenPile.spawn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runs <em>func</em> in its own green thread, with the result available by
+iterating over the GreenPile object.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="eventlet.greenpool.GreenPool">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">eventlet.greenpool.</span></span><span class="sig-name descname"><span class="pre">GreenPool</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.greenpool.GreenPool" title="Permalink to this definition">¶</a></dt>
 <dd><p>The GreenPool class is a pool of green threads.</p>
 <dl class="py method">
-<dt id="eventlet.greenpool.GreenPool.free">
-<code class="sig-name descname">free</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.greenpool.GreenPool.free" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.greenpool.GreenPool.free">
+<span class="sig-name descname"><span class="pre">free</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.greenpool.GreenPool.free" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the number of greenthreads available for use.</p>
 <p>If zero or less, the next call to <a class="reference internal" href="#eventlet.greenpool.GreenPool.spawn" title="eventlet.greenpool.GreenPool.spawn"><code class="xref py py-meth docutils literal notranslate"><span class="pre">spawn()</span></code></a> or <a class="reference internal" href="#eventlet.greenpool.GreenPool.spawn_n" title="eventlet.greenpool.GreenPool.spawn_n"><code class="xref py py-meth docutils literal notranslate"><span class="pre">spawn_n()</span></code></a> will
 block the calling greenthread until a slot becomes available.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.greenpool.GreenPool.imap">
-<code class="sig-name descname">imap</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">function</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">iterables</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.greenpool.GreenPool.imap" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.greenpool.GreenPool.imap">
+<span class="sig-name descname"><span class="pre">imap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">function</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">iterables</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.greenpool.GreenPool.imap" title="Permalink to this definition">¶</a></dt>
 <dd><p>This is the same as <code class="xref py py-func docutils literal notranslate"><span class="pre">itertools.imap()</span></code>, and has the same
 concurrency and memory behavior as <a class="reference internal" href="#eventlet.greenpool.GreenPool.starmap" title="eventlet.greenpool.GreenPool.starmap"><code class="xref py py-meth docutils literal notranslate"><span class="pre">starmap()</span></code></a>.</p>
 <p>It’s quite convenient for, e.g., farming out jobs from a file:</p>
@@ -74,8 +105,8 @@ concurrency and memory behavior as <a class="reference internal" href="#eventlet
 </dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.greenpool.GreenPool.resize">
-<code class="sig-name descname">resize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">new_size</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.greenpool.GreenPool.resize" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.greenpool.GreenPool.resize">
+<span class="sig-name descname"><span class="pre">resize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_size</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.greenpool.GreenPool.resize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Change the max number of greenthreads doing work at any given time.</p>
 <p>If resize is called when there are more than <em>new_size</em> greenthreads
 already working on tasks, they will be allowed to complete but no new
@@ -85,15 +116,15 @@ then, the return value of free() will be negative.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.greenpool.GreenPool.running">
-<code class="sig-name descname">running</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.greenpool.GreenPool.running" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.greenpool.GreenPool.running">
+<span class="sig-name descname"><span class="pre">running</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.greenpool.GreenPool.running" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the number of greenthreads that are currently executing
 functions in the GreenPool.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.greenpool.GreenPool.spawn">
-<code class="sig-name descname">spawn</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">function</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.greenpool.GreenPool.spawn" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.greenpool.GreenPool.spawn">
+<span class="sig-name descname"><span class="pre">spawn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">function</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.greenpool.GreenPool.spawn" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run the <em>function</em> with its arguments in its own green thread.
 Returns the <code class="xref py py-class docutils literal notranslate"><span class="pre">GreenThread</span></code>
 object that is running the function, which can be used to retrieve the
@@ -105,16 +136,16 @@ pool without risk of deadlocking the whole thing.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.greenpool.GreenPool.spawn_n">
-<code class="sig-name descname">spawn_n</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">function</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.greenpool.GreenPool.spawn_n" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.greenpool.GreenPool.spawn_n">
+<span class="sig-name descname"><span class="pre">spawn_n</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">function</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.greenpool.GreenPool.spawn_n" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a greenthread to run the <em>function</em>, the same as
 <a class="reference internal" href="#eventlet.greenpool.GreenPool.spawn" title="eventlet.greenpool.GreenPool.spawn"><code class="xref py py-meth docutils literal notranslate"><span class="pre">spawn()</span></code></a>.  The difference is that <a class="reference internal" href="#eventlet.greenpool.GreenPool.spawn_n" title="eventlet.greenpool.GreenPool.spawn_n"><code class="xref py py-meth docutils literal notranslate"><span class="pre">spawn_n()</span></code></a> returns
 None; the results of <em>function</em> are not retrievable.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.greenpool.GreenPool.starmap">
-<code class="sig-name descname">starmap</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">function</span></em>, <em class="sig-param"><span class="n">iterable</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.greenpool.GreenPool.starmap" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.greenpool.GreenPool.starmap">
+<span class="sig-name descname"><span class="pre">starmap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iterable</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.greenpool.GreenPool.starmap" title="Permalink to this definition">¶</a></dt>
 <dd><p>This is the same as <a class="reference external" href="https://docs.python.org/3/library/itertools.html#itertools.starmap" title="(in Python v3.9)"><code class="xref py py-func docutils literal notranslate"><span class="pre">itertools.starmap()</span></code></a>, except that <em>func</em> is
 executed in a separate green thread for each item, with the concurrency
 limited by the pool’s size. In operation, starmap consumes a constant
@@ -123,51 +154,23 @@ suited for iterating over extremely long input lists.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.greenpool.GreenPool.waitall">
-<code class="sig-name descname">waitall</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.greenpool.GreenPool.waitall" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.greenpool.GreenPool.waitall">
+<span class="sig-name descname"><span class="pre">waitall</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.greenpool.GreenPool.waitall" title="Permalink to this definition">¶</a></dt>
 <dd><p>Waits until all greenthreads in the pool are finished working.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.greenpool.GreenPool.waiting">
-<code class="sig-name descname">waiting</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.greenpool.GreenPool.waiting" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.greenpool.GreenPool.waiting">
+<span class="sig-name descname"><span class="pre">waiting</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.greenpool.GreenPool.waiting" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the number of greenthreads waiting to spawn.</p>
 </dd></dl>
 
 </dd></dl>
 
-<dl class="py class">
-<dt id="eventlet.greenpool.GreenPile">
-<em class="property">class </em><code class="sig-prename descclassname">eventlet.greenpool.</code><code class="sig-name descname">GreenPile</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">size_or_pool</span><span class="o">=</span><span class="default_value">1000</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.greenpool.GreenPile" title="Permalink to this definition">¶</a></dt>
-<dd><p>GreenPile is an abstraction representing a bunch of I/O-related tasks.</p>
-<p>Construct a GreenPile with an existing GreenPool object.  The GreenPile will
-then use that pool’s concurrency as it processes its jobs.  There can be
-many GreenPiles associated with a single GreenPool.</p>
-<p>A GreenPile can also be constructed standalone, not associated with any
-GreenPool.  To do this, construct it with an integer size parameter instead
-of a GreenPool.</p>
-<p>It is not advisable to iterate over a GreenPile in a different greenthread
-than the one which is calling spawn.  The iterator will exit early in that
-situation.</p>
-<dl class="py method">
-<dt id="eventlet.greenpool.GreenPile.next">
-<code class="sig-name descname">next</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.greenpool.GreenPile.next" title="Permalink to this definition">¶</a></dt>
-<dd><p>Wait for the next result, suspending the current greenthread until it
-is available.  Raises StopIteration when there are no more results.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt id="eventlet.greenpool.GreenPile.spawn">
-<code class="sig-name descname">spawn</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">func</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.greenpool.GreenPile.spawn" title="Permalink to this definition">¶</a></dt>
-<dd><p>Runs <em>func</em> in its own green thread, with the result available by
-iterating over the GreenPile object.</p>
-</dd></dl>
-
-</dd></dl>
-
-</div>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -190,7 +193,7 @@ iterating over the GreenPile object.</p>
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
@@ -215,14 +218,15 @@ iterating over the GreenPile object.</p>
         <li class="right" >
           <a href="event.html" title="event – Cross-greenthread primitive"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.31.0 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.32.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">greenpool</span></code> – Green Thread Pools</a></li> 
       </ul>
     </div>
 
     <div class="footer" role="contentinfo">
         &#169; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.2.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

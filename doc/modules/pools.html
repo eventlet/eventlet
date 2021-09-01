@@ -1,18 +1,19 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
-    <title>pools - Generic pools of resources &#8212; Eventlet 0.31.0 documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>pools - Generic pools of resources &#8212; Eventlet 0.32.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
     <script src="../_static/doctools.js"></script>
-    <script src="../_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -34,8 +35,9 @@
         <li class="right" >
           <a href="greenthread.html" title="greenthread – Green Thread Implementation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.31.0 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.32.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">pools</span></code> - Generic pools of resources</a></li> 
       </ul>
     </div>  
 
@@ -44,11 +46,11 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="module-eventlet.pools">
+  <section id="module-eventlet.pools">
 <span id="pools-generic-pools-of-resources"></span><h1><code class="xref py py-mod docutils literal notranslate"><span class="pre">pools</span></code> - Generic pools of resources<a class="headerlink" href="#module-eventlet.pools" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
-<dt id="eventlet.pools.Pool">
-<em class="property">class </em><code class="sig-prename descclassname">eventlet.pools.</code><code class="sig-name descname">Pool</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">min_size</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">max_size</span><span class="o">=</span><span class="default_value">4</span></em>, <em class="sig-param"><span class="n">order_as_stack</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">create</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.pools.Pool" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.pools.Pool">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">eventlet.pools.</span></span><span class="sig-name descname"><span class="pre">Pool</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">min_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order_as_stack</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.pools.Pool" title="Permalink to this definition">¶</a></dt>
 <dd><p>Pool class implements resource limitation and construction.</p>
 <p>There are two ways of using Pool: passing a <cite>create</cite> argument or
 subclassing. In either case you must provide a way to create
@@ -89,8 +91,8 @@ it cannot contain any more items than <em>max_size</em>, and if there are alread
 greenthread calling <a class="reference internal" href="#eventlet.pools.Pool.get" title="eventlet.pools.Pool.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get()</span></code></a> to cooperatively yield until an item
 is <a class="reference internal" href="#eventlet.pools.Pool.put" title="eventlet.pools.Pool.put"><code class="xref py py-meth docutils literal notranslate"><span class="pre">put()</span></code></a> in.</p>
 <dl class="py method">
-<dt id="eventlet.pools.Pool.create">
-<code class="sig-name descname">create</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.pools.Pool.create" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.pools.Pool.create">
+<span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.pools.Pool.create" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a new pool item.  In order for the pool to
 function, either this method must be overriden in a subclass
 or the pool must be constructed with the <cite>create</cite> argument.
@@ -106,22 +108,22 @@ called a second time.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.pools.Pool.free">
-<code class="sig-name descname">free</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.pools.Pool.free" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.pools.Pool.free">
+<span class="sig-name descname"><span class="pre">free</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.pools.Pool.free" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the number of free items in the pool.  This corresponds
 to the number of <a class="reference internal" href="#eventlet.pools.Pool.get" title="eventlet.pools.Pool.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get()</span></code></a> calls needed to empty the pool.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.pools.Pool.get">
-<code class="sig-name descname">get</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.pools.Pool.get" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.pools.Pool.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.pools.Pool.get" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return an item from the pool, when one is available.  This may
 cause the calling greenthread to block.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.pools.Pool.item">
-<code class="sig-name descname">item</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.pools.Pool.item" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.pools.Pool.item">
+<span class="sig-name descname"><span class="pre">item</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.pools.Pool.item" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get an object out of the pool, for use with with statement.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">pools</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pool</span> <span class="o">=</span> <span class="n">pools</span><span class="o">.</span><span class="n">TokenPool</span><span class="p">(</span><span class="n">max_size</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
@@ -136,15 +138,15 @@ cause the calling greenthread to block.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.pools.Pool.put">
-<code class="sig-name descname">put</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">item</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.pools.Pool.put" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.pools.Pool.put">
+<span class="sig-name descname"><span class="pre">put</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.pools.Pool.put" title="Permalink to this definition">¶</a></dt>
 <dd><p>Put an item back into the pool, when done.  This may
 cause the putting greenthread to block.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.pools.Pool.resize">
-<code class="sig-name descname">resize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">new_size</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.pools.Pool.resize" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.pools.Pool.resize">
+<span class="sig-name descname"><span class="pre">resize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_size</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.pools.Pool.resize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Resize the pool to <em>new_size</em>.</p>
 <p>Adjusting this number does not affect existing items checked out of
 the pool, nor on any greenthreads who are waiting for an item to free
@@ -154,22 +156,22 @@ the actual operation of the pool.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.pools.Pool.waiting">
-<code class="sig-name descname">waiting</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.pools.Pool.waiting" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.pools.Pool.waiting">
+<span class="sig-name descname"><span class="pre">waiting</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.pools.Pool.waiting" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the number of routines waiting for a pool item.</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
-<dt id="eventlet.pools.TokenPool">
-<em class="property">class </em><code class="sig-prename descclassname">eventlet.pools.</code><code class="sig-name descname">TokenPool</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">min_size</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">max_size</span><span class="o">=</span><span class="default_value">4</span></em>, <em class="sig-param"><span class="n">order_as_stack</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">create</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.pools.TokenPool" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.pools.TokenPool">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">eventlet.pools.</span></span><span class="sig-name descname"><span class="pre">TokenPool</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">min_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order_as_stack</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.pools.TokenPool" title="Permalink to this definition">¶</a></dt>
 <dd><p>A pool which gives out tokens (opaque unique objects), which indicate
 that the coroutine which holds the token has a right to consume some
 limited resource.</p>
 <dl class="py method">
-<dt id="eventlet.pools.TokenPool.create">
-<code class="sig-name descname">create</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.pools.TokenPool.create" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.pools.TokenPool.create">
+<span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.pools.TokenPool.create" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a new pool item.  In order for the pool to
 function, either this method must be overriden in a subclass
 or the pool must be constructed with the <cite>create</cite> argument.
@@ -186,9 +188,10 @@ called a second time.</p>
 
 </dd></dl>
 
-</div>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -211,7 +214,7 @@ called a second time.</p>
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
@@ -236,14 +239,15 @@ called a second time.</p>
         <li class="right" >
           <a href="greenthread.html" title="greenthread – Green Thread Implementation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.31.0 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.32.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">pools</span></code> - Generic pools of resources</a></li> 
       </ul>
     </div>
 
     <div class="footer" role="contentinfo">
         &#169; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.2.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

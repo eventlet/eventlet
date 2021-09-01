@@ -1,18 +1,19 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
-    <title>semaphore – Semaphore classes &#8212; Eventlet 0.31.0 documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>semaphore – Semaphore classes &#8212; Eventlet 0.32.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
     <script src="../_static/doctools.js"></script>
-    <script src="../_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -34,8 +35,9 @@
         <li class="right" >
           <a href="queue.html" title="queue – Queue class"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.31.0 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.32.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">semaphore</span></code> – Semaphore classes</a></li> 
       </ul>
     </div>  
 
@@ -44,11 +46,11 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="semaphore-semaphore-classes">
+  <section id="semaphore-semaphore-classes">
 <h1><code class="xref py py-mod docutils literal notranslate"><span class="pre">semaphore</span></code> – Semaphore classes<a class="headerlink" href="#semaphore-semaphore-classes" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
-<dt id="eventlet.semaphore.Semaphore">
-<em class="property">class </em><code class="sig-prename descclassname">eventlet.semaphore.</code><code class="sig-name descname">Semaphore</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.semaphore.Semaphore" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.semaphore.Semaphore">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">eventlet.semaphore.</span></span><span class="sig-name descname"><span class="pre">Semaphore</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.semaphore.Semaphore" title="Permalink to this definition">¶</a></dt>
 <dd><p>An unbounded semaphore.
 Optionally initialize with a resource <em>count</em>, then <a class="reference internal" href="#eventlet.semaphore.Semaphore.acquire" title="eventlet.semaphore.Semaphore.acquire"><code class="xref py py-meth docutils literal notranslate"><span class="pre">acquire()</span></code></a> and
 <a class="reference internal" href="#eventlet.semaphore.Semaphore.release" title="eventlet.semaphore.Semaphore.release"><code class="xref py py-meth docutils literal notranslate"><span class="pre">release()</span></code></a> resources as needed. Attempting to <a class="reference internal" href="#eventlet.semaphore.Semaphore.acquire" title="eventlet.semaphore.Semaphore.acquire"><code class="xref py py-meth docutils literal notranslate"><span class="pre">acquire()</span></code></a> when
@@ -69,8 +71,8 @@ nonzero again.</p>
 </pre></div>
 </div>
 <dl class="py method">
-<dt id="eventlet.semaphore.Semaphore.acquire">
-<code class="sig-name descname">acquire</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">blocking</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">timeout</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.semaphore.Semaphore.acquire" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.semaphore.Semaphore.acquire">
+<span class="sig-name descname"><span class="pre">acquire</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">blocking</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.semaphore.Semaphore.acquire" title="Permalink to this definition">¶</a></dt>
 <dd><p>Acquire a semaphore.</p>
 <p>When invoked without arguments: if the internal counter is larger than
 zero on entry, decrement it by one and return immediately. If it is zero
@@ -88,9 +90,9 @@ same thing as when called without arguments, and return true.</p>
 <p>Timeout value must be strictly positive.</p>
 </dd></dl>
 
-<dl class="py method">
-<dt id="eventlet.semaphore.Semaphore.balance">
-<em class="property">property </em><code class="sig-name descname">balance</code><a class="headerlink" href="#eventlet.semaphore.Semaphore.balance" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="eventlet.semaphore.Semaphore.balance">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">balance</span></span><a class="headerlink" href="#eventlet.semaphore.Semaphore.balance" title="Permalink to this definition">¶</a></dt>
 <dd><p>An integer value that represents how many new calls to
 <a class="reference internal" href="#eventlet.semaphore.Semaphore.acquire" title="eventlet.semaphore.Semaphore.acquire"><code class="xref py py-meth docutils literal notranslate"><span class="pre">acquire()</span></code></a> or <a class="reference internal" href="#eventlet.semaphore.Semaphore.release" title="eventlet.semaphore.Semaphore.release"><code class="xref py py-meth docutils literal notranslate"><span class="pre">release()</span></code></a> would be needed to get the counter to
 0.  If it is positive, then its value is the number of acquires that can
@@ -102,21 +104,21 @@ are currently blocking in <a class="reference internal" href="#eventlet.semaphor
 </dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.semaphore.Semaphore.bounded">
-<code class="sig-name descname">bounded</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.semaphore.Semaphore.bounded" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.semaphore.Semaphore.bounded">
+<span class="sig-name descname"><span class="pre">bounded</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.semaphore.Semaphore.bounded" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns False; for consistency with
 <a class="reference internal" href="#eventlet.semaphore.CappedSemaphore" title="eventlet.semaphore.CappedSemaphore"><code class="xref py py-class docutils literal notranslate"><span class="pre">CappedSemaphore</span></code></a>.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.semaphore.Semaphore.locked">
-<code class="sig-name descname">locked</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.semaphore.Semaphore.locked" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.semaphore.Semaphore.locked">
+<span class="sig-name descname"><span class="pre">locked</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.semaphore.Semaphore.locked" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns true if a call to acquire would block.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.semaphore.Semaphore.release">
-<code class="sig-name descname">release</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">blocking</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.semaphore.Semaphore.release" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.semaphore.Semaphore.release">
+<span class="sig-name descname"><span class="pre">release</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">blocking</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.semaphore.Semaphore.release" title="Permalink to this definition">¶</a></dt>
 <dd><p>Release a semaphore, incrementing the internal counter by one. When
 it was zero on entry and another thread is waiting for it to become
 larger than zero again, wake up that thread.</p>
@@ -127,16 +129,16 @@ ignored</p>
 </dd></dl>
 
 <dl class="py class">
-<dt id="eventlet.semaphore.BoundedSemaphore">
-<em class="property">class </em><code class="sig-prename descclassname">eventlet.semaphore.</code><code class="sig-name descname">BoundedSemaphore</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.semaphore.BoundedSemaphore" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.semaphore.BoundedSemaphore">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">eventlet.semaphore.</span></span><span class="sig-name descname"><span class="pre">BoundedSemaphore</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.semaphore.BoundedSemaphore" title="Permalink to this definition">¶</a></dt>
 <dd><p>A bounded semaphore checks to make sure its current value doesn’t exceed
 its initial value. If it does, ValueError is raised. In most situations
 semaphores are used to guard resources with limited capacity. If the
 semaphore is released too many times it’s a sign of a bug. If not given,
 <em>value</em> defaults to 1.</p>
 <dl class="py method">
-<dt id="eventlet.semaphore.BoundedSemaphore.release">
-<code class="sig-name descname">release</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">blocking</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.semaphore.BoundedSemaphore.release" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.semaphore.BoundedSemaphore.release">
+<span class="sig-name descname"><span class="pre">release</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">blocking</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.semaphore.BoundedSemaphore.release" title="Permalink to this definition">¶</a></dt>
 <dd><p>Release a semaphore, incrementing the internal counter by one. If
 the counter would exceed the initial value, raises ValueError.  When
 it was zero on entry and another thread is waiting for it to become
@@ -148,8 +150,8 @@ and is ignored</p>
 </dd></dl>
 
 <dl class="py class">
-<dt id="eventlet.semaphore.CappedSemaphore">
-<em class="property">class </em><code class="sig-prename descclassname">eventlet.semaphore.</code><code class="sig-name descname">CappedSemaphore</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">count</span></em>, <em class="sig-param"><span class="n">limit</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.semaphore.CappedSemaphore" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.semaphore.CappedSemaphore">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">eventlet.semaphore.</span></span><span class="sig-name descname"><span class="pre">CappedSemaphore</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">count</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.semaphore.CappedSemaphore" title="Permalink to this definition">¶</a></dt>
 <dd><p>A blockingly bounded semaphore.</p>
 <p>Optionally initialize with a resource <em>count</em>, then <a class="reference internal" href="#eventlet.semaphore.CappedSemaphore.acquire" title="eventlet.semaphore.CappedSemaphore.acquire"><code class="xref py py-meth docutils literal notranslate"><span class="pre">acquire()</span></code></a> and
 <a class="reference internal" href="#eventlet.semaphore.CappedSemaphore.release" title="eventlet.semaphore.CappedSemaphore.release"><code class="xref py py-meth docutils literal notranslate"><span class="pre">release()</span></code></a> resources as needed. Attempting to <a class="reference internal" href="#eventlet.semaphore.CappedSemaphore.acquire" title="eventlet.semaphore.CappedSemaphore.acquire"><code class="xref py py-meth docutils literal notranslate"><span class="pre">acquire()</span></code></a> when
@@ -169,8 +171,8 @@ instead of raising a ValueError.</p>
 </pre></div>
 </div>
 <dl class="py method">
-<dt id="eventlet.semaphore.CappedSemaphore.acquire">
-<code class="sig-name descname">acquire</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">blocking</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.semaphore.CappedSemaphore.acquire" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.semaphore.CappedSemaphore.acquire">
+<span class="sig-name descname"><span class="pre">acquire</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">blocking</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.semaphore.CappedSemaphore.acquire" title="Permalink to this definition">¶</a></dt>
 <dd><p>Acquire a semaphore.</p>
 <p>When invoked without arguments: if the internal counter is larger than
 zero on entry, decrement it by one and return immediately. If it is zero
@@ -187,9 +189,9 @@ an argument would block, return false immediately; otherwise, do the
 same thing as when called without arguments, and return true.</p>
 </dd></dl>
 
-<dl class="py method">
-<dt id="eventlet.semaphore.CappedSemaphore.balance">
-<em class="property">property </em><code class="sig-name descname">balance</code><a class="headerlink" href="#eventlet.semaphore.CappedSemaphore.balance" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="eventlet.semaphore.CappedSemaphore.balance">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">balance</span></span><a class="headerlink" href="#eventlet.semaphore.CappedSemaphore.balance" title="Permalink to this definition">¶</a></dt>
 <dd><p>An integer value that represents how many new calls to
 <a class="reference internal" href="#eventlet.semaphore.CappedSemaphore.acquire" title="eventlet.semaphore.CappedSemaphore.acquire"><code class="xref py py-meth docutils literal notranslate"><span class="pre">acquire()</span></code></a> or <a class="reference internal" href="#eventlet.semaphore.CappedSemaphore.release" title="eventlet.semaphore.CappedSemaphore.release"><code class="xref py py-meth docutils literal notranslate"><span class="pre">release()</span></code></a> would be needed to get the counter to
 0.  If it is positive, then its value is the number of acquires that can
@@ -201,20 +203,20 @@ are currently blocking in <a class="reference internal" href="#eventlet.semaphor
 </dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.semaphore.CappedSemaphore.bounded">
-<code class="sig-name descname">bounded</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.semaphore.CappedSemaphore.bounded" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.semaphore.CappedSemaphore.bounded">
+<span class="sig-name descname"><span class="pre">bounded</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.semaphore.CappedSemaphore.bounded" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns true if a call to release would block.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.semaphore.CappedSemaphore.locked">
-<code class="sig-name descname">locked</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.semaphore.CappedSemaphore.locked" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.semaphore.CappedSemaphore.locked">
+<span class="sig-name descname"><span class="pre">locked</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.semaphore.CappedSemaphore.locked" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns true if a call to acquire would block.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.semaphore.CappedSemaphore.release">
-<code class="sig-name descname">release</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">blocking</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.semaphore.CappedSemaphore.release" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.semaphore.CappedSemaphore.release">
+<span class="sig-name descname"><span class="pre">release</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">blocking</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.semaphore.CappedSemaphore.release" title="Permalink to this definition">¶</a></dt>
 <dd><p>Release a semaphore.  In this class, this behaves very much like
 an <a class="reference internal" href="#eventlet.semaphore.CappedSemaphore.acquire" title="eventlet.semaphore.CappedSemaphore.acquire"><code class="xref py py-meth docutils literal notranslate"><span class="pre">acquire()</span></code></a> but in the opposite direction.</p>
 <p>Imagine the docs of <a class="reference internal" href="#eventlet.semaphore.CappedSemaphore.acquire" title="eventlet.semaphore.CappedSemaphore.acquire"><code class="xref py py-meth docutils literal notranslate"><span class="pre">acquire()</span></code></a> here, but with every direction
@@ -224,9 +226,10 @@ counter is greater than or equal to <em>limit</em>.</p>
 
 </dd></dl>
 
-</div>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -249,7 +252,7 @@ counter is greater than or equal to <em>limit</em>.</p>
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
@@ -274,14 +277,15 @@ counter is greater than or equal to <em>limit</em>.</p>
         <li class="right" >
           <a href="queue.html" title="queue – Queue class"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.31.0 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.32.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">semaphore</span></code> – Semaphore classes</a></li> 
       </ul>
     </div>
 
     <div class="footer" role="contentinfo">
         &#169; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.2.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

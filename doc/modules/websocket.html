@@ -1,18 +1,19 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
-    <title>websocket – Websocket Server &#8212; Eventlet 0.31.0 documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>websocket – Websocket Server &#8212; Eventlet 0.32.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
     <script src="../_static/doctools.js"></script>
-    <script src="../_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -34,8 +35,9 @@
         <li class="right" >
           <a href="timeout.html" title="timeout – Universal Timeouts"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.31.0 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.32.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">websocket</span></code> – Websocket Server</a></li> 
       </ul>
     </div>  
 
@@ -44,7 +46,7 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="websocket-websocket-server">
+  <section id="websocket-websocket-server">
 <h1><code class="xref py py-mod docutils literal notranslate"><span class="pre">websocket</span></code> – Websocket Server<a class="headerlink" href="#websocket-websocket-server" title="Permalink to this headline">¶</a></h1>
 <p>This module provides a simple way to create a <a class="reference external" href="http://dev.w3.org/html5/websockets/">websocket</a> server.  It works with a few
 tweaks in the <a class="reference internal" href="wsgi.html#module-eventlet.wsgi" title="eventlet.wsgi"><code class="xref py py-mod docutils literal notranslate"><span class="pre">wsgi</span></code></a> module that allow websockets to
@@ -74,29 +76,8 @@ documentation</p>
 <p>The web socket spec is still under development, and it will be necessary to change the way that this module works in response to spec changes.</p>
 </div>
 <span class="target" id="module-eventlet.websocket"></span><dl class="py class">
-<dt id="eventlet.websocket.WebSocketWSGI">
-<em class="property">class </em><code class="sig-prename descclassname">eventlet.websocket.</code><code class="sig-name descname">WebSocketWSGI</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">handler</span></em>, <em class="sig-param"><span class="n">max_frame_length</span><span class="o">=</span><span class="default_value">8388608</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.websocket.WebSocketWSGI" title="Permalink to this definition">¶</a></dt>
-<dd><p>Wraps a websocket handler function in a WSGI application.</p>
-<p>Use it like this:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@websocket</span><span class="o">.</span><span class="n">WebSocketWSGI</span>
-<span class="k">def</span> <span class="nf">my_handler</span><span class="p">(</span><span class="n">ws</span><span class="p">):</span>
-    <span class="n">from_browser</span> <span class="o">=</span> <span class="n">ws</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
-    <span class="n">ws</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;from server&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>The single argument to the function will be an instance of
-<a class="reference internal" href="#eventlet.websocket.WebSocket" title="eventlet.websocket.WebSocket"><code class="xref py py-class docutils literal notranslate"><span class="pre">WebSocket</span></code></a>.  To close the socket, simply return from the
-function.  Note that the server will log the websocket request at
-the time of closure.</p>
-<p>An optional argument max_frame_length can be given, which will set the
-maximum incoming <em>uncompressed</em> payload length of a frame. By default, this
-is set to 8MiB. Note that excessive values here might create a DOS attack
-vector.</p>
-</dd></dl>
-
-<dl class="py class">
-<dt id="eventlet.websocket.WebSocket">
-<em class="property">class </em><code class="sig-prename descclassname">eventlet.websocket.</code><code class="sig-name descname">WebSocket</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sock</span></em>, <em class="sig-param"><span class="n">environ</span></em>, <em class="sig-param"><span class="n">version</span><span class="o">=</span><span class="default_value">76</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.websocket.WebSocket" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.websocket.WebSocket">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">eventlet.websocket.</span></span><span class="sig-name descname"><span class="pre">WebSocket</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sock</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">environ</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">76</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.websocket.WebSocket" title="Permalink to this definition">¶</a></dt>
 <dd><p>A websocket object that handles the details of
 serialization/deserialization to the socket.</p>
 <p>The primary way to interact with a <a class="reference internal" href="#eventlet.websocket.WebSocket" title="eventlet.websocket.WebSocket"><code class="xref py py-class docutils literal notranslate"><span class="pre">WebSocket</span></code></a> object is to
@@ -115,15 +96,15 @@ but more convenient.</p>
 </dd>
 </dl>
 <dl class="py method">
-<dt id="eventlet.websocket.WebSocket.close">
-<code class="sig-name descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.websocket.WebSocket.close" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.websocket.WebSocket.close">
+<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.websocket.WebSocket.close" title="Permalink to this definition">¶</a></dt>
 <dd><p>Forcibly close the websocket; generally it is preferable to
 return from the handler method.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.websocket.WebSocket.send">
-<code class="sig-name descname">send</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">message</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.websocket.WebSocket.send" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.websocket.WebSocket.send">
+<span class="sig-name descname"><span class="pre">send</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.websocket.WebSocket.send" title="Permalink to this definition">¶</a></dt>
 <dd><p>Send a message to the browser.</p>
 <p><em>message</em> should be convertable to a string; unicode objects should be
 encodable as utf-8.  Raises socket.error with errno of 32
@@ -131,8 +112,8 @@ encodable as utf-8.  Raises socket.error with errno of 32
 </dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.websocket.WebSocket.wait">
-<code class="sig-name descname">wait</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.websocket.WebSocket.wait" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.websocket.WebSocket.wait">
+<span class="sig-name descname"><span class="pre">wait</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.websocket.WebSocket.wait" title="Permalink to this definition">¶</a></dt>
 <dd><p>Waits for and deserializes messages.</p>
 <p>Returns a single message; the oldest not yet processed. If the client
 has already closed the connection, returns None.  This is different
@@ -142,9 +123,31 @@ websocket message.</p>
 
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="eventlet.websocket.WebSocketWSGI">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">eventlet.websocket.</span></span><span class="sig-name descname"><span class="pre">WebSocketWSGI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_frame_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8388608</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.websocket.WebSocketWSGI" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wraps a websocket handler function in a WSGI application.</p>
+<p>Use it like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@websocket</span><span class="o">.</span><span class="n">WebSocketWSGI</span>
+<span class="k">def</span> <span class="nf">my_handler</span><span class="p">(</span><span class="n">ws</span><span class="p">):</span>
+    <span class="n">from_browser</span> <span class="o">=</span> <span class="n">ws</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+    <span class="n">ws</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;from server&quot;</span><span class="p">)</span>
+</pre></div>
 </div>
+<p>The single argument to the function will be an instance of
+<a class="reference internal" href="#eventlet.websocket.WebSocket" title="eventlet.websocket.WebSocket"><code class="xref py py-class docutils literal notranslate"><span class="pre">WebSocket</span></code></a>.  To close the socket, simply return from the
+function.  Note that the server will log the websocket request at
+the time of closure.</p>
+<p>An optional argument max_frame_length can be given, which will set the
+maximum incoming <em>uncompressed</em> payload length of a frame. By default, this
+is set to 8MiB. Note that excessive values here might create a DOS attack
+vector.</p>
+</dd></dl>
+
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -167,7 +170,7 @@ websocket message.</p>
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
@@ -192,14 +195,15 @@ websocket message.</p>
         <li class="right" >
           <a href="timeout.html" title="timeout – Universal Timeouts"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.31.0 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.32.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">websocket</span></code> – Websocket Server</a></li> 
       </ul>
     </div>
 
     <div class="footer" role="contentinfo">
         &#169; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.2.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

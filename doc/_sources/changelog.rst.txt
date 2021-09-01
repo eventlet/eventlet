@@ -1,3 +1,13 @@
+0.32.0
+======
+* greendns: compatibility with dnspython v2 https://github.com/eventlet/eventlet/pull/722
+* green.ssl: wrap_socket now accepts argument `ciphers` https://github.com/eventlet/eventlet/pull/718
+* websocket: control frames are now always uncompressed per RFC 7692; Thanks to Onno Kortmann
+
+0.31.1
+======
+* ssl: py3.6 using client certificates raised ValueError: check_hostname needs server_hostname argument https://github.com/eventlet/eventlet/pull/705
+
 0.31.0
 ======
 * IMPORTANT: websocket: Limit maximum uncompressed frame length to 8MiB https://github.com/eventlet/eventlet/security/advisories/GHSA-9p9m-jm8w-94p2

@@ -1,18 +1,19 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
-    <title>db_pool – DBAPI 2 database connection pooling &#8212; Eventlet 0.31.0 documentation</title>
-    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>db_pool – DBAPI 2 database connection pooling &#8212; Eventlet 0.32.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
-    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
     <script src="../_static/doctools.js"></script>
-    <script src="../_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -34,8 +35,9 @@
         <li class="right" >
           <a href="debug.html" title="debug – Debugging tools for Eventlet"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.31.0 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.32.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">db_pool</span></code> – DBAPI 2 database connection pooling</a></li> 
       </ul>
     </div>  
 
@@ -44,7 +46,7 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="db-pool-dbapi-2-database-connection-pooling">
+  <section id="db-pool-dbapi-2-database-connection-pooling">
 <h1><code class="xref py py-mod docutils literal notranslate"><span class="pre">db_pool</span></code> – DBAPI 2 database connection pooling<a class="headerlink" href="#db-pool-dbapi-2-database-connection-pooling" title="Permalink to this headline">¶</a></h1>
 <p>The db_pool module is useful for managing database connections.  It provides three primary benefits: cooperative yielding during database operations, concurrency limiting to a database host, and connection reuse.  db_pool is intended to be database-agnostic, compatible with any DB-API 2.0 database module.</p>
 <p><em>It has currently been tested and used with both MySQLdb and psycopg2.</em></p>
@@ -66,7 +68,7 @@
 </pre></div>
 </div>
 <p>After you’ve returned a connection object to the pool, it becomes useless and will raise exceptions if any of its methods are called.</p>
-<div class="section" id="constructor-arguments">
+<section id="constructor-arguments">
 <h2>Constructor Arguments<a class="headerlink" href="#constructor-arguments" title="Permalink to this headline">¶</a></h2>
 <p>In addition to the database credentials, there are a bunch of keyword constructor arguments to the ConnectionPool that are useful.</p>
 <ul class="simple">
@@ -75,8 +77,8 @@
 <li><p>max_age : The lifespan of a connection.  This works much like max_idle, but the timer is measured from the connection’s creation time, and is tracked throughout the connection’s life.  This means that if you take a connection out of the pool and hold on to it for some lengthy operation that exceeds max_age, upon putting the connection back in to the pool, it will be closed.  Like max_idle, max_age will not close connections that are taken out of the pool, and, if set to 0, will cause every connection to be closed when put back in the pool.</p></li>
 <li><p>connect_timeout : How long to wait before raising an exception on connect().  If the database module’s connect() method takes too long, it raises a ConnectTimeout exception from the get() method on the pool.</p></li>
 </ul>
-</div>
-<div class="section" id="databaseconnector">
+</section>
+<section id="databaseconnector">
 <h2>DatabaseConnector<a class="headerlink" href="#databaseconnector" title="Permalink to this headline">¶</a></h2>
 <p>If you want to connect to multiple databases easily (and who doesn’t), the DatabaseConnector is for you.  It’s a pool of pools, containing a ConnectionPool for every host you connect to.</p>
 <p>The constructor arguments are:</p>
@@ -96,25 +98,25 @@
 <p>The rest of the arguments to the DatabaseConnector constructor are passed on to the ConnectionPool.</p>
 <p><em>Caveat: The DatabaseConnector is a bit unfinished, it only suits a subset of use cases.</em></p>
 <span class="target" id="module-eventlet.db_pool"></span><dl class="py class">
-<dt id="eventlet.db_pool.BaseConnectionPool">
-<em class="property">class </em><code class="sig-prename descclassname">eventlet.db_pool.</code><code class="sig-name descname">BaseConnectionPool</code><span class="sig-paren">(</span><em class="sig-param">db_module</em>, <em class="sig-param">min_size=0</em>, <em class="sig-param">max_size=4</em>, <em class="sig-param">max_idle=10</em>, <em class="sig-param">max_age=30</em>, <em class="sig-param">connect_timeout=5</em>, <em class="sig-param">cleanup=&lt;function cleanup_rollback&gt;</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.BaseConnectionPool" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.BaseConnectionPool">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">eventlet.db_pool.</span></span><span class="sig-name descname"><span class="pre">BaseConnectionPool</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">db_module</span></em>, <em class="sig-param"><span class="pre">min_size=0</span></em>, <em class="sig-param"><span class="pre">max_size=4</span></em>, <em class="sig-param"><span class="pre">max_idle=10</span></em>, <em class="sig-param"><span class="pre">max_age=30</span></em>, <em class="sig-param"><span class="pre">connect_timeout=5</span></em>, <em class="sig-param"><span class="pre">cleanup=&lt;function</span> <span class="pre">cleanup_rollback&gt;</span></em>, <em class="sig-param"><span class="pre">*args</span></em>, <em class="sig-param"><span class="pre">**kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.BaseConnectionPool" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="py method">
-<dt id="eventlet.db_pool.BaseConnectionPool.clear">
-<code class="sig-name descname">clear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.BaseConnectionPool.clear" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.BaseConnectionPool.clear">
+<span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.BaseConnectionPool.clear" title="Permalink to this definition">¶</a></dt>
 <dd><p>Close all connections that this pool still holds a reference to,
 and removes all references to them.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.BaseConnectionPool.get">
-<code class="sig-name descname">get</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.BaseConnectionPool.get" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.BaseConnectionPool.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.BaseConnectionPool.get" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return an item from the pool, when one is available.  This may
 cause the calling greenthread to block.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.BaseConnectionPool.item">
-<code class="sig-name descname">item</code><span class="sig-paren">(</span><em class="sig-param">cleanup=&lt;object object&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.BaseConnectionPool.item" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.BaseConnectionPool.item">
+<span class="sig-name descname"><span class="pre">item</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">cleanup=&lt;object</span> <span class="pre">object&gt;</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.BaseConnectionPool.item" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get an object out of the pool, for use with with statement.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">pools</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pool</span> <span class="o">=</span> <span class="n">pools</span><span class="o">.</span><span class="n">TokenPool</span><span class="p">(</span><span class="n">max_size</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
@@ -129,8 +131,8 @@ cause the calling greenthread to block.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.BaseConnectionPool.put">
-<code class="sig-name descname">put</code><span class="sig-paren">(</span><em class="sig-param">conn</em>, <em class="sig-param">cleanup=&lt;object object&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.BaseConnectionPool.put" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.BaseConnectionPool.put">
+<span class="sig-name descname"><span class="pre">put</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">conn</span></em>, <em class="sig-param"><span class="pre">cleanup=&lt;object</span> <span class="pre">object&gt;</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.BaseConnectionPool.put" title="Permalink to this definition">¶</a></dt>
 <dd><p>Put an item back into the pool, when done.  This may
 cause the putting greenthread to block.</p>
 </dd></dl>
@@ -138,209 +140,209 @@ cause the putting greenthread to block.</p>
 </dd></dl>
 
 <dl class="py exception">
-<dt id="eventlet.db_pool.ConnectTimeout">
-<em class="property">exception </em><code class="sig-prename descclassname">eventlet.db_pool.</code><code class="sig-name descname">ConnectTimeout</code><a class="headerlink" href="#eventlet.db_pool.ConnectTimeout" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.ConnectTimeout">
+<em class="property"><span class="pre">exception</span> </em><span class="sig-prename descclassname"><span class="pre">eventlet.db_pool.</span></span><span class="sig-name descname"><span class="pre">ConnectTimeout</span></span><a class="headerlink" href="#eventlet.db_pool.ConnectTimeout" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt id="eventlet.db_pool.ConnectionPool">
-<code class="sig-prename descclassname">eventlet.db_pool.</code><code class="sig-name descname">ConnectionPool</code><a class="headerlink" href="#eventlet.db_pool.ConnectionPool" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.ConnectionPool">
+<span class="sig-prename descclassname"><span class="pre">eventlet.db_pool.</span></span><span class="sig-name descname"><span class="pre">ConnectionPool</span></span><a class="headerlink" href="#eventlet.db_pool.ConnectionPool" title="Permalink to this definition">¶</a></dt>
 <dd><p>alias of <a class="reference internal" href="#eventlet.db_pool.TpooledConnectionPool" title="eventlet.db_pool.TpooledConnectionPool"><code class="xref py py-class docutils literal notranslate"><span class="pre">eventlet.db_pool.TpooledConnectionPool</span></code></a></p>
 </dd></dl>
 
 <dl class="py class">
-<dt id="eventlet.db_pool.DatabaseConnector">
-<em class="property">class </em><code class="sig-prename descclassname">eventlet.db_pool.</code><code class="sig-name descname">DatabaseConnector</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">module</span></em>, <em class="sig-param"><span class="n">credentials</span></em>, <em class="sig-param"><span class="n">conn_pool</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.DatabaseConnector" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.DatabaseConnector">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">eventlet.db_pool.</span></span><span class="sig-name descname"><span class="pre">DatabaseConnector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">credentials</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conn_pool</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.DatabaseConnector" title="Permalink to this definition">¶</a></dt>
 <dd><p>This is an object which will maintain a collection of database
 connection pools on a per-host basis.</p>
 <dl class="py method">
-<dt id="eventlet.db_pool.DatabaseConnector.credentials_for">
-<code class="sig-name descname">credentials_for</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">host</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.DatabaseConnector.credentials_for" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.DatabaseConnector.credentials_for">
+<span class="sig-name descname"><span class="pre">credentials_for</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">host</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.DatabaseConnector.credentials_for" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.DatabaseConnector.get">
-<code class="sig-name descname">get</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">host</span></em>, <em class="sig-param"><span class="n">dbname</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.DatabaseConnector.get" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.DatabaseConnector.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">host</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dbname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.DatabaseConnector.get" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a ConnectionPool to the target host and schema.</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
-<dt id="eventlet.db_pool.GenericConnectionWrapper">
-<em class="property">class </em><code class="sig-prename descclassname">eventlet.db_pool.</code><code class="sig-name descname">GenericConnectionWrapper</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">baseconn</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">eventlet.db_pool.</span></span><span class="sig-name descname"><span class="pre">GenericConnectionWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">baseconn</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="py method">
-<dt id="eventlet.db_pool.GenericConnectionWrapper.affected_rows">
-<code class="sig-name descname">affected_rows</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.affected_rows" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper.affected_rows">
+<span class="sig-name descname"><span class="pre">affected_rows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.affected_rows" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.GenericConnectionWrapper.autocommit">
-<code class="sig-name descname">autocommit</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.autocommit" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper.autocommit">
+<span class="sig-name descname"><span class="pre">autocommit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.autocommit" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.GenericConnectionWrapper.begin">
-<code class="sig-name descname">begin</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.begin" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper.begin">
+<span class="sig-name descname"><span class="pre">begin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.begin" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.GenericConnectionWrapper.change_user">
-<code class="sig-name descname">change_user</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.change_user" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper.change_user">
+<span class="sig-name descname"><span class="pre">change_user</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.change_user" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.GenericConnectionWrapper.character_set_name">
-<code class="sig-name descname">character_set_name</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.character_set_name" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper.character_set_name">
+<span class="sig-name descname"><span class="pre">character_set_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.character_set_name" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.GenericConnectionWrapper.close">
-<code class="sig-name descname">close</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.close" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper.close">
+<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.close" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.GenericConnectionWrapper.commit">
-<code class="sig-name descname">commit</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.commit" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper.commit">
+<span class="sig-name descname"><span class="pre">commit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.commit" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.GenericConnectionWrapper.cursor">
-<code class="sig-name descname">cursor</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.cursor" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper.cursor">
+<span class="sig-name descname"><span class="pre">cursor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.cursor" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.GenericConnectionWrapper.dump_debug_info">
-<code class="sig-name descname">dump_debug_info</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.dump_debug_info" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper.dump_debug_info">
+<span class="sig-name descname"><span class="pre">dump_debug_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.dump_debug_info" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.GenericConnectionWrapper.errno">
-<code class="sig-name descname">errno</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.errno" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper.errno">
+<span class="sig-name descname"><span class="pre">errno</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.errno" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.GenericConnectionWrapper.error">
-<code class="sig-name descname">error</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.error" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper.error">
+<span class="sig-name descname"><span class="pre">error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.error" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.GenericConnectionWrapper.errorhandler">
-<code class="sig-name descname">errorhandler</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.errorhandler" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper.errorhandler">
+<span class="sig-name descname"><span class="pre">errorhandler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.errorhandler" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.GenericConnectionWrapper.insert_id">
-<code class="sig-name descname">insert_id</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.insert_id" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper.insert_id">
+<span class="sig-name descname"><span class="pre">insert_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.insert_id" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.GenericConnectionWrapper.literal">
-<code class="sig-name descname">literal</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.literal" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper.literal">
+<span class="sig-name descname"><span class="pre">literal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.literal" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.GenericConnectionWrapper.ping">
-<code class="sig-name descname">ping</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.ping" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper.ping">
+<span class="sig-name descname"><span class="pre">ping</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.ping" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.GenericConnectionWrapper.query">
-<code class="sig-name descname">query</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.query" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper.query">
+<span class="sig-name descname"><span class="pre">query</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.query" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.GenericConnectionWrapper.rollback">
-<code class="sig-name descname">rollback</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.rollback" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper.rollback">
+<span class="sig-name descname"><span class="pre">rollback</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.rollback" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.GenericConnectionWrapper.select_db">
-<code class="sig-name descname">select_db</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.select_db" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper.select_db">
+<span class="sig-name descname"><span class="pre">select_db</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.select_db" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.GenericConnectionWrapper.server_capabilities">
-<code class="sig-name descname">server_capabilities</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.server_capabilities" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper.server_capabilities">
+<span class="sig-name descname"><span class="pre">server_capabilities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.server_capabilities" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.GenericConnectionWrapper.set_character_set">
-<code class="sig-name descname">set_character_set</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.set_character_set" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper.set_character_set">
+<span class="sig-name descname"><span class="pre">set_character_set</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.set_character_set" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.GenericConnectionWrapper.set_isolation_level">
-<code class="sig-name descname">set_isolation_level</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.set_isolation_level" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper.set_isolation_level">
+<span class="sig-name descname"><span class="pre">set_isolation_level</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.set_isolation_level" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.GenericConnectionWrapper.set_server_option">
-<code class="sig-name descname">set_server_option</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.set_server_option" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper.set_server_option">
+<span class="sig-name descname"><span class="pre">set_server_option</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.set_server_option" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.GenericConnectionWrapper.set_sql_mode">
-<code class="sig-name descname">set_sql_mode</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.set_sql_mode" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper.set_sql_mode">
+<span class="sig-name descname"><span class="pre">set_sql_mode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.set_sql_mode" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.GenericConnectionWrapper.show_warnings">
-<code class="sig-name descname">show_warnings</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.show_warnings" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper.show_warnings">
+<span class="sig-name descname"><span class="pre">show_warnings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.show_warnings" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.GenericConnectionWrapper.shutdown">
-<code class="sig-name descname">shutdown</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.shutdown" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper.shutdown">
+<span class="sig-name descname"><span class="pre">shutdown</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.shutdown" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.GenericConnectionWrapper.sqlstate">
-<code class="sig-name descname">sqlstate</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.sqlstate" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper.sqlstate">
+<span class="sig-name descname"><span class="pre">sqlstate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.sqlstate" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.GenericConnectionWrapper.stat">
-<code class="sig-name descname">stat</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.stat" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper.stat">
+<span class="sig-name descname"><span class="pre">stat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.stat" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.GenericConnectionWrapper.store_result">
-<code class="sig-name descname">store_result</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.store_result" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper.store_result">
+<span class="sig-name descname"><span class="pre">store_result</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.store_result" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.GenericConnectionWrapper.string_literal">
-<code class="sig-name descname">string_literal</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.string_literal" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper.string_literal">
+<span class="sig-name descname"><span class="pre">string_literal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.string_literal" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.GenericConnectionWrapper.thread_id">
-<code class="sig-name descname">thread_id</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.thread_id" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper.thread_id">
+<span class="sig-name descname"><span class="pre">thread_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.thread_id" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.GenericConnectionWrapper.use_result">
-<code class="sig-name descname">use_result</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.use_result" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper.use_result">
+<span class="sig-name descname"><span class="pre">use_result</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.use_result" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.GenericConnectionWrapper.warning_count">
-<code class="sig-name descname">warning_count</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.warning_count" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.GenericConnectionWrapper.warning_count">
+<span class="sig-name descname"><span class="pre">warning_count</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.GenericConnectionWrapper.warning_count" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
-<dt id="eventlet.db_pool.PooledConnectionWrapper">
-<em class="property">class </em><code class="sig-prename descclassname">eventlet.db_pool.</code><code class="sig-name descname">PooledConnectionWrapper</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">baseconn</span></em>, <em class="sig-param"><span class="n">pool</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.PooledConnectionWrapper" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.PooledConnectionWrapper">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">eventlet.db_pool.</span></span><span class="sig-name descname"><span class="pre">PooledConnectionWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">baseconn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pool</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.PooledConnectionWrapper" title="Permalink to this definition">¶</a></dt>
 <dd><p>A connection wrapper where:
 - the close method returns the connection to the pool instead of closing it directly
 - <code class="docutils literal notranslate"><span class="pre">bool(conn)</span></code> returns a reasonable value
 - returns itself to the pool if it gets garbage collected</p>
 <dl class="py method">
-<dt id="eventlet.db_pool.PooledConnectionWrapper.close">
-<code class="sig-name descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.PooledConnectionWrapper.close" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.PooledConnectionWrapper.close">
+<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.PooledConnectionWrapper.close" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the connection to the pool, and remove the
 reference to it so that you can’t use it again through this
 wrapper object.</p>
@@ -349,17 +351,17 @@ wrapper object.</p>
 </dd></dl>
 
 <dl class="py class">
-<dt id="eventlet.db_pool.RawConnectionPool">
-<em class="property">class </em><code class="sig-prename descclassname">eventlet.db_pool.</code><code class="sig-name descname">RawConnectionPool</code><span class="sig-paren">(</span><em class="sig-param">db_module</em>, <em class="sig-param">min_size=0</em>, <em class="sig-param">max_size=4</em>, <em class="sig-param">max_idle=10</em>, <em class="sig-param">max_age=30</em>, <em class="sig-param">connect_timeout=5</em>, <em class="sig-param">cleanup=&lt;function cleanup_rollback&gt;</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.RawConnectionPool" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.RawConnectionPool">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">eventlet.db_pool.</span></span><span class="sig-name descname"><span class="pre">RawConnectionPool</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">db_module</span></em>, <em class="sig-param"><span class="pre">min_size=0</span></em>, <em class="sig-param"><span class="pre">max_size=4</span></em>, <em class="sig-param"><span class="pre">max_idle=10</span></em>, <em class="sig-param"><span class="pre">max_age=30</span></em>, <em class="sig-param"><span class="pre">connect_timeout=5</span></em>, <em class="sig-param"><span class="pre">cleanup=&lt;function</span> <span class="pre">cleanup_rollback&gt;</span></em>, <em class="sig-param"><span class="pre">*args</span></em>, <em class="sig-param"><span class="pre">**kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.RawConnectionPool" title="Permalink to this definition">¶</a></dt>
 <dd><p>A pool which gives out plain database connections.</p>
 <dl class="py method">
-<dt id="eventlet.db_pool.RawConnectionPool.connect">
-<em class="property">classmethod </em><code class="sig-name descname">connect</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">db_module</span></em>, <em class="sig-param"><span class="n">connect_timeout</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.RawConnectionPool.connect" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.RawConnectionPool.connect">
+<em class="property"><span class="pre">classmethod</span> </em><span class="sig-name descname"><span class="pre">connect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connect_timeout</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.RawConnectionPool.connect" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.RawConnectionPool.create">
-<code class="sig-name descname">create</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.RawConnectionPool.create" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.RawConnectionPool.create">
+<span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.RawConnectionPool.create" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a new pool item.  In order for the pool to
 function, either this method must be overriden in a subclass
 or the pool must be constructed with the <cite>create</cite> argument.
@@ -377,18 +379,18 @@ called a second time.</p>
 </dd></dl>
 
 <dl class="py class">
-<dt id="eventlet.db_pool.TpooledConnectionPool">
-<em class="property">class </em><code class="sig-prename descclassname">eventlet.db_pool.</code><code class="sig-name descname">TpooledConnectionPool</code><span class="sig-paren">(</span><em class="sig-param">db_module</em>, <em class="sig-param">min_size=0</em>, <em class="sig-param">max_size=4</em>, <em class="sig-param">max_idle=10</em>, <em class="sig-param">max_age=30</em>, <em class="sig-param">connect_timeout=5</em>, <em class="sig-param">cleanup=&lt;function cleanup_rollback&gt;</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.TpooledConnectionPool" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.TpooledConnectionPool">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">eventlet.db_pool.</span></span><span class="sig-name descname"><span class="pre">TpooledConnectionPool</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">db_module</span></em>, <em class="sig-param"><span class="pre">min_size=0</span></em>, <em class="sig-param"><span class="pre">max_size=4</span></em>, <em class="sig-param"><span class="pre">max_idle=10</span></em>, <em class="sig-param"><span class="pre">max_age=30</span></em>, <em class="sig-param"><span class="pre">connect_timeout=5</span></em>, <em class="sig-param"><span class="pre">cleanup=&lt;function</span> <span class="pre">cleanup_rollback&gt;</span></em>, <em class="sig-param"><span class="pre">*args</span></em>, <em class="sig-param"><span class="pre">**kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.TpooledConnectionPool" title="Permalink to this definition">¶</a></dt>
 <dd><p>A pool which gives out <a class="reference internal" href="../threading.html#eventlet.tpool.Proxy" title="eventlet.tpool.Proxy"><code class="xref py py-class docutils literal notranslate"><span class="pre">Proxy</span></code></a>-based database
 connections.</p>
 <dl class="py method">
-<dt id="eventlet.db_pool.TpooledConnectionPool.connect">
-<em class="property">classmethod </em><code class="sig-name descname">connect</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">db_module</span></em>, <em class="sig-param"><span class="n">connect_timeout</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.TpooledConnectionPool.connect" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.TpooledConnectionPool.connect">
+<em class="property"><span class="pre">classmethod</span> </em><span class="sig-name descname"><span class="pre">connect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connect_timeout</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.TpooledConnectionPool.connect" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="eventlet.db_pool.TpooledConnectionPool.create">
-<code class="sig-name descname">create</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.TpooledConnectionPool.create" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.TpooledConnectionPool.create">
+<span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.TpooledConnectionPool.create" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a new pool item.  In order for the pool to
 function, either this method must be overriden in a subclass
 or the pool must be constructed with the <cite>create</cite> argument.
@@ -406,14 +408,15 @@ called a second time.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="eventlet.db_pool.cleanup_rollback">
-<code class="sig-prename descclassname">eventlet.db_pool.</code><code class="sig-name descname">cleanup_rollback</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.cleanup_rollback" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="eventlet.db_pool.cleanup_rollback">
+<span class="sig-prename descclassname"><span class="pre">eventlet.db_pool.</span></span><span class="sig-name descname"><span class="pre">cleanup_rollback</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.db_pool.cleanup_rollback" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-</div>
-</div>
+</section>
+</section>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -445,7 +448,7 @@ called a second time.</p>
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
@@ -470,14 +473,15 @@ called a second time.</p>
         <li class="right" >
           <a href="debug.html" title="debug – Debugging tools for Eventlet"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.31.0 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.32.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">db_pool</span></code> – DBAPI 2 database connection pooling</a></li> 
       </ul>
     </div>
 
     <div class="footer" role="contentinfo">
         &#169; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.2.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
