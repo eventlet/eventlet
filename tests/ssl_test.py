@@ -395,3 +395,7 @@ class SSLTest(tests.LimitedTestCase):
         client.send(b"check_hostname works")
         client.recv(64)
         server_coro.wait()
+
+    @tests.skip_if(sys.version_info < (3, 7))
+    def test_context_version_setters(self):
+        tests.run_isolated("ssl_context_version_setters.py")

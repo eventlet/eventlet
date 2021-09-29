@@ -465,11 +465,12 @@ if hasattr(__ssl, 'SSLContext'):
             def verify_mode(self, value):
                 super(_original_sslcontext, _original_sslcontext).verify_mode.__set__(self, value)
 
-            if hasattr(_original_sslcontext, 'maximum_version'):
+            if hasattr(_original_sslcontext, "maximum_version"):
                 @_original_sslcontext.maximum_version.setter
                 def maximum_version(self, value):
                     super(_original_sslcontext, _original_sslcontext).maximum_version.__set__(self, value)
 
+            if hasattr(_original_sslcontext, "minimum_version"):
                 @_original_sslcontext.minimum_version.setter
                 def minimum_version(self, value):
                     super(_original_sslcontext, _original_sslcontext).minimum_version.__set__(self, value)
