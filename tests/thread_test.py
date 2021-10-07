@@ -101,14 +101,37 @@ class Locals(LimitedTestCase):
         # at this point all our coros have terminated
         self.assertEqual(len(refs), 1)
 
-    def test_compat_lock_release(self):
-        # https://github.com/eventlet/eventlet/issues/697
-        for mod in (patcher.original("threading"), thread):
-            try:
-                mod.Lock().release()
-            except RuntimeError as e:
-                # python3
-                assert "release unlocked lock" in str(e).lower(), str((mod, e))
-            except thread.error as e:
-                # python2.7
-                assert "release unlocked lock" in str(e).lower(), str((mod, e))
+
+def test_compat_lock_release():
+    # https://github.com/eventlet/eventlet/issues/697
+    for mod in (patcher.original("threading"), thread):
+        try:
+            mod.Lock().release()
+        except RuntimeError as e:
+            # python3
+            assert "release unlocked lock" in str(e).lower(), str((mod, e))
+        except thread.error as e:
+            # python2.7
+            assert "release unlocked lock" in str(e).lower(), str((mod, e))
+
+
+def test_reinit():
+    # py39+ expects locks to have a _at_fork_reinit() method
+    # https://github.com/eventlet/eventlet/pull/721#pullrequestreview-769377850
+    lk = thread.Lock()
+    lk.acquire()
+    lk._at_fork_reinit()
+    assert lk.acquire(blocking=False)
+    assert not lk.acquire(blocking=False)
+
+    lk = thread.Lock(0)
+    lk.release()
+    lk._at_fork_reinit()
+    assert not lk.acquire(blocking=False)
+
+    lk = thread.Lock(2)
+    lk.acquire()
+    lk._at_fork_reinit()
+    assert lk.acquire(blocking=False)
+    assert lk.acquire(blocking=False)
+    assert not lk.acquire(blocking=False)
