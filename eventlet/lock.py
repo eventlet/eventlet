@@ -22,3 +22,7 @@ class Lock(Semaphore):
             raise RuntimeError("release unlocked lock")
 
         return super(Lock, self).release(blocking=blocking)
+
+    def _at_fork_reinit(self):
+        self.counter = 1
+        self._waiters.clear()

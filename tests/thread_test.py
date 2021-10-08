@@ -123,15 +123,3 @@ def test_reinit():
     lk._at_fork_reinit()
     assert lk.acquire(blocking=False)
     assert not lk.acquire(blocking=False)
-
-    lk = thread.Lock(0)
-    lk.release()
-    lk._at_fork_reinit()
-    assert not lk.acquire(blocking=False)
-
-    lk = thread.Lock(2)
-    lk.acquire()
-    lk._at_fork_reinit()
-    assert lk.acquire(blocking=False)
-    assert lk.acquire(blocking=False)
-    assert not lk.acquire(blocking=False)
