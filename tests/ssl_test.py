@@ -396,6 +396,15 @@ class SSLTest(tests.LimitedTestCase):
         client.recv(64)
         server_coro.wait()
 
-    @tests.skip_if(sys.version_info < (3, 7))
-    def test_context_version_setters(self):
-        tests.run_isolated("ssl_context_version_setters.py")
+
+@tests.skip_if(sys.version_info < (3, 7))
+def test_context_version_setters():
+    tests.run_isolated("ssl_context_version_setters.py")
+
+
+def test_context_properties():
+    # https://github.com/eventlet/eventlet/issues/371
+    context = ssl.create_default_context()
+    context.options |= context.options
+
+    tests.run_isolated("ssl_context_properties.py")
