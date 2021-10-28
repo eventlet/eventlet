@@ -3,15 +3,16 @@ from six.moves import _thread as __thread
 import six
 from eventlet.support import greenlets as greenlet
 from eventlet import greenthread
-from eventlet.semaphore import Semaphore as LockType
+from eventlet.lock import Lock
 import sys
 
 
 __patched__ = ['get_ident', 'start_new_thread', 'start_new', 'allocate_lock',
                'allocate', 'exit', 'interrupt_main', 'stack_size', '_local',
-               'LockType', '_count']
+               'LockType', 'Lock', '_count']
 
 error = __thread.error
+LockType = Lock
 __threadcount = 0
 
 
