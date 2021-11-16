@@ -8,7 +8,7 @@ if sys.version_info < (3, 5):
         DeprecationWarning,
     )
 
-version_info = (0, 32, 0)
+version_info = (0, 33, 0)
 __version__ = '.'.join(map(str, version_info))
 # This is to make Debian packaging easier, it ignores import
 # errors of greenlet so that the packager can still at least

@@ -1,3 +1,11 @@
+0.33.0
+======
+* green.thread: unlocked Lock().release() should raise exception, returned True https://github.com/eventlet/eventlet/issues/697
+* wsgi: Don't break HTTP framing during 100-continue handling https://github.com/eventlet/eventlet/pull/578
+* Python 3.10 partial support https://github.com/eventlet/eventlet/pull/715
+* greendns: Create a DNS resolver lazily rather than on import https://github.com/eventlet/eventlet/issues/462
+* ssl: GreenSSLContext minimum_version and maximum_version setters https://github.com/eventlet/eventlet/issues/726
+
 0.32.0
 ======
 * greendns: compatibility with dnspython v2 https://github.com/eventlet/eventlet/pull/722
