@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>greenpool – Green Thread Pools &#8212; Eventlet 0.32.0 documentation</title>
+    <title>greenpool – Green Thread Pools &#8212; Eventlet 0.33.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="event.html" title="event – Cross-greenthread primitive"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.32.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.33.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">greenpool</span></code> – Green Thread Pools</a></li> 
       </ul>
@@ -146,7 +146,7 @@ None; the results of <em>function</em> are not retrievable.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="eventlet.greenpool.GreenPool.starmap">
 <span class="sig-name descname"><span class="pre">starmap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iterable</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.greenpool.GreenPool.starmap" title="Permalink to this definition">¶</a></dt>
-<dd><p>This is the same as <a class="reference external" href="https://docs.python.org/3/library/itertools.html#itertools.starmap" title="(in Python v3.9)"><code class="xref py py-func docutils literal notranslate"><span class="pre">itertools.starmap()</span></code></a>, except that <em>func</em> is
+<dd><p>This is the same as <a class="reference external" href="https://docs.python.org/3/library/itertools.html#itertools.starmap" title="(in Python v3.10)"><code class="xref py py-func docutils literal notranslate"><span class="pre">itertools.starmap()</span></code></a>, except that <em>func</em> is
 executed in a separate green thread for each item, with the concurrency
 limited by the pool’s size. In operation, starmap consumes a constant
 amount of memory, proportional to the size of the pool, and is thus
@@ -218,7 +218,7 @@ suited for iterating over extremely long input lists.</p>
         <li class="right" >
           <a href="event.html" title="event – Cross-greenthread primitive"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.32.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.33.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">greenpool</span></code> – Green Thread Pools</a></li> 
       </ul>

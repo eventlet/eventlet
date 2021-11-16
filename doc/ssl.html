@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Using SSL With Eventlet &#8212; Eventlet 0.32.0 documentation</title>
+    <title>Using SSL With Eventlet &#8212; Eventlet 0.33.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css" />
     
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="examples.html" title="Examples"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.32.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.33.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Using SSL With Eventlet</a></li> 
       </ul>
     </div>  
@@ -59,7 +59,7 @@
 </div>
 <section id="pyopenssl">
 <h2>PyOpenSSL<a class="headerlink" href="#pyopenssl" title="Permalink to this headline">¶</a></h2>
-<p><code class="xref py py-mod docutils literal notranslate"><span class="pre">eventlet.green.OpenSSL</span></code> has exactly the same interface as <a class="reference external" href="https://launchpad.net/pyopenssl">pyOpenSSL</a> <a class="reference external" href="http://pyopenssl.sourceforge.net/pyOpenSSL.html/">(docs)</a>, and works in all versions of Python.  This module is much more powerful than <code class="xref py py-func docutils literal notranslate"><span class="pre">socket.ssl()</span></code>, and may have some advantages over <a class="reference external" href="https://docs.python.org/3/library/ssl.html#module-ssl" title="(in Python v3.9)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ssl</span></code></a>, depending on your needs.</p>
+<p><code class="xref py py-mod docutils literal notranslate"><span class="pre">eventlet.green.OpenSSL</span></code> has exactly the same interface as <a class="reference external" href="https://launchpad.net/pyopenssl">pyOpenSSL</a> <a class="reference external" href="http://pyopenssl.sourceforge.net/pyOpenSSL.html/">(docs)</a>, and works in all versions of Python.  This module is much more powerful than <code class="xref py py-func docutils literal notranslate"><span class="pre">socket.ssl()</span></code>, and may have some advantages over <a class="reference external" href="https://docs.python.org/3/library/ssl.html#module-ssl" title="(in Python v3.10)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ssl</span></code></a>, depending on your needs.</p>
 <p>For testing purpose first create self-signed certificate using following commands</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ openssl genrsa 1024 &gt; server.key
 $ openssl req -new -x509 -nodes -sha1 -days 365 -key server.key &gt; server.cert
@@ -177,7 +177,7 @@ $ openssl req -new -x509 -nodes -sha1 -days 365 -key server.key &gt; server.cert
         <li class="right" >
           <a href="examples.html" title="Examples"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.32.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.33.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Using SSL With Eventlet</a></li> 
       </ul>
     </div>

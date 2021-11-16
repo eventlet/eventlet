@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>timeout – Universal Timeouts &#8212; Eventlet 0.32.0 documentation</title>
+    <title>timeout – Universal Timeouts &#8212; Eventlet 0.33.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="semaphore.html" title="semaphore – Semaphore classes"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.32.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.33.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">timeout</span></code> – Universal Timeouts</a></li> 
       </ul>
@@ -91,7 +91,7 @@ and is only useful if you’re planning to raise it directly.</p>
 <p>There are two Timeout caveats to be aware of:</p>
 <ul class="simple">
 <li><p>If the code block in the try/finally or with-block never cooperatively yields, the timeout cannot be raised.  In Eventlet, this should rarely be a problem, but be aware that you cannot time out CPU-only operations with this class.</p></li>
-<li><p>If the code block catches and doesn’t re-raise <a class="reference external" href="https://docs.python.org/3/library/exceptions.html#BaseException" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseException</span></code></a>  (for example, with <code class="docutils literal notranslate"><span class="pre">except:</span></code>), then it will catch the Timeout exception, and might not abort as intended.</p></li>
+<li><p>If the code block catches and doesn’t re-raise <a class="reference external" href="https://docs.python.org/3/library/exceptions.html#BaseException" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseException</span></code></a>  (for example, with <code class="docutils literal notranslate"><span class="pre">except:</span></code>), then it will catch the Timeout exception, and might not abort as intended.</p></li>
 </ul>
 <p>When catching timeouts, keep in mind that the one you catch may not be the
 one you set; if you plan on silencing a timeout, always check that it’s the
@@ -131,7 +131,7 @@ value.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>seconds</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – seconds before timeout occurs</p></li>
+<li><p><strong>seconds</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a>) – seconds before timeout occurs</p></li>
 <li><p><strong>func</strong> – the callable to execute with a timeout; it must cooperatively yield, or else the timeout will not be able to trigger</p></li>
 <li><p><strong>*args</strong> – positional arguments to pass to <em>func</em></p></li>
 <li><p><strong>**kwds</strong> – keyword arguments to pass to <em>func</em></p></li>
@@ -211,7 +211,7 @@ is passed through to the caller.</p>
         <li class="right" >
           <a href="semaphore.html" title="semaphore – Semaphore classes"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.32.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.33.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">timeout</span></code> – Universal Timeouts</a></li> 
       </ul>

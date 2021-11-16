@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>event – Cross-greenthread primitive &#8212; Eventlet 0.32.0 documentation</title>
+    <title>event – Cross-greenthread primitive &#8212; Eventlet 0.33.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
     
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="db_pool.html" title="db_pool – DBAPI 2 database connection pooling"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.32.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.33.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">event</span></code> – Cross-greenthread primitive</a></li> 
       </ul>
@@ -134,7 +134,7 @@ new stacktrace.</p>
 </pre></div>
 </div>
 <p>If it’s important to preserve the entire original stack trace,
-you must pass in the entire <a class="reference external" href="https://docs.python.org/3/library/sys.html#sys.exc_info" title="(in Python v3.9)"><code class="xref py py-func docutils literal notranslate"><span class="pre">sys.exc_info()</span></code></a> tuple.</p>
+you must pass in the entire <a class="reference external" href="https://docs.python.org/3/library/sys.html#sys.exc_info" title="(in Python v3.10)"><code class="xref py py-func docutils literal notranslate"><span class="pre">sys.exc_info()</span></code></a> tuple.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">sys</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">evt</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">try</span><span class="p">:</span>
@@ -153,7 +153,7 @@ you must pass in the entire <a class="reference external" href="https://docs.pyt
 </div>
 <p>Note that doing so stores a traceback object directly on the
 Event object, which may cause reference cycles. See the
-<a class="reference external" href="https://docs.python.org/3/library/sys.html#sys.exc_info" title="(in Python v3.9)"><code class="xref py py-func docutils literal notranslate"><span class="pre">sys.exc_info()</span></code></a> documentation.</p>
+<a class="reference external" href="https://docs.python.org/3/library/sys.html#sys.exc_info" title="(in Python v3.10)"><code class="xref py py-func docutils literal notranslate"><span class="pre">sys.exc_info()</span></code></a> documentation.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -234,7 +234,7 @@ specifying a timeout for the operation in seconds (or fractions thereof).</p>
         <li class="right" >
           <a href="db_pool.html" title="db_pool – DBAPI 2 database connection pooling"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.32.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.33.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">event</span></code> – Cross-greenthread primitive</a></li> 
       </ul>
