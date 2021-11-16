@@ -322,7 +322,21 @@ class ResolverProxy(object):
         """
         self._hosts = hosts_resolver
         self._filename = filename
-        self.clear()
+        # NOTE(dtantsur): we cannot create a resolver here since this code is
+        # executed on eventlet import. In an environment without DNS, creating
+        # a Resolver will fail making eventlet unusable at all. See
+        # https://github.com/eventlet/eventlet/issues/736 for details.
+        self._cached_resolver = None
+
+    @property
+    def _resolver(self):
+        if self._cached_resolver is None:
+            self.clear()
+        return self._cached_resolver
+
+    @_resolver.setter
+    def _resolver(self, value):
+        self._cached_resolver = value
 
     def clear(self):
         self._resolver = dns.resolver.Resolver(filename=self._filename)

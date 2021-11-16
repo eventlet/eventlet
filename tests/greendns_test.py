@@ -297,8 +297,11 @@ class TestProxyResolver(tests.LimitedTestCase):
 
     def test_clear(self):
         rp = greendns.ResolverProxy()
+        assert rp._cached_resolver is None
         resolver = rp._resolver
+        assert resolver is not None
         rp.clear()
+        assert rp._resolver is not None
         assert rp._resolver != resolver
 
     def _make_mock_hostsresolver(self):
