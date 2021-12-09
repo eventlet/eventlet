@@ -1,5 +1,14 @@
-import imp
+try:
+    import _imp as imp
+except ImportError:
+    import imp
 import sys
+try:
+    # Only for this purpose, it's irrelevant if `os` was already patched.
+    # https://github.com/eventlet/eventlet/pull/661
+    from os import register_at_fork
+except ImportError:
+    register_at_fork = None
 
 import eventlet
 import six
@@ -298,6 +307,7 @@ def monkey_patch(**on):
             # tell us whether or not we succeeded
             pass
 
+    _threading = original('threading')
     imp.acquire_lock()
     try:
         for name, mod in modules_to_patch:
@@ -312,6 +322,28 @@ def monkey_patch(**on):
             for attr_name in deleted:
                 if hasattr(orig_mod, attr_name):
                     delattr(orig_mod, attr_name)
+
+            # https://github.com/eventlet/eventlet/issues/592
+            if name == 'threading' and register_at_fork:
+                def fix_threading_active(
+                    _global_dict=_threading.current_thread.__globals__,
+                    # alias orig_mod as patched to reflect its new state
+                    # https://github.com/eventlet/eventlet/pull/661#discussion_r509877481
+                    _patched=orig_mod,
+                ):
+                    _prefork_active = [None]
+
+                    def before_fork():
+                        _prefork_active[0] = _global_dict['_active']
+                        _global_dict['_active'] = _patched._active
+
+                    def after_fork():
+                        _global_dict['_active'] = _prefork_active[0]
+
+                    register_at_fork(
+                        before=before_fork,
+                        after_in_parent=after_fork)
+                fix_threading_active()
     finally:
         imp.release_lock()
 
@@ -327,6 +359,12 @@ def monkey_patch(**on):
         # calls threading.get_ident() and so is compatible with eventlet.
         import threading
         threading.RLock = threading._PyRLock
+
+    # Issue #508: Since Python 3.7 queue.SimpleQueue is implemented in C,
+    # causing a deadlock.  Replace the C implementation with the Python one.
+    if sys.version_info >= (3, 7):
+        import queue
+        queue.SimpleQueue = queue._PySimpleQueue
 
 
 def is_monkey_patched(module):
@@ -353,18 +391,25 @@ def _green_existing_locks():
     import eventlet.green.thread
     lock_type = type(threading.Lock())
     rlock_type = type(threading.RLock())
-    if sys.version_info[0] >= 3:
+    if hasattr(threading, '_PyRLock'):
+        # this happens on CPython3 and PyPy >= 7.0.0: "py3-style" rlocks, they
+        # are implemented natively in C and RPython respectively
+        py3_style = True
         pyrlock_type = type(threading._PyRLock())
+    else:
+        # this happens on CPython2.7 and PyPy < 7.0.0: "py2-style" rlocks,
+        # they are implemented in pure-python
+        py3_style = False
+        pyrlock_type = None
+
     # We're monkey-patching so there can't be any greenlets yet, ergo our thread
     # ID is the only valid owner possible.
     tid = eventlet.green.thread.get_ident()
     for obj in gc.get_objects():
         if isinstance(obj, rlock_type):
-            if (sys.version_info[0] == 2 and
-                    isinstance(obj._RLock__block, lock_type)):
+            if not py3_style and isinstance(obj._RLock__block, lock_type):
                 _fix_py2_rlock(obj, tid)
-            elif (sys.version_info[0] >= 3 and
-                    not isinstance(obj, pyrlock_type)):
+            elif py3_style and not isinstance(obj, pyrlock_type):
                 _fix_py3_rlock(obj)
 
 

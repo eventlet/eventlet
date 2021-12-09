@@ -42,6 +42,7 @@ from eventlet.green import _socket_nodns
 from eventlet.green import os
 from eventlet.green import time
 from eventlet.green import select
+from eventlet.green import ssl
 import six
 
 
@@ -55,6 +56,7 @@ def import_patched(module_name):
         'time': time,
         'os': os,
         'socket': _socket_nodns,
+        'ssl': ssl,
     }
     return patcher.import_patched(module_name, **modules)
 
@@ -116,6 +118,16 @@ def is_ipv6_addr(host):
 def is_ip_addr(host):
     """Return True if host is a valid IPv4 or IPv6 address"""
     return is_ipv4_addr(host) or is_ipv6_addr(host)
+
+
+# NOTE(ralonsoh): in dnspython v2.0.0, "_compute_expiration" was replaced
+# by "_compute_times".
+if hasattr(dns.query, '_compute_expiration'):
+    def compute_expiration(query, timeout):
+        return query._compute_expiration(timeout)
+else:
+    def compute_expiration(query, timeout):
+        return query._compute_times(timeout)[1]
 
 
 class HostsAnswer(dns.resolver.Answer):
@@ -310,7 +322,21 @@ class ResolverProxy(object):
         """
         self._hosts = hosts_resolver
         self._filename = filename
-        self.clear()
+        # NOTE(dtantsur): we cannot create a resolver here since this code is
+        # executed on eventlet import. In an environment without DNS, creating
+        # a Resolver will fail making eventlet unusable at all. See
+        # https://github.com/eventlet/eventlet/issues/736 for details.
+        self._cached_resolver = None
+
+    @property
+    def _resolver(self):
+        if self._cached_resolver is None:
+            self.clear()
+        return self._cached_resolver
+
+    @_resolver.setter
+    def _resolver(self, value):
+        self._cached_resolver = value
 
     def clear(self):
         self._resolver = dns.resolver.Resolver(filename=self._filename)
@@ -658,8 +684,21 @@ def _net_write(sock, data, expiration):
                 raise dns.exception.Timeout
 
 
+# Test if raise_on_truncation is an argument we should handle.
+# It was newly added in dnspython 2.0
+try:
+    dns.message.from_wire("", raise_on_truncation=True)
+except dns.message.ShortHeader:
+    _handle_raise_on_truncation = True
+except TypeError:
+    # Argument error, there is no argument "raise_on_truncation"
+    _handle_raise_on_truncation = False
+
+
 def udp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
-        af=None, source=None, source_port=0, ignore_unexpected=False):
+        af=None, source=None, source_port=0, ignore_unexpected=False,
+        one_rr_per_rrset=False, ignore_trailing=False,
+        raise_on_truncation=False, sock=None):
     """coro friendly replacement for dns.query.udp
     Return the response obtained after sending a query via UDP.
 
@@ -684,7 +723,21 @@ def udp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
     @type source_port: int
     @param ignore_unexpected: If True, ignore responses from unexpected
     sources.  The default is False.
-    @type ignore_unexpected: bool"""
+    @type ignore_unexpected: bool
+    @param one_rr_per_rrset: If True, put each RR into its own
+    RRset.
+    @type one_rr_per_rrset: bool
+    @param ignore_trailing: If True, ignore trailing
+    junk at end of the received message.
+    @type ignore_trailing: bool
+    @param raise_on_truncation: If True, raise an exception if
+    the TC bit is set.
+    @type raise_on_truncation: bool
+    @param sock: the socket to use for the
+    query.  If None, the default, a socket is created.  Note that
+    if a socket is provided, it must be a nonblocking datagram socket,
+    and the source and source_port are ignored.
+    @type sock: socket.socket | None"""
 
     wire = q.to_wire()
     if af is None:
@@ -706,10 +759,13 @@ def udp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
         if source is not None:
             source = (source, source_port, 0, 0)
 
-    s = socket.socket(af, socket.SOCK_DGRAM)
+    if sock:
+        s = sock
+    else:
+        s = socket.socket(af, socket.SOCK_DGRAM)
     s.settimeout(timeout)
     try:
-        expiration = dns.query._compute_expiration(timeout)
+        expiration = compute_expiration(dns.query, timeout)
         if source is not None:
             s.bind(source)
         while True:
@@ -754,14 +810,23 @@ def udp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
     finally:
         s.close()
 
-    r = dns.message.from_wire(wire, keyring=q.keyring, request_mac=q.mac)
+    if _handle_raise_on_truncation:
+        r = dns.message.from_wire(wire, keyring=q.keyring, request_mac=q.mac,
+                                  one_rr_per_rrset=one_rr_per_rrset,
+                                  ignore_trailing=ignore_trailing,
+                                  raise_on_truncation=raise_on_truncation)
+    else:
+        r = dns.message.from_wire(wire, keyring=q.keyring, request_mac=q.mac,
+                                  one_rr_per_rrset=one_rr_per_rrset,
+                                  ignore_trailing=ignore_trailing)
     if not q.is_response(r):
         raise dns.query.BadResponse()
     return r
 
 
 def tcp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
-        af=None, source=None, source_port=0):
+        af=None, source=None, source_port=0,
+        one_rr_per_rrset=False, ignore_trailing=False, sock=None):
     """coro friendly replacement for dns.query.tcp
     Return the response obtained after sending a query via TCP.
 
@@ -783,7 +848,19 @@ def tcp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
     @type source: string
     @param source_port: The port from which to send the message.
     The default is 0.
-    @type source_port: int"""
+    @type source_port: int
+    @type ignore_unexpected: bool
+    @param one_rr_per_rrset: If True, put each RR into its own
+    RRset.
+    @type one_rr_per_rrset: bool
+    @param ignore_trailing: If True, ignore trailing
+    junk at end of the received message.
+    @type ignore_trailing: bool
+    @param sock: the socket to use for the
+    query.  If None, the default, a socket is created.  Note that
+    if a socket is provided, it must be a nonblocking datagram socket,
+    and the source and source_port are ignored.
+    @type sock: socket.socket | None"""
 
     wire = q.to_wire()
     if af is None:
@@ -799,10 +876,13 @@ def tcp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
         destination = (where, port, 0, 0)
         if source is not None:
             source = (source, source_port, 0, 0)
-    s = socket.socket(af, socket.SOCK_STREAM)
+    if sock:
+        s = sock
+    else:
+        s = socket.socket(af, socket.SOCK_STREAM)
     s.settimeout(timeout)
     try:
-        expiration = dns.query._compute_expiration(timeout)
+        expiration = compute_expiration(dns.query, timeout)
         if source is not None:
             s.bind(source)
         while True:
@@ -827,7 +907,9 @@ def tcp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
         wire = bytes(_net_read(s, l, expiration))
     finally:
         s.close()
-    r = dns.message.from_wire(wire, keyring=q.keyring, request_mac=q.mac)
+    r = dns.message.from_wire(wire, keyring=q.keyring, request_mac=q.mac,
+                              one_rr_per_rrset=one_rr_per_rrset,
+                              ignore_trailing=ignore_trailing)
     if not q.is_response(r):
         raise dns.query.BadResponse()
     return r

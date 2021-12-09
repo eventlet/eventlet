@@ -1,7 +1,14 @@
 import os
+import sys
+import warnings
 
+if sys.version_info < (3, 5):
+    warnings.warn(
+        "Support for your Python version is deprecated and will be removed in the future",
+        DeprecationWarning,
+    )
 
-version_info = (0, 24, 1)
+version_info = (0, 33, 0)
 __version__ = '.'.join(map(str, version_info))
 # This is to make Debian packaging easier, it ignores import
 # errors of greenlet so that the packager can still at least
@@ -21,8 +28,11 @@ if os.environ.get('EVENTLET_IMPORT_VERSION_ONLY') != '1':
     # Helpful when CPython < 3.5 on Linux blocked in `os.waitpid(-1)` before first use of hub.
     # Example: gunicorn
     # https://github.com/eventlet/eventlet/issues/401#issuecomment-327500352
-    import monotonic
-    del monotonic
+    try:
+        import monotonic
+        del monotonic
+    except ImportError:
+        pass
 
     connect = convenience.connect
     listen = convenience.listen

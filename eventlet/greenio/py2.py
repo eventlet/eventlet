@@ -207,7 +207,10 @@ class _SocketDuckForFd(object):
         was_closed = self._mark_as_closed()
         if was_closed:
             return
-        notify_close(self._fileno)
+        if notify_close:
+            # If closing from __del__, notify_close may have
+            # already been cleaned up and set to None
+            notify_close(self._fileno)
         try:
             os.close(self._fileno)
         except:

@@ -9,6 +9,7 @@ import warnings
 import eventlet
 from eventlet import greenio
 from eventlet import support
+from eventlet.corolocal import local
 from eventlet.green import BaseHTTPServer
 from eventlet.green import socket
 import six
@@ -69,19 +70,7 @@ class ChunkReadError(ValueError):
     pass
 
 
-# special flag return value for apps
-class _AlreadyHandled(object):
-
-    def __iter__(self):
-        return self
-
-    def next(self):
-        raise StopIteration
-
-    __next__ = next
-
-
-ALREADY_HANDLED = _AlreadyHandled()
+WSGI_LOCAL = local()
 
 
 class Input(object):
@@ -92,8 +81,7 @@ class Input(object):
                  sock,
                  wfile=None,
                  wfile_line=None,
-                 chunked_input=False,
-                 headers_sent=None):
+                 chunked_input=False):
 
         self.rfile = rfile
         self._sock = sock
@@ -113,9 +101,10 @@ class Input(object):
         self.hundred_continue_headers = None
         self.is_hundred_continue_response_sent = False
 
-        # Hold on to a ref to the response state so we know whether we can
-        # still send the 100 Continue
-        self.headers_sent = headers_sent
+        # handle_one_response should give us a ref to the response state so we
+        # know whether we can still send the 100 Continue; until then, though,
+        # we're flying blind
+        self.headers_sent = None
 
     def send_hundred_continue_response(self):
         if self.headers_sent:
@@ -145,8 +134,12 @@ class Input(object):
         # Reinitialize chunk_length (expect more data)
         self.chunk_length = -1
 
+    @property
+    def should_send_hundred_continue(self):
+        return self.wfile is not None and not self.is_hundred_continue_response_sent
+
     def _do_read(self, reader, length=None):
-        if self.wfile is not None and not self.is_hundred_continue_response_sent:
+        if self.should_send_hundred_continue:
             # 100 Continue response
             self.send_hundred_continue_response()
             self.is_hundred_continue_response_sent = True
@@ -163,7 +156,7 @@ class Input(object):
         return read
 
     def _chunked_read(self, rfile, length=None, use_readline=False):
-        if self.wfile is not None and not self.is_hundred_continue_response_sent:
+        if self.should_send_hundred_continue:
             # 100 Continue response
             self.send_hundred_continue_response()
             self.is_hundred_continue_response_sent = True
@@ -458,13 +451,12 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.close_connection = 1
                 return
 
-        headers_sent = []
-        self.environ = self.get_environ(headers_sent)
+        self.environ = self.get_environ()
         self.application = self.server.app
         try:
             self.server.outstanding_requests += 1
             try:
-                self.handle_one_response(headers_sent)
+                self.handle_one_response()
             except socket.error as e:
                 # Broken pipe, connection reset by peer
                 if support.get_errno(e) not in BROKEN_SOCK:
@@ -472,9 +464,15 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         finally:
             self.server.outstanding_requests -= 1
 
-    def handle_one_response(self, headers_sent):
+    def handle_one_response(self):
         start = time.time()
         headers_set = []
+        headers_sent = []
+        # Grab the request input now; app may try to replace it in the environ
+        request_input = self.environ['eventlet.input']
+        # Push the headers-sent state into the Input so it won't send a
+        # 100 Continue response if we've already started a response.
+        request_input.headers_sent = headers_sent
 
         wfile = self.wfile
         result = None
@@ -551,8 +549,15 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             # Per HTTP RFC standard, header name is case-insensitive.
             # Please, fix your client to ignore header case if possible.
             if self.capitalize_response_headers:
+                if six.PY2:
+                    def cap(x):
+                        return x.capitalize()
+                else:
+                    def cap(x):
+                        return x.encode('latin1').capitalize().decode('latin1')
+
                 response_headers = [
-                    ('-'.join([x.capitalize() for x in key.split('-')]), value)
+                    ('-'.join([cap(x) for x in key.split('-')]), value)
                     for key, value in response_headers]
 
             headers_set[:] = [status, response_headers]
@@ -560,16 +565,19 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
         try:
             try:
+                WSGI_LOCAL.already_handled = False
                 result = self.application(self.environ, start_response)
-                if (isinstance(result, _AlreadyHandled)
-                        or isinstance(getattr(result, '_obj', None), _AlreadyHandled)):
-                    self.close_connection = 1
-                    return
 
                 # Set content-length if possible
-                if not headers_sent and hasattr(result, '__len__') and \
-                        'Content-Length' not in [h for h, _v in headers_set[1]]:
-                    headers_set[1].append(('Content-Length', str(sum(map(len, result)))))
+                if headers_set and not headers_sent and hasattr(result, '__len__'):
+                    # We've got a complete final response
+                    if 'Content-Length' not in [h for h, _v in headers_set[1]]:
+                        headers_set[1].append(('Content-Length', str(sum(map(len, result)))))
+                    if request_input.should_send_hundred_continue:
+                        # We've got a complete final response, and never sent a 100 Continue.
+                        # There's no chance we'll need to read the body as we stream out the
+                        # response, so we can be nice and send a Connection: close header.
+                        self.close_connection = 1
 
                 towrite = []
                 towrite_size = 0
@@ -589,6 +597,9 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                         towrite = []
                         just_written_size = towrite_size
                         towrite_size = 0
+                if WSGI_LOCAL.already_handled:
+                    self.close_connection = 1
+                    return
                 if towrite:
                     just_written_size = towrite_size
                     write(b''.join(towrite))
@@ -607,11 +618,22 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         finally:
             if hasattr(result, 'close'):
                 result.close()
-            request_input = self.environ['eventlet.input']
+            if request_input.should_send_hundred_continue:
+                # We just sent the final response, no 100 Continue. Client may or
+                # may not have started to send a body, and if we keep the connection
+                # open we've seen clients either
+                #   * send a body, then start a new request
+                #   * skip the body and go straight to a new request
+                # Looks like the most broadly compatible option is to close the
+                # connection and let the client retry.
+                # https://curl.se/mail/lib-2004-08/0002.html
+                # Note that we likely *won't* send a Connection: close header at this point
+                self.close_connection = 1
+
             if (request_input.chunked_input or
                     request_input.position < (request_input.content_length or 0)):
-                # Read and discard body if there was no pending 100-continue
-                if not request_input.wfile and self.close_connection == 0:
+                # Read and discard body if connection is going to be reused
+                if self.close_connection == 0:
                     try:
                         request_input.discard()
                     except ChunkReadError as e:
@@ -655,7 +677,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 host = forward + ',' + host
         return (host, port)
 
-    def get_environ(self, headers_sent):
+    def get_environ(self):
         env = self.server.get_environ()
         env['REQUEST_METHOD'] = self.command
         env['SCRIPT_NAME'] = ''
@@ -719,7 +741,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         chunked = env.get('HTTP_TRANSFER_ENCODING', '').lower() == 'chunked'
         env['wsgi.input'] = env['eventlet.input'] = Input(
             self.rfile, length, self.connection, wfile=wfile, wfile_line=wfile_line,
-            chunked_input=chunked, headers_sent=headers_sent)
+            chunked_input=chunked)
         env['eventlet.posthooks'] = []
 
         return env

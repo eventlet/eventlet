@@ -297,8 +297,11 @@ class TestProxyResolver(tests.LimitedTestCase):
 
     def test_clear(self):
         rp = greendns.ResolverProxy()
+        assert rp._cached_resolver is None
         resolver = rp._resolver
+        assert resolver is not None
         rp.clear()
+        assert rp._resolver is not None
         assert rp._resolver != resolver
 
     def _make_mock_hostsresolver(self):
@@ -901,7 +904,7 @@ class TinyDNSTests(tests.LimitedTestCase):
             resolver.nameserver_ports[dnsaddr[0]] = dnsaddr[1]
             response = resolver.query('host.example.com', 'a', tcp=True)
             self.assertIsInstance(response, Answer)
-            self.assertEqual(response.rrset.items[0].address, expected_ip)
+            self.assertEqual(list(response.rrset.items)[0].address, expected_ip)
 
 
 def test_reverse_name():

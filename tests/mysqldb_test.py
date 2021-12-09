@@ -38,6 +38,8 @@ def mysql_requirement(_f):
 
 
 class TestMySQLdb(tests.LimitedTestCase):
+    TEST_TIMEOUT = 5
+
     def setUp(self):
         self._auth = get_database_auth()['MySQLdb']
         self.create_db()

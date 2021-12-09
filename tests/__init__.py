@@ -232,10 +232,10 @@ def check_idle_cpu_usage(duration, allowed_part):
     utime = r2.ru_utime - r1.ru_utime
     stime = r2.ru_stime - r1.ru_stime
 
-    # This check is reliably unreliable on Travis, presumably because of CPU
+    # This check is reliably unreliable on Travis/Github Actions, presumably because of CPU
     # resources being quite restricted by the build environment. The workaround
     # is to apply an arbitrary factor that should be enough to make it work nicely.
-    if os.environ.get('TRAVIS') == 'true':
+    if os.environ.get('CI') == 'true':
         allowed_part *= 5
 
     assert utime + stime < duration * allowed_part, \
@@ -323,8 +323,8 @@ def get_database_auth():
 
 def run_python(path, env=None, args=None, timeout=None, pythonpath_extend=None, expect_pass=False):
     new_argv = [sys.executable]
-    if sys.version_info[:2] <= (2, 6):
-        new_argv += ['-W', 'ignore::DeprecationWarning']
+    if sys.version_info[:2] <= (2, 7):
+        new_argv += ['-W', 'ignore:Python 2 is no longer supported']
     new_env = os.environ.copy()
     new_env.setdefault('eventlet_test_in_progress', 'yes')
     src_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -356,6 +356,9 @@ def run_python(path, env=None, args=None, timeout=None, pythonpath_extend=None, 
     except subprocess.TimeoutExpired:
         p.kill()
         output, _ = p.communicate(timeout=timeout)
+        if expect_pass:
+            sys.stderr.write('Program {0} output:\n---\n{1}\n---\n'.format(path, output.decode()))
+            assert False, 'timed out'
         return '{0}\nFAIL - timed out'.format(output).encode()
 
     if expect_pass:
@@ -380,7 +383,7 @@ def run_isolated(path, prefix='tests/isolated/', **kwargs):
 
 def check_is_timeout(obj):
     value_text = getattr(obj, 'is_timeout', '(missing)')
-    assert obj.is_timeout, 'type={0} str={1} .is_timeout={2}'.format(type(obj), str(obj), value_text)
+    assert eventlet.is_timeout(obj), 'type={0} str={1} .is_timeout={2}'.format(type(obj), str(obj), value_text)
 
 
 @contextlib.contextmanager

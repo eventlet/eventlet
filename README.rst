@@ -16,11 +16,11 @@ Quick Example
 
 Here's something you can try right on the command line::
 
-    % python
+    % python3
     >>> import eventlet
-    >>> from eventlet.green import urllib2
-    >>> gt = eventlet.spawn(urllib2.urlopen, 'http://eventlet.net')
-    >>> gt2 = eventlet.spawn(urllib2.urlopen, 'http://secondlife.com')
+    >>> from eventlet.green.urllib.request import urlopen
+    >>> gt = eventlet.spawn(urlopen, 'http://eventlet.net')
+    >>> gt2 = eventlet.spawn(urlopen, 'http://secondlife.com')
     >>> gt2.wait()
     >>> gt.wait()
 
@@ -62,12 +62,19 @@ If you have a project that uses Eventlet with Twisted, your options are:
 
 Apologies for any inconvenience.
 
+Supported Python versions
+=========================
+
+Currently CPython 2.7 and 3.4+ are supported, but **2.7 and 3.4 support is deprecated and will be removed in the future**, only CPython 3.5+ support will remain.
 
 Flair
 =====
 
-.. image:: https://travis-ci.org/eventlet/eventlet.svg?branch=master
-    :target: https://travis-ci.org/eventlet/eventlet
+.. image:: https://img.shields.io/pypi/v/eventlet
+    :target: https://pypi.org/project/eventlet/
+
+.. image:: https://img.shields.io/github/workflow/status/eventlet/eventlet/test/master
+    :target: https://github.com/eventlet/eventlet/actions?query=workflow%3Atest+branch%3Amaster
 
 .. image:: https://codecov.io/gh/eventlet/eventlet/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/eventlet/eventlet

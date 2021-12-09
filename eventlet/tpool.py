@@ -14,7 +14,10 @@
 # limitations under the License.
 
 import atexit
-import imp
+try:
+    import _imp as imp
+except ImportError:
+    import imp
 import os
 import sys
 import traceback

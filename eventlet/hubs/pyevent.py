@@ -1,6 +1,7 @@
 import sys
 import traceback
 import types
+import warnings
 
 from eventlet.support import greenlets as greenlet
 import six
@@ -57,6 +58,11 @@ class Hub(BaseHub):
             2,
             lambda signalnum, frame: self.greenlet.parent.throw(KeyboardInterrupt))
         self.events_to_add = []
+
+        warnings.warn(
+            "ACTION REQUIRED eventlet pyevent hub is deprecated and will be removed soon",
+            DeprecationWarning,
+        )
 
     def dispatch(self):
         loop = event.loop

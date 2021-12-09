@@ -634,12 +634,15 @@ class TestGreenSocket(tests.LimitedTestCase):
         sock1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         fd = sock1.fd.fileno()
         flags = fcntl.fcntl(fd, fcntl.F_GETFL)
-        flags = fcntl.fcntl(fd, fcntl.F_SETFL, flags & ~os.O_NONBLOCK)
-        assert flags & os.O_NONBLOCK == 0
+        # on SPARC, nonblocking mode sets O_NDELAY as well
+        fcntl.fcntl(fd, fcntl.F_SETFL, flags & ~(os.O_NONBLOCK
+                                                 | os.O_NDELAY))
+        flags = fcntl.fcntl(fd, fcntl.F_GETFL)
+        assert flags & (os.O_NONBLOCK | os.O_NDELAY) == 0
 
         sock2 = socket.socket(sock1.fd, set_nonblocking=False)
         flags = fcntl.fcntl(sock2.fd.fileno(), fcntl.F_GETFL)
-        assert flags & os.O_NONBLOCK == 0
+        assert flags & (os.O_NONBLOCK | os.O_NDELAY) == 0
 
     def test_sockopt_interface(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -922,7 +925,10 @@ def test_set_nonblocking():
     assert orig_flags & os.O_NONBLOCK == 0
     greenio.set_nonblocking(sock)
     new_flags = fcntl.fcntl(fileno, fcntl.F_GETFL)
-    assert new_flags == (orig_flags | os.O_NONBLOCK)
+    # on SPARC, O_NDELAY is set as well, and it might be a superset
+    # of O_NONBLOCK
+    assert (new_flags == (orig_flags | os.O_NONBLOCK)
+            or new_flags == (orig_flags | os.O_NONBLOCK | os.O_NDELAY))
 
 
 def test_socket_del_fails_gracefully_when_not_fully_initialized():

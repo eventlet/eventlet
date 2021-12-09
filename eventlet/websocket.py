@@ -38,6 +38,7 @@ for _mod in ('wsaccel.utf8validator', 'autobahn.utf8validator'):
         break
 
 ACCEPTABLE_CLIENT_ERRORS = set((errno.ECONNRESET, errno.EPIPE))
+DEFAULT_MAX_FRAME_LENGTH = 8 << 20
 
 __all__ = ["WebSocketWSGI", "WebSocket"]
 PROTOCOL_GUID = b'258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
@@ -75,14 +76,20 @@ class WebSocketWSGI(object):
     :class:`WebSocket`.  To close the socket, simply return from the
     function.  Note that the server will log the websocket request at
     the time of closure.
+
+    An optional argument max_frame_length can be given, which will set the
+    maximum incoming *uncompressed* payload length of a frame. By default, this
+    is set to 8MiB. Note that excessive values here might create a DOS attack
+    vector.
     """
 
-    def __init__(self, handler):
+    def __init__(self, handler, max_frame_length=DEFAULT_MAX_FRAME_LENGTH):
         self.handler = handler
         self.protocol_version = None
         self.support_legacy_versions = True
         self.supported_protocols = []
         self.origin_checker = None
+        self.max_frame_length = max_frame_length
 
     @classmethod
     def configured(cls,
@@ -135,7 +142,8 @@ class WebSocketWSGI(object):
         ws._send_closing_frame(True)
         # use this undocumented feature of eventlet.wsgi to ensure that it
         # doesn't barf on the fact that we didn't call start_response
-        return wsgi.ALREADY_HANDLED
+        wsgi.WSGI_LOCAL.already_handled = True
+        return []
 
     def _handle_legacy_request(self, environ):
         if 'eventlet.input' in environ:
@@ -323,7 +331,8 @@ class WebSocketWSGI(object):
         sock.sendall(b'\r\n'.join(handshake_reply) + b'\r\n\r\n')
         return RFC6455WebSocket(sock, environ, self.protocol_version,
                                 protocol=negotiated_protocol,
-                                extensions=parsed_extensions)
+                                extensions=parsed_extensions,
+                                max_frame_length=self.max_frame_length)
 
     def _extract_number(self, value):
         """
@@ -502,7 +511,8 @@ class ProtocolError(ValueError):
 
 
 class RFC6455WebSocket(WebSocket):
-    def __init__(self, sock, environ, version=13, protocol=None, client=False, extensions=None):
+    def __init__(self, sock, environ, version=13, protocol=None, client=False, extensions=None,
+                 max_frame_length=DEFAULT_MAX_FRAME_LENGTH):
         super(RFC6455WebSocket, self).__init__(sock, environ, version)
         self.iterator = self._iter_frames()
         self.client = client
@@ -511,6 +521,8 @@ class RFC6455WebSocket(WebSocket):
 
         self._deflate_enc = None
         self._deflate_dec = None
+        self.max_frame_length = max_frame_length
+        self._remote_close_data = None
 
     class UTF8Decoder(object):
         def __init__(self):
@@ -582,12 +594,13 @@ class RFC6455WebSocket(WebSocket):
         return data
 
     class Message(object):
-        def __init__(self, opcode, decoder=None, decompressor=None):
+        def __init__(self, opcode, max_frame_length, decoder=None, decompressor=None):
             self.decoder = decoder
             self.data = []
             self.finished = False
             self.opcode = opcode
             self.decompressor = decompressor
+            self.max_frame_length = max_frame_length
 
         def push(self, data, final=False):
             self.finished = final
@@ -596,7 +609,12 @@ class RFC6455WebSocket(WebSocket):
         def getvalue(self):
             data = b"".join(self.data)
             if not self.opcode & 8 and self.decompressor:
-                data = self.decompressor.decompress(data + b'\x00\x00\xff\xff')
+                data = self.decompressor.decompress(data + b"\x00\x00\xff\xff", self.max_frame_length)
+                if self.decompressor.unconsumed_tail:
+                    raise FailedConnectionError(
+                        1009,
+                        "Incoming compressed frame exceeds length limit of {} bytes.".format(self.max_frame_length))
+
             if self.decoder:
                 data = self.decoder.decode(data, self.finished)
             return data
@@ -610,6 +628,7 @@ class RFC6455WebSocket(WebSocket):
 
     def _handle_control_frame(self, opcode, data):
         if opcode == 8:  # connection close
+            self._remote_close_data = data
             if not data:
                 status = 1000
             elif len(data) > 1:
@@ -709,13 +728,17 @@ class RFC6455WebSocket(WebSocket):
             length = struct.unpack('!H', recv(2))[0]
         elif length == 127:
             length = struct.unpack('!Q', recv(8))[0]
+
+        if length > self.max_frame_length:
+            raise FailedConnectionError(1009, "Incoming frame of {} bytes is above length limit of {} bytes.".format(
+                length, self.max_frame_length))
         if masked:
             mask = struct.unpack('!BBBB', recv(4))
         received = 0
         if not message or opcode & 8:
             decoder = self.UTF8Decoder() if opcode == 1 else None
             decompressor = self._get_permessage_deflate_dec(rsv1)
-            message = self.Message(opcode, decoder=decoder, decompressor=decompressor)
+            message = self.Message(opcode, self.max_frame_length, decoder=decoder, decompressor=decompressor)
         if not length:
             message.push(b'', final=finished)
         else:
@@ -743,7 +766,17 @@ class RFC6455WebSocket(WebSocket):
 
         compress_bit = 0
         compressor = self._get_permessage_deflate_enc()
-        if message and compressor:
+        # Control frames are identified by opcodes where the most significant
+        # bit of the opcode is 1.  Currently defined opcodes for control frames
+        # include 0x8 (Close), 0x9 (Ping), and 0xA (Pong).  Opcodes 0xB-0xF are
+        # reserved for further control frames yet to be defined.
+        # https://datatracker.ietf.org/doc/html/rfc6455#section-5.5
+        is_control_frame = (control_code or 0) & 8
+        # An endpoint MUST NOT set the "Per-Message Compressed" bit of control
+        # frames and non-first fragments of a data message.  An endpoint
+        # receiving such a frame MUST _Fail the WebSocket Connection_.
+        # https://datatracker.ietf.org/doc/html/rfc7692#section-6.1
+        if message and compressor and not is_control_frame:
             message = compressor.compress(message)
             message += compressor.flush(zlib.Z_SYNC_FLUSH)
             assert message[-4:] == b"\x00\x00\xff\xff"
