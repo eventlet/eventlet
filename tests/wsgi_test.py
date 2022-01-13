@@ -1862,6 +1862,20 @@ class TestHttpd(_TestBase):
         except Exception:
             assert False, self.logfile.getvalue()
 
+    def test_no_transfer_encoding_in_empty_response(self):
+        def app(environ, start_response):
+            write = start_response("204 OK", [])
+            write(b"")
+
+        self.spawn_server(site=app)
+        sock = eventlet.connect(self.server_addr)
+        sock.sendall(b"DELETE /foo HTTP/1.1\r\n\r\n")
+
+        response = read_http(sock)
+        sock.close()
+        print(response)
+        assert "transfer-encoding" not in response.headers_lower
+
 
 def read_headers(sock):
     fd = sock.makefile('rb')
