@@ -29,19 +29,25 @@ _is_under_py_3_7 = sys.version_info < (3, 7)
 
 @contextmanager
 def _original_ssl_context(*args, **kwargs):
-    tmp_sslcontext = _original_wrap_socket.__globals__.get('SSLContext', None)
-    tmp_sslsocket = _original_sslsocket._create.__globals__.get('SSLSocket', None)
-    _original_sslsocket._create.__globals__['SSLSocket'] = _original_sslsocket
-    _original_wrap_socket.__globals__['SSLContext'] = _original_sslcontext
+    tmp_sslcontext = _original_wrap_socket.__globals__.get("SSLContext", None)
+    tmp_sslsocket = _original_sslsocket.sslsocket_class._create.__globals__.get(
+        "SSLSocket", None
+    )
+    _original_sslsocket.sslsocket_class._create.__globals__[
+        "SSLSocket"
+    ] = _original_sslsocket
+    _original_wrap_socket.__globals__["SSLContext"] = _original_sslcontext
     try:
         yield
     finally:
-        _original_wrap_socket.__globals__['SSLContext'] = tmp_sslcontext
-        _original_sslsocket._create.__globals__['SSLSocket'] = tmp_sslsocket
+        _original_wrap_socket.__globals__["SSLContext"] = tmp_sslcontext
+        _original_sslsocket.sslsocket_class._create.__globals__[
+            "SSLSocket"
+        ] = tmp_sslsocket
 
 
 class GreenSSLSocket(_original_sslsocket):
-    """ This is a green version of the SSLSocket class from the ssl module added
+    """This is a green version of the SSLSocket class from the ssl module added
     in 2.6.  For documentation on it, please see the Python standard
     documentation.
 
