@@ -447,35 +447,33 @@ if hasattr(__ssl, 'SSLContext'):
 
         # https://github.com/eventlet/eventlet/issues/371
         # Thanks to Gevent developers for sharing patch to this problem.
-        if hasattr(_original_sslcontext.options, 'setter'):
-            # In 3.6, these became properties. They want to access the
-            # property __set__ method in the superclass, and they do so by using
-            # super(SSLContext, SSLContext). But we rebind SSLContext when we monkey
-            # patch, which causes infinite recursion.
-            # https://github.com/python/cpython/commit/328067c468f82e4ec1b5c510a4e84509e010f296
-            @_original_sslcontext.options.setter
-            def options(self, value):
-                super().options.__set__(self, value)
+        # if hasattr(_original_sslcontext.options, 'setter'):
+        #    # In 3.6, these became properties. They want to access the
+        #    # property __set__ method in the superclass, and they do so by using
+        #    # super(SSLContext, SSLContext). But we rebind SSLContext when we monkey
+        #    # patch, which causes infinite recursion.
+        #    # https://github.com/python/cpython/commit/328067c468f82e4ec1b5c510a4e84509e010f296
+        #    @_original_sslcontext.options.setter
+        #    def options(self, value):
+        #        super(_original_sslcontext, _original_sslcontext).options.__set__(self, value)
 
-            @_original_sslcontext.verify_flags.setter
-            def verify_flags(self, value):
-                super().verify_flags.__set__(self, value)
+        #    @_original_sslcontext.verify_flags.setter
+        #    def verify_flags(self, value):
+        #        super(_original_sslcontext, _original_sslcontext).verify_flags.__set__(self, value)
 
-            @_original_sslcontext.verify_mode.setter
-            def verify_mode(self, value):
-                super().verify_mode.__set__(self, value)
+        #    @_original_sslcontext.verify_mode.setter
+        #    def verify_mode(self, value):
+        #        super(_original_sslcontext, _original_sslcontext).verify_mode.__set__(self, value)
 
-            if hasattr(_original_sslcontext, "maximum_version"):
+        #    if hasattr(_original_sslcontext, "maximum_version"):
+        #        @_original_sslcontext.maximum_version.setter
+        #        def maximum_version(self, value):
+        #            super(_original_sslcontext, _original_sslcontext).maximum_version.__set__(self, value)
 
-                @_original_sslcontext.maximum_version.setter
-                def maximum_version(self, value):
-                    super().maximum_version.__set__(self, value)
-
-            if hasattr(_original_sslcontext, "minimum_version"):
-
-                @_original_sslcontext.minimum_version.setter
-                def minimum_version(self, value):
-                    super().minimum_version.__set__(self, value)
+        #    if hasattr(_original_sslcontext, "minimum_version"):
+        #        @_original_sslcontext.minimum_version.setter
+        #        def minimum_version(self, value):
+        #            super(_original_sslcontext, _original_sslcontext).minimum_version.__set__(self, value)
 
     SSLContext = GreenSSLContext
 
