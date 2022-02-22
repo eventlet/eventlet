@@ -455,29 +455,31 @@ if hasattr(__ssl, 'SSLContext'):
             # https://github.com/python/cpython/commit/328067c468f82e4ec1b5c510a4e84509e010f296
             @_original_sslcontext.options.setter
             def options(self, value):
-                super(_original_sslcontext, _original_sslcontext).options.__set__(self, value)
+                super().options.__set__(self, value)
 
             @_original_sslcontext.verify_flags.setter
             def verify_flags(self, value):
-                super(_original_sslcontext, _original_sslcontext).verify_flags.__set__(self, value)
+                super().verify_flags.__set__(self, value)
 
             @_original_sslcontext.verify_mode.setter
             def verify_mode(self, value):
-                super(_original_sslcontext, _original_sslcontext).verify_mode.__set__(self, value)
+                super().verify_mode.__set__(self, value)
 
             if hasattr(_original_sslcontext, "maximum_version"):
+
                 @_original_sslcontext.maximum_version.setter
                 def maximum_version(self, value):
-                    super(_original_sslcontext, _original_sslcontext).maximum_version.__set__(self, value)
+                    super().maximum_version.__set__(self, value)
 
             if hasattr(_original_sslcontext, "minimum_version"):
+
                 @_original_sslcontext.minimum_version.setter
                 def minimum_version(self, value):
-                    super(_original_sslcontext, _original_sslcontext).minimum_version.__set__(self, value)
+                    super().minimum_version.__set__(self, value)
 
     SSLContext = GreenSSLContext
 
-    if hasattr(__ssl, 'create_default_context'):
+    if hasattr(__ssl, "create_default_context"):
         _original_create_default_context = __ssl.create_default_context
 
         def green_create_default_context(*a, **kw):
