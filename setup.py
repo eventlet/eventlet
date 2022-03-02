@@ -13,6 +13,9 @@ setuptools.setup(
     author='Linden Lab',
     author_email='eventletdev@lists.secondlife.com',
     url='http://eventlet.net',
+    project_urls={
+        'Source': 'https://github.com/eventlet/eventlet',
+    },
     packages=setuptools.find_packages(exclude=['benchmarks', 'tests', 'tests.*']),
     install_requires=(
         'dnspython >= 1.15.0',
