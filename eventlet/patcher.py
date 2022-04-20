@@ -425,7 +425,7 @@ def _fix_py2_rlock(rlock, tid):
 
 def _fix_py3_rlock(old):
     import gc
-    import threading
+    from eventlet.green import threading
     new = threading._PyRLock()
     while old._is_owned():
         old.release()
@@ -434,14 +434,23 @@ def _fix_py3_rlock(old):
         new.acquire()
     gc.collect()
     for ref in gc.get_referrers(old):
-        try:
-            ref_vars = vars(ref)
-        except TypeError:
-            pass
-        else:
-            for k, v in ref_vars.items():
+        if isinstance(ref, dict):
+            for k, v in ref.items():
                 if v == old:
-                    setattr(ref, k, new)
+                    ref[k] = new
+        elif isinstance(ref, list):
+            for k, v in enumerate(ref):
+                if v == old:
+                    ref[k] = new
+        else:
+            try:
+                ref_vars = vars(ref)
+            except TypeError:
+                pass
+            else:
+                for k, v in ref_vars.items():
+                    if v == old:
+                        setattr(ref, k, new)
 
 
 def _green_os_modules():
