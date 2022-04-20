@@ -412,6 +412,24 @@ def _green_existing_locks():
             elif py3_style and not isinstance(obj, pyrlock_type):
                 _fix_py3_rlock(obj)
 
+    if (3, 0) <= sys.version_info <= (3, 10):
+        # Older py3 won't have RLocks show up in gc.get_objects() -- see
+        # https://github.com/eventlet/eventlet/issues/546 -- so green a handful
+        # that we know are significant
+        import logging
+        if isinstance(logging._lock, rlock_type):
+            _fix_py3_rlock(logging._lock)
+        logging._acquireLock()
+        try:
+            for ref in logging._handlerList:
+                handler = ref()
+                if handler and isinstance(handler.lock, rlock_type):
+                    _fix_py3_rlock(handler.lock)
+                del handler
+        finally:
+            logging._releaseLock()
+
+
 
 def _fix_py2_rlock(rlock, tid):
     import eventlet.green.threading

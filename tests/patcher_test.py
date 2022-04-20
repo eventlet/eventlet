@@ -485,6 +485,10 @@ def test_patcher_existing_locks_unlocked():
     tests.run_isolated('patcher_existing_locks_unlocked.py')
 
 
+def test_patcher_existing_logging_module_lock():
+    tests.run_isolated('patcher_existing_logging_module_lock.py')
+
+
 def test_importlib_lock():
     tests.run_isolated('patcher_importlib_lock.py')
 
