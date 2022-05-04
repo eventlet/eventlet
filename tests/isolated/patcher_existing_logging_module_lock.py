@@ -1,25 +1,30 @@
-import logging
-import eventlet.patcher
-eventlet.patcher.monkey_patch(thread=True)
-import threading
+# https://github.com/eventlet/eventlet/issues/730
+# https://github.com/eventlet/eventlet/pull/754
+__test__ = False
 
 
-def take_and_release():
-    try:
-        logging._lock.acquire()
-    finally:
-        logging._lock.release()
+if __name__ == "__main__":
+    import logging
+    import eventlet.patcher
+    eventlet.patcher.monkey_patch(thread=True)
+    import threading
 
-assert logging._lock.acquire()
-t = threading.Thread(target=take_and_release)
-t.daemon = True
-t.start()
+    def take_and_release():
+        try:
+            logging._lock.acquire()
+        finally:
+            logging._lock.release()
 
-t.join(timeout=0.1)
-# we should timeout, and the thread is still blocked waiting on the lock
-assert t.is_alive()
+    assert logging._lock.acquire()
+    t = threading.Thread(target=take_and_release)
+    t.daemon = True
+    t.start()
 
-logging._lock.release()
-t.join(timeout=0.1)
-assert not t.is_alive()
-print('pass')
+    t.join(timeout=0.1)
+    # we should timeout, and the thread is still blocked waiting on the lock
+    assert t.is_alive()
+
+    logging._lock.release()
+    t.join(timeout=0.1)
+    assert not t.is_alive()
+    print("pass")
