@@ -430,7 +430,6 @@ def _green_existing_locks():
             logging._releaseLock()
 
 
-
 def _fix_py2_rlock(rlock, tid):
     import eventlet.green.threading
     old = rlock._RLock__block
