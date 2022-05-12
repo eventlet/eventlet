@@ -1,3 +1,7 @@
+0.33.1
+======
+* Prevent deadlock on logging._lock https://github.com/eventlet/eventlet/issues/742
+
 0.33.0
 ======
 * green.thread: unlocked Lock().release() should raise exception, returned True https://github.com/eventlet/eventlet/issues/697
