@@ -1022,3 +1022,56 @@ def test_pipe_context():
     with w as f:
         assert f == w
     assert r.closed and w.closed
+
+
+def read_file(filepath):
+    with open(filepath, 'r') as fr:
+        result = fr.read()
+    return result
+
+
+class TestGreenFileIO(tests.LimitedTestCase):
+    @tests.skip_on_windows
+    def setUp(self):
+        super(self.__class__, self).setUp()
+        self.tempdir = tempfile.mkdtemp('_green_file_io_test')
+
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
+        super(self.__class__, self).tearDown()
+
+    def test_write(self):
+        filepath = os.path.join(self.tempdir, 'test_file_w.txt')
+        writer = greenio.GreenPipe(filepath, 'w')
+        excepted = "Test write to file with mode 'w'."
+        writer.write(excepted)
+        writer.close()
+
+        actual = read_file(filepath)
+        self.assertEqual(excepted, actual, msg='actual=%s,excepted=%s' % (actual, excepted))
+
+    def test_append(self):
+        filepath = os.path.join(self.tempdir, 'test_file_a.txt')
+        old_data = 'Exist data...\n'
+        with open(filepath, 'w')as fw:
+            fw.write(old_data)
+        writer = greenio.GreenPipe(filepath, 'a')
+        new_data = "Test write to file with mode 'a'."
+        writer.write(new_data)
+        writer.close()
+
+        excepted = old_data + new_data
+        actual = read_file(filepath)
+        self.assertEqual(excepted, actual, msg='actual=%s,excepted=%s' % (actual, excepted))
+
+    def test_read_and_write(self):
+        filepath = os.path.join(self.tempdir, 'test_file_rw.txt')
+        with open(filepath, 'w'):
+            pass
+        writer = greenio.GreenPipe(filepath, 'r+')
+        excepted = "Test write to file with mode 'r+'."
+        writer.write(excepted)
+        writer.close()
+
+        actual = read_file(filepath)
+        self.assertEqual(excepted, actual, msg='actual=%s,excepted=%s' % (actual, excepted))

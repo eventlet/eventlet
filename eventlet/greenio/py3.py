@@ -71,41 +71,6 @@ class GreenFileIO(_OriginalIOBase):
         return 'r' in self._mode or '+' in self._mode
 
     def writable(self):
-        """judge file can write or not
-
-        >>> from eventlet.green import os
-        >>> from os import O_CREAT, O_APPEND, O_RDWR,O_TRUNC
-        >>> def read_file(filepath):
-        ...     with open(filepath,'r') as fr:
-        ...         return fr.read()
-        ...
-        >>> filepath = './1.txt'
-        >>> expected = "Write to file with mode 'w'."
-        >>> with os.fdopen(os.open(filepath, O_RDWR | O_CREAT | O_TRUNC, 0o777), 'w') as fw:
-        ...     i=fw.write(expected)
-        ...
-        >>> read_file(filepath)
-        "Write to file with mode 'w'."
-        >>> read_file(filepath) == expected
-        True
-
-        >>> read_file(filepath) == expected
-        True
-        >>> expected_2 = "Write to file with mode 'a'."
-        >>> with os.fdopen(os.open(filepath, O_RDWR | O_CREAT | O_APPEND, 0o777), 'a') as fa:
-        ...     i=fa.write(expected_2)
-        ...
-
-        >>> read_file(filepath) == expected+expected_2
-        True
-        >>> fw = os.fdopen(os.open(filepath, O_RDWR | O_CREAT | O_TRUNC, 0o777), 'r')
-        >>> fw.write(expected)
-        Traceback (most recent call last):
-            ...
-        io.UnsupportedOperation: not writable
-        >>> import os as sys_os
-        >>> sys_os.remove(filepath)
-        """
         return 'w' in self._mode or '+' in self._mode or 'a' in self._mode
 
     def fileno(self):
