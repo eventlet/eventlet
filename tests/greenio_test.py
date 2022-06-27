@@ -1061,3 +1061,76 @@ def test_greenpipe_read_overwrite():
 
         actual = tests.read_file(f.name)
         assert actual == new_data
+
+
+def read_file(filepath):
+    with open(filepath, 'r') as fr:
+        result = fr.read()
+    return result
+
+
+class TestGreenFileIO(tests.LimitedTestCase):
+    my_os = eventlet.green.os
+
+    @tests.skip_on_windows
+    def setUp(self):
+        super(self.__class__, self).setUp()
+        self.tempdir = tempfile.mkdtemp('_green_file_io_test')
+
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
+        super(self.__class__, self).tearDown()
+
+    def test_mode_write(self):
+        filepath = os.path.join(self.tempdir, 'test_file_w.txt')
+        excepted = "Test write to file with mode 'w'."
+        with self.my_os.fdopen(self.my_os.open(filepath, os.O_RDWR | os.O_CREAT | os.O_TRUNC, 0o777), 'w') as fw:
+            fw.write(excepted)
+
+        actual = read_file(filepath)
+        assert actual == excepted, 'actual=%s,excepted=%s' % (actual, excepted)
+
+    def test_mode_append(self):
+        filepath = os.path.join(self.tempdir, 'test_file_a.txt')
+        old_data = 'Exist data...\n'
+        with open(filepath, 'w')as fw:
+            fw.write(old_data)
+        new_data = "Test write to file with mode 'a'."
+        with self.my_os.fdopen(self.my_os.open(filepath, os.O_RDWR | os.O_CREAT | os.O_APPEND, 0o777), 'a') as fa:
+            fa.write(new_data)
+
+        excepted = old_data + new_data
+        actual = read_file(filepath)
+        assert actual == excepted, 'actual=%s,excepted=%s' % (actual, excepted)
+
+    def test_mode_read_and_plus(self):
+        filepath = os.path.join(self.tempdir, 'test_file_r+.txt')
+        old_data = 'Exist data...\n'
+        with open(filepath, 'w') as fw:
+            fw.write(old_data)
+
+        new_data = "Test write to file with mode 'r+'."
+        with self.my_os.fdopen(self.my_os.open(filepath, os.O_RDWR | os.O_CREAT | os.O_APPEND, 0o777), 'r+') as fw:
+            fw.write(new_data)
+
+        excepted = old_data + new_data
+        actual = read_file(filepath)
+        assert actual == excepted, 'actual=%s,excepted=%s' % (actual, excepted)
+
+    def test_mode_write_and_plus(self):
+        filepath = os.path.join(self.tempdir, 'test_file_w+.txt')
+        excepted = "Test write to file with mode 'w+'."
+        with self.my_os.fdopen(self.my_os.open(filepath, os.O_RDWR | os.O_CREAT | os.O_APPEND, 0o777), 'w+') as fw:
+            fw.write(excepted)
+
+        actual = read_file(filepath)
+        assert actual == excepted, 'actual=%s,excepted=%s' % (actual, excepted)
+
+    def test_mode_append_and_plus(self):
+        filepath = os.path.join(self.tempdir, 'test_file_a+.txt')
+        excepted = "Test write to file with mode 'a+'."
+        with self.my_os.fdopen(self.my_os.open(filepath, os.O_RDWR | os.O_CREAT | os.O_APPEND, 0o777), 'a+') as fw:
+            fw.write(excepted)
+
+        actual = read_file(filepath)
+        assert actual == excepted, 'actual=%s,excepted=%s' % (actual, excepted)
