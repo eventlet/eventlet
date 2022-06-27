@@ -682,6 +682,7 @@ def test_get_fileno_of_a_socket_works():
     class DummySocket(object):
         def fileno(self):
             return 123
+
     assert select.get_fileno(DummySocket()) == 123
 
 
@@ -690,7 +691,7 @@ def test_get_fileno_of_an_int_works():
 
 
 expected_get_fileno_type_error_message = (
-    'Expected int or long, got <%s \'str\'>' % ('type' if six.PY2 else 'class'))
+        'Expected int or long, got <%s \'str\'>' % ('type' if six.PY2 else 'class'))
 
 
 def test_get_fileno_of_wrong_type_fails():
@@ -706,6 +707,7 @@ def test_get_fileno_of_a_socket_with_fileno_returning_wrong_type_fails():
     class DummySocket(object):
         def fileno(self):
             return 'foo'
+
     try:
         select.get_fileno(DummySocket())
     except TypeError as ex:
@@ -1063,12 +1065,6 @@ def test_greenpipe_read_overwrite():
         assert actual == new_data
 
 
-def read_file(filepath):
-    with open(filepath, 'r') as fr:
-        result = fr.read()
-    return result
-
-
 class TestGreenFileIO(tests.LimitedTestCase):
     my_os = eventlet.green.os
 
@@ -1087,7 +1083,7 @@ class TestGreenFileIO(tests.LimitedTestCase):
         with self.my_os.fdopen(self.my_os.open(filepath, os.O_RDWR | os.O_CREAT | os.O_TRUNC, 0o777), 'w') as fw:
             fw.write(excepted)
 
-        actual = read_file(filepath)
+        actual = tests.read_file(filepath, mode='r')
         assert actual == excepted, 'actual=%s,excepted=%s' % (actual, excepted)
 
     def test_mode_append(self):
@@ -1100,7 +1096,7 @@ class TestGreenFileIO(tests.LimitedTestCase):
             fa.write(new_data)
 
         excepted = old_data + new_data
-        actual = read_file(filepath)
+        actual = tests.read_file(filepath, mode='r')
         assert actual == excepted, 'actual=%s,excepted=%s' % (actual, excepted)
 
     def test_mode_read_and_plus(self):
@@ -1114,7 +1110,7 @@ class TestGreenFileIO(tests.LimitedTestCase):
             fw.write(new_data)
 
         excepted = old_data + new_data
-        actual = read_file(filepath)
+        actual = tests.read_file(filepath, mode='r')
         assert actual == excepted, 'actual=%s,excepted=%s' % (actual, excepted)
 
     def test_mode_write_and_plus(self):
@@ -1123,7 +1119,7 @@ class TestGreenFileIO(tests.LimitedTestCase):
         with self.my_os.fdopen(self.my_os.open(filepath, os.O_RDWR | os.O_CREAT | os.O_APPEND, 0o777), 'w+') as fw:
             fw.write(excepted)
 
-        actual = read_file(filepath)
+        actual = tests.read_file(filepath, mode='r')
         assert actual == excepted, 'actual=%s,excepted=%s' % (actual, excepted)
 
     def test_mode_append_and_plus(self):
@@ -1132,5 +1128,5 @@ class TestGreenFileIO(tests.LimitedTestCase):
         with self.my_os.fdopen(self.my_os.open(filepath, os.O_RDWR | os.O_CREAT | os.O_APPEND, 0o777), 'a+') as fw:
             fw.write(excepted)
 
-        actual = read_file(filepath)
+        actual = tests.read_file(filepath, mode='r')
         assert actual == excepted, 'actual=%s,excepted=%s' % (actual, excepted)
