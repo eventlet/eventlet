@@ -1022,3 +1022,42 @@ def test_pipe_context():
     with w as f:
         assert f == w
     assert r.closed and w.closed
+
+
+def test_greenpipe_write():
+    expected = b"initial"
+    with tempfile.NamedTemporaryFile() as f:
+        with greenio.GreenPipe(f.name, "wb") as writer:
+            writer.write(expected)
+
+        actual = tests.read_file(f.name)
+        assert actual == expected
+
+
+def test_greenpipe_append():
+    old_data = b"existing data..."
+    new_data = b"append with mode=a"
+    expected = old_data + new_data
+    with tempfile.NamedTemporaryFile() as f:
+        with open(f.name, "wb") as fw:
+            fw.write(old_data)
+
+        with greenio.GreenPipe(f.name, "ab") as writer:
+            writer.write(new_data)
+
+        actual = tests.read_file(f.name)
+        assert actual == expected
+
+
+def test_greenpipe_read_overwrite():
+    old_data = b"existing data..."
+    new_data = b"overwrite with mode=r+"
+    with tempfile.NamedTemporaryFile() as f:
+        with greenio.GreenPipe(f.name, "wb") as writer:
+            writer.write(old_data)
+
+        with greenio.GreenPipe(f.name, "r+b") as writer:
+            writer.write(new_data)
+
+        actual = tests.read_file(f.name)
+        assert actual == new_data
