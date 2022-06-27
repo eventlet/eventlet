@@ -488,3 +488,9 @@ def dns_tcp_server(ip_to_give, request_count=1):
     client.close()
     thread.join()
     server_socket.close()
+
+
+def read_file(path, mode="rb"):
+    with open(path, mode) as f:
+        result = f.read()
+    return result
