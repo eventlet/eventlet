@@ -682,7 +682,6 @@ def test_get_fileno_of_a_socket_works():
     class DummySocket(object):
         def fileno(self):
             return 123
-
     assert select.get_fileno(DummySocket()) == 123
 
 
@@ -691,7 +690,7 @@ def test_get_fileno_of_an_int_works():
 
 
 expected_get_fileno_type_error_message = (
-        'Expected int or long, got <%s \'str\'>' % ('type' if six.PY2 else 'class'))
+    'Expected int or long, got <%s \'str\'>' % ('type' if six.PY2 else 'class'))
 
 
 def test_get_fileno_of_wrong_type_fails():
@@ -707,7 +706,6 @@ def test_get_fileno_of_a_socket_with_fileno_returning_wrong_type_fails():
     class DummySocket(object):
         def fileno(self):
             return 'foo'
-
     try:
         select.get_fileno(DummySocket())
     except TypeError as ex:
