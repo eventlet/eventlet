@@ -682,6 +682,7 @@ def test_get_fileno_of_a_socket_works():
     class DummySocket(object):
         def fileno(self):
             return 123
+
     assert select.get_fileno(DummySocket()) == 123
 
 
@@ -690,7 +691,7 @@ def test_get_fileno_of_an_int_works():
 
 
 expected_get_fileno_type_error_message = (
-    'Expected int or long, got <%s \'str\'>' % ('type' if six.PY2 else 'class'))
+        'Expected int or long, got <%s \'str\'>' % ('type' if six.PY2 else 'class'))
 
 
 def test_get_fileno_of_wrong_type_fails():
@@ -706,6 +707,7 @@ def test_get_fileno_of_a_socket_with_fileno_returning_wrong_type_fails():
     class DummySocket(object):
         def fileno(self):
             return 'foo'
+
     try:
         select.get_fileno(DummySocket())
     except TypeError as ex:
@@ -1063,68 +1065,21 @@ def test_greenpipe_read_overwrite():
         assert actual == new_data
 
 
-class TestGreenFileIO(tests.LimitedTestCase):
-    my_os = eventlet.green.os
+def test_greenpipe_write_plus():
+    excepted = "write with mode=w+"
+    with tempfile.NamedTemporaryFile() as f:
+        with greenio.GreenPipe(f.name, "w+") as writer:
+            writer.write(excepted)
 
-    @tests.skip_on_windows
-    def setUp(self):
-        super(self.__class__, self).setUp()
-        self.tempdir = tempfile.mkdtemp('_green_file_io_test')
+        actual = tests.read_file(f.name, mode='r')
+        assert actual == excepted
 
-    def tearDown(self):
-        shutil.rmtree(self.tempdir)
-        super(self.__class__, self).tearDown()
 
-    def test_mode_write(self):
-        filepath = os.path.join(self.tempdir, 'test_file_w.txt')
-        excepted = "Test write to file with mode 'w'."
-        with self.my_os.fdopen(self.my_os.open(filepath, os.O_RDWR | os.O_CREAT | os.O_TRUNC, 0o777), 'w') as fw:
-            fw.write(excepted)
+def test_greenpipe_append_plus():
+    excepted = "append with mode=a+"
+    with tempfile.NamedTemporaryFile() as f:
+        with greenio.GreenPipe(f.name, "a+") as writer:
+            writer.write(excepted)
 
-        actual = tests.read_file(filepath, mode='r')
-        assert actual == excepted, 'actual=%s,excepted=%s' % (actual, excepted)
-
-    def test_mode_append(self):
-        filepath = os.path.join(self.tempdir, 'test_file_a.txt')
-        old_data = 'Exist data...\n'
-        with open(filepath, 'w')as fw:
-            fw.write(old_data)
-        new_data = "Test write to file with mode 'a'."
-        with self.my_os.fdopen(self.my_os.open(filepath, os.O_RDWR | os.O_CREAT | os.O_APPEND, 0o777), 'a') as fa:
-            fa.write(new_data)
-
-        excepted = old_data + new_data
-        actual = tests.read_file(filepath, mode='r')
-        assert actual == excepted, 'actual=%s,excepted=%s' % (actual, excepted)
-
-    def test_mode_read_and_plus(self):
-        filepath = os.path.join(self.tempdir, 'test_file_r+.txt')
-        old_data = 'Exist data...\n'
-        with open(filepath, 'w') as fw:
-            fw.write(old_data)
-
-        new_data = "Test write to file with mode 'r+'."
-        with self.my_os.fdopen(self.my_os.open(filepath, os.O_RDWR | os.O_CREAT | os.O_APPEND, 0o777), 'r+') as fw:
-            fw.write(new_data)
-
-        excepted = old_data + new_data
-        actual = tests.read_file(filepath, mode='r')
-        assert actual == excepted, 'actual=%s,excepted=%s' % (actual, excepted)
-
-    def test_mode_write_and_plus(self):
-        filepath = os.path.join(self.tempdir, 'test_file_w+.txt')
-        excepted = "Test write to file with mode 'w+'."
-        with self.my_os.fdopen(self.my_os.open(filepath, os.O_RDWR | os.O_CREAT | os.O_APPEND, 0o777), 'w+') as fw:
-            fw.write(excepted)
-
-        actual = tests.read_file(filepath, mode='r')
-        assert actual == excepted, 'actual=%s,excepted=%s' % (actual, excepted)
-
-    def test_mode_append_and_plus(self):
-        filepath = os.path.join(self.tempdir, 'test_file_a+.txt')
-        excepted = "Test write to file with mode 'a+'."
-        with self.my_os.fdopen(self.my_os.open(filepath, os.O_RDWR | os.O_CREAT | os.O_APPEND, 0o777), 'a+') as fw:
-            fw.write(excepted)
-
-        actual = tests.read_file(filepath, mode='r')
-        assert actual == excepted, 'actual=%s,excepted=%s' % (actual, excepted)
+        actual = tests.read_file(f.name, mode='r')
+        assert actual == excepted
