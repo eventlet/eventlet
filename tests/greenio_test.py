@@ -1064,20 +1064,20 @@ def test_greenpipe_read_overwrite():
 
 
 def test_greenpipe_write_plus():
-    excepted = "write with mode=w+"
+    expected = "write with mode=w+"
     with tempfile.NamedTemporaryFile() as f:
         with greenio.GreenPipe(f.name, "w+") as writer:
-            writer.write(excepted)
+            writer.write(expected)
 
         actual = tests.read_file(f.name, mode='r')
-        assert actual == excepted
+        assert actual == expected
 
 
 def test_greenpipe_append_plus():
-    excepted = "append with mode=a+"
+    expected = "append with mode=a+"
     with tempfile.NamedTemporaryFile() as f:
         with greenio.GreenPipe(f.name, "a+") as writer:
-            writer.write(excepted)
+            writer.write(expected)
 
         actual = tests.read_file(f.name, mode='r')
-        assert actual == excepted
+        assert actual == expected
