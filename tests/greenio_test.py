@@ -1061,3 +1061,23 @@ def test_greenpipe_read_overwrite():
 
         actual = tests.read_file(f.name)
         assert actual == new_data
+
+
+def test_greenpipe_write_plus():
+    expected = "write with mode=w+"
+    with tempfile.NamedTemporaryFile() as f:
+        with greenio.GreenPipe(f.name, "w+") as writer:
+            writer.write(expected)
+
+        actual = tests.read_file(f.name, mode='r')
+        assert actual == expected
+
+
+def test_greenpipe_append_plus():
+    expected = "append with mode=a+"
+    with tempfile.NamedTemporaryFile() as f:
+        with greenio.GreenPipe(f.name, "a+") as writer:
+            writer.write(expected)
+
+        actual = tests.read_file(f.name, mode='r')
+        assert actual == expected
