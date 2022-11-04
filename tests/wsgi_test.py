@@ -645,7 +645,13 @@ class TestHttpd(_TestBase):
         self.assertEqual(b'second response', result2.body)
         self.assertEqual(result2.headers_original.get('Connection'), 'close')
 
-        sock.sendall(b'PUT /3 HTTP/1.0\r\nHost: localhost\r\nConnection: close\r\n\r\n')
+        try:
+            sock.sendall(b'PUT /3 HTTP/1.0\r\nHost: localhost\r\nConnection: close\r\n\r\n')
+        except socket.error as err:
+            # At one point this could succeed; presumably some older versions
+            # of python will still allow it, but now we get a BrokenPipeError
+            if err.errno != errno.EPIPE:
+                raise
         with self.assertRaises(ConnectionClosed):
             read_http(sock)
         sock.close()
