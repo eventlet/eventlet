@@ -453,11 +453,11 @@ def _fix_py3_rlock(old):
     for ref in gc.get_referrers(old):
         if isinstance(ref, dict):
             for k, v in ref.items():
-                if v == old:
+                if v is old:
                     ref[k] = new
         elif isinstance(ref, list):
             for k, v in enumerate(ref):
-                if v == old:
+                if v is old:
                     ref[k] = new
         else:
             try:
@@ -466,7 +466,7 @@ def _fix_py3_rlock(old):
                 pass
             else:
                 for k, v in ref_vars.items():
-                    if v == old:
+                    if v is old:
                         setattr(ref, k, new)
 
 
