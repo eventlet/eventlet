@@ -71,7 +71,7 @@ class GreenFileIO(_OriginalIOBase):
         return 'r' in self._mode or '+' in self._mode
 
     def writable(self):
-        return 'w' in self._mode or '+' in self._mode
+        return 'w' in self._mode or '+' in self._mode or 'a' in self._mode
 
     def fileno(self):
         return self._fileno
