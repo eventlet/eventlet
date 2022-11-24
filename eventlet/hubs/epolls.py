@@ -29,3 +29,7 @@ class Hub(poll.Hub):
 
     def do_poll(self, seconds):
         return self.poll.poll(seconds)
+
+    def __del__(self):
+        self.poll.close()
+

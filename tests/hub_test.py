@@ -402,3 +402,7 @@ def test_kqueue_unsupported():
     # https://github.com/eventlet/eventlet/issues/38
     # get_hub on windows broken by kqueue
     tests.run_isolated('hub_kqueue_unsupported.py')
+
+
+def test_epoll_fd_leak():
+    tests.run_isolated('hub_epoll_file_descriptor_leak.py')
