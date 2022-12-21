@@ -15,7 +15,7 @@ from contextlib import contextmanager
 
 orig_socket = __import__('socket')
 socket = orig_socket.socket
-timeout_exc = SSLError
+timeout_exc = orig_socket.timeout
 
 __patched__ = [
     'SSLSocket', 'SSLContext', 'wrap_socket', 'sslwrap_simple',
