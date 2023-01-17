@@ -45,6 +45,7 @@ def assimilate_patched(name):
         except AttributeError:
             print("No test_main for %s, assuming it tests on import" % name)
 
+
 import all_modules
 
 for m in all_modules.get_modules():

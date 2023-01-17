@@ -214,4 +214,5 @@ def GreenPipe(name, mode="r", buffering=-1, encoding=None, errors=None,
 
     return _open(name, mode, buffering, encoding, errors, newline, closefd, opener)
 
+
 GreenPipe.__doc__ = greenpipe_doc

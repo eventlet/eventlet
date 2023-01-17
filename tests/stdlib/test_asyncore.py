@@ -40,6 +40,7 @@ def new_closeall_check(self, usedefault):
     for c in l:
         self.assertEqual(c.socket.closed, True)
 
+
 HelperFunctionTests.closeall_check = new_closeall_check
 
 try:

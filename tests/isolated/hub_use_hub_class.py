@@ -5,6 +5,7 @@ __test__ = False
 class Foo(object):
     pass
 
+
 if __name__ == '__main__':
     import eventlet.hubs
     eventlet.hubs.use_hub(Foo)

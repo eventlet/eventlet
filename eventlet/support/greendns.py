@@ -924,6 +924,7 @@ def tcp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
 def reset():
     resolver.clear()
 
+
 # Install our coro-friendly replacements for the tcp and udp query methods.
 dns.query.tcp = tcp
 dns.query.udp = udp

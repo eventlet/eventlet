@@ -32,6 +32,7 @@ def handle(ws):
     else:
         ws.close()
 
+
 wsapp = WebSocketWSGI(handle)
 
 

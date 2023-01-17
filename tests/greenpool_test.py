@@ -386,6 +386,7 @@ def test_greenpool_type_check():
 class StressException(Exception):
     pass
 
+
 r = random.Random(0)
 
 

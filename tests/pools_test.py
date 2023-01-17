@@ -248,5 +248,6 @@ SOMETIMES = RuntimeError('I fail half the time')
 class TestTookTooLong(Exception):
     pass
 
+
 if __name__ == '__main__':
     main()

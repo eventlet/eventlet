@@ -13,6 +13,8 @@ def is_resource_enabled(resource):
         return True
     else:
         return i_r_e(resource)
+
+
 test.test_support.is_resource_enabled = is_resource_enabled
 
 try:

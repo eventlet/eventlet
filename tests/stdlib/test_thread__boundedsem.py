@@ -6,6 +6,7 @@ from eventlet.green import thread
 def allocate_lock():
     return semaphore.Semaphore(1, 9999)
 
+
 original_allocate_lock = thread.allocate_lock
 thread.allocate_lock = allocate_lock
 original_LockType = thread.LockType
