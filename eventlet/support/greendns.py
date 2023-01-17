@@ -62,8 +62,9 @@ def import_patched(module_name):
 
 
 dns = import_patched('dns')
-for pkg in dns.__all__:
-    setattr(dns, pkg, import_patched('dns.' + pkg))
+
+# Handle rdtypes separately; we need fully it available as we patch the rest
+dns.rdtypes = import_patched('dns.rdtypes')
 dns.rdtypes.__all__.extend(['dnskeybase', 'dsbase', 'txtbase'])
 for pkg in dns.rdtypes.__all__:
     setattr(dns.rdtypes, pkg, import_patched('dns.rdtypes.' + pkg))
@@ -71,6 +72,11 @@ for pkg in dns.rdtypes.IN.__all__:
     setattr(dns.rdtypes.IN, pkg, import_patched('dns.rdtypes.IN.' + pkg))
 for pkg in dns.rdtypes.ANY.__all__:
     setattr(dns.rdtypes.ANY, pkg, import_patched('dns.rdtypes.ANY.' + pkg))
+
+for pkg in dns.__all__:
+    if pkg == 'rdtypes':
+        continue
+    setattr(dns, pkg, import_patched('dns.' + pkg))
 del import_patched
 
 
