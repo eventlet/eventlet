@@ -23,6 +23,10 @@ setuptools.setup(
         'monotonic >= 1.4;python_version<"3.5"',
         'six >= 1.10.0',
     ),
+    # TODO py2 drop uncomment
+    # extras_require={
+    #     "dev": ["trustme"],
+    # },
     zip_safe=False,
     long_description=open(
         os.path.join(
