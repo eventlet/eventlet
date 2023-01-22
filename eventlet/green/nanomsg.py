@@ -8,7 +8,8 @@ from eventlet.patcher import slurp_properties
 from eventlet.hubs import trampoline
 from errno import EAGAIN
 
-__nanomsg__.__all__ = ['wrapper', 'NanoMsgError', 'NanoMsgAPIError', 'Device', 'Socket']
+if not hasattr(__nanomsg__, "__all__"):
+    __nanomsg__.__all__ = ['wrapper', 'NanoMsgError', 'NanoMsgAPIError', 'Device', 'Socket']
 
 for name, value in __nanomsg__.wrapper.nn_symbols():
     if name.startswith('NN_'):
