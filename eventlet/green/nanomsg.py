@@ -44,13 +44,16 @@ class Socket(__nanomsg__.Socket):
     def send(self, msg, flags=0):
         """Send a message"""
 
+        flags |= __nanomsg__.DONTWAIT
+
         while True:
-            trampoline(self.send_fd, write=True)
-            ret = __nanomsg__.wrapper.nn_send(self.fd, msg, flags | __nanomsg__.DONTWAIT)
-            if ret > 0:
-                break
-            else:
-                raise __nanomsg__.NanoMsgAPIError()
+            ret = __nanomsg__.wrapper.nn_send(self.fd, msg, flags)
+            if ret >= 0:
+                return ret
+            if __nanomsg__.wrapper.nn_errno() == EAGAIN:
+                trampoline(self.send_fd, write=True)
+                continue
+            raise __nanomsg__.NanoMsgAPIError()
 
     def poll(in_sockets, out_sockets, timeout=-1):
         raise NotImplementedError("poll is not implemented in the nanomsg eventlet wrapper")
