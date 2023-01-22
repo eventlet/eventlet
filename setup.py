@@ -19,7 +19,7 @@ setuptools.setup(
     packages=setuptools.find_packages(exclude=['benchmarks', 'tests', 'tests.*']),
     install_requires=(
         'dnspython >= 1.15.0',
-        'greenlet >= 0.3',
+        'greenlet >= 1.0',
         'monotonic >= 1.4;python_version<"3.5"',
         'six >= 1.10.0',
     ),

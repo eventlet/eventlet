@@ -21,7 +21,7 @@ else:
 
 import eventlet.hubs
 from eventlet.hubs import timer
-from eventlet.support import greenlets as greenlet, clear_sys_exc_info
+from eventlet.support import greenlets as greenlet
 try:
     from monotonic import monotonic
 except ImportError:
@@ -309,7 +309,6 @@ class BaseHub(object):
                 cur.parent = self.greenlet
         except ValueError:
             pass  # gets raised if there is a greenlet parent cycle
-        clear_sys_exc_info()
         return self.greenlet.switch()
 
     def squelch_exception(self, fileno, exc_info):
@@ -397,13 +396,11 @@ class BaseHub(object):
         if self.debug_exceptions:
             traceback.print_exception(*exc_info)
             sys.stderr.flush()
-            clear_sys_exc_info()
 
     def squelch_timer_exception(self, timer, exc_info):
         if self.debug_exceptions:
             traceback.print_exception(*exc_info)
             sys.stderr.flush()
-            clear_sys_exc_info()
 
     def add_timer(self, timer):
         scheduled_time = self.clock() + timer.seconds
@@ -478,7 +475,6 @@ class BaseHub(object):
                 raise
             except:
                 self.squelch_timer_exception(timer, sys.exc_info())
-                clear_sys_exc_info()
 
     # for debugging:
 
