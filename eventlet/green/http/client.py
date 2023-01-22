@@ -126,7 +126,10 @@ import email.parser
 import email.message
 import io
 import re
-import collections
+try:
+    from collections.abc import Iterable
+except ImportError:
+    from collections import Iterable
 from urllib.parse import urlsplit
 
 from eventlet.green import http, os, socket
@@ -1048,7 +1051,7 @@ class HTTPConnection:
         try:
             self.sock.sendall(data)
         except TypeError:
-            if isinstance(data, collections.Iterable):
+            if isinstance(data, Iterable):
                 for d in data:
                     self.sock.sendall(d)
             else:
