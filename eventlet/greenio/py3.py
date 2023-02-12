@@ -159,6 +159,8 @@ class GreenFileIO(_OriginalIOBase):
             setattr(self, method, _operation_on_closed_file)
 
     def truncate(self, size=-1):
+        if size is None:
+            size = -1
         if size == -1:
             size = self.tell()
         try:
