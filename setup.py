@@ -22,6 +22,7 @@ setuptools.setup(
         'greenlet >= 0.3',
         'monotonic >= 1.4;python_version<"3.5"',
         'six >= 1.10.0',
+        'packaging >= 17.0',
     ),
     zip_safe=False,
     long_description=open(
