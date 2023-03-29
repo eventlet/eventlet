@@ -29,19 +29,25 @@ _is_under_py_3_7 = sys.version_info < (3, 7)
 
 @contextmanager
 def _original_ssl_context(*args, **kwargs):
-    tmp_sslcontext = _original_wrap_socket.__globals__.get('SSLContext', None)
-    tmp_sslsocket = _original_sslsocket._create.__globals__.get('SSLSocket', None)
-    _original_sslsocket._create.__globals__['SSLSocket'] = _original_sslsocket
-    _original_wrap_socket.__globals__['SSLContext'] = _original_sslcontext
+    tmp_sslcontext = _original_wrap_socket.__globals__.get("SSLContext", None)
+    tmp_sslsocket = _original_sslsocket.sslsocket_class._create.__globals__.get(
+        "SSLSocket", None
+    )
+    _original_sslsocket.sslsocket_class._create.__globals__[
+        "SSLSocket"
+    ] = _original_sslsocket
+    _original_wrap_socket.__globals__["SSLContext"] = _original_sslcontext
     try:
         yield
     finally:
-        _original_wrap_socket.__globals__['SSLContext'] = tmp_sslcontext
-        _original_sslsocket._create.__globals__['SSLSocket'] = tmp_sslsocket
+        _original_wrap_socket.__globals__["SSLContext"] = tmp_sslcontext
+        _original_sslsocket.sslsocket_class._create.__globals__[
+            "SSLSocket"
+        ] = tmp_sslsocket
 
 
 class GreenSSLSocket(_original_sslsocket):
-    """ This is a green version of the SSLSocket class from the ssl module added
+    """This is a green version of the SSLSocket class from the ssl module added
     in 2.6.  For documentation on it, please see the Python standard
     documentation.
 
@@ -447,37 +453,37 @@ if hasattr(__ssl, 'SSLContext'):
 
         # https://github.com/eventlet/eventlet/issues/371
         # Thanks to Gevent developers for sharing patch to this problem.
-        if hasattr(_original_sslcontext.options, 'setter'):
-            # In 3.6, these became properties. They want to access the
-            # property __set__ method in the superclass, and they do so by using
-            # super(SSLContext, SSLContext). But we rebind SSLContext when we monkey
-            # patch, which causes infinite recursion.
-            # https://github.com/python/cpython/commit/328067c468f82e4ec1b5c510a4e84509e010f296
-            @_original_sslcontext.options.setter
-            def options(self, value):
-                super(_original_sslcontext, _original_sslcontext).options.__set__(self, value)
+        # if hasattr(_original_sslcontext.options, 'setter'):
+        #    # In 3.6, these became properties. They want to access the
+        #    # property __set__ method in the superclass, and they do so by using
+        #    # super(SSLContext, SSLContext). But we rebind SSLContext when we monkey
+        #    # patch, which causes infinite recursion.
+        #    # https://github.com/python/cpython/commit/328067c468f82e4ec1b5c510a4e84509e010f296
+        #    @_original_sslcontext.options.setter
+        #    def options(self, value):
+        #        super(_original_sslcontext, _original_sslcontext).options.__set__(self, value)
 
-            @_original_sslcontext.verify_flags.setter
-            def verify_flags(self, value):
-                super(_original_sslcontext, _original_sslcontext).verify_flags.__set__(self, value)
+        #    @_original_sslcontext.verify_flags.setter
+        #    def verify_flags(self, value):
+        #        super(_original_sslcontext, _original_sslcontext).verify_flags.__set__(self, value)
 
-            @_original_sslcontext.verify_mode.setter
-            def verify_mode(self, value):
-                super(_original_sslcontext, _original_sslcontext).verify_mode.__set__(self, value)
+        #    @_original_sslcontext.verify_mode.setter
+        #    def verify_mode(self, value):
+        #        super(_original_sslcontext, _original_sslcontext).verify_mode.__set__(self, value)
 
-            if hasattr(_original_sslcontext, "maximum_version"):
-                @_original_sslcontext.maximum_version.setter
-                def maximum_version(self, value):
-                    super(_original_sslcontext, _original_sslcontext).maximum_version.__set__(self, value)
+        #    if hasattr(_original_sslcontext, "maximum_version"):
+        #        @_original_sslcontext.maximum_version.setter
+        #        def maximum_version(self, value):
+        #            super(_original_sslcontext, _original_sslcontext).maximum_version.__set__(self, value)
 
-            if hasattr(_original_sslcontext, "minimum_version"):
-                @_original_sslcontext.minimum_version.setter
-                def minimum_version(self, value):
-                    super(_original_sslcontext, _original_sslcontext).minimum_version.__set__(self, value)
+        #    if hasattr(_original_sslcontext, "minimum_version"):
+        #        @_original_sslcontext.minimum_version.setter
+        #        def minimum_version(self, value):
+        #            super(_original_sslcontext, _original_sslcontext).minimum_version.__set__(self, value)
 
     SSLContext = GreenSSLContext
 
-    if hasattr(__ssl, 'create_default_context'):
+    if hasattr(__ssl, "create_default_context"):
         _original_create_default_context = __ssl.create_default_context
 
         def green_create_default_context(*a, **kw):
