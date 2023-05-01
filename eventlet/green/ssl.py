@@ -92,7 +92,7 @@ class GreenSSLSocket(_original_sslsocket):
             ret.cert_reqs = cert_reqs
             ret.ssl_version = ssl_version
             ret.ca_certs = ca_certs
-            ret.__class__ = GreenSSLSocket
+            ret.__class__ = cls
             return ret
 
     # we are inheriting from SSLSocket because its constructor calls
