@@ -22,21 +22,17 @@ __patched__ = [
     'create_default_context', '_create_default_https_context']
 
 _original_sslsocket = __ssl.SSLSocket
-_original_wrap_socket = __ssl.wrap_socket
 _original_sslcontext = getattr(__ssl, 'SSLContext', None)
 _is_under_py_3_7 = sys.version_info < (3, 7)
 
 
 @contextmanager
 def _original_ssl_context(*args, **kwargs):
-    tmp_sslcontext = _original_wrap_socket.__globals__.get('SSLContext', None)
     tmp_sslsocket = _original_sslsocket._create.__globals__.get('SSLSocket', None)
     _original_sslsocket._create.__globals__['SSLSocket'] = _original_sslsocket
-    _original_wrap_socket.__globals__['SSLContext'] = _original_sslcontext
     try:
         yield
     finally:
-        _original_wrap_socket.__globals__['SSLContext'] = tmp_sslcontext
         _original_sslsocket._create.__globals__['SSLSocket'] = tmp_sslsocket
 
 
@@ -76,16 +72,21 @@ class GreenSSLSocket(_original_sslsocket):
                         session=kw.get('session'),
                     )
                 else:
-                    ret = _original_wrap_socket(
+                    context = _original_sslcontext(protocol=ssl_version)
+                    context.options |= cert_reqs
+                    if certfile or keyfile:
+                        context.load_cert_chain(
+                            certfile=certfile,
+                            keyfile=keyfile,
+                        )
+                    if ca_certs:
+                        context.load_verify_locations(ca_certs)
+                    if ciphers := kw.get('ciphers'):
+                        context.set_ciphers(ciphers)
+                    ret = context.wrap_socket(
                         sock=sock.fd,
-                        keyfile=keyfile,
-                        certfile=certfile,
                         server_side=server_side,
-                        cert_reqs=cert_reqs,
-                        ssl_version=ssl_version,
-                        ca_certs=ca_certs,
                         do_handshake_on_connect=False,
-                        ciphers=kw.get('ciphers'),
                     )
             ret.keyfile = keyfile
             ret.certfile = certfile
