@@ -287,11 +287,11 @@ class TpoolLongTests(tests.LimitedTestCase):
     TEST_TIMEOUT = 60
 
     def test_a_buncha_stuff(self):
-        assert_ = self.assert_
+        assertTrue = self.assertTrue
 
         class Dummy(object):
             def foo(self, when, token=None):
-                assert_(token is not None)
+                assertTrue(token is not None)
                 time.sleep(random.random() / 200.0)
                 return token
 
@@ -330,7 +330,7 @@ class TpoolLongTests(tests.LimitedTestCase):
         first_created = middle_objs - initial_objs
         gc.collect()
         second_created = len(gc.get_objects()) - middle_objs
-        self.assert_(second_created - first_created < 10,
+        self.assertTrue(second_created - first_created < 10,
                      "first loop: %s, second loop: %s" % (first_created,
                                                           second_created))
         tpool.killall()
