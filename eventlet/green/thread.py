@@ -113,3 +113,6 @@ if hasattr(__thread, 'stack_size'):
             # this thread will suffer
 
 from eventlet.corolocal import local as _local
+
+if hasattr(__thread, 'daemon_threads_allowed'):
+    daemon_threads_allowed = __thread.daemon_threads_allowed
