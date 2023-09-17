@@ -2,6 +2,7 @@
 """Tests for the eventlet.support.greendns module"""
 
 import os
+import six
 import socket
 import tempfile
 import time
@@ -793,6 +794,14 @@ class TestGetaddrinfo(tests.LimitedTestCase):
             greendns.getaddrinfo('::1', None, 0, 0, 0, socket.AI_ADDRCONFIG)
         except socket.error as e:
             assert e.errno == socket.EAI_ADDRFAMILY
+
+    def test_getaddrinfo_py2_py3_type_parameter(self):
+        greendns.resolve = _make_mock_resolve()
+        greendns.resolve.add('localhost', '127.0.0.1')
+        if six.PY3:
+            greendns.getaddrinfo('localhost', None, type=0)
+        else:
+            greendns.getaddrinfo('localhost', None, socktype=0)
 
 
 class TestIsIpAddr(tests.LimitedTestCase):
