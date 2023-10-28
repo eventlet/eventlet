@@ -85,9 +85,9 @@ socket = _socket_nodns
 DNS_QUERY_TIMEOUT = 10.0
 HOSTS_TTL = 10.0
 
-# Exceptions should be initialized when being called, otherwise it will cause a memory leak.
-EAI_EAGAIN_ERROR = lambda : socket.gaierror(socket.EAI_AGAIN, 'Lookup timed out')
-EAI_NONAME_ERROR = lambda : socket.gaierror(socket.EAI_NONAME, 'Name or service not known')
+# NOTE(victor): do not use EAI_*_ERROR instances for raising errors in python3, which will cause a memory leak.
+EAI_EAGAIN_ERROR = socket.gaierror(socket.EAI_AGAIN, 'Lookup timed out')
+EAI_NONAME_ERROR = socket.gaierror(socket.EAI_NONAME, 'Name or service not known')
 # EAI_NODATA was removed from RFC3493, it's now replaced with EAI_NONAME
 # socket.EAI_NODATA is not defined on FreeBSD, probably on some other platforms too.
 # https://lists.freebsd.org/pipermail/freebsd-ports/2003-October/005757.html
@@ -95,8 +95,12 @@ EAI_NODATA_ERROR = EAI_NONAME_ERROR
 EAI_ERRNOS = (socket.EAI_AGAIN, socket.EAI_NONAME)
 if (os.environ.get('EVENTLET_DEPRECATED_EAI_NODATA', '').lower() in ('1', 'y', 'yes')
         and hasattr(socket, 'EAI_NODATA')):
-    EAI_NODATA_ERROR = lambda : socket.gaierror(socket.EAI_NODATA, 'No address associated with hostname')
+    EAI_NODATA_ERROR = socket.gaierror(socket.EAI_NODATA, 'No address associated with hostname')
     EAI_ERRNOS = (socket.EAI_AGAIN, socket.EAI_NONAME, socket.EAI_NODATA)
+
+
+def raise_new_error(error_instance):
+    raise error_instance.__class__(*error_instance.args)
 
 
 def is_ipv4_addr(host):
@@ -467,9 +471,9 @@ def resolve(name, family=socket.AF_INET, raises=True, _proxy=None,
                                    rdtype, dns.rdataclass.IN, None, False)
             raise
     except dns.exception.Timeout:
-        raise EAI_EAGAIN_ERROR()
+        raise_new_error(EAI_EAGAIN_ERROR)
     except dns.exception.DNSException:
-        raise EAI_NODATA_ERROR()
+        raise_new_error(EAI_NODATA_ERROR)
 
 
 def resolve_cname(host):
@@ -479,9 +483,9 @@ def resolve_cname(host):
     except dns.resolver.NoAnswer:
         return host
     except dns.exception.Timeout:
-        raise EAI_EAGAIN_ERROR()
+        raise_new_error(EAI_EAGAIN_ERROR)
     except dns.exception.DNSException:
-        raise EAI_NODATA_ERROR()
+        raise_new_error(EAI_NODATA_ERROR)
     else:
         return str(ans[0].target)
 
@@ -496,9 +500,9 @@ def getaliases(host):
     try:
         return resolver.getaliases(host)
     except dns.exception.Timeout:
-        raise EAI_EAGAIN_ERROR()
+        raise_new_error(EAI_EAGAIN_ERROR)
     except dns.exception.DNSException:
-        raise EAI_NODATA_ERROR()
+        raise_new_error(EAI_NODATA_ERROR)
 
 
 def _getaddrinfo_lookup(host, family, flags):
@@ -507,7 +511,7 @@ def _getaddrinfo_lookup(host, family, flags):
     Helper function for getaddrinfo.
     """
     if flags & socket.AI_NUMERICHOST:
-        raise EAI_NONAME_ERROR()
+        raise_new_error(EAI_NONAME_ERROR)
     addrs = []
     if family == socket.AF_UNSPEC:
         err = None
@@ -618,11 +622,11 @@ def getnameinfo(sockaddr, flags):
             raise TypeError('getnameinfo() argument 1 must be a tuple')
         else:
             # must be ipv6 sockaddr, pretending we don't know how to resolve it
-            raise EAI_NONAME_ERROR()
+            raise_new_error(EAI_NONAME_ERROR)
 
     if (flags & socket.NI_NAMEREQD) and (flags & socket.NI_NUMERICHOST):
         # Conflicting flags.  Punt.
-        raise EAI_NONAME_ERROR()
+        raise_new_error(EAI_NONAME_ERROR)
 
     if is_ipv4_addr(host):
         try:
@@ -633,10 +637,10 @@ def getnameinfo(sockaddr, flags):
             host = rrset[0].target.to_text(omit_final_dot=True)
         except dns.exception.Timeout:
             if flags & socket.NI_NAMEREQD:
-                raise EAI_EAGAIN_ERROR()
+                raise_new_error(EAI_EAGAIN_ERROR)
         except dns.exception.DNSException:
             if flags & socket.NI_NAMEREQD:
-                raise EAI_NONAME_ERROR()
+                raise_new_error(EAI_NONAME_ERROR)
     else:
         try:
             rrset = resolver.query(host)
@@ -645,7 +649,7 @@ def getnameinfo(sockaddr, flags):
             if flags & socket.NI_NUMERICHOST:
                 host = rrset[0].address
         except dns.exception.Timeout:
-            raise EAI_EAGAIN_ERROR()
+            raise_new_error(EAI_EAGAIN_ERROR)
         except dns.exception.DNSException:
             raise socket.gaierror(
                 (socket.EAI_NODATA, 'No address associated with hostname'))
