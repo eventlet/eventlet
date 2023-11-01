@@ -940,9 +940,12 @@ class TestRaiseErrors(tests.LimitedTestCase):
 
         # Raise exception multiple times
         for _ in range(3):
-            with greendns._raise_new_error(greendns.EAI_EAGAIN_ERROR) as error:
-                self.assertIsNone(error.__traceback__)
-                self.assertIsNone(greendns.EAI_EAGAIN_ERROR.__traceback__)
+            with self.assertRaises(socket.gaierror) as error:
+                greendns._raise_new_error(greendns.EAI_EAGAIN_ERROR)
+
+            self.assertIsNone(error.exception.__traceback__)
+        # Check no memory leak of exception instance
+        self.assertIsNone(greendns.EAI_EAGAIN_ERROR.__traceback__)
 
 
 def test_reverse_name():
