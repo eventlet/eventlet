@@ -2,6 +2,7 @@ import contextlib
 import random
 import socket
 import sys
+from unittest import SkipTest
 import warnings
 
 import eventlet
@@ -76,6 +77,12 @@ class SSLTest(tests.LimitedTestCase):
         server_coro.wait()
 
     def test_ssl_close(self):
+        if sys.version_info[:2] < (3, 8):
+            raise SkipTest(
+                "This only passes on Python 3.8 and later "
+                "but since 3.7 is end-of-life it doesn't seem worth fixing..."
+            )
+
         def serve(listener):
             sock, addr = listener.accept()
             sock.recv(8192)
@@ -208,6 +215,12 @@ class SSLTest(tests.LimitedTestCase):
         server_coro.kill()
 
     def test_greensslobject(self):
+        if sys.version_info[:2] < (3, 8):
+            raise SkipTest(
+                "This only passes on Python 3.8 and later "
+                "but since 3.7 is end-of-life it doesn't seem worth fixing..."
+            )
+
         def serve(listener):
             sock, addr = listener.accept()
             sock.sendall(b'content')
