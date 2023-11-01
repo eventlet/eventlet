@@ -565,6 +565,9 @@ class TestHttpd(_TestBase):
                 client_socket, addr = sock.accept()
                 serv.process_request([addr, client_socket, wsgi.STATE_IDLE])
                 return True
+            except ssl.SSLZeroReturnError:
+                # Can't write a response to a closed TLS session
+                return True
             except Exception:
                 traceback.print_exc()
                 return False
