@@ -83,7 +83,7 @@ class GreenSSLSocket(_original_sslsocket):
                         session=kw.get('session'),
                     )
                 else:
-                    ret = self._wrap_socket(
+                    ret = cls._wrap_socket(
                         sock=sock.fd,
                         keyfile=keyfile,
                         certfile=certfile,
