@@ -100,6 +100,7 @@ class GreenSSLSocket(_original_sslsocket):
             ret.__class__ = GreenSSLSocket
             return ret
 
+    global __ssl
     try:
         __ssl.wrap_socket
     except AttributeError:
