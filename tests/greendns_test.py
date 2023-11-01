@@ -931,6 +931,20 @@ class TinyDNSTests(tests.LimitedTestCase):
             self.assertEqual(list(response.rrset.items)[0].address, expected_ip)
 
 
+class TestRaiseErrors(tests.LimitedTestCase):
+
+    def test_raise_new_error(self):
+        # https://github.com/eventlet/eventlet/issues/810
+        if not hasattr(greendns.EAI_EAGAIN_ERROR, "__traceback__"):
+            self.skipTest("Python version does not implement PEP-3134, skip this testcase.")
+
+        # Raise exception multiple times
+        for _ in range(3):
+            with greendns._raise_new_error(greendns.EAI_EAGAIN_ERROR) as error:
+                self.assertIsNone(error.__traceback__)
+                self.assertIsNone(greendns.EAI_EAGAIN_ERROR.__traceback__)
+
+
 def test_reverse_name():
     tests.run_isolated('greendns_from_address_203.py')
 
