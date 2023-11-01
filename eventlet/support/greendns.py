@@ -99,7 +99,7 @@ if (os.environ.get('EVENTLET_DEPRECATED_EAI_NODATA', '').lower() in ('1', 'y', '
     EAI_ERRNOS = (socket.EAI_AGAIN, socket.EAI_NONAME, socket.EAI_NODATA)
 
 
-def raise_new_error(error_instance):
+def _raise_new_error(error_instance):
     raise error_instance.__class__(*error_instance.args)
 
 
@@ -471,9 +471,9 @@ def resolve(name, family=socket.AF_INET, raises=True, _proxy=None,
                                    rdtype, dns.rdataclass.IN, None, False)
             raise
     except dns.exception.Timeout:
-        raise_new_error(EAI_EAGAIN_ERROR)
+        _raise_new_error(EAI_EAGAIN_ERROR)
     except dns.exception.DNSException:
-        raise_new_error(EAI_NODATA_ERROR)
+        _raise_new_error(EAI_NODATA_ERROR)
 
 
 def resolve_cname(host):
@@ -483,9 +483,9 @@ def resolve_cname(host):
     except dns.resolver.NoAnswer:
         return host
     except dns.exception.Timeout:
-        raise_new_error(EAI_EAGAIN_ERROR)
+        _raise_new_error(EAI_EAGAIN_ERROR)
     except dns.exception.DNSException:
-        raise_new_error(EAI_NODATA_ERROR)
+        _raise_new_error(EAI_NODATA_ERROR)
     else:
         return str(ans[0].target)
 
@@ -500,9 +500,9 @@ def getaliases(host):
     try:
         return resolver.getaliases(host)
     except dns.exception.Timeout:
-        raise_new_error(EAI_EAGAIN_ERROR)
+        _raise_new_error(EAI_EAGAIN_ERROR)
     except dns.exception.DNSException:
-        raise_new_error(EAI_NODATA_ERROR)
+        _raise_new_error(EAI_NODATA_ERROR)
 
 
 def _getaddrinfo_lookup(host, family, flags):
@@ -511,7 +511,7 @@ def _getaddrinfo_lookup(host, family, flags):
     Helper function for getaddrinfo.
     """
     if flags & socket.AI_NUMERICHOST:
-        raise_new_error(EAI_NONAME_ERROR)
+        _raise_new_error(EAI_NONAME_ERROR)
     addrs = []
     if family == socket.AF_UNSPEC:
         err = None
@@ -622,11 +622,11 @@ def getnameinfo(sockaddr, flags):
             raise TypeError('getnameinfo() argument 1 must be a tuple')
         else:
             # must be ipv6 sockaddr, pretending we don't know how to resolve it
-            raise_new_error(EAI_NONAME_ERROR)
+            _raise_new_error(EAI_NONAME_ERROR)
 
     if (flags & socket.NI_NAMEREQD) and (flags & socket.NI_NUMERICHOST):
         # Conflicting flags.  Punt.
-        raise_new_error(EAI_NONAME_ERROR)
+        _raise_new_error(EAI_NONAME_ERROR)
 
     if is_ipv4_addr(host):
         try:
@@ -637,10 +637,10 @@ def getnameinfo(sockaddr, flags):
             host = rrset[0].target.to_text(omit_final_dot=True)
         except dns.exception.Timeout:
             if flags & socket.NI_NAMEREQD:
-                raise_new_error(EAI_EAGAIN_ERROR)
+                _raise_new_error(EAI_EAGAIN_ERROR)
         except dns.exception.DNSException:
             if flags & socket.NI_NAMEREQD:
-                raise_new_error(EAI_NONAME_ERROR)
+                _raise_new_error(EAI_NONAME_ERROR)
     else:
         try:
             rrset = resolver.query(host)
@@ -649,7 +649,7 @@ def getnameinfo(sockaddr, flags):
             if flags & socket.NI_NUMERICHOST:
                 host = rrset[0].address
         except dns.exception.Timeout:
-            raise_new_error(EAI_EAGAIN_ERROR)
+            _raise_new_error(EAI_EAGAIN_ERROR)
         except dns.exception.DNSException:
             raise socket.gaierror(
                 (socket.EAI_NODATA, 'No address associated with hostname'))
