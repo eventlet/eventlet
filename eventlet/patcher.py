@@ -433,7 +433,9 @@ def _fix_py3_rlock(old, tid):
         new.acquire()
     if old._is_owned():
         new.acquire()
-    new._owner = tid
+    if hasattr(new, "_owner"):
+        # Newer Python versions:
+        new._owner = tid
     gc.collect()
     for ref in gc.get_referrers(old):
         if isinstance(ref, dict):
