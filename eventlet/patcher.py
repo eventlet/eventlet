@@ -411,7 +411,7 @@ def _green_existing_locks():
             if not py3_style and isinstance(obj._RLock__block, lock_type):
                 _fix_py2_rlock(obj, tid)
             elif py3_style and not isinstance(obj, pyrlock_type):
-                _fix_py3_rlock(obj)
+                _fix_py3_rlock(obj, tid)
 
 
 def _fix_py2_rlock(rlock, tid):
@@ -424,7 +424,7 @@ def _fix_py2_rlock(rlock, tid):
         rlock._RLock__owner = tid
 
 
-def _fix_py3_rlock(old):
+def _fix_py3_rlock(old, tid):
     import gc
     import threading
     new = threading._PyRLock()
@@ -433,8 +433,19 @@ def _fix_py3_rlock(old):
         new.acquire()
     if old._is_owned():
         new.acquire()
+    new._owner = tid
     gc.collect()
     for ref in gc.get_referrers(old):
+        if isinstance(ref, dict):
+            for k, v in list(ref.items()):
+                if v is old:
+                    ref[k] = new
+            continue
+        if isinstance(ref, list):
+            for i, v in enumerate(ref):
+                if v is old:
+                    ref[i] = new
+            continue
         try:
             ref_vars = vars(ref)
         except TypeError:
