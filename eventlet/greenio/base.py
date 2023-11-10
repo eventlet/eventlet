@@ -496,9 +496,16 @@ def shutdown_safe(sock):
 
     Regular sockets don't need a shutdown before close, but it doesn't hurt.
     """
+    from eventlet.green.ssl import GreenSSLSocket
+    if isinstance(sock, GreenSSLSocket):
+        try:
+            sock.unwrap()
+        except:
+            pass
+        return
     try:
         try:
-            # socket, ssl.SSLSocket
+            # socket
             return sock.shutdown(socket.SHUT_RDWR)
         except TypeError:
             # SSL.Connection

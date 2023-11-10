@@ -75,14 +75,11 @@ class TestApi(tests.LimitedTestCase):
         fd = client.makefile('rb', 8192)
 
         assert fd.readline() == b'hello\r\n'
-        # This only passes on Python 3.8 and later, but since 3.7 is
-        # end-of-life it doesn't seem worth fixing...
-        if sys.version_info[:2] > (3, 7):
-            try:
-                self.assertEqual(b'', fd.read(10))
-            except greenio.SSL.ZeroReturnError:
-                # if it's a GreenSSL object it'll do this
-                pass
+        try:
+            self.assertEqual(b'', fd.read(10))
+        except greenio.SSL.ZeroReturnError:
+            # if it's a GreenSSL object it'll do this
+            pass
         greenio.shutdown_safe(client)
         client.close()
 
