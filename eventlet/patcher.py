@@ -411,7 +411,7 @@ def _green_existing_locks():
             if not py3_style and isinstance(obj._RLock__block, lock_type):
                 _fix_py2_rlock(obj, tid)
             elif py3_style and not isinstance(obj, pyrlock_type):
-                _fix_py3_rlock(obj, tid)
+                _fix_py3_rlock(obj)
 
 
 def _fix_py2_rlock(rlock, tid):
@@ -424,18 +424,148 @@ def _fix_py2_rlock(rlock, tid):
         rlock._RLock__owner = tid
 
 
-def _fix_py3_rlock(old, tid):
+class _PyRLock:
+    """This class implements reentrant lock objects.
+
+    A reentrant lock must be released by the thread that acquired it.  Once a
+    thread has acquired a reentrant lock, the same thread may acquire it again
+    without blocking; the thread must release it once for each time it has
+    acquired it.
+
+    Copied from Python 3.11 and tweaked to work with eventlet, this code is
+    licensed under the PSF license.
+    """
+
+    import threading as _threading
+
+    def __init__(self):
+        from eventlet.green.threading import _allocate_lock
+        self._block = _allocate_lock()
+        self._owner = None
+        self._count = 0
+
+    def __repr__(self):
+        owner = self._owner
+        try:
+            owner = self._threading._active[owner].name
+        except KeyError:
+            pass
+        return "<%s %s.%s object owner=%r count=%d at %s>" % (
+            "locked" if self._block.locked() else "unlocked",
+            self.__class__.__module__,
+            self.__class__.__qualname__,
+            owner,
+            self._count,
+            hex(id(self))
+        )
+
+    def _at_fork_reinit(self):
+        self._block._at_fork_reinit()
+        self._owner = None
+        self._count = 0
+
+    def acquire(self, blocking=True, timeout=-1):
+        """Acquire a lock, blocking or non-blocking.
+
+        When invoked without arguments: if this thread already owns the lock,
+        increment the recursion level by one, and return immediately. Otherwise,
+        if another thread owns the lock, block until the lock is unlocked. Once
+        the lock is unlocked (not owned by any thread), then grab ownership, set
+        the recursion level to one, and return. If more than one thread is
+        blocked waiting until the lock is unlocked, only one at a time will be
+        able to grab ownership of the lock. There is no return value in this
+        case.
+
+        When invoked with the blocking argument set to true, do the same thing
+        as when called without arguments, and return true.
+
+        When invoked with the blocking argument set to false, do not block. If a
+        call without an argument would block, return false immediately;
+        otherwise, do the same thing as when called without arguments, and
+        return true.
+
+        When invoked with the floating-point timeout argument set to a positive
+        value, block for at most the number of seconds specified by timeout
+        and as long as the lock cannot be acquired.  Return true if the lock has
+        been acquired, false if the timeout has elapsed.
+
+        """
+        me = self._threading.get_ident()
+        if self._owner == me:
+            self._count += 1
+            return 1
+        rc = self._block.acquire(blocking, timeout)
+        if rc:
+            self._owner = me
+            self._count = 1
+        return rc
+
+    __enter__ = acquire
+
+    def release(self):
+        """Release a lock, decrementing the recursion level.
+
+        If after the decrement it is zero, reset the lock to unlocked (not owned
+        by any thread), and if any other threads are blocked waiting for the
+        lock to become unlocked, allow exactly one of them to proceed. If after
+        the decrement the recursion level is still nonzero, the lock remains
+        locked and owned by the calling thread.
+
+        Only call this method when the calling thread owns the lock. A
+        RuntimeError is raised if this method is called when the lock is
+        unlocked.
+
+        There is no return value.
+
+        """
+        # This breaks locks created by _fix_py3_rlock, so we comment it out:
+        #if self._owner != get_ident():
+        #    raise RuntimeError("cannot release un-acquired lock")
+        self._count = count = self._count - 1
+        if not count:
+            self._owner = None
+            self._block.release()
+
+    def __exit__(self, t, v, tb):
+        self.release()
+
+    # Internal methods used by condition variables
+
+    def _acquire_restore(self, state):
+        self._block.acquire()
+        self._count, self._owner = state
+
+    def _release_save(self):
+        if self._count == 0:
+            raise RuntimeError("cannot release un-acquired lock")
+        count = self._count
+        self._count = 0
+        owner = self._owner
+        self._owner = None
+        self._block.release()
+        return (count, owner)
+
+    def _is_owned(self):
+        return self._owner == self._threading.get_ident()
+
+    # Internal method used for reentrancy checks
+
+    def _recursion_count(self):
+        if self._owner != self._threading.get_ident():
+            return 0
+        return self._count
+
+
+def _fix_py3_rlock(old):
     import gc
-    import threading
-    new = threading._PyRLock()
+    # On 3.11 and presumably later the _PyRLock class is no longer compatible
+    # with eventlet, so use a patched copy.
+    new = _PyRLock()
     while old._is_owned():
         old.release()
         new.acquire()
     if old._is_owned():
         new.acquire()
-    if hasattr(new, "_owner"):
-        # Newer Python versions:
-        new._owner = tid
     gc.collect()
     for ref in gc.get_referrers(old):
         if isinstance(ref, dict):
