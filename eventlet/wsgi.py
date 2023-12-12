@@ -331,6 +331,22 @@ class FileObjectForHeaders(object):
 
 
 class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
+    """This class is used to handle the HTTP requests that arrive
+    at the server.
+
+    The handler will parse the request and the headers, then call a method
+    specific to the request type.
+
+    :param conn_state: The given connection status.
+    :param server: The server accessible by the request handler.
+    :param reject_bad_requests: Rejection policy.
+                If True, or not specified, queries defined as non-compliant,
+                by example with the RFC 9112, will automatically rejected.
+                Else, if False, even if a request is bad formed, the query
+                will be processed. Functionning this way, default to the
+                more-secure behavior, and allow working with old clients that
+                cannot be updated.
+    """
     protocol_version = 'HTTP/1.1'
     minimum_chunk_size = MINIMUM_CHUNK_SIZE
     capitalize_response_headers = True
@@ -340,11 +356,12 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
     # so before going back to unbuffered, remove any usage of `writelines`.
     wbufsize = 16 << 10
 
-    def __init__(self, conn_state, server):
+    def __init__(self, conn_state, server, reject_bad_requests=True):
         self.request = conn_state[1]
         self.client_address = conn_state[0]
         self.conn_state = conn_state
         self.server = server
+        self.reject_bad_requests = reject_bad_requests
         self.setup()
         try:
             self.handle()
@@ -444,6 +461,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             self.rfile = orig_rfile
 
         content_length = self.headers.get('content-length')
+        transfer_encoding = self.headers.get('transfer-encoding')
         if content_length is not None:
             try:
                 if int(content_length) < 0:
@@ -455,6 +473,17 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     b"Connection: close\r\nContent-length: 0\r\n\r\n")
                 self.close_connection = 1
                 return
+
+            if transfer_encoding is not None:
+                if reject_bad_requests:
+                    msg = b"Content-Length and Transfer-Encoding are not allowed together\n"
+                    self.wfile.write(
+                        b"HTTP/1.0 400 Bad Request\r\n"
+                        b"Connection: close\r\n"
+                        b"Content-Length: %d\r\n"
+                        b"\r\n%s" % (len(msg), msg))
+                    self.close_connection = 1
+                    return
 
         self.environ = self.get_environ()
         self.application = self.server.app

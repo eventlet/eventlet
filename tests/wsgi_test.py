@@ -1928,6 +1928,22 @@ class TestHttpd(_TestBase):
         except Exception:
             assert False, self.logfile.getvalue()
 
+    def test_rfc9112_reject_bad_request(self):
+        # (hberaud): Transfer-Encoding and Content-Length in the
+        # same header are not allowed by rfc9112.
+        # Requests containing both headers MAY be rejected to
+        # avoid potential attack.
+        self.site.application = use_write
+        sock = eventlet.connect(self.server_addr)
+        sock.send(
+            b'GET / HTTP/1.1\r\n'
+            b'Transfer-Encoding: chunked\r\n'
+            b'Content-Length: 0'
+            b'Host: localhost\r\n'
+            b'\r\n')
+        result = read_http(sock)
+        self.assertRaises(ConnectionClosed, read_http, sock)
+
 
 def read_headers(sock):
     fd = sock.makefile('rb')
@@ -2064,7 +2080,7 @@ class TestChunkedInput(_TestBase):
     def test_short_read_with_content_length(self):
         body = self.body()
         req = "POST /short-read HTTP/1.1\r\ntransfer-encoding: Chunked\r\n" \
-              "Content-Length:1000\r\n\r\n" + body
+              "\r\n" + body
 
         fd = self.connect()
         fd.sendall(req.encode())
@@ -2076,7 +2092,7 @@ class TestChunkedInput(_TestBase):
     def test_short_read_with_zero_content_length(self):
         body = self.body()
         req = "POST /short-read HTTP/1.1\r\ntransfer-encoding: Chunked\r\n" \
-              "Content-Length:0\r\n\r\n" + body
+              "\r\n" + body
         fd = self.connect()
         fd.sendall(req.encode())
         self.assertEqual(read_http(fd).body, b"this is ch")
@@ -2108,8 +2124,8 @@ class TestChunkedInput(_TestBase):
 
     def test_chunked_readline(self):
         body = self.body()
-        req = "POST /lines HTTP/1.1\r\nContent-Length: %s\r\n" \
-              "transfer-encoding: Chunked\r\n\r\n%s" % (len(body), body)
+        req = "POST /lines HTTP/1.1\r\n" \
+              "transfer-encoding: Chunked\r\n\r\n%s" % (body)
 
         fd = self.connect()
         fd.sendall(req.encode())
@@ -2118,8 +2134,8 @@ class TestChunkedInput(_TestBase):
 
     def test_chunked_readline_from_input(self):
         body = self.body()
-        req = "POST /readline HTTP/1.1\r\nContent-Length: %s\r\n" \
-              "transfer-encoding: Chunked\r\n\r\n%s" % (len(body), body)
+        req = "POST /readline HTTP/1.1\r\n" \
+              "transfer-encoding: Chunked\r\n\r\n%s" % (body)
 
         fd = self.connect()
         fd.sendall(req.encode())
@@ -2128,8 +2144,8 @@ class TestChunkedInput(_TestBase):
 
     def test_chunked_readlines_from_input(self):
         body = self.body()
-        req = "POST /readlines HTTP/1.1\r\nContent-Length: %s\r\n" \
-              "transfer-encoding: Chunked\r\n\r\n%s" % (len(body), body)
+        req = "POST /readlines HTTP/1.1\r\n" \
+              "transfer-encoding: Chunked\r\n\r\n%s" % (body)
 
         fd = self.connect()
         fd.sendall(req.encode())

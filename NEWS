@@ -1,3 +1,8 @@
+Unreleased
+==========
+
+* Fix security issue in the wsgi module related to RFC 9112 https://github.com/eventlet/eventlet/pull/826
+
 0.34.0
 ======
 
