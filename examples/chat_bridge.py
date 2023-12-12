@@ -1,5 +1,8 @@
 import sys
-from zmq import FORWARDER, PUB, SUB, SUBSCRIBE
+try:
+    from zmq import FORWARDER, PUB, SUB, SUBSCRIBE
+except ImportError:
+    raise RuntimeError("zmq is required, please install it first")
 from zmq.devices import Device
 
 

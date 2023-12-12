@@ -49,5 +49,15 @@ setuptools.setup(
         "Programming Language :: Python",
         "Topic :: Internet",
         "Topic :: Software Development :: Libraries :: Python Modules",
-    ]
+    ],
+    entry_points={
+        'console_scripts': [
+            'eventlet_chat_bridge_example = examples.chat_bridge:__main__',
+            'eventlet_chat_server_example = examples.chat_server:__main__',
+            'eventlet_connect_example = examples.connect:__main__',
+            'eventlet_distributed_websocket_chat_example = examples.distributed_websocket_chat:__main__',
+            'eventlet_echoserver_example = examples.echoserver:__main__',
+            'eventlet_wsgi_example = examples.wsgi:__main__',
+        ]
+    }
 )

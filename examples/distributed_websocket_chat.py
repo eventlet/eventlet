@@ -20,7 +20,10 @@ from collections import defaultdict
 from eventlet import spawn_n, sleep
 from eventlet import wsgi
 from eventlet import websocket
-from eventlet.green import zmq
+try:
+    from eventlet.green import zmq
+except ImportError:
+    raise RuntimeError("zmq is required, please install it first")
 from eventlet.hubs import get_hub, use_hub
 from uuid import uuid1
 

@@ -19,6 +19,8 @@ WSGI Server
 
 .. literalinclude:: ../examples/wsgi.py
 
+This example can be launched by using the command ``$ eventlet_wsgi_example``
+
 .. _echo_server_example:
 
 Echo Server
@@ -27,6 +29,8 @@ Echo Server
 
 .. literalinclude:: ../examples/echoserver.py
 
+This example can be launched by using the command ``$ eventlet_echoserver_example``
+
 .. _socket_connect_example:
 
 Socket Connect
@@ -34,6 +38,8 @@ Socket Connect
 ``examples/connect.py``
 
 .. literalinclude:: ../examples/connect.py
+
+This example can be launched by using the command ``$ eventlet_connect_example``
 
 .. _chat_server_example:
 
@@ -45,6 +51,8 @@ This is a little different from the echo server, in that it broadcasts the
 messages to all participants, not just the sender.
         
 .. literalinclude:: ../examples/chat_server.py
+
+This example can be launched by using the command ``$ eventlet_chat_server_example``
 
 .. _feed_scraper_example:
 
