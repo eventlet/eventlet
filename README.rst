@@ -65,7 +65,7 @@ Apologies for any inconvenience.
 Supported Python versions
 =========================
 
-Currently CPython 2.7 and 3.4+ are supported, but **2.7 and 3.4 support is deprecated and will be removed in the future**, only CPython 3.5+ support will remain.
+Python 3.8-3.11 are currently supported.
 
 Flair
 =====
