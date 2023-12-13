@@ -13,6 +13,7 @@ setuptools.setup(
     author='Linden Lab',
     author_email='eventletdev@lists.secondlife.com',
     url='http://eventlet.net',
+    python_requires=">=3.8.0",
     project_urls={
         'Source': 'https://github.com/eventlet/eventlet',
     },
