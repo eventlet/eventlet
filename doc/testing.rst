@@ -34,21 +34,6 @@ To run the doctests included in many of the eventlet modules, use this command:
 
 Currently there are 16 doctests.
 
-Standard Library Tests
-----------------------
-
-Eventlet provides the ability to test itself with the standard Python networking tests.  This verifies that the libraries it wraps work at least as well as the standard ones do.  The directory tests/stdlib contains a bunch of stubs that import the standard lib tests from your system and run them.  If you do not have any tests in your python distribution, they'll simply fail to import.
-
-There's a convenience module called all.py designed to handle the impedance mismatch between Nose and the standard tests:
-
-.. code-block:: sh
-
-  $ nosetests tests/stdlib/all.py
-
-That will run all the tests, though the output will be a little weird because it will look like Nose is running about 20 tests, each of which consists of a bunch of sub-tests.  Not all test modules are present in all versions of Python, so there will be an occasional printout of "Not importing %s, it doesn't exist in this installation/version of Python".
-
-If you see "Ran 0 tests in 0.001s", it means that your Python installation lacks its own tests.  This is usually the case for Linux distributions.  One way to get the missing tests is to download a source tarball (of the same version you have installed on your system!) and copy its Lib/test directory into the correct place on your PYTHONPATH.
-
 
 Testing Eventlet Hubs
 ---------------------
