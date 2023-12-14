@@ -213,7 +213,6 @@ class LimitedTestCase(unittest.TestCase):
 def check_idle_cpu_usage(duration, allowed_part):
     if resource is None:
         # TODO: use https://code.google.com/p/psutil/
-        from nose.plugins.skip import SkipTest
         raise SkipTest('CPU usage testing not supported (`import resource` failed)')
 
     r1 = resource.getrusage(resource.RUSAGE_SELF)
