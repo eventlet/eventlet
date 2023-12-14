@@ -20,7 +20,7 @@ import sys
 import unittest
 import warnings
 
-from nose.plugins.skip import SkipTest
+from unittest import SkipTest
 
 import eventlet
 from eventlet import tpool
