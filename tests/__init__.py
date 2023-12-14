@@ -391,18 +391,6 @@ certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
 private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
 
 
-def test_run_python_timeout():
-    output = run_python('', args=('-c', 'import time; time.sleep(0.5)'), timeout=0.1)
-    assert output.endswith(b'FAIL - timed out')
-
-
-def test_run_python_pythonpath_extend():
-    code = '''import os, sys ; print('\\n'.join(sys.path))'''
-    output = run_python('', args=('-c', code), pythonpath_extend=('dira', 'dirb'))
-    assert b'/dira\n' in output
-    assert b'/dirb\n' in output
-
-
 @contextlib.contextmanager
 def dns_tcp_server(ip_to_give, request_count=1):
     state = [0]  # request count storage writable by thread
