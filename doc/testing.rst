@@ -20,7 +20,7 @@ To run the doctests included in many of the eventlet modules, use this command:
 
   $ pytest --doctest-modules eventlet/
 
-Currently there are 16 doctests, and they `do not pass
+The doctests currently `do not pass <https://github.com/eventlet/eventlet/issues/837>`_.
 
 
 Testing Eventlet Hubs
