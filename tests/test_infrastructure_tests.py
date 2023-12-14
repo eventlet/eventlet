@@ -2,6 +2,7 @@
 
 from . import run_python
 
+
 def test_run_python_timeout():
     output = run_python('', args=('-c', 'import time; time.sleep(0.5)'), timeout=0.1)
     assert output.endswith(b'FAIL - timed out')
