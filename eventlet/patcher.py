@@ -429,8 +429,13 @@ def _fix_py3_rlock(old, tid):
     import threading
     from eventlet.green.thread import allocate_lock
     new = threading._PyRLock()
-    assert hasattr(new, "_block")
-    assert hasattr(new, "_owner")
+    if not hasattr(new, "_block") or not hasattr(new, "_owner"):
+        # These will only fail if Python changes its internal implementation of
+        # _PyRLock:
+        raise RuntimeError(
+            "INTERNAL BUG. Perhaps you are using a major version " +
+            "of Python that is unsupported by eventlet? Please file a bug " +
+            "at https://github.com/eventlet/eventlet/issues/new")
     new._block = allocate_lock()
     acquired = False
     while old._is_owned():
