@@ -73,7 +73,7 @@ Flair
 .. image:: https://img.shields.io/pypi/v/eventlet
     :target: https://pypi.org/project/eventlet/
 
-.. image:: https://img.shields.io/github/workflow/status/eventlet/eventlet/test/master
+.. image:: https://img.shields.io/github/actions/workflow/status/eventlet/eventlet/test.yaml?branch=master
     :target: https://github.com/eventlet/eventlet/actions?query=workflow%3Atest+branch%3Amaster
 
 .. image:: https://codecov.io/gh/eventlet/eventlet/branch/master/graph/badge.svg
