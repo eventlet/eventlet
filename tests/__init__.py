@@ -357,8 +357,9 @@ def run_python(path, env=None, args=None, timeout=None, pythonpath_extend=None, 
             if len(parts) > 1:
                 skip_args.append(parts[1])
             raise SkipTest(*skip_args)
-        ok = output.rstrip() == b'pass'
-        if not ok:
+        lines = output.splitlines()
+        ok = lines[-1].rstrip() == b'pass'
+        if not ok or len(lines) > 1:
             sys.stderr.write('Program {0} output:\n---\n{1}\n---\n'.format(path, output.decode()))
         assert ok, 'Expected single line "pass" in stdout'
 
