@@ -504,7 +504,9 @@ class GreenSSLContext(_original_sslcontext):
             def minimum_version(self, value):
                 super(_original_sslcontext, _original_sslcontext).minimum_version.__set__(self, value)
 
+
 SSLContext = GreenSSLContext
+
 
 # TODO: ssl.create_default_context() was added in 2.7.9.
 # Not clear we're still trying to support Python versions even older than that.

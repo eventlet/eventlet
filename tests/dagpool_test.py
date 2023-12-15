@@ -265,9 +265,9 @@ def test_wait_posted():
     gotten = pool.wait("bcdefg")
     capture.add("got all")
     assert_equal(gotten,
-                  dict(b=2, c=3,
-                       d="dval", e="eval",
-                       f="fval", g="gval"))
+                 dict(b=2, c=3,
+                      d="dval", e="eval",
+                      f="fval", g="gval"))
     capture.validate([
         [],
         [],
@@ -365,7 +365,7 @@ def test_spawn_multiple():
     assert_equal(pool.get("g"), "gval")
     assert_equal(set(pool.keys()), set("abcefg"))
     assert_equal(dict(pool.items()),
-                  dict(a=1, b=2, c=3, e="eval", f="fval", g="gval"))
+                 dict(a=1, b=2, c=3, e="eval", f="fval", g="gval"))
     assert_equal(pool.running(), 2)
     assert_equal(set(pool.running_keys()), set("dh"))
     assert_equal(pool.waiting(), 1)
@@ -379,8 +379,8 @@ def test_spawn_multiple():
     assert_equal(pool.get("d"), "dval")
     assert_equal(set(pool.keys()), set("abcdefgh"))
     assert_equal(dict(pool.items()),
-                  dict(a=1, b=2, c=3,
-                       d="dval", e="eval", f="fval", g="gval", h="hval"))
+                 dict(a=1, b=2, c=3,
+                      d="dval", e="eval", f="fval", g="gval", h="hval"))
     assert_equal(pool.running(), 0)
     assert not pool.running_keys()
     assert_equal(pool.waiting(), 0)
@@ -445,12 +445,12 @@ def test_spawn_many():
     sequence = capture.sequence[:]
     sequence[1:3] = [set([sequence[1].pop(), sequence[2].pop()])]
     assert_equal(sequence,
-                  [set(["a done"]),
-                   set(["b done", "c done"]),
-                   set(["d done"]),
-                   set(["e done"]),
-                   set(["waitall() done"]),
-                   ])
+                 [set(["a done"]),
+                  set(["b done", "c done"]),
+                  set(["d done"]),
+                  set(["e done"]),
+                  set(["waitall() done"]),
+                  ])
 
 
 # deliberately distinguish this from dagpool._MISSING
