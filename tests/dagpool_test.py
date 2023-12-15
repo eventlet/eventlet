@@ -5,12 +5,19 @@
 @brief  Test DAGPool class
 """
 
-from nose.tools import *
 import eventlet
 from eventlet.dagpool import DAGPool, Collision, PropagateError
 import six
 from contextlib import contextmanager
 import itertools
+
+
+def assert_equals(a, b):
+    """Backwards compatibility so we don't have to touch a bunch of tests."""
+    assert a == b
+
+
+assert_equal = assert_equals
 
 
 # Not all versions of nose.tools.assert_raises() support the usage in this
@@ -375,10 +382,9 @@ def test_spawn_multiple():
                   dict(a=1, b=2, c=3,
                        d="dval", e="eval", f="fval", g="gval", h="hval"))
     assert_equal(pool.running(), 0)
-    assert_false(pool.running_keys())
+    assert not pool.running_keys()
     assert_equal(pool.waiting(), 0)
     assert_equal(pool.waiting_for("h"), set())
-
     capture.validate([
         ["h got b", "h got c"],
         ["f returning fval", "h got f"],
