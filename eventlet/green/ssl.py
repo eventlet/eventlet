@@ -6,7 +6,7 @@ slurp_properties(__ssl, globals(), srckeys=dir(__ssl))
 import sys
 from eventlet import greenio, hubs
 from eventlet.greenio import (
-    set_nonblocking, GreenSocket, CONNECT_ERR, CONNECT_SUCCESS,
+    GreenSocket, CONNECT_ERR, CONNECT_SUCCESS,
 )
 from eventlet.hubs import trampoline, IOClosed
 from eventlet.support import get_errno, PY33
@@ -24,14 +24,7 @@ __patched__ = [
 _original_sslsocket = __ssl.SSLSocket
 _original_sslcontext = __ssl.SSLContext
 _is_under_py_3_7 = sys.version_info < (3, 7)
-try:
-    # Python 3.11 and earlier
-    _original_wrap_socket = __ssl.wrap_socket
-    _has_ssl_wrap_socket = True
-except AttributeError:
-    # Python 3.12+
-    _original_wrap_socket = __ssl.SSLContext.wrap_socket
-    _has_ssl_wrap_socket = False
+_original_wrap_socket = __ssl.SSLContext.wrap_socket
 
 
 @contextmanager
@@ -102,30 +95,25 @@ class GreenSSLSocket(_original_sslsocket):
             ret.__class__ = GreenSSLSocket
             return ret
 
-    if _has_ssl_wrap_socket:
-        # Python 3.11 or earlier
-        _wrap_socket = _original_wrap_socket
-    else:
-        # Python 3.12+
-        @staticmethod
-        def _wrap_socket(sock, keyfile, certfile, server_side, cert_reqs,
-                         ssl_version, ca_certs, do_handshake_on_connect, ciphers):
-            context = _original_sslcontext(protocol=ssl_version)
-            context.options |= cert_reqs
-            if certfile or keyfile:
-                context.load_cert_chain(
-                    certfile=certfile,
-                    keyfile=keyfile,
-                )
-            if ca_certs:
-                context.load_verify_locations(ca_certs)
-            if ciphers:
-                context.set_ciphers(ciphers)
-            return context.wrap_socket(
-                sock=sock,
-                server_side=server_side,
-                do_handshake_on_connect=do_handshake_on_connect,
+    @staticmethod
+    def _wrap_socket(sock, keyfile, certfile, server_side, cert_reqs,
+                     ssl_version, ca_certs, do_handshake_on_connect, ciphers):
+        context = _original_sslcontext(protocol=ssl_version)
+        context.options |= cert_reqs
+        if certfile or keyfile:
+            context.load_cert_chain(
+                certfile=certfile,
+                keyfile=keyfile,
             )
+        if ca_certs:
+            context.load_verify_locations(ca_certs)
+        if ciphers:
+            context.set_ciphers(ciphers)
+        return context.wrap_socket(
+            sock=sock,
+            server_side=server_side,
+            do_handshake_on_connect=do_handshake_on_connect,
+        )
 
     # we are inheriting from SSLSocket because its constructor calls
     # do_handshake whose behavior we wish to override

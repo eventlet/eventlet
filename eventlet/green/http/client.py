@@ -1450,35 +1450,21 @@ try:
 except ImportError:
     pass
 else:
-    if ssl._has_ssl_wrap_socket:
-        # Python 3.11 or earlier
-        def _create_https_context(http_version):
-            return ssl._create_default_https_context()
+    def _create_https_context(http_version):
+        # Function also used by urllib.request to be able to set the check_hostname
+        # attribute on a context object.
+        context = ssl._create_default_https_context()
+        # send ALPN extension to indicate HTTP/1.1 protocol
+        if http_version == 11:
+            context.set_alpn_protocols(['http/1.1'])
+        # enable PHA for TLS 1.3 connections if available
+        if context.post_handshake_auth is not None:
+            context.post_handshake_auth = True
+        return context
 
-        def _populate_https_context(context, check_hostname):
-            will_verify = context.verify_mode != ssl.CERT_NONE
-            if check_hostname is None:
-                check_hostname = context.check_hostname
-            if check_hostname and not will_verify:
-                raise ValueError("check_hostname needs a SSL context with "
-                                 "either CERT_OPTIONAL or CERT_REQUIRED")
-    else:
-        # Python 3.12+
-        def _create_https_context(http_version):
-            # Function also used by urllib.request to be able to set the check_hostname
-            # attribute on a context object.
-            context = ssl._create_default_https_context()
-            # send ALPN extension to indicate HTTP/1.1 protocol
-            if http_version == 11:
-                context.set_alpn_protocols(['http/1.1'])
-            # enable PHA for TLS 1.3 connections if available
-            if context.post_handshake_auth is not None:
-                context.post_handshake_auth = True
-            return context
-
-        def _populate_https_context(context, check_hostname):
-            if check_hostname is not None:
-                context.check_hostname = check_hostname
+    def _populate_https_context(context, check_hostname):
+        if check_hostname is not None:
+            context.check_hostname = check_hostname
 
     class HTTPSConnection(HTTPConnection):
         "This class allows communication via SSL."
