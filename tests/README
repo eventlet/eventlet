@@ -1,7 +1,4 @@
-The tests are intended to be run using Nose.  
-http://somethingaboutorange.com/mrl/projects/nose/
+The tests are intended to be run using pytest.
 
-To run tests, simply install nose, and then, in the eventlet tree, do:
-   $ nosetests
-
-That's it!  Its output is the same as unittest's output.  It tends to emit a lot of tracebacks from various poorly-behaving tests, but they still (generally) pass.
+To run tests, simply install pytest, and then, in the eventlet tree, do:
+   $ pytest

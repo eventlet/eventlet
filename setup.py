@@ -13,6 +13,7 @@ setuptools.setup(
     author='Linden Lab',
     author_email='eventletdev@lists.secondlife.com',
     url='http://eventlet.net',
+    python_requires=">=3.8.0",
     project_urls={
         'Source': 'https://github.com/eventlet/eventlet',
     },
@@ -30,7 +31,6 @@ setuptools.setup(
             'README.rst'
         )
     ).read(),
-    test_suite='nose.collector',
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
@@ -38,14 +38,11 @@ setuptools.setup(
         "Operating System :: MacOS :: MacOS X",
         "Operating System :: Microsoft :: Windows",
         "Operating System :: POSIX",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Programming Language :: Python",
         "Topic :: Internet",
         "Topic :: Software Development :: Libraries :: Python Modules",
