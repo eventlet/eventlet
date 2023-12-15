@@ -74,13 +74,13 @@ request. This diagram details these state transitions:
       | ( putheader() )*  endheaders()
       v
     Request-sent
-      |\_____________________________
+      |\\_____________________________
       |                              | getresponse() raises
       | response = getresponse()     | ConnectionError
       v                              v
     Unread-response                Idle
     [Response-headers-read]
-      |\____________________
+      |\\____________________
       |                     |
       | response.read()     | putrequest()
       v                     v
