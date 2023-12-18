@@ -419,13 +419,13 @@ def _green_existing_locks():
         # that we know are significant
         import logging
         if isinstance(logging._lock, rlock_type):
-            _fix_py3_rlock(logging._lock)
+            _fix_py3_rlock(logging._lock, tid)
         logging._acquireLock()
         try:
             for ref in logging._handlerList:
                 handler = ref()
                 if handler and isinstance(handler.lock, rlock_type):
-                    _fix_py3_rlock(handler.lock)
+                    _fix_py3_rlock(handler.lock, tid)
                 del handler
         finally:
             logging._releaseLock()
@@ -482,7 +482,7 @@ def _fix_py3_rlock(old, tid):
             pass
         else:
             for k, v in ref_vars.items():
-                if v == old:
+                if v is old:
                     setattr(ref, k, new)
 
 
