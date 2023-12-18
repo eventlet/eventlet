@@ -5,26 +5,20 @@ __test__ = False
 
 if __name__ == "__main__":
     import logging
-    import eventlet.patcher
-    eventlet.patcher.monkey_patch(thread=True)
     import threading
 
-    def take_and_release():
-        try:
-            logging._lock.acquire()
-        finally:
-            logging._lock.release()
+    handler = logging.Handler()
+    logger = logging.Logger("test")
+    logger.addHandler(handler)
 
-    assert logging._lock.acquire()
-    t = threading.Thread(target=take_and_release)
-    t.daemon = True
-    t.start()
+    # Initially these are standard Python RLocks:
+    assert not isinstance(logging._lock, threading._PyRLock)
+    assert not isinstance(handler.lock, threading._PyRLock)
 
-    t.join(timeout=0.1)
-    # we should timeout, and the thread is still blocked waiting on the lock
-    assert t.is_alive()
+    # After patching, they get converted:
+    import eventlet.patcher
+    eventlet.patcher.monkey_patch(thread=True)
+    assert isinstance(logging._lock, threading._PyRLock)
+    assert isinstance(handler.lock, threading._PyRLock)
 
-    logging._lock.release()
-    t.join(timeout=0.1)
-    assert not t.is_alive()
     print("pass")
