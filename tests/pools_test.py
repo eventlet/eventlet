@@ -245,8 +245,9 @@ ALWAYS = RuntimeError('I always fail')
 SOMETIMES = RuntimeError('I fail half the time')
 
 
-class TestTookTooLong(Exception):
+class TookTooLongToRunTest(Exception):
     pass
+
 
 if __name__ == '__main__':
     main()

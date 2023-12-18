@@ -57,7 +57,6 @@ def run_interaction(run_client):
 
 def run_and_check(run_client):
     w = run_interaction(run_client=run_client)
-    # clear_sys_exc_info()
     gc.collect()
     fd = w()
     print('run_and_check: weakref fd:', fd)

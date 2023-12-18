@@ -9,8 +9,6 @@ import socket as _orig_sock
 import sys
 import tempfile
 
-from nose.tools import eq_
-
 import eventlet
 from eventlet import event, greenio, debug
 from eventlet.hubs import get_hub
@@ -39,7 +37,7 @@ def expect_socket_timeout(function, *args):
         raise AssertionError("socket.timeout not raised")
     except socket.timeout as e:
         assert hasattr(e, 'args')
-        eq_(e.args[0], 'timed out')
+        assert e.args[0] == 'timed out'
 
 
 def min_buf_size():
@@ -516,7 +514,6 @@ class TestGreenSocket(tests.LimitedTestCase):
         server.close()
         client.close()
 
-    @tests.skip_with_pyevent
     def test_raised_multiple_readers(self):
         debug.hub_prevent_multiple_readers(True)
 
@@ -538,7 +535,6 @@ class TestGreenSocket(tests.LimitedTestCase):
         s.sendall(b'b')
         a.wait()
 
-    @tests.skip_with_pyevent
     @tests.skip_if(using_epoll_hub)
     @tests.skip_if(using_kqueue_hub)
     def test_closure(self):
@@ -674,8 +670,8 @@ class TestGreenSocket(tests.LimitedTestCase):
         sender.sendto(b'second', 0, address)
 
         sender_address = ('127.0.0.1', sender.getsockname()[1])
-        eq_(receiver.recvfrom(1024), (b'first', sender_address))
-        eq_(receiver.recvfrom(1024), (b'second', sender_address))
+        assert receiver.recvfrom(1024) == (b'first', sender_address)
+        assert receiver.recvfrom(1024) == (b'second', sender_address)
 
 
 def test_get_fileno_of_a_socket_works():
@@ -860,7 +856,6 @@ class TestGreenPipe(tests.LimitedTestCase):
 class TestGreenIoLong(tests.LimitedTestCase):
     TEST_TIMEOUT = 10  # the test here might take a while depending on the OS
 
-    @tests.skip_with_pyevent
     def test_multiple_readers(self):
         debug.hub_prevent_multiple_readers(False)
         recvsize = 2 * min_buf_size()

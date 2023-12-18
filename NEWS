@@ -1,3 +1,16 @@
+Unreleased
+==========
+
+* Dropped support for Python 3.7 and earlier.
+
+0.33.3
+======
+* dnspython 2.3.0 raised AttributeError: module 'dns.rdtypes' has no attribute 'ANY' https://github.com/eventlet/eventlet/issues/781
+
+0.33.2
+======
+* greenio: GreenPipe/fdopen() with 'a' in mode raised io.UnsupportedOperation: File or stream is not writable https://github.com/eventlet/eventlet/pull/758
+
 0.33.1
 ======
 * Prevent deadlock on logging._lock https://github.com/eventlet/eventlet/issues/742

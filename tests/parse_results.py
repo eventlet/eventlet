@@ -31,6 +31,7 @@ def parse_stdout(s):
         hub += '/%s' % reactor
     return testname, hub
 
+
 unittest_delim = '----------------------------------------------------------------------'
 
 
@@ -101,6 +102,7 @@ def main(db):
                       'values (?, ?, ?, ?, ?, ?, ?)',
                       (id, testname, hub, runs, errors, fails, timeouts))
             c.commit()
+
 
 if __name__ == '__main__':
     if not sys.argv[1:]:

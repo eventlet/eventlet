@@ -109,4 +109,3 @@ class Hub(hub.BaseHub):
                 raise
             except:
                 self.squelch_exception(fileno, sys.exc_info())
-                support.clear_sys_exc_info()

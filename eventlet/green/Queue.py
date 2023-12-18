@@ -28,5 +28,6 @@ class LifoQueue(queue.LifoQueue):
             maxsize = None
         super(LifoQueue, self).__init__(maxsize)
 
+
 Empty = queue.Empty
 Full = queue.Full

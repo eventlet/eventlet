@@ -10,10 +10,10 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: cache pip
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('.github/workflows/style.yaml') }}
@@ -21,7 +21,7 @@ jobs:
             ${{ runner.os }}-pip-
             ${{ runner.os }}-
       - name: cache tox
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: .tox
           key: ${{ runner.os }}-tox-style-${{ hashFiles('tox.ini') }}
@@ -31,7 +31,7 @@ jobs:
             ${{ runner.os }}-
 
       - name: setup python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
         with:
           python-version: 3.x
       - name: install tox

@@ -145,6 +145,7 @@ def exc_after(seconds, *throw_args):
     hub = hubs.get_hub()
     return hub.schedule_call_local(seconds, getcurrent().throw, *throw_args)
 
+
 # deprecate, remove
 TimeoutError, with_timeout = (
     support.wrap_deprecated(old, new)(fun) for old, new, fun in (

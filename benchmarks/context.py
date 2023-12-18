@@ -5,8 +5,7 @@ import threading
 import time
 
 import eventlet
-from eventlet import hubs
-from eventlet.hubs import pyevent, epolls, poll, selects
+import eventlet.hubs
 
 
 CONTEXT_SWITCHES = 100000
@@ -65,15 +64,7 @@ test_thread()
 print("threading: %.02f seconds" % (time.time() - start))
 
 try:
-    hubs.use_hub(pyevent)
-    start = time.time()
-    test_eventlet()
-    print("pyevent:   %.02f seconds" % (time.time() - start))
-except:
-    print("pyevent hub unavailable")
-
-try:
-    hubs.use_hub(epolls)
+    eventlet.hubs.use_hub("eventlet.hubs.epolls")
     start = time.time()
     test_eventlet()
     print("epoll:     %.02f seconds" % (time.time() - start))
@@ -81,7 +72,15 @@ except:
     print("epoll hub unavailable")
 
 try:
-    hubs.use_hub(poll)
+    eventlet.hubs.use_hub("eventlet.hubs.kqueue")
+    start = time.time()
+    test_eventlet()
+    print("kqueue:    %.02f seconds" % (time.time() - start))
+except:
+    print("kqueue hub unavailable")
+
+try:
+    eventlet.hubs.use_hub("eventlet.hubs.poll")
     start = time.time()
     test_eventlet()
     print("poll:      %.02f seconds" % (time.time() - start))
@@ -89,7 +88,7 @@ except:
     print("poll hub unavailable")
 
 try:
-    hubs.use_hub(selects)
+    eventlet.hubs.use_hub("eventlet.hubs.selects")
     start = time.time()
     test_eventlet()
     print("select:    %.02f seconds" % (time.time() - start))

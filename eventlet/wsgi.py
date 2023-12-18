@@ -392,7 +392,12 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             return ''
 
         try:
-            return self.rfile.readline(self.server.url_length_limit)
+            sock = self.rfile._sock if six.PY2 else self.connection
+            if self.server.keepalive and not isinstance(self.server.keepalive, bool):
+                sock.settimeout(self.server.keepalive)
+            line = self.rfile.readline(self.server.url_length_limit)
+            sock.settimeout(self.server.socket_timeout)
+            return line
         except greenio.SSL.ZeroReturnError:
             pass
         except socket.error as e:
@@ -521,6 +526,10 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     towrite.append(b'Connection: close\r\n')
                 elif send_keep_alive:
                     towrite.append(b'Connection: keep-alive\r\n')
+                    # Spec says timeout must be an integer, but we allow sub-second
+                    int_timeout = int(self.server.keepalive or 0)
+                    if not isinstance(self.server.keepalive, bool) and int_timeout:
+                        towrite.append(b'Keep-Alive: timeout=%d\r\n' % int_timeout)
                 towrite.append(b'\r\n')
                 # end of header writing
 
@@ -937,8 +946,9 @@ def server(sock, site,
                 log line.
     :param custom_pool: A custom GreenPool instance which is used to spawn client green threads.
                 If this is supplied, max_size is ignored.
-    :param keepalive: If set to False, disables keepalives on the server; all connections will be
-                closed after serving one request.
+    :param keepalive: If set to False or zero, disables keepalives on the server; all connections
+                will be closed after serving one request. If numeric, it will be the timeout used
+                when reading the next request.
     :param log_output: A Boolean indicating if the server will log data or not.
     :param log_format: A python format string that is used as the template to generate log lines.
                 The following values can be formatted into it: client_ip, date_time, request_line,
