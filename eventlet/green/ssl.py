@@ -200,14 +200,17 @@ class GreenSSLSocket(_original_sslsocket):
         return self._call_trampolining(
             super(GreenSSLSocket, self).write, data)
 
-    def read(self, *args, **kwargs):
+    def read(self, len=1024, buffer=None):
         """Read up to LEN bytes and return them.
         Return zero-length string on EOF."""
         try:
             return self._call_trampolining(
-                super(GreenSSLSocket, self).read, *args, **kwargs)
+                super(GreenSSLSocket, self).read, len, buffer)
         except IOClosed:
-            return b''
+            if buffer is None:
+                return b''
+            else:
+                return 0
 
     def send(self, data, flags=0):
         if self._sslobj:
