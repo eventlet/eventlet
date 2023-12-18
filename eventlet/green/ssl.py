@@ -24,6 +24,7 @@ __patched__ = [
 _original_sslsocket = __ssl.SSLSocket
 _original_sslcontext = __ssl.SSLContext
 _is_under_py_3_7 = sys.version_info < (3, 7)
+_is_py_3_7 = sys.version_info[:2] == (3, 7)
 _original_wrap_socket = __ssl.SSLContext.wrap_socket
 
 
@@ -191,6 +192,11 @@ class GreenSSLSocket(_original_sslsocket):
                                    write=True,
                                    timeout=self.gettimeout(),
                                    timeout_exc=timeout_exc('timed out'))
+                    elif _is_py_3_7 and "unexpected eof" in exc.args[1]:
+                        # For reasons I don't understand on 3.7 we get [ssl:
+                        # KRB5_S_TKT_NYV] unexpected eof while reading]
+                        # errors...
+                        raise IOClosed
                     else:
                         raise
 
