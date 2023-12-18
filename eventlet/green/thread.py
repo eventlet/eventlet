@@ -15,6 +15,8 @@ error = __thread.error
 LockType = Lock
 __threadcount = 0
 
+if hasattr(__thread, "_is_main_interpreter"):
+    _is_main_interpreter = __thread._is_main_interpreter
 
 if six.PY3:
     def _set_sentinel():

@@ -2,6 +2,7 @@ Unreleased
 ==========
 
 * Dropped support for Python 3.7 and earlier.
+* Fix Python 3.13 compat by adding missing attibute '_is_main_interpreter' https://github.com/eventlet/eventlet/pull/847
 
 0.33.3
 ======
