@@ -413,7 +413,7 @@ def _green_existing_locks():
             elif py3_style and not isinstance(obj, pyrlock_type):
                 _fix_py3_rlock(obj, tid)
 
-    if (3, 0) <= sys.version_info <= (3, 10):
+    if sys.version_info < (3, 10):
         # Older py3 won't have RLocks show up in gc.get_objects() -- see
         # https://github.com/eventlet/eventlet/issues/546 -- so green a handful
         # that we know are significant
