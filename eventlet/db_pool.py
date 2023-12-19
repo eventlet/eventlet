@@ -75,7 +75,7 @@ class BaseConnectionPool(Pool):
 
         If max_age or max_idle is 0, _schedule_expiration likewise does nothing.
         """
-        if self.max_age is 0 or self.max_idle is 0:
+        if self.max_age == 0 or self.max_idle == 0:
             # expiration is unnecessary because all connections will be expired
             # on put
             return
@@ -361,6 +361,8 @@ class GenericConnectionWrapper(object):
         'use_result',
         'warning_count',
     )
+
+
 for _proxy_fun in GenericConnectionWrapper._proxy_funcs:
     # excess wrapper for early binding (closure by value)
     def _wrapper(_proxy_fun=_proxy_fun):

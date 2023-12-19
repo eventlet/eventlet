@@ -20,7 +20,7 @@ import sys
 import unittest
 import warnings
 
-from nose.plugins.skip import SkipTest
+from unittest import SkipTest
 
 import eventlet
 from eventlet import tpool
@@ -99,16 +99,6 @@ def skip_unless(condition):
                 return func(*a, **kw)
         return wrapped
     return skipped_wrapper
-
-
-def using_pyevent(_f):
-    from eventlet.hubs import get_hub
-    return 'pyevent' in type(get_hub()).__module__
-
-
-def skip_with_pyevent(func):
-    """ Decorator that skips a test if we're using the pyevent hub."""
-    return skip_if(using_pyevent)(func)
 
 
 def skip_on_windows(func):
@@ -223,7 +213,6 @@ class LimitedTestCase(unittest.TestCase):
 def check_idle_cpu_usage(duration, allowed_part):
     if resource is None:
         # TODO: use https://code.google.com/p/psutil/
-        from nose.plugins.skip import SkipTest
         raise SkipTest('CPU usage testing not supported (`import resource` failed)')
 
     r1 = resource.getrusage(resource.RUSAGE_SELF)
@@ -232,11 +221,11 @@ def check_idle_cpu_usage(duration, allowed_part):
     utime = r2.ru_utime - r1.ru_utime
     stime = r2.ru_stime - r1.ru_stime
 
-    # This check is reliably unreliable on Travis, presumably because of CPU
+    # This check is reliably unreliable on Travis/Github Actions, presumably because of CPU
     # resources being quite restricted by the build environment. The workaround
     # is to apply an arbitrary factor that should be enough to make it work nicely.
-    if os.environ.get('TRAVIS') == 'true':
-        allowed_part *= 1.2
+    if os.environ.get('CI') == 'true':
+        allowed_part *= 5
 
     assert utime + stime < duration * allowed_part, \
         "CPU usage over limit: user %.0f%% sys %.0f%% allowed %.0f%%" % (
@@ -323,8 +312,8 @@ def get_database_auth():
 
 def run_python(path, env=None, args=None, timeout=None, pythonpath_extend=None, expect_pass=False):
     new_argv = [sys.executable]
-    if sys.version_info[:2] <= (2, 6):
-        new_argv += ['-W', 'ignore::DeprecationWarning']
+    if sys.version_info[:2] <= (2, 7):
+        new_argv += ['-W', 'ignore:Python 2 is no longer supported']
     new_env = os.environ.copy()
     new_env.setdefault('eventlet_test_in_progress', 'yes')
     src_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -356,6 +345,9 @@ def run_python(path, env=None, args=None, timeout=None, pythonpath_extend=None, 
     except subprocess.TimeoutExpired:
         p.kill()
         output, _ = p.communicate(timeout=timeout)
+        if expect_pass:
+            sys.stderr.write('Program {0} output:\n---\n{1}\n---\n'.format(path, output.decode()))
+            assert False, 'timed out'
         return '{0}\nFAIL - timed out'.format(output).encode()
 
     if expect_pass:
@@ -365,8 +357,9 @@ def run_python(path, env=None, args=None, timeout=None, pythonpath_extend=None, 
             if len(parts) > 1:
                 skip_args.append(parts[1])
             raise SkipTest(*skip_args)
-        ok = output.rstrip() == b'pass'
-        if not ok:
+        lines = output.splitlines()
+        ok = lines[-1].rstrip() == b'pass'
+        if not ok or len(lines) > 1:
             sys.stderr.write('Program {0} output:\n---\n{1}\n---\n'.format(path, output.decode()))
         assert ok, 'Expected single line "pass" in stdout'
 
@@ -380,7 +373,7 @@ def run_isolated(path, prefix='tests/isolated/', **kwargs):
 
 def check_is_timeout(obj):
     value_text = getattr(obj, 'is_timeout', '(missing)')
-    assert obj.is_timeout, 'type={0} str={1} .is_timeout={2}'.format(type(obj), str(obj), value_text)
+    assert eventlet.is_timeout(obj), 'type={0} str={1} .is_timeout={2}'.format(type(obj), str(obj), value_text)
 
 
 @contextlib.contextmanager
@@ -397,18 +390,6 @@ def capture_stderr():
 
 certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
 private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
-
-
-def test_run_python_timeout():
-    output = run_python('', args=('-c', 'import time; time.sleep(0.5)'), timeout=0.1)
-    assert output.endswith(b'FAIL - timed out')
-
-
-def test_run_python_pythonpath_extend():
-    code = '''import os, sys ; print('\\n'.join(sys.path))'''
-    output = run_python('', args=('-c', code), pythonpath_extend=('dira', 'dirb'))
-    assert b'/dira\n' in output
-    assert b'/dirb\n' in output
 
 
 @contextlib.contextmanager
@@ -485,3 +466,9 @@ def dns_tcp_server(ip_to_give, request_count=1):
     client.close()
     thread.join()
     server_socket.close()
+
+
+def read_file(path, mode="rb"):
+    with open(path, mode) as f:
+        result = f.read()
+    return result

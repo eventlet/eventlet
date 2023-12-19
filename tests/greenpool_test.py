@@ -350,6 +350,12 @@ class GreenPile(tests.LimitedTestCase):
             p.spawn(passthru, i)
         self.assertEqual(list(p), list(range(10)))
 
+    def test_empty_pile(self):
+        p = eventlet.GreenPile(4)
+        # no spawn()s
+        # If this hangs, LimitedTestCase should time out
+        self.assertEqual(list(p), [])
+
     def test_constructing_from_pool(self):
         pool = eventlet.GreenPool(2)
         pile1 = eventlet.GreenPile(pool)
@@ -379,6 +385,7 @@ def test_greenpool_type_check():
 
 class StressException(Exception):
     pass
+
 
 r = random.Random(0)
 

@@ -8,7 +8,7 @@ The prints in the body of the fetch function are there to demonstrate that the
 requests are truly made in parallel.
 """
 import eventlet
-from eventlet.green import urllib2
+from eventlet.green.urllib.request import urlopen
 
 
 urls = [
@@ -20,7 +20,7 @@ urls = [
 
 def fetch(url):
     print("opening", url)
-    body = urllib2.urlopen(url).read()
+    body = urlopen(url).read()
     print("done with", url)
     return url, body
 

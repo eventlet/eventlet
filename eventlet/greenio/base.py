@@ -29,7 +29,10 @@ if six.PY2:
 _original_socket = eventlet.patcher.original('socket').socket
 
 
-socket_timeout = eventlet.timeout.wrap_is_timeout(socket.timeout)
+if sys.version_info >= (3, 10):
+    socket_timeout = socket.timeout  # Really, TimeoutError
+else:
+    socket_timeout = eventlet.timeout.wrap_is_timeout(socket.timeout)
 
 
 def socket_connect(descriptor, address):
@@ -145,7 +148,9 @@ class GreenSocket(object):
         except AttributeError:
             self._timeout = socket.getdefaulttimeout()
 
-        if should_set_nonblocking:
+        # Filter fd.fileno() != -1 so that won't call set non-blocking on
+        # closed socket
+        if should_set_nonblocking and fd.fileno() != -1:
             set_nonblocking(fd)
         self.fd = fd
         # when client calls setblocking(0) or settimeout(0) the socket must
@@ -277,6 +282,7 @@ class GreenSocket(object):
                     return get_errno(ex)
                 except IOClosed:
                     return errno.EBADFD
+                return 0
         else:
             end = time.time() + self.gettimeout()
             timeout_exc = socket.timeout(errno.EAGAIN)
@@ -293,6 +299,7 @@ class GreenSocket(object):
                     return get_errno(ex)
                 except IOClosed:
                     return errno.EBADFD
+                return 0
 
     def dup(self, *args, **kw):
         sock = self.fd.dup(*args, **kw)
@@ -329,7 +336,6 @@ class GreenSocket(object):
             timeout_exc=socket_timeout('timed out'))
 
     def _recv_loop(self, recv_meth, empty_val, *args):
-        fd = self.fd
         if self.act_non_blocking:
             return recv_meth(*args)
 
@@ -453,7 +459,7 @@ def _operation_on_closed_file(*args, **kwargs):
 greenpipe_doc = """
     GreenPipe is a cooperative replacement for file class.
     It will cooperate on pipes. It will block on regular file.
-    Differneces from file class:
+    Differences from file class:
     - mode is r/w property. Should re r/o
     - encoding property not implemented
     - write/writelines will not raise TypeError exception when non-string data is written

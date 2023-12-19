@@ -71,7 +71,7 @@ class GreenFileIO(_OriginalIOBase):
         return 'r' in self._mode or '+' in self._mode
 
     def writable(self):
-        return 'w' in self._mode or '+' in self._mode
+        return 'w' in self._mode or '+' in self._mode or 'a' in self._mode
 
     def fileno(self):
         return self._fileno
@@ -191,9 +191,12 @@ _open_environment.update(dict(
     FileIO=GreenFileIO,
     os=_original_os,
 ))
+if hasattr(_original_pyio, 'text_encoding'):
+    _open_environment['text_encoding'] = _original_pyio.text_encoding
 
+_pyio_open = getattr(_original_pyio.open, '__wrapped__', _original_pyio.open)
 _open = FunctionType(
-    six.get_function_code(_original_pyio.open),
+    six.get_function_code(_pyio_open),
     _open_environment,
 )
 
@@ -210,5 +213,6 @@ def GreenPipe(name, mode="r", buffering=-1, encoding=None, errors=None,
         name = fileno
 
     return _open(name, mode, buffering, encoding, errors, newline, closefd, opener)
+
 
 GreenPipe.__doc__ = greenpipe_doc

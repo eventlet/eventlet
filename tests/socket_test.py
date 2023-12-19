@@ -99,3 +99,11 @@ def test_error_is_timeout():
         tests.check_is_timeout(e)
     else:
         assert False, 'No timeout, socket.error was not raised'
+
+
+def test_connect_ex_success():
+    # https://github.com/eventlet/eventlet/issues/696
+    server = eventlet.listen(("127.0.0.1", 0))
+    client = socket.socket()
+    result = client.connect_ex(server.getsockname())
+    assert result == 0

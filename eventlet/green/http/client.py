@@ -74,13 +74,13 @@ request. This diagram details these state transitions:
       | ( putheader() )*  endheaders()
       v
     Request-sent
-      |\_____________________________
+      |\\_____________________________
       |                              | getresponse() raises
       | response = getresponse()     | ConnectionError
       v                              v
     Unread-response                Idle
     [Response-headers-read]
-      |\____________________
+      |\\____________________
       |                     |
       | response.read()     | putrequest()
       v                     v
@@ -126,7 +126,10 @@ import email.parser
 import email.message
 import io
 import re
-import collections
+try:
+    from collections.abc import Iterable
+except ImportError:
+    from collections import Iterable
 from urllib.parse import urlsplit
 
 from eventlet.green import http, os, socket
@@ -1048,7 +1051,7 @@ class HTTPConnection:
         try:
             self.sock.sendall(data)
         except TypeError:
-            if isinstance(data, collections.Iterable):
+            if isinstance(data, Iterable):
                 for d in data:
                     self.sock.sendall(d)
             else:
@@ -1281,22 +1284,32 @@ class HTTPConnection:
         header = header + b': ' + value
         self._output(header)
 
-    def endheaders(self, message_body=None, *, encode_chunked=False):
+    def endheaders(self, message_body=None, **kwds):
         """Indicate that the last header line has been sent to the server.
 
         This method sends the request to the server.  The optional message_body
         argument can be used to pass a message body associated with the
         request.
         """
+        encode_chunked = kwds.pop('encode_chunked', False)
+        if kwds:
+            # mimic interpreter error for unrecognized keyword
+            raise TypeError("endheaders() got an unexpected keyword argument '{0}'"
+                            .format(kwds.popitem()[0]))
+
         if self.__state == _CS_REQ_STARTED:
             self.__state = _CS_REQ_SENT
         else:
             raise CannotSendHeader()
         self._send_output(message_body, encode_chunked=encode_chunked)
 
-    def request(self, method, url, body=None, headers={}, *,
-                encode_chunked=False):
+    def request(self, method, url, body=None, headers={}, **kwds):
         """Send a complete request to the server."""
+        encode_chunked = kwds.pop('encode_chunked', False)
+        if kwds:
+            # mimic interpreter error for unrecognized keyword
+            raise TypeError("request() got an unexpected keyword argument '{0}'"
+                            .format(kwds.popitem()[0]))
         self._send_request(method, url, body, headers, encode_chunked)
 
     def _set_content_length(self, body, method):
@@ -1433,10 +1446,26 @@ class HTTPConnection:
             raise
 
 try:
-    import ssl
+    from eventlet.green import ssl
 except ImportError:
     pass
 else:
+    def _create_https_context(http_version):
+        # Function also used by urllib.request to be able to set the check_hostname
+        # attribute on a context object.
+        context = ssl._create_default_https_context()
+        # send ALPN extension to indicate HTTP/1.1 protocol
+        if http_version == 11:
+            context.set_alpn_protocols(['http/1.1'])
+        # enable PHA for TLS 1.3 connections if available
+        if context.post_handshake_auth is not None:
+            context.post_handshake_auth = True
+        return context
+
+    def _populate_https_context(context, check_hostname):
+        if check_hostname is not None:
+            context.check_hostname = check_hostname
+
     class HTTPSConnection(HTTPConnection):
         "This class allows communication via SSL."
 
@@ -1453,13 +1482,8 @@ else:
             self.key_file = key_file
             self.cert_file = cert_file
             if context is None:
-                context = ssl._create_default_https_context()
-            will_verify = context.verify_mode != ssl.CERT_NONE
-            if check_hostname is None:
-                check_hostname = context.check_hostname
-            if check_hostname and not will_verify:
-                raise ValueError("check_hostname needs a SSL context with "
-                                 "either CERT_OPTIONAL or CERT_REQUIRED")
+                context = _create_https_context(self._http_vsn)
+            _populate_https_context(context, check_hostname)
             if key_file or cert_file:
                 context.load_cert_chain(cert_file, key_file)
             self._context = context

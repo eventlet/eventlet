@@ -9,6 +9,7 @@ import warnings
 import eventlet
 from eventlet import greenio
 from eventlet import support
+from eventlet.corolocal import local
 from eventlet.green import BaseHTTPServer
 from eventlet.green import socket
 import six
@@ -59,14 +60,6 @@ def addr_to_host_port(addr):
     return (host, port)
 
 
-def encode_dance(s):
-    if not isinstance(s, bytes):
-        s = s.encode('utf-8', 'replace')
-    if six.PY2:
-        return s
-    return s.decode('latin1')
-
-
 # Collections of error codes to compare against.  Not all attributes are set
 # on errno module on all platforms, so some are literals :(
 BAD_SOCK = set((errno.EBADF, 10053))
@@ -77,19 +70,7 @@ class ChunkReadError(ValueError):
     pass
 
 
-# special flag return value for apps
-class _AlreadyHandled(object):
-
-    def __iter__(self):
-        return self
-
-    def next(self):
-        raise StopIteration
-
-    __next__ = next
-
-
-ALREADY_HANDLED = _AlreadyHandled()
+WSGI_LOCAL = local()
 
 
 class Input(object):
@@ -120,7 +101,19 @@ class Input(object):
         self.hundred_continue_headers = None
         self.is_hundred_continue_response_sent = False
 
+        # handle_one_response should give us a ref to the response state so we
+        # know whether we can still send the 100 Continue; until then, though,
+        # we're flying blind
+        self.headers_sent = None
+
     def send_hundred_continue_response(self):
+        if self.headers_sent:
+            # To late; application has already started sending data back
+            # to the client
+            # TODO: maybe log a warning if self.hundred_continue_headers
+            #       is not None?
+            return
+
         towrite = []
 
         # 100 Continue status line
@@ -141,8 +134,12 @@ class Input(object):
         # Reinitialize chunk_length (expect more data)
         self.chunk_length = -1
 
+    @property
+    def should_send_hundred_continue(self):
+        return self.wfile is not None and not self.is_hundred_continue_response_sent
+
     def _do_read(self, reader, length=None):
-        if self.wfile is not None and not self.is_hundred_continue_response_sent:
+        if self.should_send_hundred_continue:
             # 100 Continue response
             self.send_hundred_continue_response()
             self.is_hundred_continue_response_sent = True
@@ -159,13 +156,13 @@ class Input(object):
         return read
 
     def _chunked_read(self, rfile, length=None, use_readline=False):
-        if self.wfile is not None and not self.is_hundred_continue_response_sent:
+        if self.should_send_hundred_continue:
             # 100 Continue response
             self.send_hundred_continue_response()
             self.is_hundred_continue_response_sent = True
         try:
             if length == 0:
-                return ""
+                return b""
 
             if length and length < 0:
                 length = None
@@ -198,7 +195,7 @@ class Input(object):
                         length -= datalen
                         if length == 0:
                             break
-                    if use_readline and data[-1] == "\n":
+                    if use_readline and data[-1:] == b"\n":
                         break
                 else:
                     try:
@@ -224,7 +221,17 @@ class Input(object):
             return self._do_read(self.rfile.readline, size)
 
     def readlines(self, hint=None):
-        return self._do_read(self.rfile.readlines, hint)
+        if self.chunked_input:
+            lines = []
+            for line in iter(self.readline, b''):
+                lines.append(line)
+                if hint and hint > 0:
+                    hint -= len(line)
+                    if hint <= 0:
+                        break
+            return lines
+        else:
+            return self._do_read(self.rfile.readlines, hint)
 
     def __iter__(self):
         return iter(self.read, b'')
@@ -385,7 +392,12 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             return ''
 
         try:
-            return self.rfile.readline(self.server.url_length_limit)
+            sock = self.rfile._sock if six.PY2 else self.connection
+            if self.server.keepalive and not isinstance(self.server.keepalive, bool):
+                sock.settimeout(self.server.keepalive)
+            line = self.rfile.readline(self.server.url_length_limit)
+            sock.settimeout(self.server.socket_timeout)
+            return line
         except greenio.SSL.ZeroReturnError:
             pass
         except socket.error as e:
@@ -434,8 +446,10 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         content_length = self.headers.get('content-length')
         if content_length is not None:
             try:
-                int(content_length)
+                if int(content_length) < 0:
+                    raise ValueError
             except ValueError:
+                # Negative, or not an int at all
                 self.wfile.write(
                     b"HTTP/1.0 400 Bad Request\r\n"
                     b"Connection: close\r\nContent-length: 0\r\n\r\n")
@@ -459,6 +473,11 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         start = time.time()
         headers_set = []
         headers_sent = []
+        # Grab the request input now; app may try to replace it in the environ
+        request_input = self.environ['eventlet.input']
+        # Push the headers-sent state into the Input so it won't send a
+        # 100 Continue response if we've already started a response.
+        request_input.headers_sent = headers_sent
 
         wfile = self.wfile
         result = None
@@ -507,6 +526,10 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     towrite.append(b'Connection: close\r\n')
                 elif send_keep_alive:
                     towrite.append(b'Connection: keep-alive\r\n')
+                    # Spec says timeout must be an integer, but we allow sub-second
+                    int_timeout = int(self.server.keepalive or 0)
+                    if not isinstance(self.server.keepalive, bool) and int_timeout:
+                        towrite.append(b'Keep-Alive: timeout=%d\r\n' % int_timeout)
                 towrite.append(b'\r\n')
                 # end of header writing
 
@@ -535,8 +558,15 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             # Per HTTP RFC standard, header name is case-insensitive.
             # Please, fix your client to ignore header case if possible.
             if self.capitalize_response_headers:
+                if six.PY2:
+                    def cap(x):
+                        return x.capitalize()
+                else:
+                    def cap(x):
+                        return x.encode('latin1').capitalize().decode('latin1')
+
                 response_headers = [
-                    ('-'.join([x.capitalize() for x in key.split('-')]), value)
+                    ('-'.join([cap(x) for x in key.split('-')]), value)
                     for key, value in response_headers]
 
             headers_set[:] = [status, response_headers]
@@ -544,16 +574,19 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
         try:
             try:
+                WSGI_LOCAL.already_handled = False
                 result = self.application(self.environ, start_response)
-                if (isinstance(result, _AlreadyHandled)
-                        or isinstance(getattr(result, '_obj', None), _AlreadyHandled)):
-                    self.close_connection = 1
-                    return
 
                 # Set content-length if possible
-                if not headers_sent and hasattr(result, '__len__') and \
-                        'Content-Length' not in [h for h, _v in headers_set[1]]:
-                    headers_set[1].append(('Content-Length', str(sum(map(len, result)))))
+                if headers_set and not headers_sent and hasattr(result, '__len__'):
+                    # We've got a complete final response
+                    if 'Content-Length' not in [h for h, _v in headers_set[1]]:
+                        headers_set[1].append(('Content-Length', str(sum(map(len, result)))))
+                    if request_input.should_send_hundred_continue:
+                        # We've got a complete final response, and never sent a 100 Continue.
+                        # There's no chance we'll need to read the body as we stream out the
+                        # response, so we can be nice and send a Connection: close header.
+                        self.close_connection = 1
 
                 towrite = []
                 towrite_size = 0
@@ -573,6 +606,9 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                         towrite = []
                         just_written_size = towrite_size
                         towrite_size = 0
+                if WSGI_LOCAL.already_handled:
+                    self.close_connection = 1
+                    return
                 if towrite:
                     just_written_size = towrite_size
                     write(b''.join(towrite))
@@ -591,17 +627,35 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         finally:
             if hasattr(result, 'close'):
                 result.close()
-            request_input = self.environ['eventlet.input']
+            if request_input.should_send_hundred_continue:
+                # We just sent the final response, no 100 Continue. Client may or
+                # may not have started to send a body, and if we keep the connection
+                # open we've seen clients either
+                #   * send a body, then start a new request
+                #   * skip the body and go straight to a new request
+                # Looks like the most broadly compatible option is to close the
+                # connection and let the client retry.
+                # https://curl.se/mail/lib-2004-08/0002.html
+                # Note that we likely *won't* send a Connection: close header at this point
+                self.close_connection = 1
+
             if (request_input.chunked_input or
                     request_input.position < (request_input.content_length or 0)):
-                # Read and discard body if there was no pending 100-continue
-                if not request_input.wfile and self.close_connection == 0:
+                # Read and discard body if connection is going to be reused
+                if self.close_connection == 0:
                     try:
                         request_input.discard()
                     except ChunkReadError as e:
                         self.close_connection = 1
                         self.server.log.error((
                             'chunked encoding error while discarding request body.'
+                            + ' client={0} request="{1}" error="{2}"').format(
+                                self.get_client_address()[0], self.requestline, e,
+                        ))
+                    except IOError as e:
+                        self.close_connection = 1
+                        self.server.log.error((
+                            'I/O error while discarding request body.'
                             + ' client={0} request="{1}" error="{2}"').format(
                                 self.get_client_address()[0], self.requestline, e,
                         ))
@@ -639,7 +693,10 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
         pq = self.path.split('?', 1)
         env['RAW_PATH_INFO'] = pq[0]
-        env['PATH_INFO'] = encode_dance(urllib.parse.unquote(pq[0]))
+        if six.PY2:
+            env['PATH_INFO'] = urllib.parse.unquote(pq[0])
+        else:
+            env['PATH_INFO'] = urllib.parse.unquote(pq[0], encoding='latin1')
         if len(pq) > 1:
             env['QUERY_STRING'] = pq[1]
 
@@ -889,8 +946,9 @@ def server(sock, site,
                 log line.
     :param custom_pool: A custom GreenPool instance which is used to spawn client green threads.
                 If this is supplied, max_size is ignored.
-    :param keepalive: If set to False, disables keepalives on the server; all connections will be
-                closed after serving one request.
+    :param keepalive: If set to False or zero, disables keepalives on the server; all connections
+                will be closed after serving one request. If numeric, it will be the timeout used
+                when reading the next request.
     :param log_output: A Boolean indicating if the server will log data or not.
     :param log_format: A python format string that is used as the template to generate log lines.
                 The following values can be formatted into it: client_ip, date_time, request_line,

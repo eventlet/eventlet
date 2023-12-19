@@ -87,6 +87,10 @@ def test_import_patched_defaults():
     tests.run_isolated('patcher_import_patched_defaults.py')
 
 
+def test_import_patched_handles_sub_modules():
+    tests.run_isolated('test_sub_module_in_import_patched/test.py')
+
+
 class MonkeyPatch(ProcessBase):
     def test_patched_modules(self):
         new_mod = """
@@ -229,7 +233,6 @@ def test_monkey_patch_threading():
 class Tpool(ProcessBase):
     TEST_TIMEOUT = 3
 
-    @tests.skip_with_pyevent
     def test_simple(self):
         new_mod = """
 import eventlet
@@ -247,7 +250,6 @@ tpool.killall()
         assert '2' in lines[0], repr(output)
         assert '3' in lines[1], repr(output)
 
-    @tests.skip_with_pyevent
     def test_unpatched_thread(self):
         new_mod = """import eventlet
 eventlet.monkey_patch(time=False, thread=False)
@@ -260,7 +262,6 @@ import time
         output, lines = self.launch_subprocess('newmod.py')
         self.assertEqual(len(lines), 2, lines)
 
-    @tests.skip_with_pyevent
     def test_patched_thread(self):
         new_mod = """import eventlet
 eventlet.monkey_patch(time=False, thread=True)
@@ -481,6 +482,10 @@ def test_patcher_existing_locks_unlocked():
     tests.run_isolated('patcher_existing_locks_unlocked.py')
 
 
+def test_patcher_existing_logging_module_lock():
+    tests.run_isolated('patcher_existing_logging_module_lock.py')
+
+
 def test_importlib_lock():
     tests.run_isolated('patcher_importlib_lock.py')
 
@@ -507,3 +512,19 @@ def test_regular_file_readall():
 
 def test_threading_current():
     tests.run_isolated('patcher_threading_current.py')
+
+
+def test_threadpoolexecutor():
+    tests.run_isolated('patcher_threadpoolexecutor.py')
+
+
+def test_fork_after_monkey_patch():
+    tests.run_isolated('patcher_fork_after_monkey_patch.py')
+
+
+def test_builtin():
+    tests.run_isolated('patcher_builtin.py')
+
+
+def test_open_kwargs():
+    tests.run_isolated("patcher_open_kwargs.py")
