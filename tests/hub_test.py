@@ -1,4 +1,3 @@
-from __future__ import with_statement
 import errno
 import fcntl
 import os
@@ -6,7 +5,7 @@ import sys
 import time
 
 import tests
-from tests import skip_with_pyevent, skip_if_no_itimer, skip_unless
+from tests import skip_if_no_itimer, skip_unless
 import eventlet
 from eventlet import debug, hubs
 from eventlet.support import greenlets
@@ -23,7 +22,6 @@ def noop():
 class TestTimerCleanup(tests.LimitedTestCase):
     TEST_TIMEOUT = 2
 
-    @skip_with_pyevent
     def test_cancel_immediate(self):
         hub = hubs.get_hub()
         stimers = hub.get_timers_count()
@@ -37,7 +35,6 @@ class TestTimerCleanup(tests.LimitedTestCase):
         self.assert_less_than_equal(hub.get_timers_count(), 1000 + stimers)
         self.assert_less_than_equal(hub.timers_canceled, 1000)
 
-    @skip_with_pyevent
     def test_cancel_accumulated(self):
         hub = hubs.get_hub()
         stimers = hub.get_timers_count()
@@ -54,7 +51,6 @@ class TestTimerCleanup(tests.LimitedTestCase):
         self.assert_less_than_equal(hub.get_timers_count(), 1000 + stimers)
         self.assert_less_than_equal(hub.timers_canceled, 1000)
 
-    @skip_with_pyevent
     def test_cancel_proportion(self):
         # if fewer than half the pending timers are canceled, it should
         # not clean them out
@@ -194,7 +190,6 @@ class TestExceptionInMainloop(tests.LimitedTestCase):
 
 class TestExceptionInGreenthread(tests.LimitedTestCase):
 
-    @skip_unless(greenlets.preserves_excinfo)
     def test_exceptionpreservation(self):
         # events for controlling execution order
         gt1event = eventlet.Event()
@@ -252,7 +247,6 @@ class TestExceptionInGreenthread(tests.LimitedTestCase):
 class TestHubBlockingDetector(tests.LimitedTestCase):
     TEST_TIMEOUT = 10
 
-    @skip_with_pyevent
     def test_block_detect(self):
         def look_im_blocking():
             import time
@@ -263,8 +257,7 @@ class TestHubBlockingDetector(tests.LimitedTestCase):
         self.assertRaises(RuntimeError, gt.wait)
         debug.hub_blocking_detection(False)
 
-    @skip_with_pyevent
-    @skip_if_no_itimer
+    @tests.skip_if_no_itimer
     def test_block_detect_with_itimer(self):
         def look_im_blocking():
             import time
@@ -329,7 +322,6 @@ def test_repeated_select_bad_fd():
     once()
 
 
-@skip_with_pyevent
 def test_fork():
     tests.run_isolated('hub_fork.py')
 
@@ -362,7 +354,7 @@ class TestDeadRunLoop(tests.LimitedTestCase):
         # kill dummyproc, this schedules a timer to return execution to
         # this greenlet before throwing an exception in dummyproc.
         # it is from this timer that execution should be returned to this
-        # greenlet, and not by propogating of the terminating greenlet.
+        # greenlet, and not by propagating of the terminating greenlet.
         g.kill()
         with eventlet.Timeout(0.5, self.CustomException()):
             # we now switch to the hub, there should be no existing timers

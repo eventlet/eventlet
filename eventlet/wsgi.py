@@ -9,6 +9,7 @@ import warnings
 import eventlet
 from eventlet import greenio
 from eventlet import support
+from eventlet.corolocal import local
 from eventlet.green import BaseHTTPServer
 from eventlet.green import socket
 import six
@@ -69,19 +70,7 @@ class ChunkReadError(ValueError):
     pass
 
 
-# special flag return value for apps
-class _AlreadyHandled(object):
-
-    def __iter__(self):
-        return self
-
-    def next(self):
-        raise StopIteration
-
-    __next__ = next
-
-
-ALREADY_HANDLED = _AlreadyHandled()
+WSGI_LOCAL = local()
 
 
 class Input(object):
@@ -145,8 +134,12 @@ class Input(object):
         # Reinitialize chunk_length (expect more data)
         self.chunk_length = -1
 
+    @property
+    def should_send_hundred_continue(self):
+        return self.wfile is not None and not self.is_hundred_continue_response_sent
+
     def _do_read(self, reader, length=None):
-        if self.wfile is not None and not self.is_hundred_continue_response_sent:
+        if self.should_send_hundred_continue:
             # 100 Continue response
             self.send_hundred_continue_response()
             self.is_hundred_continue_response_sent = True
@@ -163,7 +156,7 @@ class Input(object):
         return read
 
     def _chunked_read(self, rfile, length=None, use_readline=False):
-        if self.wfile is not None and not self.is_hundred_continue_response_sent:
+        if self.should_send_hundred_continue:
             # 100 Continue response
             self.send_hundred_continue_response()
             self.is_hundred_continue_response_sent = True
@@ -399,7 +392,12 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             return ''
 
         try:
-            return self.rfile.readline(self.server.url_length_limit)
+            sock = self.rfile._sock if six.PY2 else self.connection
+            if self.server.keepalive and not isinstance(self.server.keepalive, bool):
+                sock.settimeout(self.server.keepalive)
+            line = self.rfile.readline(self.server.url_length_limit)
+            sock.settimeout(self.server.socket_timeout)
+            return line
         except greenio.SSL.ZeroReturnError:
             pass
         except socket.error as e:
@@ -475,9 +473,11 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         start = time.time()
         headers_set = []
         headers_sent = []
+        # Grab the request input now; app may try to replace it in the environ
+        request_input = self.environ['eventlet.input']
         # Push the headers-sent state into the Input so it won't send a
         # 100 Continue response if we've already started a response.
-        self.environ['wsgi.input'].headers_sent = headers_sent
+        request_input.headers_sent = headers_sent
 
         wfile = self.wfile
         result = None
@@ -526,6 +526,10 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     towrite.append(b'Connection: close\r\n')
                 elif send_keep_alive:
                     towrite.append(b'Connection: keep-alive\r\n')
+                    # Spec says timeout must be an integer, but we allow sub-second
+                    int_timeout = int(self.server.keepalive or 0)
+                    if not isinstance(self.server.keepalive, bool) and int_timeout:
+                        towrite.append(b'Keep-Alive: timeout=%d\r\n' % int_timeout)
                 towrite.append(b'\r\n')
                 # end of header writing
 
@@ -570,16 +574,19 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
         try:
             try:
+                WSGI_LOCAL.already_handled = False
                 result = self.application(self.environ, start_response)
-                if (isinstance(result, _AlreadyHandled)
-                        or isinstance(getattr(result, '_obj', None), _AlreadyHandled)):
-                    self.close_connection = 1
-                    return
 
                 # Set content-length if possible
-                if not headers_sent and hasattr(result, '__len__') and \
-                        'Content-Length' not in [h for h, _v in headers_set[1]]:
-                    headers_set[1].append(('Content-Length', str(sum(map(len, result)))))
+                if headers_set and not headers_sent and hasattr(result, '__len__'):
+                    # We've got a complete final response
+                    if 'Content-Length' not in [h for h, _v in headers_set[1]]:
+                        headers_set[1].append(('Content-Length', str(sum(map(len, result)))))
+                    if request_input.should_send_hundred_continue:
+                        # We've got a complete final response, and never sent a 100 Continue.
+                        # There's no chance we'll need to read the body as we stream out the
+                        # response, so we can be nice and send a Connection: close header.
+                        self.close_connection = 1
 
                 towrite = []
                 towrite_size = 0
@@ -599,6 +606,9 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                         towrite = []
                         just_written_size = towrite_size
                         towrite_size = 0
+                if WSGI_LOCAL.already_handled:
+                    self.close_connection = 1
+                    return
                 if towrite:
                     just_written_size = towrite_size
                     write(b''.join(towrite))
@@ -617,11 +627,22 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         finally:
             if hasattr(result, 'close'):
                 result.close()
-            request_input = self.environ['eventlet.input']
+            if request_input.should_send_hundred_continue:
+                # We just sent the final response, no 100 Continue. Client may or
+                # may not have started to send a body, and if we keep the connection
+                # open we've seen clients either
+                #   * send a body, then start a new request
+                #   * skip the body and go straight to a new request
+                # Looks like the most broadly compatible option is to close the
+                # connection and let the client retry.
+                # https://curl.se/mail/lib-2004-08/0002.html
+                # Note that we likely *won't* send a Connection: close header at this point
+                self.close_connection = 1
+
             if (request_input.chunked_input or
                     request_input.position < (request_input.content_length or 0)):
-                # Read and discard body if there was no pending 100-continue
-                if not request_input.wfile and self.close_connection == 0:
+                # Read and discard body if connection is going to be reused
+                if self.close_connection == 0:
                     try:
                         request_input.discard()
                     except ChunkReadError as e:
@@ -925,8 +946,9 @@ def server(sock, site,
                 log line.
     :param custom_pool: A custom GreenPool instance which is used to spawn client green threads.
                 If this is supplied, max_size is ignored.
-    :param keepalive: If set to False, disables keepalives on the server; all connections will be
-                closed after serving one request.
+    :param keepalive: If set to False or zero, disables keepalives on the server; all connections
+                will be closed after serving one request. If numeric, it will be the timeout used
+                when reading the next request.
     :param log_output: A Boolean indicating if the server will log data or not.
     :param log_format: A python format string that is used as the template to generate log lines.
                 The following values can be formatted into it: client_ip, date_time, request_line,

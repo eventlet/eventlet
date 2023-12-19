@@ -157,6 +157,7 @@ def wrap_ssl(sock, *a, **kw):
     """
     return wrap_ssl_impl(sock, *a, **kw)
 
+
 try:
     from eventlet.green import ssl
     wrap_ssl_impl = ssl.wrap_socket

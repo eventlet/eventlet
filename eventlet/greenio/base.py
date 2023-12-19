@@ -29,7 +29,10 @@ if six.PY2:
 _original_socket = eventlet.patcher.original('socket').socket
 
 
-socket_timeout = eventlet.timeout.wrap_is_timeout(socket.timeout)
+if sys.version_info >= (3, 10):
+    socket_timeout = socket.timeout  # Really, TimeoutError
+else:
+    socket_timeout = eventlet.timeout.wrap_is_timeout(socket.timeout)
 
 
 def socket_connect(descriptor, address):
@@ -279,6 +282,7 @@ class GreenSocket(object):
                     return get_errno(ex)
                 except IOClosed:
                     return errno.EBADFD
+                return 0
         else:
             end = time.time() + self.gettimeout()
             timeout_exc = socket.timeout(errno.EAGAIN)
@@ -295,6 +299,7 @@ class GreenSocket(object):
                     return get_errno(ex)
                 except IOClosed:
                     return errno.EBADFD
+                return 0
 
     def dup(self, *args, **kw):
         sock = self.fd.dup(*args, **kw)
@@ -454,7 +459,7 @@ def _operation_on_closed_file(*args, **kwargs):
 greenpipe_doc = """
     GreenPipe is a cooperative replacement for file class.
     It will cooperate on pipes. It will block on regular file.
-    Differneces from file class:
+    Differences from file class:
     - mode is r/w property. Should re r/o
     - encoding property not implemented
     - write/writelines will not raise TypeError exception when non-string data is written

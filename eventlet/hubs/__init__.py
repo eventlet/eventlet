@@ -32,9 +32,6 @@ def get_default_hub():
     * poll
     * select
 
-    It won't automatically select the pyevent hub, because it's not
-    python-thread-safe.
-
     .. include:: ../doc/common.txt
     .. note :: |internal|
     """

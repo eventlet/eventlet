@@ -12,14 +12,20 @@ Code talks!  This is a simple web crawler that fetches a bunch of urls concurren
     ]
 
     import eventlet
-    from eventlet.green import urllib2
+    from eventlet.green.urllib.request import urlopen
 
     def fetch(url):
-        return urllib2.urlopen(url).read()
+        return urlopen(url).read()
 
     pool = eventlet.GreenPool()
     for body in pool.imap(fetch, urls):
         print("got body", len(body))
+
+Supported Python versions
+=========================
+
+Currently CPython 2.7 and 3.4+ are supported, but **2.7 and 3.4 support is deprecated and will be removed in the future**, only CPython 3.5+ support will remain.
+
 
 Contents
 =========

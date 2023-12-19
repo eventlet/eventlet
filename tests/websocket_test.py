@@ -32,6 +32,7 @@ def handle(ws):
     else:
         ws.close()
 
+
 wsapp = WebSocketWSGI(handle)
 
 
@@ -527,6 +528,38 @@ class TestWebSocket(tests.wsgi_test._TestBase):
         self.killer.kill(KeyboardInterrupt)
         with eventlet.Timeout(1):
             pool.waitall()
+
+    def test_wrapped_wsgi(self):
+        site = self.site
+
+        def wrapper(environ, start_response):
+            for chunk in site(environ, start_response):
+                yield chunk
+
+        self.site = wrapper
+        self.spawn_server()
+        connect = [
+            "GET /range HTTP/1.1",
+            "Upgrade: WebSocket",
+            "Connection: Upgrade",
+            "Host: {}:{}".format(*self.server_addr),
+            "Origin: http://{}:{}".format(*self.server_addr),
+            "WebSocket-Protocol: ws",
+        ]
+        sock = eventlet.connect(self.server_addr)
+
+        sock.sendall(six.b("\r\n".join(connect) + "\r\n\r\n"))
+        resp = sock.recv(1024)
+        headers, result = resp.split(b"\r\n\r\n")
+        msgs = [result.strip(b"\x00\xff")]
+        msgs.extend(sock.recv(20).strip(b"\x00\xff") for _ in range(10))
+        expect = [six.b("msg {}".format(i)) for i in range(10)] + [b""]
+        assert msgs == expect
+        # In case of server error, server will write HTTP 500 response to the socket
+        msg = sock.recv(20)
+        assert not msg
+        sock.close()
+        eventlet.sleep(0.01)
 
 
 class TestWebSocketSSL(tests.wsgi_test._TestBase):

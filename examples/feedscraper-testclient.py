@@ -1,4 +1,4 @@
-from eventlet.green import urllib2
+from eventlet.green.urllib.request import urlopen
 
 big_list_of_feeds = """
 http://blog.eventlet.net/feed/
@@ -21,5 +21,5 @@ http://ln.hixie.ch/rss/html
 """
 
 url = 'http://localhost:9010/'
-result = urllib2.urlopen(url, big_list_of_feeds)
+result = urlopen(url, big_list_of_feeds)
 print(result.read())

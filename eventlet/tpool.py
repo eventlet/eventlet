@@ -14,7 +14,10 @@
 # limitations under the License.
 
 import atexit
-import imp
+try:
+    import _imp as imp
+except ImportError:
+    import imp
 import os
 import sys
 import traceback
@@ -111,7 +114,7 @@ def execute(meth, *args, **kwargs):
     # if already in tpool, don't recurse into the tpool
     # also, call functions directly if we're inside an import lock, because
     # if meth does any importing (sadly common), it will hang
-    my_thread = threading.currentThread()
+    my_thread = threading.current_thread()
     if my_thread in _threads or imp.lock_held() or _nthreads == 0:
         return meth(*args, **kwargs)
 
@@ -289,7 +292,7 @@ def setup():
     for i in six.moves.range(_nthreads):
         t = threading.Thread(target=tworker,
                              name="tpool_thread_%s" % i)
-        t.setDaemon(True)
+        t.daemon = True
         t.start()
         _threads.append(t)
 

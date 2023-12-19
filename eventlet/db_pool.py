@@ -361,6 +361,8 @@ class GenericConnectionWrapper(object):
         'use_result',
         'warning_count',
     )
+
+
 for _proxy_fun in GenericConnectionWrapper._proxy_funcs:
     # excess wrapper for early binding (closure by value)
     def _wrapper(_proxy_fun=_proxy_fun):
