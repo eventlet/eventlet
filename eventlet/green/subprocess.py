@@ -11,9 +11,8 @@ from eventlet.green import select, threading, time
 __patched__ = ['call', 'check_call', 'Popen']
 to_patch = [('select', select), ('threading', threading), ('time', time)]
 
-if sys.version_info > (3, 4):
-    from eventlet.green import selectors
-    to_patch.append(('selectors', selectors))
+from eventlet.green import selectors
+to_patch.append(('selectors', selectors))
 
 patcher.inject('subprocess', globals(), *to_patch)
 subprocess_orig = patcher.original("subprocess")

@@ -2,11 +2,6 @@ import os
 import sys
 import warnings
 
-if sys.version_info < (3, 5):
-    warnings.warn(
-        "Support for your Python version is deprecated and will be removed in the future",
-        DeprecationWarning,
-    )
 
 from eventlet import convenience
 from eventlet import event

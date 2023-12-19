@@ -57,42 +57,39 @@ class GreenSSLSocket(_original_sslsocket):
                 server_side=False, cert_reqs=CERT_NONE,
                 ssl_version=PROTOCOL_SSLv23, ca_certs=None,
                 do_handshake_on_connect=True, *args, **kw):
-        if sys.version_info < (3, 7):
-            return super().__new__(cls)
-        else:
-            if not isinstance(sock, GreenSocket):
-                sock = GreenSocket(sock)
-            with _original_ssl_context():
-                context = kw.get('_context')
-                if context:
-                    ret = _original_sslsocket._create(
-                        sock=sock.fd,
-                        server_side=server_side,
-                        do_handshake_on_connect=False,
-                        suppress_ragged_eofs=kw.get('suppress_ragged_eofs', True),
-                        server_hostname=kw.get('server_hostname'),
-                        context=context,
-                        session=kw.get('session'),
-                    )
-                else:
-                    ret = cls._wrap_socket(
-                        sock=sock.fd,
-                        keyfile=keyfile,
-                        certfile=certfile,
-                        server_side=server_side,
-                        cert_reqs=cert_reqs,
-                        ssl_version=ssl_version,
-                        ca_certs=ca_certs,
-                        do_handshake_on_connect=False,
-                        ciphers=kw.get('ciphers'),
-                    )
-            ret.keyfile = keyfile
-            ret.certfile = certfile
-            ret.cert_reqs = cert_reqs
-            ret.ssl_version = ssl_version
-            ret.ca_certs = ca_certs
-            ret.__class__ = GreenSSLSocket
-            return ret
+        if not isinstance(sock, GreenSocket):
+            sock = GreenSocket(sock)
+        with _original_ssl_context():
+            context = kw.get('_context')
+            if context:
+                ret = _original_sslsocket._create(
+                    sock=sock.fd,
+                    server_side=server_side,
+                    do_handshake_on_connect=False,
+                    suppress_ragged_eofs=kw.get('suppress_ragged_eofs', True),
+                    server_hostname=kw.get('server_hostname'),
+                    context=context,
+                    session=kw.get('session'),
+                )
+            else:
+                ret = cls._wrap_socket(
+                    sock=sock.fd,
+                    keyfile=keyfile,
+                    certfile=certfile,
+                    server_side=server_side,
+                    cert_reqs=cert_reqs,
+                    ssl_version=ssl_version,
+                    ca_certs=ca_certs,
+                    do_handshake_on_connect=False,
+                    ciphers=kw.get('ciphers'),
+                )
+        ret.keyfile = keyfile
+        ret.certfile = certfile
+        ret.cert_reqs = cert_reqs
+        ret.ssl_version = ssl_version
+        ret.ca_certs = ca_certs
+        ret.__class__ = GreenSSLSocket
+        return ret
 
     @staticmethod
     def _wrap_socket(sock, keyfile, certfile, server_side, cert_reqs,
@@ -124,12 +121,6 @@ class GreenSSLSocket(_original_sslsocket):
             sock = GreenSocket(sock)
         self.act_non_blocking = sock.act_non_blocking
 
-        if sys.version_info < (3, 7):
-            # nonblocking socket handshaking on connect got disabled so let's pretend it's disabled
-            # even when it's on
-            super().__init__(
-                sock.fd, keyfile, certfile, server_side, cert_reqs, ssl_version,
-                ca_certs, False, *args, **kw)
         # the superclass initializer trashes the methods so we remove
         # the local-object versions of them and let the actual class
         # methods shine through
@@ -395,10 +386,7 @@ class GreenSSLSocket(_original_sslsocket):
         except NameError:
             self._sslobj = sslobj
         else:
-            if sys.version_info < (3, 7):
-                self._sslobj = SSLObject(sslobj, owner=self)
-            else:
-                self._sslobj = sslobj
+            self._sslobj = sslobj
 
         if self.do_handshake_on_connect:
             self.do_handshake()

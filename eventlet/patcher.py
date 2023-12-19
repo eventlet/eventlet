@@ -344,24 +344,22 @@ def monkey_patch(**on):
     finally:
         imp.release_lock()
 
-    if sys.version_info >= (3, 3):
-        import importlib._bootstrap
-        thread = original('_thread')
-        # importlib must use real thread locks, not eventlet.Semaphore
-        importlib._bootstrap._thread = thread
+    import importlib._bootstrap
+    thread = original('_thread')
+    # importlib must use real thread locks, not eventlet.Semaphore
+    importlib._bootstrap._thread = thread
 
-        # Issue #185: Since Python 3.3, threading.RLock is implemented in C and
-        # so call a C function to get the thread identifier, instead of calling
-        # threading.get_ident(). Force the Python implementation of RLock which
-        # calls threading.get_ident() and so is compatible with eventlet.
-        import threading
-        threading.RLock = threading._PyRLock
+    # Issue #185: Since Python 3.3, threading.RLock is implemented in C and
+    # so call a C function to get the thread identifier, instead of calling
+    # threading.get_ident(). Force the Python implementation of RLock which
+    # calls threading.get_ident() and so is compatible with eventlet.
+    import threading
+    threading.RLock = threading._PyRLock
 
     # Issue #508: Since Python 3.7 queue.SimpleQueue is implemented in C,
     # causing a deadlock.  Replace the C implementation with the Python one.
-    if sys.version_info >= (3, 7):
-        import queue
-        queue.SimpleQueue = queue._PySimpleQueue
+    import queue
+    queue.SimpleQueue = queue._PySimpleQueue
 
 
 def is_monkey_patched(module):
@@ -491,9 +489,8 @@ def _green_select_modules():
     from eventlet.green import select
     modules = [('select', select)]
 
-    if sys.version_info >= (3, 4):
-        from eventlet.green import selectors
-        modules.append(('selectors', selectors))
+    from eventlet.green import selectors
+    modules.append(('selectors', selectors))
 
     return modules
 
