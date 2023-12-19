@@ -568,6 +568,12 @@ class TestHttpd(_TestBase):
             except (ssl.SSLZeroReturnError, ssl.SSLEOFError):
                 # Can't write a response to a closed TLS session
                 return True
+            except OSError:
+                if sys.version_info[:2] == (3, 7):
+                    return True
+                else:
+                    traceback.print_exc()
+                    return False
             except Exception:
                 traceback.print_exc()
                 return False

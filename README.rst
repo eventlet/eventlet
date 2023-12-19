@@ -65,7 +65,7 @@ Apologies for any inconvenience.
 Supported Python versions
 =========================
 
-Python 3.8-3.12 are currently supported.
+Python 3.7-3.12 are currently supported.
 
 Flair
 =====
