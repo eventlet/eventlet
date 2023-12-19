@@ -1,6 +1,5 @@
 """Implements the standard thread module, using greenthreads."""
 import _thread as __thread
-import six
 from eventlet.support import greenlets as greenlet
 from eventlet import greenthread
 from eventlet.lock import Lock

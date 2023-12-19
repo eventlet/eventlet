@@ -11,7 +11,6 @@ except ImportError:
     register_at_fork = None
 
 import eventlet
-import six
 
 
 __all__ = ['inject', 'import_patched', 'monkey_patch', 'is_monkey_patched']
@@ -198,8 +197,6 @@ def original(modname):
     # some rudimentary dependency checking -- fortunately the modules
     # we're working on don't have many dependencies so we can just do
     # some special-casing here
-    if six.PY2:
-        deps = {'threading': 'thread', 'Queue': 'threading'}
     deps = {'threading': '_thread', 'queue': 'threading'}
     if modname in deps:
         dependency = deps[modname]
@@ -519,8 +516,6 @@ def _green_thread_modules():
     from eventlet.green import Queue
     from eventlet.green import thread
     from eventlet.green import threading
-    if six.PY2:
-        return [('Queue', Queue), ('thread', thread), ('threading', threading)]
     return [('queue', Queue), ('_thread', thread), ('threading', threading)]
 
 
@@ -540,7 +535,7 @@ def _green_MySQLdb():
 def _green_builtins():
     try:
         from eventlet.green import builtin
-        return [('__builtin__' if six.PY2 else 'builtins', builtin)]
+        return [('builtins', builtin)]
     except ImportError:
         return []
 

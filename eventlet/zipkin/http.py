@@ -1,6 +1,5 @@
 import warnings
 
-import six
 from eventlet.green import httplib
 from eventlet.zipkin import api
 
@@ -13,18 +12,12 @@ HDR_SAMPLED = 'X-B3-Sampled'
 
 
 def patch():
-    if six.PY2:
-        httplib.HTTPConnection.endheaders = _patched_endheaders
-        httplib.HTTPResponse.begin = _patched_begin
     warnings.warn("Since current Python thrift release \
         doesn't support Python 3, eventlet.zipkin.http \
         doesn't also support Python 3 (http.client)")
 
 
 def unpatch():
-    if six.PY2:
-        httplib.HTTPConnection.endheaders = __org_endheaders__
-        httplib.HTTPResponse.begin = __org_begin__
     pass
 
 

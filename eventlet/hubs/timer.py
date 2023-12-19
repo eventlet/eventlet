@@ -2,7 +2,7 @@ import traceback
 
 import eventlet.hubs
 from eventlet.support import greenlets as greenlet
-import six
+import io
 
 """ If true, captures a stack trace for each timer when constructed.  This is
 useful for debugging leaking timers, to find out where the timer was set up. """
@@ -24,7 +24,7 @@ class Timer:
         self.tpl = cb, args, kw
         self.called = False
         if _g_debug:
-            self.traceback = six.StringIO()
+            self.traceback = io.StringIO()
             traceback.print_stack(file=self.traceback)
 
     @property

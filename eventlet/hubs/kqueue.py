@@ -2,7 +2,6 @@ import os
 import sys
 from eventlet import patcher, support
 from eventlet.hubs import hub
-import six
 select = patcher.original('select')
 time = patcher.original('time')
 

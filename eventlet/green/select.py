@@ -1,6 +1,5 @@
 import eventlet
 from eventlet.hubs import get_hub
-import six
 __select = eventlet.patcher.original('select')
 error = __select.error
 

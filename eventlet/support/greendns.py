@@ -43,7 +43,6 @@ from eventlet.green import os
 from eventlet.green import time
 from eventlet.green import select
 from eventlet.green import ssl
-import six
 
 
 def import_patched(module_name):

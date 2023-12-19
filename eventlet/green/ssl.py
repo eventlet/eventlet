@@ -10,7 +10,6 @@ from eventlet.greenio import (
 )
 from eventlet.hubs import trampoline, IOClosed
 from eventlet.support import get_errno, PY33
-import six
 from contextlib import contextmanager
 
 orig_socket = __import__('socket')
@@ -125,17 +124,12 @@ class GreenSSLSocket(_original_sslsocket):
             sock = GreenSocket(sock)
         self.act_non_blocking = sock.act_non_blocking
 
-        if six.PY2:
-            # On Python 2 SSLSocket constructor queries the timeout, it'd break without
-            # this assignment
-            self._timeout = sock.gettimeout()
-
         if sys.version_info < (3, 7):
             # nonblocking socket handshaking on connect got disabled so let's pretend it's disabled
             # even when it's on
             super().__init__(
                 sock.fd, keyfile, certfile, server_side, cert_reqs, ssl_version,
-                ca_certs, do_handshake_on_connect and six.PY2, *args, **kw)
+                ca_certs, False, *args, **kw)
         # the superclass initializer trashes the methods so we remove
         # the local-object versions of them and let the actual class
         # methods shine through

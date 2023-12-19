@@ -8,7 +8,6 @@ import warnings
 import eventlet
 from eventlet.hubs import trampoline, notify_opened, IOClosed
 from eventlet.support import get_errno
-import six
 
 __all__ = [
     'GreenSocket', '_GLOBAL_DEFAULT_TIMEOUT', 'set_nonblocking',

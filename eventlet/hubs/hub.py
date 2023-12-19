@@ -27,8 +27,6 @@ try:
 except ImportError:
     from time import monotonic
 
-import six
-
 g_prevent_multiple_readers = True
 
 READ = "read"

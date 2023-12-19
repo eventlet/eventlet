@@ -13,7 +13,6 @@ from eventlet import hubs
 from eventlet.hubs import hub
 from eventlet.patcher import slurp_properties
 import sys
-import six
 
 __all__ = dir(builtins_orig)
 __patched__ = ['open']

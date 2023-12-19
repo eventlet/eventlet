@@ -24,7 +24,6 @@ import traceback
 
 import eventlet
 from eventlet import event, greenio, greenthread, patcher, timeout
-import six
 
 __all__ = ['execute', 'Proxy', 'killall', 'set_num_threads']
 
@@ -87,8 +86,6 @@ def tworker():
             rv = sys.exc_info()
             if sys.version_info >= (3, 4):
                 traceback.clear_frames(rv[1].__traceback__)
-        if six.PY2:
-            sys.exc_clear()
         # test_leakage_from_tracebacks verifies that the use of
         # exc_info does not lead to memory leaks
         _rspq.put((e, rv))

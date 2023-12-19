@@ -6,7 +6,6 @@ import eventlet
 from eventlet import greenio
 from eventlet import patcher
 from eventlet.green import select, threading, time
-import six
 
 
 __patched__ = ['call', 'check_call', 'Popen']

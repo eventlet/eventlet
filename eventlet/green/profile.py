@@ -40,9 +40,9 @@ import functools
 
 from eventlet import greenthread
 from eventlet import patcher
-import six
+import _thread
 
-thread = patcher.original(six.moves._thread.__name__)  # non-monkeypatched module needed
+thread = patcher.original(_thread.__name__)  # non-monkeypatched module needed
 
 
 # This class provides the start() and stop() functions

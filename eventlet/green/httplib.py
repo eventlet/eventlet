@@ -1,6 +1,5 @@
 from eventlet import patcher
 from eventlet.green import socket
-import six
 
 to_patch = [('socket', socket)]
 

@@ -10,7 +10,6 @@ from eventlet.greenio.base import (
 )
 from eventlet.hubs import trampoline, notify_close, notify_opened, IOClosed
 from eventlet.support import get_errno
-import six
 
 __all__ = ['_fileobject', 'GreenPipe']
 

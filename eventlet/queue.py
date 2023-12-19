@@ -48,7 +48,6 @@ import traceback
 from eventlet.event import Event
 from eventlet.greenthread import getcurrent
 from eventlet.hubs import get_hub
-import six
 import queue as Stdlib_Queue
 from eventlet.timeout import Timeout
 
@@ -56,8 +55,8 @@ from eventlet.timeout import Timeout
 __all__ = ['Queue', 'PriorityQueue', 'LifoQueue', 'LightQueue', 'Full', 'Empty']
 
 _NONE = object()
-Full = six.moves.queue.Full
-Empty = six.moves.queue.Empty
+Full = Stdlib_Queue.Full
+Empty = Stdlib_Queue.Empty
 
 
 class Waiter:

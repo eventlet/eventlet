@@ -5,7 +5,6 @@
 
 from eventlet.event import Event
 from eventlet import greenthread
-import six
 import collections
 
 

@@ -4,6 +4,7 @@ import sys
 import time
 import traceback
 import types
+import urllib.parse
 import warnings
 
 import eventlet
@@ -12,8 +13,6 @@ from eventlet import support
 from eventlet.corolocal import local
 from eventlet.green import BaseHTTPServer
 from eventlet.green import socket
-import six
-from six.moves import urllib
 
 
 DEFAULT_MAX_SIMULTANEOUS_REQUESTS = 1024
@@ -123,7 +122,7 @@ class Input:
         if self.hundred_continue_headers is not None:
             # 100 Continue headers
             for header in self.hundred_continue_headers:
-                towrite.append(six.b('%s: %s\r\n' % header))
+                towrite.append(('%s: %s\r\n' % header).encode())
 
         # Blank line
         towrite.append(b'\r\n')
@@ -392,7 +391,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             return ''
 
         try:
-            sock = self.rfile._sock if six.PY2 else self.connection
+            sock = self.connection
             if self.server.keepalive and not isinstance(self.server.keepalive, bool):
                 sock.settimeout(self.server.keepalive)
             line = self.rfile.readline(self.server.url_length_limit)
@@ -493,13 +492,13 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 status, response_headers = headers_set
                 headers_sent.append(1)
                 header_list = [header[0].lower() for header in response_headers]
-                towrite.append(six.b('%s %s\r\n' % (self.protocol_version, status)))
+                towrite.append(('%s %s\r\n' % (self.protocol_version, status)).encode())
                 for header in response_headers:
-                    towrite.append(six.b('%s: %s\r\n' % header))
+                    towrite.append(('%s: %s\r\n' % header).encode('latin-1'))
 
                 # send Date header?
                 if 'date' not in header_list:
-                    towrite.append(six.b('Date: %s\r\n' % (format_date_time(time.time()),)))
+                    towrite.append(('Date: %s\r\n' % (format_date_time(time.time()),)).encode())
 
                 client_conn = self.headers.get('Connection', '').lower()
                 send_keep_alive = False
@@ -535,7 +534,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
             if use_chunked[0]:
                 # Write the chunked encoding
-                towrite.append(six.b("%x" % (len(data),)) + b"\r\n" + data + b"\r\n")
+                towrite.append(("%x" % (len(data),)).encode() + b"\r\n" + data + b"\r\n")
             else:
                 towrite.append(data)
             wfile.writelines(towrite)
@@ -615,7 +614,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 tb = traceback.format_exc()
                 self.server.log.info(tb)
                 if not headers_sent:
-                    err_body = six.b(tb) if self.server.debug else b''
+                    err_body = tb.encode() if self.server.debug else b''
                     start_response("500 Internal Server Error",
                                    [('Content-type', 'text/plain'),
                                     ('Content-length', len(err_body))])

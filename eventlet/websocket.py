@@ -21,7 +21,6 @@ from eventlet import semaphore
 from eventlet import wsgi
 from eventlet.green import socket
 from eventlet.support import get_errno
-import six
 
 # Python 2's utf8 decoding is more lenient than we'd like
 # In order to pass autobahn's testsuite we need stricter validation
@@ -188,18 +187,18 @@ class WebSocketWSGI:
                 b"HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
                 b"Upgrade: WebSocket\r\n"
                 b"Connection: Upgrade\r\n"
-                b"WebSocket-Origin: " + six.b(environ.get('HTTP_ORIGIN')) + b"\r\n"
-                b"WebSocket-Location: " + six.b(location) + b"\r\n\r\n"
+                b"WebSocket-Origin: " + environ.get('HTTP_ORIGIN').encode() + b"\r\n"
+                b"WebSocket-Location: " + location.encode() + b"\r\n\r\n"
             )
         elif self.protocol_version == 76:
             handshake_reply = (
                 b"HTTP/1.1 101 WebSocket Protocol Handshake\r\n"
                 b"Upgrade: WebSocket\r\n"
                 b"Connection: Upgrade\r\n"
-                b"Sec-WebSocket-Origin: " + six.b(environ.get('HTTP_ORIGIN')) + b"\r\n"
+                b"Sec-WebSocket-Origin: " + environ.get('HTTP_ORIGIN').encode() + b"\r\n"
                 b"Sec-WebSocket-Protocol: " +
-                six.b(environ.get('HTTP_SEC_WEBSOCKET_PROTOCOL', 'default')) + b"\r\n"
-                b"Sec-WebSocket-Location: " + six.b(location) + b"\r\n"
+                environ.get('HTTP_SEC_WEBSOCKET_PROTOCOL', 'default').encode() + b"\r\n"
+                b"Sec-WebSocket-Location: " + location.encode() + b"\r\n"
                 b"\r\n" + response
             )
         else:  # pragma NO COVER
@@ -266,14 +265,14 @@ class WebSocketWSGI:
             return None
         parts = []
         for name, config in parsed_extensions.items():
-            ext_parts = [six.b(name)]
+            ext_parts = [name.encode()]
             for key, value in config.items():
                 if value is False:
                     pass
                 elif value is True:
-                    ext_parts.append(six.b(key))
+                    ext_parts.append(key.encode())
                 else:
-                    ext_parts.append(six.b("%s=%s" % (key, str(value))))
+                    ext_parts.append(("%s=%s" % (key, str(value))).encode())
             parts.append(b"; ".join(ext_parts))
         return b", ".join(parts)
 
@@ -309,13 +308,13 @@ class WebSocketWSGI:
                     break
 
         key = environ['HTTP_SEC_WEBSOCKET_KEY']
-        response = base64.b64encode(sha1(six.b(key) + PROTOCOL_GUID).digest())
+        response = base64.b64encode(sha1(key.encode() + PROTOCOL_GUID).digest())
         handshake_reply = [b"HTTP/1.1 101 Switching Protocols",
                            b"Upgrade: websocket",
                            b"Connection: Upgrade",
                            b"Sec-WebSocket-Accept: " + response]
         if negotiated_protocol:
-            handshake_reply.append(b"Sec-WebSocket-Protocol: " + six.b(negotiated_protocol))
+            handshake_reply.append(b"Sec-WebSocket-Protocol: " + negotiated_protocol.encode())
 
         parsed_extensions = {}
         extensions = self._parse_extension_header(environ.get("HTTP_SEC_WEBSOCKET_EXTENSIONS"))
@@ -402,7 +401,7 @@ class WebSocket:
         if isinstance(message, str):
             message = message.encode('utf-8')
         elif not isinstance(message, bytes):
-            message = six.b(str(message))
+            message = str(message).encode()
         packed = b"\x00" + message + b"\xFF"
         return packed
 
