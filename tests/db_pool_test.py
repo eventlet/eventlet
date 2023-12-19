@@ -3,7 +3,6 @@ import sys
 import traceback
 
 from eventlet import db_pool
-import six
 import eventlet
 import eventlet.tpool
 import tests

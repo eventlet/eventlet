@@ -4,6 +4,7 @@ import contextlib
 import errno
 import functools
 import gc
+import io
 import json
 import os
 try:
@@ -11,10 +12,7 @@ try:
 except ImportError:
     resource = None
 import signal
-try:
-    import subprocess32 as subprocess  # py2
-except ImportError:
-    import subprocess  # py3
+import subprocess
 import sys
 import unittest
 import warnings
@@ -23,7 +21,6 @@ from unittest import SkipTest
 
 import eventlet
 from eventlet import tpool
-import six
 import socket
 from threading import Thread
 import struct
@@ -377,7 +374,7 @@ def check_is_timeout(obj):
 
 @contextlib.contextmanager
 def capture_stderr():
-    stream = six.StringIO()
+    stream = io.StringIO()
     original = sys.stderr
     try:
         sys.stderr = stream

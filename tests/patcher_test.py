@@ -3,7 +3,6 @@ import shutil
 import sys
 import tempfile
 
-import six
 import tests
 
 
@@ -210,8 +209,7 @@ def test_monkey_patch_threading():
     tickcount = [0]
 
     def tick():
-        import six
-        for i in six.moves.range(1000):
+        for i in range(1000):
             tickcount[0] += 1
             eventlet.sleep()
 

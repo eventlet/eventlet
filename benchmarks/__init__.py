@@ -9,7 +9,6 @@ import sys
 import timeit
 
 import eventlet
-import six
 
 
 # legacy, TODO convert context/localhost_socket benchmarks to new way

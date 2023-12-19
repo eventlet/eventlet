@@ -1,5 +1,4 @@
 import eventlet
-import six
 
 
 def test_pathlib_open_issue_534():

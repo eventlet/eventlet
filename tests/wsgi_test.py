@@ -1,6 +1,7 @@
 import cgi
 import collections
 import errno
+import io
 import os
 import shutil
 import signal
@@ -20,7 +21,6 @@ from eventlet import wsgi
 from eventlet.green import socket as greensocket
 from eventlet.green import ssl
 from eventlet.support import bytes_to_str
-import six
 from urllib import parse
 import tests
 
@@ -236,7 +236,7 @@ class _TestBase(tests.LimitedTestCase):
 
         Sets `self.server_addr` to (host, port) tuple suitable for `socket.connect`.
         """
-        self.logfile = six.StringIO()
+        self.logfile = io.StringIO()
         new_kwargs = dict(max_size=128,
                           log=self.logfile,
                           site=self.site)
@@ -321,7 +321,7 @@ class TestHttpd(_TestBase):
             body = bytes_to_str(env['wsgi.input'].read())
             a = parse.parse_qs(body).get('a', [1])[0]
             start_response('200 OK', [('Content-type', 'text/plain')])
-            return [six.b('a is %s, body is %s' % (a, body))]
+            return [('a is %s, body is %s' % (a, body)).encode()]
 
         self.site.application = new_app
         sock = eventlet.connect(self.server_addr)
@@ -701,7 +701,7 @@ class TestHttpd(_TestBase):
         assert '1.2.3.4,5.6.7.8,127.0.0.1' in self.logfile.getvalue()
 
         # turning off the option should work too
-        self.logfile = six.StringIO()
+        self.logfile = io.StringIO()
         self.spawn_server(log_x_forwarded_for=False)
 
         sock = eventlet.connect(self.server_addr)
@@ -1593,8 +1593,8 @@ class TestHttpd(_TestBase):
     def test_path_info_decoding(self):
         def wsgi_app(environ, start_response):
             start_response("200 OK", [])
-            yield six.b("decoded: %s" % environ['PATH_INFO'])
-            yield six.b("raw: %s" % environ['RAW_PATH_INFO'])
+            yield ("decoded: %s" % environ['PATH_INFO']).encode()
+            yield ("raw: %s" % environ['RAW_PATH_INFO']).encode()
         self.site.application = wsgi_app
         sock = eventlet.connect(self.server_addr)
         sock.sendall(b'GET /a*b@%40%233 HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
@@ -1643,7 +1643,7 @@ class TestHttpd(_TestBase):
             sock = eventlet.listen(('::1', 0), family=socket.AF_INET6)
         except (OSError, socket.gaierror):  # probably no ipv6
             return
-        log = six.StringIO()
+        log = io.StringIO()
         # first thing the server does is try to log the IP it's bound to
 
         def run_server():
@@ -1822,7 +1822,7 @@ class TestHttpd(_TestBase):
             server_sock = eventlet.listen(tempdir + '/socket', socket.AF_UNIX)
             path = server_sock.getsockname()
 
-            log = six.StringIO()
+            log = io.StringIO()
             self.spawn_server(site=app, sock=server_sock, log=log)
             eventlet.sleep(0)  # need to enter server loop
             assert 'http:' + path in log.getvalue()

@@ -7,7 +7,6 @@ from eventlet import event
 from eventlet import greenthread
 from eventlet import patcher
 from eventlet.green import thread
-import six
 
 from tests import LimitedTestCase
 

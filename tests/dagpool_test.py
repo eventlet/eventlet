@@ -7,7 +7,6 @@
 
 import eventlet
 from eventlet.dagpool import DAGPool, Collision, PropagateError
-import six
 from contextlib import contextmanager
 import itertools
 

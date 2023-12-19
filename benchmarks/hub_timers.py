@@ -5,7 +5,6 @@ import random
 
 import benchmarks
 from eventlet.hubs import timer, get_hub
-import six
 
 
 l = []

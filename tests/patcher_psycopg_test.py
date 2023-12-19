@@ -1,7 +1,5 @@
 import os
 
-import six
-
 from tests import patcher_test, skip_unless
 from tests import get_database_auth
 from tests.db_pool_test import postgres_requirement

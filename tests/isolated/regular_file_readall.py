@@ -4,7 +4,6 @@ if __name__ == '__main__':
     import eventlet
     eventlet.monkey_patch()
 
-    import six
     import io
     import os
     import tempfile

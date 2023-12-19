@@ -3,7 +3,6 @@
 import time
 
 import benchmarks
-import six
 
 
 BYTES = 1000

@@ -11,7 +11,6 @@ try:
     from eventlet.green import ssl
 except ImportError:
     __test__ = False
-import six
 import tests
 
 

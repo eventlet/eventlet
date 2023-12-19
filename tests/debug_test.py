@@ -1,7 +1,7 @@
+import io
 import sys
 
 from eventlet import debug
-import six
 import tests
 import eventlet
 
@@ -34,7 +34,7 @@ class TestSpew(tests.LimitedTestCase):
         else:
             frame_str = "f=<frame object at"
 
-        sys.stdout = six.StringIO()
+        sys.stdout = io.StringIO()
         s = debug.Spew()
         f = sys._getframe()
         s(f, "line", None)
@@ -44,7 +44,7 @@ class TestSpew(tests.LimitedTestCase):
         assert frame_str in output
 
     def test_line_nofile(self):
-        sys.stdout = six.StringIO()
+        sys.stdout = io.StringIO()
         s = debug.Spew()
         g = globals().copy()
         del g['__file__']
@@ -62,7 +62,7 @@ class TestSpew(tests.LimitedTestCase):
             frame_str = "f=<frame object at"
 
         global GLOBAL_VAR
-        sys.stdout = six.StringIO()
+        sys.stdout = io.StringIO()
         GLOBAL_VAR = debug.Spew()
         f = sys._getframe()
         GLOBAL_VAR(f, "line", None)
@@ -75,7 +75,7 @@ class TestSpew(tests.LimitedTestCase):
         del GLOBAL_VAR
 
     def test_line_novalue(self):
-        sys.stdout = six.StringIO()
+        sys.stdout = io.StringIO()
         s = debug.Spew(show_values=False)
         f = sys._getframe()
         s(f, "line", None)
@@ -85,7 +85,7 @@ class TestSpew(tests.LimitedTestCase):
         assert "f=<frame object at" not in output
 
     def test_line_nooutput(self):
-        sys.stdout = six.StringIO()
+        sys.stdout = io.StringIO()
         s = debug.Spew(trace_names=['foo'])
         f = sys._getframe()
         s(f, "line", None)

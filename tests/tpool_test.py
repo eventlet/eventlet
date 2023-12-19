@@ -20,7 +20,6 @@ import time
 
 import eventlet
 from eventlet import tpool
-import six
 import tests
 
 

@@ -9,7 +9,6 @@ from tests import skip_if_no_itimer, skip_unless
 import eventlet
 from eventlet import debug, hubs
 from eventlet.support import greenlets
-import six
 
 
 DELAY = 0.001

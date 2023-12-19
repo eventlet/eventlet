@@ -6,6 +6,7 @@ from io import DEFAULT_BUFFER_SIZE
 import os
 import shutil
 import socket as _orig_sock
+import struct
 import sys
 import tempfile
 
@@ -14,7 +15,6 @@ from eventlet import event, greenio, debug
 from eventlet.hubs import get_hub
 from eventlet.green import select, socket, time, ssl
 from eventlet.support import get_errno
-import six
 import tests
 import tests.mock as mock
 
@@ -685,8 +685,7 @@ def test_get_fileno_of_an_int_works():
     assert select.get_fileno(123) == 123
 
 
-expected_get_fileno_type_error_message = (
-    'Expected int or long, got <%s \'str\'>' % ('type' if six.PY2 else 'class'))
+expected_get_fileno_type_error_message = 'Expected int or long, got <class \'str\'>'
 
 
 def test_get_fileno_of_wrong_type_fails():
@@ -726,7 +725,7 @@ class TestGreenPipe(tests.LimitedTestCase):
         wf = greenio.GreenPipe(w, 'wb', 0)
 
         def sender(f, content):
-            for ch in map(six.int2byte, iter(content)):
+            for ch in map(struct.Struct(">B").pack, iter(content)):
                 eventlet.sleep(0.0001)
                 f.write(ch)
             f.close()

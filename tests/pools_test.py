@@ -4,7 +4,6 @@ import eventlet
 from eventlet import Queue
 from eventlet import hubs
 from eventlet import pools
-import six
 
 
 class IntPool(pools.Pool):
