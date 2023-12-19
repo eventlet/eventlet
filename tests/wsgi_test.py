@@ -565,6 +565,15 @@ class TestHttpd(_TestBase):
                 client_socket, addr = sock.accept()
                 serv.process_request([addr, client_socket, wsgi.STATE_IDLE])
                 return True
+            except (ssl.SSLZeroReturnError, ssl.SSLEOFError):
+                # Can't write a response to a closed TLS session
+                return True
+            except OSError:
+                if sys.version_info[:2] == (3, 7):
+                    return True
+                else:
+                    traceback.print_exc()
+                    return False
             except Exception:
                 traceback.print_exc()
                 return False
@@ -1232,6 +1241,16 @@ class TestHttpd(_TestBase):
         result = read_http(sock)
         self.assertEqual(result.headers_lower['connection'], 'close')
 
+    def test_026b_http_10_zero_keepalive(self):
+        # verify that if an http/1.0 client sends connection: keep-alive
+        # and the server doesn't accept keep-alives, we close the connection
+        self.spawn_server(keepalive=0)
+        sock = eventlet.connect(self.server_addr)
+
+        sock.sendall(b'GET / HTTP/1.0\r\nHost: localhost\r\nConnection: keep-alive\r\n\r\n')
+        result = read_http(sock)
+        self.assertEqual(result.headers_lower['connection'], 'close')
+
     def test_027_keepalive_chunked(self):
         self.site.application = chunked_post
         sock = eventlet.connect(self.server_addr)
@@ -1714,6 +1733,47 @@ class TestHttpd(_TestBase):
             assert False, 'Expected ConnectionClosed exception'
         except ConnectionClosed:
             pass
+
+    def test_server_keepalive_as_timeout(self):
+        calls = []
+
+        def call_tracker(env, start_response):
+            calls.append((env['REQUEST_METHOD'], env['PATH_INFO']))
+            start_response('202 Accepted', [])
+            return []
+        self.site.application = call_tracker
+
+        self.spawn_server(socket_timeout=1.0, keepalive=0.1)
+        sock = eventlet.connect(self.server_addr)
+        sock.send(b'GET / HTTP/1.1\r\n')
+        eventlet.sleep(0.1)  # still within socket_timeout
+        sock.send(b'Host: localhost\r\n\r\n')
+        result = read_http(sock)
+        assert 'keep-alive' not in result.headers_lower
+        # now the socket's gone idle, though
+        eventlet.sleep(0.1)
+        try:
+            sock.send(b'PUT / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+            read_http(sock)
+            assert False, 'Expected ConnectionClosed exception'
+        except ConnectionClosed:
+            pass
+        assert calls == [('GET', '/')]  # no PUT!
+
+    def test_server_keepalive_sent_in_headers(self):
+        self.spawn_server(keepalive=2.5)
+        sock = eventlet.connect(self.server_addr)
+        sock.send(
+            b'GET / HTTP/1.1\r\n'
+            b'Connection: keep-alive\r\n'
+            b'Host: localhost\r\n'
+            b'\r\n')
+        result = read_http(sock)
+        assert 'connection' in result.headers_lower
+        assert result.headers_lower['connection'] == 'keep-alive'
+        assert 'keep-alive' in result.headers_lower
+        assert result.headers_lower['keep-alive'] == 'timeout=2'
+        sock.close()
 
     def test_header_name_capitalization(self):
         def wsgi_app(environ, start_response):

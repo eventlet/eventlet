@@ -630,14 +630,14 @@ class TestGetaddrinfo(tests.LimitedTestCase):
     def test_getaddrinfo_only_a_ans(self):
         greendns.resolve = _make_mock_resolve()
         greendns.resolve.add('example.com', '1.2.3.4')
-        res = greendns.getaddrinfo('example.com', 0)
+        res = greendns.getaddrinfo('example.com', None)
         addr = [('1.2.3.4', 0)] * len(res)
         assert addr == [ai[-1] for ai in res]
 
     def test_getaddrinfo_only_aaaa_ans(self):
         greendns.resolve = _make_mock_resolve()
         greendns.resolve.add('example.com', 'dead:beef::1')
-        res = greendns.getaddrinfo('example.com', 0)
+        res = greendns.getaddrinfo('example.com', None)
         addr = [('dead:beef::1', 0, 0, 0)] * len(res)
         assert addr == [ai[-1] for ai in res]
 
@@ -654,7 +654,7 @@ class TestGetaddrinfo(tests.LimitedTestCase):
         res.raises = greendns.dns.exception.Timeout
         greendns.resolver._resolver = res()
 
-        result = greendns.getaddrinfo('example.com', 0, 0)
+        result = greendns.getaddrinfo('example.com', None, 0)
         addr = [('1.2.3.4', 0)] * len(result)
         assert addr == [ai[-1] for ai in result]
 
@@ -671,7 +671,7 @@ class TestGetaddrinfo(tests.LimitedTestCase):
         res.raises = greendns.dns.exception.DNSException
         greendns.resolver._resolver = res()
 
-        result = greendns.getaddrinfo('example.com', 0, 0)
+        result = greendns.getaddrinfo('example.com', None, 0)
         addr = [('1.2.3.4', 0)] * len(result)
         assert addr == [ai[-1] for ai in result]
 
@@ -691,7 +691,7 @@ class TestGetaddrinfo(tests.LimitedTestCase):
         greendns.resolver._resolver = res()
 
         with tests.assert_raises(socket.gaierror):
-            greendns.getaddrinfo('example.com', 0, 0)
+            greendns.getaddrinfo('example.com', None, 0)
 
     def test_getaddrinfo_hosts_only_dns_error(self):
         hostsres = _make_mock_base_resolver()
@@ -702,13 +702,13 @@ class TestGetaddrinfo(tests.LimitedTestCase):
         greendns.resolver._resolver = res()
 
         with tests.assert_raises(socket.gaierror):
-            greendns.getaddrinfo('example.com', 0, 0)
+            greendns.getaddrinfo('example.com', None, 0)
 
     def test_canonname(self):
         greendns.resolve = _make_mock_resolve()
         greendns.resolve.add('host.example.com', '1.2.3.4')
         greendns.resolve_cname = self._make_mock_resolve_cname()
-        res = greendns.getaddrinfo('host.example.com', 0,
+        res = greendns.getaddrinfo('host.example.com', None,
                                    0, 0, 0, socket.AI_CANONNAME)
         assert res[0][3] == 'cname.example.com'
 
