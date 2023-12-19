@@ -1,3 +1,4 @@
+from eventlet import hubs
 from eventlet.semaphore import Semaphore
 
 
@@ -21,7 +22,15 @@ class Lock(Semaphore):
         if self.counter > 0:
             raise RuntimeError("release unlocked lock")
 
-        return super(Lock, self).release(blocking=blocking)
+        # Consciously *do not* call super().release(), but instead inline
+        # Semaphore.release() here. We've seen issues with logging._lock
+        # deadlocking because garbage collection happened to run mid-release
+        # and eliminating the extra stack frame should help prevent that.
+        # See https://github.com/eventlet/eventlet/issues/742
+        self.counter += 1
+        if self._waiters:
+            hubs.get_hub().schedule_call_global(0, self._do_acquire)
+        return True
 
     def _at_fork_reinit(self):
         self.counter = 1

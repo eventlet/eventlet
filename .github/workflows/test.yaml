@@ -8,7 +8,7 @@ jobs:
   tox:
     name: "tox ${{ matrix.toxenv }}"
     continue-on-error: ${{ matrix.ignore-error }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     # https://github.community/t/duplicate-checks-on-push-and-pull-request-simultaneous-event/18012/5
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != 'eventlet/eventlet'
     timeout-minutes: 10
@@ -29,38 +29,30 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { py: 2.7, toxenv: py27-epolls, ignore-error: false }
-          - { py: 2.7, toxenv: py27-poll, ignore-error: false }
-          - { py: 2.7, toxenv: py27-selects, ignore-error: false }
-          - { py: 2.7, toxenv: py27-dnspython1, ignore-error: false }
-          - { py: 3.5, toxenv: py35-epolls, ignore-error: false }
-          - { py: 3.5, toxenv: py35-poll, ignore-error: false }
-          - { py: 3.5, toxenv: py35-selects, ignore-error: false }
-          - { py: 3.6, toxenv: py36-epolls, ignore-error: false }
-          - { py: 3.6, toxenv: py36-poll, ignore-error: false }
-          - { py: 3.6, toxenv: py36-selects, ignore-error: false }
-          - { py: 3.7, toxenv: py37-epolls, ignore-error: false }
-          - { py: 3.7, toxenv: py37-poll, ignore-error: false }
-          - { py: 3.7, toxenv: py37-selects, ignore-error: false }
-          - { py: 3.8, toxenv: py38-epolls, ignore-error: false }
-          - { py: 3.8, toxenv: py38-openssl, ignore-error: false }
-          - { py: 3.8, toxenv: py38-poll, ignore-error: false }
-          - { py: 3.8, toxenv: py38-selects, ignore-error: false }
-          - { py: 3.9, toxenv: py39-epolls, ignore-error: false }
-          - { py: 3.9, toxenv: py39-poll, ignore-error: false }
-          - { py: 3.9, toxenv: py39-selects, ignore-error: false }
-          - { py: 3.9, toxenv: py39-dnspython1, ignore-error: false }
-          - { py: 3.x, toxenv: ipv6, ignore-error: false }
-          - { py: pypy2, toxenv: pypy2-epolls, ignore-error: true }
-          - { py: pypy3, toxenv: pypy3-epolls, ignore-error: true }
+          - { py: 3.7, toxenv: py37-epolls, ignore-error: false, os: ubuntu-latest }
+          - { py: 3.8, toxenv: py38-epolls, ignore-error: false, os: ubuntu-latest }
+          - { py: 3.8, toxenv: py38-openssl, ignore-error: false, os: ubuntu-latest }
+          - { py: 3.8, toxenv: py38-poll, ignore-error: false, os: ubuntu-latest }
+          - { py: 3.8, toxenv: py38-selects, ignore-error: false, os: ubuntu-latest }
+          - { py: 3.9, toxenv: py39-epolls, ignore-error: false, os: ubuntu-latest }
+          - { py: 3.9, toxenv: py39-poll, ignore-error: false, os: ubuntu-latest }
+          - { py: 3.9, toxenv: py39-selects, ignore-error: false, os: ubuntu-latest }
+          - { py: 3.9, toxenv: py39-dnspython1, ignore-error: false, os: ubuntu-latest }
+          - { py: "3.10", toxenv: py310-epolls, ignore-error: false, os: ubuntu-latest }
+          - { py: "3.10", toxenv: py310-poll, ignore-error: false, os: ubuntu-latest }
+          - { py: "3.10", toxenv: py310-selects, ignore-error: false, os: ubuntu-latest }
+          - { py: "3.10", toxenv: ipv6, ignore-error: false, os: ubuntu-latest }
+          - { py: "3.11", toxenv: py311-epolls, ignore-error: false, os: ubuntu-latest }
+          - { py: "3.12", toxenv: py312-epolls, ignore-error: false, os: ubuntu-latest }
+          - { py: pypy3.9, toxenv: pypy3-epolls, ignore-error: true, os: ubuntu-20.04 }
 
     steps:
       - name: install system packages
         run: sudo apt install -y --no-install-recommends ccache libffi-dev default-libmysqlclient-dev libpq-dev libssl-dev libzmq3-dev
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: cache pip
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ matrix.toxenv }}-${{ hashFiles('.github/workflows/test.yaml', 'setup.py') }}
@@ -68,7 +60,7 @@ jobs:
             ${{ runner.os }}-pip-
             ${{ runner.os }}-
       - name: cache tox
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: .tox
           key: ${{ runner.os }}-tox-${{ matrix.toxenv }}-${{ hashFiles('tox.ini') }}
@@ -77,7 +69,7 @@ jobs:
             ${{ runner.os }}-
 
       - name: setup python ${{ matrix.py }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.py }}
       - name: install codecov, tox

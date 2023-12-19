@@ -16,7 +16,7 @@ def zmq_supported(_):
         import zmq
     except ImportError:
         return False
-    return not tests.using_pyevent(_)
+    return True
 
 
 class TestUpstreamDownStream(tests.LimitedTestCase):

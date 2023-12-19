@@ -71,7 +71,7 @@ class GreenFileIO(_OriginalIOBase):
         return 'r' in self._mode or '+' in self._mode
 
     def writable(self):
-        return 'w' in self._mode or '+' in self._mode
+        return 'w' in self._mode or '+' in self._mode or 'a' in self._mode
 
     def fileno(self):
         return self._fileno
@@ -213,5 +213,6 @@ def GreenPipe(name, mode="r", buffering=-1, encoding=None, errors=None,
         name = fileno
 
     return _open(name, mode, buffering, encoding, errors, newline, closefd, opener)
+
 
 GreenPipe.__doc__ = greenpipe_doc

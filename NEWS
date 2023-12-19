@@ -1,3 +1,26 @@
+0.34.0
+======
+
+* Dropped support for Python 3.6 and earlier.
+* Fix Python 3.13 compat by adding missing attibute '_is_main_interpreter' https://github.com/eventlet/eventlet/pull/847
+* Add support of Python 3.12 https://github.com/eventlet/eventlet/pull/817
+* Drop unmaintained and unused stdlib tests https://github.com/eventlet/eventlet/pull/820
+* Fix tests and CI for Python 3.7 and higher https://github.com/eventlet/eventlet/pull/831 and https://github.com/eventlet/eventlet/pull/832
+* Stop claiming to create universal wheels https://github.com/eventlet/eventlet/pull/841
+* Fix green logging locks for Python versions <= 3.10 https://github.com/eventlet/eventlet/pull/754
+
+0.33.3
+======
+* dnspython 2.3.0 raised AttributeError: module 'dns.rdtypes' has no attribute 'ANY' https://github.com/eventlet/eventlet/issues/781
+
+0.33.2
+======
+* greenio: GreenPipe/fdopen() with 'a' in mode raised io.UnsupportedOperation: File or stream is not writable https://github.com/eventlet/eventlet/pull/758
+
+0.33.1
+======
+* Prevent deadlock on logging._lock https://github.com/eventlet/eventlet/issues/742
+
 0.33.0
 ======
 * green.thread: unlocked Lock().release() should raise exception, returned True https://github.com/eventlet/eventlet/issues/697

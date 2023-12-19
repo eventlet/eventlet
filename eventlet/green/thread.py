@@ -15,6 +15,8 @@ error = __thread.error
 LockType = Lock
 __threadcount = 0
 
+if hasattr(__thread, "_is_main_interpreter"):
+    _is_main_interpreter = __thread._is_main_interpreter
 
 if six.PY3:
     def _set_sentinel():
@@ -113,3 +115,6 @@ if hasattr(__thread, 'stack_size'):
             # this thread will suffer
 
 from eventlet.corolocal import local as _local
+
+if hasattr(__thread, 'daemon_threads_allowed'):
+    daemon_threads_allowed = __thread.daemon_threads_allowed

@@ -62,8 +62,9 @@ def import_patched(module_name):
 
 
 dns = import_patched('dns')
-for pkg in dns.__all__:
-    setattr(dns, pkg, import_patched('dns.' + pkg))
+
+# Handle rdtypes separately; we need fully it available as we patch the rest
+dns.rdtypes = import_patched('dns.rdtypes')
 dns.rdtypes.__all__.extend(['dnskeybase', 'dsbase', 'txtbase'])
 for pkg in dns.rdtypes.__all__:
     setattr(dns.rdtypes, pkg, import_patched('dns.rdtypes.' + pkg))
@@ -71,6 +72,11 @@ for pkg in dns.rdtypes.IN.__all__:
     setattr(dns.rdtypes.IN, pkg, import_patched('dns.rdtypes.IN.' + pkg))
 for pkg in dns.rdtypes.ANY.__all__:
     setattr(dns.rdtypes.ANY, pkg, import_patched('dns.rdtypes.ANY.' + pkg))
+
+for pkg in dns.__all__:
+    if pkg == 'rdtypes':
+        continue
+    setattr(dns, pkg, import_patched('dns.' + pkg))
 del import_patched
 
 
@@ -259,6 +265,9 @@ class HostsResolver(object):
         if isinstance(qname, six.string_types):
             name = qname
             qname = dns.name.from_text(qname)
+        elif isinstance(qname, six.binary_type):
+            name = qname.decode("ascii")
+            qname = dns.name.from_text(qname)
         else:
             name = str(qname)
         name = name.lower()
@@ -358,7 +367,7 @@ class ResolverProxy(object):
 
         if qname is None:
             qname = '0.0.0.0'
-        if isinstance(qname, six.string_types):
+        if isinstance(qname, six.string_types) or isinstance(qname, six.binary_type):
             qname = dns.name.from_text(qname, None)
 
         def step(fun, *args, **kwargs):
@@ -539,6 +548,8 @@ def getaddrinfo(host, port, family=0, socktype=0, proto=0, flags=0):
     """
     if isinstance(host, six.string_types):
         host = host.encode('idna').decode('ascii')
+    elif isinstance(host, six.binary_type):
+        host = host.decode("ascii")
     if host is not None and not is_ip_addr(host):
         qname, addrs = _getaddrinfo_lookup(host, family, flags)
     else:
@@ -917,6 +928,7 @@ def tcp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
 
 def reset():
     resolver.clear()
+
 
 # Install our coro-friendly replacements for the tcp and udp query methods.
 dns.query.tcp = tcp

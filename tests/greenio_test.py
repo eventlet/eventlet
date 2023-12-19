@@ -9,8 +9,6 @@ import socket as _orig_sock
 import sys
 import tempfile
 
-from nose.tools import eq_
-
 import eventlet
 from eventlet import event, greenio, debug
 from eventlet.hubs import get_hub
@@ -39,7 +37,7 @@ def expect_socket_timeout(function, *args):
         raise AssertionError("socket.timeout not raised")
     except socket.timeout as e:
         assert hasattr(e, 'args')
-        eq_(e.args[0], 'timed out')
+        assert e.args[0] == 'timed out'
 
 
 def min_buf_size():
@@ -516,7 +514,6 @@ class TestGreenSocket(tests.LimitedTestCase):
         server.close()
         client.close()
 
-    @tests.skip_with_pyevent
     def test_raised_multiple_readers(self):
         debug.hub_prevent_multiple_readers(True)
 
@@ -538,7 +535,6 @@ class TestGreenSocket(tests.LimitedTestCase):
         s.sendall(b'b')
         a.wait()
 
-    @tests.skip_with_pyevent
     @tests.skip_if(using_epoll_hub)
     @tests.skip_if(using_kqueue_hub)
     def test_closure(self):
@@ -674,8 +670,8 @@ class TestGreenSocket(tests.LimitedTestCase):
         sender.sendto(b'second', 0, address)
 
         sender_address = ('127.0.0.1', sender.getsockname()[1])
-        eq_(receiver.recvfrom(1024), (b'first', sender_address))
-        eq_(receiver.recvfrom(1024), (b'second', sender_address))
+        assert receiver.recvfrom(1024) == (b'first', sender_address)
+        assert receiver.recvfrom(1024) == (b'second', sender_address)
 
 
 def test_get_fileno_of_a_socket_works():
@@ -860,7 +856,6 @@ class TestGreenPipe(tests.LimitedTestCase):
 class TestGreenIoLong(tests.LimitedTestCase):
     TEST_TIMEOUT = 10  # the test here might take a while depending on the OS
 
-    @tests.skip_with_pyevent
     def test_multiple_readers(self):
         debug.hub_prevent_multiple_readers(False)
         recvsize = 2 * min_buf_size()
@@ -1022,3 +1017,62 @@ def test_pipe_context():
     with w as f:
         assert f == w
     assert r.closed and w.closed
+
+
+def test_greenpipe_write():
+    expected = b"initial"
+    with tempfile.NamedTemporaryFile() as f:
+        with greenio.GreenPipe(f.name, "wb") as writer:
+            writer.write(expected)
+
+        actual = tests.read_file(f.name)
+        assert actual == expected
+
+
+def test_greenpipe_append():
+    old_data = b"existing data..."
+    new_data = b"append with mode=a"
+    expected = old_data + new_data
+    with tempfile.NamedTemporaryFile() as f:
+        with open(f.name, "wb") as fw:
+            fw.write(old_data)
+
+        with greenio.GreenPipe(f.name, "ab") as writer:
+            writer.write(new_data)
+
+        actual = tests.read_file(f.name)
+        assert actual == expected
+
+
+def test_greenpipe_read_overwrite():
+    old_data = b"existing data..."
+    new_data = b"overwrite with mode=r+"
+    with tempfile.NamedTemporaryFile() as f:
+        with greenio.GreenPipe(f.name, "wb") as writer:
+            writer.write(old_data)
+
+        with greenio.GreenPipe(f.name, "r+b") as writer:
+            writer.write(new_data)
+
+        actual = tests.read_file(f.name)
+        assert actual == new_data
+
+
+def test_greenpipe_write_plus():
+    expected = "write with mode=w+"
+    with tempfile.NamedTemporaryFile() as f:
+        with greenio.GreenPipe(f.name, "w+") as writer:
+            writer.write(expected)
+
+        actual = tests.read_file(f.name, mode='r')
+        assert actual == expected
+
+
+def test_greenpipe_append_plus():
+    expected = "append with mode=a+"
+    with tempfile.NamedTemporaryFile() as f:
+        with greenio.GreenPipe(f.name, "a+") as writer:
+            writer.write(expected)
+
+        actual = tests.read_file(f.name, mode='r')
+        assert actual == expected

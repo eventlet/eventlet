@@ -20,7 +20,7 @@ import sys
 import unittest
 import warnings
 
-from nose.plugins.skip import SkipTest
+from unittest import SkipTest
 
 import eventlet
 from eventlet import tpool
@@ -99,16 +99,6 @@ def skip_unless(condition):
                 return func(*a, **kw)
         return wrapped
     return skipped_wrapper
-
-
-def using_pyevent(_f):
-    from eventlet.hubs import get_hub
-    return 'pyevent' in type(get_hub()).__module__
-
-
-def skip_with_pyevent(func):
-    """ Decorator that skips a test if we're using the pyevent hub."""
-    return skip_if(using_pyevent)(func)
 
 
 def skip_on_windows(func):
@@ -223,7 +213,6 @@ class LimitedTestCase(unittest.TestCase):
 def check_idle_cpu_usage(duration, allowed_part):
     if resource is None:
         # TODO: use https://code.google.com/p/psutil/
-        from nose.plugins.skip import SkipTest
         raise SkipTest('CPU usage testing not supported (`import resource` failed)')
 
     r1 = resource.getrusage(resource.RUSAGE_SELF)
@@ -368,8 +357,9 @@ def run_python(path, env=None, args=None, timeout=None, pythonpath_extend=None, 
             if len(parts) > 1:
                 skip_args.append(parts[1])
             raise SkipTest(*skip_args)
-        ok = output.rstrip() == b'pass'
-        if not ok:
+        lines = output.splitlines()
+        ok = lines[-1].rstrip() == b'pass'
+        if not ok or len(lines) > 1:
             sys.stderr.write('Program {0} output:\n---\n{1}\n---\n'.format(path, output.decode()))
         assert ok, 'Expected single line "pass" in stdout'
 
@@ -400,18 +390,6 @@ def capture_stderr():
 
 certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
 private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
-
-
-def test_run_python_timeout():
-    output = run_python('', args=('-c', 'import time; time.sleep(0.5)'), timeout=0.1)
-    assert output.endswith(b'FAIL - timed out')
-
-
-def test_run_python_pythonpath_extend():
-    code = '''import os, sys ; print('\\n'.join(sys.path))'''
-    output = run_python('', args=('-c', code), pythonpath_extend=('dira', 'dirb'))
-    assert b'/dira\n' in output
-    assert b'/dirb\n' in output
 
 
 @contextlib.contextmanager
@@ -488,3 +466,9 @@ def dns_tcp_server(ip_to_give, request_count=1):
     client.close()
     thread.join()
     server_socket.close()
+
+
+def read_file(path, mode="rb"):
+    with open(path, mode) as f:
+        result = f.read()
+    return result

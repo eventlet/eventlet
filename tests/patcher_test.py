@@ -233,7 +233,6 @@ def test_monkey_patch_threading():
 class Tpool(ProcessBase):
     TEST_TIMEOUT = 3
 
-    @tests.skip_with_pyevent
     def test_simple(self):
         new_mod = """
 import eventlet
@@ -251,7 +250,6 @@ tpool.killall()
         assert '2' in lines[0], repr(output)
         assert '3' in lines[1], repr(output)
 
-    @tests.skip_with_pyevent
     def test_unpatched_thread(self):
         new_mod = """import eventlet
 eventlet.monkey_patch(time=False, thread=False)
@@ -264,7 +262,6 @@ import time
         output, lines = self.launch_subprocess('newmod.py')
         self.assertEqual(len(lines), 2, lines)
 
-    @tests.skip_with_pyevent
     def test_patched_thread(self):
         new_mod = """import eventlet
 eventlet.monkey_patch(time=False, thread=True)
@@ -483,6 +480,10 @@ def test_patcher_existing_locks_locked():
 @tests.skip_if_CRLock_exist
 def test_patcher_existing_locks_unlocked():
     tests.run_isolated('patcher_existing_locks_unlocked.py')
+
+
+def test_patcher_existing_logging_module_lock():
+    tests.run_isolated('patcher_existing_logging_module_lock.py')
 
 
 def test_importlib_lock():

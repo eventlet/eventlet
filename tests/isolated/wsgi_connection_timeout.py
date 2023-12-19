@@ -188,5 +188,6 @@ def main():
     assert "Traceback" not in output_normal, repr(output_normal)
     print("pass")
 
+
 if __name__ == '__main__':
     main()

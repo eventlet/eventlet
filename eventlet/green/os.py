@@ -29,6 +29,7 @@ def fdopen(fd, *args, **kw):
     except IOError as e:
         raise OSError(*e.args)
 
+
 __original_read__ = os_orig.read
 
 
@@ -50,6 +51,7 @@ def read(fd, n):
             hubs.trampoline(fd, read=True)
         except hubs.IOClosed:
             return ''
+
 
 __original_write__ = os_orig.write
 
@@ -77,6 +79,7 @@ def wait():
     Wait for completion of a child process."""
     return waitpid(0, 0)
 
+
 __original_waitpid__ = os_orig.waitpid
 
 
@@ -94,6 +97,7 @@ def waitpid(pid, options):
             if rpid and status >= 0:
                 return rpid, status
             greenthread.sleep(0.01)
+
 
 __original_open__ = os_orig.open
 

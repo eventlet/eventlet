@@ -222,6 +222,7 @@ def original(modname):
 
     return sys.modules[original_name]
 
+
 already_patched = {}
 
 
@@ -410,7 +411,24 @@ def _green_existing_locks():
             if not py3_style and isinstance(obj._RLock__block, lock_type):
                 _fix_py2_rlock(obj, tid)
             elif py3_style and not isinstance(obj, pyrlock_type):
-                _fix_py3_rlock(obj)
+                _fix_py3_rlock(obj, tid)
+
+    if sys.version_info < (3, 10):
+        # Older py3 won't have RLocks show up in gc.get_objects() -- see
+        # https://github.com/eventlet/eventlet/issues/546 -- so green a handful
+        # that we know are significant
+        import logging
+        if isinstance(logging._lock, rlock_type):
+            _fix_py3_rlock(logging._lock, tid)
+        logging._acquireLock()
+        try:
+            for ref in logging._handlerList:
+                handler = ref()
+                if handler and isinstance(handler.lock, rlock_type):
+                    _fix_py3_rlock(handler.lock, tid)
+                del handler
+        finally:
+            logging._releaseLock()
 
 
 def _fix_py2_rlock(rlock, tid):
@@ -423,24 +441,48 @@ def _fix_py2_rlock(rlock, tid):
         rlock._RLock__owner = tid
 
 
-def _fix_py3_rlock(old):
+def _fix_py3_rlock(old, tid):
     import gc
     import threading
+    from eventlet.green.thread import allocate_lock
     new = threading._PyRLock()
+    if not hasattr(new, "_block") or not hasattr(new, "_owner"):
+        # These will only fail if Python changes its internal implementation of
+        # _PyRLock:
+        raise RuntimeError(
+            "INTERNAL BUG. Perhaps you are using a major version " +
+            "of Python that is unsupported by eventlet? Please file a bug " +
+            "at https://github.com/eventlet/eventlet/issues/new")
+    new._block = allocate_lock()
+    acquired = False
     while old._is_owned():
         old.release()
         new.acquire()
+        acquired = True
     if old._is_owned():
         new.acquire()
+        acquired = True
+    if acquired:
+        new._owner = tid
     gc.collect()
     for ref in gc.get_referrers(old):
+        if isinstance(ref, dict):
+            for k, v in list(ref.items()):
+                if v is old:
+                    ref[k] = new
+            continue
+        if isinstance(ref, list):
+            for i, v in enumerate(ref):
+                if v is old:
+                    ref[i] = new
+            continue
         try:
             ref_vars = vars(ref)
         except TypeError:
             pass
         else:
             for k, v in ref_vars.items():
-                if v == old:
+                if v is old:
                     setattr(ref, k, new)
 
 

@@ -10,6 +10,7 @@ class NOT_USED:
     def __repr__(self):
         return 'NOT_USED'
 
+
 NOT_USED = NOT_USED()
 
 
