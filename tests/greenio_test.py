@@ -9,8 +9,6 @@ import socket as _orig_sock
 import sys
 import tempfile
 
-from nose.tools import eq_
-
 import eventlet
 from eventlet import event, greenio, debug
 from eventlet.hubs import get_hub
@@ -39,7 +37,7 @@ def expect_socket_timeout(function, *args):
         raise AssertionError("socket.timeout not raised")
     except socket.timeout as e:
         assert hasattr(e, 'args')
-        eq_(e.args[0], 'timed out')
+        assert e.args[0] == 'timed out'
 
 
 def min_buf_size():
@@ -672,8 +670,8 @@ class TestGreenSocket(tests.LimitedTestCase):
         sender.sendto(b'second', 0, address)
 
         sender_address = ('127.0.0.1', sender.getsockname()[1])
-        eq_(receiver.recvfrom(1024), (b'first', sender_address))
-        eq_(receiver.recvfrom(1024), (b'second', sender_address))
+        assert receiver.recvfrom(1024) == (b'first', sender_address)
+        assert receiver.recvfrom(1024) == (b'second', sender_address)
 
 
 def test_get_fileno_of_a_socket_works():

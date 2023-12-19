@@ -265,6 +265,9 @@ class HostsResolver(object):
         if isinstance(qname, six.string_types):
             name = qname
             qname = dns.name.from_text(qname)
+        elif isinstance(qname, six.binary_type):
+            name = qname.decode("ascii")
+            qname = dns.name.from_text(qname)
         else:
             name = str(qname)
         name = name.lower()
@@ -364,7 +367,7 @@ class ResolverProxy(object):
 
         if qname is None:
             qname = '0.0.0.0'
-        if isinstance(qname, six.string_types):
+        if isinstance(qname, six.string_types) or isinstance(qname, six.binary_type):
             qname = dns.name.from_text(qname, None)
 
         def step(fun, *args, **kwargs):
@@ -545,6 +548,8 @@ def getaddrinfo(host, port, family=0, socktype=0, proto=0, flags=0):
     """
     if isinstance(host, six.string_types):
         host = host.encode('idna').decode('ascii')
+    elif isinstance(host, six.binary_type):
+        host = host.decode("ascii")
     if host is not None and not is_ip_addr(host):
         qname, addrs = _getaddrinfo_lookup(host, family, flags)
     else:

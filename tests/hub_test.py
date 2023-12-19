@@ -190,7 +190,6 @@ class TestExceptionInMainloop(tests.LimitedTestCase):
 
 class TestExceptionInGreenthread(tests.LimitedTestCase):
 
-    @tests.skip_unless(greenlets.preserves_excinfo)
     def test_exceptionpreservation(self):
         # events for controlling execution order
         gt1event = eventlet.Event()
