@@ -1,8 +1,13 @@
-Unreleased
-==========
+0.34.0
+======
 
-* Dropped support for Python 3.7 and earlier.
+* Dropped support for Python 3.6 and earlier.
 * Fix Python 3.13 compat by adding missing attibute '_is_main_interpreter' https://github.com/eventlet/eventlet/pull/847
+* Add support of Python 3.12 https://github.com/eventlet/eventlet/pull/817
+* Drop unmaintained and unused stdlib tests https://github.com/eventlet/eventlet/pull/820
+* Fix tests and CI for Python 3.7 and higher https://github.com/eventlet/eventlet/pull/831 and https://github.com/eventlet/eventlet/pull/832
+* Stop claiming to create universal wheels https://github.com/eventlet/eventlet/pull/841
+* Fix green logging locks for Python versions <= 3.10 https://github.com/eventlet/eventlet/pull/754
 
 0.33.3
 ======
