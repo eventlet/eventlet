@@ -76,16 +76,7 @@ except ImportError:
             return f
         return inner
 else:
-    if sys.version_info[:2] >= (3, 2):
-        wraps = original_wraps
-    else:
-        def wraps(func):
-            def inner(f):
-                f = original_wraps(func)(f)
-                wrapped = getattr(func, '__wrapped__', func)
-                f.__wrapped__ = wrapped
-                return f
-            return inner
+    wraps = original_wraps
 
 try:
     unicode

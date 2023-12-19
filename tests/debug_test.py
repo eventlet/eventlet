@@ -29,10 +29,7 @@ class TestSpew(tests.LimitedTestCase):
         assert self.tracer is None
 
     def test_line(self):
-        if sys.version_info >= (3, 7):
-            frame_str = "f=<frame at"
-        else:
-            frame_str = "f=<frame object at"
+        frame_str = "f=<frame at"
 
         sys.stdout = io.StringIO()
         s = debug.Spew()
@@ -56,10 +53,7 @@ class TestSpew(tests.LimitedTestCase):
         assert "VM instruction #" in output, output
 
     def test_line_global(self):
-        if sys.version_info >= (3, 7):
-            frame_str = "f=<frame at"
-        else:
-            frame_str = "f=<frame object at"
+        frame_str = "f=<frame at"
 
         global GLOBAL_VAR
         sys.stdout = io.StringIO()

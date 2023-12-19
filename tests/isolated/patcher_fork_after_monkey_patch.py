@@ -38,9 +38,8 @@ if __name__ == '__main__':
     if os.fork() == 0:
         # Inside the child, we should only have a main thread,
         # but old pythons make it difficult to ensure
-        if sys.version_info >= (3, 7):
-            check(1, threading, 'child post-fork patched')
-            check(1, _threading, 'child post-fork original')
+        check(1, threading, 'child post-fork patched')
+        check(1, _threading, 'child post-fork original')
         check(1, eventlet.green.threading, 'child post-fork green')
         sys.exit()
     else:
