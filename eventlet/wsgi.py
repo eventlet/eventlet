@@ -559,7 +559,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     exc_info = None
 
             bodyless[0] = (
-                status_code[0] == 204
+                status_code[0] in (204, 304)
+                or self.command == "HEAD"
                 or (100 <= status_code[0] < 200)
                 or (self.command == "CONNECT" and 200 <= status_code[0] < 300)
             )

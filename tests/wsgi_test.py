@@ -1932,7 +1932,11 @@ class TestHttpd(_TestBase):
 
     def test_no_transfer_encoding_in_empty_response(self):
         def app(environ, start_response):
-            write = start_response("204 OK", [])
+            if environ["PATH_INFO"] == "/304":
+                status = "304 Not Modified"
+            else:
+                status = "204 OK"
+            write = start_response(status, [])
             write(b"")
             # "An application must return an iterable object, even if it uses
             #  write() to produce all or part of its response body."
@@ -1943,14 +1947,26 @@ class TestHttpd(_TestBase):
 
         sock.sendall(b"DELETE /foo HTTP/1.1\r\nConnection: keep-alive\r\n\r\n")
         response = read_http(sock)
+        assert response.status == "HTTP/1.1 204 OK"
         assert "transfer-encoding" not in response.headers_lower
+        assert "content-length" not in response.headers_lower
         assert response.headers_lower.get("connection") == "keep-alive"
 
         # Since it's HTTP/1.1 and clients know there's no body,
         # we can continue using the connection
+        sock.sendall(b"GET /304 HTTP/1.1\r\n\r\n")
+        response = read_http(sock)
+        assert response.status == "HTTP/1.1 304 Not Modified"
+        assert "transfer-encoding" not in response.headers_lower
+        assert "content-length" not in response.headers_lower
+        assert "connection" not in response.headers_lower
+
+        # HTTP/1.1 default to persistant connections, even without an explicit
+        # Connection header, so we can keep going
         sock.sendall(b"DELETE /foo HTTP/1.1\r\n\r\n")
         response = read_http(sock)
         assert "transfer-encoding" not in response.headers_lower
+        assert "content-length" not in response.headers_lower
         assert "connection" not in response.headers_lower
 
         sock.close()
