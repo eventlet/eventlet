@@ -935,9 +935,6 @@ class TestRaiseErrors(tests.LimitedTestCase):
 
     def test_raise_new_error(self):
         # https://github.com/eventlet/eventlet/issues/810
-        if not hasattr(greendns.EAI_EAGAIN_ERROR, "__traceback__"):
-            self.skipTest("Python version does not implement PEP-3134, skip this testcase.")
-
         # Raise exception multiple times
         for _ in range(3):
             with self.assertRaises(socket.gaierror) as error:
