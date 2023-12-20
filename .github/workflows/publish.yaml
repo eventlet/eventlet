@@ -11,7 +11,7 @@ name: Build & Optional Deploy
 on: [push, pull_request]
 
 permissions:
-  contents: read
+  id-token: write
 
 jobs:
   build-and-deploy:
