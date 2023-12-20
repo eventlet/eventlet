@@ -23,7 +23,6 @@ __patched__ = [
 
 _original_sslsocket = __ssl.SSLSocket
 _original_sslcontext = __ssl.SSLContext
-_is_under_py_3_7 = sys.version_info < (3, 7)
 _is_py_3_7 = sys.version_info[:2] == (3, 7)
 _original_wrap_socket = __ssl.SSLContext.wrap_socket
 
@@ -59,7 +58,7 @@ class GreenSSLSocket(_original_sslsocket):
                 server_side=False, cert_reqs=CERT_NONE,
                 ssl_version=PROTOCOL_SSLv23, ca_certs=None,
                 do_handshake_on_connect=True, *args, **kw):
-        if _is_under_py_3_7:
+        if sys.version_info < (3, 7):
             return super(GreenSSLSocket, cls).__new__(cls)
         else:
             if not isinstance(sock, GreenSocket):
@@ -131,7 +130,7 @@ class GreenSSLSocket(_original_sslsocket):
             # this assignment
             self._timeout = sock.gettimeout()
 
-        if _is_under_py_3_7:
+        if sys.version_info < (3, 7):
             # nonblocking socket handshaking on connect got disabled so let's pretend it's disabled
             # even when it's on
             super(GreenSSLSocket, self).__init__(
@@ -406,7 +405,7 @@ class GreenSSLSocket(_original_sslsocket):
         except NameError:
             self._sslobj = sslobj
         else:
-            if _is_under_py_3_7:
+            if sys.version_info < (3, 7):
                 self._sslobj = SSLObject(sslobj, owner=self)
             else:
                 self._sslobj = sslobj
