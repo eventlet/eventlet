@@ -92,11 +92,9 @@ EAI_NONAME_ERROR = socket.gaierror(socket.EAI_NONAME, 'Name or service not known
 # socket.EAI_NODATA is not defined on FreeBSD, probably on some other platforms too.
 # https://lists.freebsd.org/pipermail/freebsd-ports/2003-October/005757.html
 EAI_NODATA_ERROR = EAI_NONAME_ERROR
-EAI_ERRNOS = (socket.EAI_AGAIN, socket.EAI_NONAME)
 if (os.environ.get('EVENTLET_DEPRECATED_EAI_NODATA', '').lower() in ('1', 'y', 'yes')
         and hasattr(socket, 'EAI_NODATA')):
     EAI_NODATA_ERROR = socket.gaierror(socket.EAI_NODATA, 'No address associated with hostname')
-    EAI_ERRNOS = (socket.EAI_AGAIN, socket.EAI_NONAME, socket.EAI_NODATA)
 
 
 def _raise_new_error(error_instance):
@@ -520,7 +518,7 @@ def _getaddrinfo_lookup(host, family, flags):
                 try:
                     answer = resolve(host, qfamily, False, use_network=use_network)
                 except socket.gaierror as e:
-                    if e.errno not in EAI_ERRNOS:
+                    if e.errno not in (socket.EAI_AGAIN, EAI_NONAME_ERROR.errno, EAI_NODATA_ERROR.errno):
                         raise
                     err = e
                 else:
