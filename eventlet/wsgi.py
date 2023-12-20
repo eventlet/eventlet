@@ -518,10 +518,12 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     self.close_connection = 1
 
                 if 'content-length' not in header_list:
-                    if not bodyless[0] and self.request_version == 'HTTP/1.1':
+                    if bodyless[0]:
+                        pass  # client didn't expect a body anyway
+                    elif self.request_version == 'HTTP/1.1':
                         use_chunked[0] = True
                         towrite.append(b'Transfer-Encoding: chunked\r\n')
-                    elif 'content-length' not in header_list:
+                    else:
                         # client is 1.0 and therefore must read to EOF
                         self.close_connection = 1
 
