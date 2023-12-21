@@ -1,5 +1,4 @@
 """Benchmark evaluating eventlet's performance at speaking to itself over a localhost socket."""
-from __future__ import print_function
 
 import time
 

@@ -1,5 +1,4 @@
 # package is named tests, not test, so it won't be confused with test in stdlib
-from __future__ import print_function
 
 import contextlib
 import errno
