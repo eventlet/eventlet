@@ -10,7 +10,7 @@ if __name__ == '__main__':
     import tempfile
 
     with tempfile.NamedTemporaryFile() as tmp:
-        with io.open(tmp.name, "wb") as fp:
+        with open(tmp.name, "wb") as fp:
             fp.write(b"content")
 
         # test BufferedReader.read()
@@ -36,7 +36,7 @@ if __name__ == '__main__':
             assert content == b'content'
 
         # test FileIO.readall() (for Python 2 and Python 3)
-        with io.open(tmp.name, "rb", 0) as fp:
+        with open(tmp.name, "rb", 0) as fp:
             content = fp.readall()
         assert content == b'content'
 
