@@ -486,9 +486,9 @@ class TestHttpd(_TestBase):
         self.site.application = chunked_post
         sock = eventlet.connect(self.server_addr)
         fd = sock.makefile('rwb')
-        fd.write('PUT /a HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n'
-                 'Transfer-Encoding: chunked\r\n\r\n'
-                 '2\r\noh\r\n4\r\n hai\r\n0\r\n\r\n'.encode())
+        fd.write(b'PUT /a HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n'
+                 b'Transfer-Encoding: chunked\r\n\r\n'
+                 b'2\r\noh\r\n4\r\n hai\r\n0\r\n\r\n')
         fd.flush()
         while True:
             if fd.readline() == b'\r\n':
@@ -498,9 +498,9 @@ class TestHttpd(_TestBase):
 
         sock = eventlet.connect(self.server_addr)
         fd = sock.makefile('rwb')
-        fd.write('PUT /b HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n'
-                 'Transfer-Encoding: chunked\r\n\r\n'
-                 '2\r\noh\r\n4\r\n hai\r\n0\r\n\r\n'.encode())
+        fd.write(b'PUT /b HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n'
+                 b'Transfer-Encoding: chunked\r\n\r\n'
+                 b'2\r\noh\r\n4\r\n hai\r\n0\r\n\r\n')
         fd.flush()
         while True:
             if fd.readline() == b'\r\n':
@@ -510,9 +510,9 @@ class TestHttpd(_TestBase):
 
         sock = eventlet.connect(self.server_addr)
         fd = sock.makefile('rwb')
-        fd.write('PUT /c HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n'
-                 'Transfer-Encoding: chunked\r\n\r\n'
-                 '2\r\noh\r\n4\r\n hai\r\n0\r\n\r\n'.encode())
+        fd.write(b'PUT /c HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n'
+                 b'Transfer-Encoding: chunked\r\n\r\n'
+                 b'2\r\noh\r\n4\r\n hai\r\n0\r\n\r\n')
         fd.flush()
         while True:
             if fd.readline() == b'\r\n':
