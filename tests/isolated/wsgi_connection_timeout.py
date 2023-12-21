@@ -38,7 +38,7 @@ TAG_BOOM = "=== ~* BOOM *~ ==="
 output_buffer = []
 
 
-class BufferLog(object):
+class BufferLog:
     @staticmethod
     def write(s):
         output_buffer.append(s.rstrip())
@@ -46,7 +46,7 @@ class BufferLog(object):
 
 
 # This test might make you wince
-class NaughtySocketAcceptWrap(object):
+class NaughtySocketAcceptWrap:
     # server's socket.accept(); patches resulting connection sockets
 
     def __init__(self, sock):
@@ -73,7 +73,7 @@ class NaughtySocketAcceptWrap(object):
         return conn, addr
 
 
-class ExplodingConnectionWrap(object):
+class ExplodingConnectionWrap:
     # new connection's socket.makefile
     # eventlet *tends* to use socket.makefile, not raw socket methods.
     # need to patch file operations

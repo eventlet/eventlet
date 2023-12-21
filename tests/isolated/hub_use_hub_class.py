@@ -2,7 +2,7 @@ from __future__ import print_function
 __test__ = False
 
 
-class Foo(object):
+class Foo:
     pass
 
 

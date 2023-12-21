@@ -117,7 +117,7 @@ def test_check_no_suspend():
 # ****************************************************************************
 #   Verify that the expected things happened in the expected order
 # ****************************************************************************
-class Capture(object):
+class Capture:
     """
     This class is intended to capture a sequence (of string messages) to
     verify that all expected events occurred, and in the expected order. The

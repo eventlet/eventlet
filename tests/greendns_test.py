@@ -202,10 +202,10 @@ line2 # inline comment
 
 def _make_mock_base_resolver():
     """A mocked base resolver class"""
-    class RR(object):
+    class RR:
         pass
 
-    class Resolver(object):
+    class Resolver:
         aliases = ['cname.example.com']
         raises = None
         rr = RR()
@@ -383,10 +383,10 @@ class TestProxyResolver(tests.LimitedTestCase):
 
     def _make_mock_resolver_aliases(self):
 
-        class RR(object):
+        class RR:
             target = 'host.example.com'
 
-        class Resolver(object):
+        class Resolver:
             call_count = 0
             exc_type = greendns.dns.resolver.NoAnswer
 
@@ -511,7 +511,7 @@ def _make_mock_resolve():
     class MockAnswer(list):
         pass
 
-    class MockResolve(object):
+    class MockResolve:
 
         def __init__(self):
             self.answers = {}
@@ -557,7 +557,7 @@ class TestGetaddrinfo(tests.LimitedTestCase):
     def _make_mock_resolve_cname(self):
         """A stubbed out cname function"""
 
-        class ResolveCname(object):
+        class ResolveCname:
             qname = None
             cname = 'cname.example.com'
 
@@ -868,7 +868,7 @@ class TestGethostbyname_ex(tests.LimitedTestCase):
 
     def _make_mock_getaliases(self):
 
-        class GetAliases(object):
+        class GetAliases:
             aliases = ['cname.example.com']
 
             def __call__(self, *args, **kwargs):

@@ -160,7 +160,7 @@ def _is_exception(obj):
     )
 
 
-class _slotted(object):
+class _slotted:
     __slots__ = ['a']
 
 
@@ -363,7 +363,7 @@ def _is_magic(name):
     return '__%s__' % name[2:-2] == name
 
 
-class _SentinelObject(object):
+class _SentinelObject:
     "A unique, named, sentinel object."
 
     def __init__(self, name):
@@ -373,7 +373,7 @@ class _SentinelObject(object):
         return 'sentinel.%s' % self.name
 
 
-class _Sentinel(object):
+class _Sentinel:
     """Access attributes to return a named object, usable as a sentinel."""
 
     def __init__(self):
@@ -482,7 +482,7 @@ def _check_and_set_parent(parent, value, name, new_name):
     return True
 
 
-class Base(object):
+class Base:
     _mock_return_value = DEFAULT
     _mock_side_effect = None
 
@@ -1104,7 +1104,7 @@ def _is_started(patcher):
     return hasattr(patcher, 'is_local')
 
 
-class _patch(object):
+class _patch:
 
     attribute_name = None
     _active_patches = set()
@@ -1554,7 +1554,7 @@ def patch(
     )
 
 
-class _patch_dict(object):
+class _patch_dict:
     """
     Patch a dictionary, or dictionary like object, and restore the dictionary
     to its original state after the test.
@@ -1827,7 +1827,7 @@ def _set_return_value(mock, method, name):
         method.side_effect = side_effector(mock)
 
 
-class MagicMixin(object):
+class MagicMixin:
     def __init__(self, *args, **kw):
         _super(MagicMixin, self).__init__(*args, **kw)
         self._mock_set_magics()
@@ -1889,7 +1889,7 @@ class MagicMock(MagicMixin, Mock):
         self._mock_set_magics()
 
 
-class MagicProxy(object):
+class MagicProxy:
     def __init__(self, name, parent):
         self.name = name
         self.parent = parent
@@ -1911,7 +1911,7 @@ class MagicProxy(object):
         return self.create_mock()
 
 
-class _ANY(object):
+class _ANY:
     "A helper object that compares equal to everything."
 
     def __eq__(self, other):
@@ -2250,7 +2250,7 @@ def _get_class(obj):
         return type(obj)
 
 
-class _SpecState(object):
+class _SpecState:
 
     def __init__(self, spec, spec_set=False, parent=None,
                  name=None, ids=None, instance=False):

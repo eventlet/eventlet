@@ -24,7 +24,7 @@ except ImportError:
     pass
 
 
-class DBTester(object):
+class DBTester:
     __test__ = False  # so that nose doesn't try to execute this directly
 
     def setUp(self):
@@ -63,7 +63,7 @@ class DBTester(object):
 
 
 # silly mock class
-class Mock(object):
+class Mock:
     pass
 
 
@@ -318,17 +318,17 @@ class DBConnectionPool(DBTester):
         self.assertEqual(self.pool.free(), 1)
 
 
-class DummyConnection(object):
+class DummyConnection:
     def rollback(self):
         pass
 
 
-class DummyDBModule(object):
+class DummyDBModule:
     def connect(self, *args, **kwargs):
         return DummyConnection()
 
 
-class RaisingDBModule(object):
+class RaisingDBModule:
     def connect(self, *args, **kw):
         raise RuntimeError()
 
@@ -453,7 +453,7 @@ def mysql_requirement(_f):
         return False
 
 
-class MysqlConnectionPool(object):
+class MysqlConnectionPool:
     dummy_table_sql = """CREATE TEMPORARY TABLE test_table
         (
         row_id INTEGER PRIMARY KEY AUTO_INCREMENT,
@@ -518,7 +518,7 @@ def postgres_requirement(_f):
         return False
 
 
-class Psycopg2ConnectionPool(object):
+class Psycopg2ConnectionPool:
     dummy_table_sql = """CREATE TEMPORARY TABLE test_table
         (
         row_id SERIAL PRIMARY KEY,

@@ -287,7 +287,7 @@ class TpoolLongTests(tests.LimitedTestCase):
     TEST_TIMEOUT = 60
 
     def test_a_buncha_stuff(self):
-        class Dummy(object):
+        class Dummy:
             def foo(self, when, token=None):
                 assert token is not None
                 time.sleep(random.random() / 200.0)

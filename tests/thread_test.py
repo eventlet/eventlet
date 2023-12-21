@@ -82,7 +82,7 @@ class Locals(LimitedTestCase):
         refs = weakref.WeakKeyDictionary()
         my_local = corolocal.local()
 
-        class X(object):
+        class X:
             pass
 
         def do_something(i):

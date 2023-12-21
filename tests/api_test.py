@@ -172,7 +172,7 @@ class TestApi(tests.LimitedTestCase):
 
 
 def test_wrap_is_timeout():
-    class A(object):
+    class A:
         pass
 
     obj = eventlet.wrap_is_timeout(A)()

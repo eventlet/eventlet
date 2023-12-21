@@ -107,7 +107,7 @@ def already_handled(env, start_response):
     return []
 
 
-class Site(object):
+class Site:
     def __init__(self):
         self.application = hello_world
 
@@ -115,7 +115,7 @@ class Site(object):
         return self.application(env, start_response)
 
 
-class IterableApp(object):
+class IterableApp:
     def __init__(self, send_start_response=False, return_val=()):
         self.send_start_response = send_start_response
         self.return_val = return_val

@@ -675,7 +675,7 @@ class TestGreenSocket(tests.LimitedTestCase):
 
 
 def test_get_fileno_of_a_socket_works():
-    class DummySocket(object):
+    class DummySocket:
         def fileno(self):
             return 123
     assert select.get_fileno(DummySocket()) == 123
@@ -699,7 +699,7 @@ def test_get_fileno_of_wrong_type_fails():
 
 
 def test_get_fileno_of_a_socket_with_fileno_returning_wrong_type_fails():
-    class DummySocket(object):
+    class DummySocket:
         def fileno(self):
             return 'foo'
     try:

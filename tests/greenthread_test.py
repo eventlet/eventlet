@@ -15,7 +15,7 @@ def waiter(a):
     return a
 
 
-class Asserts(object):
+class Asserts:
     def assert_dead(self, gt):
         if hasattr(gt, 'wait'):
             self.assertRaises(greenlet.GreenletExit, gt.wait)
