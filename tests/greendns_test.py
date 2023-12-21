@@ -100,7 +100,7 @@ line2 # inline comment
         hr._v4 = {'v4.example.com': '1.2.3.4'}
         ans = hr.query('v4.example.com')
         assert ans[0].address == '1.2.3.4'
-        ans = hr.query(u'v4.example.com')
+        ans = hr.query('v4.example.com')
         assert ans[0].address == '1.2.3.4'
         ans = hr.query(b'v4.example.com')
         assert ans[0].address == '1.2.3.4'
@@ -324,7 +324,7 @@ class TestProxyResolver(tests.LimitedTestCase):
         rp = greendns.ResolverProxy(hostsres)
         ans = rp.query('host.example.com')
         assert ans[0].address == '1.2.3.4'
-        ans = rp.query(u'host.example.com')
+        ans = rp.query('host.example.com')
         assert ans[0].address == '1.2.3.4'
         ans = rp.query(b'host.example.com')
         assert ans[0].address == '1.2.3.4'
@@ -346,7 +346,7 @@ class TestProxyResolver(tests.LimitedTestCase):
         assert ans[0].address == '5.6.7.8'
         assert isinstance(res.args[0], dns.name.Name)
 
-        ans = rp.query(u'host.example.com')
+        ans = rp.query('host.example.com')
         assert ans[0].address == '5.6.7.8'
         assert isinstance(res.args[0], dns.name.Name)
 
@@ -596,7 +596,7 @@ class TestGetaddrinfo(tests.LimitedTestCase):
 
     def test_getaddrinfo_idn(self):
         greendns.resolve = _make_mock_resolve()
-        idn_name = u'евентлет.com'
+        idn_name = 'евентлет.com'
         greendns.resolve.add(idn_name.encode('idna').decode('ascii'), '127.0.0.2')
         res = greendns.getaddrinfo(idn_name, 'domain')
         addr = ('127.0.0.2', 53)

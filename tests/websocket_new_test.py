@@ -132,9 +132,9 @@ class TestWebSocket(tests.wsgi_test._TestBase):
         ws.send(b'hello')
         assert ws.wait() == b'hello'
         ws.send(b'hello world!\x01')
-        ws.send(u'hello world again!')
+        ws.send('hello world again!')
         assert ws.wait() == b'hello world!\x01'
-        assert ws.wait() == u'hello world again!'
+        assert ws.wait() == 'hello world again!'
         ws.close()
         eventlet.sleep(0.01)
 
@@ -448,9 +448,9 @@ class TestWebSocketWithCompression(tests.wsgi_test._TestBase):
         ws.send(b'hello')
         assert ws.wait() == b'hello'
         ws.send(b'hello world!')
-        ws.send(u'hello world again!')
+        ws.send('hello world again!')
         assert ws.wait() == b'hello world!'
-        assert ws.wait() == u'hello world again!'
+        assert ws.wait() == 'hello world again!'
 
         ws.close()
         eventlet.sleep(0.01)
@@ -490,9 +490,9 @@ class TestWebSocketWithCompression(tests.wsgi_test._TestBase):
         ws.send(b'hello')
         assert ws.wait() == b'hello'
         ws.send(b'hello world!')
-        ws.send(u'hello world again!')
+        ws.send('hello world again!')
         assert ws.wait() == b'hello world!'
-        assert ws.wait() == u'hello world again!'
+        assert ws.wait() == 'hello world again!'
 
         ws.close()
         eventlet.sleep(0.01)
@@ -511,9 +511,9 @@ class TestWebSocketWithCompression(tests.wsgi_test._TestBase):
         ws.send(b'hello')
         assert ws.wait() == b'hello'
         ws.send(b'hello world!')
-        ws.send(u'hello world again!')
+        ws.send('hello world again!')
         assert ws.wait() == b'hello world!'
-        assert ws.wait() == u'hello world again!'
+        assert ws.wait() == 'hello world again!'
 
         ws.close()
         eventlet.sleep(0.01)
@@ -533,9 +533,9 @@ class TestWebSocketWithCompression(tests.wsgi_test._TestBase):
         ws.send(b'hello')
         assert ws.wait() == b'hello'
         ws.send(b'hello world!')
-        ws.send(u'hello world again!')
+        ws.send('hello world again!')
         assert ws.wait() == b'hello world!'
-        assert ws.wait() == u'hello world again!'
+        assert ws.wait() == 'hello world again!'
 
         ws.close()
         eventlet.sleep(0.01)

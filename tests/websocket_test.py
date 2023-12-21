@@ -633,7 +633,7 @@ class TestWebSocketObject(tests.LimitedTestCase):
 
     def test_send_to_ws(self):
         ws = self.test_ws
-        ws.send(u'hello')
+        ws.send('hello')
         assert ws.socket.sendall.called_with("\x00hello\xFF")
         ws.send(10)
         assert ws.socket.sendall.called_with("\x0010\xFF")

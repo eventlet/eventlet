@@ -1573,7 +1573,7 @@ class TestHttpd(_TestBase):
         def wsgi_app(environ, start_response):
             start_response("200 OK", [])
             yield b"oh hai, "
-            yield u"xxx"
+            yield "xxx"
         self.site.application = wsgi_app
         sock = eventlet.connect(self.server_addr)
         sock.sendall(b'GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
@@ -1584,7 +1584,7 @@ class TestHttpd(_TestBase):
         def wsgi_app(environ, start_response):
             start_response("200 OK", [])
             yield b"oh hai, "
-            yield u"xxx \u0230"
+            yield "xxx \u0230"
         self.site.application = wsgi_app
         sock = eventlet.connect(self.server_addr)
         sock.sendall(b'GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
