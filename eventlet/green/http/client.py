@@ -126,10 +126,7 @@ import email.parser
 import email.message
 import io
 import re
-try:
-    from collections.abc import Iterable
-except ImportError:
-    from collections import Iterable
+from collections.abc import Iterable
 from urllib.parse import urlsplit
 
 from eventlet.green import http, os, socket
