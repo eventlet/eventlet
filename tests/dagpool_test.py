@@ -152,19 +152,19 @@ class Capture:
         # purposes, turn them into the specific form we store: a list of sets.
         setlist = []
         for subseq in sequence:
-            if isinstance(subseq, six.string_types):
+            if isinstance(subseq, str):
                 # If this item is a plain string (which Python regards as an
                 # iterable of characters) rather than a list or tuple or set
                 # of strings, treat it as atomic. Make a set containing only
                 # that string.
-                setlist.append(set([subseq]))
+                setlist.append({subseq})
             else:
                 try:
                     iter(subseq)
                 except TypeError:
                     # subseq is a scalar of some other kind. Make a set
                     # containing only that item.
-                    setlist.append(set([subseq]))
+                    setlist.append({subseq})
                 else:
                     # subseq is, as we expect, an iterable -- possibly already
                     # a set. Make a set containing its elements.
@@ -443,13 +443,13 @@ def test_spawn_many():
     # With the dependency graph shown above, it is not guaranteed whether b or
     # c will complete first. Handle either case.
     sequence = capture.sequence[:]
-    sequence[1:3] = [set([sequence[1].pop(), sequence[2].pop()])]
+    sequence[1:3] = [{sequence[1].pop(), sequence[2].pop()}]
     assert_equal(sequence,
-                 [set(["a done"]),
-                  set(["b done", "c done"]),
-                  set(["d done"]),
-                  set(["e done"]),
-                  set(["waitall() done"]),
+                 [{"a done"},
+                  {"b done", "c done"},
+                  {"d done"},
+                  {"e done"},
+                  {"waitall() done"},
                   ])
 
 
@@ -463,9 +463,9 @@ def test_wait_each_all():
     capture = Capture()
     pool = DAGPool([("a", "a")])
     # capture a different Event for each key
-    events = dict((key, eventlet.event.Event()) for key in six.iterkeys(deps))
+    events = {key: eventlet.event.Event() for key in deps.keys()}
     # can't use spawn_many() because we need a different event for each
-    for key, dep in six.iteritems(deps):
+    for key, dep in deps.items():
         pool.spawn(key, dep, observe, capture, events[key])
     keys = "abcde"                      # this specific order
     each = iter(pool.wait_each())

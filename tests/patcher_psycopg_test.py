@@ -47,7 +47,7 @@ class PatchingPsycopg(patcher_test.ProcessBase):
             if isinstance(psycopg_auth, str):
                 dsn = psycopg_auth
             else:
-                dsn = " ".join(["%s=%s" % (k, v) for k, v in six.iteritems(psycopg_auth)])
+                dsn = " ".join(["%s=%s" % (k, v) for k, v in psycopg_auth.items()])
             os.environ['PSYCOPG_TEST_DSN'] = dsn
         self.write_to_tempfile("psycopg_patcher", psycopg_test_file)
         output, lines = self.launch_subprocess('psycopg_patcher.py')

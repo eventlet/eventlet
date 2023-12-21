@@ -249,7 +249,7 @@ class SSLTest(tests.LimitedTestCase):
             while True:
                 try:
                     sock, _ = listener.accept()
-                except socket.error:
+                except OSError:
                     return
                 eventlet.spawn(serve, sock)
 
@@ -311,8 +311,8 @@ class SSLTest(tests.LimitedTestCase):
             client_to_server = None
             try:
                 client_to_server = ssl.wrap_socket(eventlet.connect(listener.getsockname()))
-                for character in six.iterbytes(content):
-                    character = six.int2byte(character)
+                for character in iter(content):
+                    character = bytes((character,))
                     print('We have %d already decrypted bytes pending, expecting: %s' % (
                         client_to_server.pending(), character))
                     read_function(client_to_server, character)

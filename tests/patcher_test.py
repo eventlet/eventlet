@@ -52,11 +52,8 @@ class ProcessBase(tests.LimitedTestCase):
     def launch_subprocess(self, filename):
         path = os.path.join(self.tempdir, filename)
         output = tests.run_python(path)
-        if six.PY3:
-            output = output.decode('utf-8')
-            separator = '\n'
-        else:
-            separator = b'\n'
+        output = output.decode('utf-8')
+        separator = '\n'
         lines = output.split(separator)
         return output, lines
 

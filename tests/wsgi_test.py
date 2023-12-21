@@ -21,7 +21,7 @@ from eventlet.green import socket as greensocket
 from eventlet.green import ssl
 from eventlet.support import bytes_to_str
 import six
-from six.moves.urllib import parse
+from urllib import parse
 import tests
 
 
@@ -626,8 +626,7 @@ class TestHttpd(_TestBase):
             }.get(environ['PATH_INFO'])
             if resp_body is None:
                 resp_body = 'Unexpected path: ' + environ['PATH_INFO']
-                if six.PY3:
-                    resp_body = resp_body.encode('latin1')
+                resp_body = resp_body.encode('latin1')
             # Never look at wsgi.input!
             start_response('200 OK', [('Content-type', 'text/plain')])
             return [resp_body]
@@ -909,7 +908,7 @@ class TestHttpd(_TestBase):
             else:
                 header_lines.append(line.strip())
         assert header_lines[0].startswith(b'HTTP/1.1 100 Continue')
-        headers = dict((k, v) for k, v in (h.split(b': ', 1) for h in header_lines[1:]))
+        headers = {k: v for k, v in (h.split(b': ', 1) for h in header_lines[1:])}
         assert b'Hundred-Continue-Header-1' in headers
         assert b'Hundred-Continue-Header-2' in headers
         assert b'Hundred-Continue-Header-K' in headers
@@ -961,8 +960,8 @@ class TestHttpd(_TestBase):
             else:
                 header_lines.append(line.strip())
         assert header_lines[0].startswith(b'HTTP/1.1 100 Continue')
-        headers = dict((k, v) for k, v in (h.split(b': ', 1)
-                                           for h in header_lines[1:]))
+        headers = {k: v for k, v in (h.split(b': ', 1)
+                                     for h in header_lines[1:])}
         assert b'Hundred-Continue-Header-1' in headers
         assert b'Hundred-Continue-Header-2' in headers
         self.assertEqual(b'H1', headers[b'Hundred-Continue-Header-1'])
@@ -981,8 +980,8 @@ class TestHttpd(_TestBase):
             else:
                 header_lines.append(line.strip())
         assert header_lines[0].startswith(b'HTTP/1.1 100 Continue')
-        headers = dict((k, v) for k, v in (h.split(b': ', 1)
-                                           for h in header_lines[1:]))
+        headers = {k: v for k, v in (h.split(b': ', 1)
+                                     for h in header_lines[1:])}
         assert b'Hundred-Continue-Header-3' in headers
         self.assertEqual(b'H3', headers[b'Hundred-Continue-Header-3'])
 
@@ -1039,8 +1038,8 @@ class TestHttpd(_TestBase):
             else:
                 header_lines.append(line.strip())
         assert header_lines[0].startswith(b'HTTP/1.1 100 Continue')
-        headers = dict((k, v) for k, v in (h.split(b': ', 1)
-                                           for h in header_lines[1:]))
+        headers = {k: v for k, v in (h.split(b': ', 1)
+                                     for h in header_lines[1:])}
         assert b'Hundred-Continue-Header-1' in headers
         assert b'Hundred-Continue-Header-2' in headers
         self.assertEqual(b'H1', headers[b'Hundred-Continue-Header-1'])
@@ -1059,8 +1058,8 @@ class TestHttpd(_TestBase):
             else:
                 header_lines.append(line.strip())
         assert header_lines[0].startswith(b'HTTP/1.1 100 Continue')
-        headers = dict((k, v) for k, v in (h.split(b': ', 1)
-                                           for h in header_lines[1:]))
+        headers = {k: v for k, v in (h.split(b': ', 1)
+                                     for h in header_lines[1:])}
         assert b'Hundred-Continue-Header-3' in headers
         self.assertEqual(b'H3', headers[b'Hundred-Continue-Header-3'])
 
@@ -2203,8 +2202,7 @@ class TestChunkedInput(_TestBase):
             # the hub *before* attempting to read anything from a file descriptor
             # therefore we need one extra context switch to let it notice closed
             # socket, die and leave the hub empty
-            if six.PY3:
-                eventlet.sleep(0)
+            eventlet.sleep(0)
         finally:
             signal.alarm(0)
             signal.signal(signal.SIGALRM, signal.SIG_DFL)

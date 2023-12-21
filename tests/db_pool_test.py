@@ -138,7 +138,7 @@ class DBConnectionPool(DBTester):
 
     def fill_up_table(self, conn):
         curs = conn.cursor()
-        for i in six.moves.range(1000):
+        for i in range(1000):
             curs.execute('insert into test_table (value_int) values (%s)' % i)
         conn.commit()
 

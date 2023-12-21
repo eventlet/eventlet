@@ -5,7 +5,7 @@ if __name__ == '__main__':
     from eventlet import patcher
     from eventlet.green import MySQLdb as gm
     patcher.monkey_patch(all=True, MySQLdb=True)
-    patched_set = set(patcher.already_patched) - set(['psycopg'])
+    patched_set = set(patcher.already_patched) - {'psycopg'}
     assert patched_set == frozenset([
         'MySQLdb',
         'os',

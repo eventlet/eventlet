@@ -14,7 +14,7 @@ def read_chat_forever(writer, reader):
                 if p is not writer:  # Don't echo
                     p.write(line)
                     p.flush()
-            except socket.error as e:
+            except OSError as e:
                 # ignore broken pipes, they just mean the participant
                 # closed its connection already
                 if e[0] != 32:

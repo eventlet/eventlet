@@ -27,13 +27,12 @@ if __name__ == '__main__':
             content = fp.read()
         assert content == b'content'
 
-        if six.PY3:
-            # test FileIO.readall()
-            fd = os.open(tmp.name, os.O_RDONLY)
-            fp = os.fdopen(fd, "rb", 0)
-            with fp:
-                content = fp.readall()
-            assert content == b'content'
+        # test FileIO.readall()
+        fd = os.open(tmp.name, os.O_RDONLY)
+        fp = os.fdopen(fd, "rb", 0)
+        with fp:
+            content = fp.readall()
+        assert content == b'content'
 
         # test FileIO.readall() (for Python 2 and Python 3)
         with open(tmp.name, "rb", 0) as fp:

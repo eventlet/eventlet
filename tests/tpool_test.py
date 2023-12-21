@@ -153,7 +153,7 @@ class TestTpool(tests.LimitedTestCase):
         counter = [0]
 
         def tick():
-            for i in six.moves.range(20000):
+            for i in range(20000):
                 counter[0] += 1
                 if counter[0] % 20 == 0:
                     eventlet.sleep(0.0001)
@@ -295,7 +295,7 @@ class TpoolLongTests(tests.LimitedTestCase):
         def sender_loop(loopnum):
             obj = tpool.Proxy(Dummy())
             count = 100
-            for n in six.moves.range(count):
+            for n in range(count):
                 eventlet.sleep(random.random() / 200.0)
                 now = time.time()
                 token = loopnum * count + n
@@ -305,7 +305,7 @@ class TpoolLongTests(tests.LimitedTestCase):
 
         cnt = 10
         pile = eventlet.GreenPile(cnt)
-        for i in six.moves.range(cnt):
+        for i in range(cnt):
             pile.spawn(sender_loop, i)
         results = list(pile)
         self.assertEqual(len(results), cnt)
@@ -322,7 +322,7 @@ class TpoolLongTests(tests.LimitedTestCase):
         # some objects will inevitably be created by the previous loop
         # now we test to ensure that running the loop an order of
         # magnitude more doesn't generate additional objects
-        for i in six.moves.range(100):
+        for i in range(100):
             self.assertRaises(RuntimeError, tpool.execute, raise_exception)
         first_created = middle_objs - initial_objs
         gc.collect()

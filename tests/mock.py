@@ -408,13 +408,11 @@ ClassTypes = (type,)
 if not inPy3k:
     ClassTypes = (type, ClassType)
 
-_allowed_names = set(
-    [
+_allowed_names = {
         'return_value', '_mock_return_value', 'side_effect',
         '_mock_side_effect', '_mock_parent', '_mock_new_parent',
         '_mock_name', '_mock_new_name'
-    ]
-)
+}
 
 
 def _delegating_property(name):
@@ -1712,13 +1710,13 @@ else:
 # (as they are metaclass methods)
 # __del__ is not supported at all as it causes problems if it exists
 
-_non_defaults = set('__%s__' % method for method in [
+_non_defaults = {'__%s__' % method for method in [
     'cmp', 'getslice', 'setslice', 'coerce', 'subclasses',
     'format', 'get', 'set', 'delete', 'reversed',
     'missing', 'reduce', 'reduce_ex', 'getinitargs',
     'getnewargs', 'getstate', 'setstate', 'getformat',
     'setformat', 'repr', 'dir'
-])
+]}
 
 
 def _get_method(name, func):
@@ -1730,19 +1728,19 @@ def _get_method(name, func):
     return method
 
 
-_magics = set(
+_magics = {
     '__%s__' % method for method in
     ' '.join([magic_methods, numerics, inplace, right, extra]).split()
-)
+}
 
 _all_magics = _magics | _non_defaults
 
-_unsupported_magics = set([
+_unsupported_magics = {
     '__getattr__', '__setattr__',
     '__init__', '__new__', '__prepare__'
     '__instancecheck__', '__subclasscheck__',
     '__del__'
-])
+}
 
 _calculate_return_value = {
     '__hash__': lambda self: object.__hash__(self),
@@ -2201,7 +2199,7 @@ def create_autospec(spec, spec_set=False, instance=False, _parent=None,
         else:
             parent = mock
             if isinstance(spec, FunctionTypes):
-                parent = mock.mock
+                parent = mock
 
             new = MagicMock(parent=parent, name=entry, _new_name=entry,
                             _new_parent=parent, **kwargs)
@@ -2271,7 +2269,7 @@ FunctionTypes = (
     type(_ANY.__eq__),
 )
 
-FunctionAttributes = set([
+FunctionAttributes = {
     'func_closure',
     'func_code',
     'func_defaults',
@@ -2279,7 +2277,7 @@ FunctionAttributes = set([
     'func_doc',
     'func_globals',
     'func_name',
-])
+}
 
 
 file_spec = None

@@ -91,7 +91,7 @@ class Locals(LimitedTestCase):
             my_local.foo = o
 
         p = eventlet.GreenPool()
-        for i in six.moves.range(100):
+        for i in range(100):
             p.spawn(do_something, i)
         p.waitall()
         del p

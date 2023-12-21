@@ -172,7 +172,7 @@ line2 # inline comment
         hr._aliases = {'host': 'host.example.com',
                        'localhost': 'host.example.com'}
         res = set(hr.getaliases('host'))
-        assert res == set(['host.example.com', 'localhost'])
+        assert res == {'host.example.com', 'localhost'}
 
     def test_getaliases_unknown(self):
         hr = _make_host_resolver()
@@ -182,7 +182,7 @@ line2 # inline comment
         hr = _make_host_resolver()
         hr._aliases = {'host': 'host.example.com'}
         res = set(hr.getaliases('host.example.com'))
-        assert res == set(['host'])
+        assert res == {'host'}
 
     def test_hosts_case_insensitive(self):
         name = 'example.com'
@@ -405,7 +405,7 @@ class TestProxyResolver(tests.LimitedTestCase):
         rp = greendns.ResolverProxy()
         rp._resolver = aliases_res
         aliases = set(rp.getaliases('alias.example.com'))
-        assert aliases == set(['host.example.com'])
+        assert aliases == {'host.example.com'}
 
     def test_getaliases_fqdn(self):
         aliases_res = self._make_mock_resolver_aliases()
@@ -713,12 +713,12 @@ class TestGetaddrinfo(tests.LimitedTestCase):
 
     def test_host_none(self):
         res = greendns.getaddrinfo(None, 80)
-        for addr in set(ai[-1] for ai in res):
+        for addr in {ai[-1] for ai in res}:
             assert addr in [('127.0.0.1', 80), ('::1', 80, 0, 0)]
 
     def test_host_none_passive(self):
         res = greendns.getaddrinfo(None, 80, 0, 0, 0, socket.AI_PASSIVE)
-        for addr in set(ai[-1] for ai in res):
+        for addr in {ai[-1] for ai in res}:
             assert addr in [('0.0.0.0', 80), ('::', 80, 0, 0)]
 
     def test_v4mapped(self):
@@ -726,8 +726,8 @@ class TestGetaddrinfo(tests.LimitedTestCase):
         greendns.resolve.add('example.com', '1.2.3.4')
         res = greendns.getaddrinfo('example.com', 80,
                                    socket.AF_INET6, 0, 0, socket.AI_V4MAPPED)
-        addrs = set(ai[-1] for ai in res)
-        assert addrs == set([('::ffff:1.2.3.4', 80, 0, 0)])
+        addrs = {ai[-1] for ai in res}
+        assert addrs == {('::ffff:1.2.3.4', 80, 0, 0)}
 
     def test_v4mapped_all(self):
         greendns.resolve = _make_mock_resolve()
@@ -735,7 +735,7 @@ class TestGetaddrinfo(tests.LimitedTestCase):
         greendns.resolve.add('example.com', 'dead:beef::1')
         res = greendns.getaddrinfo('example.com', 80, socket.AF_INET6, 0, 0,
                                    socket.AI_V4MAPPED | socket.AI_ALL)
-        addrs = set(ai[-1] for ai in res)
+        addrs = {ai[-1] for ai in res}
         for addr in addrs:
             assert addr in [('::ffff:1.2.3.4', 80, 0, 0),
                             ('dead:beef::1', 80, 0, 0)]

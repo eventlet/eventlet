@@ -6,11 +6,8 @@ import eventlet
 from eventlet.green import BaseHTTPServer
 import six
 
-if six.PY2:
-    from eventlet.green.urllib2 import HTTPError, urlopen
-else:
-    from eventlet.green.urllib.request import urlopen
-    from eventlet.green.urllib.error import HTTPError
+from eventlet.green.urllib.request import urlopen
+from eventlet.green.urllib.error import HTTPError
 
 
 class QuietHandler(BaseHTTPServer.BaseHTTPRequestHandler):

@@ -300,10 +300,10 @@ def get_database_auth():
             # Have to convert unicode objects to str objects because
             # mysqldb is dumb. Using a doubly-nested list comprehension
             # because we know that the structure is a two-level dict.
-            return dict(
-                [(str(modname), dict(
-                    [(str(k), str(v)) for k, v in connectargs.items()]))
-                 for modname, connectargs in auth_utf8.items()])
+            return {
+                str(modname): {
+                    str(k): str(v) for k, v in connectargs.items()}
+                 for modname, connectargs in auth_utf8.items()}
         except OSError:
             pass
     return retval

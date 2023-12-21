@@ -95,7 +95,7 @@ def test_error_is_timeout():
     s1.settimeout(0.01)
     try:
         s1.recv(1)
-    except socket.error as e:
+    except OSError as e:
         tests.check_is_timeout(e)
     else:
         assert False, 'No timeout, socket.error was not raised'
