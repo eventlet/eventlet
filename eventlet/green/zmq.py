@@ -1,4 +1,3 @@
-# coding: utf-8
 """The :mod:`zmq` module wraps the :class:`Socket` and :class:`Context`
 found in :mod:`pyzmq <zmq>` to be non blocking.
 """
