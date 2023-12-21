@@ -37,7 +37,7 @@ for _mod in ('wsaccel.utf8validator', 'autobahn.utf8validator'):
     else:
         break
 
-ACCEPTABLE_CLIENT_ERRORS = set((errno.ECONNRESET, errno.EPIPE))
+ACCEPTABLE_CLIENT_ERRORS = {errno.ECONNRESET, errno.EPIPE}
 DEFAULT_MAX_FRAME_LENGTH = 8 << 20
 
 __all__ = ["WebSocketWSGI", "WebSocket"]
@@ -135,7 +135,7 @@ class WebSocketWSGI:
 
         try:
             self.handler(ws)
-        except socket.error as e:
+        except OSError as e:
             if get_errno(e) not in ACCEPTABLE_CLIENT_ERRORS:
                 raise
         # Make sure we send the closing frame
@@ -399,9 +399,9 @@ class WebSocket:
 
         As per the dataframing section (5.3) for the websocket spec
         """
-        if isinstance(message, six.text_type):
+        if isinstance(message, str):
             message = message.encode('utf-8')
-        elif not isinstance(message, six.binary_type):
+        elif not isinstance(message, bytes):
             message = six.b(str(message))
         packed = b"\x00" + message + b"\xFF"
         return packed
@@ -417,7 +417,7 @@ class WebSocket:
         end_idx = 0
         buf = self._buf
         while buf:
-            frame_type = six.indexbytes(buf, 0)
+            frame_type = buf[0]
             if frame_type == 0:
                 # Normal message.
                 end_idx = buf.find(b"\xFF")
@@ -427,7 +427,7 @@ class WebSocket:
                 buf = buf[end_idx + 1:]
             elif frame_type == 255:
                 # Closing handshake.
-                assert six.indexbytes(buf, 1) == 0, "Unexpected closing handshake: %r" % buf
+                assert buf[1] == 0, "Unexpected closing handshake: %r" % buf
                 self.websocket_closed = True
                 break
             else:
@@ -624,7 +624,7 @@ class RFC6455WebSocket(WebSocket):
         if length is None:
             length = len(data)
         cnt = range(length)
-        return b''.join(six.int2byte(six.indexbytes(data, i) ^ mask[(offset + i) % 4]) for i in cnt)
+        return b''.join(bytes((data[i] ^ mask[(offset + i) % 4],)) for i in cnt)
 
     def _handle_control_frame(self, opcode, data):
         if opcode == 8:  # connection close
@@ -760,7 +760,7 @@ class RFC6455WebSocket(WebSocket):
     def _pack_message(self, message, masked=False,
                       continuation=False, final=True, control_code=None):
         is_text = False
-        if isinstance(message, six.text_type):
+        if isinstance(message, str):
             message = message.encode('utf-8')
             is_text = True
 
@@ -809,7 +809,7 @@ class RFC6455WebSocket(WebSocket):
             # NOTE: RFC6455 states:
             # A server MUST NOT mask any frames that it sends to the client
             rand = Random(time.time())
-            mask = [rand.getrandbits(8) for _ in six.moves.xrange(4)]
+            mask = [rand.getrandbits(8) for _ in range(4)]
             message = RFC6455WebSocket._apply_mask(message, mask, length)
             maskdata = struct.pack('!BBBB', *mask)
         else:
@@ -837,7 +837,7 @@ class RFC6455WebSocket(WebSocket):
         if self.version in (8, 13) and not self.websocket_closed:
             if close_data is not None:
                 status, msg = close_data
-                if isinstance(msg, six.text_type):
+                if isinstance(msg, str):
                     msg = msg.encode('utf-8')
                 data = struct.pack('!H', status) + msg
             else:

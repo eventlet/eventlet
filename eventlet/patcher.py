@@ -16,7 +16,7 @@ import six
 
 __all__ = ['inject', 'import_patched', 'monkey_patch', 'is_monkey_patched']
 
-__exclude = set(('__builtins__', '__file__', '__name__'))
+__exclude = {'__builtins__', '__file__', '__name__'}
 
 
 class SysModulesSaver:
@@ -39,7 +39,7 @@ class SysModulesSaver:
         sys.modules.
         """
         try:
-            for modname, mod in six.iteritems(self._saved):
+            for modname, mod in self._saved.items():
                 if mod is not None:
                     sys.modules[modname] = mod
                 else:
@@ -200,8 +200,7 @@ def original(modname):
     # some special-casing here
     if six.PY2:
         deps = {'threading': 'thread', 'Queue': 'threading'}
-    if six.PY3:
-        deps = {'threading': '_thread', 'queue': 'threading'}
+    deps = {'threading': '_thread', 'queue': 'threading'}
     if modname in deps:
         dependency = deps[modname]
         saver.save(dependency)
@@ -249,9 +248,9 @@ def monkey_patch(**on):
     # the hub calls into monkey-patched modules.
     eventlet.hubs.get_hub()
 
-    accepted_args = set(('os', 'select', 'socket',
-                         'thread', 'time', 'psycopg', 'MySQLdb',
-                         'builtins', 'subprocess'))
+    accepted_args = {'os', 'select', 'socket',
+                     'thread', 'time', 'psycopg', 'MySQLdb',
+                     'builtins', 'subprocess'}
     # To make sure only one of them is passed here
     assert not ('__builtin__' in on and 'builtins' in on)
     try:
@@ -263,7 +262,7 @@ def monkey_patch(**on):
 
     default_on = on.pop("all", None)
 
-    for k in six.iterkeys(on):
+    for k in on.keys():
         if k not in accepted_args:
             raise TypeError("monkey_patch() got an unexpected "
                             "keyword argument %r" % k)
@@ -522,8 +521,7 @@ def _green_thread_modules():
     from eventlet.green import threading
     if six.PY2:
         return [('Queue', Queue), ('thread', thread), ('threading', threading)]
-    if six.PY3:
-        return [('queue', Queue), ('_thread', thread), ('threading', threading)]
+    return [('queue', Queue), ('_thread', thread), ('threading', threading)]
 
 
 def _green_time_modules():
@@ -557,11 +555,11 @@ def slurp_properties(source, destination, ignore=[], srckeys=None):
     """
     if srckeys is None:
         srckeys = source.__all__
-    destination.update(dict([
-        (name, getattr(source, name))
+    destination.update({
+        name: getattr(source, name)
         for name in srckeys
         if not (name.startswith('__') or name in ignore)
-    ]))
+    })
 
 
 if __name__ == "__main__":

@@ -103,17 +103,14 @@ class Popen(subprocess_orig.Popen):
         # just want a version that uses eventlet.green.select.select()
         # instead of select.select().
         _communicate = FunctionType(
-            six.get_function_code(six.get_unbound_function(
-                subprocess_orig.Popen._communicate)),
+            subprocess_orig.Popen._communicate.__code__,
             globals())
         try:
             _communicate_with_select = FunctionType(
-                six.get_function_code(six.get_unbound_function(
-                    subprocess_orig.Popen._communicate_with_select)),
+                subprocess_orig.Popen._communicate_with_select.__code__,
                 globals())
             _communicate_with_poll = FunctionType(
-                six.get_function_code(six.get_unbound_function(
-                    subprocess_orig.Popen._communicate_with_poll)),
+                subprocess_orig.Popen._communicate_with_poll.__code__,
                 globals())
         except AttributeError:
             pass
@@ -122,9 +119,8 @@ class Popen(subprocess_orig.Popen):
 # Borrow subprocess.call() and check_call(), but patch them so they reference
 # OUR Popen class rather than subprocess.Popen.
 def patched_function(function):
-    new_function = FunctionType(six.get_function_code(function), globals())
-    if six.PY3:
-        new_function.__kwdefaults__ = function.__kwdefaults__
+    new_function = FunctionType(function.__code__, globals())
+    new_function.__kwdefaults__ = function.__kwdefaults__
     new_function.__defaults__ = function.__defaults__
     return new_function
 

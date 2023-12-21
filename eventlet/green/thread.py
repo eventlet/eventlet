@@ -1,5 +1,5 @@
 """Implements the standard thread module, using greenthreads."""
-from six.moves import _thread as __thread
+import _thread as __thread
 import six
 from eventlet.support import greenlets as greenlet
 from eventlet import greenthread
@@ -18,13 +18,14 @@ __threadcount = 0
 if hasattr(__thread, "_is_main_interpreter"):
     _is_main_interpreter = __thread._is_main_interpreter
 
-if six.PY3:
-    def _set_sentinel():
-        # TODO this is a dummy code, reimplementing this may be needed:
-        # https://hg.python.org/cpython/file/b5e9bc4352e1/Modules/_threadmodule.c#l1203
-        return allocate_lock()
 
-    TIMEOUT_MAX = __thread.TIMEOUT_MAX
+def _set_sentinel():
+    # TODO this is a dummy code, reimplementing this may be needed:
+    # https://hg.python.org/cpython/file/b5e9bc4352e1/Modules/_threadmodule.c#l1203
+    return allocate_lock()
+
+
+TIMEOUT_MAX = __thread.TIMEOUT_MAX
 
 
 def _count():

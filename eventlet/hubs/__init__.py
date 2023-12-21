@@ -71,7 +71,7 @@ def use_hub(mod=None):
         del _threadlocal.hub
 
     classname = ''
-    if isinstance(mod, six.string_types):
+    if isinstance(mod, str):
         assert mod.strip(), "Need to specify a hub"
         if '.' in mod or ':' in mod:
             modulename, _, classname = mod.strip().partition(':')

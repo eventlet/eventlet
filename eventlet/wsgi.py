@@ -62,8 +62,8 @@ def addr_to_host_port(addr):
 
 # Collections of error codes to compare against.  Not all attributes are set
 # on errno module on all platforms, so some are literals :(
-BAD_SOCK = set((errno.EBADF, 10053))
-BROKEN_SOCK = set((errno.EPIPE, errno.ECONNRESET))
+BAD_SOCK = {errno.EBADF, 10053}
+BROKEN_SOCK = {errno.EPIPE, errno.ECONNRESET}
 
 
 class ChunkReadError(ValueError):
@@ -360,7 +360,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         if getattr(socket, 'TCP_QUICKACK', None):
             try:
                 conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, True)
-            except socket.error:
+            except OSError:
                 pass
 
         try:
@@ -400,7 +400,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             return line
         except greenio.SSL.ZeroReturnError:
             pass
-        except socket.error as e:
+        except OSError as e:
             last_errno = support.get_errno(e)
             if last_errno in BROKEN_SOCK:
                 self.server.log.debug('({}) connection reset by peer {!r}'.format(
@@ -462,7 +462,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             self.server.outstanding_requests += 1
             try:
                 self.handle_one_response()
-            except socket.error as e:
+            except OSError as e:
                 # Broken pipe, connection reset by peer
                 if support.get_errno(e) not in BROKEN_SOCK:
                     raise
@@ -548,7 +548,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 try:
                     if headers_sent:
                         # Re-raise original exception if headers sent
-                        six.reraise(exc_info[0], exc_info[1], exc_info[2])
+                        raise exc_info[1].with_traceback(exc_info[2])
                 finally:
                     # Avoid dangling circular ref
                     exc_info = None
@@ -558,12 +558,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             # Per HTTP RFC standard, header name is case-insensitive.
             # Please, fix your client to ignore header case if possible.
             if self.capitalize_response_headers:
-                if six.PY2:
-                    def cap(x):
-                        return x.capitalize()
-                else:
-                    def cap(x):
-                        return x.encode('latin1').capitalize().decode('latin1')
+                def cap(x):
+                    return x.encode('latin1').capitalize().decode('latin1')
 
                 response_headers = [
                     ('-'.join([cap(x) for x in key.split('-')]), value)
@@ -596,7 +592,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 for data in result:
                     if len(data) == 0:
                         continue
-                    if isinstance(data, six.text_type):
+                    if isinstance(data, str):
                         data = data.encode('ascii')
 
                     towrite.append(data)
@@ -693,10 +689,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
         pq = self.path.split('?', 1)
         env['RAW_PATH_INFO'] = pq[0]
-        if six.PY2:
-            env['PATH_INFO'] = urllib.parse.unquote(pq[0])
-        else:
-            env['PATH_INFO'] = urllib.parse.unquote(pq[0], encoding='latin1')
+        env['PATH_INFO'] = urllib.parse.unquote(pq[0], encoding='latin1')
         if len(pq) > 1:
             env['QUERY_STRING'] = pq[1]
 
@@ -758,7 +751,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
     def finish(self):
         try:
             BaseHTTPServer.BaseHTTPRequestHandler.finish(self)
-        except socket.error as e:
+        except OSError as e:
             # Broken pipe, connection reset by peer
             if support.get_errno(e) not in BROKEN_SOCK:
                 raise
@@ -865,11 +858,11 @@ except AttributeError:
 try:
     import ssl
     ACCEPT_EXCEPTIONS = (socket.error, ssl.SSLError)
-    ACCEPT_ERRNO = set((errno.EPIPE, errno.EBADF, errno.ECONNRESET,
-                        ssl.SSL_ERROR_EOF, ssl.SSL_ERROR_SSL))
+    ACCEPT_ERRNO = {errno.EPIPE, errno.EBADF, errno.ECONNRESET,
+                    ssl.SSL_ERROR_EOF, ssl.SSL_ERROR_SSL}
 except ImportError:
     ACCEPT_EXCEPTIONS = (socket.error,)
-    ACCEPT_ERRNO = set((errno.EPIPE, errno.EBADF, errno.ECONNRESET))
+    ACCEPT_ERRNO = {errno.EPIPE, errno.EBADF, errno.ECONNRESET}
 
 
 def socket_repr(sock):
@@ -1022,7 +1015,7 @@ If unsure, use eventlet.GreenPool.''')
                 serv.log.info('wsgi exiting')
                 break
     finally:
-        for cs in six.itervalues(connections):
+        for cs in connections.values():
             prev_state = cs[2]
             cs[2] = STATE_CLOSE
             if prev_state == STATE_IDLE:
@@ -1036,6 +1029,6 @@ If unsure, use eventlet.GreenPool.''')
             # that far we might as well not bother closing sock at
             # all.
             sock.close()
-        except socket.error as e:
+        except OSError as e:
             if support.get_errno(e) not in BROKEN_SOCK:
                 traceback.print_exc()

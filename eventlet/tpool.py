@@ -36,10 +36,7 @@ QUIET = True
 
 socket = patcher.original('socket')
 threading = patcher.original('threading')
-if six.PY2:
-    Queue_module = patcher.original('Queue')
-if six.PY3:
-    Queue_module = patcher.original('queue')
+Queue_module = patcher.original('queue')
 
 Empty = Queue_module.Empty
 Queue = Queue_module.Queue
@@ -129,7 +126,7 @@ def execute(meth, *args, **kwargs):
         if not QUIET:
             traceback.print_exception(c, e, tb)
             traceback.print_stack()
-        six.reraise(c, e, tb)
+        raise e.with_traceback(tb)
     return rv
 
 
@@ -289,7 +286,7 @@ def setup():
     _rsock = greenio.GreenSocket(csock)
     _rsock.settimeout(None)
 
-    for i in six.moves.range(_nthreads):
+    for i in range(_nthreads):
         t = threading.Thread(target=tworker,
                              name="tpool_thread_%s" % i)
         t.daemon = True

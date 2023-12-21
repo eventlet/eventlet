@@ -195,7 +195,7 @@ class BaseHub:
             their greenlets queued up to send.
         """
         found = False
-        for evtype, bucket in six.iteritems(self.secondaries):
+        for evtype, bucket in self.secondaries.items():
             if fileno in bucket:
                 for listener in bucket[fileno]:
                     found = True
@@ -205,7 +205,7 @@ class BaseHub:
 
         # For the primary listeners, we actually need to call remove,
         # which may modify the underlying OS polling objects.
-        for evtype, bucket in six.iteritems(self.listeners):
+        for evtype, bucket in self.listeners.items():
             if fileno in bucket:
                 listener = bucket[fileno]
                 found = True

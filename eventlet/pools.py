@@ -1,4 +1,3 @@
-
 import collections
 from contextlib import contextmanager
 

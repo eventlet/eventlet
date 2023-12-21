@@ -43,7 +43,7 @@ def read(fd, n):
         except OSError as e:
             if get_errno(e) != errno.EAGAIN:
                 raise
-        except socket.error as e:
+        except OSError as e:
             if get_errno(e) == errno.EPIPE:
                 return ''
             raise
@@ -67,7 +67,7 @@ def write(fd, st):
         except OSError as e:
             if get_errno(e) != errno.EAGAIN:
                 raise
-        except socket.error as e:
+        except OSError as e:
             if get_errno(e) != errno.EPIPE:
                 raise
         hubs.trampoline(fd, write=True)

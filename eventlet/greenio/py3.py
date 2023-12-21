@@ -37,7 +37,7 @@ class GreenFileIO(_OriginalIOBase):
             fileno = name
             self._name = "<fd:%d>" % fileno
         else:
-            assert isinstance(name, six.string_types)
+            assert isinstance(name, str)
             with open(name, mode) as fd:
                 self._name = fd.name
                 fileno = _original_os.dup(fd.fileno())
@@ -196,7 +196,7 @@ if hasattr(_original_pyio, 'text_encoding'):
 
 _pyio_open = getattr(_original_pyio.open, '__wrapped__', _original_pyio.open)
 _open = FunctionType(
-    six.get_function_code(_pyio_open),
+    _pyio_open.__code__,
     _open_environment,
 )
 

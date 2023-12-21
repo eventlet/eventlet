@@ -18,13 +18,10 @@ __all__ = [
 ]
 
 BUFFER_SIZE = 4096
-CONNECT_ERR = set((errno.EINPROGRESS, errno.EALREADY, errno.EWOULDBLOCK))
-CONNECT_SUCCESS = set((0, errno.EISCONN))
+CONNECT_ERR = {errno.EINPROGRESS, errno.EALREADY, errno.EWOULDBLOCK}
+CONNECT_SUCCESS = {0, errno.EISCONN}
 if sys.platform[:3] == "win":
     CONNECT_ERR.add(errno.WSAEINVAL)   # Bug 67
-
-if six.PY2:
-    _python2_fileobject = socket._fileobject
 
 _original_socket = eventlet.patcher.original('socket').socket
 
@@ -70,13 +67,13 @@ def socket_accept(descriptor):
 
 if sys.platform[:3] == "win":
     # winsock sometimes throws ENOTCONN
-    SOCKET_BLOCKING = set((errno.EAGAIN, errno.EWOULDBLOCK,))
-    SOCKET_CLOSED = set((errno.ECONNRESET, errno.ENOTCONN, errno.ESHUTDOWN))
+    SOCKET_BLOCKING = {errno.EAGAIN, errno.EWOULDBLOCK}
+    SOCKET_CLOSED = {errno.ECONNRESET, errno.ENOTCONN, errno.ESHUTDOWN}
 else:
     # oddly, on linux/darwin, an unconnected socket is expected to block,
     # so we treat ENOTCONN the same as EWOULDBLOCK
-    SOCKET_BLOCKING = set((errno.EAGAIN, errno.EWOULDBLOCK, errno.ENOTCONN))
-    SOCKET_CLOSED = set((errno.ECONNRESET, errno.ESHUTDOWN, errno.EPIPE))
+    SOCKET_BLOCKING = {errno.EAGAIN, errno.EWOULDBLOCK, errno.ENOTCONN}
+    SOCKET_CLOSED = {errno.ECONNRESET, errno.ESHUTDOWN, errno.EPIPE}
 
 
 def set_nonblocking(fd):
@@ -135,7 +132,7 @@ class GreenSocket:
 
     def __init__(self, family=socket.AF_INET, *args, **kwargs):
         should_set_nonblocking = kwargs.pop('set_nonblocking', True)
-        if isinstance(family, six.integer_types):
+        if isinstance(family, int):
             fd = _original_socket(family, *args, **kwargs)
             # Notify the hub that this is a newly-opened socket.
             notify_opened(fd.fileno())
@@ -176,14 +173,13 @@ class GreenSocket:
     def _sock(self):
         return self
 
-    if six.PY3:
-        def _get_io_refs(self):
-            return self.fd._io_refs
+    def _get_io_refs(self):
+        return self.fd._io_refs
 
-        def _set_io_refs(self, value):
-            self.fd._io_refs = value
+    def _set_io_refs(self, value):
+        self.fd._io_refs = value
 
-        _io_refs = property(_get_io_refs, _set_io_refs)
+    _io_refs = property(_get_io_refs, _set_io_refs)
 
     # Forward unknown attributes to fd, cache the value for future use.
     # I do not see any simple attribute which could be changed
@@ -307,21 +303,8 @@ class GreenSocket:
         newsock.settimeout(self.gettimeout())
         return newsock
 
-    if six.PY3:
-        def makefile(self, *args, **kwargs):
-            return _original_socket.makefile(self, *args, **kwargs)
-    else:
-        def makefile(self, *args, **kwargs):
-            dupped = self.dup()
-            res = _python2_fileobject(dupped, *args, **kwargs)
-            if hasattr(dupped, "_drop"):
-                dupped._drop()
-                # Making the close function of dupped None so that when garbage collector
-                # kicks in and tries to call del, which will ultimately call close, _drop
-                # doesn't get called on dupped twice as it has been already explicitly called in
-                # previous line
-                dupped.close = None
-            return res
+    def makefile(self, *args, **kwargs):
+        return _original_socket.makefile(self, *args, **kwargs)
 
     def makeGreenFile(self, *args, **kw):
         warnings.warn("makeGreenFile has been deprecated, please use "

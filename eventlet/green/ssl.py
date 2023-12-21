@@ -146,18 +146,17 @@ class GreenSSLSocket(_original_sslsocket):
         except AttributeError:
             pass
 
-        if six.PY3:
-            # Python 3 SSLSocket construction process overwrites the timeout so restore it
-            self._timeout = sock.gettimeout()
+        # Python 3 SSLSocket construction process overwrites the timeout so restore it
+        self._timeout = sock.gettimeout()
 
-            # it also sets timeout to None internally apparently (tested with 3.4.2)
-            _original_sslsocket.settimeout(self, 0.0)
-            assert _original_sslsocket.gettimeout(self) == 0.0
+        # it also sets timeout to None internally apparently (tested with 3.4.2)
+        _original_sslsocket.settimeout(self, 0.0)
+        assert _original_sslsocket.gettimeout(self) == 0.0
 
-            # see note above about handshaking
-            self.do_handshake_on_connect = do_handshake_on_connect
-            if do_handshake_on_connect and self._connected:
-                self.do_handshake()
+        # see note above about handshaking
+        self.do_handshake_on_connect = do_handshake_on_connect
+        if do_handshake_on_connect and self._connected:
+            self.do_handshake()
 
     def settimeout(self, timeout):
         self._timeout = timeout
@@ -389,11 +388,8 @@ class GreenSSLSocket(_original_sslsocket):
             sslwrap = _ssl.sslwrap
         except AttributeError:
             # sslwrap was removed in 3.x and later in 2.7.9
-            if six.PY2:
-                sslobj = self._context._wrap_socket(self._sock, server_side, ssl_sock=self)
-            else:
-                context = self.context if PY33 else self._context
-                sslobj = context._wrap_socket(self, server_side, server_hostname=self.server_hostname)
+            context = self.context if PY33 else self._context
+            sslobj = context._wrap_socket(self, server_side, server_hostname=self.server_hostname)
         else:
             sslobj = sslwrap(self._sock, server_side, self.keyfile, self.certfile,
                              self.cert_reqs, self.ssl_version,

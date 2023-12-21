@@ -181,7 +181,7 @@ class GreenPool:
            for result in pool.imap(worker, open("filename", 'r')):
                print(result)
         """
-        return self.starmap(function, six.moves.zip(*iterables))
+        return self.starmap(function, zip(*iterables))
 
 
 class GreenPile:

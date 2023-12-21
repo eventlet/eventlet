@@ -12,7 +12,7 @@ __all__ = ['spew', 'unspew', 'format_hub_listeners', 'format_hub_timers',
            'hub_prevent_multiple_readers', 'hub_timer_stacks',
            'hub_blocking_detection']
 
-_token_splitter = re.compile('\W+')
+_token_splitter = re.compile(r'\W+')
 
 
 class Spew:

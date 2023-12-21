@@ -9,10 +9,7 @@ __patched__ = ['_start_new_thread', '_allocate_lock',
                '_sleep', 'local', 'stack_size', 'Lock', 'currentThread',
                'current_thread', '_after_fork', '_shutdown']
 
-if six.PY2:
-    __patched__ += ['_get_ident']
-else:
-    __patched__ += ['get_ident', '_set_sentinel']
+__patched__ += ['get_ident', '_set_sentinel']
 
 __orig_threading = eventlet.patcher.original('threading')
 __threadlocal = __orig_threading.local()

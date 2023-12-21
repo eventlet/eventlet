@@ -22,10 +22,10 @@ class GreenPipe(_fileobject):
     __doc__ = greenpipe_doc
 
     def __init__(self, f, mode='r', bufsize=-1):
-        if not isinstance(f, six.string_types + (int, file)):
+        if not isinstance(f, (str,) + (int, file)):
             raise TypeError('f(ile) should be int, str, unicode or file, not %r' % f)
 
-        if isinstance(f, six.string_types):
+        if isinstance(f, str):
             f = open(f, mode, 0)
 
         if isinstance(f, int):

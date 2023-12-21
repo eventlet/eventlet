@@ -98,7 +98,7 @@ if (os.environ.get('EVENTLET_DEPRECATED_EAI_NODATA', '').lower() in ('1', 'y', '
 
 def is_ipv4_addr(host):
     """Return True if host is a valid IPv4 address"""
-    if not isinstance(host, six.string_types):
+    if not isinstance(host, str):
         return False
     try:
         dns.ipv4.inet_aton(host)
@@ -110,7 +110,7 @@ def is_ipv4_addr(host):
 
 def is_ipv6_addr(host):
     """Return True if host is a valid IPv6 address"""
-    if not isinstance(host, six.string_types):
+    if not isinstance(host, str):
         return False
     host = host.split('%', 1)[0]
     try:
@@ -211,7 +211,7 @@ class HostsResolver:
 
         udata = fdata.decode(errors='ignore')
 
-        return six.moves.filter(None, self.LINES_RE.findall(udata))
+        return filter(None, self.LINES_RE.findall(udata))
 
     def _load(self):
         """Load hosts file
@@ -262,10 +262,10 @@ class HostsResolver:
         if self._last_load + self.interval < now:
             self._load()
         rdclass = dns.rdataclass.IN
-        if isinstance(qname, six.string_types):
+        if isinstance(qname, str):
             name = qname
             qname = dns.name.from_text(qname)
-        elif isinstance(qname, six.binary_type):
+        elif isinstance(qname, bytes):
             name = qname.decode("ascii")
             qname = dns.name.from_text(qname)
         else:
@@ -305,7 +305,7 @@ class HostsResolver:
         else:
             cannon = hostname
         aliases.append(cannon)
-        for alias, cname in six.iteritems(self._aliases):
+        for alias, cname in self._aliases.items():
             if cannon == cname:
                 aliases.append(alias)
         aliases.remove(hostname)
@@ -367,7 +367,7 @@ class ResolverProxy:
 
         if qname is None:
             qname = '0.0.0.0'
-        if isinstance(qname, six.string_types) or isinstance(qname, six.binary_type):
+        if isinstance(qname, str) or isinstance(qname, bytes):
             qname = dns.name.from_text(qname, None)
 
         def step(fun, *args, **kwargs):
@@ -546,9 +546,9 @@ def getaddrinfo(host, port, family=0, socktype=0, proto=0, flags=0):
     flag ensures getaddrinfo(3) does not use the network itself and
     allows us to respect all the other arguments like the native OS.
     """
-    if isinstance(host, six.string_types):
+    if isinstance(host, str):
         host = host.encode('idna').decode('ascii')
-    elif isinstance(host, six.binary_type):
+    elif isinstance(host, bytes):
         host = host.decode("ascii")
     if host is not None and not is_ip_addr(host):
         qname, addrs = _getaddrinfo_lookup(host, family, flags)
@@ -562,7 +562,7 @@ def getaddrinfo(host, port, family=0, socktype=0, proto=0, flags=0):
         try:
             ai = socket.getaddrinfo(addr, port, family,
                                     socktype, proto, aiflags)
-        except socket.error as e:
+        except OSError as e:
             if flags & socket.AI_ADDRCONFIG:
                 err = e
                 continue
@@ -626,7 +626,7 @@ def getnameinfo(sockaddr, flags):
             rrset = resolver.query(
                 dns.reversename.from_address(host), dns.rdatatype.PTR)
             if len(rrset) > 1:
-                raise socket.error('sockaddr resolved to multiple addresses')
+                raise OSError('sockaddr resolved to multiple addresses')
             host = rrset[0].target.to_text(omit_final_dot=True)
         except dns.exception.Timeout:
             if flags & socket.NI_NAMEREQD:
@@ -638,7 +638,7 @@ def getnameinfo(sockaddr, flags):
         try:
             rrset = resolver.query(host)
             if len(rrset) > 1:
-                raise socket.error('sockaddr resolved to multiple addresses')
+                raise OSError('sockaddr resolved to multiple addresses')
             if flags & socket.NI_NUMERICHOST:
                 host = rrset[0].address
         except dns.exception.Timeout:
