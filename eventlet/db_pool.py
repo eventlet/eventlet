@@ -59,9 +59,7 @@ class BaseConnectionPool(Pool):
         self.connect_timeout = connect_timeout
         self._expiration_timer = None
         self.cleanup = cleanup
-        super(BaseConnectionPool, self).__init__(min_size=min_size,
-                                                 max_size=max_size,
-                                                 order_as_stack=True)
+        super().__init__(min_size=min_size, max_size=max_size, order_as_stack=True)
 
     def _schedule_expiration(self):
         """Sets up a timer that will call _expire_old_connections when the
@@ -173,7 +171,7 @@ class BaseConnectionPool(Pool):
                 print("Connection.close raised: %s" % (sys.exc_info()[1]))
 
     def get(self):
-        conn = super(BaseConnectionPool, self).get()
+        conn = super().get()
 
         # None is a flag value that means that put got called with
         # something it couldn't use
@@ -229,12 +227,12 @@ class BaseConnectionPool(Pool):
                 raise
 
         if conn is not None:
-            super(BaseConnectionPool, self).put((now, created_at, conn))
+            super().put((now, created_at, conn))
         else:
             # wake up any waiters with a flag value that indicates
             # they need to manufacture a connection
             if self.waiting() > 0:
-                super(BaseConnectionPool, self).put(None)
+                super().put(None)
             else:
                 # no waiters -- just change the size
                 self.current_size -= 1
@@ -386,7 +384,7 @@ class PooledConnectionWrapper(GenericConnectionWrapper):
     """
 
     def __init__(self, baseconn, pool):
-        super(PooledConnectionWrapper, self).__init__(baseconn)
+        super().__init__(baseconn)
         self._pool = pool
 
     def __nonzero__(self):

@@ -12,7 +12,7 @@ def is_available():
 # are identical in value to the poll constants
 class Hub(poll.Hub):
     def __init__(self, clock=None):
-        super(Hub, self).__init__(clock=clock)
+        super().__init__(clock=clock)
         self.poll = select.epoll()
 
     def add(self, evtype, fileno, cb, tb, mac):

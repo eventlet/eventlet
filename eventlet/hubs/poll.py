@@ -13,19 +13,19 @@ def is_available():
 
 class Hub(hub.BaseHub):
     def __init__(self, clock=None):
-        super(Hub, self).__init__(clock)
+        super().__init__(clock)
         self.EXC_MASK = select.POLLERR | select.POLLHUP
         self.READ_MASK = select.POLLIN | select.POLLPRI
         self.WRITE_MASK = select.POLLOUT
         self.poll = select.poll()
 
     def add(self, evtype, fileno, cb, tb, mac):
-        listener = super(Hub, self).add(evtype, fileno, cb, tb, mac)
+        listener = super().add(evtype, fileno, cb, tb, mac)
         self.register(fileno, new=True)
         return listener
 
     def remove(self, listener):
-        super(Hub, self).remove(listener)
+        super().remove(listener)
         self.register(listener.fileno)
 
     def register(self, fileno, new=False):
@@ -56,7 +56,7 @@ class Hub(hub.BaseHub):
             raise
 
     def remove_descriptor(self, fileno):
-        super(Hub, self).remove_descriptor(fileno)
+        super().remove_descriptor(fileno)
         try:
             self.poll.unregister(fileno)
         except (KeyError, ValueError, IOError, OSError):

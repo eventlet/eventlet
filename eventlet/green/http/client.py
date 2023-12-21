@@ -1477,7 +1477,7 @@ else:
                      timeout=socket._GLOBAL_DEFAULT_TIMEOUT,
                      source_address=None, *, context=None,
                      check_hostname=None):
-            super(HTTPSConnection, self).__init__(host, port, timeout,
+            super().__init__(host, port, timeout,
                                                   source_address)
             self.key_file = key_file
             self.cert_file = cert_file

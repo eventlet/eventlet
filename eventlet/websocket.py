@@ -501,7 +501,7 @@ class ConnectionClosedError(Exception):
 
 class FailedConnectionError(Exception):
     def __init__(self, status, message):
-        super(FailedConnectionError, self).__init__(status, message)
+        super().__init__(status, message)
         self.message = message
         self.status = status
 
@@ -513,7 +513,7 @@ class ProtocolError(ValueError):
 class RFC6455WebSocket(WebSocket):
     def __init__(self, sock, environ, version=13, protocol=None, client=False, extensions=None,
                  max_frame_length=DEFAULT_MAX_FRAME_LENGTH):
-        super(RFC6455WebSocket, self).__init__(sock, environ, version)
+        super().__init__(sock, environ, version)
         self.iterator = self._iter_frames()
         self.client = client
         self.protocol = protocol

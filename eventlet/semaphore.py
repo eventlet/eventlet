@@ -176,7 +176,7 @@ class BoundedSemaphore(Semaphore):
     """
 
     def __init__(self, value=1):
-        super(BoundedSemaphore, self).__init__(value)
+        super().__init__(value)
         self.original_counter = value
 
     def release(self, blocking=True):
@@ -190,7 +190,7 @@ class BoundedSemaphore(Semaphore):
         """
         if self.counter >= self.original_counter:
             raise ValueError("Semaphore released too many times")
-        return super(BoundedSemaphore, self).release(blocking)
+        return super().release(blocking)
 
 
 class CappedSemaphore:

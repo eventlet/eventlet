@@ -221,7 +221,7 @@ class Socket(_Socket):
     """
 
     def __init__(self, context, socket_type):
-        super(Socket, self).__init__(context, socket_type)
+        super().__init__(context, socket_type)
 
         self.__dict__['_eventlet_send_event'] = _BlockedThread()
         self.__dict__['_eventlet_recv_event'] = _BlockedThread()
@@ -250,7 +250,7 @@ class Socket(_Socket):
 
     @_wraps(_Socket.close)
     def close(self, linger=None):
-        super(Socket, self).close(linger)
+        super().close(linger)
         if self._eventlet_listener is not None:
             eventlet.hubs.get_hub().remove(self._eventlet_listener)
             self.__dict__['_eventlet_listener'] = None

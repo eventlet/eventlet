@@ -59,7 +59,7 @@ class GreenSSLSocket(_original_sslsocket):
                 ssl_version=PROTOCOL_SSLv23, ca_certs=None,
                 do_handshake_on_connect=True, *args, **kw):
         if sys.version_info < (3, 7):
-            return super(GreenSSLSocket, cls).__new__(cls)
+            return super().__new__(cls)
         else:
             if not isinstance(sock, GreenSocket):
                 sock = GreenSocket(sock)
@@ -133,7 +133,7 @@ class GreenSSLSocket(_original_sslsocket):
         if sys.version_info < (3, 7):
             # nonblocking socket handshaking on connect got disabled so let's pretend it's disabled
             # even when it's on
-            super(GreenSSLSocket, self).__init__(
+            super().__init__(
                 sock.fd, keyfile, certfile, server_side, cert_reqs, ssl_version,
                 ca_certs, do_handshake_on_connect and six.PY2, *args, **kw)
         # the superclass initializer trashes the methods so we remove
@@ -203,14 +203,14 @@ class GreenSSLSocket(_original_sslsocket):
         """Write DATA to the underlying SSL channel.  Returns
         number of bytes of DATA actually transmitted."""
         return self._call_trampolining(
-            super(GreenSSLSocket, self).write, data)
+            super().write, data)
 
     def read(self, len=1024, buffer=None):
         """Read up to LEN bytes and return them.
         Return zero-length string on EOF."""
         try:
             return self._call_trampolining(
-                super(GreenSSLSocket, self).read, len, buffer)
+                super().read, len, buffer)
         except IOClosed:
             if buffer is None:
                 return b''
@@ -220,7 +220,7 @@ class GreenSSLSocket(_original_sslsocket):
     def send(self, data, flags=0):
         if self._sslobj:
             return self._call_trampolining(
-                super(GreenSSLSocket, self).send, data, flags)
+                super().send, data, flags)
         else:
             trampoline(self, write=True, timeout_exc=timeout_exc('timed out'))
             return socket.send(self, data, flags)
@@ -323,22 +323,22 @@ class GreenSSLSocket(_original_sslsocket):
         if not self.act_non_blocking:
             trampoline(self, read=True, timeout=self.gettimeout(),
                        timeout_exc=timeout_exc('timed out'))
-        return super(GreenSSLSocket, self).recvfrom(addr, buflen, flags)
+        return super().recvfrom(addr, buflen, flags)
 
     def recvfrom_into(self, buffer, nbytes=None, flags=0):
         if not self.act_non_blocking:
             trampoline(self, read=True, timeout=self.gettimeout(),
                        timeout_exc=timeout_exc('timed out'))
-        return super(GreenSSLSocket, self).recvfrom_into(buffer, nbytes, flags)
+        return super().recvfrom_into(buffer, nbytes, flags)
 
     def unwrap(self):
         return GreenSocket(self._call_trampolining(
-            super(GreenSSLSocket, self).unwrap))
+            super().unwrap))
 
     def do_handshake(self):
         """Perform a TLS/SSL handshake."""
         return self._call_trampolining(
-            super(GreenSSLSocket, self).do_handshake)
+            super().do_handshake)
 
     def _socket_connect(self, addr):
         real_connect = socket.connect

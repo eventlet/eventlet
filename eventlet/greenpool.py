@@ -242,7 +242,7 @@ class GreenPile:
 # instead relying on the spawning process to send one in when it's done
 class GreenMap(GreenPile):
     def __init__(self, size_or_pool):
-        super(GreenMap, self).__init__(size_or_pool)
+        super().__init__(size_or_pool)
         self.waiters = queue.LightQueue(maxsize=self.pool.size)
 
     def done_spawning(self):

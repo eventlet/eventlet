@@ -90,7 +90,7 @@ class DebugListener(FdListener):
     def __init__(self, evtype, fileno, cb, tb, mark_as_closed):
         self.where_called = traceback.format_stack()
         self.greenlet = greenlet.getcurrent()
-        super(DebugListener, self).__init__(evtype, fileno, cb, tb, mark_as_closed)
+        super().__init__(evtype, fileno, cb, tb, mark_as_closed)
 
     def __repr__(self):
         return "DebugListener(%r, %r, %r, %r, %r, %r)\n%sEndDebugFdListener" % (

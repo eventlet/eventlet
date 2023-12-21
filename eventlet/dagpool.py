@@ -41,7 +41,7 @@ class PropagateError(Exception):
         # initialize base class with a reasonable string message
         msg = "PropagateError({0}): {1}: {2}" \
               .format(key, exc.__class__.__name__, exc)
-        super(PropagateError, self).__init__(msg)
+        super().__init__(msg)
         self.msg = msg
         # Unless we set args, this is unpickleable:
         # https://bugs.python.org/issue1692335

@@ -30,7 +30,7 @@ if six.PY2:
 
     class file(__original_file):
         def __init__(self, *args, **kwargs):
-            super(file, self).__init__(*args, **kwargs)
+            super().__init__(*args, **kwargs)
             hubs.notify_opened(self.fileno())
 
 

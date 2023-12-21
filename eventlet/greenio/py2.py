@@ -39,7 +39,7 @@ class GreenPipe(_fileobject):
             self._name = f.name
             f.close()
 
-        super(GreenPipe, self).__init__(_SocketDuckForFd(fileno), mode, bufsize)
+        super().__init__(_SocketDuckForFd(fileno), mode, bufsize)
         set_nonblocking(self)
         self.softspace = 0
 
@@ -56,7 +56,7 @@ class GreenPipe(_fileobject):
             (id(self) < 0) and (sys.maxint + id(self)) or id(self))
 
     def close(self):
-        super(GreenPipe, self).close()
+        super().close()
         for method in [
                 'fileno', 'flush', 'isatty', 'next', 'read', 'readinto',
                 'readline', 'readlines', 'seek', 'tell', 'truncate',
