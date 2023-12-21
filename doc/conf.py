@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Eventlet documentation build configuration file, created by
 # sphinx-quickstart on Sat Jul  4 19:48:27 2009.

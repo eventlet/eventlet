@@ -1,4 +1,3 @@
-# coding: utf-8
 """Tests for the eventlet.support.greendns module"""
 
 import os
