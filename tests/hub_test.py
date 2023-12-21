@@ -84,12 +84,12 @@ class TestTimerCleanup(tests.LimitedTestCase):
 
 class TestMultipleListenersCleanup(tests.LimitedTestCase):
     def setUp(self):
-        super(TestMultipleListenersCleanup, self).setUp()
+        super().setUp()
         debug.hub_prevent_multiple_readers(False)
         debug.hub_exceptions(False)
 
     def tearDown(self):
-        super(TestMultipleListenersCleanup, self).tearDown()
+        super().tearDown()
         debug.hub_prevent_multiple_readers(True)
         debug.hub_exceptions(True)
 

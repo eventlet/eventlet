@@ -71,7 +71,7 @@ class DBConnectionPool(DBTester):
     __test__ = False  # so that nose doesn't try to execute this directly
 
     def setUp(self):
-        super(DBConnectionPool, self).setUp()
+        super().setUp()
         self.pool = self.create_pool()
         self.connection = self.pool.get()
 
@@ -79,7 +79,7 @@ class DBConnectionPool(DBTester):
         if self.connection:
             self.pool.put(self.connection)
         self.pool.clear()
-        super(DBConnectionPool, self).tearDown()
+        super().tearDown()
 
     def assert_cursor_works(self, cursor):
         cursor.execute("select 1")
@@ -348,10 +348,10 @@ class TpoolConnectionPool(DBConnectionPool):
             **self._auth)
 
     def setUp(self):
-        super(TpoolConnectionPool, self).setUp()
+        super().setUp()
 
     def tearDown(self):
-        super(TpoolConnectionPool, self).tearDown()
+        super().tearDown()
         eventlet.tpool.killall()
 
 
@@ -471,10 +471,10 @@ class MysqlConnectionPool:
     def setUp(self):
         self._dbmodule = MySQLdb
         self._auth = tests.get_database_auth()['MySQLdb']
-        super(MysqlConnectionPool, self).setUp()
+        super().setUp()
 
     def tearDown(self):
-        super(MysqlConnectionPool, self).tearDown()
+        super().tearDown()
 
     def create_db(self):
         auth = self._auth.copy()
@@ -535,10 +535,10 @@ class Psycopg2ConnectionPool:
     def setUp(self):
         self._dbmodule = psycopg2
         self._auth = tests.get_database_auth()['psycopg2']
-        super(Psycopg2ConnectionPool, self).setUp()
+        super().setUp()
 
     def tearDown(self):
-        super(Psycopg2ConnectionPool, self).tearDown()
+        super().tearDown()
 
     def create_db(self):
         dbname = 'test%s' % os.getpid()

@@ -15,11 +15,11 @@ private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
 
 class TestServe(tests.LimitedTestCase):
     def setUp(self):
-        super(TestServe, self).setUp()
+        super().setUp()
         debug.hub_exceptions(False)
 
     def tearDown(self):
-        super(TestServe, self).tearDown()
+        super().tearDown()
         debug.hub_exceptions(True)
 
     def test_exiting_server(self):

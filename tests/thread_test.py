@@ -19,11 +19,11 @@ class Locals(LimitedTestCase):
 
     def setUp(self):
         self.results = []
-        super(Locals, self).setUp()
+        super().setUp()
 
     def tearDown(self):
         self.results = []
-        super(Locals, self).tearDown()
+        super().tearDown()
 
     def test_assignment(self):
         my_local = corolocal.local()

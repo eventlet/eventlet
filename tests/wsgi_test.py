@@ -221,7 +221,7 @@ def read_http(sock):
 
 class _TestBase(tests.LimitedTestCase):
     def setUp(self):
-        super(_TestBase, self).setUp()
+        super().setUp()
         self.site = Site()
         self.killer = None
         self.set_site()
@@ -230,7 +230,7 @@ class _TestBase(tests.LimitedTestCase):
     def tearDown(self):
         greenthread.kill(self.killer)
         eventlet.sleep(0)
-        super(_TestBase, self).tearDown()
+        super().tearDown()
 
     def spawn_server(self, **kwargs):
         """Spawns a new wsgi server with the given arguments using
@@ -1985,11 +1985,11 @@ class ProxiedIterableAlreadyHandledTest(IterableAlreadyHandledTest):
     # same thing as the previous test but ensuring that it works with tpooled
     # results as well as regular ones
     def get_app(self):
-        return tpool.Proxy(super(ProxiedIterableAlreadyHandledTest, self).get_app())
+        return tpool.Proxy(super().get_app())
 
     def tearDown(self):
         tpool.killall()
-        super(ProxiedIterableAlreadyHandledTest, self).tearDown()
+        super().tearDown()
 
 
 class TestChunkedInput(_TestBase):

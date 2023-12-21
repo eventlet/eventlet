@@ -41,11 +41,11 @@ def raise_exception():
 
 class TestTpool(tests.LimitedTestCase):
     def setUp(self):
-        super(TestTpool, self).setUp()
+        super().setUp()
 
     def tearDown(self):
         tpool.killall()
-        super(TestTpool, self).tearDown()
+        super().tearDown()
 
     def test_wrap_tuple(self):
         my_tuple = (1, 2)

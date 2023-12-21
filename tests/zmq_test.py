@@ -24,14 +24,14 @@ class TestUpstreamDownStream(tests.LimitedTestCase):
 
     @tests.skip_unless(zmq_supported)
     def setUp(self):
-        super(TestUpstreamDownStream, self).setUp()
+        super().setUp()
         self.context = zmq.Context()
         self.sockets = []
 
     @tests.skip_unless(zmq_supported)
     def tearDown(self):
         self.clear_up_sockets()
-        super(TestUpstreamDownStream, self).tearDown()
+        super().tearDown()
 
     def create_bound_pair(self, type1, type2, interface='tcp://127.0.0.1'):
         """Create a bound socket pair using a random port."""

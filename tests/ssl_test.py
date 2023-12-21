@@ -36,7 +36,7 @@ class SSLTest(tests.LimitedTestCase):
             message='.*socket.ssl.*',
             category=DeprecationWarning)
 
-        super(SSLTest, self).setUp()
+        super().setUp()
 
     def test_duplex_response(self):
         def serve(listener):

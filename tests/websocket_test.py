@@ -618,7 +618,7 @@ class TestWebSocketObject(tests.LimitedTestCase):
                                   PATH_INFO='test')
 
         self.test_ws = WebSocket(s, env)
-        super(TestWebSocketObject, self).setUp()
+        super().setUp()
 
     def test_recieve(self):
         ws = self.test_ws

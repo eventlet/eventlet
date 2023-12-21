@@ -50,14 +50,14 @@ class TestMySQLdb(tests.LimitedTestCase):
         self.connection.commit()
         cursor.close()
 
-        super(TestMySQLdb, self).setUp()
+        super().setUp()
 
     def tearDown(self):
         if self.connection:
             self.connection.close()
         self.drop_db()
 
-        super(TestMySQLdb, self).tearDown()
+        super().tearDown()
 
     @tests.skip_unless(mysql_requirement)
     def create_db(self):

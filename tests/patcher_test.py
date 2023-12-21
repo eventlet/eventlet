@@ -33,12 +33,12 @@ class ProcessBase(tests.LimitedTestCase):
     TEST_TIMEOUT = 3  # starting processes is time-consuming
 
     def setUp(self):
-        super(ProcessBase, self).setUp()
+        super().setUp()
         self._saved_syspath = sys.path
         self.tempdir = tempfile.mkdtemp('_patcher_test')
 
     def tearDown(self):
-        super(ProcessBase, self).tearDown()
+        super().tearDown()
         sys.path = self._saved_syspath
         shutil.rmtree(self.tempdir)
 

@@ -238,7 +238,7 @@ class TestUdp(tests.LimitedTestCase):
         self.query = greendns.dns.message.Message()
         self.query.flags = greendns.dns.flags.QR
         self.query_wire = self.query.to_wire()
-        super(TestUdp, self).setUp()
+        super().setUp()
 
     def test_udp_ipv4(self):
         with tests.mock.patch('eventlet.support.greendns.socket.socket.recvfrom',

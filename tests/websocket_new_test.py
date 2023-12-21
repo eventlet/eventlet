@@ -243,7 +243,7 @@ class TestWebSocketWithCompression(tests.wsgi_test._TestBase):
         self.site = wsapp
 
     def setUp(self):
-        super(TestWebSocketWithCompression, self).setUp()
+        super().setUp()
         self.connect = '\r\n'.join([
             "GET /echo HTTP/1.1",
             "Upgrade: websocket",
