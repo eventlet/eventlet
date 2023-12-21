@@ -39,7 +39,6 @@ or :meth:`Queue.put` will not block.  The new methods :meth:`Queue.getting`
 and :meth:`Queue.putting` report on the number of greenthreads blocking
 in :meth:`put <Queue.put>` or :meth:`get <Queue.get>` respectively.
 """
-from __future__ import print_function
 
 import sys
 import heapq

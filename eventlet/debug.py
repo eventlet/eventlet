@@ -1,6 +1,5 @@
 """The debug module contains utilities and functions for better
 debugging Eventlet-powered applications."""
-from __future__ import print_function
 
 import os
 import sys
