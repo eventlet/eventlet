@@ -197,7 +197,7 @@ def read_http(sock):
         # FIXME: Duplicate headers are allowed as per HTTP RFC standard,
         # the client and/or intermediate proxies are supposed to treat them
         # as a single header with values concatenated using space (' ') delimiter.
-        assert key_lower not in headers_lower, "header duplicated: {0}".format(key)
+        assert key_lower not in headers_lower, "header duplicated: {}".format(key)
         headers_original[key] = value
         headers_lower[key_lower] = value
 
@@ -1629,12 +1629,12 @@ class TestHttpd(_TestBase):
         # Per PEP-0333 https://www.python.org/dev/peps/pep-0333/#unicode-issues
         # in all WSGI environment strings application must observe either bytes in latin-1 (ISO-8859-1)
         # or unicode code points \u0000..\u00ff
-        msg = 'Expected PATH_INFO to be a native string, not {0}'.format(type(g[0]))
+        msg = 'Expected PATH_INFO to be a native string, not {}'.format(type(g[0]))
         assert isinstance(g[0], str), msg
         # Fortunately, WSGI strings have the same literal representation on both py2 and py3
         assert g[0] == '/\xe4\xbd\xa0\xe5\xa5\xbd'
 
-        msg = 'Expected PATH_INFO to be a native string, not {0}'.format(type(g[1]))
+        msg = 'Expected PATH_INFO to be a native string, not {}'.format(type(g[1]))
         assert isinstance(g[1], str), msg
         assert g[1] == '/\xbd\xa5\xe5\xa0\xbd\xe4'
 
@@ -1816,7 +1816,7 @@ class TestHttpd(_TestBase):
     def test_log_unix_address(self):
         def app(environ, start_response):
             start_response('200 OK', [])
-            return ['\n{0}={1}\n'.format(k, v).encode() for k, v in environ.items()]
+            return ['\n{}={}\n'.format(k, v).encode() for k, v in environ.items()]
 
         tempdir = tempfile.mkdtemp('eventlet_test_log_unix_address')
         try:
@@ -1845,7 +1845,7 @@ class TestHttpd(_TestBase):
     def test_headers_raw(self):
         def app(environ, start_response):
             start_response('200 OK', [])
-            return [b'\n'.join('{0}: {1}'.format(*kv).encode() for kv in environ['headers_raw'])]
+            return [b'\n'.join('{}: {}'.format(*kv).encode() for kv in environ['headers_raw'])]
 
         self.spawn_server(site=app)
         sock = eventlet.connect(self.server_addr)
@@ -1858,7 +1858,7 @@ class TestHttpd(_TestBase):
     def test_env_headers(self):
         def app(environ, start_response):
             start_response('200 OK', [])
-            return ['{0}: {1}\n'.format(*kv).encode() for kv in sorted(environ.items())
+            return ['{}: {}\n'.format(*kv).encode() for kv in sorted(environ.items())
                     if kv[0].startswith('HTTP_')]
 
         self.spawn_server(site=app)
@@ -1867,7 +1867,7 @@ class TestHttpd(_TestBase):
                      b'x-ANY_k: one\r\nhttp-x-ANY_k: two\r\n\r\n')
         result = read_http(sock)
         sock.close()
-        assert result.status == 'HTTP/1.1 200 OK', 'Received status {0!r}'.format(result.status)
+        assert result.status == 'HTTP/1.1 200 OK', 'Received status {!r}'.format(result.status)
         assert result.body == (b'HTTP_HOST: localhost\nHTTP_HTTP_X_ANY_K: two\n'
                                b'HTTP_PATH_INFO: foo\nHTTP_X_ANY_K: one\n')
 
@@ -1878,7 +1878,7 @@ class TestHttpd(_TestBase):
             return [line if isinstance(line, bytes) else line.encode('latin1')
                     for kv in sorted(environ.items())
                     if kv[0].startswith('HTTP_')
-                    for line in ('{0}: {1}\n'.format(*kv),)]
+                    for line in ('{}: {}\n'.format(*kv),)]
 
         self.spawn_server(site=app)
         sock = eventlet.connect(self.server_addr)
@@ -1891,7 +1891,7 @@ class TestHttpd(_TestBase):
             b'null-set: \xe2\x88\x85\r\n\r\n')
         result = read_http(sock)
         sock.close()
-        assert result.status == 'HTTP/1.1 200 OK', 'Received status {0!r}'.format(result.status)
+        assert result.status == 'HTTP/1.1 200 OK', 'Received status {!r}'.format(result.status)
         assert result.body == (
             b'HTTP_HOST: localhost\n'
             b'HTTP_NULL_SET: \xe2\x88\x85\n'
@@ -1918,7 +1918,7 @@ class TestHttpd(_TestBase):
 
         sock.sendall(b'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
         result = read_http(sock)
-        assert result.status == 'HTTP/1.1 200 OK', 'Received status {0!r}'.format(result.status)
+        assert result.status == 'HTTP/1.1 200 OK', 'Received status {!r}'.format(result.status)
         self.killer.kill(KeyboardInterrupt)
         try:
             with eventlet.Timeout(1):

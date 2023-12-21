@@ -45,7 +45,7 @@ def assert_raises(exc_type):
             name = exc_type.__name__
         except AttributeError:
             pass
-        assert False, 'Expected exception {0}'.format(name)
+        assert False, 'Expected exception {}'.format(name)
 
 
 def skipped(func, *decorator_args):
@@ -345,9 +345,9 @@ def run_python(path, env=None, args=None, timeout=None, pythonpath_extend=None, 
         p.kill()
         output, _ = p.communicate(timeout=timeout)
         if expect_pass:
-            sys.stderr.write('Program {0} output:\n---\n{1}\n---\n'.format(path, output.decode()))
+            sys.stderr.write('Program {} output:\n---\n{}\n---\n'.format(path, output.decode()))
             assert False, 'timed out'
-        return '{0}\nFAIL - timed out'.format(output).encode()
+        return '{}\nFAIL - timed out'.format(output).encode()
 
     if expect_pass:
         if output.startswith(b'skip'):
@@ -359,7 +359,7 @@ def run_python(path, env=None, args=None, timeout=None, pythonpath_extend=None, 
         lines = output.splitlines()
         ok = lines[-1].rstrip() == b'pass'
         if not ok or len(lines) > 1:
-            sys.stderr.write('Program {0} output:\n---\n{1}\n---\n'.format(path, output.decode()))
+            sys.stderr.write('Program {} output:\n---\n{}\n---\n'.format(path, output.decode()))
         assert ok, 'Expected single line "pass" in stdout'
 
     return output
@@ -372,7 +372,7 @@ def run_isolated(path, prefix='tests/isolated/', **kwargs):
 
 def check_is_timeout(obj):
     value_text = getattr(obj, 'is_timeout', '(missing)')
-    assert eventlet.is_timeout(obj), 'type={0} str={1} .is_timeout={2}'.format(type(obj), str(obj), value_text)
+    assert eventlet.is_timeout(obj), 'type={} str={} .is_timeout={}'.format(type(obj), str(obj), value_text)
 
 
 @contextlib.contextmanager

@@ -19,7 +19,7 @@ class TestSocketErrors(unittest.TestCase):
             self.fail("Shouldn't have connected")
         except socket.error as ex:
             code, text = ex.args
-            assert code == errno.ECONNREFUSED, 'Expected ECONNREFUSED, got {0} ({1})'.format(code, text)
+            assert code == errno.ECONNREFUSED, 'Expected ECONNREFUSED, got {} ({})'.format(code, text)
             assert 'refused' in text.lower(), (code, text)
 
     def test_timeout_real_socket(self):
@@ -60,4 +60,4 @@ def test_create_connection_refused():
         assert False, "Shouldn't have connected"
     except socket.error as ex:
         code, text = ex.args
-        assert code == errno.ECONNREFUSED, 'Expected ECONNREFUSED, got {0} ({1})'.format(code, text)
+        assert code == errno.ECONNREFUSED, 'Expected ECONNREFUSED, got {} ({})'.format(code, text)
