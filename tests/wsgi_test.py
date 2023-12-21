@@ -132,8 +132,7 @@ class IterableApp:
 class IterableSite(Site):
     def __call__(self, env, start_response):
         it = self.application(env, start_response)
-        for i in it:
-            yield i
+        yield from it
 
 
 CONTENT_LENGTH = 'content-length'

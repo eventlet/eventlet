@@ -533,8 +533,7 @@ class TestWebSocket(tests.wsgi_test._TestBase):
         site = self.site
 
         def wrapper(environ, start_response):
-            for chunk in site(environ, start_response):
-                yield chunk
+            yield from site(environ, start_response)
 
         self.site = wrapper
         self.spawn_server()
