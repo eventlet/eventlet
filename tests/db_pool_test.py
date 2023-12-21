@@ -228,8 +228,8 @@ class DBConnectionPool(DBTester):
         self.assertEqual(len(self.pool.free_items), 0)
 
     def test_unwrap_connection(self):
-        self.assert_(isinstance(self.connection,
-                                db_pool.GenericConnectionWrapper))
+        self.assertTrue(isinstance(self.connection,
+                                   db_pool.GenericConnectionWrapper))
         conn = self.pool._unwrap_connection(self.connection)
         assert not isinstance(conn, db_pool.GenericConnectionWrapper)
 
