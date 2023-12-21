@@ -44,14 +44,14 @@ def socket_connect(descriptor, address):
     if err in CONNECT_ERR:
         return None
     if err not in CONNECT_SUCCESS:
-        raise socket.error(err, errno.errorcode[err])
+        raise OSError(err, errno.errorcode[err])
     return descriptor
 
 
 def socket_checkerr(descriptor):
     err = descriptor.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
     if err not in CONNECT_SUCCESS:
-        raise socket.error(err, errno.errorcode[err])
+        raise OSError(err, errno.errorcode[err])
 
 
 def socket_accept(descriptor):
@@ -62,7 +62,7 @@ def socket_accept(descriptor):
     """
     try:
         return descriptor.accept()
-    except socket.error as e:
+    except OSError as e:
         if get_errno(e) == errno.EWOULDBLOCK:
             return None
         raise
@@ -252,7 +252,7 @@ class GreenSocket:
                 try:
                     self._trampoline(fd, write=True)
                 except IOClosed:
-                    raise socket.error(errno.EBADFD)
+                    raise OSError(errno.EBADFD)
                 socket_checkerr(fd)
         else:
             end = time.time() + self.gettimeout()
@@ -266,7 +266,7 @@ class GreenSocket:
                     self._trampoline(fd, write=True, timeout=timeout, timeout_exc=_timeout_exc)
                 except IOClosed:
                     # ... we need some workable errno here.
-                    raise socket.error(errno.EBADFD)
+                    raise OSError(errno.EBADFD)
                 socket_checkerr(fd)
 
     def connect_ex(self, address):
@@ -278,7 +278,7 @@ class GreenSocket:
                 try:
                     self._trampoline(fd, write=True)
                     socket_checkerr(fd)
-                except socket.error as ex:
+                except OSError as ex:
                     return get_errno(ex)
                 except IOClosed:
                     return errno.EBADFD
@@ -295,7 +295,7 @@ class GreenSocket:
                     self._trampoline(fd, write=True, timeout=end - time.time(),
                                      timeout_exc=timeout_exc)
                     socket_checkerr(fd)
-                except socket.error as ex:
+                except OSError as ex:
                     return get_errno(ex)
                 except IOClosed:
                     return errno.EBADFD
@@ -352,7 +352,7 @@ class GreenSocket:
                 if not args[0]:
                     self._read_trampoline()
                 return recv_meth(*args)
-            except socket.error as e:
+            except OSError as e:
                 if get_errno(e) in SOCKET_BLOCKING:
                     pass
                 elif get_errno(e) in SOCKET_CLOSED:
@@ -386,7 +386,7 @@ class GreenSocket:
         while True:
             try:
                 return send_method(data, *args)
-            except socket.error as e:
+            except OSError as e:
                 eno = get_errno(e)
                 if eno == errno.ENOTCONN or eno not in SOCKET_BLOCKING:
                     raise
@@ -395,7 +395,7 @@ class GreenSocket:
                 self._trampoline(self.fd, write=True, timeout=self.gettimeout(),
                                  timeout_exc=_timeout_exc)
             except IOClosed:
-                raise socket.error(errno.ECONNRESET, 'Connection closed by another thread')
+                raise OSError(errno.ECONNRESET, 'Connection closed by another thread')
 
     def send(self, data, flags=0):
         return self._send_loop(self.fd.send, data, flags)
@@ -503,7 +503,7 @@ def shutdown_safe(sock):
         except TypeError:
             # SSL.Connection
             return sock.shutdown()
-    except socket.error as e:
+    except OSError as e:
         # we don't care if the socket is already closed;
         # this will often be the case in an http server context
         if get_errno(e) not in (errno.ENOTCONN, errno.EBADF, errno.ENOTSOCK):

@@ -182,7 +182,7 @@ class Input:
                     data = reader(maxreadlen)
                     if not data:
                         self.chunk_length = 0
-                        raise IOError("unexpected end of file while parsing chunked data")
+                        raise OSError("unexpected end of file while parsing chunked data")
 
                     datalen = len(data)
                     response.append(data)
@@ -652,7 +652,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                             + ' client={0} request="{1}" error="{2}"').format(
                                 self.get_client_address()[0], self.requestline, e,
                         ))
-                    except IOError as e:
+                    except OSError as e:
                         self.close_connection = 1
                         self.server.log.error((
                             'I/O error while discarding request body.'

@@ -206,7 +206,7 @@ class HostsResolver:
         try:
             with open(self.fname, 'rb') as fp:
                 fdata = fp.read()
-        except (IOError, OSError):
+        except OSError:
             return []
 
         udata = fdata.decode(errors='ignore')

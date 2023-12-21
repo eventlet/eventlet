@@ -82,7 +82,7 @@ class GreenPipe(_fileobject):
         try:
             return os.lseek(self.fileno(), 0, 1) - self._get_readahead_len()
         except OSError as e:
-            raise IOError(*e.args)
+            raise OSError(*e.args)
 
     def seek(self, offset, whence=0):
         self.flush()
@@ -93,7 +93,7 @@ class GreenPipe(_fileobject):
         try:
             rv = os.lseek(self.fileno(), offset, whence)
         except OSError as e:
-            raise IOError(*e.args)
+            raise OSError(*e.args)
         else:
             self._clear_readahead_buf()
             return rv
@@ -106,7 +106,7 @@ class GreenPipe(_fileobject):
             try:
                 rv = os.ftruncate(self.fileno(), size)
             except OSError as e:
-                raise IOError(*e.args)
+                raise OSError(*e.args)
             else:
                 self.seek(size)  # move position&clear buffer
                 return rv
@@ -115,7 +115,7 @@ class GreenPipe(_fileobject):
         try:
             return os.isatty(self.fileno())
         except OSError as e:
-            raise IOError(*e.args)
+            raise OSError(*e.args)
 
 
 class _SocketDuckForFd:
@@ -162,7 +162,7 @@ class _SocketDuckForFd:
                 return data
             except OSError as e:
                 if get_errno(e) not in SOCKET_BLOCKING:
-                    raise IOError(*e.args)
+                    raise OSError(*e.args)
             self._trampoline(self, read=True)
 
     def recv_into(self, buf, nbytes=0, flags=0):
@@ -178,7 +178,7 @@ class _SocketDuckForFd:
                 return os.write(self._fileno, data)
             except OSError as e:
                 if get_errno(e) not in SOCKET_BLOCKING:
-                    raise IOError(*e.args)
+                    raise OSError(*e.args)
                 else:
                     trampoline(self, write=True)
 
@@ -190,7 +190,7 @@ class _SocketDuckForFd:
             total_sent = os_write(fileno, data)
         except OSError as e:
             if get_errno(e) != errno.EAGAIN:
-                raise IOError(*e.args)
+                raise OSError(*e.args)
             total_sent = 0
         while total_sent < len_data:
             self._trampoline(self, write=True)
@@ -198,7 +198,7 @@ class _SocketDuckForFd:
                 total_sent += os_write(fileno, data[total_sent:])
             except OSError as e:
                 if get_errno(e) != errno. EAGAIN:
-                    raise IOError(*e.args)
+                    raise OSError(*e.args)
 
     def __del__(self):
         self._close()

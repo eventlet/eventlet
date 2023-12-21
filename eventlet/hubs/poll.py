@@ -41,12 +41,12 @@ class Hub(hub.BaseHub):
                 else:
                     try:
                         self.poll.modify(fileno, mask)
-                    except (IOError, OSError):
+                    except OSError:
                         self.poll.register(fileno, mask)
             else:
                 try:
                     self.poll.unregister(fileno)
-                except (KeyError, IOError, OSError):
+                except (KeyError, OSError):
                     # raised if we try to remove a fileno that was
                     # already removed/invalid
                     pass
@@ -59,7 +59,7 @@ class Hub(hub.BaseHub):
         super().remove_descriptor(fileno)
         try:
             self.poll.unregister(fileno)
-        except (KeyError, ValueError, IOError, OSError):
+        except (KeyError, ValueError, OSError):
             # raised if we try to remove a fileno that was
             # already removed/invalid
             pass
@@ -78,7 +78,7 @@ class Hub(hub.BaseHub):
             return
         try:
             presult = self.do_poll(seconds)
-        except (IOError, select.error) as e:
+        except (OSError, select.error) as e:
             if support.get_errno(e) == errno.EINTR:
                 return
             raise

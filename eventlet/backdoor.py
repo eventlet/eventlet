@@ -34,7 +34,7 @@ class FileProxy:
         try:
             self.f.write(data, *a, **kw)
             self.f.flush()
-        except socket.error as e:
+        except OSError as e:
             if get_errno(e) != errno.EPIPE:
                 raise
 
@@ -107,7 +107,7 @@ def backdoor_server(sock, locals=None):
             try:
                 socketpair = sock.accept()
                 backdoor(socketpair, locals)
-            except socket.error as e:
+            except OSError as e:
                 # Broken pipe means it was shutdown
                 if get_errno(e) != errno.EPIPE:
                     raise

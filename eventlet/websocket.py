@@ -475,7 +475,7 @@ class WebSocket:
         if self.version == 76 and not self.websocket_closed:
             try:
                 self.socket.sendall(b"\xff\x00")
-            except SocketError:
+            except OSError:
                 # Sometimes, like when the remote side cuts off the connection,
                 # we don't care about this.
                 if not ignore_send_errors:  # pragma NO COVER
@@ -488,7 +488,7 @@ class WebSocket:
         try:
             self._send_closing_frame(True)
             self.socket.shutdown(True)
-        except SocketError as e:
+        except OSError as e:
             if e.errno != errno.ENOTCONN:
                 self.log.write('{ctx} socket shutdown error: {e}'.format(ctx=self.log_context, e=e))
         finally:
@@ -844,7 +844,7 @@ class RFC6455WebSocket(WebSocket):
                 data = ''
             try:
                 self.send(data, control_code=8)
-            except SocketError:
+            except OSError:
                 # Sometimes, like when the remote side cuts off the connection,
                 # we don't care about this.
                 if not ignore_send_errors:  # pragma NO COVER
@@ -857,7 +857,7 @@ class RFC6455WebSocket(WebSocket):
         try:
             self._send_closing_frame(close_data=close_data, ignore_send_errors=True)
             self.socket.shutdown(socket.SHUT_WR)
-        except SocketError as e:
+        except OSError as e:
             if e.errno != errno.ENOTCONN:
                 self.log.write('{ctx} socket shutdown error: {e}'.format(ctx=self.log_context, e=e))
         finally:
