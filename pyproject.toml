@@ -46,7 +46,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/eventlet/eventlet"
-History = "https://github.com/eventlet/eventlet/blob/main/NEWS"
+History = "https://github.com/eventlet/eventlet/blob/master/NEWS"
 Tracker = "https://github.com/eventlet/eventlet/issues"
 Source = "https://github.com/eventlet/eventlet"
 
