@@ -374,7 +374,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             else:
                 # it's a SSLObject, or a martian
                 raise NotImplementedError(
-                    '''eventlet.wsgi doesn't support sockets of type {0}'''.format(type(conn)))
+                    '''eventlet.wsgi doesn't support sockets of type {}'''.format(type(conn)))
 
     def handle(self):
         self.close_connection = True
@@ -403,7 +403,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         except socket.error as e:
             last_errno = support.get_errno(e)
             if last_errno in BROKEN_SOCK:
-                self.server.log.debug('({0}) connection reset by peer {1!r}'.format(
+                self.server.log.debug('({}) connection reset by peer {!r}'.format(
                     self.server.pid,
                     self.client_address))
             elif last_errno not in BAD_SOCK:
@@ -848,7 +848,7 @@ class Server(BaseHTTPServer.HTTPServer):
             # Expected exceptions are not exceptional
             conn_state[1].close()
             # similar to logging "accepted" in server()
-            self.log.debug('({0}) timed out {1!r}'.format(self.pid, conn_state[0]))
+            self.log.debug('({}) timed out {!r}'.format(self.pid, conn_state[0]))
 
     def log_message(self, message):
         raise AttributeError('''\
@@ -879,9 +879,9 @@ def socket_repr(sock):
 
     name = sock.getsockname()
     if sock.family == socket.AF_INET:
-        hier_part = '//{0}:{1}'.format(*name)
+        hier_part = '//{}:{}'.format(*name)
     elif sock.family == socket.AF_INET6:
-        hier_part = '//[{0}]:{1}'.format(*name[:2])
+        hier_part = '//[{}]:{}'.format(*name[:2])
     elif sock.family == socket.AF_UNIX:
         hier_part = name
     else:
@@ -1006,12 +1006,12 @@ If unsure, use eventlet.GreenPool.''')
         conn[1].close()
 
     try:
-        serv.log.info('({0}) wsgi starting up on {1}'.format(serv.pid, socket_repr(sock)))
+        serv.log.info('({}) wsgi starting up on {}'.format(serv.pid, socket_repr(sock)))
         while is_accepting:
             try:
                 client_socket, client_addr = sock.accept()
                 client_socket.settimeout(serv.socket_timeout)
-                serv.log.debug('({0}) accepted {1!r}'.format(serv.pid, client_addr))
+                serv.log.debug('({}) accepted {!r}'.format(serv.pid, client_addr))
                 connections[client_addr] = connection = [client_addr, client_socket, STATE_IDLE]
                 (pool.spawn(serv.process_request, connection)
                     .link(_clean_connection, connection))
@@ -1028,7 +1028,7 @@ If unsure, use eventlet.GreenPool.''')
             if prev_state == STATE_IDLE:
                 greenio.shutdown_safe(cs[1])
         pool.waitall()
-        serv.log.info('({0}) wsgi exited, is_accepting={1}'.format(serv.pid, is_accepting))
+        serv.log.info('({}) wsgi exited, is_accepting={}'.format(serv.pid, is_accepting))
         try:
             # NOTE: It's not clear whether we want this to leave the
             # socket open or close it.  Use cases like Spawning want

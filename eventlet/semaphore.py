@@ -34,10 +34,10 @@ class Semaphore:
         try:
             value = int(value)
         except ValueError as e:
-            msg = 'Semaphore() expect value :: int, actual: {0} {1}'.format(type(value), str(e))
+            msg = 'Semaphore() expect value :: int, actual: {} {}'.format(type(value), str(e))
             raise TypeError(msg)
         if value < 0:
-            msg = 'Semaphore() expect value >= 0, actual: {0}'.format(repr(value))
+            msg = 'Semaphore() expect value >= 0, actual: {}'.format(repr(value))
             raise ValueError(msg)
         self.counter = value
         self._waiters = collections.deque()

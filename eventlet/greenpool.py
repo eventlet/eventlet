@@ -18,10 +18,10 @@ class GreenPool:
         try:
             size = int(size)
         except ValueError as e:
-            msg = 'GreenPool() expect size :: int, actual: {0} {1}'.format(type(size), str(e))
+            msg = 'GreenPool() expect size :: int, actual: {} {}'.format(type(size), str(e))
             raise TypeError(msg)
         if size < 0:
-            msg = 'GreenPool() expect size >= 0, actual: {0}'.format(repr(size))
+            msg = 'GreenPool() expect size >= 0, actual: {}'.format(repr(size))
             raise ValueError(msg)
         self.size = size
         self.coroutines_running = set()

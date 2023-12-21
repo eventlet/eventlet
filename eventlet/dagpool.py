@@ -39,7 +39,7 @@ class PropagateError(Exception):
     """
     def __init__(self, key, exc):
         # initialize base class with a reasonable string message
-        msg = "PropagateError({0}): {1}: {2}" \
+        msg = "PropagateError({}): {}: {}" \
               .format(key, exc.__class__.__name__, exc)
         super().__init__(msg)
         self.msg = msg

@@ -1126,7 +1126,7 @@ class HTTPConnection:
 
                 if encode_chunked and self._http_vsn == 11:
                     # chunked encoding
-                    chunk = '{0:X}\r\n'.format(len(chunk)).encode('ascii') + chunk + b'\r\n'
+                    chunk = '{:X}\r\n'.format(len(chunk)).encode('ascii') + chunk + b'\r\n'
                 self.send(chunk)
 
             if encode_chunked and self._http_vsn == 11:
@@ -1294,7 +1294,7 @@ class HTTPConnection:
         encode_chunked = kwds.pop('encode_chunked', False)
         if kwds:
             # mimic interpreter error for unrecognized keyword
-            raise TypeError("endheaders() got an unexpected keyword argument '{0}'"
+            raise TypeError("endheaders() got an unexpected keyword argument '{}'"
                             .format(kwds.popitem()[0]))
 
         if self.__state == _CS_REQ_STARTED:
@@ -1308,7 +1308,7 @@ class HTTPConnection:
         encode_chunked = kwds.pop('encode_chunked', False)
         if kwds:
             # mimic interpreter error for unrecognized keyword
-            raise TypeError("request() got an unexpected keyword argument '{0}'"
+            raise TypeError("request() got an unexpected keyword argument '{}'"
                             .format(kwds.popitem()[0]))
         self._send_request(method, url, body, headers, encode_chunked)
 
