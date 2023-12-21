@@ -31,7 +31,7 @@ if __name__ == '__main__':
     def fun(name):
         try:
             results[name] = socket.gethostbyname(name)
-        except socket.error as e:
+        except OSError as e:
             print('name: {0} error: {1}'.format(name, e))
 
     pool = eventlet.GreenPool(size=n + 1)

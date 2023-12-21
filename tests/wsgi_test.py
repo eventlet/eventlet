@@ -159,7 +159,7 @@ def send_expect_close(sock, buf):
     # Since the test expects an early close, this can be ignored.
     try:
         sock.sendall(buf)
-    except socket.error as exc:
+    except OSError as exc:
         if support.get_errno(exc) != errno.EPIPE:
             raise
 
@@ -168,7 +168,7 @@ def read_http(sock):
     fd = sock.makefile('rb')
     try:
         response_line = bytes_to_str(fd.readline().rstrip(b'\r\n'))
-    except socket.error as exc:
+    except OSError as exc:
         # TODO find out whether 54 is ok here or not, I see it when running tests
         # on Python 3
         if support.get_errno(exc) in (10053, 54):
@@ -655,7 +655,7 @@ class TestHttpd(_TestBase):
 
         try:
             sock.sendall(b'PUT /3 HTTP/1.0\r\nHost: localhost\r\nConnection: close\r\n\r\n')
-        except socket.error as err:
+        except OSError as err:
             # At one point this could succeed; presumably some older versions
             # of python will still allow it, but now we get a BrokenPipeError
             if err.errno != errno.EPIPE:
@@ -733,7 +733,7 @@ class TestHttpd(_TestBase):
         try:
             server_sock_2.accept()
             # shouldn't be able to use this one anymore
-        except socket.error as exc:
+        except OSError as exc:
             self.assertEqual(support.get_errno(exc), errno.EBADF)
         self.spawn_server(sock=server_sock)
         sock = eventlet.connect(server_sock.getsockname())
@@ -1155,7 +1155,7 @@ class TestHttpd(_TestBase):
             try:
                 eventlet.connect(self.server_addr)
                 self.fail("Didn't expect to connect")
-            except socket.error as exc:
+            except OSError as exc:
                 self.assertEqual(support.get_errno(exc), errno.ECONNREFUSED)
 
         log_content = log.getvalue()
@@ -1445,7 +1445,7 @@ class TestHttpd(_TestBase):
         def chunk_reader(env, start_response):
             try:
                 content = env['wsgi.input'].read(1024)
-            except IOError:
+            except OSError:
                 blew_up[0] = True
                 content = b'ok'
             read_content.send(content)
@@ -1643,7 +1643,7 @@ class TestHttpd(_TestBase):
     def test_ipv6(self):
         try:
             sock = eventlet.listen(('::1', 0), family=socket.AF_INET6)
-        except (socket.gaierror, socket.error):  # probably no ipv6
+        except (OSError, socket.gaierror):  # probably no ipv6
             return
         log = six.StringIO()
         # first thing the server does is try to log the IP it's bound to
@@ -1932,7 +1932,7 @@ def read_headers(sock):
     fd = sock.makefile('rb')
     try:
         response_line = fd.readline()
-    except socket.error as exc:
+    except OSError as exc:
         if support.get_errno(exc) == 10053:
             raise ConnectionClosed
         raise

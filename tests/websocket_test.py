@@ -28,7 +28,7 @@ def handle(ws):
             eventlet.sleep(0.01)
     elif ws.path == '/error':
         # some random socket error that we shouldn't normally get
-        raise socket.error(errno.ENOTSOCK)
+        raise OSError(errno.ENOTSOCK)
     else:
         ws.close()
 

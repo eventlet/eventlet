@@ -257,7 +257,7 @@ def find_command(command):
         p = os.path.join(dir, command)
         if os.access(p, os.X_OK):
             return p
-    raise IOError(errno.ENOENT, 'Command not found: %r' % command)
+    raise OSError(errno.ENOENT, 'Command not found: %r' % command)
 
 
 def silence_warnings(func):
@@ -304,7 +304,7 @@ def get_database_auth():
                 [(str(modname), dict(
                     [(str(k), str(v)) for k, v in connectargs.items()]))
                  for modname, connectargs in auth_utf8.items()])
-        except IOError:
+        except OSError:
             pass
     return retval
 

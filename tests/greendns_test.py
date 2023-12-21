@@ -536,7 +536,7 @@ def _make_mock_resolve():
                 rdata = dns.rdtypes.IN.A.A(dns.rdataclass.IN,
                                            dns.rdatatype.A, addr)
                 family = socket.AF_INET
-            except (socket.error, dns.exception.SyntaxError):
+            except (OSError, dns.exception.SyntaxError):
                 rdata = dns.rdtypes.IN.AAAA.AAAA(dns.rdataclass.IN,
                                                  dns.rdatatype.AAAA, addr)
                 family = socket.AF_INET6
@@ -768,8 +768,8 @@ class TestGetaddrinfo(tests.LimitedTestCase):
             if addr == '127.0.0.1':
                 return [(socket.AF_INET, 1, 0, '', ('127.0.0.1', 0))]
             elif addr == '::1' and aiflags & socket.AI_ADDRCONFIG:
-                raise socket.error(socket.EAI_ADDRFAMILY,
-                                   'Address family for hostname not supported')
+                raise OSError(socket.EAI_ADDRFAMILY,
+                              'Address family for hostname not supported')
             elif addr == '::1' and not aiflags & socket.AI_ADDRCONFIG:
                 return [(socket.AF_INET6, 1, 0, '', ('::1', 0, 0, 0))]
         greendns.socket.getaddrinfo = getaddrinfo
@@ -784,13 +784,13 @@ class TestGetaddrinfo(tests.LimitedTestCase):
         # If AI_ADDRCONFIG is used but there is no address we need to
         # get an exception, not an empty list.
         def getaddrinfo(addr, port, family, socktype, proto, aiflags):
-            raise socket.error(socket.EAI_ADDRFAMILY,
-                               'Address family for hostname not supported')
+            raise OSError(socket.EAI_ADDRFAMILY,
+                          'Address family for hostname not supported')
         greendns.socket.getaddrinfo = getaddrinfo
         greendns.resolve = _make_mock_resolve()
         try:
             greendns.getaddrinfo('::1', None, 0, 0, 0, socket.AI_ADDRCONFIG)
-        except socket.error as e:
+        except OSError as e:
             assert e.errno == socket.EAI_ADDRFAMILY
 
 

@@ -53,9 +53,9 @@ class Test(LimitedTestCase):
     def test_raising_custom_exception(self):
         # You can customize the exception raised:
         try:
-            with Timeout(DELAY, IOError("Operation takes way too long")):
+            with Timeout(DELAY, OSError("Operation takes way too long")):
                 sleep(DELAY * 2)
-        except IOError as ex:
+        except OSError as ex:
             assert str(ex) == "Operation takes way too long", repr(ex)
 
     def test_raising_exception_class(self):
