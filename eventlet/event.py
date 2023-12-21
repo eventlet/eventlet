@@ -14,7 +14,7 @@ class NOT_USED:
 NOT_USED = NOT_USED()
 
 
-class Event(object):
+class Event:
     """An abstraction where an arbitrary number of coroutines
     can wait for one event from another.
 

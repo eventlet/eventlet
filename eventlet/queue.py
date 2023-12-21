@@ -61,7 +61,7 @@ Full = six.moves.queue.Full
 Empty = six.moves.queue.Empty
 
 
-class Waiter(object):
+class Waiter:
     """A low level synchronization class.
 
     Wrapper around greenlet's ``switch()`` and ``throw()`` calls that makes them safe:
@@ -143,7 +143,7 @@ class Waiter(object):
             self.greenlet = None
 
 
-class LightQueue(object):
+class LightQueue:
     """
     This is a variant of Queue that behaves mostly like the standard
     :class:`Stdlib_Queue`.  It differs by not supporting the

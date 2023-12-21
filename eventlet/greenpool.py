@@ -10,7 +10,7 @@ __all__ = ['GreenPool', 'GreenPile']
 DEBUG = True
 
 
-class GreenPool(object):
+class GreenPool:
     """The GreenPool class is a pool of green threads.
     """
 
@@ -184,7 +184,7 @@ class GreenPool(object):
         return self.starmap(function, six.moves.zip(*iterables))
 
 
-class GreenPile(object):
+class GreenPile:
     """GreenPile is an abstraction representing a bunch of I/O-related tasks.
 
     Construct a GreenPile with an existing GreenPool object.  The GreenPile will

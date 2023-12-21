@@ -26,7 +26,7 @@ class LockReleaseError(Exception):
     pass
 
 
-class _QueueLock(object):
+class _QueueLock:
     """A Lock that can be acquired by at most one thread. Any other
     thread calling acquire will be blocked in a queue. When release
     is called, the threads are awoken in the order they blocked,
@@ -76,7 +76,7 @@ class _QueueLock(object):
                 self._hub.schedule_call_global(0, self._waiters[0].switch)
 
 
-class _BlockedThread(object):
+class _BlockedThread:
     """Is either empty, or represents a single blocked thread that
     blocked itself by calling the block() method. The thread can be
     awoken by calling wake(). Wake() can be called multiple times and

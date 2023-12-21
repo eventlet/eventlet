@@ -4,7 +4,7 @@ import eventlet
 from eventlet import hubs
 
 
-class Semaphore(object):
+class Semaphore:
 
     """An unbounded semaphore.
     Optionally initialize with a resource *count*, then :meth:`acquire` and
@@ -193,7 +193,7 @@ class BoundedSemaphore(Semaphore):
         return super(BoundedSemaphore, self).release(blocking)
 
 
-class CappedSemaphore(object):
+class CappedSemaphore:
 
     """A blockingly bounded semaphore.
 

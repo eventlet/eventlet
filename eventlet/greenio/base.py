@@ -120,7 +120,7 @@ except ImportError:
     _GLOBAL_DEFAULT_TIMEOUT = object()
 
 
-class GreenSocket(object):
+class GreenSocket:
     """
     Green version of socket.socket class, that is intended to be 100%
     API-compatible.
@@ -473,7 +473,7 @@ try:
     from OpenSSL import SSL
 except ImportError:
     # pyOpenSSL not installed, define exceptions anyway for convenience
-    class SSL(object):
+    class SSL:
         class WantWriteError(Exception):
             pass
 

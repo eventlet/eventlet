@@ -22,7 +22,7 @@ connect = Connect = Connection
 
 
 # replicate the MySQLdb.connections module but with a tpooled Connection factory
-class MySQLdbConnectionsModule(object):
+class MySQLdbConnectionsModule:
     pass
 
 

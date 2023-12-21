@@ -21,7 +21,7 @@ except AttributeError:
     sys.ps2 = '... '
 
 
-class FileProxy(object):
+class FileProxy:
     def __init__(self, f):
         self.f = f
 

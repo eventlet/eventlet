@@ -155,7 +155,7 @@ def proxy_call(autowrap, f, *args, **kwargs):
         return rv
 
 
-class Proxy(object):
+class Proxy:
     """
     a simple proxy-wrapper of any object that comes with a
     methods-only interface, in order to forward every method

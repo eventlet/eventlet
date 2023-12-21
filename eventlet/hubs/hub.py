@@ -42,7 +42,7 @@ def closed_callback(fileno):
     pass
 
 
-class FdListener(object):
+class FdListener:
 
     def __init__(self, evtype, fileno, cb, tb, mark_as_closed):
         """ The following are required:
@@ -109,7 +109,7 @@ def alarm_handler(signum, frame):
     raise RuntimeError("Blocking detector ALARMED at" + str(inspect.getframeinfo(frame)))
 
 
-class BaseHub(object):
+class BaseHub:
     """ Base hub class for easing the implementation of subclasses that are
     specific to a particular underlying event architecture. """
 

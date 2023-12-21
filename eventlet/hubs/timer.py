@@ -9,7 +9,7 @@ useful for debugging leaking timers, to find out where the timer was set up. """
 _g_debug = False
 
 
-class Timer(object):
+class Timer:
     def __init__(self, seconds, cb, *args, **kw):
         """Create a timer.
             seconds: The minimum number of seconds to wait before calling

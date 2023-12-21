@@ -53,7 +53,7 @@ class PropagateError(Exception):
         return self.msg
 
 
-class DAGPool(object):
+class DAGPool:
     """
     A DAGPool is a pool that constrains greenthreads, not by max concurrency,
     but by data dependencies.

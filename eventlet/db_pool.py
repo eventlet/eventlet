@@ -308,7 +308,7 @@ class RawConnectionPool(BaseConnectionPool):
 ConnectionPool = TpooledConnectionPool
 
 
-class GenericConnectionWrapper(object):
+class GenericConnectionWrapper:
     def __init__(self, baseconn):
         self._base = baseconn
 
@@ -416,7 +416,7 @@ class PooledConnectionWrapper(GenericConnectionWrapper):
         # self.close()
 
 
-class DatabaseConnector(object):
+class DatabaseConnector:
     """
     This is an object which will maintain a collection of database
     connection pools on a per-host basis.

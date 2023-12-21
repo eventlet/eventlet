@@ -118,7 +118,7 @@ class GreenPipe(_fileobject):
             raise IOError(*e.args)
 
 
-class _SocketDuckForFd(object):
+class _SocketDuckForFd:
     """Class implementing all socket method used by _fileobject
     in cooperative manner using low level os I/O calls.
     """

@@ -161,7 +161,7 @@ class HostsAnswer(dns.resolver.Answer):
                            rrset.ttl if hasattr(rrset, 'ttl') else 0)
 
 
-class HostsResolver(object):
+class HostsResolver:
     """Class to parse the hosts file
 
     Attributes
@@ -312,7 +312,7 @@ class HostsResolver(object):
         return aliases
 
 
-class ResolverProxy(object):
+class ResolverProxy:
     """Resolver class which can also use /etc/hosts
 
     Initialise with a HostsResolver instance in order for it to also

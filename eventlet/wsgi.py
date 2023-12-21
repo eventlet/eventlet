@@ -73,7 +73,7 @@ class ChunkReadError(ValueError):
 WSGI_LOCAL = local()
 
 
-class Input(object):
+class Input:
 
     def __init__(self,
                  rfile,
@@ -272,7 +272,7 @@ def get_logger(log, debug):
         return LoggerFileWrapper(log or sys.stderr, debug)
 
 
-class LoggerNull(object):
+class LoggerNull:
     def __init__(self):
         pass
 
@@ -311,7 +311,7 @@ class LoggerFileWrapper(LoggerNull):
         self.log.write(msg)
 
 
-class FileObjectForHeaders(object):
+class FileObjectForHeaders:
 
     def __init__(self, fp):
         self.fp = fp

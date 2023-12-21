@@ -62,7 +62,7 @@ class BadRequest(Exception):
         self.headers = headers
 
 
-class WebSocketWSGI(object):
+class WebSocketWSGI:
     """Wraps a websocket handler function in a WSGI application.
 
     Use it like this::
@@ -349,7 +349,7 @@ class WebSocketWSGI(object):
         return int(out) // spaces
 
 
-class WebSocket(object):
+class WebSocket:
     """A websocket object that handles the details of
     serialization/deserialization to the socket.
 
@@ -524,7 +524,7 @@ class RFC6455WebSocket(WebSocket):
         self.max_frame_length = max_frame_length
         self._remote_close_data = None
 
-    class UTF8Decoder(object):
+    class UTF8Decoder:
         def __init__(self):
             if utf8validator:
                 self.validator = utf8validator.Utf8Validator()
@@ -593,7 +593,7 @@ class RFC6455WebSocket(WebSocket):
             data = data + d
         return data
 
-    class Message(object):
+    class Message:
         def __init__(self, opcode, max_frame_length, decoder=None, decompressor=None):
             self.decoder = decoder
             self.data = []

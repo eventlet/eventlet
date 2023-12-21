@@ -29,7 +29,7 @@ eventlet.patcher.inject(
 _count = 1
 
 
-class _GreenThread(object):
+class _GreenThread:
     """Wrapper for GreenThread objects to provide Thread-like attributes
     and methods"""
 

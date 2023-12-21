@@ -19,7 +19,7 @@ __all__ = ['inject', 'import_patched', 'monkey_patch', 'is_monkey_patched']
 __exclude = set(('__builtins__', '__file__', '__name__'))
 
 
-class SysModulesSaver(object):
+class SysModulesSaver:
     """Class that captures some subset of the current state of
     sys.modules.  Pass in an iterator of module names to the
     constructor."""

@@ -16,7 +16,7 @@ __all__ = ['spew', 'unspew', 'format_hub_listeners', 'format_hub_timers',
 _token_splitter = re.compile('\W+')
 
 
-class Spew(object):
+class Spew:
 
     def __init__(self, trace_names=None, show_values=True):
         self.trace_names = trace_names
