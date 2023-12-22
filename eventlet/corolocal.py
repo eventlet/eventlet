@@ -12,7 +12,7 @@ def get_ident():
 
 # the entire purpose of this class is to store off the constructor
 # arguments in a local variable without calling __init__ directly
-class _localbase(object):
+class _localbase:
     __slots__ = '_local__args', '_local__greens'
 
     def __new__(cls, *args, **kw):

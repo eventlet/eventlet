@@ -1,4 +1,3 @@
-# coding: utf-8
 """The :mod:`zmq` module wraps the :class:`Socket` and :class:`Context`
 found in :mod:`pyzmq <zmq>` to be non blocking.
 """
@@ -26,7 +25,7 @@ class LockReleaseError(Exception):
     pass
 
 
-class _QueueLock(object):
+class _QueueLock:
     """A Lock that can be acquired by at most one thread. Any other
     thread calling acquire will be blocked in a queue. When release
     is called, the threads are awoken in the order they blocked,
@@ -76,7 +75,7 @@ class _QueueLock(object):
                 self._hub.schedule_call_global(0, self._waiters[0].switch)
 
 
-class _BlockedThread(object):
+class _BlockedThread:
     """Is either empty, or represents a single blocked thread that
     blocked itself by calling the block() method. The thread can be
     awoken by calling wake(). Wake() can be called multiple times and
@@ -221,7 +220,7 @@ class Socket(_Socket):
     """
 
     def __init__(self, context, socket_type):
-        super(Socket, self).__init__(context, socket_type)
+        super().__init__(context, socket_type)
 
         self.__dict__['_eventlet_send_event'] = _BlockedThread()
         self.__dict__['_eventlet_recv_event'] = _BlockedThread()
@@ -250,7 +249,7 @@ class Socket(_Socket):
 
     @_wraps(_Socket.close)
     def close(self, linger=None):
-        super(Socket, self).close(linger)
+        super().close(linger)
         if self._eventlet_listener is not None:
             eventlet.hubs.get_hub().remove(self._eventlet_listener)
             self.__dict__['_eventlet_listener'] = None
