@@ -3,8 +3,22 @@ Unreleased
 
 * Fix security issue in the wsgi module related to RFC 9112 https://github.com/eventlet/eventlet/pull/826
 
-0.34.0
+0.34.2
 ======
+
+* Allowing inheritance of GreenSSLSocket without overriding the __new_ method https://github.com/eventlet/eventlet/pull/796
+* [bug] Fix broken API related to `__version__` removal https://github.com/eventlet/eventlet/pull/859
+* [doc] Fix pypi broken link https://github.com/eventlet/eventlet/pull/857
+
+0.34.1
+======
+
+* [bug] Fix memory leak in greendns https://github.com/eventlet/eventlet/issues/810
+* [infra] Fix OIDC authentication failure https://github.com/eventlet/eventlet/pull/855
+* [bug] Ignore asyncore and asynchat for Python 3.12+ https://github.com/eventlet/eventlet/issues/804
+
+0.34.0 (Not released on Pypi)
+=============================
 
 * Dropped support for Python 3.6 and earlier.
 * Fix Python 3.13 compat by adding missing attibute '_is_main_interpreter' https://github.com/eventlet/eventlet/pull/847

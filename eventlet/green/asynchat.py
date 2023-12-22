@@ -1,11 +1,14 @@
-from eventlet import patcher
-from eventlet.green import asyncore
-from eventlet.green import socket
+import sys
 
-patcher.inject(
-    'asynchat',
-    globals(),
-    ('asyncore', asyncore),
-    ('socket', socket))
+if sys.version_info < (3, 12):
+    from eventlet import patcher
+    from eventlet.green import asyncore
+    from eventlet.green import socket
 
-del patcher
+    patcher.inject(
+        'asynchat',
+        globals(),
+        ('asyncore', asyncore),
+        ('socket', socket))
+
+    del patcher
