@@ -758,6 +758,9 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
     def finish(self):
         try:
             BaseHTTPServer.BaseHTTPRequestHandler.finish(self)
+        except ssl.SSLZeroReturnError:
+            # TLS version of connection reset by peer
+            pass
         except socket.error as e:
             # Broken pipe, connection reset by peer
             if support.get_errno(e) not in BROKEN_SOCK:

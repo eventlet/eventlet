@@ -446,9 +446,6 @@ class TestHttpd(_TestBase):
             start_response('200 OK', {})
             return [environ['wsgi.input'].read()]
 
-        certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
-        private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
-
         server_sock = eventlet.wrap_ssl(eventlet.listen(('localhost', 0)),
                                         certfile=certificate_file,
                                         keyfile=private_key_file,
@@ -469,8 +466,6 @@ class TestHttpd(_TestBase):
             start_response("200 OK", [])
             return [b""]
 
-        certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
-        private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
         server_sock = eventlet.wrap_ssl(eventlet.listen(('localhost', 0)),
                                         certfile=certificate_file,
                                         keyfile=private_key_file,
@@ -581,9 +576,6 @@ class TestHttpd(_TestBase):
         def wsgi_app(environ, start_response):
             start_response('200 OK', [])
             return [environ['wsgi.input'].read()]
-
-        certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
-        private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
 
         sock = eventlet.wrap_ssl(
             eventlet.listen(('localhost', 0)),
