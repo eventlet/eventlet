@@ -37,7 +37,7 @@ unittest_delim = '--------------------------------------------------------------
 
 def parse_unittest_output(s):
     s = s[s.rindex(unittest_delim) + len(unittest_delim):]
-    num = int(re.search('^Ran (\d+) test.*?$', s, re.M).group(1))
+    num = int(re.search(r'^Ran (\d+) test.*?$', s, re.M).group(1))
     ok = re.search('^OK$', s, re.M)
     error, fail, timeout = 0, 0, 0
     failed_match = re.search(
@@ -51,7 +51,7 @@ def parse_unittest_output(s):
         error = int(error or '0')
     else:
         assert ok_match, repr(s)
-    timeout_match = re.search('^===disabled because of timeout: (\d+)$', s, re.M)
+    timeout_match = re.search(r'^===disabled because of timeout: (\d+)$', s, re.M)
     if timeout_match:
         timeout = int(timeout_match.group(1))
     return num, error, fail, timeout

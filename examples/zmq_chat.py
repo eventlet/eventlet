@@ -39,7 +39,7 @@ def read_chat_forever(reader, pub_socket):
 
         try:
             pub_socket.send_pyobj((who, line))
-        except socket.error as e:
+        except OSError as e:
             # ignore broken pipes, they just mean the participant
             # closed its connection already
             if e[0] != 32:

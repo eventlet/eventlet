@@ -65,7 +65,7 @@ def run_and_check(run_client):
         for x in gc.get_referrers(fd):
             print(pprint.pformat(x))
             for y in gc.get_referrers(x):
-                print('- {0}'.format(pprint.pformat(y)))
+                print('- {}'.format(pprint.pformat(y)))
         raise AssertionError('server should be dead by now')
 
 

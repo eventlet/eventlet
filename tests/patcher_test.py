@@ -3,7 +3,6 @@ import shutil
 import sys
 import tempfile
 
-import six
 import tests
 
 
@@ -33,12 +32,12 @@ class ProcessBase(tests.LimitedTestCase):
     TEST_TIMEOUT = 3  # starting processes is time-consuming
 
     def setUp(self):
-        super(ProcessBase, self).setUp()
+        super().setUp()
         self._saved_syspath = sys.path
         self.tempdir = tempfile.mkdtemp('_patcher_test')
 
     def tearDown(self):
-        super(ProcessBase, self).tearDown()
+        super().tearDown()
         sys.path = self._saved_syspath
         shutil.rmtree(self.tempdir)
 
@@ -52,11 +51,8 @@ class ProcessBase(tests.LimitedTestCase):
     def launch_subprocess(self, filename):
         path = os.path.join(self.tempdir, filename)
         output = tests.run_python(path)
-        if six.PY3:
-            output = output.decode('utf-8')
-            separator = '\n'
-        else:
-            separator = b'\n'
+        output = output.decode('utf-8')
+        separator = '\n'
         lines = output.split(separator)
         return output, lines
 
@@ -213,8 +209,7 @@ def test_monkey_patch_threading():
     tickcount = [0]
 
     def tick():
-        import six
-        for i in six.moves.range(1000):
+        for i in range(1000):
             tickcount[0] += 1
             eventlet.sleep()
 

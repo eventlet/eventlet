@@ -7,7 +7,6 @@ from eventlet import event
 from eventlet import greenthread
 from eventlet import patcher
 from eventlet.green import thread
-import six
 
 from tests import LimitedTestCase
 
@@ -19,11 +18,11 @@ class Locals(LimitedTestCase):
 
     def setUp(self):
         self.results = []
-        super(Locals, self).setUp()
+        super().setUp()
 
     def tearDown(self):
         self.results = []
-        super(Locals, self).tearDown()
+        super().tearDown()
 
     def test_assignment(self):
         my_local = corolocal.local()
@@ -82,7 +81,7 @@ class Locals(LimitedTestCase):
         refs = weakref.WeakKeyDictionary()
         my_local = corolocal.local()
 
-        class X(object):
+        class X:
             pass
 
         def do_something(i):
@@ -91,7 +90,7 @@ class Locals(LimitedTestCase):
             my_local.foo = o
 
         p = eventlet.GreenPool()
-        for i in six.moves.range(100):
+        for i in range(100):
             p.spawn(do_something, i)
         p.waitall()
         del p

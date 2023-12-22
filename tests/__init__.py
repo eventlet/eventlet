@@ -1,10 +1,10 @@
 # package is named tests, not test, so it won't be confused with test in stdlib
-from __future__ import print_function
 
 import contextlib
 import errno
 import functools
 import gc
+import io
 import json
 import os
 try:
@@ -12,10 +12,7 @@ try:
 except ImportError:
     resource = None
 import signal
-try:
-    import subprocess32 as subprocess  # py2
-except ImportError:
-    import subprocess  # py3
+import subprocess
 import sys
 import unittest
 import warnings
@@ -24,7 +21,6 @@ from unittest import SkipTest
 
 import eventlet
 from eventlet import tpool
-import six
 import socket
 from threading import Thread
 import struct
@@ -46,7 +42,7 @@ def assert_raises(exc_type):
             name = exc_type.__name__
         except AttributeError:
             pass
-        assert False, 'Expected exception {0}'.format(name)
+        assert False, 'Expected exception {}'.format(name)
 
 
 def skipped(func, *decorator_args):
@@ -258,7 +254,7 @@ def find_command(command):
         p = os.path.join(dir, command)
         if os.access(p, os.X_OK):
             return p
-    raise IOError(errno.ENOENT, 'Command not found: %r' % command)
+    raise OSError(errno.ENOENT, 'Command not found: %r' % command)
 
 
 def silence_warnings(func):
@@ -301,19 +297,17 @@ def get_database_auth():
             # Have to convert unicode objects to str objects because
             # mysqldb is dumb. Using a doubly-nested list comprehension
             # because we know that the structure is a two-level dict.
-            return dict(
-                [(str(modname), dict(
-                    [(str(k), str(v)) for k, v in connectargs.items()]))
-                 for modname, connectargs in auth_utf8.items()])
-        except IOError:
+            return {
+                str(modname): {
+                    str(k): str(v) for k, v in connectargs.items()}
+                 for modname, connectargs in auth_utf8.items()}
+        except OSError:
             pass
     return retval
 
 
 def run_python(path, env=None, args=None, timeout=None, pythonpath_extend=None, expect_pass=False):
     new_argv = [sys.executable]
-    if sys.version_info[:2] <= (2, 7):
-        new_argv += ['-W', 'ignore:Python 2 is no longer supported']
     new_env = os.environ.copy()
     new_env.setdefault('eventlet_test_in_progress', 'yes')
     src_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -346,9 +340,9 @@ def run_python(path, env=None, args=None, timeout=None, pythonpath_extend=None, 
         p.kill()
         output, _ = p.communicate(timeout=timeout)
         if expect_pass:
-            sys.stderr.write('Program {0} output:\n---\n{1}\n---\n'.format(path, output.decode()))
+            sys.stderr.write('Program {} output:\n---\n{}\n---\n'.format(path, output.decode()))
             assert False, 'timed out'
-        return '{0}\nFAIL - timed out'.format(output).encode()
+        return '{}\nFAIL - timed out'.format(output).encode()
 
     if expect_pass:
         if output.startswith(b'skip'):
@@ -360,7 +354,7 @@ def run_python(path, env=None, args=None, timeout=None, pythonpath_extend=None, 
         lines = output.splitlines()
         ok = lines[-1].rstrip() == b'pass'
         if not ok or len(lines) > 1:
-            sys.stderr.write('Program {0} output:\n---\n{1}\n---\n'.format(path, output.decode()))
+            sys.stderr.write('Program {} output:\n---\n{}\n---\n'.format(path, output.decode()))
         assert ok, 'Expected single line "pass" in stdout'
 
     return output
@@ -373,12 +367,12 @@ def run_isolated(path, prefix='tests/isolated/', **kwargs):
 
 def check_is_timeout(obj):
     value_text = getattr(obj, 'is_timeout', '(missing)')
-    assert eventlet.is_timeout(obj), 'type={0} str={1} .is_timeout={2}'.format(type(obj), str(obj), value_text)
+    assert eventlet.is_timeout(obj), 'type={} str={} .is_timeout={}'.format(type(obj), str(obj), value_text)
 
 
 @contextlib.contextmanager
 def capture_stderr():
-    stream = six.StringIO()
+    stream = io.StringIO()
     original = sys.stderr
     try:
         sys.stderr = stream

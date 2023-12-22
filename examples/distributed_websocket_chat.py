@@ -28,7 +28,7 @@ use_hub('zeromq')
 ctx = zmq.Context()
 
 
-class IDName(object):
+class IDName:
 
     def __init__(self):
         self.id = uuid1()
