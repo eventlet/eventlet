@@ -930,6 +930,20 @@ class TinyDNSTests(tests.LimitedTestCase):
             self.assertEqual(list(response.rrset.items)[0].address, expected_ip)
 
 
+class TestRaiseErrors(tests.LimitedTestCase):
+
+    def test_raise_new_error(self):
+        # https://github.com/eventlet/eventlet/issues/810
+        # Raise exception multiple times
+        for _ in range(3):
+            with self.assertRaises(socket.gaierror) as error:
+                greendns._raise_new_error(greendns.EAI_EAGAIN_ERROR)
+
+            self.assertIsNone(error.exception.__traceback__)
+        # Check no memory leak of exception instance
+        self.assertIsNone(greendns.EAI_EAGAIN_ERROR.__traceback__)
+
+
 def test_reverse_name():
     tests.run_isolated('greendns_from_address_203.py')
 
