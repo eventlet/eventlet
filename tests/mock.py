@@ -2190,7 +2190,7 @@ def create_autospec(spec, spec_set=False, instance=False, _parent=None,
         else:
             parent = mock
             if isinstance(spec, FunctionTypes):
-                parent = mock
+                parent = mock.mock
 
             new = MagicMock(parent=parent, name=entry, _new_name=entry,
                             _new_parent=parent, **kwargs)
