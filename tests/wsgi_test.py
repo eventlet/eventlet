@@ -671,7 +671,7 @@ class TestHttpd(_TestBase):
 
         sock.close()
 
-    @pytest.mark.skipif(sys.version_info >= (3, 11),
+    @pytest.mark.skipif(sys.version_info[:2] >= (3, 11),
                         reason="cgi deprecated since version 3.11, will be removed in version 3.13")
     def test_019_fieldstorage_compat(self):
         import cgi
