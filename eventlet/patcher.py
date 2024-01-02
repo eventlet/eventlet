@@ -384,6 +384,7 @@ def _green_existing_locks():
 
     This was originally noticed in the stdlib logging module."""
     import gc
+    import os
     import threading
     import eventlet.green.thread
     rlock_type = type(threading.RLock())
@@ -395,6 +396,11 @@ def _green_existing_locks():
         _fix_py3_rlock(obj, tid)
         del obj
 
+    # Report if there are RLocks we couldn't upgrade. For cases where we're
+    # using coverage.py in parent process, and more generally for tests in
+    # general, this is difficult to ensure, so just don't complain in that case.
+    if "PYTEST_CURRENT_TEST" in os.environ:
+        return
     # We don't want to use gc.get_objects() to find locks because that doesn't
     # work in older Python, but it's fine for logging purposes.
     gc.collect()
