@@ -1,8 +1,8 @@
-import cgi
 import collections
 import errno
 import io
 import os
+import pytest
 import shutil
 import signal
 import socket
@@ -671,7 +671,11 @@ class TestHttpd(_TestBase):
 
         sock.close()
 
+    @pytest.mark.skipif(sys.version_info[:2] >= (3, 11),
+                        reason="cgi deprecated since version 3.11, will be removed in version 3.13")
     def test_019_fieldstorage_compat(self):
+        import cgi
+
         def use_fieldstorage(environ, start_response):
             cgi.FieldStorage(fp=environ['wsgi.input'], environ=environ)
             start_response('200 OK', [('Content-type', 'text/plain')])
