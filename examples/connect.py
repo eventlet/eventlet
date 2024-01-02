@@ -12,7 +12,7 @@ def geturl(url):
     ip = socket.gethostbyname(url)
     c.connect((ip, 80))
     print('%s connected' % url)
-    c.sendall('GET /\r\n\r\n')
+    c.sendall(b'GET /\r\n\r\n')
     return c.recv(1024)
 
 
