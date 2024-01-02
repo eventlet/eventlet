@@ -1,3 +1,5 @@
+from __future__ import annotations
+from typing import Callable, Optional
 try:
     import _imp as imp
 except ImportError:
@@ -381,58 +383,53 @@ def _green_existing_locks():
     blocks the native thread. We need to replace these with green Locks.
 
     This was originally noticed in the stdlib logging module."""
-    import gc
     import threading
     import eventlet.green.thread
-    lock_type = type(threading.Lock())
     rlock_type = type(threading.RLock())
-    if hasattr(threading, '_PyRLock'):
-        # this happens on CPython3 and PyPy >= 7.0.0: "py3-style" rlocks, they
-        # are implemented natively in C and RPython respectively
-        py3_style = True
-        pyrlock_type = type(threading._PyRLock())
-    else:
-        # this happens on CPython2.7 and PyPy < 7.0.0: "py2-style" rlocks,
-        # they are implemented in pure-python
-        py3_style = False
-        pyrlock_type = None
 
     # We're monkey-patching so there can't be any greenlets yet, ergo our thread
     # ID is the only valid owner possible.
     tid = eventlet.green.thread.get_ident()
-    for obj in gc.get_objects():
-        if isinstance(obj, rlock_type):
-            if not py3_style and isinstance(obj._RLock__block, lock_type):
-                _fix_py2_rlock(obj, tid)
-            elif py3_style and not isinstance(obj, pyrlock_type):
-                _fix_py3_rlock(obj, tid)
-
-    if sys.version_info < (3, 10):
-        # Older py3 won't have RLocks show up in gc.get_objects() -- see
-        # https://github.com/eventlet/eventlet/issues/546 -- so green a handful
-        # that we know are significant
-        import logging
-        if isinstance(logging._lock, rlock_type):
-            _fix_py3_rlock(logging._lock, tid)
-        logging._acquireLock()
-        try:
-            for ref in logging._handlerList:
-                handler = ref()
-                if handler and isinstance(handler.lock, rlock_type):
-                    _fix_py3_rlock(handler.lock, tid)
-                del handler
-        finally:
-            logging._releaseLock()
+    for obj in _find_instances(sys.modules, rlock_type):
+        _fix_py3_rlock(obj, tid)
 
 
-def _fix_py2_rlock(rlock, tid):
-    import eventlet.green.threading
-    old = rlock._RLock__block
-    new = eventlet.green.threading.Lock()
-    rlock._RLock__block = new
-    if old.locked():
-        new.acquire()
-        rlock._RLock__owner = tid
+def _find_instances(container, klass, visited=None, found=None):
+    """
+    Starting with a Python object, find all instances of ``klass``, following
+    references in ``dict`` values, ``list`` items, and attributes.
+    """
+    if visited is None:
+        visited = {}  # map id(obj) to obj
+    if found is None:
+        found = set()
+
+    # Handle circular references:
+    visited[id(container)] = container
+
+    def add_or_traverse(obj):
+        if id(obj) in visited:
+            return
+        if isinstance(obj, klass):
+            found.add(obj)
+        else:
+            _find_instances(obj, klass, visited, found)
+
+    if isinstance(container, dict):
+        for v in list(container.values()):
+            add_or_traverse(v)
+    if isinstance(container, list):
+        for v in container:
+            add_or_traverse(v)
+    try:
+        container_vars = vars(container)
+    except TypeError:
+        pass
+    else:
+        for v in list(container_vars.values()):
+            add_or_traverse(v)
+
+    return found
 
 
 def _upgrade_object(container, old, new, visited=None):
