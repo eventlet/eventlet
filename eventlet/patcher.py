@@ -435,8 +435,45 @@ def _fix_py2_rlock(rlock, tid):
         rlock._RLock__owner = tid
 
 
+def _upgrade_object(container, old, new, visited=None):
+    """
+    Starting with a Python object, attempt to upgrade all references of ``old``
+    to ``new``.
+
+    In practice only ``dict`` values, ``list`` items, and attributes are
+    supported.
+    """
+    if visited is None:
+        visited = {}  # map id(obj) to obj
+
+    # Handle circular references:
+    visited[id(container)] = container
+
+    if isinstance(container, dict):
+        for k, v in list(container.items()):
+            if v is old:
+                container[k] = new
+            elif id(v) not in visited:
+                _upgrade_object(v, old, new, visited)
+    if isinstance(container, list):
+        for i, v in enumerate(container):
+            if v is old:
+                container[i] = new
+            elif id(v) not in visited:
+                _upgrade_object(v, old, new, visited)
+    try:
+        container_vars = vars(container)
+    except TypeError:
+        pass
+    else:
+        for k, v in container_vars.items():
+            if v is old:
+                setattr(container, k, new)
+            elif id(v) not in visited:
+                _upgrade_object(v, old, new, visited)
+
+
 def _fix_py3_rlock(old, tid):
-    import gc
     import threading
     from eventlet.green.thread import allocate_lock
     new = threading._PyRLock()
@@ -458,26 +495,7 @@ def _fix_py3_rlock(old, tid):
         acquired = True
     if acquired:
         new._owner = tid
-    gc.collect()
-    for ref in gc.get_referrers(old):
-        if isinstance(ref, dict):
-            for k, v in list(ref.items()):
-                if v is old:
-                    ref[k] = new
-            continue
-        if isinstance(ref, list):
-            for i, v in enumerate(ref):
-                if v is old:
-                    ref[i] = new
-            continue
-        try:
-            ref_vars = vars(ref)
-        except TypeError:
-            pass
-        else:
-            for k, v in ref_vars.items():
-                if v is old:
-                    setattr(ref, k, new)
+    _upgrade_object(sys.modules, old, new)
 
 
 def _green_os_modules():
