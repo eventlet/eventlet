@@ -9,7 +9,7 @@ if __name__ == '__main__':
     class RequiredException(Exception):
         pass
 
-    class A(object):
+    class A:
         def ok(self):
             return 'ok'
 

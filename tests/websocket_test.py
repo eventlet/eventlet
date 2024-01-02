@@ -6,7 +6,6 @@ import eventlet
 from eventlet import event
 from eventlet import greenio
 from eventlet.green import httplib
-import six
 from eventlet.websocket import WebSocket, WebSocketWSGI
 
 import tests
@@ -28,7 +27,7 @@ def handle(ws):
             eventlet.sleep(0.01)
     elif ws.path == '/error':
         # some random socket error that we shouldn't normally get
-        raise socket.error(errno.ENOTSOCK)
+        raise OSError(errno.ENOTSOCK)
     else:
         ws.close()
 
@@ -110,16 +109,16 @@ class TestWebSocket(tests.wsgi_test._TestBase):
         ]
         sock = eventlet.connect(self.server_addr)
 
-        sock.sendall(six.b('\r\n'.join(connect) + '\r\n\r\n'))
+        sock.sendall('\r\n'.join(connect).encode() + b'\r\n\r\n')
         result = sock.recv(1024)
         # The server responds the correct Websocket handshake
-        self.assertEqual(result, six.b('\r\n'.join([
+        self.assertEqual(result, '\r\n'.join([
             'HTTP/1.1 101 Web Socket Protocol Handshake',
             'Upgrade: WebSocket',
             'Connection: Upgrade',
             'WebSocket-Origin: http://%s:%s' % self.server_addr,
             'WebSocket-Location: ws://%s:%s/echo\r\n\r\n' % self.server_addr,
-        ])))
+        ]).encode())
 
     def test_correct_upgrade_request_76(self):
         connect = [
@@ -134,17 +133,17 @@ class TestWebSocket(tests.wsgi_test._TestBase):
         ]
         sock = eventlet.connect(self.server_addr)
 
-        sock.sendall(six.b('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U'))
+        sock.sendall('\r\n'.join(connect).encode() + b'\r\n\r\n^n:ds[4U')
         result = sock.recv(1024)
         # The server responds the correct Websocket handshake
-        self.assertEqual(result, six.b('\r\n'.join([
+        self.assertEqual(result, '\r\n'.join([
             'HTTP/1.1 101 WebSocket Protocol Handshake',
             'Upgrade: WebSocket',
             'Connection: Upgrade',
             'Sec-WebSocket-Origin: http://%s:%s' % self.server_addr,
             'Sec-WebSocket-Protocol: ws',
             'Sec-WebSocket-Location: ws://%s:%s/echo\r\n\r\n8jKS\'y:G*Co,Wxa-' % self.server_addr,
-        ])))
+        ]).encode())
 
     def test_query_string(self):
         # verify that the query string comes out the other side unscathed
@@ -160,9 +159,9 @@ class TestWebSocket(tests.wsgi_test._TestBase):
         ]
         sock = eventlet.connect(self.server_addr)
 
-        sock.sendall(six.b('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U'))
+        sock.sendall('\r\n'.join(connect).encode() + b'\r\n\r\n^n:ds[4U')
         result = sock.recv(1024)
-        self.assertEqual(result, six.b('\r\n'.join([
+        self.assertEqual(result, '\r\n'.join([
             'HTTP/1.1 101 WebSocket Protocol Handshake',
             'Upgrade: WebSocket',
             'Connection: Upgrade',
@@ -170,7 +169,7 @@ class TestWebSocket(tests.wsgi_test._TestBase):
             'Sec-WebSocket-Protocol: ws',
             'Sec-WebSocket-Location: '
             'ws://%s:%s/echo?query_string\r\n\r\n8jKS\'y:G*Co,Wxa-' % self.server_addr,
-        ])))
+        ]).encode())
 
     def test_empty_query_string(self):
         # verify that a single trailing ? doesn't get nuked
@@ -186,16 +185,16 @@ class TestWebSocket(tests.wsgi_test._TestBase):
         ]
         sock = eventlet.connect(self.server_addr)
 
-        sock.sendall(six.b('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U'))
+        sock.sendall('\r\n'.join(connect).encode() + b'\r\n\r\n^n:ds[4U')
         result = sock.recv(1024)
-        self.assertEqual(result, six.b('\r\n'.join([
+        self.assertEqual(result, '\r\n'.join([
             'HTTP/1.1 101 WebSocket Protocol Handshake',
             'Upgrade: WebSocket',
             'Connection: Upgrade',
             'Sec-WebSocket-Origin: http://%s:%s' % self.server_addr,
             'Sec-WebSocket-Protocol: ws',
             'Sec-WebSocket-Location: ws://%s:%s/echo?\r\n\r\n8jKS\'y:G*Co,Wxa-' % self.server_addr,
-        ])))
+        ]).encode())
 
     def test_sending_messages_to_websocket_75(self):
         connect = [
@@ -208,7 +207,7 @@ class TestWebSocket(tests.wsgi_test._TestBase):
         ]
         sock = eventlet.connect(self.server_addr)
 
-        sock.sendall(six.b('\r\n'.join(connect) + '\r\n\r\n'))
+        sock.sendall('\r\n'.join(connect).encode() + b'\r\n\r\n')
         sock.recv(1024)
         sock.sendall(b'\x00hello\xFF')
         result = sock.recv(1024)
@@ -235,7 +234,7 @@ class TestWebSocket(tests.wsgi_test._TestBase):
         ]
         sock = eventlet.connect(self.server_addr)
 
-        sock.sendall(six.b('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U'))
+        sock.sendall('\r\n'.join(connect).encode() + b'\r\n\r\n^n:ds[4U')
         sock.recv(1024)
         sock.sendall(b'\x00hello\xFF')
         result = sock.recv(1024)
@@ -260,7 +259,7 @@ class TestWebSocket(tests.wsgi_test._TestBase):
         ]
         sock = eventlet.connect(self.server_addr)
 
-        sock.sendall(six.b('\r\n'.join(connect) + '\r\n\r\n'))
+        sock.sendall('\r\n'.join(connect).encode() + b'\r\n\r\n')
         resp = sock.recv(1024)
         headers, result = resp.split(b'\r\n\r\n')
         msgs = [result.strip(b'\x00\xff')]
@@ -269,7 +268,7 @@ class TestWebSocket(tests.wsgi_test._TestBase):
             msgs.append(sock.recv(20).strip(b'\x00\xff'))
             cnt -= 1
         # Last item in msgs is an empty string
-        self.assertEqual(msgs[:-1], [six.b('msg %d' % i) for i in range(10)])
+        self.assertEqual(msgs[:-1], [('msg %d' % i).encode() for i in range(10)])
 
     def test_getting_messages_from_websocket_76(self):
         connect = [
@@ -284,7 +283,7 @@ class TestWebSocket(tests.wsgi_test._TestBase):
         ]
         sock = eventlet.connect(self.server_addr)
 
-        sock.sendall(six.b('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U'))
+        sock.sendall('\r\n'.join(connect).encode() + b'\r\n\r\n^n:ds[4U')
         resp = sock.recv(1024)
         headers, result = resp.split(b'\r\n\r\n')
         msgs = [result[16:].strip(b'\x00\xff')]
@@ -293,7 +292,7 @@ class TestWebSocket(tests.wsgi_test._TestBase):
             msgs.append(sock.recv(20).strip(b'\x00\xff'))
             cnt -= 1
         # Last item in msgs is an empty string
-        self.assertEqual(msgs[:-1], [six.b('msg %d' % i) for i in range(10)])
+        self.assertEqual(msgs[:-1], [('msg %d' % i).encode() for i in range(10)])
 
     def test_breaking_the_connection_75(self):
         error_detected = [False]
@@ -320,7 +319,7 @@ class TestWebSocket(tests.wsgi_test._TestBase):
             "WebSocket-Protocol: ws",
         ]
         sock = eventlet.connect(self.server_addr)
-        sock.sendall(six.b('\r\n'.join(connect) + '\r\n\r\n'))
+        sock.sendall('\r\n'.join(connect).encode() + b'\r\n\r\n')
         sock.recv(1024)  # get the headers
         sock.close()  # close while the app is running
         done_with_request.wait()
@@ -353,7 +352,7 @@ class TestWebSocket(tests.wsgi_test._TestBase):
             "Sec-WebSocket-Key2: 12998 5 Y3 1  .P00",
         ]
         sock = eventlet.connect(self.server_addr)
-        sock.sendall(six.b('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U'))
+        sock.sendall('\r\n'.join(connect).encode() + b'\r\n\r\n^n:ds[4U')
         sock.recv(1024)  # get the headers
         sock.close()  # close while the app is running
         done_with_request.wait()
@@ -386,7 +385,7 @@ class TestWebSocket(tests.wsgi_test._TestBase):
             "Sec-WebSocket-Key2: 12998 5 Y3 1  .P00",
         ]
         sock = eventlet.connect(self.server_addr)
-        sock.sendall(six.b('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U'))
+        sock.sendall('\r\n'.join(connect).encode() + b'\r\n\r\n^n:ds[4U')
         sock.recv(1024)  # get the headers
         sock.sendall(b'\xff\x00')  # "Close the connection" packet.
         done_with_request.wait()
@@ -419,7 +418,7 @@ class TestWebSocket(tests.wsgi_test._TestBase):
             "Sec-WebSocket-Key2: 12998 5 Y3 1  .P00",
         ]
         sock = eventlet.connect(self.server_addr)
-        sock.sendall(six.b('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U'))
+        sock.sendall('\r\n'.join(connect).encode() + b'\r\n\r\n^n:ds[4U')
         sock.recv(1024)  # get the headers
         sock.sendall(b'\xef\x00')  # Weird packet.
         done_with_request.wait()
@@ -437,7 +436,7 @@ class TestWebSocket(tests.wsgi_test._TestBase):
             "Sec-WebSocket-Key2: 12998 5 Y3 1  .P00",
         ]
         sock = eventlet.connect(self.server_addr)
-        sock.sendall(six.b('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U'))
+        sock.sendall('\r\n'.join(connect).encode() + b'\r\n\r\n^n:ds[4U')
         resp = sock.recv(1024)
         headers, result = resp.split(b'\r\n\r\n')
         # The remote server should have immediately closed the connection.
@@ -468,7 +467,7 @@ class TestWebSocket(tests.wsgi_test._TestBase):
             "WebSocket-Protocol: ws",
         ]
         sock = eventlet.connect(self.server_addr)
-        sock.sendall(six.b('\r\n'.join(connect) + '\r\n\r\n'))
+        sock.sendall('\r\n'.join(connect).encode() + b'\r\n\r\n')
         sock.recv(1024)
         done_with_request.wait()
         assert error_detected[0]
@@ -500,7 +499,7 @@ class TestWebSocket(tests.wsgi_test._TestBase):
             "Sec-WebSocket-Key2: 12998 5 Y3 1  .P00",
         ]
         sock = eventlet.connect(self.server_addr)
-        sock.sendall(six.b('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U'))
+        sock.sendall('\r\n'.join(connect).encode() + b'\r\n\r\n^n:ds[4U')
         sock.recv(1024)
         done_with_request.wait()
         assert error_detected[0]
@@ -520,7 +519,7 @@ class TestWebSocket(tests.wsgi_test._TestBase):
             'Sec-WebSocket-Key2: 12998 5 Y3 1  .P00',
         )
         sock = eventlet.connect(self.server_addr)
-        sock.sendall(six.b('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U'))
+        sock.sendall('\r\n'.join(connect).encode() + b'\r\n\r\n^n:ds[4U')
         sock.recv(1024)
         sock.sendall(b'\x00hello\xff')
         result = sock.recv(1024)
@@ -533,8 +532,7 @@ class TestWebSocket(tests.wsgi_test._TestBase):
         site = self.site
 
         def wrapper(environ, start_response):
-            for chunk in site(environ, start_response):
-                yield chunk
+            yield from site(environ, start_response)
 
         self.site = wrapper
         self.spawn_server()
@@ -548,12 +546,12 @@ class TestWebSocket(tests.wsgi_test._TestBase):
         ]
         sock = eventlet.connect(self.server_addr)
 
-        sock.sendall(six.b("\r\n".join(connect) + "\r\n\r\n"))
+        sock.sendall("\r\n".join(connect).encode() + b"\r\n\r\n")
         resp = sock.recv(1024)
         headers, result = resp.split(b"\r\n\r\n")
         msgs = [result.strip(b"\x00\xff")]
         msgs.extend(sock.recv(20).strip(b"\x00\xff") for _ in range(10))
-        expect = [six.b("msg {}".format(i)) for i in range(10)] + [b""]
+        expect = ["msg {}".format(i).encode() for i in range(10)] + [b""]
         assert msgs == expect
         # In case of server error, server will write HTTP 500 response to the socket
         msg = sock.recv(20)
@@ -585,7 +583,7 @@ class TestWebSocketSSL(tests.wsgi_test._TestBase):
         ]
         sock = eventlet.wrap_ssl(eventlet.connect(self.server_addr))
 
-        sock.sendall(six.b('\r\n'.join(connect) + '\r\n\r\n^n:ds[4U'))
+        sock.sendall('\r\n'.join(connect).encode() + b'\r\n\r\n^n:ds[4U')
         first_resp = b''
         while b'\r\n\r\n' not in first_resp:
             first_resp += sock.recv()
@@ -618,7 +616,7 @@ class TestWebSocketObject(tests.LimitedTestCase):
                                   PATH_INFO='test')
 
         self.test_ws = WebSocket(s, env)
-        super(TestWebSocketObject, self).setUp()
+        super().setUp()
 
     def test_recieve(self):
         ws = self.test_ws
@@ -633,7 +631,7 @@ class TestWebSocketObject(tests.LimitedTestCase):
 
     def test_send_to_ws(self):
         ws = self.test_ws
-        ws.send(u'hello')
+        ws.send('hello')
         assert ws.socket.sendall.called_with("\x00hello\xFF")
         ws.send(10)
         assert ws.socket.sendall.called_with("\x0010\xFF")

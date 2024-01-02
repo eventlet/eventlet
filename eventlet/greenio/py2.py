@@ -10,7 +10,6 @@ from eventlet.greenio.base import (
 )
 from eventlet.hubs import trampoline, notify_close, notify_opened, IOClosed
 from eventlet.support import get_errno
-import six
 
 __all__ = ['_fileobject', 'GreenPipe']
 
@@ -22,10 +21,10 @@ class GreenPipe(_fileobject):
     __doc__ = greenpipe_doc
 
     def __init__(self, f, mode='r', bufsize=-1):
-        if not isinstance(f, six.string_types + (int, file)):
+        if not isinstance(f, (str,) + (int, file)):
             raise TypeError('f(ile) should be int, str, unicode or file, not %r' % f)
 
-        if isinstance(f, six.string_types):
+        if isinstance(f, str):
             f = open(f, mode, 0)
 
         if isinstance(f, int):
@@ -39,7 +38,7 @@ class GreenPipe(_fileobject):
             self._name = f.name
             f.close()
 
-        super(GreenPipe, self).__init__(_SocketDuckForFd(fileno), mode, bufsize)
+        super().__init__(_SocketDuckForFd(fileno), mode, bufsize)
         set_nonblocking(self)
         self.softspace = 0
 
@@ -56,7 +55,7 @@ class GreenPipe(_fileobject):
             (id(self) < 0) and (sys.maxint + id(self)) or id(self))
 
     def close(self):
-        super(GreenPipe, self).close()
+        super().close()
         for method in [
                 'fileno', 'flush', 'isatty', 'next', 'read', 'readinto',
                 'readline', 'readlines', 'seek', 'tell', 'truncate',
@@ -82,7 +81,7 @@ class GreenPipe(_fileobject):
         try:
             return os.lseek(self.fileno(), 0, 1) - self._get_readahead_len()
         except OSError as e:
-            raise IOError(*e.args)
+            raise OSError(*e.args)
 
     def seek(self, offset, whence=0):
         self.flush()
@@ -93,7 +92,7 @@ class GreenPipe(_fileobject):
         try:
             rv = os.lseek(self.fileno(), offset, whence)
         except OSError as e:
-            raise IOError(*e.args)
+            raise OSError(*e.args)
         else:
             self._clear_readahead_buf()
             return rv
@@ -106,7 +105,7 @@ class GreenPipe(_fileobject):
             try:
                 rv = os.ftruncate(self.fileno(), size)
             except OSError as e:
-                raise IOError(*e.args)
+                raise OSError(*e.args)
             else:
                 self.seek(size)  # move position&clear buffer
                 return rv
@@ -115,10 +114,10 @@ class GreenPipe(_fileobject):
         try:
             return os.isatty(self.fileno())
         except OSError as e:
-            raise IOError(*e.args)
+            raise OSError(*e.args)
 
 
-class _SocketDuckForFd(object):
+class _SocketDuckForFd:
     """Class implementing all socket method used by _fileobject
     in cooperative manner using low level os I/O calls.
     """
@@ -162,7 +161,7 @@ class _SocketDuckForFd(object):
                 return data
             except OSError as e:
                 if get_errno(e) not in SOCKET_BLOCKING:
-                    raise IOError(*e.args)
+                    raise OSError(*e.args)
             self._trampoline(self, read=True)
 
     def recv_into(self, buf, nbytes=0, flags=0):
@@ -178,7 +177,7 @@ class _SocketDuckForFd(object):
                 return os.write(self._fileno, data)
             except OSError as e:
                 if get_errno(e) not in SOCKET_BLOCKING:
-                    raise IOError(*e.args)
+                    raise OSError(*e.args)
                 else:
                     trampoline(self, write=True)
 
@@ -190,7 +189,7 @@ class _SocketDuckForFd(object):
             total_sent = os_write(fileno, data)
         except OSError as e:
             if get_errno(e) != errno.EAGAIN:
-                raise IOError(*e.args)
+                raise OSError(*e.args)
             total_sent = 0
         while total_sent < len_data:
             self._trampoline(self, write=True)
@@ -198,7 +197,7 @@ class _SocketDuckForFd(object):
                 total_sent += os_write(fileno, data[total_sent:])
             except OSError as e:
                 if get_errno(e) != errno. EAGAIN:
-                    raise IOError(*e.args)
+                    raise OSError(*e.args)
 
     def __del__(self):
         self._close()

@@ -5,7 +5,6 @@ import random
 
 import benchmarks
 from eventlet.hubs import timer, get_hub
-import six
 
 
 l = []
@@ -19,7 +18,7 @@ def work(n):
 @contextlib.contextmanager
 def setup(iters):
     l[:] = []
-    timeouts = [random.uniform(0, 10) for x in six.moves.range(iters)]
+    timeouts = [random.uniform(0, 10) for x in range(iters)]
     yield timeouts
 
 

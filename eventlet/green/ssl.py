@@ -10,7 +10,6 @@ from eventlet.greenio import (
 )
 from eventlet.hubs import trampoline, IOClosed
 from eventlet.support import get_errno, PY33
-import six
 from contextlib import contextmanager
 
 orig_socket = __import__('socket')
@@ -23,7 +22,6 @@ __patched__ = [
 
 _original_sslsocket = __ssl.SSLSocket
 _original_sslcontext = __ssl.SSLContext
-_is_under_py_3_7 = sys.version_info < (3, 7)
 _is_py_3_7 = sys.version_info[:2] == (3, 7)
 _original_wrap_socket = __ssl.SSLContext.wrap_socket
 
@@ -59,42 +57,39 @@ class GreenSSLSocket(_original_sslsocket):
                 server_side=False, cert_reqs=CERT_NONE,
                 ssl_version=PROTOCOL_SSLv23, ca_certs=None,
                 do_handshake_on_connect=True, *args, **kw):
-        if _is_under_py_3_7:
-            return super(GreenSSLSocket, cls).__new__(cls)
-        else:
-            if not isinstance(sock, GreenSocket):
-                sock = GreenSocket(sock)
-            with _original_ssl_context():
-                context = kw.get('_context')
-                if context:
-                    ret = _original_sslsocket._create(
-                        sock=sock.fd,
-                        server_side=server_side,
-                        do_handshake_on_connect=False,
-                        suppress_ragged_eofs=kw.get('suppress_ragged_eofs', True),
-                        server_hostname=kw.get('server_hostname'),
-                        context=context,
-                        session=kw.get('session'),
-                    )
-                else:
-                    ret = cls._wrap_socket(
-                        sock=sock.fd,
-                        keyfile=keyfile,
-                        certfile=certfile,
-                        server_side=server_side,
-                        cert_reqs=cert_reqs,
-                        ssl_version=ssl_version,
-                        ca_certs=ca_certs,
-                        do_handshake_on_connect=False,
-                        ciphers=kw.get('ciphers'),
-                    )
-            ret.keyfile = keyfile
-            ret.certfile = certfile
-            ret.cert_reqs = cert_reqs
-            ret.ssl_version = ssl_version
-            ret.ca_certs = ca_certs
-            ret.__class__ = cls
-            return ret
+        if not isinstance(sock, GreenSocket):
+            sock = GreenSocket(sock)
+        with _original_ssl_context():
+            context = kw.get('_context')
+            if context:
+                ret = _original_sslsocket._create(
+                    sock=sock.fd,
+                    server_side=server_side,
+                    do_handshake_on_connect=False,
+                    suppress_ragged_eofs=kw.get('suppress_ragged_eofs', True),
+                    server_hostname=kw.get('server_hostname'),
+                    context=context,
+                    session=kw.get('session'),
+                )
+            else:
+                ret = cls._wrap_socket(
+                    sock=sock.fd,
+                    keyfile=keyfile,
+                    certfile=certfile,
+                    server_side=server_side,
+                    cert_reqs=cert_reqs,
+                    ssl_version=ssl_version,
+                    ca_certs=ca_certs,
+                    do_handshake_on_connect=False,
+                    ciphers=kw.get('ciphers'),
+                )
+        ret.keyfile = keyfile
+        ret.certfile = certfile
+        ret.cert_reqs = cert_reqs
+        ret.ssl_version = ssl_version
+        ret.ca_certs = ca_certs
+        ret.__class__ = GreenSSLSocket
+        return ret
 
     @staticmethod
     def _wrap_socket(sock, keyfile, certfile, server_side, cert_reqs,
@@ -126,17 +121,6 @@ class GreenSSLSocket(_original_sslsocket):
             sock = GreenSocket(sock)
         self.act_non_blocking = sock.act_non_blocking
 
-        if six.PY2:
-            # On Python 2 SSLSocket constructor queries the timeout, it'd break without
-            # this assignment
-            self._timeout = sock.gettimeout()
-
-        if _is_under_py_3_7:
-            # nonblocking socket handshaking on connect got disabled so let's pretend it's disabled
-            # even when it's on
-            super(GreenSSLSocket, self).__init__(
-                sock.fd, keyfile, certfile, server_side, cert_reqs, ssl_version,
-                ca_certs, do_handshake_on_connect and six.PY2, *args, **kw)
         # the superclass initializer trashes the methods so we remove
         # the local-object versions of them and let the actual class
         # methods shine through
@@ -147,18 +131,17 @@ class GreenSSLSocket(_original_sslsocket):
         except AttributeError:
             pass
 
-        if six.PY3:
-            # Python 3 SSLSocket construction process overwrites the timeout so restore it
-            self._timeout = sock.gettimeout()
+        # Python 3 SSLSocket construction process overwrites the timeout so restore it
+        self._timeout = sock.gettimeout()
 
-            # it also sets timeout to None internally apparently (tested with 3.4.2)
-            _original_sslsocket.settimeout(self, 0.0)
-            assert _original_sslsocket.gettimeout(self) == 0.0
+        # it also sets timeout to None internally apparently (tested with 3.4.2)
+        _original_sslsocket.settimeout(self, 0.0)
+        assert _original_sslsocket.gettimeout(self) == 0.0
 
-            # see note above about handshaking
-            self.do_handshake_on_connect = do_handshake_on_connect
-            if do_handshake_on_connect and self._connected:
-                self.do_handshake()
+        # see note above about handshaking
+        self.do_handshake_on_connect = do_handshake_on_connect
+        if do_handshake_on_connect and self._connected:
+            self.do_handshake()
 
     def settimeout(self, timeout):
         self._timeout = timeout
@@ -204,14 +187,14 @@ class GreenSSLSocket(_original_sslsocket):
         """Write DATA to the underlying SSL channel.  Returns
         number of bytes of DATA actually transmitted."""
         return self._call_trampolining(
-            super(GreenSSLSocket, self).write, data)
+            super().write, data)
 
     def read(self, len=1024, buffer=None):
         """Read up to LEN bytes and return them.
         Return zero-length string on EOF."""
         try:
             return self._call_trampolining(
-                super(GreenSSLSocket, self).read, len, buffer)
+                super().read, len, buffer)
         except IOClosed:
             if buffer is None:
                 return b''
@@ -221,7 +204,7 @@ class GreenSSLSocket(_original_sslsocket):
     def send(self, data, flags=0):
         if self._sslobj:
             return self._call_trampolining(
-                super(GreenSSLSocket, self).send, data, flags)
+                super().send, data, flags)
         else:
             trampoline(self, write=True, timeout_exc=timeout_exc('timed out'))
             return socket.send(self, data, flags)
@@ -324,22 +307,22 @@ class GreenSSLSocket(_original_sslsocket):
         if not self.act_non_blocking:
             trampoline(self, read=True, timeout=self.gettimeout(),
                        timeout_exc=timeout_exc('timed out'))
-        return super(GreenSSLSocket, self).recvfrom(addr, buflen, flags)
+        return super().recvfrom(addr, buflen, flags)
 
     def recvfrom_into(self, buffer, nbytes=None, flags=0):
         if not self.act_non_blocking:
             trampoline(self, read=True, timeout=self.gettimeout(),
                        timeout_exc=timeout_exc('timed out'))
-        return super(GreenSSLSocket, self).recvfrom_into(buffer, nbytes, flags)
+        return super().recvfrom_into(buffer, nbytes, flags)
 
     def unwrap(self):
         return GreenSocket(self._call_trampolining(
-            super(GreenSSLSocket, self).unwrap))
+            super().unwrap))
 
     def do_handshake(self):
         """Perform a TLS/SSL handshake."""
         return self._call_trampolining(
-            super(GreenSSLSocket, self).do_handshake)
+            super().do_handshake)
 
     def _socket_connect(self, addr):
         real_connect = socket.connect
@@ -390,11 +373,8 @@ class GreenSSLSocket(_original_sslsocket):
             sslwrap = _ssl.sslwrap
         except AttributeError:
             # sslwrap was removed in 3.x and later in 2.7.9
-            if six.PY2:
-                sslobj = self._context._wrap_socket(self._sock, server_side, ssl_sock=self)
-            else:
-                context = self.context if PY33 else self._context
-                sslobj = context._wrap_socket(self, server_side, server_hostname=self.server_hostname)
+            context = self.context if PY33 else self._context
+            sslobj = context._wrap_socket(self, server_side, server_hostname=self.server_hostname)
         else:
             sslobj = sslwrap(self._sock, server_side, self.keyfile, self.certfile,
                              self.cert_reqs, self.ssl_version,
@@ -406,10 +386,7 @@ class GreenSSLSocket(_original_sslsocket):
         except NameError:
             self._sslobj = sslobj
         else:
-            if _is_under_py_3_7:
-                self._sslobj = SSLObject(sslobj, owner=self)
-            else:
-                self._sslobj = sslobj
+            self._sslobj = sslobj
 
         if self.do_handshake_on_connect:
             self.do_handshake()

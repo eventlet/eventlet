@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 from code import InteractiveConsole
 import errno
 import socket
@@ -21,7 +19,7 @@ except AttributeError:
     sys.ps2 = '... '
 
 
-class FileProxy(object):
+class FileProxy:
     def __init__(self, f):
         self.f = f
 
@@ -35,7 +33,7 @@ class FileProxy(object):
         try:
             self.f.write(data, *a, **kw)
             self.f.flush()
-        except socket.error as e:
+        except OSError as e:
             if get_errno(e) != errno.EPIPE:
                 raise
 
@@ -108,7 +106,7 @@ def backdoor_server(sock, locals=None):
             try:
                 socketpair = sock.accept()
                 backdoor(socketpair, locals)
-            except socket.error as e:
+            except OSError as e:
                 # Broken pipe means it was shutdown
                 if get_errno(e) != errno.EPIPE:
                     raise

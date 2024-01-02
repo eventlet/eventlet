@@ -13,26 +13,13 @@ from eventlet import hubs
 from eventlet.hubs import hub
 from eventlet.patcher import slurp_properties
 import sys
-import six
 
 __all__ = dir(builtins_orig)
 __patched__ = ['open']
-if six.PY2:
-    __patched__ += ['file']
-
 slurp_properties(builtins_orig, globals(),
                  ignore=__patched__, srckeys=dir(builtins_orig))
 
 hubs.get_hub()
-
-if six.PY2:
-    __original_file = file
-
-    class file(__original_file):
-        def __init__(self, *args, **kwargs):
-            super(file, self).__init__(*args, **kwargs)
-            hubs.notify_opened(self.fileno())
-
 
 __original_open = open
 __opening = False

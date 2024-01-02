@@ -1,10 +1,9 @@
 from eventlet import patcher
 from eventlet.green import socket
 from eventlet.green import SocketServer
-import six
 
 patcher.inject(
-    'BaseHTTPServer' if six.PY2 else 'http.server',
+    'http.server',
     globals(),
     ('socket', socket),
     ('SocketServer', SocketServer),

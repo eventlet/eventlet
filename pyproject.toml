@@ -41,7 +41,6 @@ dependencies = [
     'dnspython >= 1.15.0',
     'greenlet >= 1.0',
     'monotonic >= 1.4;python_version<"3.5"',
-    'six >= 1.10.0',
 ]
 
 [project.urls]
@@ -59,3 +58,6 @@ exclude = ["tests*", "benchmarks", "examples"]
 
 [tool.hatch]
 version.source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "eventlet/_version.py"

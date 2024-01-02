@@ -4,7 +4,6 @@ import warnings
 import eventlet
 from eventlet import convenience, debug
 from eventlet.green import socket
-import six
 import tests
 import tests.mock
 
@@ -15,11 +14,11 @@ private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
 
 class TestServe(tests.LimitedTestCase):
     def setUp(self):
-        super(TestServe, self).setUp()
+        super().setUp()
         debug.hub_exceptions(False)
 
     def tearDown(self):
-        super(TestServe, self).tearDown()
+        super().tearDown()
         debug.hub_exceptions(True)
 
     def test_exiting_server(self):
@@ -68,7 +67,7 @@ class TestServe(tests.LimitedTestCase):
             hits[0] += 1
         l = eventlet.listen(('localhost', 0))
         gt = eventlet.spawn(eventlet.serve, l, counter)
-        for i in six.moves.range(100):
+        for i in range(100):
             client = eventlet.connect(('localhost', l.getsockname()[1]))
             self.assertFalse(client.recv(100))
         gt.kill()
@@ -143,7 +142,7 @@ def test_socket_reuse():
         lsock1.close()
         try:
             lsock1 = eventlet.listen(addr)
-        except socket.error as e:
+        except OSError as e:
             errors.append(e)
             continue
         break
@@ -157,7 +156,7 @@ def test_socket_reuse():
             lsock2 = eventlet.listen(addr)
             assert lsock2
             lsock2.close()
-        except socket.error:
+        except OSError:
             pass
 
     lsock1.close()

@@ -2,7 +2,6 @@
 
 Demonstrates how to use the eventlet.green.socket module.
 """
-from __future__ import print_function
 
 import eventlet
 from eventlet.green import socket

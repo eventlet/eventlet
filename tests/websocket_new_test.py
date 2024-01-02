@@ -7,7 +7,6 @@ from eventlet import event
 from eventlet import websocket
 from eventlet.green import httplib
 from eventlet.green import socket
-import six
 
 import tests.wsgi_test
 
@@ -26,7 +25,7 @@ def handle(ws):
             eventlet.sleep(0.01)
     elif ws.path == '/error':
         # some random socket error that we shouldn't normally get
-        raise socket.error(errno.ENOTSOCK)
+        raise OSError(errno.ENOTSOCK)
     else:
         ws.close()
 
@@ -104,16 +103,16 @@ class TestWebSocket(tests.wsgi_test._TestBase):
             ]
             sock = eventlet.connect(self.server_addr)
 
-            sock.sendall(six.b('\r\n'.join(connect) + '\r\n\r\n'))
+            sock.sendall('\r\n'.join(connect).encode() + b'\r\n\r\n')
             result = sock.recv(1024)
             # The server responds the correct Websocket handshake
             print('Connection string: %r' % http_connection)
-            self.assertEqual(result, six.b('\r\n'.join([
+            self.assertEqual(result, ('\r\n'.join([
                 'HTTP/1.1 101 Switching Protocols',
                 'Upgrade: websocket',
                 'Connection: Upgrade',
                 'Sec-WebSocket-Accept: ywSyWXCPNsDxLrQdQrn5RFNRfBU=\r\n\r\n',
-            ])))
+            ])).encode())
 
     def test_send_recv_13(self):
         connect = [
@@ -126,15 +125,15 @@ class TestWebSocket(tests.wsgi_test._TestBase):
             "Sec-WebSocket-Key: d9MXuOzlVQ0h+qRllvSCIg==",
         ]
         sock = eventlet.connect(self.server_addr)
-        sock.sendall(six.b('\r\n'.join(connect) + '\r\n\r\n'))
+        sock.sendall('\r\n'.join(connect).encode() + b'\r\n\r\n')
         sock.recv(1024)
         ws = websocket.RFC6455WebSocket(sock, {}, client=True)
         ws.send(b'hello')
         assert ws.wait() == b'hello'
         ws.send(b'hello world!\x01')
-        ws.send(u'hello world again!')
+        ws.send('hello world again!')
         assert ws.wait() == b'hello world!\x01'
-        assert ws.wait() == u'hello world again!'
+        assert ws.wait() == 'hello world again!'
         ws.close()
         eventlet.sleep(0.01)
 
@@ -164,7 +163,7 @@ class TestWebSocket(tests.wsgi_test._TestBase):
             "Sec-WebSocket-Key: d9MXuOzlVQ0h+qRllvSCIg==",
         ]
         sock = eventlet.connect(self.server_addr)
-        sock.sendall(six.b('\r\n'.join(connect) + '\r\n\r\n'))
+        sock.sendall('\r\n'.join(connect).encode() + b'\r\n\r\n')
         sock.recv(1024)  # get the headers
         sock.close()  # close while the app is running
         done_with_request.wait()
@@ -196,7 +195,7 @@ class TestWebSocket(tests.wsgi_test._TestBase):
             "Sec-WebSocket-Key: d9MXuOzlVQ0h+qRllvSCIg==",
         ]
         sock = eventlet.connect(self.server_addr)
-        sock.sendall(six.b('\r\n'.join(connect) + '\r\n\r\n'))
+        sock.sendall('\r\n'.join(connect).encode() + b'\r\n\r\n')
         sock.recv(1024)  # get the headers
         closeframe = struct.pack('!BBIH', 1 << 7 | 8, 1 << 7 | 2, 0, 1000)
         sock.sendall(closeframe)  # "Close the connection" packet.
@@ -229,7 +228,7 @@ class TestWebSocket(tests.wsgi_test._TestBase):
             "Sec-WebSocket-Key: d9MXuOzlVQ0h+qRllvSCIg==",
         ]
         sock = eventlet.connect(self.server_addr)
-        sock.sendall(six.b('\r\n'.join(connect) + '\r\n\r\n'))
+        sock.sendall('\r\n'.join(connect).encode() + b'\r\n\r\n')
         sock.recv(1024)  # get the headers
         sock.sendall(b'\x07\xff')  # Weird packet.
         done_with_request.wait()
@@ -243,7 +242,7 @@ class TestWebSocketWithCompression(tests.wsgi_test._TestBase):
         self.site = wsapp
 
     def setUp(self):
-        super(TestWebSocketWithCompression, self).setUp()
+        super().setUp()
         self.connect = '\r\n'.join([
             "GET /echo HTTP/1.1",
             "Upgrade: websocket",
@@ -255,14 +254,14 @@ class TestWebSocketWithCompression(tests.wsgi_test._TestBase):
             "Sec-WebSocket-Extensions: %s",
             '\r\n'
         ])
-        self.handshake_re = re.compile(six.b('\r\n'.join([
+        self.handshake_re = re.compile('\r\n'.join([
             'HTTP/1.1 101 Switching Protocols',
             'Upgrade: websocket',
             'Connection: Upgrade',
             'Sec-WebSocket-Accept: ywSyWXCPNsDxLrQdQrn5RFNRfBU=',
             'Sec-WebSocket-Extensions: (.+)'
             '\r\n',
-        ])))
+        ]).encode())
 
     @staticmethod
     def get_deflated_reply(ws):
@@ -277,7 +276,7 @@ class TestWebSocketWithCompression(tests.wsgi_test._TestBase):
         ]:
             sock = eventlet.connect(self.server_addr)
 
-            sock.sendall(six.b(self.connect % extension))
+            sock.sendall((self.connect % extension).encode())
             result = sock.recv(1024)
 
             # The server responds the correct Websocket handshake
@@ -294,7 +293,7 @@ class TestWebSocketWithCompression(tests.wsgi_test._TestBase):
         ]:
             sock = eventlet.connect(self.server_addr)
 
-            sock.sendall(six.b(self.connect % extension))
+            sock.sendall((self.connect % extension).encode())
             result = sock.recv(1024)
 
             # The server responds the correct Websocket handshake
@@ -315,7 +314,7 @@ class TestWebSocketWithCompression(tests.wsgi_test._TestBase):
         ]:
             sock = eventlet.connect(self.server_addr)
 
-            sock.sendall(six.b(self.connect % extension_string))
+            sock.sendall((self.connect % extension_string).encode())
             result = sock.recv(1024)
 
             # The server responds the correct Websocket handshake
@@ -341,7 +340,7 @@ class TestWebSocketWithCompression(tests.wsgi_test._TestBase):
                             'permessage-deflate')
         sock = eventlet.connect(self.server_addr)
 
-        sock.sendall(six.b(self.connect % extension_string))
+        sock.sendall((self.connect % extension_string).encode())
         result = sock.recv(1024)
 
         # The server responds the correct Websocket handshake
@@ -356,7 +355,7 @@ class TestWebSocketWithCompression(tests.wsgi_test._TestBase):
             'server_no_context_takeover': False}}
 
         sock = eventlet.connect(self.server_addr)
-        sock.sendall(six.b(self.connect % extensions_string))
+        sock.sendall((self.connect % extensions_string).encode())
         sock.recv(1024)
         ws = websocket.RFC6455WebSocket(sock, {}, client=True,
                                         extensions=extensions)
@@ -381,7 +380,7 @@ class TestWebSocketWithCompression(tests.wsgi_test._TestBase):
             'server_no_context_takeover': True}}
 
         sock = eventlet.connect(self.server_addr)
-        sock.sendall(six.b(self.connect % extensions_string))
+        sock.sendall((self.connect % extensions_string).encode())
         sock.recv(1024)
         ws = websocket.RFC6455WebSocket(sock, {}, client=True,
                                         extensions=extensions)
@@ -441,16 +440,16 @@ class TestWebSocketWithCompression(tests.wsgi_test._TestBase):
             'server_no_context_takeover': False}}
 
         sock = eventlet.connect(self.server_addr)
-        sock.sendall(six.b(self.connect % extensions_string))
+        sock.sendall((self.connect % extensions_string).encode())
         sock.recv(1024)
         ws = websocket.RFC6455WebSocket(sock, {}, client=True, extensions=extensions)
 
         ws.send(b'hello')
         assert ws.wait() == b'hello'
         ws.send(b'hello world!')
-        ws.send(u'hello world again!')
+        ws.send('hello world again!')
         assert ws.wait() == b'hello world!'
-        assert ws.wait() == u'hello world again!'
+        assert ws.wait() == 'hello world again!'
 
         ws.close()
         eventlet.sleep(0.01)
@@ -462,7 +461,7 @@ class TestWebSocketWithCompression(tests.wsgi_test._TestBase):
             'server_no_context_takeover': False}}
 
         sock = eventlet.connect(self.server_addr)
-        sock.sendall(six.b(self.connect % extensions_string))
+        sock.sendall((self.connect % extensions_string).encode())
         sock.recv(1024)
 
         # Send without using deflate, having rsv1 unset
@@ -483,16 +482,16 @@ class TestWebSocketWithCompression(tests.wsgi_test._TestBase):
             'server_no_context_takeover': False}}
 
         sock = eventlet.connect(self.server_addr)
-        sock.sendall(six.b(self.connect % extensions_string))
+        sock.sendall((self.connect % extensions_string).encode())
         sock.recv(1024)
         ws = websocket.RFC6455WebSocket(sock, {}, client=True, extensions=extensions)
 
         ws.send(b'hello')
         assert ws.wait() == b'hello'
         ws.send(b'hello world!')
-        ws.send(u'hello world again!')
+        ws.send('hello world again!')
         assert ws.wait() == b'hello world!'
-        assert ws.wait() == u'hello world again!'
+        assert ws.wait() == 'hello world again!'
 
         ws.close()
         eventlet.sleep(0.01)
@@ -504,16 +503,16 @@ class TestWebSocketWithCompression(tests.wsgi_test._TestBase):
             'server_no_context_takeover': False}}
 
         sock = eventlet.connect(self.server_addr)
-        sock.sendall(six.b(self.connect % extensions_string))
+        sock.sendall((self.connect % extensions_string).encode())
         sock.recv(1024)
         ws = websocket.RFC6455WebSocket(sock, {}, client=True, extensions=extensions)
 
         ws.send(b'hello')
         assert ws.wait() == b'hello'
         ws.send(b'hello world!')
-        ws.send(u'hello world again!')
+        ws.send('hello world again!')
         assert ws.wait() == b'hello world!'
-        assert ws.wait() == u'hello world again!'
+        assert ws.wait() == 'hello world again!'
 
         ws.close()
         eventlet.sleep(0.01)
@@ -526,16 +525,16 @@ class TestWebSocketWithCompression(tests.wsgi_test._TestBase):
             'server_no_context_takeover': True}}
 
         sock = eventlet.connect(self.server_addr)
-        sock.sendall(six.b(self.connect % extensions_string))
+        sock.sendall((self.connect % extensions_string).encode())
         sock.recv(1024)
         ws = websocket.RFC6455WebSocket(sock, {}, client=True, extensions=extensions)
 
         ws.send(b'hello')
         assert ws.wait() == b'hello'
         ws.send(b'hello world!')
-        ws.send(u'hello world again!')
+        ws.send('hello world again!')
         assert ws.wait() == b'hello world!'
-        assert ws.wait() == u'hello world again!'
+        assert ws.wait() == 'hello world again!'
 
         ws.close()
         eventlet.sleep(0.01)
@@ -548,7 +547,7 @@ class TestWebSocketWithCompression(tests.wsgi_test._TestBase):
             'server_no_context_takeover': False}}
 
         sock = eventlet.connect(self.server_addr)
-        sock.sendall(six.b(self.connect % extensions_string))
+        sock.sendall((self.connect % extensions_string).encode())
         sock.recv(1024)
         ws = websocket.RFC6455WebSocket(sock, {}, client=True, extensions=extensions)
 
@@ -572,7 +571,7 @@ class TestWebSocketWithCompression(tests.wsgi_test._TestBase):
     def test_large_frame_size_uncompressed_13(self):
         # Test fix for GHSA-9p9m-jm8w-94p2
         sock = eventlet.connect(self.server_addr)
-        sock.sendall(six.b(self.connect))
+        sock.sendall(self.connect.encode())
         sock.recv(1024)
         ws = websocket.RFC6455WebSocket(sock, {}, client=True)
 

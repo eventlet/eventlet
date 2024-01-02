@@ -24,14 +24,14 @@ class TestUpstreamDownStream(tests.LimitedTestCase):
 
     @tests.skip_unless(zmq_supported)
     def setUp(self):
-        super(TestUpstreamDownStream, self).setUp()
+        super().setUp()
         self.context = zmq.Context()
         self.sockets = []
 
     @tests.skip_unless(zmq_supported)
     def tearDown(self):
         self.clear_up_sockets()
-        super(TestUpstreamDownStream, self).tearDown()
+        super().tearDown()
 
     def create_bound_pair(self, type1, type2, interface='tcp://127.0.0.1'):
         """Create a bound socket pair using a random port."""
@@ -250,7 +250,7 @@ class TestUpstreamDownStream(tests.LimitedTestCase):
                 pub.send(b'test BEGIN')
                 eventlet.sleep(0.005)
             for i in range(1, 101):
-                msg = 'test {0}'.format(i).encode()
+                msg = 'test {}'.format(i).encode()
                 if i != 50:
                     pub.send(msg)
                 else:
@@ -584,7 +584,7 @@ def clean_pair(type1, type2, interface='tcp://127.0.0.1'):
         s1 = ctx.socket(type1)
         port = s1.bind_to_random_port(interface)
         s2 = ctx.socket(type2)
-        s2.connect('{0}:{1}'.format(interface, port))
+        s2.connect('{}:{}'.format(interface, port))
         eventlet.sleep()
         yield (s1, s2, port)
         s1.close()

@@ -26,7 +26,7 @@ def fdopen(fd, *args, **kw):
         raise TypeError('fd should be int, not %r' % fd)
     try:
         return greenio.GreenPipe(fd, *args, **kw)
-    except IOError as e:
+    except OSError as e:
         raise OSError(*e.args)
 
 
@@ -40,10 +40,10 @@ def read(fd, n):
     while True:
         try:
             return __original_read__(fd, n)
-        except (OSError, IOError) as e:
+        except OSError as e:
             if get_errno(e) != errno.EAGAIN:
                 raise
-        except socket.error as e:
+        except OSError as e:
             if get_errno(e) == errno.EPIPE:
                 return ''
             raise
@@ -64,10 +64,10 @@ def write(fd, st):
     while True:
         try:
             return __original_write__(fd, st)
-        except (OSError, IOError) as e:
+        except OSError as e:
             if get_errno(e) != errno.EAGAIN:
                 raise
-        except socket.error as e:
+        except OSError as e:
             if get_errno(e) != errno.EPIPE:
                 raise
         hubs.trampoline(fd, write=True)

@@ -4,7 +4,6 @@ import random
 import eventlet
 from eventlet import hubs, pools
 from eventlet.support import greenlets as greenlet
-import six
 import tests
 
 
@@ -138,7 +137,7 @@ class GreenPool(tests.LimitedTestCase):
         timer = eventlet.Timeout(1)
         try:
             evt = eventlet.Event()
-            for x in six.moves.range(num_free):
+            for x in range(num_free):
                 pool.spawn(wait_long_time, evt)
                 # if the pool has fewer free than we expect,
                 # then we'll hit the timeout error
@@ -254,9 +253,9 @@ class GreenPool(tests.LimitedTestCase):
         self.assertEqual(r, [1])
 
         p.spawn_n(foo, 4)
-        self.assertEqual(set(r), set([1, 2, 3]))
+        self.assertEqual(set(r), {1, 2, 3})
         eventlet.sleep(0)
-        self.assertEqual(set(r), set([1, 2, 3, 4]))
+        self.assertEqual(set(r), {1, 2, 3, 4})
 
     def test_exceptions(self):
         p = eventlet.GreenPool(2)
@@ -307,7 +306,7 @@ class GreenPool(tests.LimitedTestCase):
         results = []
         while True:
             try:
-                results.append(six.next(it))
+                results.append(next(it))
             except RuntimeError:
                 results.append('r')
             except StopIteration:
@@ -414,7 +413,7 @@ class Stress(tests.LimitedTestCase):
         p = eventlet.GreenPile(concurrency)
 
         def makework(count, unique):
-            for i in six.moves.range(count):
+            for i in range(count):
                 token = (unique, i)
                 p.spawn(pressure, token)
 
@@ -428,7 +427,7 @@ class Stress(tests.LimitedTestCase):
         it = iter(p)
         while True:
             try:
-                i = six.next(it)
+                i = next(it)
             except StressException as exc:
                 i = exc.args[0]
             except StopIteration:
@@ -453,11 +452,11 @@ class Stress(tests.LimitedTestCase):
         # ordered and consumes a constant amount of memory
         p = eventlet.GreenPool(concurrency)
         count = 1000
-        it = p.imap(passthru, six.moves.range(count))
+        it = p.imap(passthru, range(count))
         latest = -1
         while True:
             try:
-                i = six.next(it)
+                i = next(it)
             except StopIteration:
                 break
 
@@ -496,7 +495,7 @@ class Stress(tests.LimitedTestCase):
 
             int_pool = IntPool(max_size=intpool_size)
             pool = eventlet.GreenPool(pool_size)
-            for ix in six.moves.range(num_executes):
+            for ix in range(num_executes):
                 pool.spawn(run, int_pool)
             pool.waitall()
 

@@ -2,11 +2,6 @@ import os
 import sys
 import warnings
 
-if sys.version_info < (3, 5):
-    warnings.warn(
-        "Support for your Python version is deprecated and will be removed in the future",
-        DeprecationWarning,
-    )
 
 from eventlet import convenience
 from eventlet import event
@@ -17,7 +12,19 @@ from eventlet import queue
 from eventlet import semaphore
 from eventlet import support
 from eventlet import timeout
+# NOTE(hberaud): Versions are now managed by hatch and control version.
+# hatch has a build hook which generates the version file, however,
+# if the project is installed in editable mode then the _version.py file
+# will not be updated unless the package is reinstalled (or locally rebuilt).
+# For further details, please read:
+# https://github.com/ofek/hatch-vcs#build-hook
+# https://github.com/maresb/hatch-vcs-footgun-example
+try:
+    from eventlet._version import __version__
+except ImportError:
+    __version__ = "0.0.0"
 import greenlet
+
 # Force monotonic library search as early as possible.
 # Helpful when CPython < 3.5 on Linux blocked in `os.waitpid(-1)` before first use of hub.
 # Example: gunicorn

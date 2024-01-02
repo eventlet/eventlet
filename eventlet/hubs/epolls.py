@@ -12,7 +12,7 @@ def is_available():
 # are identical in value to the poll constants
 class Hub(poll.Hub):
     def __init__(self, clock=None):
-        super(Hub, self).__init__(clock=clock)
+        super().__init__(clock=clock)
         self.poll = select.epoll()
 
     def add(self, evtype, fileno, cb, tb, mac):
@@ -22,7 +22,7 @@ class Hub(poll.Hub):
         listener = hub.BaseHub.add(self, evtype, fileno, cb, tb, mac)
         try:
             self.register(fileno, new=not oldlisteners)
-        except IOError as ex:    # ignore EEXIST, #80
+        except OSError as ex:    # ignore EEXIST, #80
             if support.get_errno(ex) != errno.EEXIST:
                 raise
         return listener

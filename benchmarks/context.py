@@ -1,5 +1,4 @@
 """Test context switching performance of threading and eventlet"""
-from __future__ import print_function
 
 import threading
 import time
