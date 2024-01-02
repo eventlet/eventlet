@@ -383,6 +383,7 @@ def _green_existing_locks():
     blocks the native thread. We need to replace these with green Locks.
 
     This was originally noticed in the stdlib logging module."""
+    import gc
     import threading
     import eventlet.green.thread
     rlock_type = type(threading.RLock())
@@ -392,6 +393,18 @@ def _green_existing_locks():
     tid = eventlet.green.thread.get_ident()
     for obj in _find_instances(sys.modules, rlock_type):
         _fix_py3_rlock(obj, tid)
+        del obj
+
+    # We don't want to use gc.get_objects() to find locks because that doesn't
+    # work in older Python, but it's fine for logging purposes.
+    gc.collect()
+    remaining_rlocks = {o for o in gc.get_objects() if isinstance(o, rlock_type)}
+    if remaining_rlocks:
+        import logging
+        logger = logging.Logger("eventlet")
+        logger.error("{} RLock(s) were not greened,".format(remaining_rlocks) +
+                     " to fix this error make sure you run eventlet.monkey_patch() " +
+                     "before importing any other modules.")
 
 
 def _find_instances(container, klass, visited=None, found=None):
