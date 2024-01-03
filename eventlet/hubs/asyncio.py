@@ -33,12 +33,7 @@ class Hub(hub.BaseHub):
         super().add_timer(timer)
         self.sleep_event.set()
 
-    def _file_cb(self, evtype, cb, fileno):
-        if evtype == hub.READ:
-            self.loop.remove_reader(fileno)
-        else:
-            self.loop.remove_writer(fileno)
-
+    def _file_cb(self, cb, fileno):
         try:
             cb(fileno)
         except self.SYSTEM_EXCEPTIONS:
@@ -56,9 +51,9 @@ class Hub(hub.BaseHub):
         listener = super().add(evtype, fileno, cb, tb, mark_as_closed)
         if not already_listening:
             if evtype == hub.READ:
-                self.loop.add_reader(fileno, self._file_cb, evtype, cb, fileno)
+                self.loop.add_reader(fileno, self._file_cb, cb, fileno)
             else:
-                self.loop.add_writer(fileno, self._file_cb, evtype, cb, fileno)
+                self.loop.add_writer(fileno, self._file_cb, cb, fileno)
         return listener
 
     def remove(self, listener):
