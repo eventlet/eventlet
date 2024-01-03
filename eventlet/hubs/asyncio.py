@@ -38,6 +38,7 @@ class Hub(hub.BaseHub):
         else:
             loop.remove_writer(fileno)
         self.schedule_call_global(0, cb)
+        self.schedule_call_global(0, _cb)
 
     def add(self, evtype, fileno, cb, tb, mark_as_closed):
         try:
