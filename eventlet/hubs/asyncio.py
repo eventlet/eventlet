@@ -22,6 +22,10 @@ class Hub(hub.BaseHub):
     def __init__(self):
         super().__init__()
         self.sleep_event = asyncio.Event()
+        # The presumption is that eventlet is driving the event loop, so we
+        # want a new one we control.
+        self.loop = asyncio.new_event_loop()
+        #asyncio.set_event_loop(self.loop)
 
     def add_timer(self, timer):
         super().add_timer(timer)
@@ -32,12 +36,10 @@ class Hub(hub.BaseHub):
             cb(fileno)
             self.sleep_event.set()
 
-        loop = asyncio.get_event_loop()
         if evtype == hub.READ:
-            loop.remove_reader(fileno)
+            self.loop.remove_reader(fileno)
         else:
-            loop.remove_writer(fileno)
-        self.schedule_call_global(0, cb)
+            self.loop.remove_writer(fileno)
         self.schedule_call_global(0, _cb)
 
     def add(self, evtype, fileno, cb, tb, mark_as_closed):
@@ -47,12 +49,11 @@ class Hub(hub.BaseHub):
             raise ValueError('Invalid file descriptor')
         already_listening = self.listeners[evtype].get(fileno) is not None
         listener = super().add(evtype, fileno, cb, tb, mark_as_closed)
-        loop = asyncio.get_event_loop()
         if not already_listening:
             if evtype == hub.READ:
-                loop.add_reader(fileno, self._file_cb, evtype, cb, fileno)
+                self.loop.add_reader(fileno, self._file_cb, evtype, cb, fileno)
             else:
-                loop.add_writer(fileno, self._file_cb, evtype, cb, fileno)
+                self.loop.add_writer(fileno, self._file_cb, evtype, cb, fileno)
         return listener
 
     def remove(self, listener):
@@ -60,21 +61,19 @@ class Hub(hub.BaseHub):
         evtype = listener.evtype
         fileno = listener.fileno
         if not self.listeners[evtype].get(fileno):
-            loop = asyncio.get_event_loop()
             if evtype == hub.READ:
-                loop.remove_reader(fileno)
+                self.loop.remove_reader(fileno)
             else:
-                loop.remove_writer(fileno)
+                self.loop.remove_writer(fileno)
 
     def remove_descriptor(self, fileno):
         have_read = self.listeners[hub.READ].get(fileno)
         have_write = self.listeners[hub.WRITE].get(fileno)
         super().remove_descriptor(fileno)
-        loop = asyncio.get_event_loop()
         if have_read:
-            loop.remove_reader(fileno)
+            self.loop.remove_reader(fileno)
         if have_write:
-            loop.remove_writer(fileno)
+            self.loop.remove_writer(fileno)
 
     def run(self, *a, **kw):
         async def async_run():
@@ -116,9 +115,4 @@ class Hub(hub.BaseHub):
                 self.running = False
                 self.stopping = False
 
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        loop.run_until_complete(async_run())
+        self.loop.run_until_complete(async_run())
