@@ -27,7 +27,7 @@ class Hub(hub.BaseHub):
         # The presumption is that eventlet is driving the event loop, so we
         # want a new one we control.
         self.loop = asyncio.new_event_loop()
-        #asyncio.set_event_loop(self.loop)
+        asyncio.set_event_loop(self.loop)
 
     def add_timer(self, timer):
         super().add_timer(timer)
