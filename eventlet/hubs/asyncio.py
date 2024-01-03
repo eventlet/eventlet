@@ -33,15 +33,13 @@ class Hub(hub.BaseHub):
         self.sleep_event.set()
 
     def _file_cb(self, evtype, cb, fileno):
-        def _cb():
-            cb(fileno)
-            self.sleep_event.set()
-
         if evtype == hub.READ:
             self.loop.remove_reader(fileno)
         else:
             self.loop.remove_writer(fileno)
-        self.schedule_call_global(0, _cb)
+
+        cb(fileno)
+        self.sleep_event.set()
 
     def add(self, evtype, fileno, cb, tb, mark_as_closed):
         try:
