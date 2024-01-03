@@ -9,6 +9,7 @@ from eventlet.hubs import hub
 
 
 def is_available():
+    """Python 3 always has asyncio."""
     return True
 
 
