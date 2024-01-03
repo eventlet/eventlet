@@ -44,6 +44,9 @@ jobs:
           - { py: "3.10", toxenv: ipv6, ignore-error: false, os: ubuntu-latest }
           - { py: "3.11", toxenv: py311-epolls, ignore-error: false, os: ubuntu-latest }
           - { py: "3.12", toxenv: py312-epolls, ignore-error: false, os: ubuntu-latest }
+          - { py: "3.10", toxenv: py310-asyncio, ignore-error: false, os: ubuntu-latest }
+          - { py: "3.11", toxenv: py311-asyncio, ignore-error: false, os: ubuntu-latest }
+          - { py: "3.12", toxenv: py312-asyncio, ignore-error: false, os: ubuntu-latest }
           - { py: pypy3.9, toxenv: pypy3-epolls, ignore-error: true, os: ubuntu-20.04 }
 
     steps:
