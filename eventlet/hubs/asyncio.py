@@ -4,6 +4,7 @@ Asyncio-based hub, originally implemented by Miguel Grinberg.
 
 import asyncio
 import os
+import sys
 
 from eventlet.hubs import hub
 
@@ -38,7 +39,12 @@ class Hub(hub.BaseHub):
         else:
             self.loop.remove_writer(fileno)
 
-        cb(fileno)
+        try:
+            cb(fileno)
+        except self.SYSTEM_EXCEPTIONS:
+            raise
+        except:
+            self.squelch_exception(fileno, sys.exc_info())
         self.sleep_event.set()
 
     def add(self, evtype, fileno, cb, tb, mark_as_closed):
