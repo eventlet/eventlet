@@ -404,7 +404,7 @@ def _green_existing_locks():
     # We don't want to use gc.get_objects() to find locks because that doesn't
     # work in older Python, but it's fine for logging purposes.
     gc.collect()
-    remaining_rlocks = {o for o in gc.get_objects() if isinstance(o, rlock_type)}
+    remaining_rlocks = len({o for o in gc.get_objects() if isinstance(o, rlock_type)})
     if remaining_rlocks:
         import logging
         logger = logging.Logger("eventlet")
@@ -417,6 +417,9 @@ def _find_instances(container, klass, visited=None, found=None):
     """
     Starting with a Python object, find all instances of ``klass``, following
     references in ``dict`` values, ``list`` items, and attributes.
+
+    In practice this is used only for ``threading.RLock``, so we can assume
+    instances are hashable.
     """
     if visited is None:
         visited = {}  # map id(obj) to obj
