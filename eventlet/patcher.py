@@ -392,9 +392,12 @@ def _green_existing_locks():
     # We're monkey-patching so there can't be any greenlets yet, ergo our thread
     # ID is the only valid owner possible.
     tid = eventlet.green.thread.get_ident()
-    for obj in _find_instances(sys.modules, rlock_type):
-        _fix_py3_rlock(obj, tid)
-        del obj
+
+    # Now, upgrade all instances:
+    def upgrade(old_lock):
+        return _convert_py3_rlock(old_lock, tid)
+
+    _upgrade_instances(sys.modules, rlock_type, upgrade)
 
     # Report if there are RLocks we couldn't upgrade. For cases where we're
     # using coverage.py in parent process, and more generally for tests in
@@ -413,86 +416,68 @@ def _green_existing_locks():
                      "before importing any other modules.")
 
 
-def _find_instances(container, klass, visited=None, found=None):
+def _upgrade_instances(container, klass, upgrade, visited=None, old_to_new=None):
     """
     Starting with a Python object, find all instances of ``klass``, following
     references in ``dict`` values, ``list`` items, and attributes.
+
+    Once an object is found, replace all instances with
+    ``upgrade(found_object)``, again limited to the criteria above.
 
     In practice this is used only for ``threading.RLock``, so we can assume
     instances are hashable.
     """
     if visited is None:
         visited = {}  # map id(obj) to obj
-    if found is None:
-        found = set()
+    if old_to_new is None:
+        old_to_new = {}  # map old klass instance to upgrade(old)
 
     # Handle circular references:
     visited[id(container)] = container
 
-    def add_or_traverse(obj):
+    def upgrade_or_traverse(obj):
         if id(obj) in visited:
-            return
+            return None
         if isinstance(obj, klass):
-            found.add(obj)
+            if obj in old_to_new:
+                return old_to_new[obj]
+            else:
+                new = upgrade(obj)
+                old_to_new[obj] = new
+                return new
         else:
-            _find_instances(obj, klass, visited, found)
-
-    if isinstance(container, dict):
-        for v in list(container.values()):
-            add_or_traverse(v)
-    if isinstance(container, list):
-        for v in container:
-            add_or_traverse(v)
-    try:
-        container_vars = vars(container)
-    except TypeError:
-        pass
-    else:
-        for v in list(container_vars.values()):
-            add_or_traverse(v)
-
-    return found
-
-
-def _upgrade_object(container, old, new, visited=None):
-    """
-    Starting with a Python object, attempt to upgrade all references of ``old``
-    to ``new``.
-
-    In practice only ``dict`` values, ``list`` items, and attributes are
-    supported.
-    """
-    if visited is None:
-        visited = {}  # map id(obj) to obj
-
-    # Handle circular references:
-    visited[id(container)] = container
+            _upgrade_instances(obj, klass, upgrade, visited, old_to_new)
+            return None
 
     if isinstance(container, dict):
         for k, v in list(container.items()):
-            if v is old:
+            new = upgrade_or_traverse(v)
+            if new is not None:
                 container[k] = new
-            elif id(v) not in visited:
-                _upgrade_object(v, old, new, visited)
     if isinstance(container, list):
         for i, v in enumerate(container):
-            if v is old:
+            new = upgrade_or_traverse(v)
+            if new is not None:
                 container[i] = new
-            elif id(v) not in visited:
-                _upgrade_object(v, old, new, visited)
     try:
         container_vars = vars(container)
     except TypeError:
         pass
     else:
-        for k, v in container_vars.items():
-            if v is old:
+        for k, v in list(container_vars.items()):
+            new = upgrade_or_traverse(v)
+            if new is not None:
                 setattr(container, k, new)
-            elif id(v) not in visited:
-                _upgrade_object(v, old, new, visited)
 
 
-def _fix_py3_rlock(old, tid):
+def _convert_py3_rlock(old, tid):
+    """
+    Convert a normal RLock to one implemented in Python.
+
+    This is necessary to make RLocks work with eventlet, but also introduces
+    bugs, e.g. https://bugs.python.org/issue13697.  So more of a downgrade,
+    really.
+    """
     import threading
     from eventlet.green.thread import allocate_lock
     new = threading._PyRLock()
@@ -514,7 +499,7 @@ def _fix_py3_rlock(old, tid):
         acquired = True
     if acquired:
         new._owner = tid
-    _upgrade_object(sys.modules, old, new)
+    return new
 
 
 def _green_os_modules():
