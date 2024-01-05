@@ -538,7 +538,14 @@ def _getaddrinfo_lookup(host, family, flags):
     return str(answer.qname), addrs
 
 
-def _getaddrinfo_impl(host, port, family=0, type=0, proto=0, flags=0):
+def getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+    """Replacement for Python's socket.getaddrinfo
+
+    This does the A and AAAA lookups asynchronously after which it
+    calls the OS' getaddrinfo(3) using the AI_NUMERICHOST flag.  This
+    flag ensures getaddrinfo(3) does not use the network itself and
+    allows us to respect all the other arguments like the native OS.
+    """
     if isinstance(host, six.string_types):
         host = host.encode('idna').decode('ascii')
     elif isinstance(host, six.binary_type):
@@ -571,27 +578,6 @@ def _getaddrinfo_impl(host, port, family=0, type=0, proto=0, flags=0):
         ai = res[0]
         res[0] = (ai[0], ai[1], ai[2], qname, ai[4])
     return res
-
-
-def getaddrinfo(host, port, family=0, socktype=0, proto=0, flags=0):
-    """Replacement for Python's socket.getaddrinfo
-
-    This does the A and AAAA lookups asynchronously after which it
-    calls the OS' getaddrinfo(3) using the AI_NUMERICHOST flag.  This
-    flag ensures getaddrinfo(3) does not use the network itself and
-    allows us to respect all the other arguments like the native OS.
-    """
-    return _getaddrinfo_impl(host, port, family, socktype, proto, flags)
-
-
-if six.PY3:
-    _doc = getaddrinfo.__doc__
-
-    def getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
-        return _getaddrinfo_impl(host, port, family, type, proto, flags)
-
-    getaddrinfo.__doc__ = _doc
-    del _doc
 
 
 def gethostbyname(hostname):
