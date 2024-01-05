@@ -1,5 +1,4 @@
 from __future__ import annotations
-from typing import Callable, Optional
 try:
     import _imp as imp
 except ImportError:
