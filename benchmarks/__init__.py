@@ -1,4 +1,3 @@
-from __future__ import print_function
 import argparse
 import gc
 import importlib
@@ -10,7 +9,6 @@ import sys
 import timeit
 
 import eventlet
-import six
 
 
 # legacy, TODO convert context/localhost_socket benchmarks to new way
@@ -19,7 +17,7 @@ def measure_best(repeat, iters,
                  common_cleanup='pass',
                  *funcs):
     funcs = list(funcs)
-    results = dict((f, []) for f in funcs)
+    results = {f: [] for f in funcs}
 
     for _ in range(repeat):
         random.shuffle(funcs)
@@ -30,7 +28,7 @@ def measure_best(repeat, iters,
             common_cleanup()
 
     best_results = {}
-    for func, times in six.iteritems(results):
+    for func, times in results.items():
         best_results[func] = min(times)
     return best_results
 
@@ -44,13 +42,13 @@ class Benchmark:
     mb_per_s = 0
 
     def __init__(self, **kwargs):
-        for k, v in six.iteritems(kwargs):
+        for k, v in kwargs.items():
             if not hasattr(self, k):
                 raise AttributeError(k)
             setattr(self, k, v)
 
     def __str__(self):
-        kvs = ', '.join('{}={}'.format(k, v) for k, v in six.iteritems(self.__dict__) if not k.startswith('_'))
+        kvs = ', '.join('{}={}'.format(k, v) for k, v in self.__dict__.items() if not k.startswith('_'))
         return 'Benchmark<{}>'.format(kvs)
 
     __repr__ = __str__

@@ -27,8 +27,6 @@ try:
 except ImportError:
     from time import monotonic
 
-import six
-
 g_prevent_multiple_readers = True
 
 READ = "read"
@@ -42,7 +40,7 @@ def closed_callback(fileno):
     pass
 
 
-class FdListener(object):
+class FdListener:
 
     def __init__(self, evtype, fileno, cb, tb, mark_as_closed):
         """ The following are required:
@@ -90,7 +88,7 @@ class DebugListener(FdListener):
     def __init__(self, evtype, fileno, cb, tb, mark_as_closed):
         self.where_called = traceback.format_stack()
         self.greenlet = greenlet.getcurrent()
-        super(DebugListener, self).__init__(evtype, fileno, cb, tb, mark_as_closed)
+        super().__init__(evtype, fileno, cb, tb, mark_as_closed)
 
     def __repr__(self):
         return "DebugListener(%r, %r, %r, %r, %r, %r)\n%sEndDebugFdListener" % (
@@ -109,7 +107,7 @@ def alarm_handler(signum, frame):
     raise RuntimeError("Blocking detector ALARMED at" + str(inspect.getframeinfo(frame)))
 
 
-class BaseHub(object):
+class BaseHub:
     """ Base hub class for easing the implementation of subclasses that are
     specific to a particular underlying event architecture. """
 
@@ -195,7 +193,7 @@ class BaseHub(object):
             their greenlets queued up to send.
         """
         found = False
-        for evtype, bucket in six.iteritems(self.secondaries):
+        for evtype, bucket in self.secondaries.items():
             if fileno in bucket:
                 for listener in bucket[fileno]:
                     found = True
@@ -205,7 +203,7 @@ class BaseHub(object):
 
         # For the primary listeners, we actually need to call remove,
         # which may modify the underlying OS polling objects.
-        for evtype, bucket in six.iteritems(self.listeners):
+        for evtype, bucket in self.listeners.items():
             if fileno in bucket:
                 listener = bucket[fileno]
                 found = True

@@ -39,7 +39,6 @@ or :meth:`Queue.put` will not block.  The new methods :meth:`Queue.getting`
 and :meth:`Queue.putting` report on the number of greenthreads blocking
 in :meth:`put <Queue.put>` or :meth:`get <Queue.get>` respectively.
 """
-from __future__ import print_function
 
 import sys
 import heapq
@@ -49,19 +48,18 @@ import traceback
 from eventlet.event import Event
 from eventlet.greenthread import getcurrent
 from eventlet.hubs import get_hub
-import six
-from six.moves import queue as Stdlib_Queue
+import queue as Stdlib_Queue
 from eventlet.timeout import Timeout
 
 
 __all__ = ['Queue', 'PriorityQueue', 'LifoQueue', 'LightQueue', 'Full', 'Empty']
 
 _NONE = object()
-Full = six.moves.queue.Full
-Empty = six.moves.queue.Empty
+Full = Stdlib_Queue.Full
+Empty = Stdlib_Queue.Empty
 
 
-class Waiter(object):
+class Waiter:
     """A low level synchronization class.
 
     Wrapper around greenlet's ``switch()`` and ``throw()`` calls that makes them safe:
@@ -143,7 +141,7 @@ class Waiter(object):
             self.greenlet = None
 
 
-class LightQueue(object):
+class LightQueue:
     """
     This is a variant of Queue that behaves mostly like the standard
     :class:`Stdlib_Queue`.  It differs by not supporting the

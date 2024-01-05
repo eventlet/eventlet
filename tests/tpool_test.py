@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from __future__ import print_function
 
 import gc
 import random
@@ -21,7 +20,6 @@ import time
 
 import eventlet
 from eventlet import tpool
-import six
 import tests
 
 
@@ -41,11 +39,11 @@ def raise_exception():
 
 class TestTpool(tests.LimitedTestCase):
     def setUp(self):
-        super(TestTpool, self).setUp()
+        super().setUp()
 
     def tearDown(self):
         tpool.killall()
-        super(TestTpool, self).tearDown()
+        super().tearDown()
 
     def test_wrap_tuple(self):
         my_tuple = (1, 2)
@@ -154,7 +152,7 @@ class TestTpool(tests.LimitedTestCase):
         counter = [0]
 
         def tick():
-            for i in six.moves.range(20000):
+            for i in range(20000):
                 counter[0] += 1
                 if counter[0] % 20 == 0:
                     eventlet.sleep(0.0001)
@@ -287,18 +285,16 @@ class TpoolLongTests(tests.LimitedTestCase):
     TEST_TIMEOUT = 60
 
     def test_a_buncha_stuff(self):
-        assert_ = self.assert_
-
-        class Dummy(object):
+        class Dummy:
             def foo(self, when, token=None):
-                assert_(token is not None)
+                assert token is not None
                 time.sleep(random.random() / 200.0)
                 return token
 
         def sender_loop(loopnum):
             obj = tpool.Proxy(Dummy())
             count = 100
-            for n in six.moves.range(count):
+            for n in range(count):
                 eventlet.sleep(random.random() / 200.0)
                 now = time.time()
                 token = loopnum * count + n
@@ -308,7 +304,7 @@ class TpoolLongTests(tests.LimitedTestCase):
 
         cnt = 10
         pile = eventlet.GreenPile(cnt)
-        for i in six.moves.range(cnt):
+        for i in range(cnt):
             pile.spawn(sender_loop, i)
         results = list(pile)
         self.assertEqual(len(results), cnt)
@@ -325,14 +321,12 @@ class TpoolLongTests(tests.LimitedTestCase):
         # some objects will inevitably be created by the previous loop
         # now we test to ensure that running the loop an order of
         # magnitude more doesn't generate additional objects
-        for i in six.moves.range(100):
+        for i in range(100):
             self.assertRaises(RuntimeError, tpool.execute, raise_exception)
         first_created = middle_objs - initial_objs
         gc.collect()
         second_created = len(gc.get_objects()) - middle_objs
-        self.assert_(second_created - first_created < 10,
-                     "first loop: %s, second loop: %s" % (first_created,
-                                                          second_created))
+        assert second_created - first_created < 10, "first loop: {}, second loop: {}".format(first_created, second_created)
         tpool.killall()
 
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Eventlet documentation build configuration file, created by
 # sphinx-quickstart on Sat Jul  4 19:48:27 2009.
@@ -42,8 +41,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Eventlet'
-copyright = u'2005-2010, Eventlet Contributors'
+project = 'Eventlet'
+copyright = '2005-2010, Eventlet Contributors'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -181,8 +180,8 @@ htmlhelp_basename = 'Eventletdoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'Eventlet.tex', u'Eventlet Documentation',
-   u'<eventlet contributors>', 'manual'),
+  ('index', 'Eventlet.tex', 'Eventlet Documentation',
+   '<eventlet contributors>', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

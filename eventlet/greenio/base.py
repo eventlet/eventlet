@@ -8,7 +8,6 @@ import warnings
 import eventlet
 from eventlet.hubs import trampoline, notify_opened, IOClosed
 from eventlet.support import get_errno
-import six
 
 __all__ = [
     'GreenSocket', '_GLOBAL_DEFAULT_TIMEOUT', 'set_nonblocking',
@@ -18,13 +17,10 @@ __all__ = [
 ]
 
 BUFFER_SIZE = 4096
-CONNECT_ERR = set((errno.EINPROGRESS, errno.EALREADY, errno.EWOULDBLOCK))
-CONNECT_SUCCESS = set((0, errno.EISCONN))
+CONNECT_ERR = {errno.EINPROGRESS, errno.EALREADY, errno.EWOULDBLOCK}
+CONNECT_SUCCESS = {0, errno.EISCONN}
 if sys.platform[:3] == "win":
     CONNECT_ERR.add(errno.WSAEINVAL)   # Bug 67
-
-if six.PY2:
-    _python2_fileobject = socket._fileobject
 
 _original_socket = eventlet.patcher.original('socket').socket
 
@@ -44,14 +40,14 @@ def socket_connect(descriptor, address):
     if err in CONNECT_ERR:
         return None
     if err not in CONNECT_SUCCESS:
-        raise socket.error(err, errno.errorcode[err])
+        raise OSError(err, errno.errorcode[err])
     return descriptor
 
 
 def socket_checkerr(descriptor):
     err = descriptor.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
     if err not in CONNECT_SUCCESS:
-        raise socket.error(err, errno.errorcode[err])
+        raise OSError(err, errno.errorcode[err])
 
 
 def socket_accept(descriptor):
@@ -62,7 +58,7 @@ def socket_accept(descriptor):
     """
     try:
         return descriptor.accept()
-    except socket.error as e:
+    except OSError as e:
         if get_errno(e) == errno.EWOULDBLOCK:
             return None
         raise
@@ -70,13 +66,13 @@ def socket_accept(descriptor):
 
 if sys.platform[:3] == "win":
     # winsock sometimes throws ENOTCONN
-    SOCKET_BLOCKING = set((errno.EAGAIN, errno.EWOULDBLOCK,))
-    SOCKET_CLOSED = set((errno.ECONNRESET, errno.ENOTCONN, errno.ESHUTDOWN))
+    SOCKET_BLOCKING = {errno.EAGAIN, errno.EWOULDBLOCK}
+    SOCKET_CLOSED = {errno.ECONNRESET, errno.ENOTCONN, errno.ESHUTDOWN}
 else:
     # oddly, on linux/darwin, an unconnected socket is expected to block,
     # so we treat ENOTCONN the same as EWOULDBLOCK
-    SOCKET_BLOCKING = set((errno.EAGAIN, errno.EWOULDBLOCK, errno.ENOTCONN))
-    SOCKET_CLOSED = set((errno.ECONNRESET, errno.ESHUTDOWN, errno.EPIPE))
+    SOCKET_BLOCKING = {errno.EAGAIN, errno.EWOULDBLOCK, errno.ENOTCONN}
+    SOCKET_CLOSED = {errno.ECONNRESET, errno.ESHUTDOWN, errno.EPIPE}
 
 
 def set_nonblocking(fd):
@@ -120,7 +116,7 @@ except ImportError:
     _GLOBAL_DEFAULT_TIMEOUT = object()
 
 
-class GreenSocket(object):
+class GreenSocket:
     """
     Green version of socket.socket class, that is intended to be 100%
     API-compatible.
@@ -135,7 +131,7 @@ class GreenSocket(object):
 
     def __init__(self, family=socket.AF_INET, *args, **kwargs):
         should_set_nonblocking = kwargs.pop('set_nonblocking', True)
-        if isinstance(family, six.integer_types):
+        if isinstance(family, int):
             fd = _original_socket(family, *args, **kwargs)
             # Notify the hub that this is a newly-opened socket.
             notify_opened(fd.fileno())
@@ -176,14 +172,13 @@ class GreenSocket(object):
     def _sock(self):
         return self
 
-    if six.PY3:
-        def _get_io_refs(self):
-            return self.fd._io_refs
+    def _get_io_refs(self):
+        return self.fd._io_refs
 
-        def _set_io_refs(self, value):
-            self.fd._io_refs = value
+    def _set_io_refs(self, value):
+        self.fd._io_refs = value
 
-        _io_refs = property(_get_io_refs, _set_io_refs)
+    _io_refs = property(_get_io_refs, _set_io_refs)
 
     # Forward unknown attributes to fd, cache the value for future use.
     # I do not see any simple attribute which could be changed
@@ -252,7 +247,7 @@ class GreenSocket(object):
                 try:
                     self._trampoline(fd, write=True)
                 except IOClosed:
-                    raise socket.error(errno.EBADFD)
+                    raise OSError(errno.EBADFD)
                 socket_checkerr(fd)
         else:
             end = time.time() + self.gettimeout()
@@ -266,7 +261,7 @@ class GreenSocket(object):
                     self._trampoline(fd, write=True, timeout=timeout, timeout_exc=_timeout_exc)
                 except IOClosed:
                     # ... we need some workable errno here.
-                    raise socket.error(errno.EBADFD)
+                    raise OSError(errno.EBADFD)
                 socket_checkerr(fd)
 
     def connect_ex(self, address):
@@ -278,7 +273,7 @@ class GreenSocket(object):
                 try:
                     self._trampoline(fd, write=True)
                     socket_checkerr(fd)
-                except socket.error as ex:
+                except OSError as ex:
                     return get_errno(ex)
                 except IOClosed:
                     return errno.EBADFD
@@ -295,7 +290,7 @@ class GreenSocket(object):
                     self._trampoline(fd, write=True, timeout=end - time.time(),
                                      timeout_exc=timeout_exc)
                     socket_checkerr(fd)
-                except socket.error as ex:
+                except OSError as ex:
                     return get_errno(ex)
                 except IOClosed:
                     return errno.EBADFD
@@ -307,21 +302,8 @@ class GreenSocket(object):
         newsock.settimeout(self.gettimeout())
         return newsock
 
-    if six.PY3:
-        def makefile(self, *args, **kwargs):
-            return _original_socket.makefile(self, *args, **kwargs)
-    else:
-        def makefile(self, *args, **kwargs):
-            dupped = self.dup()
-            res = _python2_fileobject(dupped, *args, **kwargs)
-            if hasattr(dupped, "_drop"):
-                dupped._drop()
-                # Making the close function of dupped None so that when garbage collector
-                # kicks in and tries to call del, which will ultimately call close, _drop
-                # doesn't get called on dupped twice as it has been already explicitly called in
-                # previous line
-                dupped.close = None
-            return res
+    def makefile(self, *args, **kwargs):
+        return _original_socket.makefile(self, *args, **kwargs)
 
     def makeGreenFile(self, *args, **kw):
         warnings.warn("makeGreenFile has been deprecated, please use "
@@ -352,7 +334,7 @@ class GreenSocket(object):
                 if not args[0]:
                     self._read_trampoline()
                 return recv_meth(*args)
-            except socket.error as e:
+            except OSError as e:
                 if get_errno(e) in SOCKET_BLOCKING:
                     pass
                 elif get_errno(e) in SOCKET_CLOSED:
@@ -386,7 +368,7 @@ class GreenSocket(object):
         while True:
             try:
                 return send_method(data, *args)
-            except socket.error as e:
+            except OSError as e:
                 eno = get_errno(e)
                 if eno == errno.ENOTCONN or eno not in SOCKET_BLOCKING:
                     raise
@@ -395,7 +377,7 @@ class GreenSocket(object):
                 self._trampoline(self.fd, write=True, timeout=self.gettimeout(),
                                  timeout_exc=_timeout_exc)
             except IOClosed:
-                raise socket.error(errno.ECONNRESET, 'Connection closed by another thread')
+                raise OSError(errno.ECONNRESET, 'Connection closed by another thread')
 
     def send(self, data, flags=0):
         return self._send_loop(self.fd.send, data, flags)
@@ -473,7 +455,7 @@ try:
     from OpenSSL import SSL
 except ImportError:
     # pyOpenSSL not installed, define exceptions anyway for convenience
-    class SSL(object):
+    class SSL:
         class WantWriteError(Exception):
             pass
 
@@ -503,7 +485,7 @@ def shutdown_safe(sock):
         except TypeError:
             # SSL.Connection
             return sock.shutdown()
-    except socket.error as e:
+    except OSError as e:
         # we don't care if the socket is already closed;
         # this will often be the case in an http server context
         if get_errno(e) not in (errno.ENOTCONN, errno.EBADF, errno.ENOTSOCK):

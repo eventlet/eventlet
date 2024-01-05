@@ -1,5 +1,10 @@
-from eventlet.green import zmq
 import eventlet
+
+try:
+    from eventlet.green import zmq
+except ModuleNotFoundError:
+    raise SystemExit("Unable to find required zmq module. "
+                     "Please install it before running this example.")
 
 CTX = zmq.Context(1)
 

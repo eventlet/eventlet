@@ -4,7 +4,6 @@ import eventlet
 from eventlet import Queue
 from eventlet import hubs
 from eventlet import pools
-import six
 
 
 class IntPool(pools.Pool):
@@ -117,14 +116,14 @@ class TestIntPool(TestCase):
             def just_put(pool_item, index):
                 self.pool.put(pool_item)
                 queue.put(index)
-            for index in six.moves.range(size + 1):
+            for index in range(size + 1):
                 pool_item = self.pool.get()
                 eventlet.spawn(just_put, pool_item, index)
 
-            for _ in six.moves.range(size + 1):
+            for _ in range(size + 1):
                 x = queue.get()
                 results.append(x)
-            self.assertEqual(sorted(results), list(six.moves.range(size + 1)))
+            self.assertEqual(sorted(results), list(range(size + 1)))
         finally:
             timer.cancel()
 
@@ -160,7 +159,7 @@ class TestIntPool(TestCase):
             p.put(x)
 
         gp = eventlet.GreenPool()
-        for i in six.moves.range(100):
+        for i in range(100):
             gp.spawn_n(do_get)
         gp.waitall()
         self.assertEqual(creates[0], 4)
@@ -245,7 +244,7 @@ ALWAYS = RuntimeError('I always fail')
 SOMETIMES = RuntimeError('I fail half the time')
 
 
-class TestTookTooLong(Exception):
+class TookTooLongToRunTest(Exception):
     pass
 
 
