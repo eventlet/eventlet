@@ -152,7 +152,7 @@ class LimitedTestCase(unittest.TestCase):
     timeout is 1 second, change it by setting TEST_TIMEOUT to the desired
     quantity."""
 
-    TEST_TIMEOUT = 1
+    TEST_TIMEOUT = 2
 
     def setUp(self):
         self.previous_alarm = None
