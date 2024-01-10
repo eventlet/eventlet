@@ -17,10 +17,6 @@ def is_available():
 class Hub(hub.BaseHub):
     """An Eventlet hub implementation on top of an asyncio event loop."""
 
-    @staticmethod
-    def is_available():
-        return True
-
     def __init__(self):
         super().__init__()
         self.sleep_event = asyncio.Event()
