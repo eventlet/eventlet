@@ -793,6 +793,11 @@ class TestGetaddrinfo(tests.LimitedTestCase):
         except OSError as e:
             assert e.errno == socket.EAI_ADDRFAMILY
 
+    def test_getaddrinfo_type_parameter(self):
+        greendns.resolve = _make_mock_resolve()
+        greendns.resolve.add('localhost', '127.0.0.1')
+        greendns.getaddrinfo('localhost', None, type=0)
+
 
 class TestIsIpAddr(tests.LimitedTestCase):
 
