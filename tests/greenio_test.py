@@ -9,7 +9,8 @@ import socket as _orig_sock
 import struct
 import sys
 import tempfile
-from unittest import SkipTest
+
+import pytest
 
 import eventlet
 from eventlet import event, greenio, debug
@@ -859,7 +860,9 @@ class TestGreenIoLong(tests.LimitedTestCase):
     def test_multiple_readers(self):
         from eventlet.hubs.asyncio import Hub
         if isinstance(get_hub(), Hub):
-            raise SkipTest("asyncio hub doesn't support multiple readers")
+            with pytest.raises(RuntimeError):
+                debug.hub_prevent_multiple_readers(False)
+            return
 
         debug.hub_prevent_multiple_readers(False)
         recvsize = 2 * min_buf_size()

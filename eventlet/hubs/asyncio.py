@@ -143,6 +143,4 @@ class Hub(hub.BaseHub):
                 self.running = False
                 self.stopping = False
 
-        if not hub.g_prevent_multiple_readers:
-            raise RuntimeError("Multiple readers are not supported by asyncio hub")
         self.loop.run_until_complete(async_run())
