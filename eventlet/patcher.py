@@ -403,8 +403,10 @@ def _green_existing_locks():
     # general, this is difficult to ensure, so just don't complain in that case.
     if "PYTEST_CURRENT_TEST" in os.environ:
         return
-    # We don't want to use gc.get_objects() to find locks because that doesn't
-    # work in older Python, but it's fine for logging purposes.
+    # On older Pythons (< 3.10), gc.get_objects() won't return any RLock
+    # instances, so this warning won't get logged on older Pythons. However,
+    # it's a useful warning, so we try to do it anyway for the benefit of those
+    # users on 3.10 or later.
     gc.collect()
     remaining_rlocks = len({o for o in gc.get_objects() if isinstance(o, rlock_type)})
     if remaining_rlocks:
