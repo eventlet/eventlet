@@ -10,6 +10,7 @@ from greenlet import GreenletExit
 from eventlet.hubs import get_hub
 from eventlet.hubs.asyncio import Hub as AsyncioHub
 from eventlet.asyncio import spawn_for_coroutine
+from eventlet.greenthread import getcurrent
 from .wsgi_test import _TestBase, Site
 
 if not isinstance(get_hub(), AsyncioHub):
