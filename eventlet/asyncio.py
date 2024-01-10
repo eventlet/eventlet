@@ -23,7 +23,7 @@ def spawn_for_coroutine(coroutine):
         future.add_done_callback(lambda _: has_result.send(True))
         has_result.wait()
         # Return the result of the Future (or raise an exception if it had an
-        # exception). TODO test both cases directly.
+        # exception).
         return future.result()
 
     # TODO what happens to Future if GreenThread is killed?

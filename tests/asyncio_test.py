@@ -1,5 +1,7 @@
 """Tests for asyncio integration."""
 
+import asyncio
+
 import pytest
 
 from eventlet.hubs import get_hub
@@ -8,9 +10,10 @@ from eventlet.asyncio import spawn_for_coroutine
 
 from .wsgi_test import _TestBase, Site
 
-IS_ASYNCIO = isinstance(get_hub(), AsyncioHub)
+if not isinstance(get_hub(), AsyncioHub):
+    pytest.skip("Only works on asyncio hub", allow_module_level=True)
 
-@pytest.mark.skipif(not IS_ASYNCIO, reason="Only works on asyncio hub")
+
 class CallingAsyncFunctionsFromGreenletsHighLevelTests(_TestBase):
     """
     High-level tests for using ``asyncio``-based code inside greenlets.
@@ -39,3 +42,30 @@ class CallingAsyncFunctionsFromGreenletsHighLevelTests(_TestBase):
 
         gthread = spawn_for_coroutine(request())
         assert gthread.wait() == "hello world"
+
+
+def test_result():
+    """
+    The result of the coroutine is returned by the ``GreenThread`` created by
+    ``spawn_for_coroutine``.
+    """
+
+    async def go():
+        await asyncio.sleep(0.0001)
+        return 13
+
+    assert spawn_for_coroutine(go()).wait() == 13
+
+
+def test_exception():
+    """
+    An exception raised by the coroutine is raised by ``GreenThread.wait()``
+    for the green thread created by ``spawn_for_coroutine()``.
+    """
+
+    async def go():
+        await asyncio.sleep(0.0001)
+        raise ZeroDivisionError()
+
+    with pytest.raises(ZeroDivisionError):
+        assert spawn_for_coroutine(go()).wait()
