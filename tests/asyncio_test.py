@@ -1,6 +1,7 @@
 """Tests for asyncio integration."""
 
 import asyncio
+from time import time
 
 import pytest
 
@@ -82,3 +83,17 @@ def test_future_and_task():
 
     assert spawn_for_coroutine(asyncio.ensure_future(go(8))).wait() == 16
     assert spawn_for_coroutine(asyncio.create_task(go(6))).wait() == 12
+
+
+def test_asyncio_sleep():
+    """
+    ``asyncio`` scheduled events work on eventlet.
+    """
+
+    async def go():
+        start = time()
+        await asyncio.sleep(0.07)
+        return time() - start
+
+    elapsed = spawn_for_coroutine(go()).wait()
+    assert 0.05 < elapsed < 0.09
