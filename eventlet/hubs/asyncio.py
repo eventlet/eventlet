@@ -10,7 +10,12 @@ from eventlet.hubs import hub
 
 
 def is_available():
-    """Python 3 always has asyncio."""
+    """
+    Indicate whether this hub is available, since some hubs are
+    platform-specific.
+
+    Python always has asyncio, so this is always ``True``.
+    """
     return True
 
 
@@ -26,10 +31,18 @@ class Hub(hub.BaseHub):
         asyncio.set_event_loop(self.loop)
 
     def add_timer(self, timer):
+        """
+        Register a ``Timer``.
+
+        Typically not called directly by users.
+        """
         super().add_timer(timer)
         self.sleep_event.set()
 
     def _file_cb(self, cb, fileno):
+        """
+        Callback called by ``asyncio`` when a file descriptor has an event.
+        """
         try:
             cb(fileno)
         except self.SYSTEM_EXCEPTIONS:
@@ -39,6 +52,12 @@ class Hub(hub.BaseHub):
         self.sleep_event.set()
 
     def add(self, evtype, fileno, cb, tb, mark_as_closed):
+        """
+        Add a file descriptor of given event type to the ``Hub``.  See the
+        superclass for details.
+
+        Typically not called directly by users.
+        """
         try:
             os.fstat(fileno)
         except OSError:
@@ -53,6 +72,11 @@ class Hub(hub.BaseHub):
         return listener
 
     def remove(self, listener):
+        """
+        Remove a listener from the ``Hub``.  See the superclass for details.
+
+        Typically not called directly by users.
+        """
         super().remove(listener)
         evtype = listener.evtype
         fileno = listener.fileno
@@ -63,6 +87,11 @@ class Hub(hub.BaseHub):
                 self.loop.remove_writer(fileno)
 
     def remove_descriptor(self, fileno):
+        """
+        Remove a file descriptor from the ``asyncio`` loop.
+
+        Typically not called directly by users.
+        """
         have_read = self.listeners[hub.READ].get(fileno)
         have_write = self.listeners[hub.WRITE].get(fileno)
         super().remove_descriptor(fileno)
@@ -72,6 +101,9 @@ class Hub(hub.BaseHub):
             self.loop.remove_writer(fileno)
 
     def run(self, *a, **kw):
+        """
+        Start the ``Hub`` running. See the superclass for details.
+        """
         async def async_run():
             if self.running:
                 raise RuntimeError("Already running!")
