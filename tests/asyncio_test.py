@@ -69,3 +69,16 @@ def test_exception():
 
     with pytest.raises(ZeroDivisionError):
         assert spawn_for_coroutine(go()).wait()
+
+
+def test_future_and_task():
+    """
+    ``spawn_for_coroutine()`` can take an ``asyncio.Future`` or an
+    ``asyncio.Task``.
+    """
+
+    async def go(value):
+        return value * 2
+
+    assert spawn_for_coroutine(asyncio.ensure_future(go(8))).wait() == 16
+    assert spawn_for_coroutine(asyncio.create_task(go(6))).wait() == 12

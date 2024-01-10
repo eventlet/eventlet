@@ -11,12 +11,11 @@ __all__ = ["spawn_for_coroutine"]
 def spawn_for_coroutine(coroutine):
     """
     Take a coroutine or some other object that can be turned into an
-    ``asyncio`` ``Future``, turn it into a ``GreenThread``.
+    ``asyncio.Future`` and turn it into a ``GreenThread``.
     """
     # TODO error if hub is not asyncio
     def _run():
-        # Convert whatever we're wrapping into a Future. TODO test with
-        # relevant object types.
+        # Convert the coroutine/Future/Task we're wrapping into a Future.
         future = asyncio.ensure_future(coroutine, loop=asyncio.get_running_loop())
         # Wait until the Future has a result.
         has_result = Event()
