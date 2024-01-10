@@ -2,7 +2,10 @@
 Asyncio compatibility functions.
 """
 import asyncio
-from .greenthread import spawn
+
+from greenlet import GreenletExit
+
+from .greenthread import spawn, getcurrent
 from .event import Event
 from .hubs import get_hub
 from .hubs.asyncio import Hub as AsyncioHub
@@ -24,6 +27,16 @@ def spawn_for_coroutine(coroutine):
     def _run():
         # Convert the coroutine/Future/Task we're wrapping into a Future.
         future = asyncio.ensure_future(coroutine, loop=asyncio.get_running_loop())
+
+        # Ensure killing the GreenThread cancels the Future:
+        def _got_result(gthread):
+            try:
+                gthread.wait()
+            except GreenletExit:
+                future.cancel()
+
+        getcurrent().link(_got_result)
+
         # Wait until the Future has a result.
         has_result = Event()
         future.add_done_callback(lambda _: has_result.send(True))
@@ -32,5 +45,5 @@ def spawn_for_coroutine(coroutine):
         # exception).
         return future.result()
 
-    # TODO what happens to Future if GreenThread is killed?
+    # Start a GreenThread:
     return spawn(_run)

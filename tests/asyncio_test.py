@@ -5,10 +5,11 @@ from time import time
 
 import pytest
 
+from greenlet import GreenletExit
+
 from eventlet.hubs import get_hub
 from eventlet.hubs.asyncio import Hub as AsyncioHub
 from eventlet.asyncio import spawn_for_coroutine
-
 from .wsgi_test import _TestBase, Site
 
 if not isinstance(get_hub(), AsyncioHub):
@@ -97,3 +98,33 @@ def test_asyncio_sleep():
 
     elapsed = spawn_for_coroutine(go()).wait()
     assert 0.05 < elapsed < 0.09
+
+
+def test_kill_greenthread():
+    """
+    If a ``GreenThread`` wrapping an ``asyncio.Future``/coroutine is killed,
+    the ``asyncio.Future`` is cancelled.
+    """
+
+    the_greenthread = []
+    progress = []
+
+    async def go():
+        await asyncio.sleep(0.1)
+        progress.append(1)
+        while not the_greenthread:
+            await asyncio.sleep(0.001)
+        # Kill the green thread.
+        progress.append(2)
+        the_greenthread[0].kill()
+        progress.append(3)
+        await asyncio.sleep(1)
+        # This should never be reached:
+        progress.append(4)
+
+    future = asyncio.ensure_future(go())
+    the_greenthread.append(spawn_for_coroutine(future))
+    with pytest.raises(GreenletExit):
+        the_greenthread[0].wait()
+    assert progress == [1, 2, 3]
+    assert future.cancelled()
