@@ -328,7 +328,7 @@ class SSLTest(tests.LimitedTestCase):
                 listener.close()
 
     def test_context_wrapped_accept(self):
-        context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS)
         context.load_cert_chain(tests.certificate_file, tests.private_key_file)
         expected = "success:{}".format(random.random()).encode()
 

@@ -55,7 +55,7 @@ class GreenSSLSocket(_original_sslsocket):
     """
     def __new__(cls, sock=None, keyfile=None, certfile=None,
                 server_side=False, cert_reqs=CERT_NONE,
-                ssl_version=PROTOCOL_SSLv23, ca_certs=None,
+                ssl_version=PROTOCOL_TLS, ca_certs=None,
                 do_handshake_on_connect=True, *args, **kw):
         if not isinstance(sock, GreenSocket):
             sock = GreenSocket(sock)
@@ -115,7 +115,7 @@ class GreenSSLSocket(_original_sslsocket):
     # do_handshake whose behavior we wish to override
     def __init__(self, sock, keyfile=None, certfile=None,
                  server_side=False, cert_reqs=CERT_NONE,
-                 ssl_version=PROTOCOL_SSLv23, ca_certs=None,
+                 ssl_version=PROTOCOL_TLS, ca_certs=None,
                  do_handshake_on_connect=True, *args, **kw):
         if not isinstance(sock, GreenSocket):
             sock = GreenSocket(sock)
@@ -437,7 +437,7 @@ if hasattr(__ssl, 'sslwrap_simple'):
         ssl_sock = GreenSSLSocket(sock, keyfile=keyfile, certfile=certfile,
                                   server_side=False,
                                   cert_reqs=CERT_NONE,
-                                  ssl_version=PROTOCOL_SSLv23,
+                                  ssl_version=PROTOCOL_TLS,
                                   ca_certs=None)
         return ssl_sock
 

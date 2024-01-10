@@ -542,7 +542,7 @@ def _getaddrinfo_lookup(host, family, flags):
     return str(answer.qname), addrs
 
 
-def getaddrinfo(host, port, family=0, socktype=0, proto=0, flags=0):
+def getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
     """Replacement for Python's socket.getaddrinfo
 
     This does the A and AAAA lookups asynchronously after which it
@@ -565,7 +565,7 @@ def getaddrinfo(host, port, family=0, socktype=0, proto=0, flags=0):
     for addr in addrs:
         try:
             ai = socket.getaddrinfo(addr, port, family,
-                                    socktype, proto, aiflags)
+                                    type, proto, aiflags)
         except OSError as e:
             if flags & socket.AI_ADDRCONFIG:
                 err = e
