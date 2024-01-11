@@ -39,7 +39,8 @@ class CallingAsyncFunctionsFromGreenletsHighLevelTests(_TestBase):
         async def request():
             host, port = self.server_addr
             async with aiohttp.ClientSession() as session:
-                async with session.get(f"http://{host}:{port}/") as response:
+                url = "http://{}:{}/".format(host, port)
+                async with session.get(url) as response:
                     html = await response.text()
                     return html
 
