@@ -4,10 +4,13 @@ import os
 import sys
 import time
 
+import pytest
+
 import tests
 from tests import skip_if_no_itimer, skip_unless
 import eventlet
 from eventlet import debug, hubs
+from eventlet.hubs.asyncio import Hub as AsyncioHub
 from eventlet.support import greenlets
 
 
@@ -81,6 +84,8 @@ class TestTimerCleanup(tests.LimitedTestCase):
         eventlet.sleep()
 
 
+@pytest.mark.skipif(isinstance(hubs.get_hub(), AsyncioHub),
+                    reason="Asyncio hub doesn't yet support multiple readers")
 class TestMultipleListenersCleanup(tests.LimitedTestCase):
     def setUp(self):
         super().setUp()

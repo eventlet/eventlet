@@ -10,6 +10,8 @@ import struct
 import sys
 import tempfile
 
+import pytest
+
 import eventlet
 from eventlet import event, greenio, debug
 from eventlet.hubs import get_hub
@@ -856,6 +858,12 @@ class TestGreenIoLong(tests.LimitedTestCase):
     TEST_TIMEOUT = 10  # the test here might take a while depending on the OS
 
     def test_multiple_readers(self):
+        from eventlet.hubs.asyncio import Hub
+        if isinstance(get_hub(), Hub):
+            with pytest.raises(RuntimeError):
+                debug.hub_prevent_multiple_readers(False)
+            return
+
         debug.hub_prevent_multiple_readers(False)
         recvsize = 2 * min_buf_size()
         sendsize = 10 * recvsize
