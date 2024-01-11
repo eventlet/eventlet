@@ -7,6 +7,7 @@ import pytest
 
 from greenlet import GreenletExit
 
+import eventlet
 from eventlet.hubs import get_hub
 from eventlet.hubs.asyncio import Hub as AsyncioHub
 from eventlet.asyncio import spawn_for_coroutine
@@ -129,4 +130,7 @@ def test_kill_greenthread():
     with pytest.raises(GreenletExit):
         the_greenthread[0].wait()
     assert progress == [1, 2, 3]
+    # Cancellation may not be immediate.
+    eventlet.sleep(0.01)
     assert future.cancelled()
+    assert progress == [1, 2, 3]
