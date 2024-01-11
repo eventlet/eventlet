@@ -9,7 +9,6 @@ import socket as _orig_sock
 import struct
 import sys
 import tempfile
-from unittest import SkipTest
 
 import pytest
 
