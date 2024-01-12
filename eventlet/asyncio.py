@@ -27,8 +27,8 @@ def spawn_for_coroutine(coroutine):
     """
     if not isinstance(get_hub(), AsyncioHub):
         raise RuntimeError(
-            "This API only works with the asyncio hub. "
-            + "Set a EVENTLET_HUB=asyncio environment variable."
+            "This API only works with eventlet's asyncio hub. "
+            + "To use it, set an EVENTLET_HUB=asyncio environment variable."
         )
 
     def _run():
