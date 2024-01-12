@@ -1,19 +1,17 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="./">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Module Reference &#8212; Eventlet 0.33.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    <title>Module Reference &#8212; Eventlet 0.33.3 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=514cf933" />
     
-    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
+    <script src="_static/documentation_options.js?v=026d09f6"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -35,7 +33,7 @@
         <li class="right" >
           <a href="environment.html" title="Environment Variables"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.33.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.33.3 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Module Reference</a></li> 
       </ul>
     </div>  
@@ -46,32 +44,104 @@
           <div class="body" role="main">
             
   <section id="module-reference">
-<h1>Module Reference<a class="headerlink" href="#module-reference" title="Permalink to this headline">¶</a></h1>
+<h1>Module Reference<a class="headerlink" href="#module-reference" title="Link to this heading">¶</a></h1>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="modules/backdoor.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">backdoor</span></code> – Python interactive interpreter within a running process</a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/corolocal.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">corolocal</span></code> – Coroutine local storage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/backdoor.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">backdoor</span></code> – Python interactive interpreter within a running process</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/backdoor.html#eventlet.backdoor.SocketConsole"><code class="docutils literal notranslate"><span class="pre">SocketConsole</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/backdoor.html#eventlet.backdoor.backdoor"><code class="docutils literal notranslate"><span class="pre">backdoor()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/backdoor.html#eventlet.backdoor.backdoor_server"><code class="docutils literal notranslate"><span class="pre">backdoor_server()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules/corolocal.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">corolocal</span></code> – Coroutine local storage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/corolocal.html#eventlet.corolocal.get_ident"><code class="docutils literal notranslate"><span class="pre">get_ident()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/corolocal.html#eventlet.corolocal.local"><code class="docutils literal notranslate"><span class="pre">local</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="modules/dagpool.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">dagpool</span></code> – Dependency-Driven Greenthreads</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="modules/dagpool.html#rationale">Rationale</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules/dagpool.html#tutorial">Tutorial</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="modules/dagpool.html#module-eventlet.dagpool">Module Contents</a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/debug.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">debug</span></code> – Debugging tools for Eventlet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/dagpool.html#module-eventlet.dagpool">Module Contents</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/dagpool.html#eventlet.dagpool.Collision"><code class="docutils literal notranslate"><span class="pre">Collision</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/dagpool.html#eventlet.dagpool.DAGPool"><code class="docutils literal notranslate"><span class="pre">DAGPool</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/dagpool.html#eventlet.dagpool.PropagateError"><code class="docutils literal notranslate"><span class="pre">PropagateError</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules/debug.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">debug</span></code> – Debugging tools for Eventlet</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/debug.html#eventlet.debug.format_hub_listeners"><code class="docutils literal notranslate"><span class="pre">format_hub_listeners()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/debug.html#eventlet.debug.format_hub_timers"><code class="docutils literal notranslate"><span class="pre">format_hub_timers()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/debug.html#eventlet.debug.hub_blocking_detection"><code class="docutils literal notranslate"><span class="pre">hub_blocking_detection()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/debug.html#eventlet.debug.hub_exceptions"><code class="docutils literal notranslate"><span class="pre">hub_exceptions()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/debug.html#eventlet.debug.hub_listener_stacks"><code class="docutils literal notranslate"><span class="pre">hub_listener_stacks()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/debug.html#eventlet.debug.hub_prevent_multiple_readers"><code class="docutils literal notranslate"><span class="pre">hub_prevent_multiple_readers()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/debug.html#eventlet.debug.hub_timer_stacks"><code class="docutils literal notranslate"><span class="pre">hub_timer_stacks()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/debug.html#eventlet.debug.spew"><code class="docutils literal notranslate"><span class="pre">spew()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/debug.html#eventlet.debug.tpool_exceptions"><code class="docutils literal notranslate"><span class="pre">tpool_exceptions()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/debug.html#eventlet.debug.unspew"><code class="docutils literal notranslate"><span class="pre">unspew()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="modules/db_pool.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">db_pool</span></code> – DBAPI 2 database connection pooling</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="modules/db_pool.html#constructor-arguments">Constructor Arguments</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules/db_pool.html#databaseconnector">DatabaseConnector</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="modules/event.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">event</span></code> – Cross-greenthread primitive</a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/greenpool.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">greenpool</span></code> – Green Thread Pools</a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/greenthread.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">greenthread</span></code> – Green Thread Implementation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/pools.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pools</span></code> - Generic pools of resources</a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/queue.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">queue</span></code> – Queue class</a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/semaphore.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">semaphore</span></code> – Semaphore classes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/timeout.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">timeout</span></code> – Universal Timeouts</a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/websocket.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">websocket</span></code> – Websocket Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/event.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">event</span></code> – Cross-greenthread primitive</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/event.html#eventlet.event.Event"><code class="docutils literal notranslate"><span class="pre">Event</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules/greenpool.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">greenpool</span></code> – Green Thread Pools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/greenpool.html#eventlet.greenpool.GreenPile"><code class="docutils literal notranslate"><span class="pre">GreenPile</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/greenpool.html#eventlet.greenpool.GreenPool"><code class="docutils literal notranslate"><span class="pre">GreenPool</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules/greenthread.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">greenthread</span></code> – Green Thread Implementation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/greenthread.html#eventlet.greenthread.GreenThread"><code class="docutils literal notranslate"><span class="pre">GreenThread</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/greenthread.html#eventlet.greenthread.getcurrent"><code class="docutils literal notranslate"><span class="pre">getcurrent()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/greenthread.html#eventlet.greenthread.kill"><code class="docutils literal notranslate"><span class="pre">kill()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/greenthread.html#eventlet.greenthread.sleep"><code class="docutils literal notranslate"><span class="pre">sleep()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/greenthread.html#eventlet.greenthread.spawn"><code class="docutils literal notranslate"><span class="pre">spawn()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/greenthread.html#eventlet.greenthread.spawn_after"><code class="docutils literal notranslate"><span class="pre">spawn_after()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/greenthread.html#eventlet.greenthread.spawn_after_local"><code class="docutils literal notranslate"><span class="pre">spawn_after_local()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/greenthread.html#eventlet.greenthread.spawn_n"><code class="docutils literal notranslate"><span class="pre">spawn_n()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules/pools.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pools</span></code> - Generic pools of resources</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/pools.html#eventlet.pools.Pool"><code class="docutils literal notranslate"><span class="pre">Pool</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/pools.html#eventlet.pools.TokenPool"><code class="docutils literal notranslate"><span class="pre">TokenPool</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules/queue.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">queue</span></code> – Queue class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/queue.html#eventlet.queue.Empty"><code class="docutils literal notranslate"><span class="pre">Empty</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/queue.html#eventlet.queue.Full"><code class="docutils literal notranslate"><span class="pre">Full</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/queue.html#eventlet.queue.LifoQueue"><code class="docutils literal notranslate"><span class="pre">LifoQueue</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/queue.html#eventlet.queue.LightQueue"><code class="docutils literal notranslate"><span class="pre">LightQueue</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/queue.html#eventlet.queue.PriorityQueue"><code class="docutils literal notranslate"><span class="pre">PriorityQueue</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/queue.html#eventlet.queue.Queue"><code class="docutils literal notranslate"><span class="pre">Queue</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules/semaphore.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">semaphore</span></code> – Semaphore classes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/semaphore.html#eventlet.semaphore.Semaphore"><code class="docutils literal notranslate"><span class="pre">Semaphore</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/semaphore.html#eventlet.semaphore.BoundedSemaphore"><code class="docutils literal notranslate"><span class="pre">BoundedSemaphore</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/semaphore.html#eventlet.semaphore.CappedSemaphore"><code class="docutils literal notranslate"><span class="pre">CappedSemaphore</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules/timeout.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">timeout</span></code> – Universal Timeouts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/timeout.html#eventlet.timeout.Timeout"><code class="docutils literal notranslate"><span class="pre">eventlet.timeout.Timeout</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/timeout.html#eventlet.timeout.eventlet.timeout.Timeout.Timeout.cancel"><code class="docutils literal notranslate"><span class="pre">eventlet.timeout.Timeout.Timeout.cancel()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/timeout.html#eventlet.timeout.eventlet.timeout.Timeout.Timeout.pending"><code class="docutils literal notranslate"><span class="pre">eventlet.timeout.Timeout.Timeout.pending</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/timeout.html#eventlet.timeout.with_timeout"><code class="docutils literal notranslate"><span class="pre">eventlet.timeout.with_timeout()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules/websocket.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">websocket</span></code> – Websocket Server</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/websocket.html#eventlet.websocket.WebSocket"><code class="docutils literal notranslate"><span class="pre">WebSocket</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/websocket.html#eventlet.websocket.WebSocketWSGI"><code class="docutils literal notranslate"><span class="pre">WebSocketWSGI</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="modules/wsgi.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">wsgi</span></code> – WSGI server</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/wsgi.html#eventlet.wsgi.format_date_time"><code class="docutils literal notranslate"><span class="pre">format_date_time()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules/wsgi.html#eventlet.wsgi.server"><code class="docutils literal notranslate"><span class="pre">server()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules/wsgi.html#ssl">SSL</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules/wsgi.html#non-standard-extension-to-support-post-hooks">Non-Standard Extension to Support Post Hooks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="modules/wsgi.html#continue-response-headers">“100 Continue” Response Headers</a></li>
@@ -89,12 +159,16 @@
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="environment.html"
-                        title="previous chapter">Environment Variables</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="modules/backdoor.html"
-                        title="next chapter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">backdoor</span></code> – Python interactive interpreter within a running process</a></p>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="environment.html"
+                          title="previous chapter">Environment Variables</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="modules/backdoor.html"
+                          title="next chapter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">backdoor</span></code> – Python interactive interpreter within a running process</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -111,7 +185,7 @@
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -131,14 +205,14 @@
         <li class="right" >
           <a href="environment.html" title="Environment Variables"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.33.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.33.3 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Module Reference</a></li> 
       </ul>
     </div>
 
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.2.
+    &#169; Copyright 2005-2010, Eventlet Contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

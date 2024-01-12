@@ -1,19 +1,17 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>queue – Queue class &#8212; Eventlet 0.33.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <title>queue – Queue class &#8212; Eventlet 0.33.3 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=026d09f6"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -35,7 +33,7 @@
         <li class="right" >
           <a href="pools.html" title="pools - Generic pools of resources"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.33.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.33.3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">queue</span></code> – Queue class</a></li> 
       </ul>
@@ -47,11 +45,11 @@
           <div class="body" role="main">
             
   <section id="module-eventlet.queue">
-<span id="queue-queue-class"></span><h1><a class="reference external" href="https://docs.python.org/3/library/queue.html#module-queue" title="(in Python v3.10)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">queue</span></code></a> – Queue class<a class="headerlink" href="#module-eventlet.queue" title="Permalink to this headline">¶</a></h1>
+<span id="queue-queue-class"></span><h1><a class="reference external" href="https://docs.python.org/3/library/queue.html#module-queue" title="(in Python v3.12)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">queue</span></code></a> – Queue class<a class="headerlink" href="#module-eventlet.queue" title="Link to this heading">¶</a></h1>
 <p>Synchronized queues.</p>
 <p>The <a class="reference internal" href="#module-eventlet.queue" title="eventlet.queue"><code class="xref py py-mod docutils literal notranslate"><span class="pre">eventlet.queue</span></code></a> module implements multi-producer, multi-consumer
 queues that work across greenlets, with the API similar to the classes found in
-the standard <code class="xref py py-mod docutils literal notranslate"><span class="pre">Queue</span></code> and <a class="reference external" href="https://docs.python.org/3/library/multiprocessing.html#multiprocessing.Queue" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">multiprocessing</span></code></a>
+the standard <code class="xref py py-mod docutils literal notranslate"><span class="pre">Queue</span></code> and <a class="reference external" href="https://docs.python.org/3/library/multiprocessing.html#multiprocessing.Queue" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">multiprocessing</span></code></a>
 modules.</p>
 <p>A major difference is that queues in this module operate as channels when
 initialized with <em>maxsize</em> of zero. In such case, both <code class="xref py py-meth docutils literal notranslate"><span class="pre">Queue.empty()</span></code>
@@ -65,25 +63,25 @@ and <code class="xref py py-meth docutils literal notranslate"><span class="pre"
 in <code class="xref py py-meth docutils literal notranslate"><span class="pre">put</span></code> or <code class="xref py py-meth docutils literal notranslate"><span class="pre">get</span></code> respectively.</p>
 <dl class="py exception">
 <dt class="sig sig-object py" id="eventlet.queue.Empty">
-<em class="property"><span class="pre">exception</span> </em><span class="sig-prename descclassname"><span class="pre">eventlet.queue.</span></span><span class="sig-name descname"><span class="pre">Empty</span></span><a class="headerlink" href="#eventlet.queue.Empty" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">eventlet.queue.</span></span><span class="sig-name descname"><span class="pre">Empty</span></span><a class="headerlink" href="#eventlet.queue.Empty" title="Link to this definition">¶</a></dt>
 <dd><p>Exception raised by Queue.get(block=0)/get_nowait().</p>
 </dd></dl>
 
 <dl class="py exception">
 <dt class="sig sig-object py" id="eventlet.queue.Full">
-<em class="property"><span class="pre">exception</span> </em><span class="sig-prename descclassname"><span class="pre">eventlet.queue.</span></span><span class="sig-name descname"><span class="pre">Full</span></span><a class="headerlink" href="#eventlet.queue.Full" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">eventlet.queue.</span></span><span class="sig-name descname"><span class="pre">Full</span></span><a class="headerlink" href="#eventlet.queue.Full" title="Link to this definition">¶</a></dt>
 <dd><p>Exception raised by Queue.put(block=0)/put_nowait().</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="eventlet.queue.LifoQueue">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">eventlet.queue.</span></span><span class="sig-name descname"><span class="pre">LifoQueue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">maxsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.LifoQueue" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">eventlet.queue.</span></span><span class="sig-name descname"><span class="pre">LifoQueue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">maxsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.LifoQueue" title="Link to this definition">¶</a></dt>
 <dd><p>A subclass of <a class="reference internal" href="#eventlet.queue.Queue" title="eventlet.queue.Queue"><code class="xref py py-class docutils literal notranslate"><span class="pre">Queue</span></code></a> that retrieves most recently added entries first.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="eventlet.queue.LightQueue">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">eventlet.queue.</span></span><span class="sig-name descname"><span class="pre">LightQueue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">maxsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.LightQueue" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">eventlet.queue.</span></span><span class="sig-name descname"><span class="pre">LightQueue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">maxsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.LightQueue" title="Link to this definition">¶</a></dt>
 <dd><p>This is a variant of Queue that behaves mostly like the standard
 <code class="xref py py-class docutils literal notranslate"><span class="pre">Stdlib_Queue</span></code>.  It differs by not supporting the
 <code class="xref py py-meth docutils literal notranslate"><span class="pre">task_done</span></code> or
@@ -91,20 +89,20 @@ in <code class="xref py py-meth docutils literal notranslate"><span class="pre">
 not having that overhead.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="eventlet.queue.LightQueue.empty">
-<span class="sig-name descname"><span class="pre">empty</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.LightQueue.empty" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">empty</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.LightQueue.empty" title="Link to this definition">¶</a></dt>
 <dd><p>Return <code class="docutils literal notranslate"><span class="pre">True</span></code> if the queue is empty, <code class="docutils literal notranslate"><span class="pre">False</span></code> otherwise.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="eventlet.queue.LightQueue.full">
-<span class="sig-name descname"><span class="pre">full</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.LightQueue.full" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">full</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.LightQueue.full" title="Link to this definition">¶</a></dt>
 <dd><p>Return <code class="docutils literal notranslate"><span class="pre">True</span></code> if the queue is full, <code class="docutils literal notranslate"><span class="pre">False</span></code> otherwise.</p>
 <p><code class="docutils literal notranslate"><span class="pre">Queue(None)</span></code> is never full.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="eventlet.queue.LightQueue.get">
-<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.LightQueue.get" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.LightQueue.get" title="Link to this definition">¶</a></dt>
 <dd><p>Remove and return an item from the queue.</p>
 <p>If optional args <em>block</em> is true and <em>timeout</em> is <code class="docutils literal notranslate"><span class="pre">None</span></code> (the default),
 block if necessary until an item is available. If <em>timeout</em> is a positive number,
@@ -116,7 +114,7 @@ an item if one is immediately available, else raise the <a class="reference inte
 
 <dl class="py method">
 <dt class="sig sig-object py" id="eventlet.queue.LightQueue.get_nowait">
-<span class="sig-name descname"><span class="pre">get_nowait</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.LightQueue.get_nowait" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_nowait</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.LightQueue.get_nowait" title="Link to this definition">¶</a></dt>
 <dd><p>Remove and return an item from the queue without blocking.</p>
 <p>Only get an item if one is immediately available. Otherwise
 raise the <a class="reference internal" href="#eventlet.queue.Empty" title="eventlet.queue.Empty"><code class="xref py py-class docutils literal notranslate"><span class="pre">Empty</span></code></a> exception.</p>
@@ -124,14 +122,14 @@ raise the <a class="reference internal" href="#eventlet.queue.Empty" title="even
 
 <dl class="py method">
 <dt class="sig sig-object py" id="eventlet.queue.LightQueue.getting">
-<span class="sig-name descname"><span class="pre">getting</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.LightQueue.getting" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">getting</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.LightQueue.getting" title="Link to this definition">¶</a></dt>
 <dd><p>Returns the number of greenthreads that are blocked waiting on an
 empty queue.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="eventlet.queue.LightQueue.put">
-<span class="sig-name descname"><span class="pre">put</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.LightQueue.put" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">put</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.LightQueue.put" title="Link to this definition">¶</a></dt>
 <dd><p>Put an item into the queue.</p>
 <p>If optional arg <em>block</em> is true and <em>timeout</em> is <code class="docutils literal notranslate"><span class="pre">None</span></code> (the default),
 block if necessary until a free slot is available. If <em>timeout</em> is
@@ -144,7 +142,7 @@ is ignored in that case).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="eventlet.queue.LightQueue.put_nowait">
-<span class="sig-name descname"><span class="pre">put_nowait</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.LightQueue.put_nowait" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">put_nowait</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.LightQueue.put_nowait" title="Link to this definition">¶</a></dt>
 <dd><p>Put an item into the queue without blocking.</p>
 <p>Only enqueue the item if a free slot is immediately available.
 Otherwise raise the <a class="reference internal" href="#eventlet.queue.Full" title="eventlet.queue.Full"><code class="xref py py-class docutils literal notranslate"><span class="pre">Full</span></code></a> exception.</p>
@@ -152,20 +150,20 @@ Otherwise raise the <a class="reference internal" href="#eventlet.queue.Full" ti
 
 <dl class="py method">
 <dt class="sig sig-object py" id="eventlet.queue.LightQueue.putting">
-<span class="sig-name descname"><span class="pre">putting</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.LightQueue.putting" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">putting</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.LightQueue.putting" title="Link to this definition">¶</a></dt>
 <dd><p>Returns the number of greenthreads that are blocked waiting to put
 items into the queue.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="eventlet.queue.LightQueue.qsize">
-<span class="sig-name descname"><span class="pre">qsize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.LightQueue.qsize" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">qsize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.LightQueue.qsize" title="Link to this definition">¶</a></dt>
 <dd><p>Return the size of the queue.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="eventlet.queue.LightQueue.resize">
-<span class="sig-name descname"><span class="pre">resize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.LightQueue.resize" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">resize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.LightQueue.resize" title="Link to this definition">¶</a></dt>
 <dd><p>Resizes the queue’s maximum size.</p>
 <p>If the size is increased, and there are putters waiting, they may be woken up.</p>
 </dd></dl>
@@ -174,14 +172,14 @@ items into the queue.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="eventlet.queue.PriorityQueue">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">eventlet.queue.</span></span><span class="sig-name descname"><span class="pre">PriorityQueue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">maxsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.PriorityQueue" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">eventlet.queue.</span></span><span class="sig-name descname"><span class="pre">PriorityQueue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">maxsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.PriorityQueue" title="Link to this definition">¶</a></dt>
 <dd><p>A subclass of <a class="reference internal" href="#eventlet.queue.Queue" title="eventlet.queue.Queue"><code class="xref py py-class docutils literal notranslate"><span class="pre">Queue</span></code></a> that retrieves entries in priority order (lowest first).</p>
 <p>Entries are typically tuples of the form: <code class="docutils literal notranslate"><span class="pre">(priority</span> <span class="pre">number,</span> <span class="pre">data)</span></code>.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="eventlet.queue.Queue">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">eventlet.queue.</span></span><span class="sig-name descname"><span class="pre">Queue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">maxsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.Queue" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">eventlet.queue.</span></span><span class="sig-name descname"><span class="pre">Queue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">maxsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.Queue" title="Link to this definition">¶</a></dt>
 <dd><p>Create a queue object with a given maximum size.</p>
 <p>If <em>maxsize</em> is less than zero or <code class="docutils literal notranslate"><span class="pre">None</span></code>, the queue size is infinite.</p>
 <p><code class="docutils literal notranslate"><span class="pre">Queue(0)</span></code> is a channel, that is, its <code class="xref py py-meth docutils literal notranslate"><span class="pre">put()</span></code> method always blocks
@@ -191,7 +189,7 @@ until the item is delivered. (This is unlike the standard
 <code class="xref py py-class docutils literal notranslate"><span class="pre">Stdlib_Queue</span></code>.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="eventlet.queue.Queue.join">
-<span class="sig-name descname"><span class="pre">join</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.Queue.join" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">join</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.Queue.join" title="Link to this definition">¶</a></dt>
 <dd><p>Block until all items in the queue have been gotten and processed.</p>
 <p>The count of unfinished tasks goes up whenever an item is added to the queue.
 The count goes down whenever a consumer thread calls <a class="reference internal" href="#eventlet.queue.Queue.task_done" title="eventlet.queue.Queue.task_done"><code class="xref py py-meth docutils literal notranslate"><span class="pre">task_done()</span></code></a> to indicate
@@ -201,14 +199,14 @@ unfinished tasks drops to zero, <a class="reference internal" href="#eventlet.qu
 
 <dl class="py method">
 <dt class="sig sig-object py" id="eventlet.queue.Queue.task_done">
-<span class="sig-name descname"><span class="pre">task_done</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.Queue.task_done" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">task_done</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.queue.Queue.task_done" title="Link to this definition">¶</a></dt>
 <dd><p>Indicate that a formerly enqueued task is complete. Used by queue consumer threads.
 For each <code class="xref py py-meth docutils literal notranslate"><span class="pre">get</span></code> used to fetch a task, a subsequent call to
 <a class="reference internal" href="#eventlet.queue.Queue.task_done" title="eventlet.queue.Queue.task_done"><code class="xref py py-meth docutils literal notranslate"><span class="pre">task_done()</span></code></a> tells the queue that the processing on the task is complete.</p>
 <p>If a <a class="reference internal" href="#eventlet.queue.Queue.join" title="eventlet.queue.Queue.join"><code class="xref py py-meth docutils literal notranslate"><span class="pre">join()</span></code></a> is currently blocking, it will resume when all items have been processed
 (meaning that a <a class="reference internal" href="#eventlet.queue.Queue.task_done" title="eventlet.queue.Queue.task_done"><code class="xref py py-meth docutils literal notranslate"><span class="pre">task_done()</span></code></a> call was received for every item that had been
 <code class="xref py py-meth docutils literal notranslate"><span class="pre">put</span></code> into the queue).</p>
-<p>Raises a <a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.10)"><code class="xref py py-exc docutils literal notranslate"><span class="pre">ValueError</span></code></a> if called more times than there were items placed in the queue.</p>
+<p>Raises a <a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.12)"><code class="xref py py-exc docutils literal notranslate"><span class="pre">ValueError</span></code></a> if called more times than there were items placed in the queue.</p>
 </dd></dl>
 
 </dd></dl>
@@ -222,12 +220,47 @@ For each <code class="xref py py-meth docutils literal notranslate"><span class=
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="pools.html"
-                        title="previous chapter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pools</span></code> - Generic pools of resources</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="semaphore.html"
-                        title="next chapter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">semaphore</span></code> – Semaphore classes</a></p>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">queue</span></code> – Queue class</a><ul>
+<li><a class="reference internal" href="#eventlet.queue.Empty"><code class="docutils literal notranslate"><span class="pre">Empty</span></code></a></li>
+<li><a class="reference internal" href="#eventlet.queue.Full"><code class="docutils literal notranslate"><span class="pre">Full</span></code></a></li>
+<li><a class="reference internal" href="#eventlet.queue.LifoQueue"><code class="docutils literal notranslate"><span class="pre">LifoQueue</span></code></a></li>
+<li><a class="reference internal" href="#eventlet.queue.LightQueue"><code class="docutils literal notranslate"><span class="pre">LightQueue</span></code></a><ul>
+<li><a class="reference internal" href="#eventlet.queue.LightQueue.empty"><code class="docutils literal notranslate"><span class="pre">LightQueue.empty()</span></code></a></li>
+<li><a class="reference internal" href="#eventlet.queue.LightQueue.full"><code class="docutils literal notranslate"><span class="pre">LightQueue.full()</span></code></a></li>
+<li><a class="reference internal" href="#eventlet.queue.LightQueue.get"><code class="docutils literal notranslate"><span class="pre">LightQueue.get()</span></code></a></li>
+<li><a class="reference internal" href="#eventlet.queue.LightQueue.get_nowait"><code class="docutils literal notranslate"><span class="pre">LightQueue.get_nowait()</span></code></a></li>
+<li><a class="reference internal" href="#eventlet.queue.LightQueue.getting"><code class="docutils literal notranslate"><span class="pre">LightQueue.getting()</span></code></a></li>
+<li><a class="reference internal" href="#eventlet.queue.LightQueue.put"><code class="docutils literal notranslate"><span class="pre">LightQueue.put()</span></code></a></li>
+<li><a class="reference internal" href="#eventlet.queue.LightQueue.put_nowait"><code class="docutils literal notranslate"><span class="pre">LightQueue.put_nowait()</span></code></a></li>
+<li><a class="reference internal" href="#eventlet.queue.LightQueue.putting"><code class="docutils literal notranslate"><span class="pre">LightQueue.putting()</span></code></a></li>
+<li><a class="reference internal" href="#eventlet.queue.LightQueue.qsize"><code class="docutils literal notranslate"><span class="pre">LightQueue.qsize()</span></code></a></li>
+<li><a class="reference internal" href="#eventlet.queue.LightQueue.resize"><code class="docutils literal notranslate"><span class="pre">LightQueue.resize()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#eventlet.queue.PriorityQueue"><code class="docutils literal notranslate"><span class="pre">PriorityQueue</span></code></a></li>
+<li><a class="reference internal" href="#eventlet.queue.Queue"><code class="docutils literal notranslate"><span class="pre">Queue</span></code></a><ul>
+<li><a class="reference internal" href="#eventlet.queue.Queue.join"><code class="docutils literal notranslate"><span class="pre">Queue.join()</span></code></a></li>
+<li><a class="reference internal" href="#eventlet.queue.Queue.task_done"><code class="docutils literal notranslate"><span class="pre">Queue.task_done()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="pools.html"
+                          title="previous chapter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pools</span></code> - Generic pools of resources</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="semaphore.html"
+                          title="next chapter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">semaphore</span></code> – Semaphore classes</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -244,7 +277,7 @@ For each <code class="xref py py-meth docutils literal notranslate"><span class=
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -264,15 +297,15 @@ For each <code class="xref py py-meth docutils literal notranslate"><span class=
         <li class="right" >
           <a href="pools.html" title="pools - Generic pools of resources"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.33.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.33.3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">queue</span></code> – Queue class</a></li> 
       </ul>
     </div>
 
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.2.
+    &#169; Copyright 2005-2010, Eventlet Contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

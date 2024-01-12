@@ -1,19 +1,17 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="./">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Design Patterns &#8212; Eventlet 0.33.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    <title>Design Patterns &#8212; Eventlet 0.33.3 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=514cf933" />
     
-    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
+    <script src="_static/documentation_options.js?v=026d09f6"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -35,7 +33,7 @@
         <li class="right" >
           <a href="basic_usage.html" title="Basic Usage"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.33.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.33.3 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Design Patterns</a></li> 
       </ul>
     </div>  
@@ -46,10 +44,10 @@
           <div class="body" role="main">
             
   <section id="design-patterns">
-<span id="id1"></span><h1>Design Patterns<a class="headerlink" href="#design-patterns" title="Permalink to this headline">¶</a></h1>
+<span id="id1"></span><h1>Design Patterns<a class="headerlink" href="#design-patterns" title="Link to this heading">¶</a></h1>
 <p>There are a bunch of basic patterns that Eventlet usage falls into.  Here are a few examples that show their basic structure.</p>
 <section id="client-pattern">
-<h2>Client Pattern<a class="headerlink" href="#client-pattern" title="Permalink to this headline">¶</a></h2>
+<h2>Client Pattern<a class="headerlink" href="#client-pattern" title="Link to this heading">¶</a></h2>
 <p>The canonical client-side example is a web crawler.  This use case is given a list of urls and wants to retrieve their bodies for later processing.  Here is a very simple example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">eventlet</span>
 <span class="kn">from</span> <span class="nn">eventlet.green.urllib.request</span> <span class="kn">import</span> <span class="n">urlopen</span>
@@ -73,7 +71,7 @@
 <p>The key aspect of the client pattern is that it involves collecting the results of each function call; the fact that each fetch is done concurrently is essentially an invisible optimization.  Note also that imap is memory-bounded and won’t consume gigabytes of memory if the list of urls grows to the tens of thousands (yes, we had that problem in production once!).</p>
 </section>
 <section id="server-pattern">
-<h2>Server Pattern<a class="headerlink" href="#server-pattern" title="Permalink to this headline">¶</a></h2>
+<h2>Server Pattern<a class="headerlink" href="#server-pattern" title="Link to this heading">¶</a></h2>
 <p>Here’s a simple server-side example, a simple echo server:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">eventlet</span>
 
@@ -97,7 +95,7 @@
 <p>The difference between the server and the client patterns boils down to the fact that the server has a <code class="docutils literal notranslate"><span class="pre">while</span></code> loop calling <code class="docutils literal notranslate"><span class="pre">accept()</span></code> repeatedly, and that it hands off the client socket completely to the handle() method, rather than collecting the results.</p>
 </section>
 <section id="dispatch-pattern">
-<h2>Dispatch Pattern<a class="headerlink" href="#dispatch-pattern" title="Permalink to this headline">¶</a></h2>
+<h2>Dispatch Pattern<a class="headerlink" href="#dispatch-pattern" title="Link to this heading">¶</a></h2>
 <p>One common use case that Linden Lab runs into all the time is a “dispatch” design pattern.  This is a server that is also a client of some other services.  Proxies, aggregators, job workers, and so on are all terms that apply here.  This is the use case that the <a class="reference internal" href="modules/greenpool.html#eventlet.greenpool.GreenPile" title="eventlet.greenpool.GreenPile"><code class="xref py py-class docutils literal notranslate"><span class="pre">GreenPile</span></code></a> was designed for.</p>
 <p>Here’s a somewhat contrived example: a server that receives POSTs from clients that contain a list of urls of RSS feeds.  The server fetches all the feeds concurrently and responds with a list of their titles to the client.  It’s easy to imagine it doing something more complex than this, and this could be easily modified to become a Reader-style application:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">eventlet</span>
@@ -140,8 +138,9 @@
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">Design Patterns</a><ul>
 <li><a class="reference internal" href="#client-pattern">Client Pattern</a></li>
 <li><a class="reference internal" href="#server-pattern">Server Pattern</a></li>
@@ -150,12 +149,17 @@
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="basic_usage.html"
-                        title="previous chapter">Basic Usage</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="patching.html"
-                        title="next chapter">Greening The World</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="basic_usage.html"
+                          title="previous chapter">Basic Usage</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="patching.html"
+                          title="next chapter">Greening The World</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -172,7 +176,7 @@
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -192,14 +196,14 @@
         <li class="right" >
           <a href="basic_usage.html" title="Basic Usage"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.33.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.33.3 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Design Patterns</a></li> 
       </ul>
     </div>
 
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.2.
+    &#169; Copyright 2005-2010, Eventlet Contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

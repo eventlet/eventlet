@@ -1,19 +1,17 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="./">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Examples &#8212; Eventlet 0.33.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    <title>Examples &#8212; Eventlet 0.33.3 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=514cf933" />
     
-    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
+    <script src="_static/documentation_options.js?v=026d09f6"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -35,7 +33,7 @@
         <li class="right" >
           <a href="patching.html" title="Greening The World"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.33.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.33.3 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Examples</a></li> 
       </ul>
     </div>  
@@ -46,10 +44,10 @@
           <div class="body" role="main">
             
   <section id="examples">
-<h1>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h1>
+<h1>Examples<a class="headerlink" href="#examples" title="Link to this heading">¶</a></h1>
 <p>Here are a bunch of small example programs that use Eventlet.  All of these examples can be found in the <code class="docutils literal notranslate"><span class="pre">examples</span></code> directory of a source copy of Eventlet.</p>
 <section id="web-crawler">
-<span id="web-crawler-example"></span><h2>Web Crawler<a class="headerlink" href="#web-crawler" title="Permalink to this headline">¶</a></h2>
+<span id="web-crawler-example"></span><h2>Web Crawler<a class="headerlink" href="#web-crawler" title="Link to this heading">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">examples/webcrawler.py</span></code></p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
 <span class="sd">&quot;&quot;&quot;</span>
@@ -85,7 +83,7 @@
 </div>
 </section>
 <section id="wsgi-server">
-<span id="wsgi-server-example"></span><h2>WSGI Server<a class="headerlink" href="#wsgi-server" title="Permalink to this headline">¶</a></h2>
+<span id="wsgi-server-example"></span><h2>WSGI Server<a class="headerlink" href="#wsgi-server" title="Link to this heading">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">examples/wsgi.py</span></code></p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;This is a simple example of running a wsgi application with eventlet.</span>
 <span class="sd">For a more fully-featured server which supports multiple processes,</span>
@@ -110,7 +108,7 @@
 </div>
 </section>
 <section id="echo-server">
-<span id="echo-server-example"></span><h2>Echo Server<a class="headerlink" href="#echo-server" title="Permalink to this headline">¶</a></h2>
+<span id="echo-server-example"></span><h2>Echo Server<a class="headerlink" href="#echo-server" title="Link to this heading">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">examples/echoserver.py</span></code></p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="ch">#! /usr/bin/env python</span>
 <span class="sd">&quot;&quot;&quot;\</span>
@@ -123,7 +121,6 @@
 <span class="sd">You terminate your connection by terminating telnet (typically Ctrl-]</span>
 <span class="sd">and then &#39;quit&#39;)</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span>
 
 <span class="kn">import</span> <span class="nn">eventlet</span>
 
@@ -154,13 +151,12 @@
 </div>
 </section>
 <section id="socket-connect">
-<span id="socket-connect-example"></span><h2>Socket Connect<a class="headerlink" href="#socket-connect" title="Permalink to this headline">¶</a></h2>
+<span id="socket-connect-example"></span><h2>Socket Connect<a class="headerlink" href="#socket-connect" title="Link to this heading">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">examples/connect.py</span></code></p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;Spawn multiple workers and collect their results.</span>
 
 <span class="sd">Demonstrates how to use the eventlet.green.socket module.</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span>
 
 <span class="kn">import</span> <span class="nn">eventlet</span>
 <span class="kn">from</span> <span class="nn">eventlet.green</span> <span class="kn">import</span> <span class="n">socket</span>
@@ -171,7 +167,7 @@
     <span class="n">ip</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">gethostbyname</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
     <span class="n">c</span><span class="o">.</span><span class="n">connect</span><span class="p">((</span><span class="n">ip</span><span class="p">,</span> <span class="mi">80</span><span class="p">))</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> connected&#39;</span> <span class="o">%</span> <span class="n">url</span><span class="p">)</span>
-    <span class="n">c</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="s1">&#39;GET /</span><span class="se">\r\n\r\n</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">c</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;GET /</span><span class="se">\r\n\r\n</span><span class="s1">&#39;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">c</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">1024</span><span class="p">)</span>
 
 
@@ -188,7 +184,7 @@
 </div>
 </section>
 <section id="multi-user-chat-server">
-<span id="chat-server-example"></span><h2>Multi-User Chat Server<a class="headerlink" href="#multi-user-chat-server" title="Permalink to this headline">¶</a></h2>
+<span id="chat-server-example"></span><h2>Multi-User Chat Server<a class="headerlink" href="#multi-user-chat-server" title="Link to this heading">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">examples/chat_server.py</span></code></p>
 <p>This is a little different from the echo server, in that it broadcasts the
 messages to all participants, not just the sender.</p>
@@ -208,7 +204,7 @@ messages to all participants, not just the sender.</p>
                 <span class="k">if</span> <span class="n">p</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">writer</span><span class="p">:</span>  <span class="c1"># Don&#39;t echo</span>
                     <span class="n">p</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
                     <span class="n">p</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
-            <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="c1"># ignore broken pipes, they just mean the participant</span>
                 <span class="c1"># closed its connection already</span>
                 <span class="k">if</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">32</span><span class="p">:</span>
@@ -234,7 +230,7 @@ messages to all participants, not just the sender.</p>
 </div>
 </section>
 <section id="feed-scraper">
-<span id="feed-scraper-example"></span><h2>Feed Scraper<a class="headerlink" href="#feed-scraper" title="Permalink to this headline">¶</a></h2>
+<span id="feed-scraper-example"></span><h2>Feed Scraper<a class="headerlink" href="#feed-scraper" title="Link to this heading">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">examples/feedscraper.py</span></code></p>
 <p>This example requires <a class="reference external" href="http://www.feedparser.org/">Feedparser</a> to be installed or on the PYTHONPATH.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;A simple web server that accepts POSTS containing a list of feed urls,</span>
@@ -278,7 +274,7 @@ messages to all participants, not just the sender.</p>
 </div>
 </section>
 <section id="port-forwarder">
-<span id="forwarder-example"></span><h2>Port Forwarder<a class="headerlink" href="#port-forwarder" title="Permalink to this headline">¶</a></h2>
+<span id="forwarder-example"></span><h2>Port Forwarder<a class="headerlink" href="#port-forwarder" title="Link to this heading">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">examples/forwarder.py</span></code></p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot; This is an incredibly simple port forwarder from port 7000 to 22 on</span>
 <span class="sd">localhost.  It calls a callback function when the socket is closed, to</span>
@@ -294,7 +290,7 @@ messages to all participants, not just the sender.</p>
 
 
 <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">cb</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Forwards bytes unidirectionally from source to dest&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Forwards bytes unidirectionally from source to dest&quot;&quot;&quot;</span>
     <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
         <span class="n">d</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">32384</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">d</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
@@ -313,7 +309,7 @@ messages to all participants, not just the sender.</p>
 </div>
 </section>
 <section id="recursive-web-crawler">
-<span id="recursive-crawler-example"></span><h2>Recursive Web Crawler<a class="headerlink" href="#recursive-web-crawler" title="Permalink to this headline">¶</a></h2>
+<span id="recursive-crawler-example"></span><h2>Recursive Web Crawler<a class="headerlink" href="#recursive-web-crawler" title="Link to this heading">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">examples/recursive_crawler.py</span></code></p>
 <p>This is an example recursive web crawler that fetches linked pages from a seed url.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;This is a recursive web crawler.  Don&#39;t go pointing this at random sites;</span>
@@ -336,7 +332,7 @@ messages to all participants, not just the sender.</p>
 
 
 <span class="k">def</span> <span class="nf">fetch</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">seen</span><span class="p">,</span> <span class="n">pool</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Fetch a url, stick any found urls into the seen set, and</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fetch a url, stick any found urls into the seen set, and</span>
 <span class="sd">    dispatch any new ones to the pool.&quot;&quot;&quot;</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;fetching&quot;</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
     <span class="n">data</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
@@ -353,7 +349,7 @@ messages to all participants, not just the sender.</p>
 
 
 <span class="k">def</span> <span class="nf">crawl</span><span class="p">(</span><span class="n">start_url</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Recursively crawl starting from *start_url*.  Returns a set of</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Recursively crawl starting from *start_url*.  Returns a set of</span>
 <span class="sd">    urls that were found.&quot;&quot;&quot;</span>
     <span class="n">pool</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">GreenPool</span><span class="p">()</span>
     <span class="n">seen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
@@ -368,7 +364,7 @@ messages to all participants, not just the sender.</p>
 </div>
 </section>
 <section id="producer-consumer-web-crawler">
-<span id="producer-consumer-example"></span><h2>Producer Consumer Web Crawler<a class="headerlink" href="#producer-consumer-web-crawler" title="Permalink to this headline">¶</a></h2>
+<span id="producer-consumer-example"></span><h2>Producer Consumer Web Crawler<a class="headerlink" href="#producer-consumer-web-crawler" title="Link to this heading">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">examples/producer_consumer.py</span></code></p>
 <p>This is an example implementation of the producer/consumer pattern as well as being identical in functionality to the recursive web crawler.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;This is a recursive web crawler.  Don&#39;t go pointing this at random sites;</span>
@@ -383,6 +379,7 @@ messages to all participants, not just the sender.</p>
 <span class="sd">yourself.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span> <span class="nn">eventlet.green.urllib.request</span> <span class="kn">import</span> <span class="n">urlopen</span>
+<span class="kn">from</span> <span class="nn">urllib.request</span> <span class="kn">import</span> <span class="n">urlopen</span>
 <span class="kn">import</span> <span class="nn">eventlet</span>
 <span class="kn">import</span> <span class="nn">re</span>
 
@@ -391,18 +388,18 @@ messages to all participants, not just the sender.</p>
 
 
 <span class="k">def</span> <span class="nf">fetch</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">outq</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Fetch a url and push any urls found into a queue.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fetch a url and push any urls found into a queue.&quot;&quot;&quot;</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;fetching&quot;</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
     <span class="n">data</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
     <span class="k">with</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">Timeout</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">urllib2</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">url_match</span> <span class="ow">in</span> <span class="n">url_regex</span><span class="o">.</span><span class="n">finditer</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
         <span class="n">new_url</span> <span class="o">=</span> <span class="n">url_match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
         <span class="n">outq</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">new_url</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">producer</span><span class="p">(</span><span class="n">start_url</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Recursively crawl starting from *start_url*.  Returns a set of</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Recursively crawl starting from *start_url*.  Returns a set of</span>
 <span class="sd">    urls that were found.&quot;&quot;&quot;</span>
     <span class="n">pool</span> <span class="o">=</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">GreenPool</span><span class="p">()</span>
     <span class="n">seen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
@@ -430,14 +427,13 @@ messages to all participants, not just the sender.</p>
 </div>
 </section>
 <section id="websocket-server-example">
-<span id="websocket-example"></span><h2>Websocket Server Example<a class="headerlink" href="#websocket-server-example" title="Permalink to this headline">¶</a></h2>
+<span id="websocket-example"></span><h2>Websocket Server Example<a class="headerlink" href="#websocket-server-example" title="Link to this heading">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">examples/websocket.py</span></code></p>
 <p>This exercises some of the features of the websocket server
 implementation.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">eventlet</span>
 <span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">wsgi</span>
 <span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">websocket</span>
-<span class="kn">import</span> <span class="nn">six</span>
 
 <span class="c1"># demo app</span>
 <span class="kn">import</span> <span class="nn">os</span>
@@ -446,7 +442,7 @@ implementation.</p>
 
 <span class="nd">@websocket</span><span class="o">.</span><span class="n">WebSocketWSGI</span>
 <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="n">ws</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;  This is the websocket handler function.  Note that we</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;  This is the websocket handler function.  Note that we</span>
 <span class="sd">    can dispatch based on path in here, too.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">ws</span><span class="o">.</span><span class="n">path</span> <span class="o">==</span> <span class="s1">&#39;/echo&#39;</span><span class="p">:</span>
         <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
@@ -456,13 +452,13 @@ implementation.</p>
             <span class="n">ws</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
 
     <span class="k">elif</span> <span class="n">ws</span><span class="o">.</span><span class="n">path</span> <span class="o">==</span> <span class="s1">&#39;/data&#39;</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">moves</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">10000</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10000</span><span class="p">):</span>
             <span class="n">ws</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;0 </span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()))</span>
             <span class="n">eventlet</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">dispatch</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot; This resolves to the web page or the websocket depending on</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; This resolves to the web page or the websocket depending on</span>
 <span class="sd">    the path.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;PATH_INFO&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;/data&#39;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">handle</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
@@ -481,7 +477,7 @@ implementation.</p>
 </div>
 </section>
 <section id="websocket-multi-user-chat-example">
-<span id="websocket-chat-example"></span><h2>Websocket Multi-User Chat Example<a class="headerlink" href="#websocket-multi-user-chat-example" title="Permalink to this headline">¶</a></h2>
+<span id="websocket-chat-example"></span><h2>Websocket Multi-User Chat Example<a class="headerlink" href="#websocket-multi-user-chat-example" title="Link to this heading">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">examples/websocket_chat.py</span></code></p>
 <p>This is a mashup of the websocket example and the multi-user chat example, showing how you can do the same sorts of things with websockets that you can do with regular sockets.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
@@ -510,7 +506,7 @@ implementation.</p>
 
 
 <span class="k">def</span> <span class="nf">dispatch</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Resolves to the web page or the websocket depending on the path.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolves to the web page or the websocket depending on the path.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;PATH_INFO&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;/chat&#39;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">handle</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
@@ -535,8 +531,9 @@ implementation.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table of Contents</a></h3>
-  <ul>
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
 <li><a class="reference internal" href="#">Examples</a><ul>
 <li><a class="reference internal" href="#web-crawler">Web Crawler</a></li>
 <li><a class="reference internal" href="#wsgi-server">WSGI Server</a></li>
@@ -553,12 +550,17 @@ implementation.</p>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="patching.html"
-                        title="previous chapter">Greening The World</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="ssl.html"
-                        title="next chapter">Using SSL With Eventlet</a></p>
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="patching.html"
+                          title="previous chapter">Greening The World</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="ssl.html"
+                          title="next chapter">Using SSL With Eventlet</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -575,7 +577,7 @@ implementation.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -595,14 +597,14 @@ implementation.</p>
         <li class="right" >
           <a href="patching.html" title="Greening The World"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.33.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Eventlet 0.33.3 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Examples</a></li> 
       </ul>
     </div>
 
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.2.
+    &#169; Copyright 2005-2010, Eventlet Contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

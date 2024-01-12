@@ -1,19 +1,17 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>backdoor – Python interactive interpreter within a running process &#8212; Eventlet 0.33.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <title>backdoor – Python interactive interpreter within a running process &#8212; Eventlet 0.33.3 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=026d09f6"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -35,7 +33,7 @@
         <li class="right" >
           <a href="../modules.html" title="Module Reference"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.33.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.33.3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">backdoor</span></code> – Python interactive interpreter within a running process</a></li> 
       </ul>
@@ -47,29 +45,29 @@
           <div class="body" role="main">
             
   <section id="backdoor-python-interactive-interpreter-within-a-running-process">
-<h1><code class="xref py py-mod docutils literal notranslate"><span class="pre">backdoor</span></code> – Python interactive interpreter within a running process<a class="headerlink" href="#backdoor-python-interactive-interpreter-within-a-running-process" title="Permalink to this headline">¶</a></h1>
+<h1><code class="xref py py-mod docutils literal notranslate"><span class="pre">backdoor</span></code> – Python interactive interpreter within a running process<a class="headerlink" href="#backdoor-python-interactive-interpreter-within-a-running-process" title="Link to this heading">¶</a></h1>
 <p>The backdoor module is convenient for inspecting the state of a long-running process.  It supplies the normal Python interactive interpreter in a way that does not block the normal operation of the application.  This can be useful for debugging, performance tuning, or simply learning about how things behave in situ.</p>
 <p>In the application, spawn a greenthread running backdoor_server on a listening socket:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">eventlet</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="n">backdoor</span><span class="o">.</span><span class="n">backdoor_server</span><span class="p">,</span> <span class="n">eventlet</span><span class="o">.</span><span class="n">listen</span><span class="p">((</span><span class="s1">&#39;localhost&#39;</span><span class="p">,</span> <span class="mi">3000</span><span class="p">)),</span> <span class="nb">locals</span><span class="p">())</span>
 </pre></div>
 </div>
 <p>When this is running, the backdoor is accessible via telnet to the specified port.</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ telnet localhost <span class="m">3000</span>
-<span class="o">(</span>python version, build info<span class="o">)</span>
-Type <span class="s2">&quot;help&quot;</span>, <span class="s2">&quot;copyright&quot;</span>, <span class="s2">&quot;credits&quot;</span> or <span class="s2">&quot;license&quot;</span> <span class="k">for</span> more information.
-&gt;&gt;&gt; import myapp
-&gt;&gt;&gt; dir<span class="o">(</span>myapp<span class="o">)</span>
-<span class="o">[</span><span class="s1">&#39;__all__&#39;</span>, <span class="s1">&#39;__doc__&#39;</span>, <span class="s1">&#39;__name__&#39;</span>, <span class="s1">&#39;myfunc&#39;</span><span class="o">]</span>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>telnet<span class="w"> </span>localhost<span class="w"> </span><span class="m">3000</span>
+<span class="o">(</span>python<span class="w"> </span>version,<span class="w"> </span>build<span class="w"> </span>info<span class="o">)</span>
+Type<span class="w"> </span><span class="s2">&quot;help&quot;</span>,<span class="w"> </span><span class="s2">&quot;copyright&quot;</span>,<span class="w"> </span><span class="s2">&quot;credits&quot;</span><span class="w"> </span>or<span class="w"> </span><span class="s2">&quot;license&quot;</span><span class="w"> </span><span class="k">for</span><span class="w"> </span>more<span class="w"> </span>information.
+&gt;&gt;&gt;<span class="w"> </span>import<span class="w"> </span>myapp
+&gt;&gt;&gt;<span class="w"> </span>dir<span class="o">(</span>myapp<span class="o">)</span>
+<span class="o">[</span><span class="s1">&#39;__all__&#39;</span>,<span class="w"> </span><span class="s1">&#39;__doc__&#39;</span>,<span class="w"> </span><span class="s1">&#39;__name__&#39;</span>,<span class="w"> </span><span class="s1">&#39;myfunc&#39;</span><span class="o">]</span>
 &gt;&gt;&gt;
 </pre></div>
 </div>
 <p>The backdoor cooperatively yields to the rest of the application between commands, so on a running server continuously serving requests, you can observe the internal state changing between interpreter commands.</p>
-<span class="target" id="module-eventlet.backdoor"></span><dl class="py class">
+<dl class="py class" id="module-eventlet.backdoor">
 <dt class="sig sig-object py" id="eventlet.backdoor.SocketConsole">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">eventlet.backdoor.</span></span><span class="sig-name descname"><span class="pre">SocketConsole</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">desc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hostport</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">locals</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.backdoor.SocketConsole" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">eventlet.backdoor.</span></span><span class="sig-name descname"><span class="pre">SocketConsole</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">desc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hostport</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">locals</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.backdoor.SocketConsole" title="Link to this definition">¶</a></dt>
 <dd><dl class="py method">
 <dt class="sig sig-object py" id="eventlet.backdoor.SocketConsole.switch">
-<span class="sig-name descname"><span class="pre">switch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.backdoor.SocketConsole.switch" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">switch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.backdoor.SocketConsole.switch" title="Link to this definition">¶</a></dt>
 <dd><p>Switch execution to this greenlet.</p>
 <p>If this greenlet has never been run, then this greenlet
 will be switched to using the body of <code class="docutils literal notranslate"><span class="pre">self.run(*args,</span> <span class="pre">**kwargs)</span></code>.</p>
@@ -88,7 +86,7 @@ above.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="eventlet.backdoor.backdoor">
-<span class="sig-prename descclassname"><span class="pre">eventlet.backdoor.</span></span><span class="sig-name descname"><span class="pre">backdoor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn_info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">locals</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.backdoor.backdoor" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">eventlet.backdoor.</span></span><span class="sig-name descname"><span class="pre">backdoor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn_info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">locals</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.backdoor.backdoor" title="Link to this definition">¶</a></dt>
 <dd><p>Sets up an interactive console on a socket with a single connected
 client.  This does not block the caller, as it spawns a new greenlet to
 handle the console.  This is meant to be called from within an accept loop
@@ -97,7 +95,7 @@ handle the console.  This is meant to be called from within an accept loop
 
 <dl class="py function">
 <dt class="sig sig-object py" id="eventlet.backdoor.backdoor_server">
-<span class="sig-prename descclassname"><span class="pre">eventlet.backdoor.</span></span><span class="sig-name descname"><span class="pre">backdoor_server</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sock</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">locals</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.backdoor.backdoor_server" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">eventlet.backdoor.</span></span><span class="sig-name descname"><span class="pre">backdoor_server</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sock</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">locals</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.backdoor.backdoor_server" title="Link to this definition">¶</a></dt>
 <dd><p>Blocking function that runs a backdoor server on the socket <em>sock</em>,
 accepting connections and running backdoor consoles for each client that
 connects.</p>
@@ -115,12 +113,31 @@ variables in here.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="../modules.html"
-                        title="previous chapter">Module Reference</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="corolocal.html"
-                        title="next chapter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">corolocal</span></code> – Coroutine local storage</a></p>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">backdoor</span></code> – Python interactive interpreter within a running process</a><ul>
+<li><a class="reference internal" href="#eventlet.backdoor.SocketConsole"><code class="docutils literal notranslate"><span class="pre">SocketConsole</span></code></a><ul>
+<li><a class="reference internal" href="#eventlet.backdoor.SocketConsole.switch"><code class="docutils literal notranslate"><span class="pre">SocketConsole.switch()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#eventlet.backdoor.backdoor"><code class="docutils literal notranslate"><span class="pre">backdoor()</span></code></a></li>
+<li><a class="reference internal" href="#eventlet.backdoor.backdoor_server"><code class="docutils literal notranslate"><span class="pre">backdoor_server()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="../modules.html"
+                          title="previous chapter">Module Reference</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="corolocal.html"
+                          title="next chapter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">corolocal</span></code> – Coroutine local storage</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -137,7 +154,7 @@ variables in here.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -157,15 +174,15 @@ variables in here.</p>
         <li class="right" >
           <a href="../modules.html" title="Module Reference"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.33.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.33.3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">backdoor</span></code> – Python interactive interpreter within a running process</a></li> 
       </ul>
     </div>
 
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.2.
+    &#169; Copyright 2005-2010, Eventlet Contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

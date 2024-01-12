@@ -1,19 +1,17 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>event – Cross-greenthread primitive &#8212; Eventlet 0.33.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <title>event – Cross-greenthread primitive &#8212; Eventlet 0.33.3 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=026d09f6"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -35,7 +33,7 @@
         <li class="right" >
           <a href="db_pool.html" title="db_pool – DBAPI 2 database connection pooling"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.33.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.33.3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">event</span></code> – Cross-greenthread primitive</a></li> 
       </ul>
@@ -47,10 +45,10 @@
           <div class="body" role="main">
             
   <section id="module-eventlet.event">
-<span id="event-cross-greenthread-primitive"></span><h1><code class="xref py py-mod docutils literal notranslate"><span class="pre">event</span></code> – Cross-greenthread primitive<a class="headerlink" href="#module-eventlet.event" title="Permalink to this headline">¶</a></h1>
+<span id="event-cross-greenthread-primitive"></span><h1><code class="xref py py-mod docutils literal notranslate"><span class="pre">event</span></code> – Cross-greenthread primitive<a class="headerlink" href="#module-eventlet.event" title="Link to this heading">¶</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="eventlet.event.Event">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">eventlet.event.</span></span><span class="sig-name descname"><span class="pre">Event</span></span><a class="headerlink" href="#eventlet.event.Event" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">eventlet.event.</span></span><span class="sig-name descname"><span class="pre">Event</span></span><a class="headerlink" href="#eventlet.event.Event" title="Link to this definition">¶</a></dt>
 <dd><p>An abstraction where an arbitrary number of coroutines
 can wait for one event from another.</p>
 <p>Events are similar to a Queue that can only hold one item, but differ
@@ -76,7 +74,7 @@ is implemented.</p>
 </div>
 <dl class="py method">
 <dt class="sig sig-object py" id="eventlet.event.Event.ready">
-<span class="sig-name descname"><span class="pre">ready</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.event.Event.ready" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">ready</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.event.Event.ready" title="Link to this definition">¶</a></dt>
 <dd><p>Return true if the <a class="reference internal" href="#eventlet.event.Event.wait" title="eventlet.event.Event.wait"><code class="xref py py-meth docutils literal notranslate"><span class="pre">wait()</span></code></a> call will return immediately.
 Used to avoid waiting for things that might take a while to time out.
 For example, you can put a bunch of events into a list, and then visit
@@ -86,7 +84,7 @@ and then you can <a class="reference internal" href="#eventlet.event.Event.wait"
 
 <dl class="py method">
 <dt class="sig sig-object py" id="eventlet.event.Event.send">
-<span class="sig-name descname"><span class="pre">send</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">result</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.event.Event.send" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">send</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">result</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.event.Event.send" title="Link to this definition">¶</a></dt>
 <dd><p>Makes arrangements for the waiters to be woken with the
 result and then returns immediately to the parent.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">event</span>
@@ -116,7 +114,7 @@ result and then returns immediately to the parent.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="eventlet.event.Event.send_exception">
-<span class="sig-name descname"><span class="pre">send_exception</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.event.Event.send_exception" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">send_exception</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.event.Event.send_exception" title="Link to this definition">¶</a></dt>
 <dd><p>Same as <a class="reference internal" href="#eventlet.event.Event.send" title="eventlet.event.Event.send"><code class="xref py py-meth docutils literal notranslate"><span class="pre">send()</span></code></a>, but sends an exception to waiters.</p>
 <p>The arguments to send_exception are the same as the arguments
 to <code class="docutils literal notranslate"><span class="pre">raise</span></code>.  If a single exception object is passed in, it
@@ -129,12 +127,12 @@ new stacktrace.</p>
 <span class="gt">Traceback (most recent call last):</span>
   File <span class="nb">&quot;&lt;stdin&gt;&quot;</span>, line <span class="m">1</span>, in <span class="n">&lt;module&gt;</span>
   File <span class="nb">&quot;eventlet/event.py&quot;</span>, line <span class="m">120</span>, in <span class="n">wait</span>
-    <span class="n">current</span><span class="o">.</span><span class="n">throw</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_exc</span><span class="p">)</span>
+<span class="w">    </span><span class="n">current</span><span class="o">.</span><span class="n">throw</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_exc</span><span class="p">)</span>
 <span class="gr">RuntimeError</span>
 </pre></div>
 </div>
 <p>If it’s important to preserve the entire original stack trace,
-you must pass in the entire <a class="reference external" href="https://docs.python.org/3/library/sys.html#sys.exc_info" title="(in Python v3.10)"><code class="xref py py-func docutils literal notranslate"><span class="pre">sys.exc_info()</span></code></a> tuple.</p>
+you must pass in the entire <a class="reference external" href="https://docs.python.org/3/library/sys.html#sys.exc_info" title="(in Python v3.12)"><code class="xref py py-func docutils literal notranslate"><span class="pre">sys.exc_info()</span></code></a> tuple.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">sys</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">evt</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">try</span><span class="p">:</span>
@@ -146,19 +144,19 @@ you must pass in the entire <a class="reference external" href="https://docs.pyt
 <span class="gt">Traceback (most recent call last):</span>
   File <span class="nb">&quot;&lt;stdin&gt;&quot;</span>, line <span class="m">1</span>, in <span class="n">&lt;module&gt;</span>
   File <span class="nb">&quot;eventlet/event.py&quot;</span>, line <span class="m">120</span>, in <span class="n">wait</span>
-    <span class="n">current</span><span class="o">.</span><span class="n">throw</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_exc</span><span class="p">)</span>
+<span class="w">    </span><span class="n">current</span><span class="o">.</span><span class="n">throw</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_exc</span><span class="p">)</span>
   File <span class="nb">&quot;&lt;stdin&gt;&quot;</span>, line <span class="m">2</span>, in <span class="n">&lt;module&gt;</span>
 <span class="gr">RuntimeError</span>
 </pre></div>
 </div>
 <p>Note that doing so stores a traceback object directly on the
 Event object, which may cause reference cycles. See the
-<a class="reference external" href="https://docs.python.org/3/library/sys.html#sys.exc_info" title="(in Python v3.10)"><code class="xref py py-func docutils literal notranslate"><span class="pre">sys.exc_info()</span></code></a> documentation.</p>
+<a class="reference external" href="https://docs.python.org/3/library/sys.html#sys.exc_info" title="(in Python v3.12)"><code class="xref py py-func docutils literal notranslate"><span class="pre">sys.exc_info()</span></code></a> documentation.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="eventlet.event.Event.wait">
-<span class="sig-name descname"><span class="pre">wait</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.event.Event.wait" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">wait</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.event.Event.wait" title="Link to this definition">¶</a></dt>
 <dd><p>Wait until another coroutine calls <a class="reference internal" href="#eventlet.event.Event.send" title="eventlet.event.Event.send"><code class="xref py py-meth docutils literal notranslate"><span class="pre">send()</span></code></a>.
 Returns the value the other coroutine passed to <a class="reference internal" href="#eventlet.event.Event.send" title="eventlet.event.Event.send"><code class="xref py py-meth docutils literal notranslate"><span class="pre">send()</span></code></a>.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">eventlet</span>
@@ -192,12 +190,32 @@ specifying a timeout for the operation in seconds (or fractions thereof).</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="db_pool.html"
-                        title="previous chapter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">db_pool</span></code> – DBAPI 2 database connection pooling</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="greenpool.html"
-                        title="next chapter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">greenpool</span></code> – Green Thread Pools</a></p>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">event</span></code> – Cross-greenthread primitive</a><ul>
+<li><a class="reference internal" href="#eventlet.event.Event"><code class="docutils literal notranslate"><span class="pre">Event</span></code></a><ul>
+<li><a class="reference internal" href="#eventlet.event.Event.ready"><code class="docutils literal notranslate"><span class="pre">Event.ready()</span></code></a></li>
+<li><a class="reference internal" href="#eventlet.event.Event.send"><code class="docutils literal notranslate"><span class="pre">Event.send()</span></code></a></li>
+<li><a class="reference internal" href="#eventlet.event.Event.send_exception"><code class="docutils literal notranslate"><span class="pre">Event.send_exception()</span></code></a></li>
+<li><a class="reference internal" href="#eventlet.event.Event.wait"><code class="docutils literal notranslate"><span class="pre">Event.wait()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="db_pool.html"
+                          title="previous chapter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">db_pool</span></code> – DBAPI 2 database connection pooling</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="greenpool.html"
+                          title="next chapter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">greenpool</span></code> – Green Thread Pools</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -214,7 +232,7 @@ specifying a timeout for the operation in seconds (or fractions thereof).</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -234,15 +252,15 @@ specifying a timeout for the operation in seconds (or fractions thereof).</p>
         <li class="right" >
           <a href="db_pool.html" title="db_pool – DBAPI 2 database connection pooling"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.33.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.33.3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">event</span></code> – Cross-greenthread primitive</a></li> 
       </ul>
     </div>
 
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.2.
+    &#169; Copyright 2005-2010, Eventlet Contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

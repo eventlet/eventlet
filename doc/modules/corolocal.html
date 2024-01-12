@@ -1,19 +1,17 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>corolocal – Coroutine local storage &#8212; Eventlet 0.33.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    <title>corolocal – Coroutine local storage &#8212; Eventlet 0.33.3 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=514cf933" />
     
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <script src="../_static/documentation_options.js?v=026d09f6"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -35,7 +33,7 @@
         <li class="right" >
           <a href="backdoor.html" title="backdoor – Python interactive interpreter within a running process"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.33.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.33.3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" accesskey="U">Module Reference</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">corolocal</span></code> – Coroutine local storage</a></li> 
       </ul>
@@ -47,16 +45,16 @@
           <div class="body" role="main">
             
   <section id="module-eventlet.corolocal">
-<span id="corolocal-coroutine-local-storage"></span><h1><code class="xref py py-mod docutils literal notranslate"><span class="pre">corolocal</span></code> – Coroutine local storage<a class="headerlink" href="#module-eventlet.corolocal" title="Permalink to this headline">¶</a></h1>
+<span id="corolocal-coroutine-local-storage"></span><h1><code class="xref py py-mod docutils literal notranslate"><span class="pre">corolocal</span></code> – Coroutine local storage<a class="headerlink" href="#module-eventlet.corolocal" title="Link to this heading">¶</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="eventlet.corolocal.get_ident">
-<span class="sig-prename descclassname"><span class="pre">eventlet.corolocal.</span></span><span class="sig-name descname"><span class="pre">get_ident</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.corolocal.get_ident" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">eventlet.corolocal.</span></span><span class="sig-name descname"><span class="pre">get_ident</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.corolocal.get_ident" title="Link to this definition">¶</a></dt>
 <dd><p>Returns <code class="docutils literal notranslate"><span class="pre">id()</span></code> of current greenlet.  Useful for debugging.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="eventlet.corolocal.local">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">eventlet.corolocal.</span></span><span class="sig-name descname"><span class="pre">local</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.corolocal.local" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">eventlet.corolocal.</span></span><span class="sig-name descname"><span class="pre">local</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eventlet.corolocal.local" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </section>
@@ -68,12 +66,27 @@
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="backdoor.html"
-                        title="previous chapter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">backdoor</span></code> – Python interactive interpreter within a running process</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="dagpool.html"
-                        title="next chapter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">dagpool</span></code> – Dependency-Driven Greenthreads</a></p>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">corolocal</span></code> – Coroutine local storage</a><ul>
+<li><a class="reference internal" href="#eventlet.corolocal.get_ident"><code class="docutils literal notranslate"><span class="pre">get_ident()</span></code></a></li>
+<li><a class="reference internal" href="#eventlet.corolocal.local"><code class="docutils literal notranslate"><span class="pre">local</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="backdoor.html"
+                          title="previous chapter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">backdoor</span></code> – Python interactive interpreter within a running process</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="dagpool.html"
+                          title="next chapter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">dagpool</span></code> – Dependency-Driven Greenthreads</a></p>
+  </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -90,7 +103,7 @@
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -110,15 +123,15 @@
         <li class="right" >
           <a href="backdoor.html" title="backdoor – Python interactive interpreter within a running process"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.33.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Eventlet 0.33.3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../modules.html" >Module Reference</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href=""><code class="xref py py-mod docutils literal notranslate"><span class="pre">corolocal</span></code> – Coroutine local storage</a></li> 
       </ul>
     </div>
 
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2005-2010, Eventlet Contributors.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.2.
+    &#169; Copyright 2005-2010, Eventlet Contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
