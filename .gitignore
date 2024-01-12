@@ -1,8 +1,9 @@
 # please keep this file sorted
 *.egg*
 *.pyc
-.*
+.venv
 build/
+doc/source/changelog.rst
 .coverage
 coverage.xml
 dist/
