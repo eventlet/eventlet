@@ -126,10 +126,7 @@ import email.parser
 import email.message
 import io
 import re
-try:
-    from collections.abc import Iterable
-except ImportError:
-    from collections import Iterable
+from collections.abc import Iterable
 from urllib.parse import urlsplit
 
 from eventlet.green import http, os, socket
@@ -1126,7 +1123,7 @@ class HTTPConnection:
 
                 if encode_chunked and self._http_vsn == 11:
                     # chunked encoding
-                    chunk = '{0:X}\r\n'.format(len(chunk)).encode('ascii') + chunk + b'\r\n'
+                    chunk = '{:X}\r\n'.format(len(chunk)).encode('ascii') + chunk + b'\r\n'
                 self.send(chunk)
 
             if encode_chunked and self._http_vsn == 11:
@@ -1294,7 +1291,7 @@ class HTTPConnection:
         encode_chunked = kwds.pop('encode_chunked', False)
         if kwds:
             # mimic interpreter error for unrecognized keyword
-            raise TypeError("endheaders() got an unexpected keyword argument '{0}'"
+            raise TypeError("endheaders() got an unexpected keyword argument '{}'"
                             .format(kwds.popitem()[0]))
 
         if self.__state == _CS_REQ_STARTED:
@@ -1308,7 +1305,7 @@ class HTTPConnection:
         encode_chunked = kwds.pop('encode_chunked', False)
         if kwds:
             # mimic interpreter error for unrecognized keyword
-            raise TypeError("request() got an unexpected keyword argument '{0}'"
+            raise TypeError("request() got an unexpected keyword argument '{}'"
                             .format(kwds.popitem()[0]))
         self._send_request(method, url, body, headers, encode_chunked)
 
@@ -1477,7 +1474,7 @@ else:
                      timeout=socket._GLOBAL_DEFAULT_TIMEOUT,
                      source_address=None, *, context=None,
                      check_hostname=None):
-            super(HTTPSConnection, self).__init__(host, port, timeout,
+            super().__init__(host, port, timeout,
                                                   source_address)
             self.key_file = key_file
             self.cert_file = cert_file

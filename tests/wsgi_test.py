@@ -1,8 +1,8 @@
-# coding: utf-8
-import cgi
 import collections
 import errno
+import io
 import os
+import pytest
 import shutil
 import signal
 import socket
@@ -21,8 +21,7 @@ from eventlet import wsgi
 from eventlet.green import socket as greensocket
 from eventlet.green import ssl
 from eventlet.support import bytes_to_str
-import six
-from six.moves.urllib import parse
+from urllib import parse
 import tests
 
 
@@ -107,7 +106,7 @@ def already_handled(env, start_response):
     return []
 
 
-class Site(object):
+class Site:
     def __init__(self):
         self.application = hello_world
 
@@ -115,7 +114,7 @@ class Site(object):
         return self.application(env, start_response)
 
 
-class IterableApp(object):
+class IterableApp:
     def __init__(self, send_start_response=False, return_val=()):
         self.send_start_response = send_start_response
         self.return_val = return_val
@@ -133,8 +132,7 @@ class IterableApp(object):
 class IterableSite(Site):
     def __call__(self, env, start_response):
         it = self.application(env, start_response)
-        for i in it:
-            yield i
+        yield from it
 
 
 CONTENT_LENGTH = 'content-length'
@@ -160,7 +158,7 @@ def send_expect_close(sock, buf):
     # Since the test expects an early close, this can be ignored.
     try:
         sock.sendall(buf)
-    except socket.error as exc:
+    except OSError as exc:
         if support.get_errno(exc) != errno.EPIPE:
             raise
 
@@ -169,7 +167,7 @@ def read_http(sock):
     fd = sock.makefile('rb')
     try:
         response_line = bytes_to_str(fd.readline().rstrip(b'\r\n'))
-    except socket.error as exc:
+    except OSError as exc:
         # TODO find out whether 54 is ok here or not, I see it when running tests
         # on Python 3
         if support.get_errno(exc) in (10053, 54):
@@ -199,7 +197,7 @@ def read_http(sock):
         # FIXME: Duplicate headers are allowed as per HTTP RFC standard,
         # the client and/or intermediate proxies are supposed to treat them
         # as a single header with values concatenated using space (' ') delimiter.
-        assert key_lower not in headers_lower, "header duplicated: {0}".format(key)
+        assert key_lower not in headers_lower, "header duplicated: {}".format(key)
         headers_original[key] = value
         headers_lower[key_lower] = value
 
@@ -221,7 +219,7 @@ def read_http(sock):
 
 class _TestBase(tests.LimitedTestCase):
     def setUp(self):
-        super(_TestBase, self).setUp()
+        super().setUp()
         self.site = Site()
         self.killer = None
         self.set_site()
@@ -230,7 +228,7 @@ class _TestBase(tests.LimitedTestCase):
     def tearDown(self):
         greenthread.kill(self.killer)
         eventlet.sleep(0)
-        super(_TestBase, self).tearDown()
+        super().tearDown()
 
     def spawn_server(self, **kwargs):
         """Spawns a new wsgi server with the given arguments using
@@ -238,7 +236,7 @@ class _TestBase(tests.LimitedTestCase):
 
         Sets `self.server_addr` to (host, port) tuple suitable for `socket.connect`.
         """
-        self.logfile = six.StringIO()
+        self.logfile = io.StringIO()
         new_kwargs = dict(max_size=128,
                           log=self.logfile,
                           site=self.site)
@@ -323,7 +321,7 @@ class TestHttpd(_TestBase):
             body = bytes_to_str(env['wsgi.input'].read())
             a = parse.parse_qs(body).get('a', [1])[0]
             start_response('200 OK', [('Content-type', 'text/plain')])
-            return [six.b('a is %s, body is %s' % (a, body))]
+            return [('a is %s, body is %s' % (a, body)).encode()]
 
         self.site.application = new_app
         sock = eventlet.connect(self.server_addr)
@@ -487,9 +485,9 @@ class TestHttpd(_TestBase):
         self.site.application = chunked_post
         sock = eventlet.connect(self.server_addr)
         fd = sock.makefile('rwb')
-        fd.write('PUT /a HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n'
-                 'Transfer-Encoding: chunked\r\n\r\n'
-                 '2\r\noh\r\n4\r\n hai\r\n0\r\n\r\n'.encode())
+        fd.write(b'PUT /a HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n'
+                 b'Transfer-Encoding: chunked\r\n\r\n'
+                 b'2\r\noh\r\n4\r\n hai\r\n0\r\n\r\n')
         fd.flush()
         while True:
             if fd.readline() == b'\r\n':
@@ -499,9 +497,9 @@ class TestHttpd(_TestBase):
 
         sock = eventlet.connect(self.server_addr)
         fd = sock.makefile('rwb')
-        fd.write('PUT /b HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n'
-                 'Transfer-Encoding: chunked\r\n\r\n'
-                 '2\r\noh\r\n4\r\n hai\r\n0\r\n\r\n'.encode())
+        fd.write(b'PUT /b HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n'
+                 b'Transfer-Encoding: chunked\r\n\r\n'
+                 b'2\r\noh\r\n4\r\n hai\r\n0\r\n\r\n')
         fd.flush()
         while True:
             if fd.readline() == b'\r\n':
@@ -511,9 +509,9 @@ class TestHttpd(_TestBase):
 
         sock = eventlet.connect(self.server_addr)
         fd = sock.makefile('rwb')
-        fd.write('PUT /c HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n'
-                 'Transfer-Encoding: chunked\r\n\r\n'
-                 '2\r\noh\r\n4\r\n hai\r\n0\r\n\r\n'.encode())
+        fd.write(b'PUT /c HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n'
+                 b'Transfer-Encoding: chunked\r\n\r\n'
+                 b'2\r\noh\r\n4\r\n hai\r\n0\r\n\r\n')
         fd.flush()
         while True:
             if fd.readline() == b'\r\n':
@@ -628,8 +626,7 @@ class TestHttpd(_TestBase):
             }.get(environ['PATH_INFO'])
             if resp_body is None:
                 resp_body = 'Unexpected path: ' + environ['PATH_INFO']
-                if six.PY3:
-                    resp_body = resp_body.encode('latin1')
+                resp_body = resp_body.encode('latin1')
             # Never look at wsgi.input!
             start_response('200 OK', [('Content-type', 'text/plain')])
             return [resp_body]
@@ -656,7 +653,7 @@ class TestHttpd(_TestBase):
 
         try:
             sock.sendall(b'PUT /3 HTTP/1.0\r\nHost: localhost\r\nConnection: close\r\n\r\n')
-        except socket.error as err:
+        except OSError as err:
             # At one point this could succeed; presumably some older versions
             # of python will still allow it, but now we get a BrokenPipeError
             if err.errno != errno.EPIPE:
@@ -674,7 +671,11 @@ class TestHttpd(_TestBase):
 
         sock.close()
 
+    @pytest.mark.skipif(sys.version_info[:2] >= (3, 11),
+                        reason="cgi deprecated since version 3.11, will be removed in version 3.13")
     def test_019_fieldstorage_compat(self):
+        import cgi
+
         def use_fieldstorage(environ, start_response):
             cgi.FieldStorage(fp=environ['wsgi.input'], environ=environ)
             start_response('200 OK', [('Content-type', 'text/plain')])
@@ -704,7 +705,7 @@ class TestHttpd(_TestBase):
         assert '1.2.3.4,5.6.7.8,127.0.0.1' in self.logfile.getvalue()
 
         # turning off the option should work too
-        self.logfile = six.StringIO()
+        self.logfile = io.StringIO()
         self.spawn_server(log_x_forwarded_for=False)
 
         sock = eventlet.connect(self.server_addr)
@@ -734,7 +735,7 @@ class TestHttpd(_TestBase):
         try:
             server_sock_2.accept()
             # shouldn't be able to use this one anymore
-        except socket.error as exc:
+        except OSError as exc:
             self.assertEqual(support.get_errno(exc), errno.EBADF)
         self.spawn_server(sock=server_sock)
         sock = eventlet.connect(server_sock.getsockname())
@@ -911,7 +912,7 @@ class TestHttpd(_TestBase):
             else:
                 header_lines.append(line.strip())
         assert header_lines[0].startswith(b'HTTP/1.1 100 Continue')
-        headers = dict((k, v) for k, v in (h.split(b': ', 1) for h in header_lines[1:]))
+        headers = {k: v for k, v in (h.split(b': ', 1) for h in header_lines[1:])}
         assert b'Hundred-Continue-Header-1' in headers
         assert b'Hundred-Continue-Header-2' in headers
         assert b'Hundred-Continue-Header-K' in headers
@@ -963,8 +964,8 @@ class TestHttpd(_TestBase):
             else:
                 header_lines.append(line.strip())
         assert header_lines[0].startswith(b'HTTP/1.1 100 Continue')
-        headers = dict((k, v) for k, v in (h.split(b': ', 1)
-                                           for h in header_lines[1:]))
+        headers = {k: v for k, v in (h.split(b': ', 1)
+                                     for h in header_lines[1:])}
         assert b'Hundred-Continue-Header-1' in headers
         assert b'Hundred-Continue-Header-2' in headers
         self.assertEqual(b'H1', headers[b'Hundred-Continue-Header-1'])
@@ -983,8 +984,8 @@ class TestHttpd(_TestBase):
             else:
                 header_lines.append(line.strip())
         assert header_lines[0].startswith(b'HTTP/1.1 100 Continue')
-        headers = dict((k, v) for k, v in (h.split(b': ', 1)
-                                           for h in header_lines[1:]))
+        headers = {k: v for k, v in (h.split(b': ', 1)
+                                     for h in header_lines[1:])}
         assert b'Hundred-Continue-Header-3' in headers
         self.assertEqual(b'H3', headers[b'Hundred-Continue-Header-3'])
 
@@ -1041,8 +1042,8 @@ class TestHttpd(_TestBase):
             else:
                 header_lines.append(line.strip())
         assert header_lines[0].startswith(b'HTTP/1.1 100 Continue')
-        headers = dict((k, v) for k, v in (h.split(b': ', 1)
-                                           for h in header_lines[1:]))
+        headers = {k: v for k, v in (h.split(b': ', 1)
+                                     for h in header_lines[1:])}
         assert b'Hundred-Continue-Header-1' in headers
         assert b'Hundred-Continue-Header-2' in headers
         self.assertEqual(b'H1', headers[b'Hundred-Continue-Header-1'])
@@ -1061,8 +1062,8 @@ class TestHttpd(_TestBase):
             else:
                 header_lines.append(line.strip())
         assert header_lines[0].startswith(b'HTTP/1.1 100 Continue')
-        headers = dict((k, v) for k, v in (h.split(b': ', 1)
-                                           for h in header_lines[1:]))
+        headers = {k: v for k, v in (h.split(b': ', 1)
+                                     for h in header_lines[1:])}
         assert b'Hundred-Continue-Header-3' in headers
         self.assertEqual(b'H3', headers[b'Hundred-Continue-Header-3'])
 
@@ -1156,7 +1157,7 @@ class TestHttpd(_TestBase):
             try:
                 eventlet.connect(self.server_addr)
                 self.fail("Didn't expect to connect")
-            except socket.error as exc:
+            except OSError as exc:
                 self.assertEqual(support.get_errno(exc), errno.ECONNREFUSED)
 
         log_content = log.getvalue()
@@ -1446,7 +1447,7 @@ class TestHttpd(_TestBase):
         def chunk_reader(env, start_response):
             try:
                 content = env['wsgi.input'].read(1024)
-            except IOError:
+            except OSError:
                 blew_up[0] = True
                 content = b'ok'
             read_content.send(content)
@@ -1574,7 +1575,7 @@ class TestHttpd(_TestBase):
         def wsgi_app(environ, start_response):
             start_response("200 OK", [])
             yield b"oh hai, "
-            yield u"xxx"
+            yield "xxx"
         self.site.application = wsgi_app
         sock = eventlet.connect(self.server_addr)
         sock.sendall(b'GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
@@ -1585,7 +1586,7 @@ class TestHttpd(_TestBase):
         def wsgi_app(environ, start_response):
             start_response("200 OK", [])
             yield b"oh hai, "
-            yield u"xxx \u0230"
+            yield "xxx \u0230"
         self.site.application = wsgi_app
         sock = eventlet.connect(self.server_addr)
         sock.sendall(b'GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
@@ -1596,8 +1597,8 @@ class TestHttpd(_TestBase):
     def test_path_info_decoding(self):
         def wsgi_app(environ, start_response):
             start_response("200 OK", [])
-            yield six.b("decoded: %s" % environ['PATH_INFO'])
-            yield six.b("raw: %s" % environ['RAW_PATH_INFO'])
+            yield ("decoded: %s" % environ['PATH_INFO']).encode()
+            yield ("raw: %s" % environ['RAW_PATH_INFO']).encode()
         self.site.application = wsgi_app
         sock = eventlet.connect(self.server_addr)
         sock.sendall(b'GET /a*b@%40%233 HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
@@ -1631,12 +1632,12 @@ class TestHttpd(_TestBase):
         # Per PEP-0333 https://www.python.org/dev/peps/pep-0333/#unicode-issues
         # in all WSGI environment strings application must observe either bytes in latin-1 (ISO-8859-1)
         # or unicode code points \u0000..\u00ff
-        msg = 'Expected PATH_INFO to be a native string, not {0}'.format(type(g[0]))
+        msg = 'Expected PATH_INFO to be a native string, not {}'.format(type(g[0]))
         assert isinstance(g[0], str), msg
         # Fortunately, WSGI strings have the same literal representation on both py2 and py3
         assert g[0] == '/\xe4\xbd\xa0\xe5\xa5\xbd'
 
-        msg = 'Expected PATH_INFO to be a native string, not {0}'.format(type(g[1]))
+        msg = 'Expected PATH_INFO to be a native string, not {}'.format(type(g[1]))
         assert isinstance(g[1], str), msg
         assert g[1] == '/\xbd\xa5\xe5\xa0\xbd\xe4'
 
@@ -1644,9 +1645,9 @@ class TestHttpd(_TestBase):
     def test_ipv6(self):
         try:
             sock = eventlet.listen(('::1', 0), family=socket.AF_INET6)
-        except (socket.gaierror, socket.error):  # probably no ipv6
+        except (OSError, socket.gaierror):  # probably no ipv6
             return
-        log = six.StringIO()
+        log = io.StringIO()
         # first thing the server does is try to log the IP it's bound to
 
         def run_server():
@@ -1818,14 +1819,14 @@ class TestHttpd(_TestBase):
     def test_log_unix_address(self):
         def app(environ, start_response):
             start_response('200 OK', [])
-            return ['\n{0}={1}\n'.format(k, v).encode() for k, v in environ.items()]
+            return ['\n{}={}\n'.format(k, v).encode() for k, v in environ.items()]
 
         tempdir = tempfile.mkdtemp('eventlet_test_log_unix_address')
         try:
             server_sock = eventlet.listen(tempdir + '/socket', socket.AF_UNIX)
             path = server_sock.getsockname()
 
-            log = six.StringIO()
+            log = io.StringIO()
             self.spawn_server(site=app, sock=server_sock, log=log)
             eventlet.sleep(0)  # need to enter server loop
             assert 'http:' + path in log.getvalue()
@@ -1847,7 +1848,7 @@ class TestHttpd(_TestBase):
     def test_headers_raw(self):
         def app(environ, start_response):
             start_response('200 OK', [])
-            return [b'\n'.join('{0}: {1}'.format(*kv).encode() for kv in environ['headers_raw'])]
+            return [b'\n'.join('{}: {}'.format(*kv).encode() for kv in environ['headers_raw'])]
 
         self.spawn_server(site=app)
         sock = eventlet.connect(self.server_addr)
@@ -1860,7 +1861,7 @@ class TestHttpd(_TestBase):
     def test_env_headers(self):
         def app(environ, start_response):
             start_response('200 OK', [])
-            return ['{0}: {1}\n'.format(*kv).encode() for kv in sorted(environ.items())
+            return ['{}: {}\n'.format(*kv).encode() for kv in sorted(environ.items())
                     if kv[0].startswith('HTTP_')]
 
         self.spawn_server(site=app)
@@ -1869,7 +1870,7 @@ class TestHttpd(_TestBase):
                      b'x-ANY_k: one\r\nhttp-x-ANY_k: two\r\n\r\n')
         result = read_http(sock)
         sock.close()
-        assert result.status == 'HTTP/1.1 200 OK', 'Received status {0!r}'.format(result.status)
+        assert result.status == 'HTTP/1.1 200 OK', 'Received status {!r}'.format(result.status)
         assert result.body == (b'HTTP_HOST: localhost\nHTTP_HTTP_X_ANY_K: two\n'
                                b'HTTP_PATH_INFO: foo\nHTTP_X_ANY_K: one\n')
 
@@ -1880,7 +1881,7 @@ class TestHttpd(_TestBase):
             return [line if isinstance(line, bytes) else line.encode('latin1')
                     for kv in sorted(environ.items())
                     if kv[0].startswith('HTTP_')
-                    for line in ('{0}: {1}\n'.format(*kv),)]
+                    for line in ('{}: {}\n'.format(*kv),)]
 
         self.spawn_server(site=app)
         sock = eventlet.connect(self.server_addr)
@@ -1893,7 +1894,7 @@ class TestHttpd(_TestBase):
             b'null-set: \xe2\x88\x85\r\n\r\n')
         result = read_http(sock)
         sock.close()
-        assert result.status == 'HTTP/1.1 200 OK', 'Received status {0!r}'.format(result.status)
+        assert result.status == 'HTTP/1.1 200 OK', 'Received status {!r}'.format(result.status)
         assert result.body == (
             b'HTTP_HOST: localhost\n'
             b'HTTP_NULL_SET: \xe2\x88\x85\n'
@@ -1920,7 +1921,7 @@ class TestHttpd(_TestBase):
 
         sock.sendall(b'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
         result = read_http(sock)
-        assert result.status == 'HTTP/1.1 200 OK', 'Received status {0!r}'.format(result.status)
+        assert result.status == 'HTTP/1.1 200 OK', 'Received status {!r}'.format(result.status)
         self.killer.kill(KeyboardInterrupt)
         try:
             with eventlet.Timeout(1):
@@ -1928,12 +1929,28 @@ class TestHttpd(_TestBase):
         except Exception:
             assert False, self.logfile.getvalue()
 
+    def test_rfc9112_reject_bad_request(self):
+        # (hberaud): Transfer-Encoding and Content-Length in the
+        # same header are not allowed by rfc9112.
+        # Requests containing both headers MAY be rejected to
+        # avoid potential attack.
+        self.site.application = use_write
+        sock = eventlet.connect(self.server_addr)
+        sock.send(
+            b'GET / HTTP/1.1\r\n'
+            b'Transfer-Encoding: chunked\r\n'
+            b'Content-Length: 0'
+            b'Host: localhost\r\n'
+            b'\r\n')
+        result = read_http(sock)
+        self.assertRaises(ConnectionClosed, read_http, sock)
+
 
 def read_headers(sock):
     fd = sock.makefile('rb')
     try:
         response_line = fd.readline()
-    except socket.error as exc:
+    except OSError as exc:
         if support.get_errno(exc) == 10053:
             raise ConnectionClosed
         raise
@@ -1985,11 +2002,11 @@ class ProxiedIterableAlreadyHandledTest(IterableAlreadyHandledTest):
     # same thing as the previous test but ensuring that it works with tpooled
     # results as well as regular ones
     def get_app(self):
-        return tpool.Proxy(super(ProxiedIterableAlreadyHandledTest, self).get_app())
+        return tpool.Proxy(super().get_app())
 
     def tearDown(self):
         tpool.killall()
-        super(ProxiedIterableAlreadyHandledTest, self).tearDown()
+        super().tearDown()
 
 
 class TestChunkedInput(_TestBase):
@@ -2064,7 +2081,7 @@ class TestChunkedInput(_TestBase):
     def test_short_read_with_content_length(self):
         body = self.body()
         req = "POST /short-read HTTP/1.1\r\ntransfer-encoding: Chunked\r\n" \
-              "Content-Length:1000\r\n\r\n" + body
+              "\r\n" + body
 
         fd = self.connect()
         fd.sendall(req.encode())
@@ -2076,7 +2093,7 @@ class TestChunkedInput(_TestBase):
     def test_short_read_with_zero_content_length(self):
         body = self.body()
         req = "POST /short-read HTTP/1.1\r\ntransfer-encoding: Chunked\r\n" \
-              "Content-Length:0\r\n\r\n" + body
+              "\r\n" + body
         fd = self.connect()
         fd.sendall(req.encode())
         self.assertEqual(read_http(fd).body, b"this is ch")
@@ -2108,8 +2125,8 @@ class TestChunkedInput(_TestBase):
 
     def test_chunked_readline(self):
         body = self.body()
-        req = "POST /lines HTTP/1.1\r\nContent-Length: %s\r\n" \
-              "transfer-encoding: Chunked\r\n\r\n%s" % (len(body), body)
+        req = "POST /lines HTTP/1.1\r\n" \
+              "transfer-encoding: Chunked\r\n\r\n%s" % (body)
 
         fd = self.connect()
         fd.sendall(req.encode())
@@ -2118,8 +2135,8 @@ class TestChunkedInput(_TestBase):
 
     def test_chunked_readline_from_input(self):
         body = self.body()
-        req = "POST /readline HTTP/1.1\r\nContent-Length: %s\r\n" \
-              "transfer-encoding: Chunked\r\n\r\n%s" % (len(body), body)
+        req = "POST /readline HTTP/1.1\r\n" \
+              "transfer-encoding: Chunked\r\n\r\n%s" % (body)
 
         fd = self.connect()
         fd.sendall(req.encode())
@@ -2128,8 +2145,8 @@ class TestChunkedInput(_TestBase):
 
     def test_chunked_readlines_from_input(self):
         body = self.body()
-        req = "POST /readlines HTTP/1.1\r\nContent-Length: %s\r\n" \
-              "transfer-encoding: Chunked\r\n\r\n%s" % (len(body), body)
+        req = "POST /readlines HTTP/1.1\r\n" \
+              "transfer-encoding: Chunked\r\n\r\n%s" % (body)
 
         fd = self.connect()
         fd.sendall(req.encode())
@@ -2205,8 +2222,7 @@ class TestChunkedInput(_TestBase):
             # the hub *before* attempting to read anything from a file descriptor
             # therefore we need one extra context switch to let it notice closed
             # socket, die and leave the hub empty
-            if six.PY3:
-                eventlet.sleep(0)
+            eventlet.sleep(0)
         finally:
             signal.alarm(0)
             signal.signal(signal.SIGALRM, signal.SIG_DFL)

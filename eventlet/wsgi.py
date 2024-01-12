@@ -4,6 +4,7 @@ import sys
 import time
 import traceback
 import types
+import urllib.parse
 import warnings
 
 import eventlet
@@ -12,8 +13,6 @@ from eventlet import support
 from eventlet.corolocal import local
 from eventlet.green import BaseHTTPServer
 from eventlet.green import socket
-import six
-from six.moves import urllib
 
 
 DEFAULT_MAX_SIMULTANEOUS_REQUESTS = 1024
@@ -62,8 +61,8 @@ def addr_to_host_port(addr):
 
 # Collections of error codes to compare against.  Not all attributes are set
 # on errno module on all platforms, so some are literals :(
-BAD_SOCK = set((errno.EBADF, 10053))
-BROKEN_SOCK = set((errno.EPIPE, errno.ECONNRESET))
+BAD_SOCK = {errno.EBADF, 10053}
+BROKEN_SOCK = {errno.EPIPE, errno.ECONNRESET}
 
 
 class ChunkReadError(ValueError):
@@ -73,7 +72,7 @@ class ChunkReadError(ValueError):
 WSGI_LOCAL = local()
 
 
-class Input(object):
+class Input:
 
     def __init__(self,
                  rfile,
@@ -123,7 +122,7 @@ class Input(object):
         if self.hundred_continue_headers is not None:
             # 100 Continue headers
             for header in self.hundred_continue_headers:
-                towrite.append(six.b('%s: %s\r\n' % header))
+                towrite.append(('%s: %s\r\n' % header).encode())
 
         # Blank line
         towrite.append(b'\r\n')
@@ -182,7 +181,7 @@ class Input(object):
                     data = reader(maxreadlen)
                     if not data:
                         self.chunk_length = 0
-                        raise IOError("unexpected end of file while parsing chunked data")
+                        raise OSError("unexpected end of file while parsing chunked data")
 
                     datalen = len(data)
                     response.append(data)
@@ -272,7 +271,7 @@ def get_logger(log, debug):
         return LoggerFileWrapper(log or sys.stderr, debug)
 
 
-class LoggerNull(object):
+class LoggerNull:
     def __init__(self):
         pass
 
@@ -311,7 +310,7 @@ class LoggerFileWrapper(LoggerNull):
         self.log.write(msg)
 
 
-class FileObjectForHeaders(object):
+class FileObjectForHeaders:
 
     def __init__(self, fp):
         self.fp = fp
@@ -331,6 +330,22 @@ class FileObjectForHeaders(object):
 
 
 class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
+    """This class is used to handle the HTTP requests that arrive
+    at the server.
+
+    The handler will parse the request and the headers, then call a method
+    specific to the request type.
+
+    :param conn_state: The given connection status.
+    :param server: The server accessible by the request handler.
+    :param reject_bad_requests: Rejection policy.
+                If True, or not specified, queries defined as non-compliant,
+                by example with the RFC 9112, will automatically rejected.
+                Else, if False, even if a request is bad formed, the query
+                will be processed. Functionning this way, default to the
+                more-secure behavior, and allow working with old clients that
+                cannot be updated.
+    """
     protocol_version = 'HTTP/1.1'
     minimum_chunk_size = MINIMUM_CHUNK_SIZE
     capitalize_response_headers = True
@@ -340,11 +355,12 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
     # so before going back to unbuffered, remove any usage of `writelines`.
     wbufsize = 16 << 10
 
-    def __init__(self, conn_state, server):
+    def __init__(self, conn_state, server, reject_bad_requests=True):
         self.request = conn_state[1]
         self.client_address = conn_state[0]
         self.conn_state = conn_state
         self.server = server
+        self.reject_bad_requests = reject_bad_requests
         self.setup()
         try:
             self.handle()
@@ -360,7 +376,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         if getattr(socket, 'TCP_QUICKACK', None):
             try:
                 conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, True)
-            except socket.error:
+            except OSError:
                 pass
 
         try:
@@ -374,7 +390,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             else:
                 # it's a SSLObject, or a martian
                 raise NotImplementedError(
-                    '''eventlet.wsgi doesn't support sockets of type {0}'''.format(type(conn)))
+                    '''eventlet.wsgi doesn't support sockets of type {}'''.format(type(conn)))
 
     def handle(self):
         self.close_connection = True
@@ -392,7 +408,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             return ''
 
         try:
-            sock = self.rfile._sock if six.PY2 else self.connection
+            sock = self.connection
             if self.server.keepalive and not isinstance(self.server.keepalive, bool):
                 sock.settimeout(self.server.keepalive)
             line = self.rfile.readline(self.server.url_length_limit)
@@ -400,10 +416,10 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             return line
         except greenio.SSL.ZeroReturnError:
             pass
-        except socket.error as e:
+        except OSError as e:
             last_errno = support.get_errno(e)
             if last_errno in BROKEN_SOCK:
-                self.server.log.debug('({0}) connection reset by peer {1!r}'.format(
+                self.server.log.debug('({}) connection reset by peer {!r}'.format(
                     self.server.pid,
                     self.client_address))
             elif last_errno not in BAD_SOCK:
@@ -444,6 +460,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             self.rfile = orig_rfile
 
         content_length = self.headers.get('content-length')
+        transfer_encoding = self.headers.get('transfer-encoding')
         if content_length is not None:
             try:
                 if int(content_length) < 0:
@@ -456,13 +473,24 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.close_connection = 1
                 return
 
+            if transfer_encoding is not None:
+                if reject_bad_requests:
+                    msg = b"Content-Length and Transfer-Encoding are not allowed together\n"
+                    self.wfile.write(
+                        b"HTTP/1.0 400 Bad Request\r\n"
+                        b"Connection: close\r\n"
+                        b"Content-Length: %d\r\n"
+                        b"\r\n%s" % (len(msg), msg))
+                    self.close_connection = 1
+                    return
+
         self.environ = self.get_environ()
         self.application = self.server.app
         try:
             self.server.outstanding_requests += 1
             try:
                 self.handle_one_response()
-            except socket.error as e:
+            except OSError as e:
                 # Broken pipe, connection reset by peer
                 if support.get_errno(e) not in BROKEN_SOCK:
                     raise
@@ -493,13 +521,13 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 status, response_headers = headers_set
                 headers_sent.append(1)
                 header_list = [header[0].lower() for header in response_headers]
-                towrite.append(six.b('%s %s\r\n' % (self.protocol_version, status)))
+                towrite.append(('%s %s\r\n' % (self.protocol_version, status)).encode())
                 for header in response_headers:
-                    towrite.append(six.b('%s: %s\r\n' % header))
+                    towrite.append(('%s: %s\r\n' % header).encode('latin-1'))
 
                 # send Date header?
                 if 'date' not in header_list:
-                    towrite.append(six.b('Date: %s\r\n' % (format_date_time(time.time()),)))
+                    towrite.append(('Date: %s\r\n' % (format_date_time(time.time()),)).encode())
 
                 client_conn = self.headers.get('Connection', '').lower()
                 send_keep_alive = False
@@ -535,7 +563,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
             if use_chunked[0]:
                 # Write the chunked encoding
-                towrite.append(six.b("%x" % (len(data),)) + b"\r\n" + data + b"\r\n")
+                towrite.append(("%x" % (len(data),)).encode() + b"\r\n" + data + b"\r\n")
             else:
                 towrite.append(data)
             wfile.writelines(towrite)
@@ -548,7 +576,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 try:
                     if headers_sent:
                         # Re-raise original exception if headers sent
-                        six.reraise(exc_info[0], exc_info[1], exc_info[2])
+                        raise exc_info[1].with_traceback(exc_info[2])
                 finally:
                     # Avoid dangling circular ref
                     exc_info = None
@@ -558,12 +586,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             # Per HTTP RFC standard, header name is case-insensitive.
             # Please, fix your client to ignore header case if possible.
             if self.capitalize_response_headers:
-                if six.PY2:
-                    def cap(x):
-                        return x.capitalize()
-                else:
-                    def cap(x):
-                        return x.encode('latin1').capitalize().decode('latin1')
+                def cap(x):
+                    return x.encode('latin1').capitalize().decode('latin1')
 
                 response_headers = [
                     ('-'.join([cap(x) for x in key.split('-')]), value)
@@ -596,7 +620,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 for data in result:
                     if len(data) == 0:
                         continue
-                    if isinstance(data, six.text_type):
+                    if isinstance(data, str):
                         data = data.encode('ascii')
 
                     towrite.append(data)
@@ -619,7 +643,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 tb = traceback.format_exc()
                 self.server.log.info(tb)
                 if not headers_sent:
-                    err_body = six.b(tb) if self.server.debug else b''
+                    err_body = tb.encode() if self.server.debug else b''
                     start_response("500 Internal Server Error",
                                    [('Content-type', 'text/plain'),
                                     ('Content-length', len(err_body))])
@@ -652,7 +676,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                             + ' client={0} request="{1}" error="{2}"').format(
                                 self.get_client_address()[0], self.requestline, e,
                         ))
-                    except IOError as e:
+                    except OSError as e:
                         self.close_connection = 1
                         self.server.log.error((
                             'I/O error while discarding request body.'
@@ -693,10 +717,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
         pq = self.path.split('?', 1)
         env['RAW_PATH_INFO'] = pq[0]
-        if six.PY2:
-            env['PATH_INFO'] = urllib.parse.unquote(pq[0])
-        else:
-            env['PATH_INFO'] = urllib.parse.unquote(pq[0], encoding='latin1')
+        env['PATH_INFO'] = urllib.parse.unquote(pq[0], encoding='latin1')
         if len(pq) > 1:
             env['QUERY_STRING'] = pq[1]
 
@@ -758,7 +779,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
     def finish(self):
         try:
             BaseHTTPServer.BaseHTTPRequestHandler.finish(self)
-        except socket.error as e:
+        except OSError as e:
             # Broken pipe, connection reset by peer
             if support.get_errno(e) not in BROKEN_SOCK:
                 raise
@@ -848,7 +869,7 @@ class Server(BaseHTTPServer.HTTPServer):
             # Expected exceptions are not exceptional
             conn_state[1].close()
             # similar to logging "accepted" in server()
-            self.log.debug('({0}) timed out {1!r}'.format(self.pid, conn_state[0]))
+            self.log.debug('({}) timed out {!r}'.format(self.pid, conn_state[0]))
 
     def log_message(self, message):
         raise AttributeError('''\
@@ -865,11 +886,11 @@ except AttributeError:
 try:
     import ssl
     ACCEPT_EXCEPTIONS = (socket.error, ssl.SSLError)
-    ACCEPT_ERRNO = set((errno.EPIPE, errno.EBADF, errno.ECONNRESET,
-                        ssl.SSL_ERROR_EOF, ssl.SSL_ERROR_SSL))
+    ACCEPT_ERRNO = {errno.EPIPE, errno.EBADF, errno.ECONNRESET,
+                    ssl.SSL_ERROR_EOF, ssl.SSL_ERROR_SSL}
 except ImportError:
     ACCEPT_EXCEPTIONS = (socket.error,)
-    ACCEPT_ERRNO = set((errno.EPIPE, errno.EBADF, errno.ECONNRESET))
+    ACCEPT_ERRNO = {errno.EPIPE, errno.EBADF, errno.ECONNRESET}
 
 
 def socket_repr(sock):
@@ -879,9 +900,9 @@ def socket_repr(sock):
 
     name = sock.getsockname()
     if sock.family == socket.AF_INET:
-        hier_part = '//{0}:{1}'.format(*name)
+        hier_part = '//{}:{}'.format(*name)
     elif sock.family == socket.AF_INET6:
-        hier_part = '//[{0}]:{1}'.format(*name[:2])
+        hier_part = '//[{}]:{}'.format(*name[:2])
     elif sock.family == socket.AF_UNIX:
         hier_part = name
     else:
@@ -1006,12 +1027,12 @@ If unsure, use eventlet.GreenPool.''')
         conn[1].close()
 
     try:
-        serv.log.info('({0}) wsgi starting up on {1}'.format(serv.pid, socket_repr(sock)))
+        serv.log.info('({}) wsgi starting up on {}'.format(serv.pid, socket_repr(sock)))
         while is_accepting:
             try:
                 client_socket, client_addr = sock.accept()
                 client_socket.settimeout(serv.socket_timeout)
-                serv.log.debug('({0}) accepted {1!r}'.format(serv.pid, client_addr))
+                serv.log.debug('({}) accepted {!r}'.format(serv.pid, client_addr))
                 connections[client_addr] = connection = [client_addr, client_socket, STATE_IDLE]
                 (pool.spawn(serv.process_request, connection)
                     .link(_clean_connection, connection))
@@ -1022,13 +1043,13 @@ If unsure, use eventlet.GreenPool.''')
                 serv.log.info('wsgi exiting')
                 break
     finally:
-        for cs in six.itervalues(connections):
+        for cs in connections.values():
             prev_state = cs[2]
             cs[2] = STATE_CLOSE
             if prev_state == STATE_IDLE:
                 greenio.shutdown_safe(cs[1])
         pool.waitall()
-        serv.log.info('({0}) wsgi exited, is_accepting={1}'.format(serv.pid, is_accepting))
+        serv.log.info('({}) wsgi exited, is_accepting={}'.format(serv.pid, is_accepting))
         try:
             # NOTE: It's not clear whether we want this to leave the
             # socket open or close it.  Use cases like Spawning want
@@ -1036,6 +1057,6 @@ If unsure, use eventlet.GreenPool.''')
             # that far we might as well not bother closing sock at
             # all.
             sock.close()
-        except socket.error as e:
+        except OSError as e:
             if support.get_errno(e) not in BROKEN_SOCK:
                 traceback.print_exc()

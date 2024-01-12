@@ -6,15 +6,17 @@ from io import DEFAULT_BUFFER_SIZE
 import os
 import shutil
 import socket as _orig_sock
+import struct
 import sys
 import tempfile
+
+import pytest
 
 import eventlet
 from eventlet import event, greenio, debug
 from eventlet.hubs import get_hub
 from eventlet.green import select, socket, time, ssl
 from eventlet.support import get_errno
-import six
 import tests
 import tests.mock as mock
 
@@ -80,7 +82,7 @@ class TestGreenSocket(tests.LimitedTestCase):
 
         try:
             expect_socket_timeout(gs.connect, ('192.0.2.1', 80))
-        except socket.error as e:
+        except OSError as e:
             # unreachable is also a valid outcome
             if not get_errno(e) in (errno.EHOSTUNREACH, errno.ENETUNREACH):
                 raise
@@ -546,7 +548,7 @@ class TestGreenSocket(tests.LimitedTestCase):
                     # Arbitrary delay to not use all available CPU, keeps the test
                     # running quickly and reliably under a second
                     time.sleep(0.001)
-                except socket.error as e:
+                except OSError as e:
                     if get_errno(e) == errno.EPIPE:
                         return
                     raise
@@ -564,7 +566,7 @@ class TestGreenSocket(tests.LimitedTestCase):
                     # Arbitrary delay to not use all available CPU, keeps the test
                     # running quickly and reliably under a second
                     time.sleep(0.001)
-            except socket.error as e:
+            except OSError as e:
                 # we get an EBADF because client is closed in the same process
                 # (but a different greenthread)
                 if get_errno(e) != errno.EBADF:
@@ -600,7 +602,7 @@ class TestGreenSocket(tests.LimitedTestCase):
         try:
             client.recv(1)
             assert False
-        except socket.error as e:
+        except OSError as e:
             assert get_errno(e) == errno.EAGAIN
 
         client.settimeout(0.05)
@@ -675,7 +677,7 @@ class TestGreenSocket(tests.LimitedTestCase):
 
 
 def test_get_fileno_of_a_socket_works():
-    class DummySocket(object):
+    class DummySocket:
         def fileno(self):
             return 123
     assert select.get_fileno(DummySocket()) == 123
@@ -685,8 +687,7 @@ def test_get_fileno_of_an_int_works():
     assert select.get_fileno(123) == 123
 
 
-expected_get_fileno_type_error_message = (
-    'Expected int or long, got <%s \'str\'>' % ('type' if six.PY2 else 'class'))
+expected_get_fileno_type_error_message = 'Expected int or long, got <class \'str\'>'
 
 
 def test_get_fileno_of_wrong_type_fails():
@@ -699,7 +700,7 @@ def test_get_fileno_of_wrong_type_fails():
 
 
 def test_get_fileno_of_a_socket_with_fileno_returning_wrong_type_fails():
-    class DummySocket(object):
+    class DummySocket:
         def fileno(self):
             return 'foo'
     try:
@@ -726,7 +727,7 @@ class TestGreenPipe(tests.LimitedTestCase):
         wf = greenio.GreenPipe(w, 'wb', 0)
 
         def sender(f, content):
-            for ch in map(six.int2byte, six.iterbytes(content)):
+            for ch in map(struct.Struct(">B").pack, iter(content)):
                 eventlet.sleep(0.0001)
                 f.write(ch)
             f.close()
@@ -805,7 +806,7 @@ class TestGreenPipe(tests.LimitedTestCase):
         r = greenio.GreenPipe(r, 'rb')
         w = greenio.GreenPipe(w, 'wb')
 
-        large_message = b"".join([1024 * six.int2byte(i) for i in range(65)])
+        large_message = b"".join([1024 * bytes((i,)) for i in range(65)])
 
         def writer():
             w.write(large_message)
@@ -815,7 +816,7 @@ class TestGreenPipe(tests.LimitedTestCase):
 
         for i in range(65):
             buf = r.read(1024)
-            expected = 1024 * six.int2byte(i)
+            expected = 1024 * bytes((i,))
             self.assertEqual(
                 buf, expected,
                 "expected=%r..%r, found=%r..%r iter=%d"
@@ -857,6 +858,12 @@ class TestGreenIoLong(tests.LimitedTestCase):
     TEST_TIMEOUT = 10  # the test here might take a while depending on the OS
 
     def test_multiple_readers(self):
+        from eventlet.hubs.asyncio import Hub
+        if isinstance(get_hub(), Hub):
+            with pytest.raises(RuntimeError):
+                debug.hub_prevent_multiple_readers(False)
+            return
+
         debug.hub_prevent_multiple_readers(False)
         recvsize = 2 * min_buf_size()
         sendsize = 10 * recvsize

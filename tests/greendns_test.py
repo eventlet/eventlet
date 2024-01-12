@@ -1,4 +1,3 @@
-# coding: utf-8
 """Tests for the eventlet.support.greendns module"""
 
 import os
@@ -101,7 +100,7 @@ line2 # inline comment
         hr._v4 = {'v4.example.com': '1.2.3.4'}
         ans = hr.query('v4.example.com')
         assert ans[0].address == '1.2.3.4'
-        ans = hr.query(u'v4.example.com')
+        ans = hr.query('v4.example.com')
         assert ans[0].address == '1.2.3.4'
         ans = hr.query(b'v4.example.com')
         assert ans[0].address == '1.2.3.4'
@@ -173,7 +172,7 @@ line2 # inline comment
         hr._aliases = {'host': 'host.example.com',
                        'localhost': 'host.example.com'}
         res = set(hr.getaliases('host'))
-        assert res == set(['host.example.com', 'localhost'])
+        assert res == {'host.example.com', 'localhost'}
 
     def test_getaliases_unknown(self):
         hr = _make_host_resolver()
@@ -183,7 +182,7 @@ line2 # inline comment
         hr = _make_host_resolver()
         hr._aliases = {'host': 'host.example.com'}
         res = set(hr.getaliases('host.example.com'))
-        assert res == set(['host'])
+        assert res == {'host'}
 
     def test_hosts_case_insensitive(self):
         name = 'example.com'
@@ -202,10 +201,10 @@ line2 # inline comment
 
 def _make_mock_base_resolver():
     """A mocked base resolver class"""
-    class RR(object):
+    class RR:
         pass
 
-    class Resolver(object):
+    class Resolver:
         aliases = ['cname.example.com']
         raises = None
         rr = RR()
@@ -238,7 +237,7 @@ class TestUdp(tests.LimitedTestCase):
         self.query = greendns.dns.message.Message()
         self.query.flags = greendns.dns.flags.QR
         self.query_wire = self.query.to_wire()
-        super(TestUdp, self).setUp()
+        super().setUp()
 
     def test_udp_ipv4(self):
         with tests.mock.patch('eventlet.support.greendns.socket.socket.recvfrom',
@@ -325,7 +324,7 @@ class TestProxyResolver(tests.LimitedTestCase):
         rp = greendns.ResolverProxy(hostsres)
         ans = rp.query('host.example.com')
         assert ans[0].address == '1.2.3.4'
-        ans = rp.query(u'host.example.com')
+        ans = rp.query('host.example.com')
         assert ans[0].address == '1.2.3.4'
         ans = rp.query(b'host.example.com')
         assert ans[0].address == '1.2.3.4'
@@ -347,7 +346,7 @@ class TestProxyResolver(tests.LimitedTestCase):
         assert ans[0].address == '5.6.7.8'
         assert isinstance(res.args[0], dns.name.Name)
 
-        ans = rp.query(u'host.example.com')
+        ans = rp.query('host.example.com')
         assert ans[0].address == '5.6.7.8'
         assert isinstance(res.args[0], dns.name.Name)
 
@@ -383,10 +382,10 @@ class TestProxyResolver(tests.LimitedTestCase):
 
     def _make_mock_resolver_aliases(self):
 
-        class RR(object):
+        class RR:
             target = 'host.example.com'
 
-        class Resolver(object):
+        class Resolver:
             call_count = 0
             exc_type = greendns.dns.resolver.NoAnswer
 
@@ -406,7 +405,7 @@ class TestProxyResolver(tests.LimitedTestCase):
         rp = greendns.ResolverProxy()
         rp._resolver = aliases_res
         aliases = set(rp.getaliases('alias.example.com'))
-        assert aliases == set(['host.example.com'])
+        assert aliases == {'host.example.com'}
 
     def test_getaliases_fqdn(self):
         aliases_res = self._make_mock_resolver_aliases()
@@ -511,7 +510,7 @@ def _make_mock_resolve():
     class MockAnswer(list):
         pass
 
-    class MockResolve(object):
+    class MockResolve:
 
         def __init__(self):
             self.answers = {}
@@ -537,7 +536,7 @@ def _make_mock_resolve():
                 rdata = dns.rdtypes.IN.A.A(dns.rdataclass.IN,
                                            dns.rdatatype.A, addr)
                 family = socket.AF_INET
-            except (socket.error, dns.exception.SyntaxError):
+            except (OSError, dns.exception.SyntaxError):
                 rdata = dns.rdtypes.IN.AAAA.AAAA(dns.rdataclass.IN,
                                                  dns.rdatatype.AAAA, addr)
                 family = socket.AF_INET6
@@ -557,7 +556,7 @@ class TestGetaddrinfo(tests.LimitedTestCase):
     def _make_mock_resolve_cname(self):
         """A stubbed out cname function"""
 
-        class ResolveCname(object):
+        class ResolveCname:
             qname = None
             cname = 'cname.example.com'
 
@@ -597,7 +596,7 @@ class TestGetaddrinfo(tests.LimitedTestCase):
 
     def test_getaddrinfo_idn(self):
         greendns.resolve = _make_mock_resolve()
-        idn_name = u'евентлет.com'
+        idn_name = 'евентлет.com'
         greendns.resolve.add(idn_name.encode('idna').decode('ascii'), '127.0.0.2')
         res = greendns.getaddrinfo(idn_name, 'domain')
         addr = ('127.0.0.2', 53)
@@ -714,12 +713,12 @@ class TestGetaddrinfo(tests.LimitedTestCase):
 
     def test_host_none(self):
         res = greendns.getaddrinfo(None, 80)
-        for addr in set(ai[-1] for ai in res):
+        for addr in {ai[-1] for ai in res}:
             assert addr in [('127.0.0.1', 80), ('::1', 80, 0, 0)]
 
     def test_host_none_passive(self):
         res = greendns.getaddrinfo(None, 80, 0, 0, 0, socket.AI_PASSIVE)
-        for addr in set(ai[-1] for ai in res):
+        for addr in {ai[-1] for ai in res}:
             assert addr in [('0.0.0.0', 80), ('::', 80, 0, 0)]
 
     def test_v4mapped(self):
@@ -727,8 +726,8 @@ class TestGetaddrinfo(tests.LimitedTestCase):
         greendns.resolve.add('example.com', '1.2.3.4')
         res = greendns.getaddrinfo('example.com', 80,
                                    socket.AF_INET6, 0, 0, socket.AI_V4MAPPED)
-        addrs = set(ai[-1] for ai in res)
-        assert addrs == set([('::ffff:1.2.3.4', 80, 0, 0)])
+        addrs = {ai[-1] for ai in res}
+        assert addrs == {('::ffff:1.2.3.4', 80, 0, 0)}
 
     def test_v4mapped_all(self):
         greendns.resolve = _make_mock_resolve()
@@ -736,7 +735,7 @@ class TestGetaddrinfo(tests.LimitedTestCase):
         greendns.resolve.add('example.com', 'dead:beef::1')
         res = greendns.getaddrinfo('example.com', 80, socket.AF_INET6, 0, 0,
                                    socket.AI_V4MAPPED | socket.AI_ALL)
-        addrs = set(ai[-1] for ai in res)
+        addrs = {ai[-1] for ai in res}
         for addr in addrs:
             assert addr in [('::ffff:1.2.3.4', 80, 0, 0),
                             ('dead:beef::1', 80, 0, 0)]
@@ -769,8 +768,8 @@ class TestGetaddrinfo(tests.LimitedTestCase):
             if addr == '127.0.0.1':
                 return [(socket.AF_INET, 1, 0, '', ('127.0.0.1', 0))]
             elif addr == '::1' and aiflags & socket.AI_ADDRCONFIG:
-                raise socket.error(socket.EAI_ADDRFAMILY,
-                                   'Address family for hostname not supported')
+                raise OSError(socket.EAI_ADDRFAMILY,
+                              'Address family for hostname not supported')
             elif addr == '::1' and not aiflags & socket.AI_ADDRCONFIG:
                 return [(socket.AF_INET6, 1, 0, '', ('::1', 0, 0, 0))]
         greendns.socket.getaddrinfo = getaddrinfo
@@ -785,14 +784,19 @@ class TestGetaddrinfo(tests.LimitedTestCase):
         # If AI_ADDRCONFIG is used but there is no address we need to
         # get an exception, not an empty list.
         def getaddrinfo(addr, port, family, socktype, proto, aiflags):
-            raise socket.error(socket.EAI_ADDRFAMILY,
-                               'Address family for hostname not supported')
+            raise OSError(socket.EAI_ADDRFAMILY,
+                          'Address family for hostname not supported')
         greendns.socket.getaddrinfo = getaddrinfo
         greendns.resolve = _make_mock_resolve()
         try:
             greendns.getaddrinfo('::1', None, 0, 0, 0, socket.AI_ADDRCONFIG)
-        except socket.error as e:
+        except OSError as e:
             assert e.errno == socket.EAI_ADDRFAMILY
+
+    def test_getaddrinfo_type_parameter(self):
+        greendns.resolve = _make_mock_resolve()
+        greendns.resolve.add('localhost', '127.0.0.1')
+        greendns.getaddrinfo('localhost', None, type=0)
 
 
 class TestIsIpAddr(tests.LimitedTestCase):
@@ -868,7 +872,7 @@ class TestGethostbyname_ex(tests.LimitedTestCase):
 
     def _make_mock_getaliases(self):
 
-        class GetAliases(object):
+        class GetAliases:
             aliases = ['cname.example.com']
 
             def __call__(self, *args, **kwargs):
@@ -929,6 +933,20 @@ class TinyDNSTests(tests.LimitedTestCase):
             response = resolver.query('host.example.com', 'a', tcp=True)
             self.assertIsInstance(response, Answer)
             self.assertEqual(list(response.rrset.items)[0].address, expected_ip)
+
+
+class TestRaiseErrors(tests.LimitedTestCase):
+
+    def test_raise_new_error(self):
+        # https://github.com/eventlet/eventlet/issues/810
+        # Raise exception multiple times
+        for _ in range(3):
+            with self.assertRaises(socket.gaierror) as error:
+                greendns._raise_new_error(greendns.EAI_EAGAIN_ERROR)
+
+            self.assertIsNone(error.exception.__traceback__)
+        # Check no memory leak of exception instance
+        self.assertIsNone(greendns.EAI_EAGAIN_ERROR.__traceback__)
 
 
 def test_reverse_name():

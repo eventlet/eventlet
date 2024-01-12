@@ -15,7 +15,7 @@ def waiter(a):
     return a
 
 
-class Asserts(object):
+class Asserts:
     def assert_dead(self, gt):
         if hasattr(gt, 'wait'):
             self.assertRaises(greenlet.GreenletExit, gt.wait)
@@ -26,7 +26,7 @@ class Asserts(object):
 class Spawn(LimitedTestCase, Asserts):
     def tearDown(self):
         global _g_results
-        super(Spawn, self).tearDown()
+        super().tearDown()
         _g_results = []
 
     def test_simple(self):
@@ -133,7 +133,7 @@ class SpawnAfter(Spawn):
 
 class SpawnAfterLocal(LimitedTestCase, Asserts):
     def setUp(self):
-        super(SpawnAfterLocal, self).setUp()
+        super().setUp()
         self.lst = [1]
 
     def test_timer_fired(self):

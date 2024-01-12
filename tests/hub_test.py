@@ -4,12 +4,14 @@ import os
 import sys
 import time
 
+import pytest
+
 import tests
 from tests import skip_if_no_itimer, skip_unless
 import eventlet
 from eventlet import debug, hubs
+from eventlet.hubs.asyncio import Hub as AsyncioHub
 from eventlet.support import greenlets
-import six
 
 
 DELAY = 0.001
@@ -26,7 +28,7 @@ class TestTimerCleanup(tests.LimitedTestCase):
         hub = hubs.get_hub()
         stimers = hub.get_timers_count()
         scanceled = hub.timers_canceled
-        for i in six.moves.range(2000):
+        for i in range(2000):
             t = hubs.get_hub().schedule_call_global(60, noop)
             t.cancel()
             self.assert_less_than_equal(hub.timers_canceled,
@@ -39,7 +41,7 @@ class TestTimerCleanup(tests.LimitedTestCase):
         hub = hubs.get_hub()
         stimers = hub.get_timers_count()
         scanceled = hub.timers_canceled
-        for i in six.moves.range(2000):
+        for i in range(2000):
             t = hubs.get_hub().schedule_call_global(60, noop)
             eventlet.sleep()
             self.assert_less_than_equal(hub.timers_canceled,
@@ -58,7 +60,7 @@ class TestTimerCleanup(tests.LimitedTestCase):
         uncanceled_timers = []
         stimers = hub.get_timers_count()
         scanceled = hub.timers_canceled
-        for i in six.moves.range(1000):
+        for i in range(1000):
             # 2/3rds of new timers are uncanceled
             t = hubs.get_hub().schedule_call_global(60, noop)
             t2 = hubs.get_hub().schedule_call_global(60, noop)
@@ -82,14 +84,16 @@ class TestTimerCleanup(tests.LimitedTestCase):
         eventlet.sleep()
 
 
+@pytest.mark.skipif(isinstance(hubs.get_hub(), AsyncioHub),
+                    reason="Asyncio hub doesn't yet support multiple readers")
 class TestMultipleListenersCleanup(tests.LimitedTestCase):
     def setUp(self):
-        super(TestMultipleListenersCleanup, self).setUp()
+        super().setUp()
         debug.hub_prevent_multiple_readers(False)
         debug.hub_exceptions(False)
 
     def tearDown(self):
-        super(TestMultipleListenersCleanup, self).tearDown()
+        super().tearDown()
         debug.hub_prevent_multiple_readers(True)
         debug.hub_exceptions(True)
 

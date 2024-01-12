@@ -1,6 +1,11 @@
 import sys
-from zmq import FORWARDER, PUB, SUB, SUBSCRIBE
-from zmq.devices import Device
+
+try:
+    from zmq import FORWARDER, PUB, SUB, SUBSCRIBE
+    from zmq.devices import Device
+except ModuleNotFoundError:
+    raise SystemExit("Unable to find required zmq module. "
+                     "Please install it before running this example.")
 
 
 if __name__ == "__main__":

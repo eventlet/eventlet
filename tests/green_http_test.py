@@ -1,8 +1,7 @@
 import eventlet
-import six
 import tests
 
-__test__ = six.PY3
+__test__ = True
 
 
 def test_green_http_doesnt_change_original_module():

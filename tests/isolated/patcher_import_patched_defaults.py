@@ -12,7 +12,7 @@ if __name__ == '__main__':
     t = target.socket.socket
     import eventlet.green.socket as g
     if not issubclass(t, g.socket):
-        print('Fail. Target socket not green: {0} bases {1}'.format(t, t.__bases__))
+        print('Fail. Target socket not green: {} bases {}'.format(t, t.__bases__))
         sys.exit(1)
 
     print('pass')

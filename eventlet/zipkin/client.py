@@ -11,7 +11,7 @@ from eventlet import GreenPile
 CATEGORY = 'zipkin'
 
 
-class ZipkinClient(object):
+class ZipkinClient:
 
     def __init__(self, host='127.0.0.1', port=9410):
         """

@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 from eventlet import hubs
 from eventlet.support import greenlets as greenlet
 
@@ -14,7 +12,7 @@ class NOT_USED:
 NOT_USED = NOT_USED()
 
 
-class Event(object):
+class Event:
     """An abstraction where an arbitrary number of coroutines
     can wait for one event from another.
 
