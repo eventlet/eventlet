@@ -98,7 +98,7 @@ pygments_style = 'sphinx'
 #modindex_common_prefix = []
 
 # Intersphinx references
-intersphinx_mapping = {'http://docs.python.org/': None}
+intersphinx_mapping = {'python': ('http://docs.python.org/', None)}
 
 
 # -- Options for HTML output ---------------------------------------------------

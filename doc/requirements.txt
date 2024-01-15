@@ -4,3 +4,5 @@
 
 sphinx>=2.0.0,!=2.1.0 # BSD
 sphinxcontrib-apidoc>=0.2.0  # BSD
+
+pyzmq>=25.0.0

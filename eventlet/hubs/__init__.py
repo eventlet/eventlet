@@ -31,7 +31,7 @@ def get_default_hub():
     * poll
     * select
 
-    .. include:: ../doc/common.txt
+    .. include:: ../../doc/source/common.txt
     .. note :: |internal|
     """
     for mod in builtin_hub_modules:
