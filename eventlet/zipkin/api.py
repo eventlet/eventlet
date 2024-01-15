@@ -89,7 +89,7 @@ def generate_span_id():
     return _uniq_id()
 
 
-class TraceData(object):
+class TraceData:
 
     END_ANNOTATION = SERVER_SEND
 

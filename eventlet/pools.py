@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import collections
 from contextlib import contextmanager
 
@@ -9,7 +7,7 @@ from eventlet import queue
 __all__ = ['Pool', 'TokenPool']
 
 
-class Pool(object):
+class Pool:
     """
     Pool class implements resource limitation and construction.
 
@@ -172,7 +170,7 @@ class Pool(object):
         raise NotImplementedError("Implement in subclass")
 
 
-class Token(object):
+class Token:
     pass
 
 

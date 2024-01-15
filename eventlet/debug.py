@@ -1,6 +1,5 @@
 """The debug module contains utilities and functions for better
 debugging Eventlet-powered applications."""
-from __future__ import print_function
 
 import os
 import sys
@@ -13,10 +12,10 @@ __all__ = ['spew', 'unspew', 'format_hub_listeners', 'format_hub_timers',
            'hub_prevent_multiple_readers', 'hub_timer_stacks',
            'hub_blocking_detection']
 
-_token_splitter = re.compile('\W+')
+_token_splitter = re.compile(r'\W+')
 
 
-class Spew(object):
+class Spew:
 
     def __init__(self, trace_names=None, show_values=True):
         self.trace_names = trace_names
@@ -37,7 +36,7 @@ class Spew(object):
                 try:
                     src = inspect.getsourcelines(frame)
                     line = src[lineno]
-                except IOError:
+                except OSError:
                     line = 'Unknown code named [%s].  VM instruction #%d' % (
                         frame.f_code.co_name, frame.f_lasti)
             if self.trace_names is None or name in self.trace_names:
@@ -128,7 +127,10 @@ def hub_prevent_multiple_readers(state=True):
     But if you really know what you are doing you can change the state
     to ``False`` to stop the hub from protecting against this mistake.
     """
-    from eventlet.hubs import hub
+    from eventlet.hubs import hub, get_hub
+    from eventlet.hubs import asyncio
+    if not state and isinstance(get_hub(), asyncio.Hub):
+        raise RuntimeError("Multiple readers are not yet supported by asyncio hub")
     hub.g_prevent_multiple_readers = state
 
 

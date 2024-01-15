@@ -5,7 +5,6 @@
 
 from eventlet.event import Event
 from eventlet import greenthread
-import six
 import collections
 
 
@@ -39,9 +38,9 @@ class PropagateError(Exception):
     """
     def __init__(self, key, exc):
         # initialize base class with a reasonable string message
-        msg = "PropagateError({0}): {1}: {2}" \
+        msg = "PropagateError({}): {}: {}" \
               .format(key, exc.__class__.__name__, exc)
-        super(PropagateError, self).__init__(msg)
+        super().__init__(msg)
         self.msg = msg
         # Unless we set args, this is unpickleable:
         # https://bugs.python.org/issue1692335
@@ -53,7 +52,7 @@ class PropagateError(Exception):
         return self.msg
 
 
-class DAGPool(object):
+class DAGPool:
     """
     A DAGPool is a pool that constrains greenthreads, not by max concurrency,
     but by data dependencies.
@@ -123,7 +122,7 @@ class DAGPool(object):
         try:
             # If a dict is passed, copy it. Don't risk a subsequent
             # modification to passed dict affecting our internal state.
-            iteritems = six.iteritems(preload)
+            iteritems = preload.items()
         except AttributeError:
             # Not a dict, just an iterable of (key, value) pairs
             iteritems = preload
@@ -258,7 +257,7 @@ class DAGPool(object):
             return set(keys)
         else:
             # keys arg omitted -- use all the keys we know about
-            return set(six.iterkeys(self.coros)) | set(six.iterkeys(self.values))
+            return set(self.coros.keys()) | set(self.values.keys())
 
     def _wait_each(self, pending):
         """
@@ -394,7 +393,7 @@ class DAGPool(object):
         """
         # Iterate over 'depends' items, relying on self.spawn() not to
         # context-switch so no one can modify 'depends' along the way.
-        for key, deps in six.iteritems(depends):
+        for key, deps in depends.items():
             self.spawn(key, deps, function, *args, **kwds)
 
     def kill(self, key):
@@ -502,7 +501,7 @@ class DAGPool(object):
         """
         # Explicitly return a copy rather than an iterator: don't assume our
         # caller will finish iterating before new values are posted.
-        return tuple(six.iterkeys(self.values))
+        return tuple(self.values.keys())
 
     def items(self):
         """
@@ -511,7 +510,7 @@ class DAGPool(object):
         # Don't assume our caller will finish iterating before new values are
         # posted.
         return tuple((key, self._value_or_raise(value))
-                     for key, value in six.iteritems(self.values))
+                     for key, value in self.values.items())
 
     def running(self):
         """
@@ -529,7 +528,7 @@ class DAGPool(object):
         """
         # return snapshot; don't assume caller will finish iterating before we
         # next modify self.coros
-        return tuple(six.iterkeys(self.coros))
+        return tuple(self.coros.keys())
 
     def waiting(self):
         """
@@ -567,7 +566,7 @@ class DAGPool(object):
         # some or all of those keys, because those greenthreads have not yet
         # regained control since values were posted. So make a point of
         # excluding values that are now available.
-        available = set(six.iterkeys(self.values))
+        available = set(self.values.keys())
 
         if key is not _MISSING:
             # waiting_for(key) is semantically different than waiting_for().
@@ -596,7 +595,7 @@ class DAGPool(object):
         # are now available. Filter out any pair in which 'pending' is empty,
         # that is, that greenthread will be unblocked next time it resumes.
         # Make a dict from those pairs.
-        return dict((key, pending)
-                    for key, pending in ((key, (coro.pending - available))
-                                         for key, coro in six.iteritems(self.coros))
-                    if pending)
+        return {key: pending
+                for key, pending in ((key, (coro.pending - available))
+                                     for key, coro in self.coros.items())
+                if pending}

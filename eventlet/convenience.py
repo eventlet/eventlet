@@ -63,7 +63,7 @@ def listen(addr, family=socket.AF_INET, backlog=50, reuse_addr=True, reuse_port=
         try:
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
         # OSError is enough on Python 3+
-        except (OSError, socket.error) as ex:
+        except OSError as ex:
             if support.get_errno(ex) in (22, 92):
                 # A famous platform defines unsupported socket option.
                 # https://github.com/eventlet/eventlet/issues/380
@@ -156,6 +156,7 @@ def wrap_ssl(sock, *a, **kw):
     :return Green SSL object.
     """
     return wrap_ssl_impl(sock, *a, **kw)
+
 
 try:
     from eventlet.green import ssl

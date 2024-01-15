@@ -1,16 +1,17 @@
-from __future__ import with_statement
 import errno
 import fcntl
 import os
 import sys
 import time
 
+import pytest
+
 import tests
-from tests import skip_with_pyevent, skip_if_no_itimer, skip_unless
+from tests import skip_if_no_itimer, skip_unless
 import eventlet
 from eventlet import debug, hubs
+from eventlet.hubs.asyncio import Hub as AsyncioHub
 from eventlet.support import greenlets
-import six
 
 
 DELAY = 0.001
@@ -23,12 +24,11 @@ def noop():
 class TestTimerCleanup(tests.LimitedTestCase):
     TEST_TIMEOUT = 2
 
-    @skip_with_pyevent
     def test_cancel_immediate(self):
         hub = hubs.get_hub()
         stimers = hub.get_timers_count()
         scanceled = hub.timers_canceled
-        for i in six.moves.range(2000):
+        for i in range(2000):
             t = hubs.get_hub().schedule_call_global(60, noop)
             t.cancel()
             self.assert_less_than_equal(hub.timers_canceled,
@@ -37,12 +37,11 @@ class TestTimerCleanup(tests.LimitedTestCase):
         self.assert_less_than_equal(hub.get_timers_count(), 1000 + stimers)
         self.assert_less_than_equal(hub.timers_canceled, 1000)
 
-    @skip_with_pyevent
     def test_cancel_accumulated(self):
         hub = hubs.get_hub()
         stimers = hub.get_timers_count()
         scanceled = hub.timers_canceled
-        for i in six.moves.range(2000):
+        for i in range(2000):
             t = hubs.get_hub().schedule_call_global(60, noop)
             eventlet.sleep()
             self.assert_less_than_equal(hub.timers_canceled,
@@ -54,7 +53,6 @@ class TestTimerCleanup(tests.LimitedTestCase):
         self.assert_less_than_equal(hub.get_timers_count(), 1000 + stimers)
         self.assert_less_than_equal(hub.timers_canceled, 1000)
 
-    @skip_with_pyevent
     def test_cancel_proportion(self):
         # if fewer than half the pending timers are canceled, it should
         # not clean them out
@@ -62,7 +60,7 @@ class TestTimerCleanup(tests.LimitedTestCase):
         uncanceled_timers = []
         stimers = hub.get_timers_count()
         scanceled = hub.timers_canceled
-        for i in six.moves.range(1000):
+        for i in range(1000):
             # 2/3rds of new timers are uncanceled
             t = hubs.get_hub().schedule_call_global(60, noop)
             t2 = hubs.get_hub().schedule_call_global(60, noop)
@@ -86,14 +84,16 @@ class TestTimerCleanup(tests.LimitedTestCase):
         eventlet.sleep()
 
 
+@pytest.mark.skipif(isinstance(hubs.get_hub(), AsyncioHub),
+                    reason="Asyncio hub doesn't yet support multiple readers")
 class TestMultipleListenersCleanup(tests.LimitedTestCase):
     def setUp(self):
-        super(TestMultipleListenersCleanup, self).setUp()
+        super().setUp()
         debug.hub_prevent_multiple_readers(False)
         debug.hub_exceptions(False)
 
     def tearDown(self):
-        super(TestMultipleListenersCleanup, self).tearDown()
+        super().tearDown()
         debug.hub_prevent_multiple_readers(True)
         debug.hub_exceptions(True)
 
@@ -194,7 +194,6 @@ class TestExceptionInMainloop(tests.LimitedTestCase):
 
 class TestExceptionInGreenthread(tests.LimitedTestCase):
 
-    @skip_unless(greenlets.preserves_excinfo)
     def test_exceptionpreservation(self):
         # events for controlling execution order
         gt1event = eventlet.Event()
@@ -252,7 +251,6 @@ class TestExceptionInGreenthread(tests.LimitedTestCase):
 class TestHubBlockingDetector(tests.LimitedTestCase):
     TEST_TIMEOUT = 10
 
-    @skip_with_pyevent
     def test_block_detect(self):
         def look_im_blocking():
             import time
@@ -263,8 +261,7 @@ class TestHubBlockingDetector(tests.LimitedTestCase):
         self.assertRaises(RuntimeError, gt.wait)
         debug.hub_blocking_detection(False)
 
-    @skip_with_pyevent
-    @skip_if_no_itimer
+    @tests.skip_if_no_itimer
     def test_block_detect_with_itimer(self):
         def look_im_blocking():
             import time
@@ -329,7 +326,6 @@ def test_repeated_select_bad_fd():
     once()
 
 
-@skip_with_pyevent
 def test_fork():
     tests.run_isolated('hub_fork.py')
 

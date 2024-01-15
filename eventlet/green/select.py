@@ -1,6 +1,5 @@
 import eventlet
 from eventlet.hubs import get_hub
-import six
 __select = eventlet.patcher.original('select')
 error = __select.error
 
@@ -17,12 +16,12 @@ def get_fileno(obj):
     try:
         f = obj.fileno
     except AttributeError:
-        if not isinstance(obj, six.integer_types):
+        if not isinstance(obj, int):
             raise TypeError("Expected int or long, got %s" % type(obj))
         return obj
     else:
         rv = f()
-        if not isinstance(rv, six.integer_types):
+        if not isinstance(rv, int):
             raise TypeError("Expected int or long, got %s" % type(rv))
         return rv
 
@@ -71,7 +70,7 @@ def select(read_list, write_list, error_list, timeout=None):
     if timeout is not None:
         timers.append(hub.schedule_call_global(timeout, on_timeout))
     try:
-        for k, v in six.iteritems(ds):
+        for k, v in ds.items():
             if v.get('read'):
                 listeners.append(hub.add(hub.READ, k, on_read, current.throw, lambda: None))
             if v.get('write'):

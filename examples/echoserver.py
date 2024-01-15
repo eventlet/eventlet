@@ -9,7 +9,6 @@ Connect to it with:
 You terminate your connection by terminating telnet (typically Ctrl-]
 and then 'quit')
 """
-from __future__ import print_function
 
 import eventlet
 

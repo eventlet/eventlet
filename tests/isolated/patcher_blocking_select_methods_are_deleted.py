@@ -16,17 +16,16 @@ if __name__ == '__main__':
 
     import sys
 
-    if sys.version_info >= (3, 4):
-        import selectors
-        for name in [
-            'PollSelector',
-            'EpollSelector',
-            'DevpollSelector',
-            'KqueueSelector',
-        ]:
-            assert not hasattr(selectors, name), name
+    import selectors
+    for name in [
+        'PollSelector',
+        'EpollSelector',
+        'DevpollSelector',
+        'KqueueSelector',
+    ]:
+        assert not hasattr(selectors, name), name
 
-        default = selectors.DefaultSelector
-        assert default is selectors.SelectSelector, default
+    default = selectors.DefaultSelector
+    assert default is selectors.SelectSelector, default
 
     print('pass')

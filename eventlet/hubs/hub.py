@@ -21,13 +21,11 @@ else:
 
 import eventlet.hubs
 from eventlet.hubs import timer
-from eventlet.support import greenlets as greenlet, clear_sys_exc_info
+from eventlet.support import greenlets as greenlet
 try:
     from monotonic import monotonic
 except ImportError:
     from time import monotonic
-
-import six
 
 g_prevent_multiple_readers = True
 
@@ -42,7 +40,7 @@ def closed_callback(fileno):
     pass
 
 
-class FdListener(object):
+class FdListener:
 
     def __init__(self, evtype, fileno, cb, tb, mark_as_closed):
         """ The following are required:
@@ -90,7 +88,7 @@ class DebugListener(FdListener):
     def __init__(self, evtype, fileno, cb, tb, mark_as_closed):
         self.where_called = traceback.format_stack()
         self.greenlet = greenlet.getcurrent()
-        super(DebugListener, self).__init__(evtype, fileno, cb, tb, mark_as_closed)
+        super().__init__(evtype, fileno, cb, tb, mark_as_closed)
 
     def __repr__(self):
         return "DebugListener(%r, %r, %r, %r, %r, %r)\n%sEndDebugFdListener" % (
@@ -109,7 +107,7 @@ def alarm_handler(signum, frame):
     raise RuntimeError("Blocking detector ALARMED at" + str(inspect.getframeinfo(frame)))
 
 
-class BaseHub(object):
+class BaseHub:
     """ Base hub class for easing the implementation of subclasses that are
     specific to a particular underlying event architecture. """
 
@@ -195,7 +193,7 @@ class BaseHub(object):
             their greenlets queued up to send.
         """
         found = False
-        for evtype, bucket in six.iteritems(self.secondaries):
+        for evtype, bucket in self.secondaries.items():
             if fileno in bucket:
                 for listener in bucket[fileno]:
                     found = True
@@ -205,7 +203,7 @@ class BaseHub(object):
 
         # For the primary listeners, we actually need to call remove,
         # which may modify the underlying OS polling objects.
-        for evtype, bucket in six.iteritems(self.listeners):
+        for evtype, bucket in self.listeners.items():
             if fileno in bucket:
                 listener = bucket[fileno]
                 found = True
@@ -309,7 +307,6 @@ class BaseHub(object):
                 cur.parent = self.greenlet
         except ValueError:
             pass  # gets raised if there is a greenlet parent cycle
-        clear_sys_exc_info()
         return self.greenlet.switch()
 
     def squelch_exception(self, fileno, exc_info):
@@ -397,13 +394,11 @@ class BaseHub(object):
         if self.debug_exceptions:
             traceback.print_exception(*exc_info)
             sys.stderr.flush()
-            clear_sys_exc_info()
 
     def squelch_timer_exception(self, timer, exc_info):
         if self.debug_exceptions:
             traceback.print_exception(*exc_info)
             sys.stderr.flush()
-            clear_sys_exc_info()
 
     def add_timer(self, timer):
         scheduled_time = self.clock() + timer.seconds
@@ -478,7 +473,6 @@ class BaseHub(object):
                 raise
             except:
                 self.squelch_timer_exception(timer, sys.exc_info())
-                clear_sys_exc_info()
 
     # for debugging:
 

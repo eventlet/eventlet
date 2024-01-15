@@ -30,15 +30,6 @@ def get_errno(exc):
         return None
 
 
-if sys.version_info[0] < 3 and not greenlets.preserves_excinfo:
-    from sys import exc_clear as clear_sys_exc_info
-else:
-    def clear_sys_exc_info():
-        """No-op In py3k.
-        Exception information is not visible outside of except statements.
-        sys.exc_clear became obsolete and removed."""
-        pass
-
 if sys.version_info[0] < 3:
     def bytes_to_str(b, encoding='ascii'):
         return b
