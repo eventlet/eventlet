@@ -1,5 +1,43 @@
+Warning
+=======
+
+**New usages of eventlet are now heavily discouraged! Please read the
+following.**
+
+Eventlet was created almost 18 years ago, at a time where async
+features were absent from the CPython stdlib. With time eventlet evolved and
+CPython too, but since several years the maintenance activity of eventlet
+dicreased leading to a growing gap between eventlet and the CPython
+implementation.
+
+This gap is now too high and can lead you to unexpected side effects and bugs
+in your applications.
+
+**Eventlet is now switching to legacy mode**. **Only maintenance for stability
+and bug fixing** will be provided. **No new features will be accepted**, except
+those related to the asyncio migration. **Usage in new projects are
+discouraged**. **Our goal is to plan the retirement of eventlet** and to give
+you ways to move away from eventlet.
+
+If you are looking for a library to manage async network programming,
+and if you do not yet use eventlet, then, we encourage you to use `asyncio`_,
+which is the official async library of the CPython stdlib.
+
+If you already use eventlet, our goal is to allow you to smoothly migrate from
+eventlet to asyncio. We are currently thinking about solutions to
+make that kind of migrations possible. Only new features related to the
+migration solution will be accepted.
+
+If you have questions concerning maintenance goals or concerning
+the migration do not hesitate to `open a new issue`_, we will be happy to
+answer them.
+
+.. _asyncio: https://docs.python.org/3/library/asyncio.html
+.. _that_was_not_possible_before: https://github.com/eventlet/eventlet/issues/673#issuecomment-740429872
+.. _open_a_new_issue: https://github.com/eventlet/eventlet/issues/new
+
 Eventlet Documentation
-====================================
+======================
 
 Code talks!  This is a simple web crawler that fetches a bunch of urls concurrently:
 
