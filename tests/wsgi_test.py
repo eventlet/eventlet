@@ -1947,9 +1947,7 @@ class TestHttpd(_TestBase):
 
     def test_content_length_and_transfer_encoding_escape_hatch(self):
         class LegacyClientProtocol(wsgi.HttpProtocol):
-            def __init__(self, *args, **kwargs):
-                kwargs['reject_bad_requests'] = False
-                super().__init__(*args, **kwargs)
+            reject_bad_requests = False
 
         self.spawn_server(protocol=LegacyClientProtocol)
         self.site.application = use_write
