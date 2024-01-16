@@ -24,11 +24,11 @@ class Hub(hub.BaseHub):
 
     def __init__(self):
         super().__init__()
-        self.sleep_event = asyncio.Event()
         # The presumption is that eventlet is driving the event loop, so we
         # want a new one we control.
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
+        self.sleep_event = asyncio.Event()
 
     def add_timer(self, timer):
         """
