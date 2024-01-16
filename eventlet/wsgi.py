@@ -62,7 +62,7 @@ def addr_to_host_port(addr):
 # Collections of error codes to compare against.  Not all attributes are set
 # on errno module on all platforms, so some are literals :(
 BAD_SOCK = {errno.EBADF, 10053}
-BROKEN_SOCK = {errno.EPIPE, errno.ECONNRESET}
+BROKEN_SOCK = {errno.EPIPE, errno.ECONNRESET, errno.ESHUTDOWN}
 
 
 class ChunkReadError(ValueError):
@@ -887,10 +887,11 @@ try:
     import ssl
     ACCEPT_EXCEPTIONS = (socket.error, ssl.SSLError)
     ACCEPT_ERRNO = {errno.EPIPE, errno.EBADF, errno.ECONNRESET,
-                    ssl.SSL_ERROR_EOF, ssl.SSL_ERROR_SSL}
+                    errno.ESHUTDOWN, ssl.SSL_ERROR_EOF, ssl.SSL_ERROR_SSL}
 except ImportError:
     ACCEPT_EXCEPTIONS = (socket.error,)
-    ACCEPT_ERRNO = {errno.EPIPE, errno.EBADF, errno.ECONNRESET}
+    ACCEPT_ERRNO = {errno.EPIPE, errno.EBADF, errno.ECONNRESET,
+                    errno.ESHUTDOWN}
 
 
 def socket_repr(sock):
