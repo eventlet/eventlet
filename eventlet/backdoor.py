@@ -2,8 +2,6 @@ from code import InteractiveConsole
 import errno
 import socket
 import sys
-import errno
-import traceback
 
 import eventlet
 from eventlet import hubs

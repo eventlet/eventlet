@@ -7,11 +7,6 @@ from eventlet.support import greenlets as greenlet
 import tests
 
 
-def passthru(a):
-    eventlet.sleep(0.01)
-    return a
-
-
 def passthru2(a, b):
     eventlet.sleep(0.01)
     return a, b

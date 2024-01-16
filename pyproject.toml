@@ -64,7 +64,7 @@ version-file = "eventlet/_version.py"
 
 [tool.ruff]
 # Might eventually want to add evenetlet/green/, but it's a pain...
-exclude = ["eventlet/green/", "eventlet/zipkin/_thrift", "tests/mock.py"]
+exclude = ["eventlet/green/", "eventlet/zipkin/_thrift", "tests/mock.py", "doc/"]
 line-length = 123
 
 [tool.ruff.lint]

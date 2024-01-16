@@ -474,7 +474,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 return
 
             if transfer_encoding is not None:
-                if reject_bad_requests:
+                if self.reject_bad_requests:
                     msg = b"Content-Length and Transfer-Encoding are not allowed together\n"
                     self.wfile.write(
                         b"HTTP/1.0 400 Bad Request\r\n"
