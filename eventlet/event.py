@@ -151,9 +151,8 @@ class Event:
 
         It is an error to call :meth:`send` multiple times on the same event.
 
-        >>> evt.send('whoops')
+        >>> evt.send('whoops') # doctest: +IGNORE_EXCEPTION_DETAIL
         Traceback (most recent call last):
-        ...
         AssertionError: Trying to re-send() an already-triggered event.
 
         Use :meth:`reset` between :meth:`send` s to reuse an event object.

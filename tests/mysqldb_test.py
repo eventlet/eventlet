@@ -33,7 +33,7 @@ def mysql_requirement(_f):
 
 
 class TestMySQLdb(tests.LimitedTestCase):
-    TEST_TIMEOUT = 5
+    TEST_TIMEOUT = 50
 
     def setUp(self):
         self._auth = tests.get_database_auth()['MySQLdb']

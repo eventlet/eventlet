@@ -6,7 +6,7 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: Build & Optional Deploy
+name: Build Package & Optional Deploy
 
 on: [push, pull_request]
 
@@ -14,7 +14,7 @@ permissions:
   id-token: write
 
 jobs:
-  build-and-deploy:
+  build-package-and-deploy:
 
     runs-on: ubuntu-latest
 

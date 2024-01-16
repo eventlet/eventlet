@@ -41,12 +41,10 @@ def read(fd, n):
         try:
             return __original_read__(fd, n)
         except OSError as e:
-            if get_errno(e) != errno.EAGAIN:
-                raise
-        except OSError as e:
             if get_errno(e) == errno.EPIPE:
                 return ''
-            raise
+            if get_errno(e) != errno.EAGAIN:
+                raise
         try:
             hubs.trampoline(fd, read=True)
         except hubs.IOClosed:
@@ -65,10 +63,7 @@ def write(fd, st):
         try:
             return __original_write__(fd, st)
         except OSError as e:
-            if get_errno(e) != errno.EAGAIN:
-                raise
-        except OSError as e:
-            if get_errno(e) != errno.EPIPE:
+            if get_errno(e) not in [errno.EAGAIN, errno.EPIPE]:
                 raise
         hubs.trampoline(fd, write=True)
 
