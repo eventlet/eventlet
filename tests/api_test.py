@@ -166,13 +166,13 @@ class TestApi(tests.LimitedTestCase):
 
         try:
             eventlet.with_timeout(0.1, func)
-            self.fail(u'Expected Timeout')
+            self.fail('Expected Timeout')
         except eventlet.Timeout:
             pass
 
 
 def test_wrap_is_timeout():
-    class A(object):
+    class A:
         pass
 
     obj = eventlet.wrap_is_timeout(A)()

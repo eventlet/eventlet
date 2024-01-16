@@ -38,8 +38,8 @@ rm -rf "$build"
 mkdir -p "$build/doc"
 
 echo "2. build static pages"
-cp doc/real_index.html "$build/index.html"
-cp NEWS doc/changelog.rst
+cp doc/source/real_index.html "$build/index.html"
+cp NEWS doc/source/changelog.rst
 
 # -b html -- builder, output mode
 # -d dir  -- path to doctrees cache

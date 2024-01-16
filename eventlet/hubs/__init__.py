@@ -5,7 +5,6 @@ import warnings
 
 from eventlet import patcher
 from eventlet.support import greenlets as greenlet
-import six
 
 
 __all__ = ["use_hub", "get_hub", "get_default_hub", "trampoline"]
@@ -32,10 +31,7 @@ def get_default_hub():
     * poll
     * select
 
-    It won't automatically select the pyevent hub, because it's not
-    python-thread-safe.
-
-    .. include:: ../doc/common.txt
+    .. include:: ../../doc/source/common.txt
     .. note :: |internal|
     """
     for mod in builtin_hub_modules:
@@ -74,7 +70,7 @@ def use_hub(mod=None):
         del _threadlocal.hub
 
     classname = ''
-    if isinstance(mod, six.string_types):
+    if isinstance(mod, str):
         assert mod.strip(), "Need to specify a hub"
         if '.' in mod or ':' in mod:
             modulename, _, classname = mod.strip().partition(':')

@@ -13,19 +13,19 @@ def is_available():
 
 class Hub(hub.BaseHub):
     def __init__(self, clock=None):
-        super(Hub, self).__init__(clock)
+        super().__init__(clock)
         self.EXC_MASK = select.POLLERR | select.POLLHUP
         self.READ_MASK = select.POLLIN | select.POLLPRI
         self.WRITE_MASK = select.POLLOUT
         self.poll = select.poll()
 
     def add(self, evtype, fileno, cb, tb, mac):
-        listener = super(Hub, self).add(evtype, fileno, cb, tb, mac)
+        listener = super().add(evtype, fileno, cb, tb, mac)
         self.register(fileno, new=True)
         return listener
 
     def remove(self, listener):
-        super(Hub, self).remove(listener)
+        super().remove(listener)
         self.register(listener.fileno)
 
     def register(self, fileno, new=False):
@@ -41,12 +41,12 @@ class Hub(hub.BaseHub):
                 else:
                     try:
                         self.poll.modify(fileno, mask)
-                    except (IOError, OSError):
+                    except OSError:
                         self.poll.register(fileno, mask)
             else:
                 try:
                     self.poll.unregister(fileno)
-                except (KeyError, IOError, OSError):
+                except (KeyError, OSError):
                     # raised if we try to remove a fileno that was
                     # already removed/invalid
                     pass
@@ -56,10 +56,10 @@ class Hub(hub.BaseHub):
             raise
 
     def remove_descriptor(self, fileno):
-        super(Hub, self).remove_descriptor(fileno)
+        super().remove_descriptor(fileno)
         try:
             self.poll.unregister(fileno)
-        except (KeyError, ValueError, IOError, OSError):
+        except (KeyError, ValueError, OSError):
             # raised if we try to remove a fileno that was
             # already removed/invalid
             pass
@@ -78,7 +78,7 @@ class Hub(hub.BaseHub):
             return
         try:
             presult = self.do_poll(seconds)
-        except (IOError, select.error) as e:
+        except OSError as e:
             if support.get_errno(e) == errno.EINTR:
                 return
             raise
@@ -113,7 +113,6 @@ class Hub(hub.BaseHub):
                 raise
             except:
                 self.squelch_exception(fileno, sys.exc_info())
-                support.clear_sys_exc_info()
 
         if self.debug_blocking:
             self.block_detect_post()

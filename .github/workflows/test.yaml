@@ -1,0 +1,87 @@
+name: test
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "43 7 */14 * *" # every two weeks, time chosen by RNG
+jobs:
+  tox:
+    name: "tox ${{ matrix.toxenv }}"
+    continue-on-error: ${{ matrix.ignore-error }}
+    runs-on: ${{ matrix.os }}
+    # https://github.community/t/duplicate-checks-on-push-and-pull-request-simultaneous-event/18012/5
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != 'eventlet/eventlet'
+    timeout-minutes: 10
+    services:
+      mysql:
+        image: mysql:5.7
+        env: { MYSQL_ALLOW_EMPTY_PASSWORD: yes }
+        ports: ["3306:3306"]
+        options: --health-cmd="mysqladmin ping" --health-timeout=5s --health-retries=5 --health-interval=5s
+      postgres:
+        image: postgres:13
+        env: { POSTGRES_PASSWORD: "secret" }
+        ports: ["5432:5432"]
+        options: --health-cmd pg_isready --health-timeout 5s --health-retries 5 --health-interval 5s
+    env:
+      EVENTLET_DB_TEST_AUTH: '{"psycopg2": {"host": "127.0.0.1", "port": 5432, "user": "postgres", "password": "secret"}, "MySQLdb": {"host": "127.0.0.1", "port": 3306, "passwd": "", "user": "root"}}'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { py: 3.7, toxenv: py37-epolls, ignore-error: false, os: ubuntu-latest }
+          - { py: 3.8, toxenv: py38-epolls, ignore-error: false, os: ubuntu-latest }
+          - { py: 3.8, toxenv: py38-openssl, ignore-error: false, os: ubuntu-latest }
+          - { py: 3.8, toxenv: py38-poll, ignore-error: false, os: ubuntu-latest }
+          - { py: 3.8, toxenv: py38-selects, ignore-error: false, os: ubuntu-latest }
+          - { py: 3.9, toxenv: py39-epolls, ignore-error: false, os: ubuntu-latest }
+          - { py: 3.9, toxenv: py39-poll, ignore-error: false, os: ubuntu-latest }
+          - { py: 3.9, toxenv: py39-selects, ignore-error: false, os: ubuntu-latest }
+          - { py: 3.9, toxenv: py39-dnspython1, ignore-error: false, os: ubuntu-latest }
+          - { py: "3.10", toxenv: py310-epolls, ignore-error: false, os: ubuntu-latest }
+          - { py: "3.10", toxenv: py310-poll, ignore-error: false, os: ubuntu-latest }
+          - { py: "3.10", toxenv: py310-selects, ignore-error: false, os: ubuntu-latest }
+          - { py: "3.10", toxenv: ipv6, ignore-error: false, os: ubuntu-latest }
+          - { py: "3.11", toxenv: py311-epolls, ignore-error: false, os: ubuntu-latest }
+          - { py: "3.12", toxenv: py312-epolls, ignore-error: false, os: ubuntu-latest }
+          - { py: "3.7", toxenv: py37-asyncio, ignore-error: false, os: ubuntu-latest }
+          - { py: "3.8", toxenv: py38-asyncio, ignore-error: false, os: ubuntu-latest }
+          - { py: "3.9", toxenv: py39-asyncio, ignore-error: false, os: ubuntu-latest }
+          - { py: "3.10", toxenv: py310-asyncio, ignore-error: false, os: ubuntu-latest }
+          - { py: "3.11", toxenv: py311-asyncio, ignore-error: false, os: ubuntu-latest }
+          - { py: "3.12", toxenv: py312-asyncio, ignore-error: false, os: ubuntu-latest }
+          - { py: pypy3.9, toxenv: pypy3-epolls, ignore-error: true, os: ubuntu-20.04 }
+
+    steps:
+      - name: install system packages
+        run: sudo apt install -y --no-install-recommends ccache libffi-dev default-libmysqlclient-dev libpq-dev libssl-dev libzmq3-dev
+      - uses: actions/checkout@v3
+
+      - name: cache pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ matrix.toxenv }}-${{ hashFiles('.github/workflows/test.yaml', 'setup.py') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            ${{ runner.os }}-
+      - name: cache tox
+        uses: actions/cache@v3
+        with:
+          path: .tox
+          key: ${{ runner.os }}-tox-${{ matrix.toxenv }}-${{ hashFiles('tox.ini') }}
+          restore-keys: |
+            ${{ runner.os }}-tox-
+            ${{ runner.os }}-
+
+      - name: setup python ${{ matrix.py }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.py }}
+      - name: install codecov, tox
+        run: pip install codecov tox
+      - run: env
+      - name: run tests
+        run: tox --verbose --verbose -e ${{ matrix.toxenv }}
+      - name: codecov
+        run: codecov --flags=$(echo ${{ matrix.toxenv }} |tr -d -- '-.')

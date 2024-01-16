@@ -15,28 +15,19 @@ from eventlet.patcher import slurp_properties
 import sys
 
 __all__ = dir(builtins_orig)
-__patched__ = ['file', 'open']
-
+__patched__ = ['open']
 slurp_properties(builtins_orig, globals(),
                  ignore=__patched__, srckeys=dir(builtins_orig))
 
 hubs.get_hub()
 
-__original_file = file
-
-
-class file(__original_file):
-    def __init__(self, *args, **kwargs):
-        super(file, self).__init__(*args, **kwargs)
-        hubs.notify_opened(self.fileno())
-
 __original_open = open
 __opening = False
 
 
-def open(*args):
+def open(*args, **kwargs):
     global __opening
-    result = __original_open(*args)
+    result = __original_open(*args, **kwargs)
     if not __opening:
         # This is incredibly ugly. 'open' is used under the hood by
         # the import process. So, ensure we don't wind up in an

@@ -17,7 +17,7 @@ if __name__ == '__main__':
     elif pid == 0:
         with eventlet.Timeout(1):
             sock, _ = server.accept()
-            sock.sendall('ok {0}'.format(os.getpid()).encode())
+            sock.sendall('ok {}'.format(os.getpid()).encode())
             sock.close()
         sys.exit(0)
     elif pid > 0:

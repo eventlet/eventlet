@@ -20,6 +20,6 @@ if __name__ == '__main__':
     for t in ts:
         t.join()
 
-    assert g == set(('t0', 't1', 't2')), repr(g)
+    assert g == {'t0', 't1', 't2'}, repr(g)
 
     print('pass')

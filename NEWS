@@ -1,3 +1,119 @@
+Unreleased
+==========
+
+0.34.3
+======
+
+* Fix security issue in the wsgi module related to RFC 9112 https://github.com/eventlet/eventlet/pull/826
+* Fix segfault, a new approach for greening existing locks https://github.com/eventlet/eventlet/pull/866
+* greendns: fix getaddrinfo parameter name https://github.com/eventlet/eventlet/pull/809
+* Fix deprecation warning on ssl.PROTOCOL_TLS https://github.com/eventlet/eventlet/pull/872
+* Pytests, fix error at teardown of TestGreenSocket.test_full_duplex https://github.com/eventlet/eventlet/pull/871
+* Skip test which uses Py cgi module https://github.com/eventlet/eventlet/pull/865
+* Drop old code based on python < 3.7
+
+0.34.2
+======
+
+* Allowing inheritance of GreenSSLSocket without overriding the __new_ method https://github.com/eventlet/eventlet/pull/796
+* [bug] Fix broken API related to `__version__` removal https://github.com/eventlet/eventlet/pull/859
+* [doc] Fix pypi broken link https://github.com/eventlet/eventlet/pull/857
+
+0.34.1
+======
+
+* [bug] Fix memory leak in greendns https://github.com/eventlet/eventlet/issues/810
+* [infra] Fix OIDC authentication failure https://github.com/eventlet/eventlet/pull/855
+* [bug] Ignore asyncore and asynchat for Python 3.12+ https://github.com/eventlet/eventlet/issues/804
+
+0.34.0 (Not released on Pypi)
+=============================
+
+* Dropped support for Python 3.6 and earlier.
+* Fix Python 3.13 compat by adding missing attibute '_is_main_interpreter' https://github.com/eventlet/eventlet/pull/847
+* Add support of Python 3.12 https://github.com/eventlet/eventlet/pull/817
+* Drop unmaintained and unused stdlib tests https://github.com/eventlet/eventlet/pull/820
+* Fix tests and CI for Python 3.7 and higher https://github.com/eventlet/eventlet/pull/831 and https://github.com/eventlet/eventlet/pull/832
+* Stop claiming to create universal wheels https://github.com/eventlet/eventlet/pull/841
+* Fix green logging locks for Python versions <= 3.10 https://github.com/eventlet/eventlet/pull/754
+
+0.33.3
+======
+* dnspython 2.3.0 raised AttributeError: module 'dns.rdtypes' has no attribute 'ANY' https://github.com/eventlet/eventlet/issues/781
+
+0.33.2
+======
+* greenio: GreenPipe/fdopen() with 'a' in mode raised io.UnsupportedOperation: File or stream is not writable https://github.com/eventlet/eventlet/pull/758
+
+0.33.1
+======
+* Prevent deadlock on logging._lock https://github.com/eventlet/eventlet/issues/742
+
+0.33.0
+======
+* green.thread: unlocked Lock().release() should raise exception, returned True https://github.com/eventlet/eventlet/issues/697
+* wsgi: Don't break HTTP framing during 100-continue handling https://github.com/eventlet/eventlet/pull/578
+* Python 3.10 partial support https://github.com/eventlet/eventlet/pull/715
+* greendns: Create a DNS resolver lazily rather than on import https://github.com/eventlet/eventlet/issues/462
+* ssl: GreenSSLContext minimum_version and maximum_version setters https://github.com/eventlet/eventlet/issues/726
+
+0.32.0
+======
+* greendns: compatibility with dnspython v2 https://github.com/eventlet/eventlet/pull/722
+* green.ssl: wrap_socket now accepts argument `ciphers` https://github.com/eventlet/eventlet/pull/718
+* websocket: control frames are now always uncompressed per RFC 7692; Thanks to Onno Kortmann
+
+0.31.1
+======
+* ssl: py3.6 using client certificates raised ValueError: check_hostname needs server_hostname argument https://github.com/eventlet/eventlet/pull/705
+
+0.31.0
+======
+* IMPORTANT: websocket: Limit maximum uncompressed frame length to 8MiB https://github.com/eventlet/eventlet/security/advisories/GHSA-9p9m-jm8w-94p2
+
+0.30.3
+======
+* wsgi: websocket ALREADY_HANDLED flag on corolocal
+* green.ssl: Set suppress_ragged_eofs default based on SSLSocket defaults
+* greenio: socket.connect_ex returned None instead of 0 on success
+* Use _imp instead of deprecated imp
+
+0.30.2
+======
+* greendns: patch ssl to fix RecursionError on SSLContext.options.__set__ https://github.com/eventlet/eventlet/issues/677
+
+0.30.1
+======
+* patcher: built-in open() did not accept kwargs https://github.com/eventlet/eventlet/issues/683
+
+0.30.0
+======
+* pyopenssl tsafe module was deprecated and removed in v20.0.0
+* deprecate pyevent hub
+* Deprecate CPython 2.7 and 3.4 support
+* py39: Add _at_fork_reinit method to Semaphores
+
+0.29.1
+======
+patcher: [py27] recursion error in pytest/python2.7 installing register_at_fork https://github.com/eventlet/eventlet/issues/660
+patcher: monkey_patch(builtins=True) failed on py3 because `file` class is gone https://github.com/eventlet/eventlet/issues/541
+don't crash on PyPy 7.0.0 https://github.com/eventlet/eventlet/pull/547
+Only install monotonic on python2 https://github.com/eventlet/eventlet/pull/583
+
+0.29.0
+======
+* ssl: context wrapped listener fails accept() https://github.com/eventlet/eventlet/issues/651
+
+0.28.1
+======
+* Sorry, Eventlet was broken on Windows for versions 0.27-0.28
+  patcher: no os.register_at_fork on Windows (#654)
+* Clean up TypeError in __del__
+
+0.28.0
+======
+* Always remove the right listener from the hub https://github.com/eventlet/eventlet/pull/645
+
 0.27.0
 ======
 * patcher: Clean up threading book-keeping at fork when monkey-patched

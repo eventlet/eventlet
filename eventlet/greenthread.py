@@ -7,7 +7,6 @@ from eventlet import support
 from eventlet import timeout
 from eventlet.hubs import timer
 from eventlet.support import greenlets as greenlet
-import six
 import warnings
 
 __all__ = ['getcurrent', 'sleep', 'spawn', 'spawn_n',
@@ -144,6 +143,7 @@ def exc_after(seconds, *throw_args):
         return timer.Timer(seconds, lambda: None)
     hub = hubs.get_hub()
     return hub.schedule_call_local(seconds, getcurrent().throw, *throw_args)
+
 
 # deprecate, remove
 TimeoutError, with_timeout = (
@@ -283,7 +283,7 @@ def kill(g, *throw_args):
         # method never got called
         def just_raise(*a, **kw):
             if throw_args:
-                six.reraise(throw_args[0], throw_args[1], throw_args[2])
+                raise throw_args[1].with_traceback(throw_args[2])
             else:
                 raise greenlet.GreenletExit()
         g.run = just_raise

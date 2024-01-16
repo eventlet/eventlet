@@ -26,8 +26,9 @@ def fdopen(fd, *args, **kw):
         raise TypeError('fd should be int, not %r' % fd)
     try:
         return greenio.GreenPipe(fd, *args, **kw)
-    except IOError as e:
+    except OSError as e:
         raise OSError(*e.args)
+
 
 __original_read__ = os_orig.read
 
@@ -39,17 +40,16 @@ def read(fd, n):
     while True:
         try:
             return __original_read__(fd, n)
-        except (OSError, IOError) as e:
-            if get_errno(e) != errno.EAGAIN:
-                raise
-        except socket.error as e:
+        except OSError as e:
             if get_errno(e) == errno.EPIPE:
                 return ''
-            raise
+            if get_errno(e) != errno.EAGAIN:
+                raise
         try:
             hubs.trampoline(fd, read=True)
         except hubs.IOClosed:
             return ''
+
 
 __original_write__ = os_orig.write
 
@@ -62,11 +62,8 @@ def write(fd, st):
     while True:
         try:
             return __original_write__(fd, st)
-        except (OSError, IOError) as e:
-            if get_errno(e) != errno.EAGAIN:
-                raise
-        except socket.error as e:
-            if get_errno(e) != errno.EPIPE:
+        except OSError as e:
+            if get_errno(e) not in [errno.EAGAIN, errno.EPIPE]:
                 raise
         hubs.trampoline(fd, write=True)
 
@@ -76,6 +73,7 @@ def wait():
 
     Wait for completion of a child process."""
     return waitpid(0, 0)
+
 
 __original_waitpid__ = os_orig.waitpid
 
@@ -94,6 +92,7 @@ def waitpid(pid, options):
             if rpid and status >= 0:
                 return rpid, status
             greenthread.sleep(0.01)
+
 
 __original_open__ = os_orig.open
 

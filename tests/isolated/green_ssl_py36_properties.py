@@ -11,6 +11,6 @@ if __name__ == '__main__':
             certfile='does-not-exist',
             keyfile='does-not-exist',
             server_side=True)
-    except IOError as ex:
+    except OSError as ex:
         assert ex.errno == 2
         print('pass')

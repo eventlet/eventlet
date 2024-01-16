@@ -3,14 +3,13 @@ import traceback
 import eventlet
 from eventlet import queue
 from eventlet.support import greenlets as greenlet
-import six
 
 __all__ = ['GreenPool', 'GreenPile']
 
 DEBUG = True
 
 
-class GreenPool(object):
+class GreenPool:
     """The GreenPool class is a pool of green threads.
     """
 
@@ -18,10 +17,10 @@ class GreenPool(object):
         try:
             size = int(size)
         except ValueError as e:
-            msg = 'GreenPool() expect size :: int, actual: {0} {1}'.format(type(size), str(e))
+            msg = 'GreenPool() expect size :: int, actual: {} {}'.format(type(size), str(e))
             raise TypeError(msg)
         if size < 0:
-            msg = 'GreenPool() expect size >= 0, actual: {0}'.format(repr(size))
+            msg = 'GreenPool() expect size >= 0, actual: {}'.format(repr(size))
             raise ValueError(msg)
         self.size = size
         self.coroutines_running = set()
@@ -181,10 +180,10 @@ class GreenPool(object):
            for result in pool.imap(worker, open("filename", 'r')):
                print(result)
         """
-        return self.starmap(function, six.moves.zip(*iterables))
+        return self.starmap(function, zip(*iterables))
 
 
-class GreenPile(object):
+class GreenPile:
     """GreenPile is an abstraction representing a bunch of I/O-related tasks.
 
     Construct a GreenPile with an existing GreenPool object.  The GreenPile will
@@ -242,7 +241,7 @@ class GreenPile(object):
 # instead relying on the spawning process to send one in when it's done
 class GreenMap(GreenPile):
     def __init__(self, size_or_pool):
-        super(GreenMap, self).__init__(size_or_pool)
+        super().__init__(size_or_pool)
         self.waiters = queue.LightQueue(maxsize=self.pool.size)
 
     def done_spawning(self):

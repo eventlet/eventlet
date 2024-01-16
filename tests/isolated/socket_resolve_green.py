@@ -7,17 +7,18 @@ if __name__ == '__main__':
     import time
     import dns.message
     import dns.query
+    import dns.flags
 
     n = 10
     delay = 0.01
-    addr_map = {'test-host{0}.'.format(i): '0.0.1.{0}'.format(i) for i in range(n)}
+    addr_map = {'test-host{}.'.format(i): '0.0.1.{}'.format(i) for i in range(n)}
 
     def slow_udp(q, *a, **kw):
         qname = q.question[0].name
         addr = addr_map[qname.to_text()]
         r = dns.message.make_response(q)
         r.index = None
-        r.flags = 256
+        r.flags = dns.flags.QR | dns.flags.RD
         r.answer.append(dns.rrset.from_text(str(qname), 60, 'IN', 'A', addr))
         r.time = 0.001
         eventlet.sleep(delay)
@@ -30,8 +31,8 @@ if __name__ == '__main__':
     def fun(name):
         try:
             results[name] = socket.gethostbyname(name)
-        except socket.error as e:
-            print('name: {0} error: {1}'.format(name, e))
+        except OSError as e:
+            print('name: {} error: {}'.format(name, e))
 
     pool = eventlet.GreenPool(size=n + 1)
 
@@ -44,7 +45,7 @@ if __name__ == '__main__':
         pool.spawn(fun, name)
     pool.waitall()
     td = time.time() - t1
-    fail_msg = 'Resolve time expected: ~{0:.3f}s, real: {1:.3f}'.format(delay, td)
+    fail_msg = 'Resolve time expected: ~{:.3f}s, real: {:.3f}'.format(delay, td)
     assert delay <= td < delay * n, fail_msg
     assert addr_map == results
     print('pass')

@@ -1,3 +1,4 @@
+import errno
 import unittest
 import socket as _original_sock
 from eventlet.green import socket
@@ -16,9 +17,9 @@ class TestSocketErrors(unittest.TestCase):
         try:
             s.connect(('127.0.0.1', port))
             self.fail("Shouldn't have connected")
-        except socket.error as ex:
+        except OSError as ex:
             code, text = ex.args
-            assert code in [111, 61, 10061], (code, text)
+            assert code == errno.ECONNREFUSED, 'Expected ECONNREFUSED, got {} ({})'.format(code, text)
             assert 'refused' in text.lower(), (code, text)
 
     def test_timeout_real_socket(self):
@@ -54,9 +55,9 @@ class TestSocketErrors(unittest.TestCase):
 
 
 def test_create_connection_refused():
-    errno = None
     try:
         socket.create_connection(('127.0.0.1', 1))
-    except socket.error as ex:
-        errno = ex.errno
-    assert errno in [111, 61, 10061], 'Expected socket.error ECONNREFUSED, got {0}'.format(errno)
+        assert False, "Shouldn't have connected"
+    except OSError as ex:
+        code, text = ex.args
+        assert code == errno.ECONNREFUSED, 'Expected ECONNREFUSED, got {} ({})'.format(code, text)

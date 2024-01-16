@@ -1,27 +1,30 @@
 """Implements the standard thread module, using greenthreads."""
-from six.moves import _thread as __thread
-import six
+import _thread as __thread
 from eventlet.support import greenlets as greenlet
 from eventlet import greenthread
-from eventlet.semaphore import Semaphore as LockType
+from eventlet.lock import Lock
 import sys
 
 
 __patched__ = ['get_ident', 'start_new_thread', 'start_new', 'allocate_lock',
                'allocate', 'exit', 'interrupt_main', 'stack_size', '_local',
-               'LockType', '_count']
+               'LockType', 'Lock', '_count']
 
 error = __thread.error
+LockType = Lock
 __threadcount = 0
 
+if hasattr(__thread, "_is_main_interpreter"):
+    _is_main_interpreter = __thread._is_main_interpreter
 
-if six.PY3:
-    def _set_sentinel():
-        # TODO this is a dummy code, reimplementing this may be needed:
-        # https://hg.python.org/cpython/file/b5e9bc4352e1/Modules/_threadmodule.c#l1203
-        return allocate_lock()
 
-    TIMEOUT_MAX = __thread.TIMEOUT_MAX
+def _set_sentinel():
+    # TODO this is a dummy code, reimplementing this may be needed:
+    # https://hg.python.org/cpython/file/b5e9bc4352e1/Modules/_threadmodule.c#l1203
+    return allocate_lock()
+
+
+TIMEOUT_MAX = __thread.TIMEOUT_MAX
 
 
 def _count():
@@ -112,3 +115,6 @@ if hasattr(__thread, 'stack_size'):
             # this thread will suffer
 
 from eventlet.corolocal import local as _local
+
+if hasattr(__thread, 'daemon_threads_allowed'):
+    daemon_threads_allowed = __thread.daemon_threads_allowed

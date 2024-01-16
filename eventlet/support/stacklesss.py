@@ -17,7 +17,7 @@ def getcurrent():
     return tasklet_to_greenlet[stackless.getcurrent()]
 
 
-class FirstSwitch(object):
+class FirstSwitch:
     def __init__(self, gr):
         self.gr = gr
 
@@ -33,7 +33,7 @@ class FirstSwitch(object):
         t.run()
 
 
-class greenlet(object):
+class greenlet:
     def __init__(self, run=None, parent=None):
         self.dead = False
         if parent is None:
