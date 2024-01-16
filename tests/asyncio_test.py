@@ -134,3 +134,145 @@ def test_kill_greenthread():
     eventlet.sleep(0.01)
     assert future.cancelled()
     assert progress == [1, 2, 3]
+
+
+def test_await_greenthread_success():
+    """
+    ``await`` on a ``GreenThread`` returns its eventual result.
+    """
+    def greenlet():
+        eventlet.sleep(0.001)
+        return 23
+
+    async def go():
+        result = await eventlet.spawn(greenlet)
+        return result
+
+    assert spawn_for_awaitable(go()).wait() == 23
+
+
+def test_await_greenthread_exception():
+    """
+    ``await`` on a ``GreenThread`` raises its eventual exception.
+    """
+    def greenlet():
+        eventlet.sleep(0.001)
+        return 1 / 0
+
+    async def go():
+        try:
+            await eventlet.spawn(greenlet)
+        except ZeroDivisionError as e:
+            return e
+
+    result = spawn_for_awaitable(go()).wait()
+    assert isinstance(result, ZeroDivisionError)
+
+
+def test_await_greenthread_success_immediate():
+    """
+    ``await`` on a ``GreenThread`` returns its immediate result.
+    """
+    def greenlet():
+        return 23
+
+    async def go():
+        result = await eventlet.spawn(greenlet)
+        return result
+
+    assert spawn_for_awaitable(go()).wait() == 23
+
+
+def test_await_greenthread_exception_immediate():
+    """
+    ``await`` on a ``GreenThread`` raises its immediate exception.
+    """
+    def greenlet():
+        return 1 / 0
+
+    async def go():
+        try:
+            await eventlet.spawn(greenlet)
+        except ZeroDivisionError as e:
+            return e
+
+    result = spawn_for_awaitable(go()).wait()
+    assert isinstance(result, ZeroDivisionError)
+
+
+def test_ensure_future():
+    """
+    ``asyncio.ensure_future()`` works correctly on a ``GreenThread``.
+    """
+    def greenlet():
+        eventlet.sleep(0.001)
+        return 27
+
+    async def go():
+        future = asyncio.ensure_future(eventlet.spawn(greenlet))
+        result = await future
+        return result
+
+    assert spawn_for_awaitable(go()).wait() == 27
+
+
+def test_cancelling_future_kills_greenthread():
+    """
+    If the ``Future`` created by ``asyncio.ensure_future(a_green_thread)`` is
+    cancelled, the ``a_green_thread`` ``GreenThread`` is killed.
+    """
+
+    phases = []
+
+    def green():
+        phases.append(1)
+        future.cancel()
+        eventlet.sleep(1)
+        # This should never be reached:
+        phases.append(2)
+
+    gthread = eventlet.spawn(green)
+
+    async def go():
+        try:
+            await gthread
+        except asyncio.CancelledError:
+            return "good"
+        else:
+            return "bad"
+
+    future = asyncio.ensure_future(go())
+    assert spawn_for_awaitable(future).wait() == "good"
+
+    with pytest.raises(GreenletExit):
+        gthread.wait()
+    assert phases == [1]
+
+
+def test_greenthread_killed_while_awaited():
+    """
+    If a ``GreenThread`` is killed, the ``async`` function ``await``ing it sees
+    it as cancellation.
+    """
+    phases = []
+
+    def green():
+        phases.append(1)
+        eventlet.sleep(0.001)
+        phases.append(2)
+        getcurrent().kill()
+        eventlet.sleep(1)
+        # Should never be reached:
+        phases.append(3)
+
+    gthread = eventlet.spawn(green)
+
+    async def go():
+        try:
+            await gthread
+            return "where is my cancellation?"
+        except asyncio.CancelledError:
+            return "canceled!"
+
+    assert spawn_for_awaitable(go()).wait() == "canceled!"
+    assert phases == [1, 2]
