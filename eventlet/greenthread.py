@@ -1,6 +1,8 @@
 from collections import deque
 import sys
 
+from greenlet import GreenletExit
+
 from eventlet import event
 from eventlet import hubs
 from eventlet import support
@@ -186,15 +188,30 @@ class GreenThread(greenlet.greenlet):
 
         future = hub.loop.create_future()
 
+        # When the Future finishes, check if it was due to cancellation:
+        def got_future_result(future):
+            if future.cancelled() and not self.dead:
+                # GreenThread is still running, so kill it:
+                self.kill()
+
+        future.add_done_callback(got_future_result)
+
         # When the GreenThread finishes, set its result on the Future:
-        def got_result(gthread):
+        def got_gthread_result(gthread):
+            if future.done():
+                # Can't set values any more.
+                return
+
             try:
+                # Should return immediately:
                 result = gthread.wait()
                 future.set_result(result)
+            except GreenletExit:
+                future.cancel()
             except BaseException as e:
                 future.set_exception(e)
 
-        self.link(got_result)
+        self.link(got_gthread_result)
 
         return future.__await__()
 
