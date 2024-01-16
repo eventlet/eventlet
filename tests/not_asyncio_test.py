@@ -4,7 +4,7 @@ import pytest
 
 from eventlet.hubs import get_hub
 from eventlet.hubs.asyncio import Hub as AsyncioHub
-from eventlet.asyncio import spawn_for_coroutine
+from eventlet.asyncio import spawn_for_awaitable
 
 if isinstance(get_hub(), AsyncioHub):
     pytest.skip("Only works on non-asyncio hub", allow_module_level=True)
@@ -12,7 +12,7 @@ if isinstance(get_hub(), AsyncioHub):
 
 def test_spawn_from_coroutine_errors():
     """
-    If ``spawn_for_coroutine()`` is called in a non-asyncio hub it will raise a
+    If ``spawn_for_awaitable()`` is called in a non-asyncio hub it will raise a
     ``RuntimeError``.
     """
 
@@ -20,4 +20,4 @@ def test_spawn_from_coroutine_errors():
         return 13
 
     with pytest.raises(RuntimeError):
-        spawn_for_coroutine(go())
+        spawn_for_awaitable(go())

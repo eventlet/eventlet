@@ -10,7 +10,7 @@ from greenlet import GreenletExit
 import eventlet
 from eventlet.hubs import get_hub
 from eventlet.hubs.asyncio import Hub as AsyncioHub
-from eventlet.asyncio import spawn_for_coroutine
+from eventlet.asyncio import spawn_for_awaitable
 from eventlet.greenthread import getcurrent
 from .wsgi_test import _TestBase, Site
 
@@ -45,27 +45,27 @@ class CallingAsyncFunctionsFromGreenletsHighLevelTests(_TestBase):
                     html = await response.text()
                     return html
 
-        gthread = spawn_for_coroutine(request())
+        gthread = spawn_for_awaitable(request())
         assert gthread.wait() == "hello world"
 
 
 def test_result():
     """
     The result of the coroutine is returned by the ``GreenThread`` created by
-    ``spawn_for_coroutine``.
+    ``spawn_for_awaitable``.
     """
 
     async def go():
         await asyncio.sleep(0.0001)
         return 13
 
-    assert spawn_for_coroutine(go()).wait() == 13
+    assert spawn_for_awaitable(go()).wait() == 13
 
 
 def test_exception():
     """
     An exception raised by the coroutine is raised by ``GreenThread.wait()``
-    for the green thread created by ``spawn_for_coroutine()``.
+    for the green thread created by ``spawn_for_awaitable()``.
     """
 
     async def go():
@@ -73,20 +73,20 @@ def test_exception():
         raise ZeroDivisionError()
 
     with pytest.raises(ZeroDivisionError):
-        assert spawn_for_coroutine(go()).wait()
+        assert spawn_for_awaitable(go()).wait()
 
 
 def test_future_and_task():
     """
-    ``spawn_for_coroutine()`` can take an ``asyncio.Future`` or an
+    ``spawn_for_awaitable()`` can take an ``asyncio.Future`` or an
     ``asyncio.Task``.
     """
 
     async def go(value):
         return value * 2
 
-    assert spawn_for_coroutine(asyncio.ensure_future(go(8))).wait() == 16
-    assert spawn_for_coroutine(asyncio.create_task(go(6))).wait() == 12
+    assert spawn_for_awaitable(asyncio.ensure_future(go(8))).wait() == 16
+    assert spawn_for_awaitable(asyncio.create_task(go(6))).wait() == 12
 
 
 def test_asyncio_sleep():
@@ -99,7 +99,7 @@ def test_asyncio_sleep():
         await asyncio.sleep(0.07)
         return time() - start
 
-    elapsed = spawn_for_coroutine(go()).wait()
+    elapsed = spawn_for_awaitable(go()).wait()
     assert 0.05 < elapsed < 0.09
 
 
@@ -126,7 +126,7 @@ def test_kill_greenthread():
         progress.append(4)
 
     future = asyncio.ensure_future(go())
-    the_greenthread.append(spawn_for_coroutine(future))
+    the_greenthread.append(spawn_for_awaitable(future))
     with pytest.raises(GreenletExit):
         the_greenthread[0].wait()
     assert progress == [1, 2, 3]
