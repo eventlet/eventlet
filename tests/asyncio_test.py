@@ -167,3 +167,34 @@ def test_await_greenthread_exception():
 
     result = spawn_for_awaitable(go()).wait()
     assert isinstance(result, ZeroDivisionError)
+
+
+def test_await_greenthread_success_immediate():
+    """
+    ``await`` on a ``GreenThread`` returns its immediate result.
+    """
+    def greenlet():
+        return 23
+
+    async def go():
+        result = await eventlet.spawn(greenlet)
+        return result
+
+    assert spawn_for_awaitable(go()).wait() == 23
+
+
+def test_await_greenthread_exception_immediate():
+    """
+    ``await`` on a ``GreenThread`` raises its immediate exception.
+    """
+    def greenlet():
+        1/0
+
+    async def go():
+        try:
+            await eventlet.spawn(greenlet)
+        except ZeroDivisionError as e:
+            return e
+
+    result = spawn_for_awaitable(go()).wait()
+    assert isinstance(result, ZeroDivisionError)
