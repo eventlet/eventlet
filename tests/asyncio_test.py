@@ -134,3 +134,36 @@ def test_kill_greenthread():
     eventlet.sleep(0.01)
     assert future.cancelled()
     assert progress == [1, 2, 3]
+
+
+def test_await_greenthread_success():
+    """
+    ``await`` on a ``GreenThread`` returns its eventual result.
+    """
+    def greenlet():
+        eventlet.sleep(0.001)
+        return 23
+
+    async def go():
+        result = await eventlet.spawn(greenlet)
+        return result
+
+    assert spawn_for_awaitable(go()).wait() == 23
+
+
+def test_await_greenthread_exception():
+    """
+    ``await`` on a ``GreenThread`` raises its eventual exception.
+    """
+    def greenlet():
+        eventlet.sleep(0.001)
+        1/0
+
+    async def go():
+        try:
+            await eventlet.spawn(greenlet)
+        except ZeroDivisionError as e:
+            return e
+
+    result = spawn_for_awaitable(go()).wait()
+    assert isinstance(result, ZeroDivisionError)

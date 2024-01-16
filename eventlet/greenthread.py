@@ -172,6 +172,32 @@ class GreenThread(greenlet.greenlet):
         self._resolving_links = False
         self._exit_funcs = None
 
+    def __await__(self):
+        """
+        Enable ``GreenThread``s to be ``await``ed in ``async`` functions.
+        """
+        from eventlet.hubs.asyncio import Hub
+        hub = hubs.get_hub()
+        if not isinstance(hub, Hub):
+            raise RuntimeError(
+                "This API only works with eventlet's asyncio hub. "
+                + "To use it, set an EVENTLET_HUB=asyncio environment variable."
+            )
+
+        future = hub.loop.create_future()
+
+        # When the GreenThread finishes, set its result on the Future:
+        def got_result(gthread):
+            try:
+                result = gthread.wait()
+                future.set_result(result)
+            except BaseException as e:
+                future.set_exception(e)
+
+        self.link(got_result)
+
+        return future.__await__()
+
     def wait(self):
         """ Returns the result of the main function of this GreenThread.  If the
         result is a normal return value, :meth:`wait` returns it.  If it raised
