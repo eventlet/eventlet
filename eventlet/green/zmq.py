@@ -204,15 +204,15 @@ _Socket_getsockopt = _Socket.getsockopt
 
 
 class Socket(_Socket):
-    """Green version of :class:`zmq.core.socket.Socket
+    """Green version of :class:``zmq.core.socket.Socket``.
 
     The following three methods are always overridden:
         * send
         * recv
         * getsockopt
     To ensure that the ``zmq.NOBLOCK`` flag is set and that sending or receiving
-    is deferred to the hub (using :func:`eventlet.hubs.trampoline`) if a
-    ``zmq.EAGAIN`` (retry) error is raised
+    is deferred to the hub (using :func:``eventlet.hubs.trampoline``) if a
+    ``zmq.EAGAIN`` (retry) error is raised.
 
     For some socket types, the following methods are also overridden:
         * send_multipart
