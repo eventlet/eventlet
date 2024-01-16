@@ -13,18 +13,18 @@ implementation.
 This gap is now too high and can lead you to unexpected side effects and bugs
 in your applications.
 
-**Eventlet is now switching to legacy mode**. **Only maintenance for stability
-and bug fixing** will be provided. **No new features will be accepted**, except
-those related to the asyncio migration. **Usage in new projects are
-discouraged**. **Our goal is to plan the retirement of eventlet** and to give
-you ways to move away from eventlet.
+Eventlet now follows a new maintenance policy. **Only maintenance for
+stability and bug fixing** will be provided. **No new features will be
+accepted**, except those related to the asyncio migration. **Usages in new
+projects are discouraged**. **Our goal is to plan the retirement of eventlet**
+and to give you ways to move away from eventlet.
 
 If you are looking for a library to manage async network programming,
 and if you do not yet use eventlet, then, we encourage you to use `asyncio`_,
 which is the official async library of the CPython stdlib.
 
-If you already use eventlet, our goal is to allow you to smoothly migrate from
-eventlet to asyncio. We are currently thinking about solutions to
+If you already use eventlet, our goal is to allow you to smoothly migrate
+from eventlet to asyncio. We are currently thinking about solutions to
 make that kind of migrations possible. Only new features related to the
 migration solution will be accepted.
 
@@ -33,7 +33,6 @@ the migration do not hesitate to `open a new issue`_, we will be happy to
 answer them.
 
 .. _asyncio: https://docs.python.org/3/library/asyncio.html
-.. _that_was_not_possible_before: https://github.com/eventlet/eventlet/issues/673#issuecomment-740429872
 .. _open_a_new_issue: https://github.com/eventlet/eventlet/issues/new
 
 Eventlet
@@ -60,20 +59,6 @@ applications to use it.  Start off by looking at the `examples`_,
 .. _examples: http://eventlet.net/doc/examples.html
 .. _common design patterns: http://eventlet.net/doc/design_patterns.html
 .. _basic API primitives: http://eventlet.net/doc/basic_usage.html
-
-
-Quick Example
-=============
-
-Here's something you can try right on the command line::
-
-    % python3
-    >>> import eventlet
-    >>> from eventlet.green.urllib.request import urlopen
-    >>> gt = eventlet.spawn(urlopen, 'http://eventlet.net')
-    >>> gt2 = eventlet.spawn(urlopen, 'http://secondlife.com')
-    >>> gt2.wait()
-    >>> gt.wait()
 
 
 Getting Eventlet
