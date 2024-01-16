@@ -157,7 +157,7 @@ def test_await_greenthread_exception():
     """
     def greenlet():
         eventlet.sleep(0.001)
-        1/0
+        return 1 / 0
 
     async def go():
         try:
@@ -188,7 +188,7 @@ def test_await_greenthread_exception_immediate():
     ``await`` on a ``GreenThread`` raises its immediate exception.
     """
     def greenlet():
-        1/0
+        return 1 / 0
 
     async def go():
         try:
