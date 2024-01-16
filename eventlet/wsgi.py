@@ -338,29 +338,22 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
     :param conn_state: The given connection status.
     :param server: The server accessible by the request handler.
-    :param reject_bad_requests: Rejection policy.
-                If True, or not specified, queries defined as non-compliant,
-                by example with the RFC 9112, will automatically rejected.
-                Else, if False, even if a request is bad formed, the query
-                will be processed. Functionning this way, default to the
-                more-secure behavior, and allow working with old clients that
-                cannot be updated.
     """
     protocol_version = 'HTTP/1.1'
     minimum_chunk_size = MINIMUM_CHUNK_SIZE
     capitalize_response_headers = True
+    reject_bad_requests = True
 
     # https://github.com/eventlet/eventlet/issues/295
     # Stdlib default is 0 (unbuffered), but then `wfile.writelines()` looses data
     # so before going back to unbuffered, remove any usage of `writelines`.
     wbufsize = 16 << 10
 
-    def __init__(self, conn_state, server, reject_bad_requests=True):
+    def __init__(self, conn_state, server):
         self.request = conn_state[1]
         self.client_address = conn_state[0]
         self.conn_state = conn_state
         self.server = server
-        self.reject_bad_requests = reject_bad_requests
         self.setup()
         try:
             self.handle()
