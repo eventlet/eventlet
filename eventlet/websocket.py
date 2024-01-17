@@ -36,7 +36,7 @@ for _mod in ('wsaccel.utf8validator', 'autobahn.utf8validator'):
     else:
         break
 
-ACCEPTABLE_CLIENT_ERRORS = {errno.ECONNRESET, errno.EPIPE}
+ACCEPTABLE_CLIENT_ERRORS = {errno.ECONNRESET, errno.EPIPE, errno.ESHUTDOWN}
 DEFAULT_MAX_FRAME_LENGTH = 8 << 20
 
 __all__ = ["WebSocketWSGI", "WebSocket"]
