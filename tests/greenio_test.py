@@ -84,7 +84,7 @@ class TestGreenSocket(tests.LimitedTestCase):
             expect_socket_timeout(gs.connect, ('192.0.2.1', 80))
         except OSError as e:
             # unreachable is also a valid outcome
-            if not get_errno(e) in (errno.EHOSTUNREACH, errno.ENETUNREACH):
+            if get_errno(e) not in (errno.EHOSTUNREACH, errno.ENETUNREACH):
                 raise
 
     def test_accept_timeout(self):

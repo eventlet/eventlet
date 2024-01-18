@@ -155,10 +155,11 @@ class ZipkinDataBuilder:
 
     @staticmethod
     def build_annotation(value, endpoint=None):
-        if isinstance(value, unicode):
+        if isinstance(value, str):
             value = value.encode('utf-8')
+        assert isinstance(value, bytes)
         return ttypes.Annotation(time.time() * 1000 * 1000,
-                                 str(value), endpoint)
+                                 value, endpoint)
 
     @staticmethod
     def build_binary_annotation(key, value, endpoint=None):

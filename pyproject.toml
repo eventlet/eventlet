@@ -61,3 +61,25 @@ version.source = "vcs"
 
 [tool.hatch.build.hooks.vcs]
 version-file = "eventlet/_version.py"
+
+[tool.ruff]
+# Might eventually want to add evenetlet/green/, but it's a pain...
+exclude = ["eventlet/green/", "eventlet/zipkin/_thrift", "tests/mock.py", "doc/"]
+line-length = 123
+
+[tool.ruff.lint]
+# Too many to fix as first pass, but should perhaps go back and fix these:
+ignore = [
+    # Ambiguous variable name
+    "E741",
+    # Local variable assigned but unused
+    "F841",
+    # Imported but unused
+    "F401",
+    # Bare except:
+    "E722",
+    # Module-level import not at top of file
+    "E402",
+    # Using a lambda expression with a name instead of just def
+    "E731",
+]
