@@ -16,6 +16,14 @@ Subpackages
 Submodules
 ----------
 
+eventlet.asyncio module
+-----------------------
+
+.. automodule:: eventlet.asyncio
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 eventlet.backdoor module
 ------------------------
 
@@ -132,6 +140,14 @@ eventlet.semaphore module
 -------------------------
 
 .. automodule:: eventlet.semaphore
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+eventlet.temp module
+--------------------
+
+.. automodule:: eventlet.temp
    :members:
    :undoc-members:
    :show-inheritance:

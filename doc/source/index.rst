@@ -23,10 +23,9 @@ If you are looking for a library to manage async network programming,
 and if you do not yet use eventlet, then, we encourage you to use `asyncio`_,
 which is the official async library of the CPython stdlib.
 
-If you already use eventlet, our goal is to allow you to smoothly migrate from
-eventlet to asyncio. We are currently thinking about solutions to
-make that kind of migrations possible. Only new features related to the
-migration solution will be accepted.
+If you already use eventlet, we hope to enable migration to asyncio for some use
+cases; see :ref:`migration-guide`. Only new features related to the migration
+solution will be accepted.
 
 If you have questions concerning maintenance goals or concerning
 the migration do not hesitate to `open a new issue`_, we will be happy to
@@ -70,6 +69,7 @@ Contents
 .. toctree::
    :maxdepth: 2
 
+   migration
    basic_usage
    design_patterns
    patching

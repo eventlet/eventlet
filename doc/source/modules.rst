@@ -4,6 +4,7 @@ Module Reference
 .. toctree::
    :maxdepth: 2
 
+   modules/asyncio
    modules/backdoor
    modules/corolocal
    modules/dagpool
