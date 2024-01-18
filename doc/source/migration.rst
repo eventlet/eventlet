@@ -8,14 +8,15 @@ There are two main use cases for Eventlet:
 1. As a required networking framework, much like one would use ``asyncio``, ``trio``, or older frameworks like ``Twisted`` and ``tornado``.
 
 2. As an optional, pluggable backend that allows swapping out blocking APIs for an event loop, transparently, without changing any code.
+   This is how Celery and Gunicorn use eventlet.
 
-The second use case requires exact emulation of an ever-changing and ever-increasing API footprint, which is fundamentally unsustainable for a volunteer-driven open source project.
+Pretending to look like a blocking API while actually using an event loop underneath requires exact emulation of an ever-changing and ever-increasing API footprint, which is fundamentally unsustainable for a volunteer-driven open source project.
 This is why Eventlet is discouraging new users.
-If you really want to continue with this approach, you can use `gevent <https://www.gevent.org/>`_.
-But keep in mind that the same technical issues that make Eventlet maintenance unsustainable over the long term also apply to Gevent.
 
-**The rest of this document will focus on the first use case: Eventlet as the sole networking framework.**
+**Most of this document will focus on the first use case: Eventlet as the sole networking framework.**
 For this use case, we recommend migrating to Python's ``asyncio``, and we are providing infrastructure that will make this much easier, and allow for *gradual* migration.
+
+For the second use case, we believe this is a fundamentally unsustainable approach and encourage the upstream frameworks to come up with different solutions.
 
 Step 1. Switch to the ``asyncio`` Hub
 -------------------------------------
@@ -24,16 +25,19 @@ Eventlet has different pluggable networking event loops.
 By switching the event loop to use ``asyncio``, you enable running ``asyncio`` and Eventlet code in the same thread in the same process.
 
 To do so, set the ``EVENTLET_HUB`` environment variable to ``asyncio`` before starting your Eventlet program.
-For example, if you start your program with a shell script, you can do:
+For example, if you start your program with a shell script, you can do ``export EVENTLET_HUB=asyncio``.
 
-    export EVENTLET_HUB=asyncio
+Alternatively, you can explicitly specify the ``asyncio`` hub at startup, before monkey patching or any other setup work::
+
+  import eventlet.hubs
+  eventlet.hubs.use_hub("eventlet.hubs.asyncio")
 
 Step 2. Migrate code to ``asyncio``
 -----------------------------------
 
 Now that you're running Eventlet on top of ``asyncio``, you can use some new APIs to call from Eventlet code into ``asyncio``, and vice-versa.
 
-To call ``asyncio`` code from Eventlet code, you can wrap an coroutine (or anything you can ``await``) into an Eventlet ``GreenThread``.
+To call ``asyncio`` code from Eventlet code, you can wrap a coroutine (or anything you can ``await``) into an Eventlet ``GreenThread``.
 For example, if you want to a HTTP request from Eventlet, you can use the ``asyncio``-based ``aiohttp`` library::
 
     import aiohttp
@@ -102,4 +106,11 @@ In Eventlet greenlets:
 * ``asyncio`` locks won't work if used directly.
 
 We expect to add more migration and integration APIs over time as we learn more about what works, common idioms, and requirements for migration.
-You can try progress in the `GitHub issue <https://github.com/eventlet/eventlet/issues/868>`_, and file new issues if you have problems.
+You can track progress in the `GitHub issue <https://github.com/eventlet/eventlet/issues/868>`_, and file new issues if you have problems.
+
+
+Alternatives
+------------
+
+If you really want to continue with Eventlet's pretend-to-be-blocking approach, you can use `gevent <https://www.gevent.org/>`_.
+But keep in mind that the same technical issues that make Eventlet maintenance unsustainable over the long term also apply to Gevent.
