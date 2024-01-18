@@ -48,6 +48,7 @@ Homepage = "https://github.com/eventlet/eventlet"
 History = "https://github.com/eventlet/eventlet/blob/master/NEWS"
 Tracker = "https://github.com/eventlet/eventlet/issues"
 Source = "https://github.com/eventlet/eventlet"
+Documentation = "https://eventlet.readthedocs.io/"
 
 [project.optional-dependencies]
 dev = ["black", "isort", "pip-tools", "build", "twine", "pre-commit", "commitizen"]

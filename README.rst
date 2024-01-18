@@ -56,9 +56,9 @@ It's easy to get started using Eventlet, and easy to convert existing
 applications to use it.  Start off by looking at the `examples`_,
 `common design patterns`_, and the list of `basic API primitives`_.
 
-.. _examples: http://eventlet.net/doc/examples.html
-.. _common design patterns: http://eventlet.net/doc/design_patterns.html
-.. _basic API primitives: http://eventlet.net/doc/basic_usage.html
+.. _examples: https://eventlet.readthedocs.io/en/latest/examples.html
+.. _common design patterns: https://eventlet.readthedocs.io/en/latest/design_patterns.html
+.. _basic API primitives: https://eventlet.readthedocs.io/en/latest/basic_usage.html
 
 
 Getting Eventlet
@@ -76,12 +76,11 @@ To install latest development version once::
 Building the Docs Locally
 =========================
 
-To build a complete set of HTML documentation, you must have Sphinx, which can be found at http://sphinx.pocoo.org/ (or installed with `pip install Sphinx`)::
+To build a complete set of HTML documentation::
 
-  cd doc
-  make html
+  tox -e docs
 
-The built html files can be found in doc/_build/html afterward.
+The built html files can be found in doc/build/html afterward.
 
 Supported Python versions
 =========================
