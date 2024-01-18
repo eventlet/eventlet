@@ -265,7 +265,7 @@ def monkey_patch(**on):
             raise TypeError("monkey_patch() got an unexpected "
                             "keyword argument %r" % k)
     if default_on is None:
-        default_on = not (True in on.values())
+        default_on = True not in on.values()
     for modname in accepted_args:
         if modname == 'MySQLdb':
             # MySQLdb is only on when explicitly patched for the moment

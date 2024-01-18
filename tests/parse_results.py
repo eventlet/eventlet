@@ -111,4 +111,4 @@ if __name__ == '__main__':
         sys.argv.append(latest_db)
     for db in sys.argv[1:]:
         main(db)
-    execfile('generate_report.py')
+    exec(open('generate_report.py').read())
