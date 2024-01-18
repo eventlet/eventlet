@@ -1939,11 +1939,28 @@ class TestHttpd(_TestBase):
         sock.send(
             b'GET / HTTP/1.1\r\n'
             b'Transfer-Encoding: chunked\r\n'
-            b'Content-Length: 0'
+            b'Content-Length: 0\r\n'
             b'Host: localhost\r\n'
             b'\r\n')
         result = read_http(sock)
         self.assertRaises(ConnectionClosed, read_http, sock)
+
+    def test_content_length_and_transfer_encoding_escape_hatch(self):
+        class LegacyClientProtocol(wsgi.HttpProtocol):
+            reject_bad_requests = False
+
+        self.spawn_server(protocol=LegacyClientProtocol)
+        self.site.application = use_write
+        sock = eventlet.connect(self.server_addr)
+        sock.send(
+            b'GET /a HTTP/1.1\r\n'
+            b'Transfer-Encoding: chunked\r\n'
+            b'Content-Length: 0\r\n'
+            b'Host: localhost\r\n'
+            b'\r\n')
+        result = read_http(sock)
+        assert result.status == 'HTTP/1.1 200 OK', 'Received status {!r}'.format(result.status)
+        sock.close()
 
 
 def read_headers(sock):
