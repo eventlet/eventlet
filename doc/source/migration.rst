@@ -38,7 +38,7 @@ Step 2. Migrate code to ``asyncio``
 Now that you're running Eventlet on top of ``asyncio``, you can use some new APIs to call from Eventlet code into ``asyncio``, and vice-versa.
 
 To call ``asyncio`` code from Eventlet code, you can wrap a coroutine (or anything you can ``await``) into an Eventlet ``GreenThread``.
-For example, if you want to a HTTP request from Eventlet, you can use the ``asyncio``-based ``aiohttp`` library::
+For example, if you want to make a HTTP request from Eventlet, you can use the ``asyncio``-based ``aiohttp`` library::
 
     import aiohttp
     from eventlet.asyncio import spawn_for_awaitable
