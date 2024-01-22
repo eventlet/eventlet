@@ -63,6 +63,8 @@ Do not hesitate to provide the list of changes in the tags message.
 Here is an example https://github.com/eventlet/eventlet/releases/tag/v0.34.3
 You can simply reuse the changelog you made previously.
 
+Alternatively, the Github UI also allow you creating tags.
+
 4. Final checks
 ~~~~~~~~~~~~~~~
 
@@ -79,12 +81,12 @@ Your tag should be listed there https://github.com/eventlet/eventlet/tags.
 ~~~~~~~~~~~~~~~~~~
 
 If the previous steps were successful, then you can
-now update the github issue that you previously created.
+now update the Github issue that you previously created.
 
 I'd recommend to put a comment with the pypi link and the tag link
 like there https://github.com/eventlet/eventlet/issues/875#issuecomment-1887435752.
 
-You can now close this github issue.
+You can now close this Github issue.
 
-.. _open_a_new_github_issue: https://github.com/eventlet/eventlet/issues/new
-.. _previous_examples_of_issues: https://github.com/eventlet/eventlet/issues?q=label%3Arelease+is%3Aclosed
+.. _open a new github issue: https://github.com/eventlet/eventlet/issues/new
+.. _previous examples of issues: https://github.com/eventlet/eventlet/issues?q=label%3Arelease+is%3Aclosed

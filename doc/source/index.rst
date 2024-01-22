@@ -32,7 +32,7 @@ the migration do not hesitate to `open a new issue`_, we will be happy to
 answer them.
 
 .. _asyncio: https://docs.python.org/3/library/asyncio.html
-.. _open_a_new_issue: https://github.com/eventlet/eventlet/issues/new
+.. _open a new issue: https://github.com/eventlet/eventlet/issues/new
 
 Eventlet Documentation
 ======================
@@ -83,6 +83,7 @@ Contents
 
    modules
 
+   process
    authors
    history
 
