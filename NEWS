@@ -1,6 +1,26 @@
 Unreleased
 ==========
 
+0.35.0
+======
+
+* [doc] Basic documentation for asyncio migration https://github.com/eventlet/eventlet/pull/892
+* [tests] add minimal linting https://github.com/eventlet/eventlet/pull/894
+* [doc] officially host docs on readthedocs https://github.com/eventlet/eventlet/pull/899
+* [fix] fix truncate size nullable https://github.com/eventlet/eventlet/pull/789
+* [fix] Handle transport endpoint shutdown in conditions https://github.com/eventlet/eventlet/pull/884
+* [fix] Rework reject_bad_requests option https://github.com/eventlet/eventlet/pull/890
+* [fix] Fix NameError introduced by #826 https://github.com/eventlet/eventlet/pull/890
+* [feature] Support awaiting GreenThread in an `async def` context https://github.com/eventlet/eventlet/pull/889
+* [infra] Extend test cert to 2049 https://github.com/eventlet/eventlet/pull/643
+* [feature] Asyncio hub support for Python 3.7 to 3.9 https://github.com/eventlet/eventlet/pull/886
+* [infra] Modernize doc generation https://github.com/eventlet/eventlet/pull/880
+* [fix] Fix bad exceptions handlings https://github.com/eventlet/eventlet/pull/883
+* [feature] Support using asyncio coroutines from inside greenlets https://github.com/eventlet/eventlet/pull/877
+* [removal] Remove deprecated CGIHTTPServer and SimpleHTTPServer https://github.com/eventlet/eventlet/pull/881
+* [governance] Update maintenance goals https://github.com/eventlet/eventlet/pull/850
+* [feature] Add an asyncio hub for eventlet https://github.com/eventlet/eventlet/pull/870
+
 0.34.3
 ======
 
