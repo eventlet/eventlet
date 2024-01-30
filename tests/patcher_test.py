@@ -527,3 +527,7 @@ def test_open_kwargs():
 
 def test_patcher_existing_locks():
     tests.run_isolated("patcher_existing_locks_preexisting.py")
+
+
+def test_patcher_existing_locks_exception():
+    tests.run_isolated("patcher_existing_locks_exception.py")
