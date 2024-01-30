@@ -465,10 +465,20 @@ def _upgrade_instances(container, klass, upgrade, visited=None, old_to_new=None)
     except TypeError:
         pass
     else:
-        for k, v in list(container_vars.items()):
-            new = upgrade_or_traverse(v)
-            if new is not None:
-                setattr(container, k, new)
+        # If we get here, we're operating on an object that could
+        # be doing strange things. If anything bad happens, error and
+        # warn the eventlet user to monkey_patch earlier.
+        try:
+            for k, v in list(container_vars.items()):
+                new = upgrade_or_traverse(v)
+                if new is not None:
+                    setattr(container, k, new)
+        except:
+            import logging
+            logger = logging.Logger("eventlet")
+            logger.exception("An exception was thrown while monkey_patching for eventlet. "
+                             "to fix this error make sure you run eventlet.monkey_patch() "
+                             "before importing any other modules.", exc_info=True)
 
 
 def _convert_py3_rlock(old, tid):

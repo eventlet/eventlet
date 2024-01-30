@@ -1,6 +1,11 @@
 Unreleased
 ==========
 
+0.35.1
+======
+
+* [fix] Do not allow failed patching to stop execution https://github.com/eventlet/eventlet/pull/907
+
 0.35.0
 ======
 
