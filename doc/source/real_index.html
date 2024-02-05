@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Eventlet Networking Library</title>
+    <link rel="stylesheet" href="doc/_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="doc/_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="https://yandex.st/highlightjs/7.3/styles/default.min.css">
+    <link rel="top" title="Eventlet Networking Library" href="" />
+  </head>
+  <body>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-42952223-1', 'eventlet.net');
+    ga('send', 'pageview');
+  </script>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+
+  <div class="section" id="eventlet">
+<h1>Eventlet</h1>
+
+<p>Eventlet is a concurrent networking library for Python that allows you to change how you run your code, not how you write it.</p>
+
+<ul>
+<li>It uses epoll or kqueue or libevent for <a class="reference external" target="_blank" href="http://en.wikipedia.org/wiki/Asynchronous_I/O#Select.28.2Fpoll.29_loops">highly scalable non-blocking I/O</a>.</li>
+<li><a class="reference external" target="_blank" href="http://en.wikipedia.org/wiki/Coroutine">Coroutines</a> ensure that the developer uses a blocking style of programming that is similar to threading, but provide the benefits of non-blocking I/O.</li>
+<li>The event dispatch is implicit, which means you can easily use Eventlet from the Python interpreter, or as a small part of a larger application.</li>
+</ul>
+
+<p>It's easy to get started using Eventlet, and easy to convert existing applications to use it. Start off by looking at <a href="doc/examples.html">examples</a>, <a href="doc/design_patterns.html">common design patterns</a>, and the list of the <a href="doc/basic_usage.html">basic API primitives</a>.</p>
+
+<p>License: <a class="reference external" target="_blank" href="https://opensource.org/licenses/MIT">MIT</a></p>
+
+<p>Currently supporting CPython 3.7+.</p>
+
+<h3><a href="doc/">API Documentation</a></h3>
+
+
+<h3>Installation</h3>
+
+<ul>
+    <li><p>To install latest PyPI release:
+        <code><pre>pip install eventlet</pre></code>
+        </p>
+        <p>Manually lock version in requirements, if your build/development process doesn't automate it:
+        <code><pre># requirements.txt
+eventlet==x.y</pre></code></p>
+    </li>
+
+    <li><p>Eventlet team is commited to have only stable code in master branch, so recommended way to install is from latest master commit:
+        <code><pre>pip install https://github.com/eventlet/eventlet/archive/master.zip</pre></code>
+        </p>
+        <p>Beware, http…zip link in requirements.txt will repeat download and installation even if you specify link to particular commit.</p>
+    </li>
+
+    <li><p>Earlier versions available at <a class="reference external" target="_blank" href="https://pypi.org/project/eventlet/">Eventlet on PyPI</a>
+        </p>
+    </li>
+</ul>
+
+
+<h3>Development</h3>
+
+<p>Development, issue tracking happens at <a class="reference" target="_blank" href="https://github.com/eventlet/eventlet/">Eventlet on Github</a></p>
+<p>We had <a class="reference external" target="_blank" href="https://bitbucket.org/eventlet/eventlet/">Mercurial repository on Bitbucket</a>, but it's not used anymore.</p>
+
+<h4>Pull request policy</h4>
+<ul>
+  <li>Test is required</li>
+  <li>One commit is strongly preferred, except for very big changes</li>
+  <li>Commit message should follow the following formula:
+<pre>
+subsystem: description of why the change is useful
+
+optional details
+
+links to related issues or websites
+</pre>
+    The <em>why</em> part is very important. Diff already says <em>what</em> you have done. But nobody knows why.
+  </li>
+  <li>Feel free to append yourself into AUTHORS file, sections Thanks To or Contributors.
+</ul>
+<p>If you don't like these rules, raw patches are more than welcome!</p>
+
+
+<h4>Bugs</h4>
+
+<p>Please be sure to report bugs <a class="reference external" target="_blank" href="http://www.chiark.greenend.org.uk/~sgtatham/bugs.html">as effectively as possible</a>, to ensure that we understand and act on them quickly.</p>
+
+<p>Usually <a class="reference external" target="_blank" href="https://github.com/eventlet/eventlet/issues/new">open issue at Github</a></p>
+
+<p>In special cases, to contact current maintainers directly, look up info on Github project page.</p>
+
+
+<div class="section" id="web-crawler-example">
+<h2>Web Crawler Example<a class="headerlink" href="#web-crawler-example" title="Permalink to this headline">¶</a></h2>
+<p>This is a simple web &#8220;crawler&#8221; that fetches a bunch of urls using a coroutine pool.  It has as much concurrency (i.e. pages being fetched simultaneously) as coroutines in the pool.</p>
+
+<pre><code class="language-python">import eventlet
+# note: this urllib import doesn't work in Python2
+from eventlet.green.urllib.request import urlopen
+
+
+urls = [
+    "http://www.google.com/intl/en_ALL/images/logo.gif",
+    "https://wiki.secondlife.com/w/images/secondlife.jpg",
+    "http://us.i1.yimg.com/us.yimg.com/i/ww/beta/y3.gif",
+]
+
+
+def fetch(url):
+    return urlopen(url).read()
+
+
+pool = eventlet.GreenPool()
+
+for body in pool.imap(fetch, urls):
+    print("got body", len(body))
+</code></pre>
+
+
+<h3>Flair</h3>
+<p>
+  <a class="reference external" target="_blank" href="https://pypi.org/project/eventlet/" rel="nofollow"><img alt="PyPI" src="https://img.shields.io/pypi/v/eventlet"></a>
+  <a class="reference external" target="_blank" href="https://travis-ci.org/eventlet/eventlet" rel="nofollow"><img alt="Travis build" src="https://travis-ci.org/eventlet/eventlet.svg?branch=master"></a>
+  <a class="reference external" target="_blank" href="https://codecov.io/gh/eventlet/eventlet" rel="nofollow"><img alt="Codecov coverage" src="https://codecov.io/gh/eventlet/eventlet/branch/master/graph/badge.svg?token=k01TsER6fy"></a>
+</p>
+</div>
+</div>
+</div>
+
+
+<div class="section" id="contents">
+</div>
+</div>
+</div>
+</div>
+<div class="sphinxsidebar">
+<div class="sphinxsidebarwrapper">
+<h3>Links</h3>
+<ul>
+<li><a class="reference external" href="doc/">Documentation</a></li>
+<li><a class="reference external" href="doc/changelog.html">Changelog</a></li>
+<li><a class="reference external" target="_blank" href="https://github.com/eventlet/eventlet/">Eventlet on Github</a></li>
+<li><a class="reference external" target="_blank" href="irc://chat.freenode.net/#eventlet">IRC channel</a></li>
+<li><a class="reference external" target="_blank" href="https://www.openhub.net/p/eventlet">Open Hub stats</a></li>
+</ul>
+        </div>
+      </div>
+    </div>
+    <script src="//yandex.st/highlightjs/7.3/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+  </body>
+</html>

@@ -2,7 +2,6 @@ import os
 import sys
 from eventlet import patcher, support
 from eventlet.hubs import hub
-import six
 select = patcher.original('select')
 time = patcher.original('time')
 
@@ -19,7 +18,7 @@ class Hub(hub.BaseHub):
             hub.READ: select.KQ_FILTER_READ,
             hub.WRITE: select.KQ_FILTER_WRITE,
         }
-        super(Hub, self).__init__(clock)
+        super().__init__(clock)
         self._events = {}
         self._init_kqueue()
 
@@ -30,14 +29,14 @@ class Hub(hub.BaseHub):
     def _reinit_kqueue(self):
         self.kqueue.close()
         self._init_kqueue()
-        events = [e for i in six.itervalues(self._events)
-                  for e in six.itervalues(i)]
+        events = [e for i in self._events.values()
+                  for e in i.values()]
         self.kqueue.control(events, 0, 0)
 
     def _control(self, events, max_events, timeout):
         try:
             return self.kqueue.control(events, max_events, timeout)
-        except (OSError, IOError):
+        except OSError:
             # have we forked?
             if os.getpid() != self._pid:
                 self._reinit_kqueue()
@@ -45,7 +44,7 @@ class Hub(hub.BaseHub):
             raise
 
     def add(self, evtype, fileno, cb, tb, mac):
-        listener = super(Hub, self).add(evtype, fileno, cb, tb, mac)
+        listener = super().add(evtype, fileno, cb, tb, mac)
         events = self._events.setdefault(fileno, {})
         if evtype not in events:
             try:
@@ -53,7 +52,7 @@ class Hub(hub.BaseHub):
                 self._control([event], 0, 0)
                 events[evtype] = event
             except ValueError:
-                super(Hub, self).remove(listener)
+                super().remove(listener)
                 raise
         return listener
 
@@ -65,7 +64,7 @@ class Hub(hub.BaseHub):
         self._control(del_events, 0, 0)
 
     def remove(self, listener):
-        super(Hub, self).remove(listener)
+        super().remove(listener)
         evtype = listener.evtype
         fileno = listener.fileno
         if not self.listeners[evtype].get(fileno):
@@ -78,7 +77,7 @@ class Hub(hub.BaseHub):
                 pass
 
     def remove_descriptor(self, fileno):
-        super(Hub, self).remove_descriptor(fileno)
+        super().remove_descriptor(fileno)
         try:
             events = self._events.pop(fileno).values()
             self._delete_events(events)
@@ -109,4 +108,3 @@ class Hub(hub.BaseHub):
                 raise
             except:
                 self.squelch_exception(fileno, sys.exc_info())
-                support.clear_sys_exc_info()

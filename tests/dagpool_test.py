@@ -5,12 +5,18 @@
 @brief  Test DAGPool class
 """
 
-from nose.tools import *
 import eventlet
 from eventlet.dagpool import DAGPool, Collision, PropagateError
-import six
 from contextlib import contextmanager
 import itertools
+
+
+def assert_equals(a, b):
+    """Backwards compatibility so we don't have to touch a bunch of tests."""
+    assert a == b
+
+
+assert_equal = assert_equals
 
 
 # Not all versions of nose.tools.assert_raises() support the usage in this
@@ -23,12 +29,12 @@ def assert_raises(exc):
     except exc:
         pass
     else:
-        raise AssertionError("failed to raise expected exception {0}"
+        raise AssertionError("failed to raise expected exception {}"
                              .format(exc.__class__.__name__))
 
 
 def assert_in(sought, container):
-    assert sought in container, "{0} not in {1}".format(sought, container)
+    assert sought in container, "{} not in {}".format(sought, container)
 
 
 # ****************************************************************************
@@ -87,7 +93,7 @@ def check_no_suspend():
     assert counter is not None, "Use 'with suspend_checker():' to enable check_no_suspend()"
     current = counter
     yield
-    assert counter == current, "Operation suspended {0} times".format(counter - current)
+    assert counter == current, "Operation suspended {} times".format(counter - current)
 
 
 def test_check_no_suspend():
@@ -110,7 +116,7 @@ def test_check_no_suspend():
 # ****************************************************************************
 #   Verify that the expected things happened in the expected order
 # ****************************************************************************
-class Capture(object):
+class Capture:
     """
     This class is intended to capture a sequence (of string messages) to
     verify that all expected events occurred, and in the expected order. The
@@ -145,19 +151,19 @@ class Capture(object):
         # purposes, turn them into the specific form we store: a list of sets.
         setlist = []
         for subseq in sequence:
-            if isinstance(subseq, six.string_types):
+            if isinstance(subseq, str):
                 # If this item is a plain string (which Python regards as an
                 # iterable of characters) rather than a list or tuple or set
                 # of strings, treat it as atomic. Make a set containing only
                 # that string.
-                setlist.append(set([subseq]))
+                setlist.append({subseq})
             else:
                 try:
                     iter(subseq)
                 except TypeError:
                     # subseq is a scalar of some other kind. Make a set
                     # containing only that item.
-                    setlist.append(set([subseq]))
+                    setlist.append({subseq})
                 else:
                     # subseq is, as we expect, an iterable -- possibly already
                     # a set. Make a set containing its elements.
@@ -171,9 +177,9 @@ class Capture(object):
 # ****************************************************************************
 def observe(key, results, capture, event):
     for k, v in results:
-        capture.add("{0} got {1}".format(key, k))
+        capture.add("{} got {}".format(key, k))
     result = event.wait()
-    capture.add("{0} returning {1}".format(key, result))
+    capture.add("{} returning {}".format(key, result))
     return result
 
 
@@ -191,14 +197,14 @@ def test_init():
         with check_no_suspend():
             results = pool.waitall()
         # with no spawn() or post(), waitall() returns preload data
-        assert_equals(results, dict(a=1, b=2, c=3))
+        assert_equal(results, dict(a=1, b=2, c=3))
 
         # preload sequence of pairs
         pool = DAGPool([("d", 4), ("e", 5), ("f", 6)])
         # this must not hang
         with check_no_suspend():
             results = pool.waitall()
-        assert_equals(results, dict(d=4, e=5, f=6))
+        assert_equal(results, dict(d=4, e=5, f=6))
 
 
 def test_wait_each_empty():
@@ -207,7 +213,7 @@ def test_wait_each_empty():
         with check_no_suspend():
             for k, v in pool.wait_each(()):
                 # shouldn't yield anything
-                raise AssertionError("empty wait_each() returned ({0}, {1})".format(k, v))
+                raise AssertionError("empty wait_each() returned ({}, {})".format(k, v))
 
 
 def test_wait_each_preload():
@@ -216,10 +222,10 @@ def test_wait_each_preload():
         with check_no_suspend():
             # wait_each() may deliver in arbitrary order; collect into a dict
             # for comparison
-            assert_equals(dict(pool.wait_each("abc")), dict(a=1, b=2, c=3))
+            assert_equal(dict(pool.wait_each("abc")), dict(a=1, b=2, c=3))
 
             # while we're at it, test wait() for preloaded keys
-            assert_equals(pool.wait("bc"), dict(b=2, c=3))
+            assert_equal(pool.wait("bc"), dict(b=2, c=3))
 
 
 def post_each(pool, capture):
@@ -241,7 +247,7 @@ def test_wait_each_posted():
     eventlet.spawn(post_each, pool, capture)
     # use a string as a convenient iterable of single-letter keys
     for k, v in pool.wait_each("bcdefg"):
-        capture.add("got ({0}, {1})".format(k, v))
+        capture.add("got ({}, {})".format(k, v))
 
     capture.validate([
         ["got (b, 2)", "got (c, 3)"],
@@ -257,10 +263,10 @@ def test_wait_posted():
     eventlet.spawn(post_each, pool, capture)
     gotten = pool.wait("bcdefg")
     capture.add("got all")
-    assert_equals(gotten,
-                  dict(b=2, c=3,
-                       d="dval", e="eval",
-                       f="fval", g="gval"))
+    assert_equal(gotten,
+                 dict(b=2, c=3,
+                      d="dval", e="eval",
+                      f="fval", g="gval"))
     capture.validate([
         [],
         [],
@@ -285,7 +291,7 @@ def test_spawn_collision_spawn():
     pool = DAGPool()
     pool.spawn("a", (), lambda key, results: "aval")
     # hasn't yet even started
-    assert_equals(pool.get("a"), None)
+    assert_equal(pool.get("a"), None)
     with assert_raises(Collision):
         # Attempting to spawn again with same key should collide even if the
         # first spawned greenthread hasn't yet had a chance to run.
@@ -293,7 +299,7 @@ def test_spawn_collision_spawn():
     # now let the spawned eventlet run
     eventlet.sleep(0)
     # should have finished
-    assert_equals(pool.get("a"), "aval")
+    assert_equal(pool.get("a"), "aval")
     with assert_raises(Collision):
         # Attempting to spawn with same key collides even when the greenthread
         # has completed.
@@ -324,61 +330,60 @@ def test_spawn_multiple():
     capture.step()
     # but none of them has yet produced a result
     for k in "defgh":
-        assert_equals(pool.get(k), None)
-    assert_equals(set(pool.keys()), set("abc"))
-    assert_equals(dict(pool.items()), dict(a=1, b=2, c=3))
-    assert_equals(pool.running(), 5)
-    assert_equals(set(pool.running_keys()), set("defgh"))
-    assert_equals(pool.waiting(), 1)
-    assert_equals(pool.waiting_for(), dict(h=set("defg")))
-    assert_equals(pool.waiting_for("d"), set())
-    assert_equals(pool.waiting_for("c"), set())
+        assert_equal(pool.get(k), None)
+    assert_equal(set(pool.keys()), set("abc"))
+    assert_equal(dict(pool.items()), dict(a=1, b=2, c=3))
+    assert_equal(pool.running(), 5)
+    assert_equal(set(pool.running_keys()), set("defgh"))
+    assert_equal(pool.waiting(), 1)
+    assert_equal(pool.waiting_for(), dict(h=set("defg")))
+    assert_equal(pool.waiting_for("d"), set())
+    assert_equal(pool.waiting_for("c"), set())
     with assert_raises(KeyError):
         pool.waiting_for("j")
-    assert_equals(pool.waiting_for("h"), set("defg"))
+    assert_equal(pool.waiting_for("h"), set("defg"))
 
     # let one of the upstream greenthreads complete
     events["f"].send("fval")
     spin()
     capture.step()
-    assert_equals(pool.get("f"), "fval")
-    assert_equals(set(pool.keys()), set("abcf"))
-    assert_equals(dict(pool.items()), dict(a=1, b=2, c=3, f="fval"))
-    assert_equals(pool.running(), 4)
-    assert_equals(set(pool.running_keys()), set("degh"))
-    assert_equals(pool.waiting(), 1)
-    assert_equals(pool.waiting_for("h"), set("deg"))
+    assert_equal(pool.get("f"), "fval")
+    assert_equal(set(pool.keys()), set("abcf"))
+    assert_equal(dict(pool.items()), dict(a=1, b=2, c=3, f="fval"))
+    assert_equal(pool.running(), 4)
+    assert_equal(set(pool.running_keys()), set("degh"))
+    assert_equal(pool.waiting(), 1)
+    assert_equal(pool.waiting_for("h"), set("deg"))
 
     # now two others
     events["e"].send("eval")
     events["g"].send("gval")
     spin()
     capture.step()
-    assert_equals(pool.get("e"), "eval")
-    assert_equals(pool.get("g"), "gval")
-    assert_equals(set(pool.keys()), set("abcefg"))
-    assert_equals(dict(pool.items()),
-                  dict(a=1, b=2, c=3, e="eval", f="fval", g="gval"))
-    assert_equals(pool.running(), 2)
-    assert_equals(set(pool.running_keys()), set("dh"))
-    assert_equals(pool.waiting(), 1)
-    assert_equals(pool.waiting_for("h"), set("d"))
+    assert_equal(pool.get("e"), "eval")
+    assert_equal(pool.get("g"), "gval")
+    assert_equal(set(pool.keys()), set("abcefg"))
+    assert_equal(dict(pool.items()),
+                 dict(a=1, b=2, c=3, e="eval", f="fval", g="gval"))
+    assert_equal(pool.running(), 2)
+    assert_equal(set(pool.running_keys()), set("dh"))
+    assert_equal(pool.waiting(), 1)
+    assert_equal(pool.waiting_for("h"), set("d"))
 
     # last one
     events["d"].send("dval")
     # make sure both pool greenthreads get a chance to run
     spin()
     capture.step()
-    assert_equals(pool.get("d"), "dval")
-    assert_equals(set(pool.keys()), set("abcdefgh"))
-    assert_equals(dict(pool.items()),
-                  dict(a=1, b=2, c=3,
-                       d="dval", e="eval", f="fval", g="gval", h="hval"))
-    assert_equals(pool.running(), 0)
-    assert_false(pool.running_keys())
-    assert_equals(pool.waiting(), 0)
-    assert_equals(pool.waiting_for("h"), set())
-
+    assert_equal(pool.get("d"), "dval")
+    assert_equal(set(pool.keys()), set("abcdefgh"))
+    assert_equal(dict(pool.items()),
+                 dict(a=1, b=2, c=3,
+                      d="dval", e="eval", f="fval", g="gval", h="hval"))
+    assert_equal(pool.running(), 0)
+    assert not pool.running_keys()
+    assert_equal(pool.waiting(), 0)
+    assert_equal(pool.waiting_for("h"), set())
     capture.validate([
         ["h got b", "h got c"],
         ["f returning fval", "h got f"],
@@ -394,7 +399,7 @@ def spawn_many_func(key, results, capture, pool):
         # with a capture.step() at each post(), too complicated to predict
         # which results will be delivered when
         pass
-    capture.add("{0} done".format(key))
+    capture.add("{} done".format(key))
     # use post(key) instead of waiting for implicit post() of return value
     pool.post(key, key)
     capture.step()
@@ -432,19 +437,19 @@ def test_spawn_many():
     spin()
     # verify that e completed (also that post(key) within greenthread
     # overrides implicit post of return value, which would be None)
-    assert_equals(pool.get("e"), "e")
+    assert_equal(pool.get("e"), "e")
 
     # With the dependency graph shown above, it is not guaranteed whether b or
     # c will complete first. Handle either case.
     sequence = capture.sequence[:]
-    sequence[1:3] = [set([sequence[1].pop(), sequence[2].pop()])]
-    assert_equals(sequence,
-                  [set(["a done"]),
-                   set(["b done", "c done"]),
-                   set(["d done"]),
-                   set(["e done"]),
-                   set(["waitall() done"]),
-                   ])
+    sequence[1:3] = [{sequence[1].pop(), sequence[2].pop()}]
+    assert_equal(sequence,
+                 [{"a done"},
+                  {"b done", "c done"},
+                  {"d done"},
+                  {"e done"},
+                  {"waitall() done"},
+                  ])
 
 
 # deliberately distinguish this from dagpool._MISSING
@@ -457,26 +462,26 @@ def test_wait_each_all():
     capture = Capture()
     pool = DAGPool([("a", "a")])
     # capture a different Event for each key
-    events = dict((key, eventlet.event.Event()) for key in six.iterkeys(deps))
+    events = {key: eventlet.event.Event() for key in deps.keys()}
     # can't use spawn_many() because we need a different event for each
-    for key, dep in six.iteritems(deps):
+    for key, dep in deps.items():
         pool.spawn(key, dep, observe, capture, events[key])
     keys = "abcde"                      # this specific order
     each = iter(pool.wait_each())
     for pos in range(len(keys)):
         # next value from wait_each()
         k, v = next(each)
-        assert_equals(k, keys[pos])
+        assert_equal(k, keys[pos])
         # advance every pool greenlet as far as it can go
         spin()
         # everything from keys[:pos+1] should have a value by now
         for k in keys[:pos + 1]:
             assert pool.get(k, _notthere) is not _notthere, \
-                "greenlet {0} did not yet produce a value".format(k)
+                "greenlet {} did not yet produce a value".format(k)
         # everything from keys[pos+1:] should not yet
         for k in keys[pos + 1:]:
             assert pool.get(k, _notthere) is _notthere, \
-                "wait_each() delayed value for {0}".format(keys[pos])
+                "wait_each() delayed value for {}".format(keys[pos])
         # let next greenthread complete
         if pos < len(keys) - 1:
             k = keys[pos + 1]
@@ -494,7 +499,7 @@ def test_kill():
     pool.kill("a")
     # didn't run
     spin()
-    assert_equals(pool.get("a"), None)
+    assert_equal(pool.get("a"), None)
     # killing it forgets about it
     with assert_raises(KeyError):
         pool.kill("a")
@@ -505,7 +510,7 @@ def test_kill():
     with assert_raises(KeyError):
         pool.kill("a")
     # verify it ran to completion
-    assert_equals(pool.get("a"), 2)
+    assert_equal(pool.get("a"), 2)
 
 
 def test_post_collision_preload():
@@ -533,7 +538,7 @@ def test_post_collision_spawn():
     pool.kill("a")
     # now we can post
     pool.post("a", 3)
-    assert_equals(pool.get("a"), 3)
+    assert_equal(pool.get("a"), 3)
 
     pool = DAGPool()
     pool.spawn("a", (), lambda key, result: 4)
@@ -553,15 +558,15 @@ def test_post_replace():
     pool = DAGPool()
     pool.post("a", 1)
     pool.post("a", 2, replace=True)
-    assert_equals(pool.get("a"), 2)
-    assert_equals(dict(pool.wait_each("a")), dict(a=2))
-    assert_equals(pool.wait("a"), dict(a=2))
-    assert_equals(pool["a"], 2)
+    assert_equal(pool.get("a"), 2)
+    assert_equal(dict(pool.wait_each("a")), dict(a=2))
+    assert_equal(pool.wait("a"), dict(a=2))
+    assert_equal(pool["a"], 2)
 
 
 def waitfor(capture, pool, key):
     value = pool[key]
-    capture.add("got {0}".format(value))
+    capture.add("got {}".format(value))
 
 
 def test_getitem():
@@ -598,10 +603,10 @@ def test_waitall_exc():
     try:
         pool.waitall()
     except PropagateError as err:
-        assert_equals(err.key, "a")
+        assert_equal(err.key, "a")
         assert isinstance(err.exc, BogusError), \
-            "exc attribute is {0}, not BogusError".format(err.exc)
-        assert_equals(str(err.exc), "bogus")
+            "exc attribute is {}, not BogusError".format(err.exc)
+        assert_equal(str(err.exc), "bogus")
         msg = str(err)
         assert_in("PropagateError(a)", msg)
         assert_in("BogusError", msg)
@@ -616,14 +621,14 @@ def test_propagate_exc():
     try:
         pool["c"]
     except PropagateError as errc:
-        assert_equals(errc.key, "c")
+        assert_equal(errc.key, "c")
         errb = errc.exc
-        assert_equals(errb.key, "b")
+        assert_equal(errb.key, "b")
         erra = errb.exc
-        assert_equals(erra.key, "a")
+        assert_equal(erra.key, "a")
         assert isinstance(erra.exc, BogusError), \
-            "exc attribute is {0}, not BogusError".format(erra.exc)
-        assert_equals(str(erra.exc), "bogus")
+            "exc attribute is {}, not BogusError".format(erra.exc)
+        assert_equal(str(erra.exc), "bogus")
         msg = str(errc)
         assert_in("PropagateError(a)", msg)
         assert_in("PropagateError(b)", msg)
@@ -681,13 +686,13 @@ def test_post_get_exc():
             pass
 
     # wait_each_success() filters
-    assert_equals(dict(pool.wait_each_success()), dict(a=bogua))
-    assert_equals(dict(pool.wait_each_success("ab")), dict(a=bogua))
-    assert_equals(dict(pool.wait_each_success("a")), dict(a=bogua))
-    assert_equals(dict(pool.wait_each_success("b")), {})
+    assert_equal(dict(pool.wait_each_success()), dict(a=bogua))
+    assert_equal(dict(pool.wait_each_success("ab")), dict(a=bogua))
+    assert_equal(dict(pool.wait_each_success("a")), dict(a=bogua))
+    assert_equal(dict(pool.wait_each_success("b")), {})
 
     # wait_each_exception() filters the other way
-    assert_equals(dict(pool.wait_each_exception()), dict(b=bogub))
-    assert_equals(dict(pool.wait_each_exception("ab")), dict(b=bogub))
-    assert_equals(dict(pool.wait_each_exception("a")), {})
-    assert_equals(dict(pool.wait_each_exception("b")), dict(b=bogub))
+    assert_equal(dict(pool.wait_each_exception()), dict(b=bogub))
+    assert_equal(dict(pool.wait_each_exception("ab")), dict(b=bogub))
+    assert_equal(dict(pool.wait_each_exception("a")), {})
+    assert_equal(dict(pool.wait_each_exception("b")), dict(b=bogub))

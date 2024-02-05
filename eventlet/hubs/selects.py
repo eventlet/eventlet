@@ -6,9 +6,9 @@ select = patcher.original('select')
 time = patcher.original('time')
 
 try:
-    BAD_SOCK = set((errno.EBADF, errno.WSAENOTSOCK))
+    BAD_SOCK = {errno.EBADF, errno.WSAENOTSOCK}
 except AttributeError:
-    BAD_SOCK = set((errno.EBADF,))
+    BAD_SOCK = {errno.EBADF}
 
 
 def is_available():
@@ -24,7 +24,7 @@ class Hub(hub.BaseHub):
         for fd in all_fds:
             try:
                 select.select([fd], [], [], 0)
-            except select.error as e:
+            except OSError as e:
                 if support.get_errno(e) in BAD_SOCK:
                     self.remove_descriptor(fd)
 
@@ -40,7 +40,7 @@ class Hub(hub.BaseHub):
         all_fds = reader_fds + writer_fds
         try:
             r, w, er = select.select(reader_fds, writer_fds, all_fds, seconds)
-        except select.error as e:
+        except OSError as e:
             if support.get_errno(e) == errno.EINTR:
                 return
             elif support.get_errno(e) in BAD_SOCK:
@@ -61,4 +61,3 @@ class Hub(hub.BaseHub):
                     raise
                 except:
                     self.squelch_exception(fileno, sys.exc_info())
-                    support.clear_sys_exc_info()

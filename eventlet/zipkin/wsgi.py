@@ -40,7 +40,7 @@ def _patched_handle_one_response(self):
         api.put_annotation(SERVER_SEND)
 
 
-class Sampler(object):
+class Sampler:
     def __init__(self, sampling_rate):
         self.sampling_rate = sampling_rate
 

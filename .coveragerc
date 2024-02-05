@@ -5,7 +5,6 @@ source = eventlet
 #concurrency = eventlet
 omit =
     eventlet/support/dns/*
-    eventlet/support/six.py
     tests/*
 
 [report]

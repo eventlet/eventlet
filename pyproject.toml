@@ -1,0 +1,87 @@
+[build-system]
+requires = [
+  "hatch-vcs>=0.3",
+  "hatchling>=1.12.2",
+]
+build-backend = "hatchling.build"
+
+[project]
+name = "eventlet"
+authors = [
+    {name = "Sergey Shepelev", email = "temotor@gmail.com"},
+    {name = "Jakub Stasiak", email = "jakub@stasiak.at"},
+    {name = "Tim Burke", email = "tim.burke@gmail.com"},
+    {name = "Nat Goodspeed", email = "nat@lindenlab.com"},
+    {name = "Itamar Turner-Trauring", email = "itamar@itamarst.org"},
+    {name = "Hervé Beraud", email = "hberaud@redhat.com"},
+]
+description = "Highly concurrent networking library"
+readme = "README.rst"
+requires-python = ">=3.7"
+license = {text = "MIT"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python",
+    "Topic :: Internet",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dynamic = ["version"]
+dependencies = [
+    'dnspython >= 1.15.0',
+    'greenlet >= 1.0',
+    'monotonic >= 1.4;python_version<"3.5"',
+]
+
+[project.urls]
+Homepage = "https://github.com/eventlet/eventlet"
+History = "https://github.com/eventlet/eventlet/blob/master/NEWS"
+Tracker = "https://github.com/eventlet/eventlet/issues"
+Source = "https://github.com/eventlet/eventlet"
+Documentation = "https://eventlet.readthedocs.io/"
+
+[project.optional-dependencies]
+dev = ["black", "isort", "pip-tools", "build", "twine", "pre-commit", "commitizen"]
+
+[options.packages.find]
+where = "evenetlet"
+exclude = ["tests*", "benchmarks", "examples"]
+
+[tool.hatch]
+version.source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "eventlet/_version.py"
+
+[tool.ruff]
+# Might eventually want to add evenetlet/green/, but it's a pain...
+exclude = ["eventlet/green/", "eventlet/zipkin/_thrift", "tests/mock.py", "doc/"]
+line-length = 123
+
+[tool.ruff.lint]
+# Too many to fix as first pass, but should perhaps go back and fix these:
+ignore = [
+    # Ambiguous variable name
+    "E741",
+    # Local variable assigned but unused
+    "F841",
+    # Imported but unused
+    "F401",
+    # Bare except:
+    "E722",
+    # Module-level import not at top of file
+    "E402",
+    # Using a lambda expression with a name instead of just def
+    "E731",
+]

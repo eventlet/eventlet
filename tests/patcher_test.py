@@ -3,7 +3,6 @@ import shutil
 import sys
 import tempfile
 
-import six
 import tests
 
 
@@ -33,12 +32,12 @@ class ProcessBase(tests.LimitedTestCase):
     TEST_TIMEOUT = 3  # starting processes is time-consuming
 
     def setUp(self):
-        super(ProcessBase, self).setUp()
+        super().setUp()
         self._saved_syspath = sys.path
         self.tempdir = tempfile.mkdtemp('_patcher_test')
 
     def tearDown(self):
-        super(ProcessBase, self).tearDown()
+        super().tearDown()
         sys.path = self._saved_syspath
         shutil.rmtree(self.tempdir)
 
@@ -52,11 +51,8 @@ class ProcessBase(tests.LimitedTestCase):
     def launch_subprocess(self, filename):
         path = os.path.join(self.tempdir, filename)
         output = tests.run_python(path)
-        if six.PY3:
-            output = output.decode('utf-8')
-            separator = '\n'
-        else:
-            separator = b'\n'
+        output = output.decode('utf-8')
+        separator = '\n'
         lines = output.split(separator)
         return output, lines
 
@@ -213,8 +209,7 @@ def test_monkey_patch_threading():
     tickcount = [0]
 
     def tick():
-        import six
-        for i in six.moves.range(1000):
+        for i in range(1000):
             tickcount[0] += 1
             eventlet.sleep()
 
@@ -233,7 +228,6 @@ def test_monkey_patch_threading():
 class Tpool(ProcessBase):
     TEST_TIMEOUT = 3
 
-    @tests.skip_with_pyevent
     def test_simple(self):
         new_mod = """
 import eventlet
@@ -251,7 +245,6 @@ tpool.killall()
         assert '2' in lines[0], repr(output)
         assert '3' in lines[1], repr(output)
 
-    @tests.skip_with_pyevent
     def test_unpatched_thread(self):
         new_mod = """import eventlet
 eventlet.monkey_patch(time=False, thread=False)
@@ -264,7 +257,6 @@ import time
         output, lines = self.launch_subprocess('newmod.py')
         self.assertEqual(len(lines), 2, lines)
 
-    @tests.skip_with_pyevent
     def test_patched_thread(self):
         new_mod = """import eventlet
 eventlet.monkey_patch(time=False, thread=True)
@@ -485,6 +477,10 @@ def test_patcher_existing_locks_unlocked():
     tests.run_isolated('patcher_existing_locks_unlocked.py')
 
 
+def test_patcher_existing_logging_module_lock():
+    tests.run_isolated('patcher_existing_logging_module_lock.py')
+
+
 def test_importlib_lock():
     tests.run_isolated('patcher_importlib_lock.py')
 
@@ -511,3 +507,27 @@ def test_regular_file_readall():
 
 def test_threading_current():
     tests.run_isolated('patcher_threading_current.py')
+
+
+def test_threadpoolexecutor():
+    tests.run_isolated('patcher_threadpoolexecutor.py')
+
+
+def test_fork_after_monkey_patch():
+    tests.run_isolated('patcher_fork_after_monkey_patch.py')
+
+
+def test_builtin():
+    tests.run_isolated('patcher_builtin.py')
+
+
+def test_open_kwargs():
+    tests.run_isolated("patcher_open_kwargs.py")
+
+
+def test_patcher_existing_locks():
+    tests.run_isolated("patcher_existing_locks_preexisting.py")
+
+
+def test_patcher_existing_locks_exception():
+    tests.run_isolated("patcher_existing_locks_exception.py")

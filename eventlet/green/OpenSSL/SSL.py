@@ -119,6 +119,7 @@ class GreenConnection(greenio.GreenSocket):
                            timeout=self.gettimeout(),
                            timeout_exc=socket.timeout)
 
+
 Connection = ConnectionType = GreenConnection
 
 del greenio

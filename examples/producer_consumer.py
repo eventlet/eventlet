@@ -9,7 +9,8 @@ GreenPool handles any exceptions raised and arranges so that there's a set
 number of "workers", so you don't have to write that tedious management code
 yourself.
 """
-from eventlet.green import urllib2
+from eventlet.green.urllib.request import urlopen
+from urllib.request import urlopen
 import eventlet
 import re
 
@@ -22,7 +23,7 @@ def fetch(url, outq):
     print("fetching", url)
     data = ''
     with eventlet.Timeout(5, False):
-        data = urllib2.urlopen(url).read()
+        data = urlopen(url).read().decode()
     for url_match in url_regex.finditer(data):
         new_url = url_match.group(0)
         outq.put(new_url)

@@ -1,13 +1,14 @@
 from collections import deque
 import sys
 
+from greenlet import GreenletExit
+
 from eventlet import event
 from eventlet import hubs
 from eventlet import support
 from eventlet import timeout
 from eventlet.hubs import timer
 from eventlet.support import greenlets as greenlet
-import six
 import warnings
 
 __all__ = ['getcurrent', 'sleep', 'spawn', 'spawn_n',
@@ -145,6 +146,7 @@ def exc_after(seconds, *throw_args):
     hub = hubs.get_hub()
     return hub.schedule_call_local(seconds, getcurrent().throw, *throw_args)
 
+
 # deprecate, remove
 TimeoutError, with_timeout = (
     support.wrap_deprecated(old, new)(fun) for old, new, fun in (
@@ -171,6 +173,47 @@ class GreenThread(greenlet.greenlet):
         self._exit_event = event.Event()
         self._resolving_links = False
         self._exit_funcs = None
+
+    def __await__(self):
+        """
+        Enable ``GreenThread``s to be ``await``ed in ``async`` functions.
+        """
+        from eventlet.hubs.asyncio import Hub
+        hub = hubs.get_hub()
+        if not isinstance(hub, Hub):
+            raise RuntimeError(
+                "This API only works with eventlet's asyncio hub. "
+                + "To use it, set an EVENTLET_HUB=asyncio environment variable."
+            )
+
+        future = hub.loop.create_future()
+
+        # When the Future finishes, check if it was due to cancellation:
+        def got_future_result(future):
+            if future.cancelled() and not self.dead:
+                # GreenThread is still running, so kill it:
+                self.kill()
+
+        future.add_done_callback(got_future_result)
+
+        # When the GreenThread finishes, set its result on the Future:
+        def got_gthread_result(gthread):
+            if future.done():
+                # Can't set values any more.
+                return
+
+            try:
+                # Should return immediately:
+                result = gthread.wait()
+                future.set_result(result)
+            except GreenletExit:
+                future.cancel()
+            except BaseException as e:
+                future.set_exception(e)
+
+        self.link(got_gthread_result)
+
+        return future.__await__()
 
     def wait(self):
         """ Returns the result of the main function of this GreenThread.  If the
@@ -283,7 +326,7 @@ def kill(g, *throw_args):
         # method never got called
         def just_raise(*a, **kw):
             if throw_args:
-                six.reraise(throw_args[0], throw_args[1], throw_args[2])
+                raise throw_args[1].with_traceback(throw_args[2])
             else:
                 raise greenlet.GreenletExit()
         g.run = just_raise

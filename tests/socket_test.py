@@ -12,7 +12,7 @@ import tests
 def test_create_connection_error():
     try:
         socket.create_connection(('192.0.2.1', 80), timeout=0.1)
-    except (IOError, OSError):
+    except OSError:
         pass
 
 
@@ -95,7 +95,15 @@ def test_error_is_timeout():
     s1.settimeout(0.01)
     try:
         s1.recv(1)
-    except socket.error as e:
+    except OSError as e:
         tests.check_is_timeout(e)
     else:
         assert False, 'No timeout, socket.error was not raised'
+
+
+def test_connect_ex_success():
+    # https://github.com/eventlet/eventlet/issues/696
+    server = eventlet.listen(("127.0.0.1", 0))
+    client = socket.socket()
+    result = client.connect_ex(server.getsockname())
+    assert result == 0

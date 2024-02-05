@@ -31,12 +31,13 @@ def parse_stdout(s):
         hub += '/%s' % reactor
     return testname, hub
 
+
 unittest_delim = '----------------------------------------------------------------------'
 
 
 def parse_unittest_output(s):
     s = s[s.rindex(unittest_delim) + len(unittest_delim):]
-    num = int(re.search('^Ran (\d+) test.*?$', s, re.M).group(1))
+    num = int(re.search(r'^Ran (\d+) test.*?$', s, re.M).group(1))
     ok = re.search('^OK$', s, re.M)
     error, fail, timeout = 0, 0, 0
     failed_match = re.search(
@@ -50,7 +51,7 @@ def parse_unittest_output(s):
         error = int(error or '0')
     else:
         assert ok_match, repr(s)
-    timeout_match = re.search('^===disabled because of timeout: (\d+)$', s, re.M)
+    timeout_match = re.search(r'^===disabled because of timeout: (\d+)$', s, re.M)
     if timeout_match:
         timeout = int(timeout_match.group(1))
     return num, error, fail, timeout
@@ -102,6 +103,7 @@ def main(db):
                       (id, testname, hub, runs, errors, fails, timeouts))
             c.commit()
 
+
 if __name__ == '__main__':
     if not sys.argv[1:]:
         latest_db = sorted(glob.glob('results.*.db'), key=lambda f: os.stat(f).st_mtime)[-1]
@@ -109,4 +111,4 @@ if __name__ == '__main__':
         sys.argv.append(latest_db)
     for db in sys.argv[1:]:
         main(db)
-    execfile('generate_report.py')
+    exec(open('generate_report.py').read())

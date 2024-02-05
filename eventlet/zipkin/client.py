@@ -11,11 +11,11 @@ from eventlet import GreenPile
 CATEGORY = 'zipkin'
 
 
-class ZipkinClient(object):
+class ZipkinClient:
 
     def __init__(self, host='127.0.0.1', port=9410):
         """
-        :param host: zipkin collector IP addoress (default '127.0.0.1')
+        :param host: zipkin collector IP address (default '127.0.0.1')
         :param port: zipkin collector port (default 9410)
         """
         self.host = host

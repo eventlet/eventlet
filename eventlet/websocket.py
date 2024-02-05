@@ -21,7 +21,6 @@ from eventlet import semaphore
 from eventlet import wsgi
 from eventlet.green import socket
 from eventlet.support import get_errno
-import six
 
 # Python 2's utf8 decoding is more lenient than we'd like
 # In order to pass autobahn's testsuite we need stricter validation
@@ -37,7 +36,8 @@ for _mod in ('wsaccel.utf8validator', 'autobahn.utf8validator'):
     else:
         break
 
-ACCEPTABLE_CLIENT_ERRORS = set((errno.ECONNRESET, errno.EPIPE))
+ACCEPTABLE_CLIENT_ERRORS = {errno.ECONNRESET, errno.EPIPE, errno.ESHUTDOWN}
+DEFAULT_MAX_FRAME_LENGTH = 8 << 20
 
 __all__ = ["WebSocketWSGI", "WebSocket"]
 PROTOCOL_GUID = b'258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
@@ -61,7 +61,7 @@ class BadRequest(Exception):
         self.headers = headers
 
 
-class WebSocketWSGI(object):
+class WebSocketWSGI:
     """Wraps a websocket handler function in a WSGI application.
 
     Use it like this::
@@ -75,14 +75,20 @@ class WebSocketWSGI(object):
     :class:`WebSocket`.  To close the socket, simply return from the
     function.  Note that the server will log the websocket request at
     the time of closure.
+
+    An optional argument max_frame_length can be given, which will set the
+    maximum incoming *uncompressed* payload length of a frame. By default, this
+    is set to 8MiB. Note that excessive values here might create a DOS attack
+    vector.
     """
 
-    def __init__(self, handler):
+    def __init__(self, handler, max_frame_length=DEFAULT_MAX_FRAME_LENGTH):
         self.handler = handler
         self.protocol_version = None
         self.support_legacy_versions = True
         self.supported_protocols = []
         self.origin_checker = None
+        self.max_frame_length = max_frame_length
 
     @classmethod
     def configured(cls,
@@ -132,14 +138,15 @@ class WebSocketWSGI(object):
 
         try:
             self.handler(ws)
-        except socket.error as e:
+        except OSError as e:
             if get_errno(e) not in ACCEPTABLE_CLIENT_ERRORS:
                 raise
         # Make sure we send the closing frame
         ws._send_closing_frame(True)
         # use this undocumented feature of eventlet.wsgi to ensure that it
         # doesn't barf on the fact that we didn't call start_response
-        return wsgi.ALREADY_HANDLED
+        wsgi.WSGI_LOCAL.already_handled = True
+        return []
 
     def _handle_legacy_request(self, environ):
         if 'eventlet.input' in environ:
@@ -184,18 +191,18 @@ class WebSocketWSGI(object):
                 b"HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
                 b"Upgrade: WebSocket\r\n"
                 b"Connection: Upgrade\r\n"
-                b"WebSocket-Origin: " + six.b(environ.get('HTTP_ORIGIN')) + b"\r\n"
-                b"WebSocket-Location: " + six.b(location) + b"\r\n\r\n"
+                b"WebSocket-Origin: " + environ.get('HTTP_ORIGIN').encode() + b"\r\n"
+                b"WebSocket-Location: " + location.encode() + b"\r\n\r\n"
             )
         elif self.protocol_version == 76:
             handshake_reply = (
                 b"HTTP/1.1 101 WebSocket Protocol Handshake\r\n"
                 b"Upgrade: WebSocket\r\n"
                 b"Connection: Upgrade\r\n"
-                b"Sec-WebSocket-Origin: " + six.b(environ.get('HTTP_ORIGIN')) + b"\r\n"
+                b"Sec-WebSocket-Origin: " + environ.get('HTTP_ORIGIN').encode() + b"\r\n"
                 b"Sec-WebSocket-Protocol: " +
-                six.b(environ.get('HTTP_SEC_WEBSOCKET_PROTOCOL', 'default')) + b"\r\n"
-                b"Sec-WebSocket-Location: " + six.b(location) + b"\r\n"
+                environ.get('HTTP_SEC_WEBSOCKET_PROTOCOL', 'default').encode() + b"\r\n"
+                b"Sec-WebSocket-Location: " + location.encode() + b"\r\n"
                 b"\r\n" + response
             )
         else:  # pragma NO COVER
@@ -262,14 +269,14 @@ class WebSocketWSGI(object):
             return None
         parts = []
         for name, config in parsed_extensions.items():
-            ext_parts = [six.b(name)]
+            ext_parts = [name.encode()]
             for key, value in config.items():
                 if value is False:
                     pass
                 elif value is True:
-                    ext_parts.append(six.b(key))
+                    ext_parts.append(key.encode())
                 else:
-                    ext_parts.append(six.b("%s=%s" % (key, str(value))))
+                    ext_parts.append(("%s=%s" % (key, str(value))).encode())
             parts.append(b"; ".join(ext_parts))
         return b", ".join(parts)
 
@@ -305,13 +312,13 @@ class WebSocketWSGI(object):
                     break
 
         key = environ['HTTP_SEC_WEBSOCKET_KEY']
-        response = base64.b64encode(sha1(six.b(key) + PROTOCOL_GUID).digest())
+        response = base64.b64encode(sha1(key.encode() + PROTOCOL_GUID).digest())
         handshake_reply = [b"HTTP/1.1 101 Switching Protocols",
                            b"Upgrade: websocket",
                            b"Connection: Upgrade",
                            b"Sec-WebSocket-Accept: " + response]
         if negotiated_protocol:
-            handshake_reply.append(b"Sec-WebSocket-Protocol: " + six.b(negotiated_protocol))
+            handshake_reply.append(b"Sec-WebSocket-Protocol: " + negotiated_protocol.encode())
 
         parsed_extensions = {}
         extensions = self._parse_extension_header(environ.get("HTTP_SEC_WEBSOCKET_EXTENSIONS"))
@@ -327,7 +334,8 @@ class WebSocketWSGI(object):
         sock.sendall(b'\r\n'.join(handshake_reply) + b'\r\n\r\n')
         return RFC6455WebSocket(sock, environ, self.protocol_version,
                                 protocol=negotiated_protocol,
-                                extensions=parsed_extensions)
+                                extensions=parsed_extensions,
+                                max_frame_length=self.max_frame_length)
 
     def _extract_number(self, value):
         """
@@ -344,7 +352,7 @@ class WebSocketWSGI(object):
         return int(out) // spaces
 
 
-class WebSocket(object):
+class WebSocket:
     """A websocket object that handles the details of
     serialization/deserialization to the socket.
 
@@ -394,10 +402,10 @@ class WebSocket(object):
 
         As per the dataframing section (5.3) for the websocket spec
         """
-        if isinstance(message, six.text_type):
+        if isinstance(message, str):
             message = message.encode('utf-8')
-        elif not isinstance(message, six.binary_type):
-            message = six.b(str(message))
+        elif not isinstance(message, bytes):
+            message = str(message).encode()
         packed = b"\x00" + message + b"\xFF"
         return packed
 
@@ -412,7 +420,7 @@ class WebSocket(object):
         end_idx = 0
         buf = self._buf
         while buf:
-            frame_type = six.indexbytes(buf, 0)
+            frame_type = buf[0]
             if frame_type == 0:
                 # Normal message.
                 end_idx = buf.find(b"\xFF")
@@ -422,7 +430,7 @@ class WebSocket(object):
                 buf = buf[end_idx + 1:]
             elif frame_type == 255:
                 # Closing handshake.
-                assert six.indexbytes(buf, 1) == 0, "Unexpected closing handshake: %r" % buf
+                assert buf[1] == 0, "Unexpected closing handshake: %r" % buf
                 self.websocket_closed = True
                 break
             else:
@@ -470,7 +478,7 @@ class WebSocket(object):
         if self.version == 76 and not self.websocket_closed:
             try:
                 self.socket.sendall(b"\xff\x00")
-            except SocketError:
+            except OSError:
                 # Sometimes, like when the remote side cuts off the connection,
                 # we don't care about this.
                 if not ignore_send_errors:  # pragma NO COVER
@@ -483,7 +491,7 @@ class WebSocket(object):
         try:
             self._send_closing_frame(True)
             self.socket.shutdown(True)
-        except SocketError as e:
+        except OSError as e:
             if e.errno != errno.ENOTCONN:
                 self.log.write('{ctx} socket shutdown error: {e}'.format(ctx=self.log_context, e=e))
         finally:
@@ -496,7 +504,7 @@ class ConnectionClosedError(Exception):
 
 class FailedConnectionError(Exception):
     def __init__(self, status, message):
-        super(FailedConnectionError, self).__init__(status, message)
+        super().__init__(status, message)
         self.message = message
         self.status = status
 
@@ -506,8 +514,9 @@ class ProtocolError(ValueError):
 
 
 class RFC6455WebSocket(WebSocket):
-    def __init__(self, sock, environ, version=13, protocol=None, client=False, extensions=None):
-        super(RFC6455WebSocket, self).__init__(sock, environ, version)
+    def __init__(self, sock, environ, version=13, protocol=None, client=False, extensions=None,
+                 max_frame_length=DEFAULT_MAX_FRAME_LENGTH):
+        super().__init__(sock, environ, version)
         self.iterator = self._iter_frames()
         self.client = client
         self.protocol = protocol
@@ -515,8 +524,10 @@ class RFC6455WebSocket(WebSocket):
 
         self._deflate_enc = None
         self._deflate_dec = None
+        self.max_frame_length = max_frame_length
+        self._remote_close_data = None
 
-    class UTF8Decoder(object):
+    class UTF8Decoder:
         def __init__(self):
             if utf8validator:
                 self.validator = utf8validator.Utf8Validator()
@@ -585,13 +596,14 @@ class RFC6455WebSocket(WebSocket):
             data = data + d
         return data
 
-    class Message(object):
-        def __init__(self, opcode, decoder=None, decompressor=None):
+    class Message:
+        def __init__(self, opcode, max_frame_length, decoder=None, decompressor=None):
             self.decoder = decoder
             self.data = []
             self.finished = False
             self.opcode = opcode
             self.decompressor = decompressor
+            self.max_frame_length = max_frame_length
 
         def push(self, data, final=False):
             self.finished = final
@@ -600,7 +612,12 @@ class RFC6455WebSocket(WebSocket):
         def getvalue(self):
             data = b"".join(self.data)
             if not self.opcode & 8 and self.decompressor:
-                data = self.decompressor.decompress(data + b'\x00\x00\xff\xff')
+                data = self.decompressor.decompress(data + b"\x00\x00\xff\xff", self.max_frame_length)
+                if self.decompressor.unconsumed_tail:
+                    raise FailedConnectionError(
+                        1009,
+                        "Incoming compressed frame exceeds length limit of {} bytes.".format(self.max_frame_length))
+
             if self.decoder:
                 data = self.decoder.decode(data, self.finished)
             return data
@@ -610,10 +627,11 @@ class RFC6455WebSocket(WebSocket):
         if length is None:
             length = len(data)
         cnt = range(length)
-        return b''.join(six.int2byte(six.indexbytes(data, i) ^ mask[(offset + i) % 4]) for i in cnt)
+        return b''.join(bytes((data[i] ^ mask[(offset + i) % 4],)) for i in cnt)
 
     def _handle_control_frame(self, opcode, data):
         if opcode == 8:  # connection close
+            self._remote_close_data = data
             if not data:
                 status = 1000
             elif len(data) > 1:
@@ -713,13 +731,17 @@ class RFC6455WebSocket(WebSocket):
             length = struct.unpack('!H', recv(2))[0]
         elif length == 127:
             length = struct.unpack('!Q', recv(8))[0]
+
+        if length > self.max_frame_length:
+            raise FailedConnectionError(1009, "Incoming frame of {} bytes is above length limit of {} bytes.".format(
+                length, self.max_frame_length))
         if masked:
             mask = struct.unpack('!BBBB', recv(4))
         received = 0
         if not message or opcode & 8:
             decoder = self.UTF8Decoder() if opcode == 1 else None
             decompressor = self._get_permessage_deflate_dec(rsv1)
-            message = self.Message(opcode, decoder=decoder, decompressor=decompressor)
+            message = self.Message(opcode, self.max_frame_length, decoder=decoder, decompressor=decompressor)
         if not length:
             message.push(b'', final=finished)
         else:
@@ -741,13 +763,23 @@ class RFC6455WebSocket(WebSocket):
     def _pack_message(self, message, masked=False,
                       continuation=False, final=True, control_code=None):
         is_text = False
-        if isinstance(message, six.text_type):
+        if isinstance(message, str):
             message = message.encode('utf-8')
             is_text = True
 
         compress_bit = 0
         compressor = self._get_permessage_deflate_enc()
-        if message and compressor:
+        # Control frames are identified by opcodes where the most significant
+        # bit of the opcode is 1.  Currently defined opcodes for control frames
+        # include 0x8 (Close), 0x9 (Ping), and 0xA (Pong).  Opcodes 0xB-0xF are
+        # reserved for further control frames yet to be defined.
+        # https://datatracker.ietf.org/doc/html/rfc6455#section-5.5
+        is_control_frame = (control_code or 0) & 8
+        # An endpoint MUST NOT set the "Per-Message Compressed" bit of control
+        # frames and non-first fragments of a data message.  An endpoint
+        # receiving such a frame MUST _Fail the WebSocket Connection_.
+        # https://datatracker.ietf.org/doc/html/rfc7692#section-6.1
+        if message and compressor and not is_control_frame:
             message = compressor.compress(message)
             message += compressor.flush(zlib.Z_SYNC_FLUSH)
             assert message[-4:] == b"\x00\x00\xff\xff"
@@ -780,7 +812,7 @@ class RFC6455WebSocket(WebSocket):
             # NOTE: RFC6455 states:
             # A server MUST NOT mask any frames that it sends to the client
             rand = Random(time.time())
-            mask = [rand.getrandbits(8) for _ in six.moves.xrange(4)]
+            mask = [rand.getrandbits(8) for _ in range(4)]
             message = RFC6455WebSocket._apply_mask(message, mask, length)
             maskdata = struct.pack('!BBBB', *mask)
         else:
@@ -808,14 +840,14 @@ class RFC6455WebSocket(WebSocket):
         if self.version in (8, 13) and not self.websocket_closed:
             if close_data is not None:
                 status, msg = close_data
-                if isinstance(msg, six.text_type):
+                if isinstance(msg, str):
                     msg = msg.encode('utf-8')
                 data = struct.pack('!H', status) + msg
             else:
                 data = ''
             try:
                 self.send(data, control_code=8)
-            except SocketError:
+            except OSError:
                 # Sometimes, like when the remote side cuts off the connection,
                 # we don't care about this.
                 if not ignore_send_errors:  # pragma NO COVER
@@ -828,7 +860,7 @@ class RFC6455WebSocket(WebSocket):
         try:
             self._send_closing_frame(close_data=close_data, ignore_send_errors=True)
             self.socket.shutdown(socket.SHUT_WR)
-        except SocketError as e:
+        except OSError as e:
             if e.errno != errno.ENOTCONN:
                 self.log.write('{ctx} socket shutdown error: {e}'.format(ctx=self.log_context, e=e))
         finally:

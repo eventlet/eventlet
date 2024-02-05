@@ -16,12 +16,15 @@ __orig_connections = __import__('MySQLdb.connections').connections
 def Connection(*args, **kw):
     conn = tpool.execute(__orig_connections.Connection, *args, **kw)
     return tpool.Proxy(conn, autowrap_names=('cursor',))
+
+
 connect = Connect = Connection
 
 
 # replicate the MySQLdb.connections module but with a tpooled Connection factory
-class MySQLdbConnectionsModule(object):
+class MySQLdbConnectionsModule:
     pass
+
 
 connections = MySQLdbConnectionsModule()
 for var in dir(__orig_connections):

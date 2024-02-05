@@ -1,11 +1,7 @@
-from __future__ import print_function
-
 from code import InteractiveConsole
 import errno
 import socket
 import sys
-import errno
-import traceback
 
 import eventlet
 from eventlet import hubs
@@ -21,7 +17,7 @@ except AttributeError:
     sys.ps2 = '... '
 
 
-class FileProxy(object):
+class FileProxy:
     def __init__(self, f):
         self.f = f
 
@@ -32,8 +28,12 @@ class FileProxy(object):
         pass
 
     def write(self, data, *a, **kw):
-        self.f.write(data, *a, **kw)
-        self.f.flush()
+        try:
+            self.f.write(data, *a, **kw)
+            self.f.flush()
+        except OSError as e:
+            if get_errno(e) != errno.EPIPE:
+                raise
 
     def readline(self, *a):
         return self.f.readline(*a).replace('\r\n', '\n')
@@ -99,14 +99,18 @@ def backdoor_server(sock, locals=None):
 
     print("backdoor server listening on %s" % (listening_on,))
     try:
-        try:
-            while True:
+        while True:
+            socketpair = None
+            try:
                 socketpair = sock.accept()
                 backdoor(socketpair, locals)
-        except socket.error as e:
-            # Broken pipe means it was shutdown
-            if get_errno(e) != errno.EPIPE:
-                raise
+            except OSError as e:
+                # Broken pipe means it was shutdown
+                if get_errno(e) != errno.EPIPE:
+                    raise
+            finally:
+                if socketpair:
+                    socketpair[0].close()
     finally:
         sock.close()
 

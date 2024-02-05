@@ -4,13 +4,9 @@ If either operation blocked the whole script would block and timeout.
 """
 import eventlet
 from eventlet.green import BaseHTTPServer
-import six
 
-if six.PY2:
-    from eventlet.green.urllib2 import HTTPError, urlopen
-else:
-    from eventlet.green.urllib.request import urlopen
-    from eventlet.green.urllib.error import HTTPError
+from eventlet.green.urllib.request import urlopen
+from eventlet.green.urllib.error import HTTPError
 
 
 class QuietHandler(BaseHTTPServer.BaseHTTPRequestHandler):
@@ -41,7 +37,7 @@ def test_urllib():
     try:
         assert server.request_count == 0
         try:
-            urlopen('http://127.0.0.1:{0}'.format(port))
+            urlopen('http://127.0.0.1:{}'.format(port))
             assert False, 'should not get there'
         except HTTPError as ex:
             assert ex.code == 501, repr(ex)

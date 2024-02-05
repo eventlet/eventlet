@@ -5,8 +5,8 @@ import eventlet
 from eventlet import corolocal
 from eventlet import event
 from eventlet import greenthread
+from eventlet import patcher
 from eventlet.green import thread
-import six
 
 from tests import LimitedTestCase
 
@@ -18,11 +18,11 @@ class Locals(LimitedTestCase):
 
     def setUp(self):
         self.results = []
-        super(Locals, self).setUp()
+        super().setUp()
 
     def tearDown(self):
         self.results = []
-        super(Locals, self).tearDown()
+        super().tearDown()
 
     def test_assignment(self):
         my_local = corolocal.local()
@@ -81,7 +81,7 @@ class Locals(LimitedTestCase):
         refs = weakref.WeakKeyDictionary()
         my_local = corolocal.local()
 
-        class X(object):
+        class X:
             pass
 
         def do_something(i):
@@ -90,7 +90,7 @@ class Locals(LimitedTestCase):
             my_local.foo = o
 
         p = eventlet.GreenPool()
-        for i in six.moves.range(100):
+        for i in range(100):
             p.spawn(do_something, i)
         p.waitall()
         del p
@@ -99,3 +99,26 @@ class Locals(LimitedTestCase):
         gc.collect()
         # at this point all our coros have terminated
         self.assertEqual(len(refs), 1)
+
+
+def test_compat_lock_release():
+    # https://github.com/eventlet/eventlet/issues/697
+    for mod in (patcher.original("threading"), thread):
+        try:
+            mod.Lock().release()
+        except RuntimeError as e:
+            # python3
+            assert "release unlocked lock" in str(e).lower(), str((mod, e))
+        except thread.error as e:
+            # python2.7
+            assert "release unlocked lock" in str(e).lower(), str((mod, e))
+
+
+def test_reinit():
+    # py39+ expects locks to have a _at_fork_reinit() method
+    # https://github.com/eventlet/eventlet/pull/721#pullrequestreview-769377850
+    lk = thread.Lock()
+    lk.acquire()
+    lk._at_fork_reinit()
+    assert lk.acquire(blocking=False)
+    assert not lk.acquire(blocking=False)

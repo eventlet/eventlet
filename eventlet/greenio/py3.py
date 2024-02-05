@@ -20,7 +20,6 @@ from eventlet.greenio.base import (
 )
 from eventlet.hubs import notify_close, notify_opened, IOClosed, trampoline
 from eventlet.support import get_errno
-import six
 
 __all__ = ['_fileobject', 'GreenPipe']
 
@@ -37,7 +36,7 @@ class GreenFileIO(_OriginalIOBase):
             fileno = name
             self._name = "<fd:%d>" % fileno
         else:
-            assert isinstance(name, six.string_types)
+            assert isinstance(name, str)
             with open(name, mode) as fd:
                 self._name = fd.name
                 fileno = _original_os.dup(fd.fileno())
@@ -57,7 +56,7 @@ class GreenFileIO(_OriginalIOBase):
         if self._seekable is None:
             try:
                 _original_os.lseek(self._fileno, 0, _original_os.SEEK_CUR)
-            except IOError as e:
+            except OSError as e:
                 if get_errno(e) == errno.ESPIPE:
                     self._seekable = False
                 else:
@@ -71,7 +70,7 @@ class GreenFileIO(_OriginalIOBase):
         return 'r' in self._mode or '+' in self._mode
 
     def writable(self):
-        return 'w' in self._mode or '+' in self._mode
+        return 'w' in self._mode or '+' in self._mode or 'a' in self._mode
 
     def fileno(self):
         return self._fileno
@@ -85,7 +84,7 @@ class GreenFileIO(_OriginalIOBase):
                 return _original_os.read(self._fileno, size)
             except OSError as e:
                 if get_errno(e) not in SOCKET_BLOCKING:
-                    raise IOError(*e.args)
+                    raise OSError(*e.args)
                 self._trampoline(self, read=True)
 
     def readall(self):
@@ -98,7 +97,7 @@ class GreenFileIO(_OriginalIOBase):
                 buf.append(chunk)
             except OSError as e:
                 if get_errno(e) not in SOCKET_BLOCKING:
-                    raise IOError(*e.args)
+                    raise OSError(*e.args)
                 self._trampoline(self, read=True)
 
     def readinto(self, b):
@@ -112,7 +111,7 @@ class GreenFileIO(_OriginalIOBase):
         try:
             return _original_os.isatty(self.fileno())
         except OSError as e:
-            raise IOError(*e.args)
+            raise OSError(*e.args)
 
     def _trampoline(self, fd, read=False, write=False, timeout=None, timeout_exc=None):
         if self._closed:
@@ -141,7 +140,7 @@ class GreenFileIO(_OriginalIOBase):
                 written = _original_os.write(self._fileno, view[offset:])
             except OSError as e:
                 if get_errno(e) not in SOCKET_BLOCKING:
-                    raise IOError(*e.args)
+                    raise OSError(*e.args)
                 trampoline(self, write=True)
             else:
                 offset += written
@@ -159,12 +158,14 @@ class GreenFileIO(_OriginalIOBase):
             setattr(self, method, _operation_on_closed_file)
 
     def truncate(self, size=-1):
+        if size is None:
+            size = -1
         if size == -1:
             size = self.tell()
         try:
             rv = _original_os.ftruncate(self._fileno, size)
         except OSError as e:
-            raise IOError(*e.args)
+            raise OSError(*e.args)
         else:
             self.seek(size)  # move position&clear buffer
             return rv
@@ -173,7 +174,7 @@ class GreenFileIO(_OriginalIOBase):
         try:
             return _original_os.lseek(self._fileno, offset, whence)
         except OSError as e:
-            raise IOError(*e.args)
+            raise OSError(*e.args)
 
     def __enter__(self):
         return self
@@ -191,9 +192,12 @@ _open_environment.update(dict(
     FileIO=GreenFileIO,
     os=_original_os,
 ))
+if hasattr(_original_pyio, 'text_encoding'):
+    _open_environment['text_encoding'] = _original_pyio.text_encoding
 
+_pyio_open = getattr(_original_pyio.open, '__wrapped__', _original_pyio.open)
 _open = FunctionType(
-    six.get_function_code(_original_pyio.open),
+    _pyio_open.__code__,
     _open_environment,
 )
 
@@ -210,5 +214,6 @@ def GreenPipe(name, mode="r", buffering=-1, encoding=None, errors=None,
         name = fileno
 
     return _open(name, mode, buffering, encoding, errors, newline, closefd, opener)
+
 
 GreenPipe.__doc__ = greenpipe_doc

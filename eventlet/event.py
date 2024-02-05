@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 from eventlet import hubs
 from eventlet.support import greenlets as greenlet
 
@@ -10,10 +8,11 @@ class NOT_USED:
     def __repr__(self):
         return 'NOT_USED'
 
+
 NOT_USED = NOT_USED()
 
 
-class Event(object):
+class Event:
     """An abstraction where an arbitrary number of coroutines
     can wait for one event from another.
 
@@ -152,9 +151,8 @@ class Event(object):
 
         It is an error to call :meth:`send` multiple times on the same event.
 
-        >>> evt.send('whoops')
+        >>> evt.send('whoops') # doctest: +IGNORE_EXCEPTION_DETAIL
         Traceback (most recent call last):
-        ...
         AssertionError: Trying to re-send() an already-triggered event.
 
         Use :meth:`reset` between :meth:`send` s to reuse an event object.

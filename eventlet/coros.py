@@ -1,9 +1,7 @@
-from __future__ import print_function
-
 from eventlet import event as _event
 
 
-class metaphore(object):
+class metaphore:
     """This is sort of an inverse semaphore: a counter that starts at 0 and
     waits only if nonzero. It's used to implement a "wait for all" scenario.
 

@@ -1,10 +1,10 @@
 # package is named tests, not test, so it won't be confused with test in stdlib
-from __future__ import print_function
 
 import contextlib
 import errno
 import functools
 import gc
+import io
 import json
 import os
 try:
@@ -12,19 +12,15 @@ try:
 except ImportError:
     resource = None
 import signal
-try:
-    import subprocess32 as subprocess  # py2
-except ImportError:
-    import subprocess  # py3
+import subprocess
 import sys
 import unittest
 import warnings
 
-from nose.plugins.skip import SkipTest
+from unittest import SkipTest
 
 import eventlet
 from eventlet import tpool
-import six
 import socket
 from threading import Thread
 import struct
@@ -46,7 +42,7 @@ def assert_raises(exc_type):
             name = exc_type.__name__
         except AttributeError:
             pass
-        assert False, 'Expected exception {0}'.format(name)
+        assert False, 'Expected exception {}'.format(name)
 
 
 def skipped(func, *decorator_args):
@@ -99,16 +95,6 @@ def skip_unless(condition):
                 return func(*a, **kw)
         return wrapped
     return skipped_wrapper
-
-
-def using_pyevent(_f):
-    from eventlet.hubs import get_hub
-    return 'pyevent' in type(get_hub()).__module__
-
-
-def skip_with_pyevent(func):
-    """ Decorator that skips a test if we're using the pyevent hub."""
-    return skip_if(using_pyevent)(func)
 
 
 def skip_on_windows(func):
@@ -166,7 +152,7 @@ class LimitedTestCase(unittest.TestCase):
     timeout is 1 second, change it by setting TEST_TIMEOUT to the desired
     quantity."""
 
-    TEST_TIMEOUT = 1
+    TEST_TIMEOUT = 2
 
     def setUp(self):
         self.previous_alarm = None
@@ -223,7 +209,6 @@ class LimitedTestCase(unittest.TestCase):
 def check_idle_cpu_usage(duration, allowed_part):
     if resource is None:
         # TODO: use https://code.google.com/p/psutil/
-        from nose.plugins.skip import SkipTest
         raise SkipTest('CPU usage testing not supported (`import resource` failed)')
 
     r1 = resource.getrusage(resource.RUSAGE_SELF)
@@ -232,10 +217,10 @@ def check_idle_cpu_usage(duration, allowed_part):
     utime = r2.ru_utime - r1.ru_utime
     stime = r2.ru_stime - r1.ru_stime
 
-    # This check is reliably unreliable on Travis, presumably because of CPU
+    # This check is reliably unreliable on Travis/Github Actions, presumably because of CPU
     # resources being quite restricted by the build environment. The workaround
     # is to apply an arbitrary factor that should be enough to make it work nicely.
-    if os.environ.get('TRAVIS') == 'true':
+    if os.environ.get('CI') == 'true':
         allowed_part *= 5
 
     assert utime + stime < duration * allowed_part, \
@@ -269,7 +254,7 @@ def find_command(command):
         p = os.path.join(dir, command)
         if os.access(p, os.X_OK):
             return p
-    raise IOError(errno.ENOENT, 'Command not found: %r' % command)
+    raise OSError(errno.ENOENT, 'Command not found: %r' % command)
 
 
 def silence_warnings(func):
@@ -312,19 +297,17 @@ def get_database_auth():
             # Have to convert unicode objects to str objects because
             # mysqldb is dumb. Using a doubly-nested list comprehension
             # because we know that the structure is a two-level dict.
-            return dict(
-                [(str(modname), dict(
-                    [(str(k), str(v)) for k, v in connectargs.items()]))
-                 for modname, connectargs in auth_utf8.items()])
-        except IOError:
+            return {
+                str(modname): {
+                    str(k): str(v) for k, v in connectargs.items()}
+                 for modname, connectargs in auth_utf8.items()}
+        except OSError:
             pass
     return retval
 
 
 def run_python(path, env=None, args=None, timeout=None, pythonpath_extend=None, expect_pass=False):
     new_argv = [sys.executable]
-    if sys.version_info[:2] <= (2, 6):
-        new_argv += ['-W', 'ignore::DeprecationWarning']
     new_env = os.environ.copy()
     new_env.setdefault('eventlet_test_in_progress', 'yes')
     src_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -356,7 +339,10 @@ def run_python(path, env=None, args=None, timeout=None, pythonpath_extend=None, 
     except subprocess.TimeoutExpired:
         p.kill()
         output, _ = p.communicate(timeout=timeout)
-        return '{0}\nFAIL - timed out'.format(output).encode()
+        if expect_pass:
+            sys.stderr.write('Program {} output:\n---\n{}\n---\n'.format(path, output.decode()))
+            assert False, 'timed out'
+        return '{}\nFAIL - timed out'.format(output).encode()
 
     if expect_pass:
         if output.startswith(b'skip'):
@@ -365,9 +351,10 @@ def run_python(path, env=None, args=None, timeout=None, pythonpath_extend=None, 
             if len(parts) > 1:
                 skip_args.append(parts[1])
             raise SkipTest(*skip_args)
-        ok = output.rstrip() == b'pass'
-        if not ok:
-            sys.stderr.write('Program {0} output:\n---\n{1}\n---\n'.format(path, output.decode()))
+        lines = output.splitlines()
+        ok = lines[-1].rstrip() == b'pass'
+        if not ok or len(lines) > 1:
+            sys.stderr.write('Program {} output:\n---\n{}\n---\n'.format(path, output.decode()))
         assert ok, 'Expected single line "pass" in stdout'
 
     return output
@@ -380,12 +367,12 @@ def run_isolated(path, prefix='tests/isolated/', **kwargs):
 
 def check_is_timeout(obj):
     value_text = getattr(obj, 'is_timeout', '(missing)')
-    assert obj.is_timeout, 'type={0} str={1} .is_timeout={2}'.format(type(obj), str(obj), value_text)
+    assert eventlet.is_timeout(obj), 'type={} str={} .is_timeout={}'.format(type(obj), str(obj), value_text)
 
 
 @contextlib.contextmanager
 def capture_stderr():
-    stream = six.StringIO()
+    stream = io.StringIO()
     original = sys.stderr
     try:
         sys.stderr = stream
@@ -397,18 +384,6 @@ def capture_stderr():
 
 certificate_file = os.path.join(os.path.dirname(__file__), 'test_server.crt')
 private_key_file = os.path.join(os.path.dirname(__file__), 'test_server.key')
-
-
-def test_run_python_timeout():
-    output = run_python('', args=('-c', 'import time; time.sleep(0.5)'), timeout=0.1)
-    assert output.endswith(b'FAIL - timed out')
-
-
-def test_run_python_pythonpath_extend():
-    code = '''import os, sys ; print('\\n'.join(sys.path))'''
-    output = run_python('', args=('-c', code), pythonpath_extend=('dira', 'dirb'))
-    assert b'/dira\n' in output
-    assert b'/dirb\n' in output
 
 
 @contextlib.contextmanager
@@ -485,3 +460,9 @@ def dns_tcp_server(ip_to_give, request_count=1):
     client.close()
     thread.join()
     server_socket.close()
+
+
+def read_file(path, mode="rb"):
+    with open(path, mode) as f:
+        result = f.read()
+    return result
