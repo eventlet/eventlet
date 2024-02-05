@@ -43,7 +43,6 @@ from eventlet.green import os
 from eventlet.green import time
 from eventlet.green import select
 from eventlet.green import ssl
-import six
 
 
 def import_patched(module_name):
@@ -85,6 +84,7 @@ socket = _socket_nodns
 DNS_QUERY_TIMEOUT = 10.0
 HOSTS_TTL = 10.0
 
+# NOTE(victor): do not use EAI_*_ERROR instances for raising errors in python3, which will cause a memory leak.
 EAI_EAGAIN_ERROR = socket.gaierror(socket.EAI_AGAIN, 'Lookup timed out')
 EAI_NONAME_ERROR = socket.gaierror(socket.EAI_NONAME, 'Name or service not known')
 # EAI_NODATA was removed from RFC3493, it's now replaced with EAI_NONAME
@@ -96,9 +96,13 @@ if (os.environ.get('EVENTLET_DEPRECATED_EAI_NODATA', '').lower() in ('1', 'y', '
     EAI_NODATA_ERROR = socket.gaierror(socket.EAI_NODATA, 'No address associated with hostname')
 
 
+def _raise_new_error(error_instance):
+    raise error_instance.__class__(*error_instance.args)
+
+
 def is_ipv4_addr(host):
     """Return True if host is a valid IPv4 address"""
-    if not isinstance(host, six.string_types):
+    if not isinstance(host, str):
         return False
     try:
         dns.ipv4.inet_aton(host)
@@ -110,7 +114,7 @@ def is_ipv4_addr(host):
 
 def is_ipv6_addr(host):
     """Return True if host is a valid IPv6 address"""
-    if not isinstance(host, six.string_types):
+    if not isinstance(host, str):
         return False
     host = host.split('%', 1)[0]
     try:
@@ -161,7 +165,7 @@ class HostsAnswer(dns.resolver.Answer):
                            rrset.ttl if hasattr(rrset, 'ttl') else 0)
 
 
-class HostsResolver(object):
+class HostsResolver:
     """Class to parse the hosts file
 
     Attributes
@@ -206,12 +210,12 @@ class HostsResolver(object):
         try:
             with open(self.fname, 'rb') as fp:
                 fdata = fp.read()
-        except (IOError, OSError):
+        except OSError:
             return []
 
         udata = fdata.decode(errors='ignore')
 
-        return six.moves.filter(None, self.LINES_RE.findall(udata))
+        return filter(None, self.LINES_RE.findall(udata))
 
     def _load(self):
         """Load hosts file
@@ -262,10 +266,10 @@ class HostsResolver(object):
         if self._last_load + self.interval < now:
             self._load()
         rdclass = dns.rdataclass.IN
-        if isinstance(qname, six.string_types):
+        if isinstance(qname, str):
             name = qname
             qname = dns.name.from_text(qname)
-        elif isinstance(qname, six.binary_type):
+        elif isinstance(qname, bytes):
             name = qname.decode("ascii")
             qname = dns.name.from_text(qname)
         else:
@@ -305,14 +309,14 @@ class HostsResolver(object):
         else:
             cannon = hostname
         aliases.append(cannon)
-        for alias, cname in six.iteritems(self._aliases):
+        for alias, cname in self._aliases.items():
             if cannon == cname:
                 aliases.append(alias)
         aliases.remove(hostname)
         return aliases
 
 
-class ResolverProxy(object):
+class ResolverProxy:
     """Resolver class which can also use /etc/hosts
 
     Initialise with a HostsResolver instance in order for it to also
@@ -367,7 +371,7 @@ class ResolverProxy(object):
 
         if qname is None:
             qname = '0.0.0.0'
-        if isinstance(qname, six.string_types) or isinstance(qname, six.binary_type):
+        if isinstance(qname, str) or isinstance(qname, bytes):
             qname = dns.name.from_text(qname, None)
 
         def step(fun, *args, **kwargs):
@@ -464,9 +468,9 @@ def resolve(name, family=socket.AF_INET, raises=True, _proxy=None,
                                    rdtype, dns.rdataclass.IN, None, False)
             raise
     except dns.exception.Timeout:
-        raise EAI_EAGAIN_ERROR
+        _raise_new_error(EAI_EAGAIN_ERROR)
     except dns.exception.DNSException:
-        raise EAI_NODATA_ERROR
+        _raise_new_error(EAI_NODATA_ERROR)
 
 
 def resolve_cname(host):
@@ -476,9 +480,9 @@ def resolve_cname(host):
     except dns.resolver.NoAnswer:
         return host
     except dns.exception.Timeout:
-        raise EAI_EAGAIN_ERROR
+        _raise_new_error(EAI_EAGAIN_ERROR)
     except dns.exception.DNSException:
-        raise EAI_NODATA_ERROR
+        _raise_new_error(EAI_NODATA_ERROR)
     else:
         return str(ans[0].target)
 
@@ -493,9 +497,9 @@ def getaliases(host):
     try:
         return resolver.getaliases(host)
     except dns.exception.Timeout:
-        raise EAI_EAGAIN_ERROR
+        _raise_new_error(EAI_EAGAIN_ERROR)
     except dns.exception.DNSException:
-        raise EAI_NODATA_ERROR
+        _raise_new_error(EAI_NODATA_ERROR)
 
 
 def _getaddrinfo_lookup(host, family, flags):
@@ -504,7 +508,7 @@ def _getaddrinfo_lookup(host, family, flags):
     Helper function for getaddrinfo.
     """
     if flags & socket.AI_NUMERICHOST:
-        raise EAI_NONAME_ERROR
+        _raise_new_error(EAI_NONAME_ERROR)
     addrs = []
     if family == socket.AF_UNSPEC:
         err = None
@@ -538,7 +542,7 @@ def _getaddrinfo_lookup(host, family, flags):
     return str(answer.qname), addrs
 
 
-def getaddrinfo(host, port, family=0, socktype=0, proto=0, flags=0):
+def getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
     """Replacement for Python's socket.getaddrinfo
 
     This does the A and AAAA lookups asynchronously after which it
@@ -546,9 +550,9 @@ def getaddrinfo(host, port, family=0, socktype=0, proto=0, flags=0):
     flag ensures getaddrinfo(3) does not use the network itself and
     allows us to respect all the other arguments like the native OS.
     """
-    if isinstance(host, six.string_types):
+    if isinstance(host, str):
         host = host.encode('idna').decode('ascii')
-    elif isinstance(host, six.binary_type):
+    elif isinstance(host, bytes):
         host = host.decode("ascii")
     if host is not None and not is_ip_addr(host):
         qname, addrs = _getaddrinfo_lookup(host, family, flags)
@@ -561,8 +565,8 @@ def getaddrinfo(host, port, family=0, socktype=0, proto=0, flags=0):
     for addr in addrs:
         try:
             ai = socket.getaddrinfo(addr, port, family,
-                                    socktype, proto, aiflags)
-        except socket.error as e:
+                                    type, proto, aiflags)
+        except OSError as e:
             if flags & socket.AI_ADDRCONFIG:
                 err = e
                 continue
@@ -615,34 +619,34 @@ def getnameinfo(sockaddr, flags):
             raise TypeError('getnameinfo() argument 1 must be a tuple')
         else:
             # must be ipv6 sockaddr, pretending we don't know how to resolve it
-            raise EAI_NONAME_ERROR
+            _raise_new_error(EAI_NONAME_ERROR)
 
     if (flags & socket.NI_NAMEREQD) and (flags & socket.NI_NUMERICHOST):
         # Conflicting flags.  Punt.
-        raise EAI_NONAME_ERROR
+        _raise_new_error(EAI_NONAME_ERROR)
 
     if is_ipv4_addr(host):
         try:
             rrset = resolver.query(
                 dns.reversename.from_address(host), dns.rdatatype.PTR)
             if len(rrset) > 1:
-                raise socket.error('sockaddr resolved to multiple addresses')
+                raise OSError('sockaddr resolved to multiple addresses')
             host = rrset[0].target.to_text(omit_final_dot=True)
         except dns.exception.Timeout:
             if flags & socket.NI_NAMEREQD:
-                raise EAI_EAGAIN_ERROR
+                _raise_new_error(EAI_EAGAIN_ERROR)
         except dns.exception.DNSException:
             if flags & socket.NI_NAMEREQD:
-                raise EAI_NONAME_ERROR
+                _raise_new_error(EAI_NONAME_ERROR)
     else:
         try:
             rrset = resolver.query(host)
             if len(rrset) > 1:
-                raise socket.error('sockaddr resolved to multiple addresses')
+                raise OSError('sockaddr resolved to multiple addresses')
             if flags & socket.NI_NUMERICHOST:
                 host = rrset[0].address
         except dns.exception.Timeout:
-            raise EAI_EAGAIN_ERROR
+            _raise_new_error(EAI_EAGAIN_ERROR)
         except dns.exception.DNSException:
             raise socket.gaierror(
                 (socket.EAI_NODATA, 'No address associated with hostname'))

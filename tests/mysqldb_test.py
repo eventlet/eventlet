@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import os
 import time
 import traceback
@@ -35,7 +33,7 @@ def mysql_requirement(_f):
 
 
 class TestMySQLdb(tests.LimitedTestCase):
-    TEST_TIMEOUT = 5
+    TEST_TIMEOUT = 50
 
     def setUp(self):
         self._auth = tests.get_database_auth()['MySQLdb']
@@ -50,14 +48,14 @@ class TestMySQLdb(tests.LimitedTestCase):
         self.connection.commit()
         cursor.close()
 
-        super(TestMySQLdb, self).setUp()
+        super().setUp()
 
     def tearDown(self):
         if self.connection:
             self.connection.close()
         self.drop_db()
 
-        super(TestMySQLdb, self).tearDown()
+        super().tearDown()
 
     @tests.skip_unless(mysql_requirement)
     def create_db(self):

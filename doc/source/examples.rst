@@ -9,7 +9,7 @@ Web Crawler
 ------------
 ``examples/webcrawler.py``
 
-.. literalinclude:: ../examples/webcrawler.py
+.. literalinclude:: ../../examples/webcrawler.py
 
 .. _wsgi_server_example:
 
@@ -17,7 +17,7 @@ WSGI Server
 ------------
 ``examples/wsgi.py``
 
-.. literalinclude:: ../examples/wsgi.py
+.. literalinclude:: ../../examples/wsgi.py
 
 .. _echo_server_example:
 
@@ -25,7 +25,7 @@ Echo Server
 -----------
 ``examples/echoserver.py``
 
-.. literalinclude:: ../examples/echoserver.py
+.. literalinclude:: ../../examples/echoserver.py
 
 .. _socket_connect_example:
 
@@ -33,7 +33,7 @@ Socket Connect
 --------------
 ``examples/connect.py``
 
-.. literalinclude:: ../examples/connect.py
+.. literalinclude:: ../../examples/connect.py
 
 .. _chat_server_example:
 
@@ -44,7 +44,7 @@ Multi-User Chat Server
 This is a little different from the echo server, in that it broadcasts the 
 messages to all participants, not just the sender.
         
-.. literalinclude:: ../examples/chat_server.py
+.. literalinclude:: ../../examples/chat_server.py
 
 .. _feed_scraper_example:
 
@@ -54,7 +54,7 @@ Feed Scraper
 
 This example requires `Feedparser <http://www.feedparser.org/>`_ to be installed or on the PYTHONPATH.
 
-.. literalinclude:: ../examples/feedscraper.py
+.. literalinclude:: ../../examples/feedscraper.py
 
 .. _forwarder_example:
 
@@ -62,7 +62,7 @@ Port Forwarder
 -----------------------
 ``examples/forwarder.py``
 
-.. literalinclude:: ../examples/forwarder.py
+.. literalinclude:: ../../examples/forwarder.py
 
 .. _recursive_crawler_example:
 
@@ -72,7 +72,7 @@ Recursive Web Crawler
 
 This is an example recursive web crawler that fetches linked pages from a seed url.
 
-.. literalinclude:: ../examples/recursive_crawler.py
+.. literalinclude:: ../../examples/recursive_crawler.py
 
 .. _producer_consumer_example:
 
@@ -82,7 +82,7 @@ Producer Consumer Web Crawler
 
 This is an example implementation of the producer/consumer pattern as well as being identical in functionality to the recursive web crawler.
 
-.. literalinclude:: ../examples/producer_consumer.py
+.. literalinclude:: ../../examples/producer_consumer.py
 
 .. _websocket_example:
 
@@ -93,7 +93,7 @@ Websocket Server Example
 This exercises some of the features of the websocket server
 implementation.
 
-.. literalinclude:: ../examples/websocket.py
+.. literalinclude:: ../../examples/websocket.py
 
 .. _websocket_chat_example:
 
@@ -103,4 +103,4 @@ Websocket Multi-User Chat Example
 
 This is a mashup of the websocket example and the multi-user chat example, showing how you can do the same sorts of things with websockets that you can do with regular sockets.
 
-.. literalinclude:: ../examples/websocket_chat.py
+.. literalinclude:: ../../examples/websocket_chat.py

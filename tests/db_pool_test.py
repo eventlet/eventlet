@@ -1,10 +1,8 @@
-from __future__ import print_function
 import os
 import sys
 import traceback
 
 from eventlet import db_pool
-import six
 import eventlet
 import eventlet.tpool
 import tests
@@ -24,7 +22,7 @@ except ImportError:
     pass
 
 
-class DBTester(object):
+class DBTester:
     __test__ = False  # so that nose doesn't try to execute this directly
 
     def setUp(self):
@@ -63,7 +61,7 @@ class DBTester(object):
 
 
 # silly mock class
-class Mock(object):
+class Mock:
     pass
 
 
@@ -71,7 +69,7 @@ class DBConnectionPool(DBTester):
     __test__ = False  # so that nose doesn't try to execute this directly
 
     def setUp(self):
-        super(DBConnectionPool, self).setUp()
+        super().setUp()
         self.pool = self.create_pool()
         self.connection = self.pool.get()
 
@@ -79,7 +77,7 @@ class DBConnectionPool(DBTester):
         if self.connection:
             self.pool.put(self.connection)
         self.pool.clear()
-        super(DBConnectionPool, self).tearDown()
+        super().tearDown()
 
     def assert_cursor_works(self, cursor):
         cursor.execute("select 1")
@@ -139,7 +137,7 @@ class DBConnectionPool(DBTester):
 
     def fill_up_table(self, conn):
         curs = conn.cursor()
-        for i in six.moves.range(1000):
+        for i in range(1000):
             curs.execute('insert into test_table (value_int) values (%s)' % i)
         conn.commit()
 
@@ -228,8 +226,8 @@ class DBConnectionPool(DBTester):
         self.assertEqual(len(self.pool.free_items), 0)
 
     def test_unwrap_connection(self):
-        self.assert_(isinstance(self.connection,
-                                db_pool.GenericConnectionWrapper))
+        self.assertTrue(isinstance(self.connection,
+                                   db_pool.GenericConnectionWrapper))
         conn = self.pool._unwrap_connection(self.connection)
         assert not isinstance(conn, db_pool.GenericConnectionWrapper)
 
@@ -318,17 +316,17 @@ class DBConnectionPool(DBTester):
         self.assertEqual(self.pool.free(), 1)
 
 
-class DummyConnection(object):
+class DummyConnection:
     def rollback(self):
         pass
 
 
-class DummyDBModule(object):
+class DummyDBModule:
     def connect(self, *args, **kwargs):
         return DummyConnection()
 
 
-class RaisingDBModule(object):
+class RaisingDBModule:
     def connect(self, *args, **kw):
         raise RuntimeError()
 
@@ -348,10 +346,10 @@ class TpoolConnectionPool(DBConnectionPool):
             **self._auth)
 
     def setUp(self):
-        super(TpoolConnectionPool, self).setUp()
+        super().setUp()
 
     def tearDown(self):
-        super(TpoolConnectionPool, self).tearDown()
+        super().tearDown()
         eventlet.tpool.killall()
 
 
@@ -453,7 +451,7 @@ def mysql_requirement(_f):
         return False
 
 
-class MysqlConnectionPool(object):
+class MysqlConnectionPool:
     dummy_table_sql = """CREATE TEMPORARY TABLE test_table
         (
         row_id INTEGER PRIMARY KEY AUTO_INCREMENT,
@@ -471,10 +469,10 @@ class MysqlConnectionPool(object):
     def setUp(self):
         self._dbmodule = MySQLdb
         self._auth = tests.get_database_auth()['MySQLdb']
-        super(MysqlConnectionPool, self).setUp()
+        super().setUp()
 
     def tearDown(self):
-        super(MysqlConnectionPool, self).tearDown()
+        super().tearDown()
 
     def create_db(self):
         auth = self._auth.copy()
@@ -518,7 +516,7 @@ def postgres_requirement(_f):
         return False
 
 
-class Psycopg2ConnectionPool(object):
+class Psycopg2ConnectionPool:
     dummy_table_sql = """CREATE TEMPORARY TABLE test_table
         (
         row_id SERIAL PRIMARY KEY,
@@ -535,10 +533,10 @@ class Psycopg2ConnectionPool(object):
     def setUp(self):
         self._dbmodule = psycopg2
         self._auth = tests.get_database_auth()['psycopg2']
-        super(Psycopg2ConnectionPool, self).setUp()
+        super().setUp()
 
     def tearDown(self):
-        super(Psycopg2ConnectionPool, self).tearDown()
+        super().tearDown()
 
     def create_db(self):
         dbname = 'test%s' % os.getpid()

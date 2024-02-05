@@ -63,7 +63,8 @@ are delivered in the order results become available; the consuming greenthread
 blocks until the next result can be delivered.
 
 Tutorial
-*******
+********
+
 Example
 -------
 

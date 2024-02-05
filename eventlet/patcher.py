@@ -1,3 +1,4 @@
+from __future__ import annotations
 try:
     import _imp as imp
 except ImportError:
@@ -11,15 +12,14 @@ except ImportError:
     register_at_fork = None
 
 import eventlet
-import six
 
 
 __all__ = ['inject', 'import_patched', 'monkey_patch', 'is_monkey_patched']
 
-__exclude = set(('__builtins__', '__file__', '__name__'))
+__exclude = {'__builtins__', '__file__', '__name__'}
 
 
-class SysModulesSaver(object):
+class SysModulesSaver:
     """Class that captures some subset of the current state of
     sys.modules.  Pass in an iterator of module names to the
     constructor."""
@@ -39,7 +39,7 @@ class SysModulesSaver(object):
         sys.modules.
         """
         try:
-            for modname, mod in six.iteritems(self._saved):
+            for modname, mod in self._saved.items():
                 if mod is not None:
                     sys.modules[modname] = mod
                 else:
@@ -198,10 +198,7 @@ def original(modname):
     # some rudimentary dependency checking -- fortunately the modules
     # we're working on don't have many dependencies so we can just do
     # some special-casing here
-    if six.PY2:
-        deps = {'threading': 'thread', 'Queue': 'threading'}
-    if six.PY3:
-        deps = {'threading': '_thread', 'queue': 'threading'}
+    deps = {'threading': '_thread', 'queue': 'threading'}
     if modname in deps:
         dependency = deps[modname]
         saver.save(dependency)
@@ -249,9 +246,9 @@ def monkey_patch(**on):
     # the hub calls into monkey-patched modules.
     eventlet.hubs.get_hub()
 
-    accepted_args = set(('os', 'select', 'socket',
-                         'thread', 'time', 'psycopg', 'MySQLdb',
-                         'builtins', 'subprocess'))
+    accepted_args = {'os', 'select', 'socket',
+                     'thread', 'time', 'psycopg', 'MySQLdb',
+                     'builtins', 'subprocess'}
     # To make sure only one of them is passed here
     assert not ('__builtin__' in on and 'builtins' in on)
     try:
@@ -263,12 +260,12 @@ def monkey_patch(**on):
 
     default_on = on.pop("all", None)
 
-    for k in six.iterkeys(on):
+    for k in on.keys():
         if k not in accepted_args:
             raise TypeError("monkey_patch() got an unexpected "
                             "keyword argument %r" % k)
     if default_on is None:
-        default_on = not (True in on.values())
+        default_on = True not in on.values()
     for modname in accepted_args:
         if modname == 'MySQLdb':
             # MySQLdb is only on when explicitly patched for the moment
@@ -348,24 +345,22 @@ def monkey_patch(**on):
     finally:
         imp.release_lock()
 
-    if sys.version_info >= (3, 3):
-        import importlib._bootstrap
-        thread = original('_thread')
-        # importlib must use real thread locks, not eventlet.Semaphore
-        importlib._bootstrap._thread = thread
+    import importlib._bootstrap
+    thread = original('_thread')
+    # importlib must use real thread locks, not eventlet.Semaphore
+    importlib._bootstrap._thread = thread
 
-        # Issue #185: Since Python 3.3, threading.RLock is implemented in C and
-        # so call a C function to get the thread identifier, instead of calling
-        # threading.get_ident(). Force the Python implementation of RLock which
-        # calls threading.get_ident() and so is compatible with eventlet.
-        import threading
-        threading.RLock = threading._PyRLock
+    # Issue #185: Since Python 3.3, threading.RLock is implemented in C and
+    # so call a C function to get the thread identifier, instead of calling
+    # threading.get_ident(). Force the Python implementation of RLock which
+    # calls threading.get_ident() and so is compatible with eventlet.
+    import threading
+    threading.RLock = threading._PyRLock
 
     # Issue #508: Since Python 3.7 queue.SimpleQueue is implemented in C,
     # causing a deadlock.  Replace the C implementation with the Python one.
-    if sys.version_info >= (3, 7):
-        import queue
-        queue.SimpleQueue = queue._PySimpleQueue
+    import queue
+    queue.SimpleQueue = queue._PySimpleQueue
 
 
 def is_monkey_patched(module):
@@ -388,61 +383,112 @@ def _green_existing_locks():
 
     This was originally noticed in the stdlib logging module."""
     import gc
+    import os
     import threading
     import eventlet.green.thread
-    lock_type = type(threading.Lock())
     rlock_type = type(threading.RLock())
-    if hasattr(threading, '_PyRLock'):
-        # this happens on CPython3 and PyPy >= 7.0.0: "py3-style" rlocks, they
-        # are implemented natively in C and RPython respectively
-        py3_style = True
-        pyrlock_type = type(threading._PyRLock())
-    else:
-        # this happens on CPython2.7 and PyPy < 7.0.0: "py2-style" rlocks,
-        # they are implemented in pure-python
-        py3_style = False
-        pyrlock_type = None
 
     # We're monkey-patching so there can't be any greenlets yet, ergo our thread
     # ID is the only valid owner possible.
     tid = eventlet.green.thread.get_ident()
-    for obj in gc.get_objects():
-        if isinstance(obj, rlock_type):
-            if not py3_style and isinstance(obj._RLock__block, lock_type):
-                _fix_py2_rlock(obj, tid)
-            elif py3_style and not isinstance(obj, pyrlock_type):
-                _fix_py3_rlock(obj, tid)
 
-    if sys.version_info < (3, 10):
-        # Older py3 won't have RLocks show up in gc.get_objects() -- see
-        # https://github.com/eventlet/eventlet/issues/546 -- so green a handful
-        # that we know are significant
+    # Now, upgrade all instances:
+    def upgrade(old_lock):
+        return _convert_py3_rlock(old_lock, tid)
+
+    _upgrade_instances(sys.modules, rlock_type, upgrade)
+
+    # Report if there are RLocks we couldn't upgrade. For cases where we're
+    # using coverage.py in parent process, and more generally for tests in
+    # general, this is difficult to ensure, so just don't complain in that case.
+    if "PYTEST_CURRENT_TEST" in os.environ:
+        return
+    # On older Pythons (< 3.10), gc.get_objects() won't return any RLock
+    # instances, so this warning won't get logged on older Pythons. However,
+    # it's a useful warning, so we try to do it anyway for the benefit of those
+    # users on 3.10 or later.
+    gc.collect()
+    remaining_rlocks = len({o for o in gc.get_objects() if isinstance(o, rlock_type)})
+    if remaining_rlocks:
         import logging
-        if isinstance(logging._lock, rlock_type):
-            _fix_py3_rlock(logging._lock, tid)
-        logging._acquireLock()
+        logger = logging.Logger("eventlet")
+        logger.error("{} RLock(s) were not greened,".format(remaining_rlocks) +
+                     " to fix this error make sure you run eventlet.monkey_patch() " +
+                     "before importing any other modules.")
+
+
+def _upgrade_instances(container, klass, upgrade, visited=None, old_to_new=None):
+    """
+    Starting with a Python object, find all instances of ``klass``, following
+    references in ``dict`` values, ``list`` items, and attributes.
+
+    Once an object is found, replace all instances with
+    ``upgrade(found_object)``, again limited to the criteria above.
+
+    In practice this is used only for ``threading.RLock``, so we can assume
+    instances are hashable.
+    """
+    if visited is None:
+        visited = {}  # map id(obj) to obj
+    if old_to_new is None:
+        old_to_new = {}  # map old klass instance to upgrade(old)
+
+    # Handle circular references:
+    visited[id(container)] = container
+
+    def upgrade_or_traverse(obj):
+        if id(obj) in visited:
+            return None
+        if isinstance(obj, klass):
+            if obj in old_to_new:
+                return old_to_new[obj]
+            else:
+                new = upgrade(obj)
+                old_to_new[obj] = new
+                return new
+        else:
+            _upgrade_instances(obj, klass, upgrade, visited, old_to_new)
+            return None
+
+    if isinstance(container, dict):
+        for k, v in list(container.items()):
+            new = upgrade_or_traverse(v)
+            if new is not None:
+                container[k] = new
+    if isinstance(container, list):
+        for i, v in enumerate(container):
+            new = upgrade_or_traverse(v)
+            if new is not None:
+                container[i] = new
+    try:
+        container_vars = vars(container)
+    except TypeError:
+        pass
+    else:
+        # If we get here, we're operating on an object that could
+        # be doing strange things. If anything bad happens, error and
+        # warn the eventlet user to monkey_patch earlier.
         try:
-            for ref in logging._handlerList:
-                handler = ref()
-                if handler and isinstance(handler.lock, rlock_type):
-                    _fix_py3_rlock(handler.lock, tid)
-                del handler
-        finally:
-            logging._releaseLock()
+            for k, v in list(container_vars.items()):
+                new = upgrade_or_traverse(v)
+                if new is not None:
+                    setattr(container, k, new)
+        except:
+            import logging
+            logger = logging.Logger("eventlet")
+            logger.exception("An exception was thrown while monkey_patching for eventlet. "
+                             "to fix this error make sure you run eventlet.monkey_patch() "
+                             "before importing any other modules.", exc_info=True)
 
 
-def _fix_py2_rlock(rlock, tid):
-    import eventlet.green.threading
-    old = rlock._RLock__block
-    new = eventlet.green.threading.Lock()
-    rlock._RLock__block = new
-    if old.locked():
-        new.acquire()
-        rlock._RLock__owner = tid
+def _convert_py3_rlock(old, tid):
+    """
+    Convert a normal RLock to one implemented in Python.
 
-
-def _fix_py3_rlock(old, tid):
-    import gc
+    This is necessary to make RLocks work with eventlet, but also introduces
+    bugs, e.g. https://bugs.python.org/issue13697.  So more of a downgrade,
+    really.
+    """
     import threading
     from eventlet.green.thread import allocate_lock
     new = threading._PyRLock()
@@ -464,26 +510,7 @@ def _fix_py3_rlock(old, tid):
         acquired = True
     if acquired:
         new._owner = tid
-    gc.collect()
-    for ref in gc.get_referrers(old):
-        if isinstance(ref, dict):
-            for k, v in list(ref.items()):
-                if v is old:
-                    ref[k] = new
-            continue
-        if isinstance(ref, list):
-            for i, v in enumerate(ref):
-                if v is old:
-                    ref[i] = new
-            continue
-        try:
-            ref_vars = vars(ref)
-        except TypeError:
-            pass
-        else:
-            for k, v in ref_vars.items():
-                if v is old:
-                    setattr(ref, k, new)
+    return new
 
 
 def _green_os_modules():
@@ -495,9 +522,8 @@ def _green_select_modules():
     from eventlet.green import select
     modules = [('select', select)]
 
-    if sys.version_info >= (3, 4):
-        from eventlet.green import selectors
-        modules.append(('selectors', selectors))
+    from eventlet.green import selectors
+    modules.append(('selectors', selectors))
 
     return modules
 
@@ -520,10 +546,7 @@ def _green_thread_modules():
     from eventlet.green import Queue
     from eventlet.green import thread
     from eventlet.green import threading
-    if six.PY2:
-        return [('Queue', Queue), ('thread', thread), ('threading', threading)]
-    if six.PY3:
-        return [('queue', Queue), ('_thread', thread), ('threading', threading)]
+    return [('queue', Queue), ('_thread', thread), ('threading', threading)]
 
 
 def _green_time_modules():
@@ -542,7 +565,7 @@ def _green_MySQLdb():
 def _green_builtins():
     try:
         from eventlet.green import builtin
-        return [('__builtin__' if six.PY2 else 'builtins', builtin)]
+        return [('builtins', builtin)]
     except ImportError:
         return []
 
@@ -557,11 +580,11 @@ def slurp_properties(source, destination, ignore=[], srckeys=None):
     """
     if srckeys is None:
         srckeys = source.__all__
-    destination.update(dict([
-        (name, getattr(source, name))
+    destination.update({
+        name: getattr(source, name)
         for name in srckeys
         if not (name.startswith('__') or name in ignore)
-    ]))
+    })
 
 
 if __name__ == "__main__":

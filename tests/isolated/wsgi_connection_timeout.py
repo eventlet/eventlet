@@ -25,7 +25,6 @@ connection makefile() file objects - ExplodingSocketFile <-- these raise
 import socket
 
 import eventlet
-import six
 import tests.wsgi_test
 
 
@@ -38,7 +37,7 @@ TAG_BOOM = "=== ~* BOOM *~ ==="
 output_buffer = []
 
 
-class BufferLog(object):
+class BufferLog:
     @staticmethod
     def write(s):
         output_buffer.append(s.rstrip())
@@ -46,7 +45,7 @@ class BufferLog(object):
 
 
 # This test might make you wince
-class NaughtySocketAcceptWrap(object):
+class NaughtySocketAcceptWrap:
     # server's socket.accept(); patches resulting connection sockets
 
     def __init__(self, sock):
@@ -73,7 +72,7 @@ class NaughtySocketAcceptWrap(object):
         return conn, addr
 
 
-class ExplodingConnectionWrap(object):
+class ExplodingConnectionWrap:
     # new connection's socket.makefile
     # eventlet *tends* to use socket.makefile, not raw socket methods.
     # need to patch file operations
@@ -105,8 +104,7 @@ class ExplodingConnectionWrap(object):
 class ExplodingSocketFile(eventlet.greenio._fileobject):
 
     def __init__(self, sock, mode='rb', bufsize=-1, close=False):
-        args = [bufsize, close] if six.PY2 else []
-        super(self.__class__, self).__init__(sock, mode, *args)
+        super(self.__class__, self).__init__(sock, mode)
         self.armed = False
 
     def arm(self):

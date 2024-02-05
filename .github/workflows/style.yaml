@@ -37,4 +37,6 @@ jobs:
       - name: install tox
         run: pip install tox
       - name: run tests
-        run: tox --verbose -e pep8
+        run: |
+          tox --verbose -e pep8
+          tox --verbose -e lint

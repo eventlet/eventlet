@@ -1,6 +1,4 @@
-import contextlib
 import random
-import socket
 import sys
 import warnings
 
@@ -11,7 +9,6 @@ try:
     from eventlet.green import ssl
 except ImportError:
     __test__ = False
-import six
 import tests
 
 
@@ -36,7 +33,7 @@ class SSLTest(tests.LimitedTestCase):
             message='.*socket.ssl.*',
             category=DeprecationWarning)
 
-        super(SSLTest, self).setUp()
+        super().setUp()
 
     def test_duplex_response(self):
         def serve(listener):
@@ -249,7 +246,7 @@ class SSLTest(tests.LimitedTestCase):
             while True:
                 try:
                     sock, _ = listener.accept()
-                except socket.error:
+                except OSError:
                     return
                 eventlet.spawn(serve, sock)
 
@@ -311,8 +308,8 @@ class SSLTest(tests.LimitedTestCase):
             client_to_server = None
             try:
                 client_to_server = ssl.wrap_socket(eventlet.connect(listener.getsockname()))
-                for character in six.iterbytes(content):
-                    character = six.int2byte(character)
+                for character in iter(content):
+                    character = bytes((character,))
                     print('We have %d already decrypted bytes pending, expecting: %s' % (
                         client_to_server.pending(), character))
                     read_function(client_to_server, character)
@@ -329,7 +326,7 @@ class SSLTest(tests.LimitedTestCase):
                 listener.close()
 
     def test_context_wrapped_accept(self):
-        context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS)
         context.load_cert_chain(tests.certificate_file, tests.private_key_file)
         expected = "success:{}".format(random.random()).encode()
 

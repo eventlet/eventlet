@@ -6,17 +6,15 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: Upload Python Package
+name: Build Package & Optional Deploy
 
-on:
-  release:
-    types: [published]
+on: [push, pull_request]
 
 permissions:
-  contents: read
+  id-token: write
 
 jobs:
-  deploy:
+  build-package-and-deploy:
 
     runs-on: ubuntu-latest
 

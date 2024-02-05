@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Eventlet documentation build configuration file, created by
 # sphinx-quickstart on Sat Jul  4 19:48:27 2009.
@@ -22,8 +21,16 @@ sys.path.append(os.path.abspath(".."))
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.todo', 'sphinx.ext.coverage', 
-              'sphinx.ext.intersphinx']
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.todo',
+    'sphinx.ext.coverage', 
+    'sphinx.ext.intersphinx',
+    'sphinxcontrib.apidoc'
+]
+
+apidoc_module_dir = '../../eventlet'
+apidoc_output_dir = 'reference/api'
 
 # If this is True, '.. todo::' and '.. todolist::' produce output, else they produce
 # nothing. The default is False.
@@ -42,16 +49,14 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Eventlet'
-copyright = u'2005-2010, Eventlet Contributors'
+project = 'Eventlet'
+copyright = '2005-2024, Eventlet Contributors'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 import eventlet
-# The short X.Y version.
-version = '%s.%s' % (eventlet.version_info[0], eventlet.version_info[1])
 # The full version, including alpha/beta/rc tags.
 release = eventlet.__version__
 
@@ -93,7 +98,7 @@ pygments_style = 'sphinx'
 #modindex_common_prefix = []
 
 # Intersphinx references
-intersphinx_mapping = {'http://docs.python.org/': None}
+intersphinx_mapping = {'python': ('http://docs.python.org/', None)}
 
 
 # -- Options for HTML output ---------------------------------------------------
@@ -181,8 +186,8 @@ htmlhelp_basename = 'Eventletdoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'Eventlet.tex', u'Eventlet Documentation',
-   u'<eventlet contributors>', 'manual'),
+  ('index', 'Eventlet.tex', 'Eventlet Documentation',
+   '<eventlet contributors>', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

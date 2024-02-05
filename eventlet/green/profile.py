@@ -40,9 +40,9 @@ import functools
 
 from eventlet import greenthread
 from eventlet import patcher
-import six
+import _thread
 
-thread = patcher.original(six.moves._thread.__name__)  # non-monkeypatched module needed
+thread = patcher.original(_thread.__name__)  # non-monkeypatched module needed
 
 
 # This class provides the start() and stop() functions
@@ -144,10 +144,10 @@ class Profile(profile_orig.Profile):
         # we must keep the timings dicts separate for each tasklet, since it contains
         # the 'ns' item, recursion count of each function in that tasklet.  This is
         # used in the Unwind dude.
-        for tasklet, (cur, timings) in six.iteritems(oldtimings):
+        for tasklet, (cur, timings) in oldtimings.items():
             self.Unwind(cur, timings)
 
-            for k, v in six.iteritems(timings):
+            for k, v in timings.items():
                 if k not in self.timings:
                     self.timings[k] = v
                 else:
@@ -157,7 +157,7 @@ class Profile(profile_orig.Profile):
                     cc += v[0]
                     tt += v[2]
                     ct += v[3]
-                    for k1, v1 in six.iteritems(v[4]):
+                    for k1, v1 in v[4].items():
                         callers[k1] = callers.get(k1, 0) + v1
                     self.timings[k] = cc, ns, tt, ct, callers
 
@@ -213,7 +213,7 @@ Profile.dispatch = dict(profile_orig.Profile.dispatch, **{
     'c_return': Profile.trace_dispatch_c_return_extend_back,
 })
 # Add automatic tasklet detection to the callbacks.
-Profile.dispatch = dict((k, ContextWrap(v)) for k, v in six.viewitems(Profile.dispatch))
+Profile.dispatch = {k: ContextWrap(v) for k, v in Profile.dispatch.items()}
 
 
 # run statements shamelessly stolen from profile.py

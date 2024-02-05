@@ -3,9 +3,8 @@ from eventlet.green import BaseHTTPServer
 from eventlet.green import urllib
 
 patcher.inject(
-    'SimpleHTTPServer',
+    'http.server',
     globals(),
-    ('BaseHTTPServer', BaseHTTPServer),
     ('urllib', urllib))
 
 del patcher

@@ -24,7 +24,6 @@ import traceback
 
 import eventlet
 from eventlet import event, greenio, greenthread, patcher, timeout
-import six
 
 __all__ = ['execute', 'Proxy', 'killall', 'set_num_threads']
 
@@ -36,10 +35,7 @@ QUIET = True
 
 socket = patcher.original('socket')
 threading = patcher.original('threading')
-if six.PY2:
-    Queue_module = patcher.original('Queue')
-if six.PY3:
-    Queue_module = patcher.original('queue')
+Queue_module = patcher.original('queue')
 
 Empty = Queue_module.Empty
 Queue = Queue_module.Queue
@@ -88,10 +84,7 @@ def tworker():
             raise
         except EXC_CLASSES:
             rv = sys.exc_info()
-            if sys.version_info >= (3, 4):
-                traceback.clear_frames(rv[1].__traceback__)
-        if six.PY2:
-            sys.exc_clear()
+            traceback.clear_frames(rv[1].__traceback__)
         # test_leakage_from_tracebacks verifies that the use of
         # exc_info does not lead to memory leaks
         _rspq.put((e, rv))
@@ -129,7 +122,7 @@ def execute(meth, *args, **kwargs):
         if not QUIET:
             traceback.print_exception(c, e, tb)
             traceback.print_stack()
-        six.reraise(c, e, tb)
+        raise e.with_traceback(tb)
     return rv
 
 
@@ -155,7 +148,7 @@ def proxy_call(autowrap, f, *args, **kwargs):
         return rv
 
 
-class Proxy(object):
+class Proxy:
     """
     a simple proxy-wrapper of any object that comes with a
     methods-only interface, in order to forward every method
@@ -289,7 +282,7 @@ def setup():
     _rsock = greenio.GreenSocket(csock)
     _rsock.settimeout(None)
 
-    for i in six.moves.range(_nthreads):
+    for i in range(_nthreads):
         t = threading.Thread(target=tworker,
                              name="tpool_thread_%s" % i)
         t.daemon = True
