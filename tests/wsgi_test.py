@@ -1570,6 +1570,47 @@ class TestHttpd(_TestBase):
         self.assertEqual(result.status, 'HTTP/1.1 500 Internal Server Error')
         self.assertEqual(result.headers_lower['connection'], 'close')
         assert 'transfer-encoding' not in result.headers_lower
+        assert 'Traceback' in self.logfile.getvalue()
+        assert 'RuntimeError: intentional error' in self.logfile.getvalue()
+
+    def test_timeouts_in_app_call(self):
+        def wsgi_app(environ, start_response):
+            start_response('200 OK', [('Content-Type', 'text/plain')])
+            yield b'partial '
+            raise eventlet.Timeout()
+            yield b'body\n'
+        self.site.application = wsgi_app
+        sock = eventlet.connect(self.server_addr)
+        sock.sendall(b'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+        result = read_http(sock)
+        self.assertEqual(result.status, 'HTTP/1.1 500 Internal Server Error')
+        self.assertEqual(result.headers_lower['connection'], 'close')
+        assert 'transfer-encoding' not in result.headers_lower
+        assert 'content-length' in result.headers_lower
+        assert 'Traceback' in self.logfile.getvalue()
+        assert 'Timeout' in self.logfile.getvalue()
+
+    def test_timeouts_in_app_iter(self):
+        def wsgi_app(environ, start_response):
+            environ['eventlet.minimum_write_chunk_size'] = 1
+            start_response('200 OK', [('Content-Type', 'text/plain'),
+                                      ('Content-Length', '13')])
+
+            def app_iter():
+                yield b'partial '
+                raise eventlet.Timeout()
+                yield b'body\n'
+            return app_iter()
+        self.site.application = wsgi_app
+        sock = eventlet.connect(self.server_addr)
+        sock.sendall(b'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+        result = read_http(sock)
+        self.assertEqual(result.status, 'HTTP/1.1 200 OK')
+        assert 'connection' not in result.headers_lower
+        self.assertEqual(result.headers_lower['content-length'], '13')
+        self.assertEqual(len(result.body), 8)
+        assert 'Traceback' in self.logfile.getvalue()
+        assert 'Timeout' in self.logfile.getvalue()
 
     def test_unicode_with_only_ascii_characters_works(self):
         def wsgi_app(environ, start_response):
