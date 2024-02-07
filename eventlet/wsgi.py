@@ -682,17 +682,12 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 hook(self.environ, *args, **kwargs)
 
             if self.server.log_output:
-                client_host, client_port = self.get_client_address()
-
-                self.server.log.info(self.server.log_format % {
-                    'client_ip': client_host,
-                    'client_port': client_port,
-                    'date_time': self.log_date_time_string(),
-                    'request_line': self.requestline,
-                    'status_code': status_code[0],
-                    'body_length': length[0],
-                    'wall_seconds': finish - start,
-                })
+                self.write_access_log(
+                    status_code=status_code[0],
+                    body_length=length[0],
+                    wall_seconds=finish - start,
+                    headers=headers_set[1]
+                )
 
     def get_client_address(self):
         host, port = addr_to_host_port(self.client_address)
@@ -702,6 +697,19 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             if forward:
                 host = forward + ',' + host
         return (host, port)
+
+    def write_access_log(self, **kwargs):
+        client_host, client_port = self.get_client_address()
+
+        self.server.log.info(self.server.log_format % {
+            'client_ip': client_host,
+            'client_port': client_port,
+            'date_time': self.log_date_time_string(),
+            'request_line': self.requestline,
+            'status_code': kwargs['status_code'],
+            'body_length': kwargs['body_length'],
+            'wall_seconds': kwargs['wall_seconds'],
+        })
 
     def get_environ(self):
         env = self.server.get_environ()
