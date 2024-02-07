@@ -1682,6 +1682,59 @@ class TestHttpd(_TestBase):
         assert isinstance(g[1], str), msg
         assert g[1] == '/\xbd\xa5\xe5\xa0\xbd\xe4'
 
+    def test_headers_latin1(self):
+        g = []
+
+        def wsgi_app(environ, start_response):
+            g.append(environ)
+            start_response("200 OK", [])
+            return [environ['wsgi.input'].read()]
+
+        self.site.application = wsgi_app
+        sock = eventlet.connect(self.server_addr)
+        sock.sendall(b'PUT / HTTP/1.1\r\n'
+                     b'Snow-Man: ' + u'\N{SNOWMAN}'.encode('utf8') + b'\r\n'
+                     b'Utf-8-' + u'\U0001F334'.encode('utf-8') + b': palm tree\r\n'
+                     b'Content-Length: 4\r\n'
+                     b'\r\ndata')
+        result = read_http(sock)
+        assert result.status == 'HTTP/1.1 200 OK'
+        assert result.body == b'data'
+
+        assert 'HTTP_SNOW_MAN' in g[0]
+        # WSGI demands native strings, either as bytes or decoded-Latin-1
+        assert isinstance(g[0]['HTTP_SNOW_MAN'], str)
+        assert g[0]['HTTP_SNOW_MAN'] == '\xE2\x98\x83'
+
+        assert 'HTTP_UTF_8_\xF0\x9F\x8C\xB4' in [h for h in g[0] if h.startswith('HTTP_')]
+        assert isinstance(g[0]['HTTP_UTF_8_\xF0\x9F\x8C\xB4'], str)
+        assert g[0]['HTTP_UTF_8_\xF0\x9F\x8C\xB4'] == 'palm tree'
+
+        sock.sendall(b'PUT / HTTP/1.1\r\n'
+                     b'Connection: close\r\n'
+                     b'Snow-Man: ' + u'\N{SNOWMAN}'.encode('utf8') + b'\r\n'
+                     b'Utf-8-' + u'\U0001F334'.encode('utf-8') + b': palm tree\r\n'
+                     b'Content-Type: foo/bar\r\n'
+                     b'Transfer-Encoding: chunked\r\n'
+                     b'\r\n'
+                     b'e\r\n'
+                     b'Hello, world!\n\r\n'
+                     b'0\r\n\r\n')
+        result = read_http(sock)
+        assert result.status == 'HTTP/1.1 200 OK'
+        assert result.body == b'Hello, world!\n'
+
+        assert 'HTTP_SNOW_MAN' in g[1]
+        # WSGI demands native strings, either as bytes or decoded-Latin-1
+        assert isinstance(g[1]['HTTP_SNOW_MAN'], str)
+        assert g[1]['HTTP_SNOW_MAN'] == '\xE2\x98\x83'
+
+        assert 'HTTP_UTF_8_\xF0\x9F\x8C\xB4' in [h for h in g[1] if h.startswith('HTTP_')]
+        assert isinstance(g[1]['HTTP_UTF_8_\xF0\x9F\x8C\xB4'], str)
+        assert g[1]['HTTP_UTF_8_\xF0\x9F\x8C\xB4'] == 'palm tree'
+
+        assert g[1]['CONTENT_TYPE'] == 'foo/bar'
+
     @tests.skip_if_no_ipv6
     def test_ipv6(self):
         try:
