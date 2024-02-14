@@ -834,7 +834,7 @@ def udp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
         r = dns.message.from_wire(wire, keyring=q.keyring, request_mac=q.mac,
                                   one_rr_per_rrset=one_rr_per_rrset,
                                   ignore_trailing=ignore_trailing)
-    if not q.is_response(r):
+    if not ignore_errors and not q.is_response(r):
         raise dns.query.BadResponse()
     return r
 
