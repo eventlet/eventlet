@@ -713,7 +713,7 @@ except TypeError:
 def udp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
         af=None, source=None, source_port=0, ignore_unexpected=False,
         one_rr_per_rrset=False, ignore_trailing=False,
-        raise_on_truncation=False, sock=None):
+        raise_on_truncation=False, sock=None, ignore_errors=True):
     """coro friendly replacement for dns.query.udp
     Return the response obtained after sending a query via UDP.
 
