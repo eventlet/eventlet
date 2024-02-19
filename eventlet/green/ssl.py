@@ -429,19 +429,6 @@ def wrap_socket(sock, *a, **kw):
     return GreenSSLSocket(sock, *a, **kw)
 
 
-if hasattr(__ssl, 'sslwrap_simple'):
-    def sslwrap_simple(sock, keyfile=None, certfile=None):
-        """A replacement for the old socket.ssl function.  Designed
-        for compatibility with Python 2.5 and earlier.  Will disappear in
-        Python 3.0."""
-        ssl_sock = GreenSSLSocket(sock, keyfile=keyfile, certfile=certfile,
-                                  server_side=False,
-                                  cert_reqs=CERT_NONE,
-                                  ssl_version=PROTOCOL_TLS,
-                                  ca_certs=None)
-        return ssl_sock
-
-
 class GreenSSLContext(_original_sslcontext):
     __slots__ = ()
 

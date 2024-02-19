@@ -7,6 +7,13 @@ A hub forms the basis of Eventlet's event loop, which dispatches I/O events and 
 
 Eventlet has multiple hub implementations, and when you start using it, it tries to select the best hub implementation for your system.  The hubs that it supports are (in order of preference):
 
+**asyncio**
+    | Asyncio based hub. Run Eventlet code in an Asyncio eventloop.
+    | By using this hub, Asyncio and Eventlet can be run the same thread in the same process.
+    | We discourage new Eventlet projects.
+    | We encourage existing Eventlet projects to migrate from Eventlet to Asyncio.
+    | This hub allow you incremental and smooth migration.
+    | See the `migration guide <https://eventlet.readthedocs.io/en/latest/migration.html>`_ for further details.
 **epolls**
     Linux. This is the fastest hub for Linux.
 **kqueue**
