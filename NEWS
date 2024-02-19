@@ -1,6 +1,17 @@
 Unreleased
 ==========
 
+0.35.2
+======
+
+* [fix] Fix tool.setuptools/packages list https://github.com/eventlet/eventlet/pull/921
+* [security] Dnspython 2.6.1 - Address DoS via the Tudoor mechanism (CVE-2023-29483) https://github.com/eventlet/eventlet/pull/916
+* [doc] add asyncio into the doc hub page https://github.com/eventlet/eventlet/pull/918
+* [clean] clean obsolete python 2 code from the ssl module https://github.com/eventlet/eventlet/pull/915
+* [fix] Add get_server_info to db_pool.py https://github.com/eventlet/eventlet/pull/324
+* [fix] wsgi: Handle Timeouts from applications https://github.com/eventlet/eventlet/pull/911
+* [fix] shrinks window before connecting https://github.com/eventlet/eventlet/pull/905
+
 0.35.1
 ======
 
