@@ -713,7 +713,7 @@ except TypeError:
 def udp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
         af=None, source=None, source_port=0, ignore_unexpected=False,
         one_rr_per_rrset=False, ignore_trailing=False,
-        raise_on_truncation=False, sock=None, ignore_errors=True):
+        raise_on_truncation=False, sock=None, ignore_errors=False):
     """coro friendly replacement for dns.query.udp
     Return the response obtained after sending a query via UDP.
 
@@ -752,7 +752,10 @@ def udp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
     query.  If None, the default, a socket is created.  Note that
     if a socket is provided, it must be a nonblocking datagram socket,
     and the source and source_port are ignored.
-    @type sock: socket.socket | None"""
+    @type sock: socket.socket | None
+    @param ignore_errors: if various format errors or response mismatches occur,
+    continue listening.
+    @type ignore_errors: bool"""
 
     wire = q.to_wire()
     if af is None:
@@ -816,26 +819,43 @@ def udp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
                 addr = from_address[0]
                 addr = dns.ipv6.inet_ntoa(dns.ipv6.inet_aton(addr))
                 from_address = (addr, from_address[1], from_address[2], from_address[3])
-            if from_address == destination:
+            if from_address != destination:
+                if ignore_unexpected:
+                    continue
+                else:
+                    raise dns.query.UnexpectedSource(
+                        'got a response from %s instead of %s'
+                        % (from_address, destination))
+            try:
+                if _handle_raise_on_truncation:
+                    r = dns.message.from_wire(wire,
+                                              keyring=q.keyring,
+                                              request_mac=q.mac,
+                                              one_rr_per_rrset=one_rr_per_rrset,
+                                              ignore_trailing=ignore_trailing,
+                                              raise_on_truncation=raise_on_truncation)
+                else:
+                    r = dns.message.from_wire(wire,
+                                              keyring=q.keyring,
+                                              request_mac=q.mac,
+                                              one_rr_per_rrset=one_rr_per_rrset,
+                                              ignore_trailing=ignore_trailing)
+                if not q.is_response(r):
+                    raise dns.query.BadResponse()
                 break
-            if not ignore_unexpected:
-                raise dns.query.UnexpectedSource(
-                    'got a response from %s instead of %s'
-                    % (from_address, destination))
+            except dns.message.Truncated as e:
+                if ignore_errors and not q.is_response(e.message()):
+                    continue
+                else:
+                    raise
+            except Exception:
+                if ignore_errors:
+                    continue
+                else:
+                    raise
     finally:
         s.close()
 
-    if _handle_raise_on_truncation:
-        r = dns.message.from_wire(wire, keyring=q.keyring, request_mac=q.mac,
-                                  one_rr_per_rrset=one_rr_per_rrset,
-                                  ignore_trailing=ignore_trailing,
-                                  raise_on_truncation=raise_on_truncation)
-    else:
-        r = dns.message.from_wire(wire, keyring=q.keyring, request_mac=q.mac,
-                                  one_rr_per_rrset=one_rr_per_rrset,
-                                  ignore_trailing=ignore_trailing)
-    if not ignore_errors and not q.is_response(r):
-        raise dns.query.BadResponse()
     return r
 
 
