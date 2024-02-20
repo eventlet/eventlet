@@ -54,6 +54,9 @@ Documentation = "https://eventlet.readthedocs.io/"
 [project.optional-dependencies]
 dev = ["black", "isort", "pip-tools", "build", "twine", "pre-commit", "commitizen"]
 
+[tool.setuptools]
+packages = ['eventlet']
+
 [options.packages.find]
 where = "evenetlet"
 exclude = ["tests*", "benchmarks", "examples"]
