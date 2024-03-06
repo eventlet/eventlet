@@ -1,8 +1,10 @@
 import os
+import signal
 import sys
 import warnings
 
 
+from eventlet import backdoor
 from eventlet import convenience
 from eventlet import event
 from eventlet import greenpool
@@ -77,3 +79,21 @@ TimeoutError, exc_after, call_after_global = (
     ))
 
 os
+
+def enable_backdoor(sig, frame):
+    """ If signal USR1 is sent to an eventlet based process, this signal
+    handler will spawn an eventlet backdoor listening on localhost:3000.
+    This backdoor can be attached by using telnet and then interact
+    interactivelly with the given process. Only works on UNIX like
+    platforms.
+    """
+    spawn(backdoor.backdoor_server,
+          listen(('localhost', 3000)), locals())
+
+try:
+    signal.signal(signal.SIGUSR1, enable_backdoor)
+except:
+    # If we reach that point that mean we are not running
+    # on an UNIX environment.
+    # Let's continue and do nothing.
+    pass

@@ -1,5 +1,6 @@
 import os
 import os.path
+import signal
 import sys
 
 import eventlet
@@ -74,5 +75,19 @@ class BackdoorTest(tests.LimitedTestCase):
         client.connect(('localhost', listener.getsockname()[1]))
         client.close()
         serv.kill()
+        # wait for the console to discover that it's dead
+        eventlet.sleep(0.1)
+
+    def test_backdoor_is_created_on_signal_emit(self):
+        pid = os.getpid()
+        os.kill(int(pid), signal.SIGUSR1)
+        client = socket.socket()
+        client.connect(('localhost', 3000))
+        client.close()
+        # can still reconnect; server is running
+        client = socket.socket()
+        client.connect(('localhost', 3000))
+        client.close()
+        os.kill(int(pid), signal.SIGUSR2)
         # wait for the console to discover that it's dead
         eventlet.sleep(0.1)

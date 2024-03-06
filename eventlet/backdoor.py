@@ -1,5 +1,6 @@
 from code import InteractiveConsole
 import errno
+import signal
 import socket
 import sys
 
@@ -50,7 +51,21 @@ class SocketConsole(greenlets.greenlet):
         self.locals = locals
         # mangle the socket
         self.desc = FileProxy(desc)
+        try:
+            signal.signal(signal.SIGUSR2, self.disable_backdoor)
+        except:
+            pass
         greenlets.greenlet.__init__(self)
+
+    def disable_backdoor(self, sig, frame):
+        """ If signal USR1 is sent to an eventlet based process, this signal
+        handler will spawn an eventlet backdoor listening on localhost:3000.
+        This backdoor can be attached by using telnet and then interact
+        interactivelly with the given process. Only works on UNIX like
+        platforms.
+        """
+        self.switch_out()
+        self.finalize()
 
     def run(self):
         try:
@@ -66,7 +81,11 @@ class SocketConsole(greenlets.greenlet):
         greenlets.greenlet.switch(self, *args, **kw)
 
     def switch_out(self):
-        sys.stdin, sys.stderr, sys.stdout = self.saved
+        try:
+            sys.stdin, sys.stderr, sys.stdout = self.saved
+        except AttributeError:
+            # Thrown if nothing is saved (self.saved)
+            pass
 
     def finalize(self):
         # restore the state of the socket

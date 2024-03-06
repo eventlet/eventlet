@@ -21,5 +21,21 @@ When this is running, the backdoor is accessible via telnet to the specified por
 
 The backdoor cooperatively yields to the rest of the application between commands, so on a running server continuously serving requests, you can observe the internal state changing between interpreter commands.
 
+This backdoor can also be interactivelly created on any running eventlet based process by sending ``USR1`` `signal <https://www.man7.org/linux/man-pages/man7/signal.7.html>`_ to the process you want to attach. Only available on `UNIX like platforms <https://docs.python.org/3/library/signal.html#signal.SIGUSR1>`_.
+
+Example:
+
+.. code-block::sh
+   $ kill -e SIGUSER1 <pid>
+
+Where ``<pid>`` is the process identifier of the process you want to attachby using the backdoor. Launching backdoor this way can allow to debug production running process based on eventlet.
+
+The backdoor can be closed by sending the ``USR2`` `signal <https://www.man7.org/linux/man-pages/man7/signal.7.html>`_ to the process to which you provisouly started the backdoor, example:
+
+.. code-block::sh
+   $ kill -e SIGUSER1 <pid>
+
+Avoiding you to let run this backdoor indefinitely.
+
 .. automodule:: eventlet.backdoor
 	:members:
