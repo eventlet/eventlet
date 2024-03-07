@@ -888,12 +888,11 @@ except AttributeError:
 try:
     import ssl
     ACCEPT_EXCEPTIONS = (socket.error, ssl.SSLError)
-    ACCEPT_ERRNO = {errno.EPIPE, errno.EBADF, errno.ECONNRESET,
+    ACCEPT_ERRNO = {errno.EPIPE, errno.ECONNRESET,
                     errno.ESHUTDOWN, ssl.SSL_ERROR_EOF, ssl.SSL_ERROR_SSL}
 except ImportError:
     ACCEPT_EXCEPTIONS = (socket.error,)
-    ACCEPT_ERRNO = {errno.EPIPE, errno.EBADF, errno.ECONNRESET,
-                    errno.ESHUTDOWN}
+    ACCEPT_ERRNO = {errno.EPIPE, errno.ECONNRESET, errno.ESHUTDOWN}
 
 
 def socket_repr(sock):
@@ -1042,6 +1041,8 @@ If unsure, use eventlet.GreenPool.''')
             except ACCEPT_EXCEPTIONS as e:
                 if support.get_errno(e) not in ACCEPT_ERRNO:
                     raise
+                else:
+                    break
             except (KeyboardInterrupt, SystemExit):
                 serv.log.info('wsgi exiting')
                 break
