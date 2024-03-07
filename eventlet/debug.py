@@ -10,7 +10,8 @@ import inspect
 __all__ = ['spew', 'unspew', 'format_hub_listeners', 'format_hub_timers',
            'hub_listener_stacks', 'hub_exceptions', 'tpool_exceptions',
            'hub_prevent_multiple_readers', 'hub_timer_stacks',
-           'hub_blocking_detection']
+           'hub_blocking_detection', 'format_asyncio_info',
+           'format_threads_info']
 
 _token_splitter = re.compile(r'\W+')
 
@@ -81,6 +82,31 @@ def format_hub_listeners():
     result.append('WRITERS:')
     for l in hub.get_writers():
         result.append(repr(l))
+    return os.linesep.join(result)
+
+
+def format_asyncio_info():
+    """ Returns a formatted string of the asyncio info.
+    This can be useful in determining what's going on in the asyncio event
+    loop system, especially when used in conjunction with the asyncio hub.
+    """
+    import asyncio
+    tasks = asyncio.all_tasks()
+    result = ['TASKS:']
+    result.append(repr(tasks))
+    result.append(f'EVENTLOOP: {asyncio.events.get_event_loop()}')
+    return os.linesep.join(result)
+
+
+def format_threads_info():
+    """ Returns a formatted string of the threads info.
+    This can be useful in determining what's going on with created threads,
+    especially when used in conjunction with greenlet
+    """
+    import threading
+    threads = threading._active
+    result = ['THREADS:']
+    result.append(repr(threads))
     return os.linesep.join(result)
 
 

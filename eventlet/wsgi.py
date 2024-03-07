@@ -634,7 +634,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     write(b''.join(towrite))
                 if not headers_sent or (use_chunked[0] and just_written_size):
                     write(b'')
-            except Exception:
+            except (Exception, eventlet.Timeout):
                 self.close_connection = 1
                 tb = traceback.format_exc()
                 self.server.log.info(tb)

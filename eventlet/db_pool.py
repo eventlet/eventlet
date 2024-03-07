@@ -336,6 +336,7 @@ class GenericConnectionWrapper:
         'errno',
         'error',
         'errorhandler',
+        'get_server_info',
         'insert_id',
         'literal',
         'ping',
