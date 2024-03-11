@@ -286,10 +286,10 @@ def test_greenthread_killed_while_awaited():
     assert phases == [1, 2]
 
 
-@pytest.mark.skip_if(
+@pytest.mark.skipif(
     sys.version_info[:2] < (3, 9), reason="to_pool() is new Python 3.9"
 )
-def test_patcher_existing_locks_exception():
+def test_asyncio_to_pool():
     """
     ``asyncio.to_pool()`` works with Eventlet.
     """
