@@ -3,10 +3,12 @@ Asyncio-based hub, originally implemented by Miguel Grinberg.
 """
 
 import asyncio
+import concurrent.futures.thread
 import os
 import sys
 
 from eventlet.hubs import hub
+from eventlet.patcher import original
 
 
 def is_available():
@@ -24,6 +26,11 @@ class Hub(hub.BaseHub):
 
     def __init__(self):
         super().__init__()
+
+        # Make sure asyncio thread pools use real threads:
+        concurrent.futures.thread.threading = original("threading")
+        concurrent.futures.thread.queue = original("queue")
+
         # The presumption is that eventlet is driving the event loop, so we
         # want a new one we control.
         self.loop = asyncio.new_event_loop()

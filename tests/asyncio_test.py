@@ -2,6 +2,7 @@
 
 import asyncio
 from time import time
+import sys
 
 import pytest
 
@@ -13,6 +14,8 @@ from eventlet.hubs.asyncio import Hub as AsyncioHub
 from eventlet.asyncio import spawn_for_awaitable
 from eventlet.greenthread import getcurrent
 from .wsgi_test import _TestBase, Site
+
+import tests
 
 if not isinstance(get_hub(), AsyncioHub):
     pytest.skip("Only works on asyncio hub", allow_module_level=True)
@@ -140,6 +143,7 @@ def test_await_greenthread_success():
     """
     ``await`` on a ``GreenThread`` returns its eventual result.
     """
+
     def greenlet():
         eventlet.sleep(0.001)
         return 23
@@ -155,6 +159,7 @@ def test_await_greenthread_exception():
     """
     ``await`` on a ``GreenThread`` raises its eventual exception.
     """
+
     def greenlet():
         eventlet.sleep(0.001)
         return 1 / 0
@@ -173,6 +178,7 @@ def test_await_greenthread_success_immediate():
     """
     ``await`` on a ``GreenThread`` returns its immediate result.
     """
+
     def greenlet():
         return 23
 
@@ -187,6 +193,7 @@ def test_await_greenthread_exception_immediate():
     """
     ``await`` on a ``GreenThread`` raises its immediate exception.
     """
+
     def greenlet():
         return 1 / 0
 
@@ -204,6 +211,7 @@ def test_ensure_future():
     """
     ``asyncio.ensure_future()`` works correctly on a ``GreenThread``.
     """
+
     def greenlet():
         eventlet.sleep(0.001)
         return 27
@@ -276,3 +284,13 @@ def test_greenthread_killed_while_awaited():
 
     assert spawn_for_awaitable(go()).wait() == "canceled!"
     assert phases == [1, 2]
+
+
+@pytest.mark.skip_if(
+    sys.version_info[:2] < (3, 9), reason="to_pool() is new Python 3.9"
+)
+def test_patcher_existing_locks_exception():
+    """
+    ``asyncio.to_pool()`` works with Eventlet.
+    """
+    tests.run_isolated("asyncio_to_pool.py")
