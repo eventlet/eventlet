@@ -3,7 +3,13 @@ Asyncio-based hub, originally implemented by Miguel Grinberg.
 """
 
 import asyncio
-import concurrent.futures.thread
+try:
+    import concurrent.futures.thread
+    concurrent_imported = True
+except RuntimeError:
+    # This happens in weird edge cases where asyncio hub is started at
+    # shutdown. Not much we can do if this happens.
+    concurrent_imported = False
 import os
 import sys
 
@@ -28,8 +34,9 @@ class Hub(hub.BaseHub):
         super().__init__()
 
         # Make sure asyncio thread pools use real threads:
-        concurrent.futures.thread.threading = original("threading")
-        concurrent.futures.thread.queue = original("queue")
+        if concurrent_imported:
+            concurrent.futures.thread.threading = original("threading")
+            concurrent.futures.thread.queue = original("queue")
 
         # The presumption is that eventlet is driving the event loop, so we
         # want a new one we control.
