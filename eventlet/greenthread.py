@@ -31,7 +31,8 @@ def sleep(seconds=0):
     """
     hub = hubs.get_hub()
     current = getcurrent()
-    assert hub.greenlet is not current, 'do not call blocking functions from the mainloop'
+    if hub.greenlet is current:
+        raise RuntimeError('do not call blocking functions from the mainloop')
     timer = hub.schedule_call_global(seconds, current.switch)
     try:
         hub.switch()
