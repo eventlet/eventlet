@@ -392,6 +392,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             self.handle_one_request()
             if self.conn_state[2] == STATE_CLOSE:
                 self.close_connection = 1
+            else:
+                self.conn_state[2] = STATE_IDLE
             if self.close_connection:
                 break
 
@@ -424,6 +426,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             self.protocol_version = self.server.max_http_version
 
         self.raw_requestline = self._read_request_line()
+        self.conn_state[2] = STATE_REQUEST
         if not self.raw_requestline:
             self.close_connection = 1
             return
@@ -767,6 +770,12 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             chunked_input=chunked)
         env['eventlet.posthooks'] = []
 
+        # WebSocketWSGI needs a way to flag the connection as idle,
+        # since it may never fall out of handle_one_request
+        def set_idle():
+            self.conn_state[2] = STATE_IDLE
+        env['eventlet.set_idle'] = set_idle
+
         return env
 
     def finish(self):
@@ -879,12 +888,11 @@ except AttributeError:
 try:
     import ssl
     ACCEPT_EXCEPTIONS = (socket.error, ssl.SSLError)
-    ACCEPT_ERRNO = {errno.EPIPE, errno.EBADF, errno.ECONNRESET,
+    ACCEPT_ERRNO = {errno.EPIPE, errno.ECONNRESET,
                     errno.ESHUTDOWN, ssl.SSL_ERROR_EOF, ssl.SSL_ERROR_SSL}
 except ImportError:
     ACCEPT_EXCEPTIONS = (socket.error,)
-    ACCEPT_ERRNO = {errno.EPIPE, errno.EBADF, errno.ECONNRESET,
-                    errno.ESHUTDOWN}
+    ACCEPT_ERRNO = {errno.EPIPE, errno.ECONNRESET, errno.ESHUTDOWN}
 
 
 def socket_repr(sock):
@@ -1033,6 +1041,8 @@ If unsure, use eventlet.GreenPool.''')
             except ACCEPT_EXCEPTIONS as e:
                 if support.get_errno(e) not in ACCEPT_ERRNO:
                     raise
+                else:
+                    break
             except (KeyboardInterrupt, SystemExit):
                 serv.log.info('wsgi exiting')
                 break
