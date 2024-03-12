@@ -7,7 +7,7 @@ following.**
 Eventlet was created almost 18 years ago, at a time where async
 features were absent from the CPython stdlib. With time eventlet evolved and
 CPython too, but since several years the maintenance activity of eventlet
-dicreased leading to a growing gap between eventlet and the CPython
+decreased leading to a growing gap between eventlet and the CPython
 implementation.
 
 This gap is now too high and can lead you to unexpected side effects and bugs
