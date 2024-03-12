@@ -132,6 +132,10 @@ class WebSocketWSGI:
                            [('Connection', 'close'), ] + headers)
             return [body]
 
+        # We're ready to switch protocols; flag the connection
+        # as idle to play well with a graceful stop
+        environ['eventlet.set_idle']()
+
         try:
             self.handler(ws)
         except OSError as e:
