@@ -7,6 +7,7 @@ import os
 import sys
 
 from eventlet.hubs import hub
+from eventlet.patcher import original
 
 
 def is_available():
@@ -24,6 +25,10 @@ class Hub(hub.BaseHub):
 
     def __init__(self):
         super().__init__()
+        # Make sure select/poll/epoll/kqueue are usable by asyncio:
+        import selectors
+        selectors.select = original("select")
+
         # The presumption is that eventlet is driving the event loop, so we
         # want a new one we control.
         self.loop = asyncio.new_event_loop()
