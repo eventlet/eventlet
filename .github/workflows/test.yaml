@@ -6,7 +6,7 @@ on:
     - cron: "43 7 */14 * *" # every two weeks, time chosen by RNG
 jobs:
   tox:
-    name: "tox ${{ matrix.toxenv }}"
+    name: "tox ${{ matrix.toxenv }} ${{ matrix.os }}"
     continue-on-error: ${{ matrix.ignore-error }}
     runs-on: ${{ matrix.os }}
     # https://github.community/t/duplicate-checks-on-push-and-pull-request-simultaneous-event/18012/5
@@ -50,11 +50,15 @@ jobs:
           - { py: "3.10", toxenv: py310-asyncio, ignore-error: false, os: ubuntu-latest }
           - { py: "3.11", toxenv: py311-asyncio, ignore-error: false, os: ubuntu-latest }
           - { py: "3.12", toxenv: py312-asyncio, ignore-error: false, os: ubuntu-latest }
+          - { py: "3.12", toxenv: py312-asyncio, ignore-error: false, os: macos-latest }
+          - { py: "3.12", toxenv: py312-kqueue, ignore-error: false, os: macos-latest }
           - { py: pypy3.9, toxenv: pypy3-epolls, ignore-error: true, os: ubuntu-20.04 }
 
     steps:
       - name: install system packages
         run: sudo apt install -y --no-install-recommends ccache libffi-dev default-libmysqlclient-dev libpq-dev libssl-dev libzmq3-dev
+        if: startsWith(matrix.os, 'ubuntu')
+
       - uses: actions/checkout@v3
 
       - name: cache pip
