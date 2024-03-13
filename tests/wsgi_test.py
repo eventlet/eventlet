@@ -2025,7 +2025,10 @@ class TestHttpd(_TestBase):
         self.assertEqual('/foo-bar', result.headers_lower['x-path'])
         eventlet.sleep(0)
 
-        listen_sock.shutdown(socket.SHUT_RDWR)
+        if sys.platform != "darwin":
+            # On macOS this raises exception for some reason:
+            listen_sock.shutdown(socket.SHUT_RDWR)
+
         eventlet.sleep(0)
         listen_sock.close()
         eventlet.sleep(0)
@@ -2058,7 +2061,10 @@ class TestHttpd(_TestBase):
         sock.sendall(method_and_headers.encode('utf8'))
         eventlet.sleep(0)
 
-        listen_sock.shutdown(socket.SHUT_RDWR)
+        if sys.platform != "darwin":
+            # On macOS this raises exception for some reason:
+            listen_sock.shutdown(socket.SHUT_RDWR)
+
         eventlet.sleep(0)
         listen_sock.close()
         eventlet.sleep(0)
