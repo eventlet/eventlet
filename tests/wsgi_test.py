@@ -842,9 +842,9 @@ class TestHttpd(_TestBase):
         # Client may still try to send the body
         fd.write(b'x' * 25)
         fd.flush()
-        # But if they keep using this socket, it's going to close on them eventually
-        fd.write(b'x' * 25)
         with self.assertRaises(socket.error) as caught:
+            # But if they keep using this socket, it's going to close on them eventually
+            fd.write(b'x' * 2500000)
             fd.flush()
         self.assertEqual(caught.exception.errno, errno.EPIPE)
         sock.close()
