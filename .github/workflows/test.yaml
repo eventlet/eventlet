@@ -50,11 +50,9 @@ jobs:
           - { py: "3.10", toxenv: py310-asyncio, ignore-error: false, os: ubuntu-latest }
           - { py: "3.11", toxenv: py311-asyncio, ignore-error: false, os: ubuntu-latest }
           - { py: "3.12", toxenv: py312-asyncio, ignore-error: false, os: ubuntu-latest }
-          - { py: "3.12", toxenv: py312-asyncio, ignore-error: false, os: macos-latest }
-          - { py: "3.12", toxenv: py312-kqueue, ignore-error: false, os: macos-latest }
           - { py: pypy3.9, toxenv: pypy3-epolls, ignore-error: true, os: ubuntu-20.04 }
 
-    steps:
+    steps: &tox-steps
       - name: install system packages
         run: sudo apt install -y --no-install-recommends ccache libffi-dev default-libmysqlclient-dev libpq-dev libssl-dev libzmq3-dev
         if: startsWith(matrix.os, 'ubuntu')
@@ -89,3 +87,19 @@ jobs:
         run: tox --verbose --verbose -e ${{ matrix.toxenv }}
       - name: codecov
         run: codecov --flags=$(echo ${{ matrix.toxenv }} |tr -d -- '-.')
+
+  tox-macos:
+    name: "tox ${{ matrix.toxenv }} ${{ matrix.os }}"
+    continue-on-error: ${{ matrix.ignore-error }}
+    runs-on: ${{ matrix.os }}
+    # https://github.community/t/duplicate-checks-on-push-and-pull-request-simultaneous-event/18012/5
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != 'eventlet/eventlet'
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { py: "3.12", toxenv: py312-asyncio, ignore-error: false, os: macos-latest }
+          - { py: "3.12", toxenv: py312-kqueue, ignore-error: false, os: macos-latest }
+
+    steps: *tox-steps
