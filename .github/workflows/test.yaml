@@ -52,13 +52,11 @@ jobs:
           - { py: "3.12", toxenv: py312-asyncio, ignore-error: false, os: ubuntu-latest }
           - { py: pypy3.9, toxenv: pypy3-epolls, ignore-error: true, os: ubuntu-20.04 }
 
-    steps: &tox-steps
+    steps:
       - name: install system packages
         run: sudo apt install -y --no-install-recommends ccache libffi-dev default-libmysqlclient-dev libpq-dev libssl-dev libzmq3-dev
-        if: startsWith(matrix.os, 'ubuntu')
 
       - uses: actions/checkout@v3
-
       - name: cache pip
         uses: actions/cache@v3
         with:
@@ -102,4 +100,12 @@ jobs:
           - { py: "3.12", toxenv: py312-asyncio, ignore-error: false, os: macos-latest }
           - { py: "3.12", toxenv: py312-kqueue, ignore-error: false, os: macos-latest }
 
-    steps: *tox-steps
+    steps:
+      - uses: actions/checkout@v3
+      - name: install codecov, tox
+        run: pip install codecov tox
+      - run: env
+      - name: run tests
+        run: tox --verbose --verbose -e ${{ matrix.toxenv }}
+      - name: codecov
+        run: codecov --flags=$(echo ${{ matrix.toxenv }} |tr -d -- '-.')
