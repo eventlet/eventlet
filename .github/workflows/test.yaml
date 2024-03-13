@@ -55,8 +55,8 @@ jobs:
     steps:
       - name: install system packages
         run: sudo apt install -y --no-install-recommends ccache libffi-dev default-libmysqlclient-dev libpq-dev libssl-dev libzmq3-dev
-      - uses: actions/checkout@v3
 
+      - uses: actions/checkout@v3
       - name: cache pip
         uses: actions/cache@v3
         with:
@@ -78,6 +78,33 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.py }}
+      - name: install codecov, tox
+        run: pip install codecov tox
+      - run: env
+      - name: run tests
+        run: tox --verbose --verbose -e ${{ matrix.toxenv }}
+      - name: codecov
+        run: codecov --flags=$(echo ${{ matrix.toxenv }} |tr -d -- '-.')
+
+  tox-macos:
+    name: "macOS tox ${{ matrix.toxenv }}"
+    continue-on-error: ${{ matrix.ignore-error }}
+    runs-on: ${{ matrix.os }}
+    # https://github.community/t/duplicate-checks-on-push-and-pull-request-simultaneous-event/18012/5
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != 'eventlet/eventlet'
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { py: "3.12", toxenv: py312-asyncio, ignore-error: false, os: macos-latest }
+          # This isn't working very well at the moment, but that might just be
+          # tox config? In any case main focus is on asyncio so someone can
+          # revisit separately.
+          #- { py: "3.12", toxenv: py312-kqueue, ignore-error: false, os: macos-latest }
+
+    steps:
+      - uses: actions/checkout@v3
       - name: install codecov, tox
         run: pip install codecov tox
       - run: env
