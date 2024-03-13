@@ -287,10 +287,10 @@ def test_greenthread_killed_while_awaited():
 
 
 @pytest.mark.skipif(
-    sys.version_info[:2] < (3, 9), reason="to_pool() is new Python 3.9"
+    sys.version_info[:2] < (3, 9), reason="to_thread() is new Python 3.9"
 )
-def test_asyncio_to_pool():
+def test_asyncio_to_thread():
     """
-    ``asyncio.to_pool()`` works with Eventlet.
+    ``asyncio.to_thread()`` works with Eventlet.
     """
-    tests.run_isolated("asyncio_to_pool.py")
+    tests.run_isolated("asyncio_to_thread.py")

@@ -76,7 +76,7 @@ The code would presumably be similar to https://github.com/gfmio/asyncio-gevent/
 ### 4. Limitations and potential unexpected behavior
 
 ``concurrent.futures.thread`` just uses normal threads, not Eventlet's special threads.
-Similarly, ``asyncio.to_pool()`` specifically requires regular blocking code, it won't work correctly with Eventlet code.
+Similarly, ``asyncio.to_thread()`` specifically requires regular blocking code, it won't work correctly with Eventlet code.
 
 ## Part 2: How a port would work on a technical level
 
