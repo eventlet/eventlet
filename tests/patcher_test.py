@@ -514,7 +514,10 @@ def test_threadpoolexecutor():
     tests.run_isolated('patcher_threadpoolexecutor.py')
 
 
-@pytest.mark.skipif(not sys.platform.startswith("linux"), reason="fork() doesn't work well on macOS, and definitely doesn't work on Windows")
+@pytest.mark.skipif(
+    not sys.platform.startswith("linux"),
+    reason="fork() doesn't work well on macOS, and definitely doesn't work on Windows"
+)
 def test_fork_after_monkey_patch():
     tests.run_isolated('patcher_fork_after_monkey_patch.py')
 
