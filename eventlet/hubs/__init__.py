@@ -71,7 +71,8 @@ def use_hub(mod=None):
 
     classname = ''
     if isinstance(mod, str):
-        assert mod.strip(), "Need to specify a hub"
+        if mod.strip() == "":
+            raise RuntimeError("Need to specify a hub")
         if '.' in mod or ':' in mod:
             modulename, _, classname = mod.strip().partition(':')
         else:
@@ -134,9 +135,10 @@ def trampoline(fd, read=None, write=None, timeout=None,
     t = None
     hub = get_hub()
     current = greenlet.getcurrent()
-    assert hub.greenlet is not current, 'do not call blocking functions from the mainloop'
-    assert not (
-        read and write), 'not allowed to trampoline for reading and writing'
+    if hub.greenlet is current:
+        raise RuntimeError('do not call blocking functions from the mainloop')
+    if (read and write):
+        raise RuntimeError('not allowed to trampoline for reading and writing')
     try:
         fileno = fd.fileno()
     except AttributeError:
