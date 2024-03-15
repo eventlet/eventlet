@@ -41,6 +41,11 @@ class Hub(hub.BaseHub):
         import selectors
         selectors.select = original("select")
 
+        # Make sure DNS lookups use normal blocking API (which asyncio will run
+        # in a thread):
+        import asyncio.base_events
+        asyncio.base_events.socket = original("socket")
+
         # The presumption is that eventlet is driving the event loop, so we
         # want a new one we control.
         self.loop = asyncio.new_event_loop()

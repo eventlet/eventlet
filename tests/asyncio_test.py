@@ -2,6 +2,7 @@
 
 import asyncio
 from time import time
+import socket
 import sys
 
 import pytest
@@ -13,6 +14,7 @@ from eventlet.hubs import get_hub
 from eventlet.hubs.asyncio import Hub as AsyncioHub
 from eventlet.asyncio import spawn_for_awaitable
 from eventlet.greenthread import getcurrent
+from eventlet.support import greendns
 from .wsgi_test import _TestBase, Site
 
 import tests
@@ -294,3 +296,11 @@ def test_asyncio_to_thread():
     ``asyncio.to_thread()`` works with Eventlet.
     """
     tests.run_isolated("asyncio_to_thread.py")
+
+
+def test_asyncio_does_not_use_greendns(monkeypatch):
+    """
+    ``asyncio`` loops' ``getaddrinfo()`` and ``getnameinfo()`` do not use green
+    DNS.
+    """
+    tests.run_isolated("asyncio_dns.py")
