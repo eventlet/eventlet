@@ -83,6 +83,10 @@ Cancellation of ``asyncio.Future`` and killing of ``eventlet.GreenThread`` shoul
 Using these two APIs, with more to come, you can gradually migrate portions of your application or library to ``asyncio``.
 Calls to blocking APIs like ``urlopen()`` or ``requests.get()`` can get replaced with calls to ``aiohttp``, for example.
 
+The `awesome-asyncio <https://github.com/timofurrer/awesome-asyncio>`_ github repository propose a curated list of awesome
+Python asyncio frameworks, libraries, software and resources. Do not hesitate to take a look at it. You may find
+candidates compatible with asyncio that can allow you to replace some of your actual underlying libraries.
+
 
 Step 3. Drop Eventlet altogether
 --------------------------------
