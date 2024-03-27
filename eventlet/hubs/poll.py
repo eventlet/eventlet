@@ -1,5 +1,6 @@
 import errno
 import sys
+import warnings
 
 from eventlet import patcher, support
 from eventlet.hubs import hub
@@ -12,12 +13,31 @@ def is_available():
 
 
 class Hub(hub.BaseHub):
+    """
+    .. warning::
+        The eventlet poll hub is now deprecated and will be removed.
+        Users should begin planning a migration from eventlet to asyncio.
+        Users are encouraged to switch to the eventlet asyncio hub in
+        order to start this migration.
+        Please find more details at https://eventlet.readthedocs.io/en/latest/migration.html
+    """
     def __init__(self, clock=None):
         super().__init__(clock)
         self.EXC_MASK = select.POLLERR | select.POLLHUP
         self.READ_MASK = select.POLLIN | select.POLLPRI
         self.WRITE_MASK = select.POLLOUT
         self.poll = select.poll()
+
+        warnings.warn(
+            """
+            ACTION REQUIRED: The eventlet poll hub is now deprecated and will be removed.
+            Users should begin planning a migration from eventlet to asyncio.
+            Users are encouraged to switch to the eventlet asyncio hub in
+            order to start this migration.
+            Please find more details at https://eventlet.readthedocs.io/en/latest/migration.html
+            """,
+            DeprecationWarning,
+        )
 
     def add(self, evtype, fileno, cb, tb, mac):
         listener = super().add(evtype, fileno, cb, tb, mac)
