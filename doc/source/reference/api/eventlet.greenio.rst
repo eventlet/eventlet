@@ -12,14 +12,6 @@ eventlet.greenio.base module
    :undoc-members:
    :show-inheritance:
 
-eventlet.greenio.py2 module
----------------------------
-
-.. automodule:: eventlet.greenio.py2
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 eventlet.greenio.py3 module
 ---------------------------
 

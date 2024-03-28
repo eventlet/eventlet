@@ -1,3 +1,5 @@
+.. _testing-eventlet:
+
 Testing Eventlet
 ================
 
