@@ -1,11 +1,23 @@
 Maintainer (i.e., Who To Hassle If You Find Bugs)
 -------------------------------------------------
-Jakub Stasiak
-Nat Goodspeed
 
 The current maintainer(s) are volunteers with unrelated jobs.
 We can only pay sporadic attention to responding to your issue and pull request submissions.
 Your patience is greatly appreciated!
+
+Active maintainers
+~~~~~~~~~~~~~~~~~~
+
+* Itamar Turner-Trauring https://github.com/itamarst
+* Tim Burke https://github.com/tipabu
+* Hervé Beraud https://github.com/4383
+
+Less active maintainers
+~~~~~~~~~~~~~~~~~~~~~~~
+
+* Sergey Shepelev https://github.com/temoto
+* Jakub Stasiak https://github.com/jstasiak
+* Nat Goodspeed https://github.com/nat-goodspeed
 
 Original Authors
 ----------------

@@ -44,6 +44,14 @@ eventlet.hubs.poll module
    :undoc-members:
    :show-inheritance:
 
+eventlet.hubs.pyevent module
+----------------------------
+
+.. automodule:: eventlet.hubs.pyevent
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 eventlet.hubs.selects module
 ----------------------------
 

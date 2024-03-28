@@ -1,17 +1,20 @@
+.. _maintenance_process:
+
 Maintenance Process
-===================
+###################
 
 This section provide guidances and process to eventlet
-maintainers. They are useful to lead the life cycle of eventlet.
+maintainers. They are mostly dedicated to Eventlet' core maintainers lead the
+life cycle of eventlet.
 
 Releases
---------
+========
 
 Here we describe the process we usually follow to
 process a new release.
 
 1. Create a github issue to track the release
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------------------------
 
 The first step will be to `open a new github issue`_
 to warn other maintainers about our intention
@@ -28,7 +31,7 @@ Please add the `release` label to this issue. It would
 ease the tracking of works related to releases.
 
 2. Prepare the changelog
-~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------
 
 You now have to update the changelog by updating
 the `NEWS` file available at the root of eventlet the project.
@@ -47,7 +50,7 @@ If you want, you can use the issue previously created to list
 each commits landed in this new version. Here is an example https://github.com/eventlet/eventlet/issues/897.
 
 3. Create the tag
-~~~~~~~~~~~~~~~~~
+-----------------
 
 Once the changelog patch is merged, then we are now
 able to produce the new corresponding tag, here are the
@@ -66,7 +69,7 @@ You can simply reuse the changelog you made previously.
 Alternatively, the Github UI also allow you creating tags.
 
 4. Final checks
-~~~~~~~~~~~~~~~
+---------------
 
 Pushing the previous will produce a new build. This
 build will generate our release and will push this
@@ -78,7 +81,7 @@ well available on Pypi https://pypi.org/project/eventlet/#history.
 Your tag should be listed there https://github.com/eventlet/eventlet/tags.
 
 5. Close the issue
-~~~~~~~~~~~~~~~~~~
+------------------
 
 If the previous steps were successful, then you can
 now update the Github issue that you previously created.
