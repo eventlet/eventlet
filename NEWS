@@ -1,6 +1,11 @@
 Unreleased
 ==========
 
+0.36.1
+======
+
+* [fix] eventlet.websocket is not always used from eventlet.wsgi, so do not assume eventlet.set_idle exists https://github.com/eventlet/eventlet/pull/949
+
 0.36.0
 ======
 
