@@ -12,15 +12,16 @@ Eventlet has multiple hub implementations, and when you start using it, it tries
     | By using this hub, Asyncio and Eventlet can be run the same thread in the same process.
     | We discourage new Eventlet projects.
     | We encourage existing Eventlet projects to migrate from Eventlet to Asyncio.
+    | We encourage using this hub at runtime.
     | This hub allow you incremental and smooth migration.
     | See the `migration guide <https://eventlet.readthedocs.io/en/latest/migration.html>`_ for further details.
-**epolls**
+**(DEPRECATED) epolls**
     Linux. This is the fastest hub for Linux.
-**kqueue**
+**(DEPRECATED) kqueue**
     FreeBSD and Mac OSX. Fastest hub for OS with kqueue.
-**poll**
+**(DEPRECATED) poll**
     On platforms that support it.
-**selects**
+**(DEPRECATED) selects**
     Lowest-common-denominator, available everywhere.
 
 The only non-pure Python, pyevent hub (using libevent) was removed because it was not maintained. You are warmly welcome to contribute fast hub implementation using Cython, CFFI or other technology of your choice.
