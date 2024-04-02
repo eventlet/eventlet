@@ -13,7 +13,8 @@ Eventlet has multiple hub implementations, and when you start using it, it tries
     | We discourage new Eventlet projects.
     | We encourage existing Eventlet projects to migrate from Eventlet to Asyncio.
     | This hub allow you incremental and smooth migration.
-    | See the `migration guide <https://eventlet.readthedocs.io/en/latest/migration.html>`_ for further details.
+    | See the :ref:`migration-guide` for further details.
+    | See the :ref:`asyncio-compatibility` for the current state of the art.
 **epolls**
     Linux. This is the fastest hub for Linux.
 **kqueue**

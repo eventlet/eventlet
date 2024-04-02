@@ -144,14 +144,6 @@ eventlet.semaphore module
    :undoc-members:
    :show-inheritance:
 
-eventlet.temp module
---------------------
-
-.. automodule:: eventlet.temp
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 eventlet.timeout module
 -----------------------
 
