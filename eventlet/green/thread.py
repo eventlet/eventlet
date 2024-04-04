@@ -32,9 +32,12 @@ def _count():
 
 
 def get_ident(gr=None):
-    if gr is None:
-        return id(greenlet.getcurrent())
-    else:
+    try:
+        if gr is None:
+            return id(greenlet.getcurrent())
+        else:
+            return id(gr)
+    except:
         return id(gr)
 
 
