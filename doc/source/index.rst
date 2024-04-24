@@ -113,7 +113,7 @@ Changelog
 =========
 
 For further details about released versions of Eventlet please take a
-look at the :ref:`changelog`.
+look at the `changelog`_.
 
 Authors & History
 =================
@@ -130,4 +130,7 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-* :ref:`changelog`
+* `changelog`_
+
+
+.. _changelog: https://github.com/eventlet/eventlet/blob/master/NEWS
