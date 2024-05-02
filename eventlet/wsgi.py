@@ -748,6 +748,9 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
         env['headers_raw'] = headers_raw = tuple((k, v.strip(' \t\n\r')) for k, v in headers)
         for k, v in headers_raw:
+            if "_" in k:
+                continue
+
             k = k.replace('-', '_').upper()
             if k in ('CONTENT_TYPE', 'CONTENT_LENGTH'):
                 # These do not get the HTTP_ prefix and were handled above
