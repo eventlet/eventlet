@@ -706,6 +706,23 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 host = forward + ',' + host
         return (host, port)
 
+    def formalize_key_naming(self, k):
+        """
+        Headers containing underscores are permitted by RFC9110,
+        but evenlet joining headers of different names into
+        the same environment variable will dangerously confuse applications as to which is which.
+        Cf.
+            - Nginx: http://nginx.org/en/docs/http/ngx_http_core_module.html#underscores_in_headers
+            - Django: https://www.djangoproject.com/weblog/2015/jan/13/security/
+            - Gunicorn: https://github.com/benoitc/gunicorn/commit/72b8970dbf2bf3444eb2e8b12aeff1a3d5922a9a
+            - Werkzeug: https://github.com/pallets/werkzeug/commit/5ee439a692dc4474e0311de2496b567eed2d02cf
+            - ...
+        """
+        if "_" in k:
+            return
+
+        return k.replace('-', '_').upper()
+
     def get_environ(self):
         env = self.server.get_environ()
         env['REQUEST_METHOD'] = self.command
@@ -748,7 +765,10 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
         env['headers_raw'] = headers_raw = tuple((k, v.strip(' \t\n\r')) for k, v in headers)
         for k, v in headers_raw:
-            k = k.replace('-', '_').upper()
+            k = self.formalize_key_naming(k)
+            if not k:
+                continue
+
             if k in ('CONTENT_TYPE', 'CONTENT_LENGTH'):
                 # These do not get the HTTP_ prefix and were handled above
                 continue

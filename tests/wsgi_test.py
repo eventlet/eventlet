@@ -1924,8 +1924,8 @@ class TestHttpd(_TestBase):
         result = read_http(sock)
         sock.close()
         assert result.status == 'HTTP/1.1 200 OK', 'Received status {!r}'.format(result.status)
-        assert result.body == (b'HTTP_HOST: localhost\nHTTP_HTTP_X_ANY_K: two\n'
-                               b'HTTP_PATH_INFO: foo\nHTTP_X_ANY_K: one\n')
+        assert result.body == (b'HTTP_HOST: localhost\n'
+                               b'HTTP_PATH_INFO: foo\n')
 
     def test_env_header_stripping(self):
         def app(environ, start_response):
