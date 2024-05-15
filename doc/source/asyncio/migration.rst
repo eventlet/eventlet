@@ -98,19 +98,26 @@ At this point you can drop Eventlet and switch to running the ``asyncio`` loop d
 Known limitations and work in progress
 --------------------------------------
 
-In general, ``async`` functions and Eventlet green threads are two separate universes that just happen to be able to call each other.
+In general, ``async`` functions and Eventlet green threads are two separate
+universes that just happen to be able to call each other.
+
 In ``async`` functions:
 
 * Eventlet thread locals probably won't work correctly.
 * ``evenlet.greenthread.getcurrent()`` won't give the result you expect.
 * ``eventlet`` locks and queues won't work if used directly.
+* Eventlet multiple readers are not supported, and so using
+  ``eventtlet.debug.hub_prevent_multiple_readers`` neither.
 
 In Eventlet greenlets:
 
 * ``asyncio`` locks won't work if used directly.
 
-We expect to add more migration and integration APIs over time as we learn more about what works, common idioms, and requirements for migration.
-You can track progress in the `GitHub issue <https://github.com/eventlet/eventlet/issues/868>`_, and file new issues if you have problems.
+We expect to add more migration and integration APIs over time as we learn
+more about what works, common idioms, and requirements for migration.
+You can track progress in the
+`GitHub issue <https://github.com/eventlet/eventlet/issues/868>`_, and file
+new issues if you have problems.
 
 
 Alternatives
