@@ -150,8 +150,24 @@ def hub_prevent_multiple_readers(state=True):
     to predict which greenlet will receive what data.  To achieve
     resource sharing consider using ``eventlet.pools.Pool`` instead.
 
-    But if you really know what you are doing you can change the state
-    to ``False`` to stop the hub from protecting against this mistake.
+    It is important to note that this feature is a debug
+    convenience. That's not a feature made to be integrated in a production
+    code in some sort.
+
+    **If you really know what you are doing** you can change the state
+    to ``False`` to stop the hub from protecting against this mistake. Else
+    we strongly discourage using this feature, or you should consider using it
+    really carefully.
+
+    You should be aware that disabling this prevention will be applied to
+    your entire stack and not only to the context where you may find it useful,
+    meaning that using this debug feature may have several significant
+    unexpected side effects on your process, which could cause race conditions
+    between your sockets and on all your I/O in general.
+
+    You should also notice that this debug convenience is not supported
+    by the Asyncio hub, which is the official plan for migrating off of
+    eventlet. Using this feature will lock your migration path.
     """
     from eventlet.hubs import hub, get_hub
     from eventlet.hubs import asyncio
