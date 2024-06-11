@@ -51,7 +51,7 @@ jobs:
           - { py: "3.12", toxenv: py312-epolls, ignore-error: false, os: ubuntu-latest }
           - { py: "3.12", toxenv: py312-asyncio, ignore-error: false, os: ubuntu-latest }
           - { py: "3.13.0-beta.2", toxenv: py313-epolls, ignore-error: false, os: ubuntu-24.04 }
-          - { py: " 3.13.0-beta.2", toxenv: py313-asyncio, ignore-error: false, os: ubuntu-24.04 }
+          - { py: "3.13.0-beta.2", toxenv: py313-asyncio, ignore-error: false, os: ubuntu-24.04 }
           - { py: pypy3.9, toxenv: pypy3-epolls, ignore-error: true, os: ubuntu-20.04 }
 
     steps:
