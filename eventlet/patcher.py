@@ -274,8 +274,8 @@ def monkey_patch(**on):
             on.setdefault(modname, False)
         on.setdefault(modname, default_on)
 
-    if on['thread'] and not already_patched.get('thread'):
-        _green_existing_locks()
+    import threading
+    original_rlock_type = type(threading.RLock())
 
     modules_to_patch = []
     for name, modules_function in [
@@ -362,6 +362,10 @@ def monkey_patch(**on):
     import queue
     queue.SimpleQueue = queue._PySimpleQueue
 
+    # Green existing locks _after_ patching modules, since patching modules
+    # might involve imports that create new locks:
+    _green_existing_locks(original_rlock_type)
+
 
 def is_monkey_patched(module):
     """Returns True if the given module is monkeypatched currently, False if
@@ -375,7 +379,7 @@ def is_monkey_patched(module):
         getattr(module, '__name__', None) in already_patched
 
 
-def _green_existing_locks():
+def _green_existing_locks(rlock_type):
     """Make locks created before monkey-patching safe.
 
     RLocks rely on a Lock and on Python 2, if an unpatched Lock blocks, it
@@ -384,9 +388,7 @@ def _green_existing_locks():
     This was originally noticed in the stdlib logging module."""
     import gc
     import os
-    import threading
     import eventlet.green.thread
-    rlock_type = type(threading.RLock())
 
     # We're monkey-patching so there can't be any greenlets yet, ergo our thread
     # ID is the only valid owner possible.
@@ -410,12 +412,26 @@ def _green_existing_locks():
     gc.collect()
     remaining_rlocks = len({o for o in gc.get_objects() if isinstance(o, rlock_type)})
     if remaining_rlocks:
+        try:
+            import _frozen_importlib
+        except ImportError:
+            pass
+        else:
+            for o in gc.get_objects():
+                # This can happen in Python 3.12, at least, if monkey patch
+                # happened as side-effect of importing a module.
+                if not isinstance(o, rlock_type):
+                    continue
+                if _frozen_importlib._ModuleLock in map(type, gc.get_referrers(o)):
+                    remaining_rlocks -= 1
+                del o
+
+    if remaining_rlocks:
         import logging
         logger = logging.Logger("eventlet")
         logger.error("{} RLock(s) were not greened,".format(remaining_rlocks) +
                      " to fix this error make sure you run eventlet.monkey_patch() " +
                      "before importing any other modules.")
-
 
 def _upgrade_instances(container, klass, upgrade, visited=None, old_to_new=None):
     """
