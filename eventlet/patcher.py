@@ -433,6 +433,7 @@ def _green_existing_locks(rlock_type):
                      " to fix this error make sure you run eventlet.monkey_patch() " +
                      "before importing any other modules.")
 
+
 def _upgrade_instances(container, klass, upgrade, visited=None, old_to_new=None):
     """
     Starting with a Python object, find all instances of ``klass``, following
