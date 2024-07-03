@@ -27,3 +27,15 @@ Want to use Asyncio and Eventlet together or you simply want to migrate
 off of Eventlet?
 
 Follow the :ref:`official migration guide <migration-guide>`.
+
+We encourage readers to first look at the :ref:`glossary_guide` to
+learn about the various terms that may be encountered during the migration.
+
+Alternatives & Tips
+-------------------
+
+You want to refactor your code to replace Eventlet usages? See the proposed
+alternatives and tips:
+
+- :ref:`awaitlet_alternative`
+- :ref:`manage-your-deprecations`

@@ -104,12 +104,15 @@ your application or library to ``asyncio``.
 Calls to blocking APIs like ``urlopen()`` or ``requests.get()`` can get
 replaced with calls to ``aiohttp``, for example.
 
+Depending on your Eventlet usage, during your migration, you may have to
+deprecate CLI options that are related to Eventlet, we invite the reader
+to take a look to :ref:`manage-your-deprecations`.
+
 The `awesome-asyncio <https://github.com/timofurrer/awesome-asyncio>`_ github
-repository propose a curated list of awesome
-Python asyncio frameworks, libraries, software and resources. Do not hesitate
-to take a look at it. You may find
-candidates compatible with asyncio that can allow you to replace some of your
-actual underlying libraries.
+repository propose a curated list of awesome Python asyncio frameworks,
+libraries, software and resources. Do not hesitate to take a look at it.
+You may find candidates compatible with asyncio that can allow you to replace
+some of your actual underlying libraries.
 
 Step 3. Drop Eventlet altogether
 --------------------------------
