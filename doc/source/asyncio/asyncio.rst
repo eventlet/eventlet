@@ -23,6 +23,35 @@ You may also want to take a look to the
 Migrating from Eventlet to Asyncio
 ==================================
 
+Why Migrating?
+--------------
+
+Eventlet is a broken and outdated technology.
+
+Eventlet was created almost 20 years ago (See the :ref:`history` of Eventlet),
+at a time where Python did not provided non-blocking features.
+
+Time passed and Python now provide AsyncIO.
+
+In parallel of the evolution of Python, the maintenance of Eventlet was
+discontinued during several versions of Python, increasing the gap between
+the monkey patching of Eventlet and the recent implementation of Python.
+
+This gap is now not recoverable. For this reason, we decided to officially
+abandon the maintenance of Eventlet in an incremental way.
+
+In a last effort, we want to lead Eventlet to a well deserved rest.
+Our goal is to provide you a guide to migrate off of Eventlet and then
+to properly retire Eventlet.
+
+For more details about the reasons who motivated this effort we invite the
+readers to show the discussions related to this scheduled abandon:
+
+https://review.opendev.org/c/openstack/governance/+/902585
+
+Getting Started
+---------------
+
 Want to use Asyncio and Eventlet together or you simply want to migrate
 off of Eventlet?
 
