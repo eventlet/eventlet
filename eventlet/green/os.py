@@ -1,6 +1,7 @@
 os_orig = __import__("os")
 import errno
 socket = __import__("socket")
+from stat import S_ISREG
 
 from eventlet import greenio
 from eventlet.support import get_errno
@@ -38,6 +39,15 @@ def read(fd, n):
 
     Read a file descriptor."""
     while True:
+        # don't wait to read for regular files
+        # select/poll will always return True while epoll will simply crash
+        st_mode = os_orig.stat(fd).st_mode
+        if not S_ISREG(st_mode):
+            try:
+                hubs.trampoline(fd, read=True)
+            except hubs.IOClosed:
+                return ''
+
         try:
             return __original_read__(fd, n)
         except OSError as e:
@@ -45,10 +55,6 @@ def read(fd, n):
                 return ''
             if get_errno(e) != errno.EAGAIN:
                 raise
-        try:
-            hubs.trampoline(fd, read=True)
-        except hubs.IOClosed:
-            return ''
 
 
 __original_write__ = os_orig.write

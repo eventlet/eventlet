@@ -1,4 +1,5 @@
 import eventlet
+import tests
 
 
 def test_pathlib_open_issue_534():
@@ -7,3 +8,7 @@ def test_pathlib_open_issue_534():
     with path.open():
         # should not raise
         pass
+
+
+def test_os_read_nonblocking():
+    tests.run_isolated('os_read_nonblocking.py')
