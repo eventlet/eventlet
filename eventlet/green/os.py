@@ -66,12 +66,20 @@ def write(fd, st):
     Write a string to a file descriptor.
     """
     while True:
+        # don't wait to write for regular files
+        # select/poll will always return True while epoll will simply crash
+        st_mode = os_orig.stat(fd).st_mode
+        if not S_ISREG(st_mode):
+            try:
+                hubs.trampoline(fd, write=True)
+            except hubs.IOClosed:
+                return 0
+
         try:
             return __original_write__(fd, st)
         except OSError as e:
             if get_errno(e) not in [errno.EAGAIN, errno.EPIPE]:
                 raise
-        hubs.trampoline(fd, write=True)
 
 
 def wait():
