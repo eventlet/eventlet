@@ -1,6 +1,14 @@
 Unreleased
 ==========
 
+0.37.0
+======
+
+* [fix] os.read/write waits until file descriptor is ready. https://github.com/eventlet/eventlet/pull/975
+* [fix] Upgrade RLocks as last thing we do https://github.com/eventlet/eventlet/pull/970
+* [security] drop header keys with underscores https://github.com/eventlet/eventlet/pull/959
+* [doc] Various doc updates (Migration Guide, repair links, warns...)
+
 0.36.1
 ======
 
