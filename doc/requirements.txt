@@ -4,5 +4,6 @@
 
 sphinx>=2.0.0,!=2.1.0 # BSD
 sphinxcontrib-apidoc>=0.2.0  # BSD
+sphinx-press-theme>=0.9.1 # MIT
 
 pyzmq>=25.0.0
