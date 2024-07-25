@@ -104,6 +104,11 @@ your application or library to ``asyncio``.
 Calls to blocking APIs like ``urlopen()`` or ``requests.get()`` can get
 replaced with calls to ``aiohttp``, for example.
 
+You can refer to :ref:`the tables of correspondences <tables-of-correspondences>`
+to identify how to migrate a specific portion of code or a specific use case.
+These tables, by example, can help you to identify solutions and alternatives
+to migrate from Eventlet :ref:`design patterns <design-patterns>`.
+
 Depending on your Eventlet usage, during your migration, you may have to
 deprecate CLI options that are related to Eventlet, we invite the reader
 to take a look to :ref:`manage-your-deprecations`.
