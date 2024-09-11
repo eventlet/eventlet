@@ -118,3 +118,10 @@ from eventlet.corolocal import local as _local
 
 if hasattr(__thread, 'daemon_threads_allowed'):
     daemon_threads_allowed = __thread.daemon_threads_allowed
+
+if hasattr(__thread, 'start_joinable_thread'):
+    start_joinable_thread = __thread.start_joinable_thread
+    _shutdown = __thread._shutdown
+    _make_thread_handle = __thread._make_thread_handle
+    _ThreadHandle = __thread._ThreadHandle
+    _get_main_thread_ident = __thread._get_main_thread_ident
