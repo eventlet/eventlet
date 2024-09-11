@@ -74,7 +74,7 @@ Code talks!  This is a simple web crawler that fetches a bunch of urls concurren
 Supported Python Versions
 =========================
 
-Currently supporting CPython 3.7+.
+Currently supporting CPython 3.8+.
 
 
 Concepts & References
