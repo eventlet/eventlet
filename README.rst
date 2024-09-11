@@ -33,7 +33,7 @@ answer them.
 
 .. _asyncio: https://docs.python.org/3/library/asyncio.html
 .. _open a new issue: https://github.com/eventlet/eventlet/issues/new
-.. _Migrating off of Eventlet: https://eventlet.readthedocs.io/en/latest/migration.html#migration-guide
+.. _Migrating off of Eventlet: https://eventlet.readthedocs.io/en/latest/asyncio/migration.html#migration-guide
 
 Eventlet
 ========
