@@ -142,8 +142,7 @@ class Input:
             # 100 Continue response
             self.send_hundred_continue_response()
             self.is_hundred_continue_response_sent = True
-        if (self.content_length is not None) and (
-                length is None or length > self.content_length - self.position):
+        if length is None or length > self.content_length - self.position:
             length = self.content_length - self.position
         if not length:
             return b''
@@ -785,6 +784,11 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             wfile = None
             wfile_line = None
         chunked = env.get('HTTP_TRANSFER_ENCODING', '').lower() == 'chunked'
+        if not chunked and length is None:
+            # https://www.rfc-editor.org/rfc/rfc9112#section-6.3-2.7
+            # "If this is a request message and none of the above are true, then
+            # the message body length is zero (no message body is present)."
+            length = '0'
         env['wsgi.input'] = env['eventlet.input'] = Input(
             self.rfile, length, self.connection, wfile=wfile, wfile_line=wfile_line,
             chunked_input=chunked)
