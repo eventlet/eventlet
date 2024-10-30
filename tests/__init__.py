@@ -354,7 +354,7 @@ def run_python(path, env=None, args=None, timeout=None, pythonpath_extend=None, 
         lines = output.splitlines()
         ok = lines[-1].rstrip() == b'pass'
         if not ok or len(lines) > 1:
-            sys.stderr.write('Program {} output:\n---\n{}\n---\n'.format(path, output.decode()))
+            sys.stderr.write('Program {} output:\n---\n{}\n---\n'.format(path, output.decode(errors="backslashreplace")))
         assert ok, 'Expected single line "pass" in stdout'
 
     return output

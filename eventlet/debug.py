@@ -10,7 +10,8 @@ import inspect
 __all__ = ['spew', 'unspew', 'format_hub_listeners', 'format_hub_timers',
            'hub_listener_stacks', 'hub_exceptions', 'tpool_exceptions',
            'hub_prevent_multiple_readers', 'hub_timer_stacks',
-           'hub_blocking_detection']
+           'hub_blocking_detection', 'format_asyncio_info',
+           'format_threads_info']
 
 _token_splitter = re.compile(r'\W+')
 
@@ -84,6 +85,31 @@ def format_hub_listeners():
     return os.linesep.join(result)
 
 
+def format_asyncio_info():
+    """ Returns a formatted string of the asyncio info.
+    This can be useful in determining what's going on in the asyncio event
+    loop system, especially when used in conjunction with the asyncio hub.
+    """
+    import asyncio
+    tasks = asyncio.all_tasks()
+    result = ['TASKS:']
+    result.append(repr(tasks))
+    result.append(f'EVENTLOOP: {asyncio.events.get_event_loop()}')
+    return os.linesep.join(result)
+
+
+def format_threads_info():
+    """ Returns a formatted string of the threads info.
+    This can be useful in determining what's going on with created threads,
+    especially when used in conjunction with greenlet
+    """
+    import threading
+    threads = threading._active
+    result = ['THREADS:']
+    result.append(repr(threads))
+    return os.linesep.join(result)
+
+
 def format_hub_timers():
     """ Returns a formatted string of the current timers on the current
     hub.  This can be useful in determining what's going on in the event system,
@@ -124,8 +150,24 @@ def hub_prevent_multiple_readers(state=True):
     to predict which greenlet will receive what data.  To achieve
     resource sharing consider using ``eventlet.pools.Pool`` instead.
 
-    But if you really know what you are doing you can change the state
-    to ``False`` to stop the hub from protecting against this mistake.
+    It is important to note that this feature is a debug
+    convenience. That's not a feature made to be integrated in a production
+    code in some sort.
+
+    **If you really know what you are doing** you can change the state
+    to ``False`` to stop the hub from protecting against this mistake. Else
+    we strongly discourage using this feature, or you should consider using it
+    really carefully.
+
+    You should be aware that disabling this prevention will be applied to
+    your entire stack and not only to the context where you may find it useful,
+    meaning that using this debug feature may have several significant
+    unexpected side effects on your process, which could cause race conditions
+    between your sockets and on all your I/O in general.
+
+    You should also notice that this debug convenience is not supported
+    by the Asyncio hub, which is the official plan for migrating off of
+    eventlet. Using this feature will lock your migration path.
     """
     from eventlet.hubs import hub, get_hub
     from eventlet.hubs import asyncio

@@ -392,6 +392,8 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             self.handle_one_request()
             if self.conn_state[2] == STATE_CLOSE:
                 self.close_connection = 1
+            else:
+                self.conn_state[2] = STATE_IDLE
             if self.close_connection:
                 break
 
@@ -424,6 +426,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             self.protocol_version = self.server.max_http_version
 
         self.raw_requestline = self._read_request_line()
+        self.conn_state[2] = STATE_REQUEST
         if not self.raw_requestline:
             self.close_connection = 1
             return
@@ -643,7 +646,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     write(b''.join(towrite))
                 if not headers_sent or (use_chunked[0] and just_written_size):
                     write(b'')
-            except Exception:
+            except (Exception, eventlet.Timeout):
                 self.close_connection = 1
                 tb = traceback.format_exc()
                 self.server.log.info(tb)
@@ -715,6 +718,23 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 host = forward + ',' + host
         return (host, port)
 
+    def formalize_key_naming(self, k):
+        """
+        Headers containing underscores are permitted by RFC9110,
+        but evenlet joining headers of different names into
+        the same environment variable will dangerously confuse applications as to which is which.
+        Cf.
+            - Nginx: http://nginx.org/en/docs/http/ngx_http_core_module.html#underscores_in_headers
+            - Django: https://www.djangoproject.com/weblog/2015/jan/13/security/
+            - Gunicorn: https://github.com/benoitc/gunicorn/commit/72b8970dbf2bf3444eb2e8b12aeff1a3d5922a9a
+            - Werkzeug: https://github.com/pallets/werkzeug/commit/5ee439a692dc4474e0311de2496b567eed2d02cf
+            - ...
+        """
+        if "_" in k:
+            return
+
+        return k.replace('-', '_').upper()
+
     def get_environ(self):
         env = self.server.get_environ()
         env['REQUEST_METHOD'] = self.command
@@ -757,7 +777,10 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
 
         env['headers_raw'] = headers_raw = tuple((k, v.strip(' \t\n\r')) for k, v in headers)
         for k, v in headers_raw:
-            k = k.replace('-', '_').upper()
+            k = self.formalize_key_naming(k)
+            if not k:
+                continue
+
             if k in ('CONTENT_TYPE', 'CONTENT_LENGTH'):
                 # These do not get the HTTP_ prefix and were handled above
                 continue
@@ -778,6 +801,12 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             self.rfile, length, self.connection, wfile=wfile, wfile_line=wfile_line,
             chunked_input=chunked)
         env['eventlet.posthooks'] = []
+
+        # WebSocketWSGI needs a way to flag the connection as idle,
+        # since it may never fall out of handle_one_request
+        def set_idle():
+            self.conn_state[2] = STATE_IDLE
+        env['eventlet.set_idle'] = set_idle
 
         return env
 
@@ -891,12 +920,11 @@ except AttributeError:
 try:
     import ssl
     ACCEPT_EXCEPTIONS = (socket.error, ssl.SSLError)
-    ACCEPT_ERRNO = {errno.EPIPE, errno.EBADF, errno.ECONNRESET,
+    ACCEPT_ERRNO = {errno.EPIPE, errno.ECONNRESET,
                     errno.ESHUTDOWN, ssl.SSL_ERROR_EOF, ssl.SSL_ERROR_SSL}
 except ImportError:
     ACCEPT_EXCEPTIONS = (socket.error,)
-    ACCEPT_ERRNO = {errno.EPIPE, errno.EBADF, errno.ECONNRESET,
-                    errno.ESHUTDOWN}
+    ACCEPT_ERRNO = {errno.EPIPE, errno.ECONNRESET, errno.ESHUTDOWN}
 
 
 def socket_repr(sock):
@@ -1045,6 +1073,8 @@ If unsure, use eventlet.GreenPool.''')
             except ACCEPT_EXCEPTIONS as e:
                 if support.get_errno(e) not in ACCEPT_ERRNO:
                     raise
+                else:
+                    break
             except (KeyboardInterrupt, SystemExit):
                 serv.log.info('wsgi exiting')
                 break

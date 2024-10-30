@@ -101,6 +101,17 @@ def chunked_post(env, start_response):
         return [x for x in iter(lambda: env['wsgi.input'].read(1), b'')]
 
 
+def echo_server(env, start_response):
+    exp_len = int(env['CONTENT_LENGTH'])
+    got_body = env['wsgi.input'].read(exp_len)
+    start_response('200 OK', [
+        ('Content-type', 'application/octet-stream'),
+        ('Content-Length', str(len(got_body))),
+        ('X-Path', env['PATH_INFO']),
+    ])
+    return [got_body]
+
+
 def already_handled(env, start_response):
     start_response('200 OK', [('Content-type', 'text/plain')])
     wsgi.WSGI_LOCAL.already_handled = True
@@ -833,9 +844,9 @@ class TestHttpd(_TestBase):
         # Client may still try to send the body
         fd.write(b'x' * 25)
         fd.flush()
-        # But if they keep using this socket, it's going to close on them eventually
-        fd.write(b'x' * 25)
         with self.assertRaises(socket.error) as caught:
+            # But if they keep using this socket, it's going to close on them eventually
+            fd.write(b'x' * 2500000)
             fd.flush()
         self.assertEqual(caught.exception.errno, errno.EPIPE)
         sock.close()
@@ -1573,6 +1584,47 @@ class TestHttpd(_TestBase):
         self.assertEqual(result.status, 'HTTP/1.1 500 Internal Server Error')
         self.assertEqual(result.headers_lower['connection'], 'close')
         assert 'transfer-encoding' not in result.headers_lower
+        assert 'Traceback' in self.logfile.getvalue()
+        assert 'RuntimeError: intentional error' in self.logfile.getvalue()
+
+    def test_timeouts_in_app_call(self):
+        def wsgi_app(environ, start_response):
+            start_response('200 OK', [('Content-Type', 'text/plain')])
+            yield b'partial '
+            raise eventlet.Timeout()
+            yield b'body\n'
+        self.site.application = wsgi_app
+        sock = eventlet.connect(self.server_addr)
+        sock.sendall(b'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+        result = read_http(sock)
+        self.assertEqual(result.status, 'HTTP/1.1 500 Internal Server Error')
+        self.assertEqual(result.headers_lower['connection'], 'close')
+        assert 'transfer-encoding' not in result.headers_lower
+        assert 'content-length' in result.headers_lower
+        assert 'Traceback' in self.logfile.getvalue()
+        assert 'Timeout' in self.logfile.getvalue()
+
+    def test_timeouts_in_app_iter(self):
+        def wsgi_app(environ, start_response):
+            environ['eventlet.minimum_write_chunk_size'] = 1
+            start_response('200 OK', [('Content-Type', 'text/plain'),
+                                      ('Content-Length', '13')])
+
+            def app_iter():
+                yield b'partial '
+                raise eventlet.Timeout()
+                yield b'body\n'
+            return app_iter()
+        self.site.application = wsgi_app
+        sock = eventlet.connect(self.server_addr)
+        sock.sendall(b'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+        result = read_http(sock)
+        self.assertEqual(result.status, 'HTTP/1.1 200 OK')
+        assert 'connection' not in result.headers_lower
+        self.assertEqual(result.headers_lower['content-length'], '13')
+        self.assertEqual(len(result.body), 8)
+        assert 'Traceback' in self.logfile.getvalue()
+        assert 'Timeout' in self.logfile.getvalue()
 
     def test_unicode_with_only_ascii_characters_works(self):
         def wsgi_app(environ, start_response):
@@ -1874,8 +1926,8 @@ class TestHttpd(_TestBase):
         result = read_http(sock)
         sock.close()
         assert result.status == 'HTTP/1.1 200 OK', 'Received status {!r}'.format(result.status)
-        assert result.body == (b'HTTP_HOST: localhost\nHTTP_HTTP_X_ANY_K: two\n'
-                               b'HTTP_PATH_INFO: foo\nHTTP_X_ANY_K: one\n')
+        assert result.body == (b'HTTP_HOST: localhost\n'
+                               b'HTTP_PATH_INFO: foo\n')
 
     def test_env_header_stripping(self):
         def app(environ, start_response):
@@ -1917,14 +1969,26 @@ class TestHttpd(_TestBase):
 
     def test_close_idle_connections(self):
         self.reset_timeout(2)
+        self.site.application = echo_server
         pool = eventlet.GreenPool()
-        self.spawn_server(custom_pool=pool)
+        self.spawn_server(custom_pool=pool, debug=True)
+        eventlet.sleep(0)  # need to enter server loop
         # https://github.com/eventlet/eventlet/issues/188
+        # We want to close idle connections
         sock = eventlet.connect(self.server_addr)
 
-        sock.sendall(b'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+        body = b'ABC' * 10
+        method_and_headers = (
+            'PUT /foo-bar HTTP/1.1\r\nHost: localhost\r\n'
+            'Content-Length: %d\r\n\r\n' % len(body))
+        sock.sendall(method_and_headers.encode('utf8'))
+        sock.sendall(body)
         result = read_http(sock)
-        assert result.status == 'HTTP/1.1 200 OK', 'Received status {!r}'.format(result.status)
+        self.assertEqual('HTTP/1.1 200 OK', result.status,
+                         'Received status {0!r}'.format(result.status))
+        self.assertEqual(body, result.body)
+        self.assertEqual('/foo-bar', result.headers_lower['x-path'])
+
         self.killer.kill(KeyboardInterrupt)
         try:
             with eventlet.Timeout(1):
@@ -1972,6 +2036,118 @@ class TestHttpd(_TestBase):
         assert "connection" not in response.headers_lower
 
         sock.close()
+
+
+    @pytest.mark.xfail(sys.platform == "darwin", reason="Fails on macOS for some reason")
+    def test_close_idle_connections_listen_socket_closed(self):
+        self.reset_timeout(4)
+        self.site.application = echo_server
+        pool = eventlet.GreenPool()
+        listen_sock = eventlet.listen(('localhost', 0))
+        self.spawn_server(custom_pool=pool, sock=listen_sock,
+                          debug=True)
+        eventlet.sleep(0)  # need to enter server loop
+
+        # https://github.com/eventlet/eventlet/issues/188
+        # We want to NOT close NON-idle connections
+        sock = eventlet.connect(self.server_addr)
+        eventlet.sleep(0)
+
+        body = b'ABC' * 10
+        method_and_headers = (
+            'PUT /foo-bar HTTP/1.1\r\nHost: localhost\r\n'
+            'Content-Length: %d\r\n\r\n' % len(body))
+        sock.sendall(method_and_headers.encode('utf8'))
+        eventlet.sleep(0)
+        sock.sendall(body)
+        eventlet.sleep(0)
+        result = read_http(sock)
+        self.assertEqual('HTTP/1.1 200 OK', result.status,
+                         'Received status {0!r}; {1!r}'.format(
+                             result.status, self.logfile.getvalue()))
+        self.assertEqual(body, result.body)
+        self.assertEqual('/foo-bar', result.headers_lower['x-path'])
+        eventlet.sleep(0)
+
+        if sys.platform != "darwin":
+            # On macOS this raises exception for some reason:
+            listen_sock.shutdown(socket.SHUT_RDWR)
+
+        eventlet.sleep(0)
+        listen_sock.close()
+        eventlet.sleep(0)
+        try:
+            with eventlet.Timeout(1):
+                pool.waitall()
+        except eventlet.Timeout:
+            eventlet.sleep(0)
+            assert False, self.logfile.getvalue()
+
+    @pytest.mark.xfail(sys.platform == "darwin", reason="Fails on macOS for some reason")
+    def test_do_not_close_non_idle_connections(self):
+        self.reset_timeout(4)
+        self.site.application = echo_server
+        pool = eventlet.GreenPool()
+        listen_sock = eventlet.listen(('localhost', 0))
+        self.spawn_server(custom_pool=pool, sock=listen_sock,
+                          debug=True)
+        eventlet.sleep(0)  # need to enter server loop
+
+        # https://github.com/eventlet/eventlet/issues/188
+        # We want to NOT close NON-idle connections
+        sock = eventlet.connect(self.server_addr)
+        eventlet.sleep(0)
+
+        body = b'ABC' * 10
+        method_and_headers = (
+            'PUT /foo-bar HTTP/1.1\r\nHost: localhost\r\n'
+            'Content-Length: %d\r\n\r\n' % len(body))
+        sock.sendall(method_and_headers.encode('utf8'))
+        eventlet.sleep(0)
+
+        if sys.platform != "darwin":
+            # On macOS this raises exception for some reason:
+            listen_sock.shutdown(socket.SHUT_RDWR)
+
+        eventlet.sleep(0)
+        listen_sock.close()
+        eventlet.sleep(0)
+        try:
+            # We use 2s here to reduce odds of missing a regression in the
+            # future.
+            with eventlet.Timeout(2):
+                pool.waitall()
+        except eventlet.Timeout:
+            pass  # we should not exit while that request is still in-flight.
+        else:
+            eventlet.sleep(0)
+            assert False, 'failed to Timeout: %r' % self.logfile.getvalue()
+
+        # Can now finish the request
+        sock.sendall(body)
+        eventlet.sleep(0)
+        result = read_http(sock)
+        self.assertEqual('HTTP/1.1 200 OK', result.status,
+                         'Received status {0!r}; {1!r}'.format(
+                             result.status, self.logfile.getvalue()))
+        self.assertEqual(body, result.body)
+        self.assertEqual('/foo-bar', result.headers_lower['x-path'])
+        eventlet.sleep(0)
+
+        try:
+            eventlet.sleep(0)
+            with eventlet.Timeout(1):
+                eventlet.sleep(0)
+                pool.waitall()
+        except (eventlet.Timeout, Exception):
+            assert False, self.logfile.getvalue()
+
+        # Sanity-check that client's socket no longer works
+        with self.assertRaises(socket.error) as cm:
+            # It takes 2 writes to trigger the exception for some reason.
+            sock.sendall(b'abc')
+            sock.sendall(b'def')
+        self.assertEqual(errno.EPIPE, cm.exception.errno)
 
     def test_rfc9112_reject_bad_request(self):
         # (hberaud): Transfer-Encoding and Content-Length in the

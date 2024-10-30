@@ -112,12 +112,12 @@ class TestDebug(tests.LimitedTestCase):
 
         with tests.capture_stderr() as fake:
             gt = eventlet.spawn(hurl, client_2)
-            eventlet.sleep(0)
+            eventlet.sleep(0.001)
             client.send(b' ')
-            eventlet.sleep(0)
+            eventlet.sleep(0.001)
             # allow the "hurl" greenlet to trigger the KeyError
             # not sure why the extra context switch is needed
-            eventlet.sleep(0)
+            eventlet.sleep(0.001)
         self.assertRaises(KeyError, gt.wait)
         debug.hub_exceptions(False)
         # look for the KeyError exception in the traceback

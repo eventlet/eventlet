@@ -1,3 +1,6 @@
+Eventlet Documentation
+######################
+
 Warning
 =======
 
@@ -7,7 +10,7 @@ following.**
 Eventlet was created almost 18 years ago, at a time where async
 features were absent from the CPython stdlib. With time eventlet evolved and
 CPython too, but since several years the maintenance activity of eventlet
-dicreased leading to a growing gap between eventlet and the CPython
+decreased leading to a growing gap between eventlet and the CPython
 implementation.
 
 This gap is now too high and can lead you to unexpected side effects and bugs
@@ -34,8 +37,19 @@ answer them.
 .. _asyncio: https://docs.python.org/3/library/asyncio.html
 .. _open a new issue: https://github.com/eventlet/eventlet/issues/new
 
-Eventlet Documentation
-======================
+Installation
+============
+
+The easiest way to get Eventlet is to use pip::
+
+  pip install -U eventlet
+
+To install latest development version once::
+
+  pip install -U https://github.com/eventlet/eventlet/archive/master.zip
+
+Usage
+=====
 
 Code talks!  This is a simple web crawler that fetches a bunch of urls concurrently:
 
@@ -57,19 +71,19 @@ Code talks!  This is a simple web crawler that fetches a bunch of urls concurren
     for body in pool.imap(fetch, urls):
         print("got body", len(body))
 
-Supported Python versions
+Supported Python Versions
 =========================
 
 Currently supporting CPython 3.7+.
 
 
-Contents
-=========
+Concepts & References
+=====================
 
 .. toctree::
    :maxdepth: 2
 
-   migration
+   asyncio/asyncio
    basic_usage
    design_patterns
    patching
@@ -78,18 +92,37 @@ Contents
    threading
    zeromq
    hubs
-   testing
    environment
-
    modules
 
-   process
-   authors
-   history
+Want to contribute?
+===================
+
+.. toctree::
+   :maxdepth: 2
+
+   contribute
+   testing
+   maintenance
 
 License
----------
+=======
 Eventlet is made available under the terms of the open source `MIT license <http://www.opensource.org/licenses/mit-license.php>`_
+
+Changelog
+=========
+
+For further details about released versions of Eventlet please take a
+look at the `changelog`_.
+
+Authors & History
+=================
+
+You have questions or you may have find a bug and you want to contact authors
+or maintainers, then please take a look at :ref:`authors`.
+
+You want to learn more about the history of Eventlet, then, please take a
+look at :ref:`history`.
 
 Indices and tables
 ==================
@@ -97,3 +130,7 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+* `changelog`_
+
+
+.. _changelog: https://github.com/eventlet/eventlet/blob/master/NEWS

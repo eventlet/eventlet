@@ -1,6 +1,41 @@
 Unreleased
 ==========
 
+0.37.0
+======
+
+* [fix] os.read/write waits until file descriptor is ready. https://github.com/eventlet/eventlet/pull/975
+* [fix] Upgrade RLocks as last thing we do https://github.com/eventlet/eventlet/pull/970
+* [security] drop header keys with underscores https://github.com/eventlet/eventlet/pull/959
+* [doc] Various doc updates (Migration Guide, repair links, warns...)
+
+0.36.1
+======
+
+* [fix] eventlet.websocket is not always used from eventlet.wsgi, so do not assume eventlet.set_idle exists https://github.com/eventlet/eventlet/pull/949
+
+0.36.0
+======
+
+* [fix] Make sure asyncio hub doesn't use greendns for asyncio DNS APIs https://github.com/eventlet/eventlet/pull/938
+* [fix] Make asyncio.to_thread work with the same semantics as normal asyncio https://github.com/eventlet/eventlet/pull/930
+* [fix] Refactor congruence checks based on assert at runtime https://github.com/eventlet/eventlet/pull/932
+* [tests] Run tests on macOS in CI, and some fixes to get it in reasonable state (#list https://github.com/eventlet/eventlet/pull/934
+* [fix] Fix wsgi.server shutdown for in-flight requests https://github.com/eventlet/eventlet/pull/912
+* [feature] Add debug convenience helpers - asyncio, threads https://github.com/eventlet/eventlet/pull/925
+* [fix] Handle errors better. https://github.com/eventlet/eventlet/pull/923
+
+0.35.2
+======
+
+* [fix] Fix tool.setuptools/packages list https://github.com/eventlet/eventlet/pull/921
+* [security] Dnspython 2.6.1 - Address DoS via the Tudoor mechanism (CVE-2023-29483) https://github.com/eventlet/eventlet/pull/916
+* [doc] add asyncio into the doc hub page https://github.com/eventlet/eventlet/pull/918
+* [clean] clean obsolete python 2 code from the ssl module https://github.com/eventlet/eventlet/pull/915
+* [fix] Add get_server_info to db_pool.py https://github.com/eventlet/eventlet/pull/324
+* [fix] wsgi: Handle Timeouts from applications https://github.com/eventlet/eventlet/pull/911
+* [fix] shrinks window before connecting https://github.com/eventlet/eventlet/pull/905
+
 0.35.1
 ======
 
