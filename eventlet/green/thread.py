@@ -2,13 +2,16 @@
 import _thread as __thread
 from eventlet.support import greenlets as greenlet
 from eventlet import greenthread
+from eventlet.timeout import with_timeout
 from eventlet.lock import Lock
 import sys
 
 
-__patched__ = ['get_ident', 'start_new_thread', 'start_new', 'allocate_lock',
-               'allocate', 'exit', 'interrupt_main', 'stack_size', '_local',
-               'LockType', 'Lock', '_count']
+__patched__ = ['Lock', 'LockType', '_ThreadHandle', '_count',
+               '_get_main_thread_ident', '_local', '_make_thread_handle',
+               'allocate', 'allocate_lock', 'exit', 'get_ident',
+               'interrupt_main', 'stack_size', 'start_joinable_thread',
+               'start_new', 'start_new_thread']
 
 error = __thread.error
 LockType = Lock
@@ -47,7 +50,36 @@ def __thread_body(func, args, kwargs):
         __threadcount -= 1
 
 
-def start_new_thread(function, args=(), kwargs=None):
+class _ThreadHandle:
+    def __init__(self, greenthread=None):
+        self._greenthread = greenthread
+        self._done = False
+
+    def _set_done(self):
+        self._done = True
+
+    def is_done(self):
+        return self._done
+
+    @property
+    def ident(self):
+        return get_ident(self._greenthread)
+
+    def join(self, timeout=None):
+        if not hasattr(self._greenthread, "wait"):
+            return
+        if timeout is not None:
+            return with_timeout(timeout, self._greenthread.wait)
+        return self._greenthread.wait()
+
+
+def _make_thread_handle(ident):
+    greenthread = greenlet.getcurrent()
+    assert ident == get_ident(greenthread)
+    return _ThreadHandle(greenthread=greenthread)
+
+
+def __spawn_green(function, args=(), kwargs=None, joinable=False):
     if (sys.version_info >= (3, 4)
             and getattr(function, '__module__', '') == 'threading'
             and hasattr(function, '__self__')):
@@ -72,11 +104,32 @@ def start_new_thread(function, args=(), kwargs=None):
         thread._bootstrap_inner = wrap_bootstrap_inner
 
     kwargs = kwargs or {}
-    g = greenthread.spawn_n(__thread_body, function, args, kwargs)
+    spawn_func = greenthread.spawn if joinable else greenthread.spawn_n
+    return spawn_func(__thread_body, function, args, kwargs)
+
+
+def start_joinable_thread(function, handle=None, daemon=True):
+    g = __spawn_green(function, joinable=True)
+    if handle is None:
+        handle = _ThreadHandle(greenthread=g)
+    else:
+        handle._greenthread = g
+    return handle
+
+
+def start_new_thread(function, args=(), kwargs=None):
+    g = __spawn_green(function, args=args, kwargs=kwargs)
     return get_ident(g)
 
 
 start_new = start_new_thread
+
+
+def _get_main_thread_ident():
+    greenthread = greenlet.getcurrent()
+    while greenthread.parent is not None:
+        greenthread = greenthread.parent
+    return get_ident(greenthread)
 
 
 def allocate_lock(*a):
@@ -118,3 +171,6 @@ from eventlet.corolocal import local as _local
 
 if hasattr(__thread, 'daemon_threads_allowed'):
     daemon_threads_allowed = __thread.daemon_threads_allowed
+
+if hasattr(__thread, '_shutdown'):
+    _shutdown = __thread._shutdown
