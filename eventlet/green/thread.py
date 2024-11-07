@@ -80,10 +80,10 @@ def _make_thread_handle(ident):
 
 
 def __spawn_green(function, args=(), kwargs=None, joinable=False):
-    if (sys.version_info >= (3, 4)
+    if ((3, 4) <= sys.version_info < (3, 13)
             and getattr(function, '__module__', '') == 'threading'
             and hasattr(function, '__self__')):
-        # Since Python 3.4, threading.Thread uses an internal lock
+        # In Python 3.4-3.12, threading.Thread uses an internal lock
         # automatically released when the python thread state is deleted.
         # With monkey patching, eventlet uses green threads without python
         # thread state, so the lock is not automatically released.
@@ -98,7 +98,7 @@ def __spawn_green(function, args=(), kwargs=None, joinable=False):
                 bootstrap_inner()
             finally:
                 # The lock can be cleared (ex: by a fork())
-                if thread._tstate_lock is not None:
+                if getattr(thread, "_tstate_lock", None) is not None:
                     thread._tstate_lock.release()
 
         thread._bootstrap_inner = wrap_bootstrap_inner
