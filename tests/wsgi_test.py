@@ -2037,7 +2037,6 @@ class TestHttpd(_TestBase):
 
         sock.close()
 
-
     @pytest.mark.xfail(sys.platform == "darwin", reason="Fails on macOS for some reason")
     def test_close_idle_connections_listen_socket_closed(self):
         self.reset_timeout(4)
