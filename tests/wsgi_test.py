@@ -2181,6 +2181,32 @@ class TestHttpd(_TestBase):
         assert result.status == 'HTTP/1.1 200 OK', 'Received status {!r}'.format(result.status)
         sock.close()
 
+    def test_no_content_length_or_transfer_encoding(self):
+        def wsgi_app(environ, start_response):
+            start_response('200 OK', [])
+            return [environ['wsgi.input'].read(1024)]
+
+        self.site.application = wsgi_app
+        sock = eventlet.connect(self.server_addr)
+        sock.send(
+            b'GET / HTTP/1.1\r\n'
+            b'Host: localhost\r\n'
+            b'\r\n')
+        result = read_http(sock)
+        assert result.status == 'HTTP/1.1 200 OK', 'Received status {!r}'.format(result.status)
+        assert result.body == b''
+        # socket's still good
+        sock.send(
+            b'GET / HTTP/1.1\r\n'
+            b'Content-Length: 6\r\n'
+            b'Host: localhost\r\n'
+            b'\r\n'
+            b'hello\n')
+        result = read_http(sock)
+        assert result.status == 'HTTP/1.1 200 OK', 'Received status {!r}'.format(result.status)
+        assert result.body == b'hello\n'
+        sock.close()
+
 
 def read_headers(sock):
     fd = sock.makefile('rb')
