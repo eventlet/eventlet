@@ -1,4 +1,5 @@
 import io
+import os
 import sys
 
 from eventlet import debug
@@ -50,7 +51,8 @@ class TestSpew(tests.LimitedTestCase):
         s(f, "line", None)
         output = sys.stdout.getvalue()
         assert "[unknown]:%i" % lineno in output, "Didn't find [unknown]:%i in %s" % (lineno, output)
-        assert "VM instruction #" in output, output
+        if "PYTEST_XDIST_WORKER" not in os.environ:
+            assert "VM instruction #" in output, output
 
     def test_line_global(self):
         frame_str = "f=<frame at"
