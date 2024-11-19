@@ -24,6 +24,7 @@ class Hub(hub.BaseHub):
 
     def __init__(self):
         super().__init__()
+
         # Make sure select/poll/epoll/kqueue are usable by asyncio, original
         # socket.socketpair is used by asyncio, real thread pools are used,
         # etc:
@@ -31,14 +32,17 @@ class Hub(hub.BaseHub):
             # This gets imported super-early so random attributes point at
             # monkey-patched select, let's try to fix that.
             import selectors as old_selectors
+
             del sys.modules["selectors"]
             import selectors
+
             # Fix old module for those who have it. Doesn't fix "from selectors
             # import whatevs" though...
             for attr, value in selectors.__dict__.items():
                 setattr(old_selectors, attr, value)
 
             import asyncio
+
             try:
                 import concurrent.futures.thread
             except RuntimeError:
@@ -50,6 +54,7 @@ class Hub(hub.BaseHub):
                 concurrent.futures.thread.queue = original("queue")
             import asyncio.base_events
             import asyncio.selector_events
+
             asyncio.base_events.socket = original("socket")
 
         _original_patch_function(
@@ -58,12 +63,13 @@ class Hub(hub.BaseHub):
             "socket",
             "os",
             "threading",
-            "queue"
+            "queue",
         )()
 
         # The presumption is that eventlet is driving the event loop, so we
         # want a new one we control.
         import asyncio
+
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
         self.sleep_event = asyncio.Event()
@@ -99,7 +105,7 @@ class Hub(hub.BaseHub):
         try:
             os.fstat(fileno)
         except OSError:
-            raise ValueError('Invalid file descriptor')
+            raise ValueError("Invalid file descriptor")
         already_listening = self.listeners[evtype].get(fileno) is not None
         listener = super().add(evtype, fileno, cb, tb, mark_as_closed)
         if not already_listening:
@@ -168,8 +174,7 @@ class Hub(hub.BaseHub):
                         sleep_time = wakeup_when - self.clock()
                     if sleep_time > 0:
                         try:
-                            await asyncio.wait_for(self.sleep_event.wait(),
-                                                   sleep_time)
+                            await asyncio.wait_for(self.sleep_event.wait(), sleep_time)
                         except asyncio.TimeoutError:
                             pass
                         self.sleep_event.clear()
