@@ -1,16 +1,19 @@
 import eventlet
 import eventlet.patcher
+
 eventlet.monkey_patch()
 
 threading_orig = eventlet.patcher.original("threading")
 
 EVENTS = []
 
+
 def os_thread_2():
     eventlet.sleep(0.1)
     EVENTS.append(2)
     eventlet.sleep(0.1)
     EVENTS.append(2)
+
 
 threading_orig.Thread(target=os_thread_2).start()
 EVENTS.append(1)
