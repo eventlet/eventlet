@@ -8,7 +8,7 @@ from eventlet import greenthread
 from eventlet import patcher
 from eventlet.green import thread
 
-from tests import LimitedTestCase
+from tests import LimitedTestCase, run_isolated
 
 
 class Locals(LimitedTestCase):
@@ -122,3 +122,7 @@ def test_reinit():
     lk._at_fork_reinit()
     assert lk.acquire(blocking=False)
     assert not lk.acquire(blocking=False)
+
+
+def test_can_use_eventlet_in_os_threads():
+    run_isolated("osthreads.py")
