@@ -2,6 +2,14 @@
 Asyncio-based hub, originally implemented by Miguel Grinberg.
 """
 
+# The various modules involved in asyncio need to call the original, unpatched
+# standard library APIs to work: socket, select, threading, and so on. We
+# therefore don't import them on the module level, since that would involve
+# their imports getting patched, and instead delay importing them as much as
+# possible. Then, we do a little song and dance in Hub.__init__ below so that
+# when they're imported they import the original modules (select, socket, etc)
+# rather than the patched ones.
+
 import os
 import sys
 
