@@ -2,19 +2,19 @@
 Asyncio-based hub, originally implemented by Miguel Grinberg.
 """
 
-import asyncio
-try:
-    import concurrent.futures.thread
-    concurrent_imported = True
-except RuntimeError:
-    # This happens in weird edge cases where asyncio hub is started at
-    # shutdown. Not much we can do if this happens.
-    concurrent_imported = False
+# The various modules involved in asyncio need to call the original, unpatched
+# standard library APIs to work: socket, select, threading, and so on. We
+# therefore don't import them on the module level, since that would involve
+# their imports getting patched, and instead delay importing them as much as
+# possible. Then, we do a little song and dance in Hub.__init__ below so that
+# when they're imported they import the original modules (select, socket, etc)
+# rather than the patched ones.
+
 import os
 import sys
 
 from eventlet.hubs import hub
-from eventlet.patcher import original
+from eventlet.patcher import original, _original_patch_function
 
 
 def is_available():
@@ -32,22 +32,52 @@ class Hub(hub.BaseHub):
 
     def __init__(self):
         super().__init__()
-        # Make sure asyncio thread pools use real threads:
-        if concurrent_imported:
-            concurrent.futures.thread.threading = original("threading")
-            concurrent.futures.thread.queue = original("queue")
 
-        # Make sure select/poll/epoll/kqueue are usable by asyncio:
-        import selectors
-        selectors.select = original("select")
+        # Make sure select/poll/epoll/kqueue are usable by asyncio, original
+        # socket.socketpair is used by asyncio, real thread pools are used,
+        # etc:
+        def import_with_original_dependencies():
+            # This gets imported super-early so random attributes point at
+            # monkey-patched select, let's try to fix that.
+            import selectors as old_selectors
 
-        # Make sure DNS lookups use normal blocking API (which asyncio will run
-        # in a thread):
-        import asyncio.base_events
-        asyncio.base_events.socket = original("socket")
+            del sys.modules["selectors"]
+            import selectors
+
+            # Fix old module for those who have it. Doesn't fix "from selectors
+            # import whatevs" though...
+            for attr, value in selectors.__dict__.items():
+                setattr(old_selectors, attr, value)
+
+            import asyncio
+
+            try:
+                import concurrent.futures.thread
+            except RuntimeError:
+                # This happens in weird edge cases where asyncio hub is started at
+                # shutdown. Not much we can do if this happens.
+                pass
+            else:
+                concurrent.futures.thread.threading = original("threading")
+                concurrent.futures.thread.queue = original("queue")
+            import asyncio.base_events
+            import asyncio.selector_events
+
+            asyncio.base_events.socket = original("socket")
+
+        _original_patch_function(
+            import_with_original_dependencies,
+            "select",
+            "socket",
+            "os",
+            "threading",
+            "queue",
+        )()
 
         # The presumption is that eventlet is driving the event loop, so we
         # want a new one we control.
+        import asyncio
+
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
         self.sleep_event = asyncio.Event()
@@ -83,7 +113,7 @@ class Hub(hub.BaseHub):
         try:
             os.fstat(fileno)
         except OSError:
-            raise ValueError('Invalid file descriptor')
+            raise ValueError("Invalid file descriptor")
         already_listening = self.listeners[evtype].get(fileno) is not None
         listener = super().add(evtype, fileno, cb, tb, mark_as_closed)
         if not already_listening:
@@ -126,6 +156,8 @@ class Hub(hub.BaseHub):
         """
         Start the ``Hub`` running. See the superclass for details.
         """
+        import asyncio
+
         async def async_run():
             if self.running:
                 raise RuntimeError("Already running!")
@@ -150,8 +182,7 @@ class Hub(hub.BaseHub):
                         sleep_time = wakeup_when - self.clock()
                     if sleep_time > 0:
                         try:
-                            await asyncio.wait_for(self.sleep_event.wait(),
-                                                   sleep_time)
+                            await asyncio.wait_for(self.sleep_event.wait(), sleep_time)
                         except asyncio.TimeoutError:
                             pass
                         self.sleep_event.clear()
