@@ -540,3 +540,12 @@ def test_patcher_existing_locks_exception():
 
 def test_patcher_threading_subclass_done():
     tests.run_isolated("patcher_threading_subclass_done.py")
+
+
+def test_auto_patch_from_env_variable():
+    # Setting EVENTLET_MONKEYPATCH=1 does monkeypatching on startup:
+    tests.run_isolated("monkeypatch_expected.py", env={"EVENTLET_MONKEYPATCH": "1"})
+
+
+def test_no_auto_patch_from_env_variable():
+    tests.run_isolated("no_monkeypatch_expected.py", env={"EVENTLET_MONKEYPATCH": "0"})
