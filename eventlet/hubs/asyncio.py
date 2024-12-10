@@ -33,7 +33,10 @@ class Hub(hub.BaseHub):
     def __init__(self):
         super().__init__()
 
-        if "asyncio.selector_events" in sys.modules:
+        # We do the socket.socket comparison to handle the fork() case where
+        # sys.modules is pre-monkeypatched...
+        if "asyncio.selector_events" in sys.modules and sys.modules[
+                "asyncio.selector_events"].socket.socket != original("socket").socket:
             raise RuntimeError(
                 "asyncio has already been imported before hub creation and "
                 "monkey patching. Try calling eventlet.monkey_patch() earlier. "
