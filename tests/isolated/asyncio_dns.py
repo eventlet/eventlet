@@ -16,7 +16,6 @@ greendns.resolve = fail
 greendns.resolver.query = fail
 
 
-
 async def lookups():
     loop = asyncio.get_running_loop()
     await loop.getaddrinfo("127.0.0.1", 80)
