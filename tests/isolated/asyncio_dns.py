@@ -1,3 +1,6 @@
+import eventlet
+eventlet.monkey_patch()
+
 import asyncio
 import socket
 
@@ -12,9 +15,6 @@ def fail(*args, **kwargs):
 greendns.resolve = fail
 greendns.resolver.query = fail
 
-import eventlet
-
-eventlet.monkey_patch()
 
 
 async def lookups():

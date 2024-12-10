@@ -33,6 +33,14 @@ class Hub(hub.BaseHub):
     def __init__(self):
         super().__init__()
 
+        if "asyncio.selector_events" in sys.modules:
+            raise RuntimeError(
+                "asyncio has already been imported before hub creation and "
+                "monkey patching. Try calling eventlet.monkey_patch() earlier. "
+                "If that is not possible, use the EVENTLET_MONKEYPATCH=1 env "
+                "variable instead of eventlet.monkey_patch()."
+            )
+
         # Make sure select/poll/epoll/kqueue are usable by asyncio, original
         # socket.socketpair is used by asyncio, real thread pools are used,
         # etc:

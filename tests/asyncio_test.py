@@ -1,26 +1,26 @@
 """Tests for asyncio integration."""
 
+import pytest
+
+import eventlet
+from eventlet.hubs import get_hub
+from eventlet.hubs.asyncio import Hub as AsyncioHub
+if not isinstance(get_hub(), AsyncioHub):
+    pytest.skip("Only works on asyncio hub", allow_module_level=True)
+
 import asyncio
 from time import time
 import socket
 import sys
 
-import pytest
-
 from greenlet import GreenletExit
 
-import eventlet
-from eventlet.hubs import get_hub
-from eventlet.hubs.asyncio import Hub as AsyncioHub
 from eventlet.asyncio import spawn_for_awaitable
 from eventlet.greenthread import getcurrent
 from eventlet.support import greendns
 from .wsgi_test import _TestBase, Site
 
 import tests
-
-if not isinstance(get_hub(), AsyncioHub):
-    pytest.skip("Only works on asyncio hub", allow_module_level=True)
 
 
 class CallingAsyncFunctionsFromGreenletsHighLevelTests(_TestBase):
@@ -298,9 +298,16 @@ def test_asyncio_to_thread():
     tests.run_isolated("asyncio_to_thread.py")
 
 
-def test_asyncio_does_not_use_greendns(monkeypatch):
+def test_asyncio_does_not_use_greendns():
     """
     ``asyncio`` loops' ``getaddrinfo()`` and ``getnameinfo()`` do not use green
     DNS.
     """
     tests.run_isolated("asyncio_dns.py")
+
+
+def test_error_if_asyncio_imported_before_hub_initialization():
+    """
+    ``asyncio`` hub complains if asyncio has been imported before it.
+    """
+    tests.run_isolated("asyncio_too_early.py")
