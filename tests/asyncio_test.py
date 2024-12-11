@@ -311,3 +311,10 @@ def test_error_if_asyncio_imported_before_hub_initialization():
     ``asyncio`` hub complains if asyncio has been imported before it.
     """
     tests.run_isolated("asyncio_too_early.py")
+
+
+def test_make_sure_monkey_patching_asyncio_is_restricted():
+    """
+    ``asyncio`` continues to have original, unpatched ``socket`` etc classes.
+    """
+    tests.run_isolated("asyncio_correct_patching.py")
