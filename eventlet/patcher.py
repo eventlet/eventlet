@@ -364,7 +364,15 @@ def monkey_patch(**on):
 
     # Green existing locks _after_ patching modules, since patching modules
     # might involve imports that create new locks:
-    _green_existing_locks(original_rlock_type)
+    for name, _ in modules_to_patch:
+        if name == "threading":
+            _green_existing_locks(original_rlock_type)
+
+            # If we used asyncio hub, we created original() modules earlier in
+            # the process, and made sure some stdlib modules used them. The end
+            # result is that some modules may have rlocks from a different copy
+            # of the original module...
+            _green_existing_locks(type(original("threading").RLock()))
 
 
 def is_monkey_patched(module):
