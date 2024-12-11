@@ -1,6 +1,12 @@
 Unreleased
 ==========
 
+0.39.0
+======
+
+* [fix] asyncio hub should error out if asyncio has already been imported (#1006)
+* [feature] EVENTLET_MONKEYPATCH mechanism. (#1005)
+
 0.38.1
 ======
 
