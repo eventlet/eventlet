@@ -33,6 +33,17 @@ class Hub(hub.BaseHub):
     def __init__(self):
         super().__init__()
 
+        # We do the socket.socket comparison to handle the fork() case where
+        # sys.modules is pre-monkeypatched...
+        if "asyncio.selector_events" in sys.modules and sys.modules[
+                "asyncio.selector_events"].socket.socket != original("socket").socket:
+            raise RuntimeError(
+                "asyncio has already been imported before hub creation and "
+                "monkey patching. Try calling eventlet.monkey_patch() earlier. "
+                "If that is not possible, use the EVENTLET_MONKEYPATCH=1 env "
+                "variable instead of eventlet.monkey_patch()."
+            )
+
         # Make sure select/poll/epoll/kqueue are usable by asyncio, original
         # socket.socketpair is used by asyncio, real thread pools are used,
         # etc:
