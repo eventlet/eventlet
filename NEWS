@@ -1,6 +1,12 @@
 Unreleased
 ==========
 
+0.38.2
+======
+
+* [fix] fix the monkey patching with the asyncio hub
+* [feature] introduce the unmonkeypatching feature
+
 0.38.1
 ======
 
