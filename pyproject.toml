@@ -73,12 +73,11 @@ dependencies = ["hatch-autorun"]
 code = """
 import os
 # This is used when running tests on the asyncio hub, to ensure asyncio doesn't
-# get imported too early.
+# get imported too early. This will also affect subprocesses too, because that's
+# necessary for e.g. stestr to use this functionality.
 if os.getenv('EVENTLET_LOAD_HUB_EARLY') == '1':
     import eventlet.hubs
     eventlet.hubs.get_hub()
-    # Shouldn't affect subprocesses:
-    del os.environ['EVENTLET_LOAD_HUB_EARLY']
 """
 
 [tool.ruff]

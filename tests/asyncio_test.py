@@ -310,7 +310,7 @@ def test_error_if_asyncio_imported_before_hub_initialization():
     """
     ``asyncio`` hub complains if asyncio has been imported before it.
     """
-    tests.run_isolated("asyncio_too_early.py")
+    tests.run_isolated("asyncio_too_early.py", env={"EVENTLET_LOAD_HUB_EARLY": "0"})
 
 
 def test_make_sure_monkey_patching_asyncio_is_restricted():

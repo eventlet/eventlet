@@ -35,12 +35,17 @@ class Hub(hub.BaseHub):
 
         # We do the socket.socket comparison to handle the fork() case where
         # sys.modules is pre-monkeypatched...
-        if "asyncio.selector_events" in sys.modules and sys.modules[
-                "asyncio.selector_events"].socket.socket != original("socket").socket:
+        if (
+            "asyncio.selector_events" in sys.modules
+            and sys.modules["asyncio.selector_events"].socket.socket
+            != original("socket").socket
+        ):
             raise RuntimeError(
-                "asyncio has already been imported before hub creation. You can "
-                "set the EVENTLET_LOAD_HUB_EARLY=1 environment variable to ensure "
-                "the hub is loaded before asyncio."
+                "asyncio has already been imported before hub creation. To fix: "
+                "run eventlet.hubs.get_hub() early in your program before "
+                "any other imports. Or, move monkey_patch() earlier, "
+                "if you were doing that. Or, set the EVENTLET_LOAD_HUB_EARLY=1 "
+                "environment variable to ensure the hub is loaded before asyncio."
             )
 
         # Make sure select/poll/epoll/kqueue are usable by asyncio, original

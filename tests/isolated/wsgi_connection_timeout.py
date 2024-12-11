@@ -25,8 +25,6 @@ connection makefile() file objects - ExplodingSocketFile <-- these raise
 import socket
 
 import eventlet
-import eventlet.hubs
-eventlet.hubs.get_hub()
 import tests.wsgi_test
 
 
