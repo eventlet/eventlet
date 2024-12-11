@@ -68,15 +68,17 @@ version.source = "vcs"
 [tool.hatch.build.hooks.vcs]
 version-file = "eventlet/_version.py"
 
-# This allows setting EVENTLET_MONKEYPATCH environment variable to monkey patch
-# as early in startup as possible.
 [tool.hatch.build.targets.wheel.hooks.autorun]
 dependencies = ["hatch-autorun"]
 code = """
 import os
-if os.getenv('EVENTLET_MONKEYPATCH') == '1':
-    import eventlet
-    eventlet.monkey_patch()
+# This is used when running tests on the asyncio hub, to ensure asyncio doesn't
+# get imported too early.
+if os.getenv('EVENTLET_LOAD_HUB_EARLY') == '1':
+    import eventlet.hubs
+    eventlet.hubs.get_hub()
+    # Shouldn't affect subprocesses:
+    del os.environ['EVENTLET_LOAD_HUB_EARLY']
 """
 
 [tool.ruff]

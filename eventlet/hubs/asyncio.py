@@ -38,10 +38,9 @@ class Hub(hub.BaseHub):
         if "asyncio.selector_events" in sys.modules and sys.modules[
                 "asyncio.selector_events"].socket.socket != original("socket").socket:
             raise RuntimeError(
-                "asyncio has already been imported before hub creation and "
-                "monkey patching. Try calling eventlet.monkey_patch() earlier. "
-                "If that is not possible, use the EVENTLET_MONKEYPATCH=1 env "
-                "variable instead of eventlet.monkey_patch()."
+                "asyncio has already been imported before hub creation. You can "
+                "set the EVENTLET_LOAD_HUB_EARLY=1 environment variable to ensure "
+                "the hub is loaded before asyncio."
             )
 
         # Make sure select/poll/epoll/kqueue are usable by asyncio, original
