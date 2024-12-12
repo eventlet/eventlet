@@ -344,12 +344,7 @@ def monkey_patch(**on):
     # Make sure the hub is completely imported before any
     # monkey-patching, or we risk recursion if the process of importing
     # the hub calls into monkey-patched modules.
-    hub = eventlet.hubs.get_hub()
-
-    # Can't import at top-level cause of circular imports
-    from eventlet.hubs.asyncio import Hub as AsyncioHub
-
-    is_asyncio = isinstance(hub, AsyncioHub)
+    eventlet.hubs.get_hub()
 
     accepted_args = {
         "os",
