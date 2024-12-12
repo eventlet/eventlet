@@ -5,6 +5,7 @@ monkeypatching.
 
 import sys
 
+
 def assert_correct_patching():
     from eventlet.greenio.base import GreenSocket
     import asyncio.selector_events
@@ -29,4 +30,3 @@ assert_correct_patching()
 
 
 print("pass")
-
