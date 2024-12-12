@@ -486,12 +486,6 @@ def monkey_patch(**on):
         if name == "threading":
             _green_existing_locks(original_rlock_type)
 
-    # Handle asyncio stdlib needing to use normal blocking APIs to implement
-    # the event loop and related APIs:
-    if is_asyncio:
-        for name, _ in modules_to_patch:
-            _unmonkey_patch_asyncio(name)
-
 
 def is_monkey_patched(module):
     """Returns True if the given module is monkeypatched currently, False if
