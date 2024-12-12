@@ -326,10 +326,12 @@ def test_repeated_select_bad_fd():
     once()
 
 
+@pytest.mark.skipif(sys.platform == "darwin", reason="on macOS using fork() is discouraged")
 def test_fork():
     tests.run_isolated('hub_fork.py')
 
 
+@pytest.mark.skipif(sys.platform == "darwin", reason="on macOS using fork() is discouraged")
 def test_fork_simple():
     tests.run_isolated('hub_fork_simple.py')
 

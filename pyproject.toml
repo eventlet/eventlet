@@ -68,17 +68,6 @@ version.source = "vcs"
 [tool.hatch.build.hooks.vcs]
 version-file = "eventlet/_version.py"
 
-# This allows setting EVENTLET_MONKEYPATCH environment variable to monkey patch
-# as early in startup as possible.
-[tool.hatch.build.targets.wheel.hooks.autorun]
-dependencies = ["hatch-autorun"]
-code = """
-import os
-if os.getenv('EVENTLET_MONKEYPATCH') == '1':
-    import eventlet
-    eventlet.monkey_patch()
-"""
-
 [tool.ruff]
 # Might eventually want to add evenetlet/green/, but it's a pain...
 exclude = ["eventlet/green/", "eventlet/zipkin/_thrift", "tests/mock.py", "doc/"]

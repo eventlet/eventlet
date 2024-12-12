@@ -1,9 +1,12 @@
 from __future__ import annotations
+
 try:
     import _imp as imp
 except ImportError:
     import imp
+import importlib
 import sys
+
 try:
     # Only for this purpose, it's irrelevant if `os` was already patched.
     # https://github.com/eventlet/eventlet/pull/661
@@ -14,9 +17,9 @@ except ImportError:
 import eventlet
 
 
-__all__ = ['inject', 'import_patched', 'monkey_patch', 'is_monkey_patched']
+__all__ = ["inject", "import_patched", "monkey_patch", "is_monkey_patched"]
 
-__exclude = {'__builtins__', '__file__', '__name__'}
+__exclude = {"__builtins__", "__file__", "__name__"}
 
 
 class SysModulesSaver:
@@ -70,7 +73,7 @@ def inject(module_name, new_globals, *additional_modules):
     name/module pairs is used, which should cover all use cases but may be
     slower because there are inevitably redundant or unnecessary imports.
     """
-    patched_name = '__patched_module_' + module_name
+    patched_name = "__patched_module_" + module_name
     if patched_name in sys.modules:
         # returning already-patched module so as not to destroy existing
         # references to patched modules
@@ -79,11 +82,12 @@ def inject(module_name, new_globals, *additional_modules):
     if not additional_modules:
         # supply some defaults
         additional_modules = (
-            _green_os_modules() +
-            _green_select_modules() +
-            _green_socket_modules() +
-            _green_thread_modules() +
-            _green_time_modules())
+            _green_os_modules()
+            + _green_select_modules()
+            + _green_socket_modules()
+            + _green_thread_modules()
+            + _green_time_modules()
+        )
         # _green_MySQLdb()) # enable this after a short baking-in period
 
     # after this we are gonna screw with sys.modules, so capture the
@@ -103,10 +107,10 @@ def inject(module_name, new_globals, *additional_modules):
     # because of the pop operations will change the content of sys.modules
     # within th loop
     for imported_module_name in list(sys.modules.keys()):
-        if imported_module_name.startswith(module_name + '.'):
+        if imported_module_name.startswith(module_name + "."):
             sys.modules.pop(imported_module_name, None)
     try:
-        module = __import__(module_name, {}, {}, module_name.split('.')[:-1])
+        module = __import__(module_name, {}, {}, module_name.split(".")[:-1])
 
         if new_globals is not None:
             # Update the given globals dictionary with everything from this new module
@@ -130,9 +134,8 @@ def import_patched(module_name, *additional_modules, **kw_additional_modules):
     The only required argument is the name of the module to be imported.
     """
     return inject(
-        module_name,
-        None,
-        *additional_modules + tuple(kw_additional_modules.items()))
+        module_name, None, *additional_modules + tuple(kw_additional_modules.items())
+    )
 
 
 def patch_function(func, *additional_modules):
@@ -144,11 +147,12 @@ def patch_function(func, *additional_modules):
     if not additional_modules:
         # supply some defaults
         additional_modules = (
-            _green_os_modules() +
-            _green_select_modules() +
-            _green_socket_modules() +
-            _green_thread_modules() +
-            _green_time_modules())
+            _green_os_modules()
+            + _green_select_modules()
+            + _green_socket_modules()
+            + _green_thread_modules()
+            + _green_time_modules()
+        )
 
     def patched(*args, **kw):
         saver = SysModulesSaver()
@@ -159,6 +163,7 @@ def patch_function(func, *additional_modules):
             return func(*args, **kw)
         finally:
             saver.restore()
+
     return patched
 
 
@@ -169,6 +174,7 @@ def _original_patch_function(func, *module_names):
     patch_function, only the names of the modules need be supplied,
     and there are no defaults.  This is a gross hack; tell your kids not
     to import inside function bodies!"""
+
     def patched(*args, **kw):
         saver = SysModulesSaver(module_names)
         for name in module_names:
@@ -177,17 +183,18 @@ def _original_patch_function(func, *module_names):
             return func(*args, **kw)
         finally:
             saver.restore()
+
     return patched
 
 
 def original(modname):
-    """ This returns an unpatched version of a module; this is useful for
+    """This returns an unpatched version of a module; this is useful for
     Eventlet itself (i.e. tpool)."""
     # note that it's not necessary to temporarily install unpatched
     # versions of all patchable modules during the import of the
     # module; this is because none of them import each other, except
     # for threading which imports thread
-    original_name = '__original_module_' + modname
+    original_name = "__original_module_" + modname
     if original_name in sys.modules:
         return sys.modules.get(original_name)
 
@@ -198,20 +205,20 @@ def original(modname):
     # some rudimentary dependency checking -- fortunately the modules
     # we're working on don't have many dependencies so we can just do
     # some special-casing here
-    deps = {'threading': '_thread', 'queue': 'threading'}
+    deps = {"threading": "_thread", "queue": "threading"}
     if modname in deps:
         dependency = deps[modname]
         saver.save(dependency)
         sys.modules[dependency] = original(dependency)
     try:
-        real_mod = __import__(modname, {}, {}, modname.split('.')[:-1])
-        if modname in ('Queue', 'queue') and not hasattr(real_mod, '_threading'):
+        real_mod = __import__(modname, {}, {}, modname.split(".")[:-1])
+        if modname in ("Queue", "queue") and not hasattr(real_mod, "_threading"):
             # tricky hack: Queue's constructor in <2.7 imports
             # threading on every instantiation; therefore we wrap
             # it so that it always gets the original threading
             real_mod.Queue.__init__ = _original_patch_function(
-                real_mod.Queue.__init__,
-                'threading')
+                real_mod.Queue.__init__, "threading"
+            )
         # save a reference to the unpatched module so it doesn't get lost
         sys.modules[original_name] = real_mod
     finally:
@@ -221,6 +228,99 @@ def original(modname):
 
 
 already_patched = {}
+
+
+def _unmonkey_patch_asyncio(unmonkeypatch_refs_to_this_module):
+    """
+    When using asyncio hub, we want the asyncio modules to use the original,
+    blocking APIs.  So un-monkeypatch references to the given module name, e.g.
+    "select".
+    """
+    to_unpatch = unmonkeypatch_refs_to_this_module
+    original_module = original(to_unpatch)
+
+    # Lower down for asyncio modules, we will switch their imported modules to
+    # original ones instead of the green ones they probably have. This won't
+    # fix "from socket import whatev" but asyncio doesn't seem to do that in
+    # ways we care about for Python 3.8 to 3.13, with the one exception of
+    # get_ident() in some older versions.
+    if to_unpatch == "_thread":
+        import asyncio.base_futures
+
+        if hasattr(asyncio.base_futures, "get_ident"):
+            asyncio.base_futures = original_module.get_ident
+
+    # Asyncio uses these for its blocking thread pool:
+    if to_unpatch in ("threading", "queue"):
+        try:
+            import concurrent.futures.thread
+        except RuntimeError:
+            # This happens in weird edge cases where asyncio hub is started at
+            # shutdown. Not much we can do if this happens.
+            pass
+        else:
+            if to_unpatch == "threading":
+                concurrent.futures.thread.threading = original_module
+            if to_unpatch == "queue":
+                concurrent.futures.thread.queue = original_module
+
+    # Patch asyncio modules:
+    for module_name in [
+        "asyncio.base_events",
+        "asyncio.base_futures",
+        "asyncio.base_subprocess",
+        "asyncio.base_tasks",
+        "asyncio.constants",
+        "asyncio.coroutines",
+        "asyncio.events",
+        "asyncio.exceptions",
+        "asyncio.format_helpers",
+        "asyncio.futures",
+        "asyncio",
+        "asyncio.locks",
+        "asyncio.log",
+        "asyncio.mixins",
+        "asyncio.protocols",
+        "asyncio.queues",
+        "asyncio.runners",
+        "asyncio.selector_events",
+        "asyncio.sslproto",
+        "asyncio.staggered",
+        "asyncio.streams",
+        "asyncio.subprocess",
+        "asyncio.taskgroups",
+        "asyncio.tasks",
+        "asyncio.threads",
+        "asyncio.timeouts",
+        "asyncio.transports",
+        "asyncio.trsock",
+        "asyncio.unix_events",
+    ]:
+        try:
+            module = importlib.import_module(module_name)
+        except ImportError:
+            # The list is from Python 3.13, so some modules may not be present
+            # in older versions of Python:
+            continue
+        if getattr(module, to_unpatch, None) is sys.modules[to_unpatch]:
+            setattr(module, to_unpatch, original_module)
+
+
+def _unmonkey_patch_asyncio_all():
+    """
+    Unmonkey-patch all referred-to modules in asyncio.
+    """
+    for module_name, _ in sum([
+        _green_os_modules(),
+        _green_select_modules(),
+        _green_socket_modules(),
+        _green_thread_modules(),
+        _green_time_modules(),
+        _green_builtins(),
+        _green_subprocess_modules(),
+    ], []):
+        _unmonkey_patch_asyncio(module_name)
+    original("selectors").select = original("select")
 
 
 def monkey_patch(**on):
@@ -246,57 +346,68 @@ def monkey_patch(**on):
     # the hub calls into monkey-patched modules.
     eventlet.hubs.get_hub()
 
-    accepted_args = {'os', 'select', 'socket',
-                     'thread', 'time', 'psycopg', 'MySQLdb',
-                     'builtins', 'subprocess'}
+    accepted_args = {
+        "os",
+        "select",
+        "socket",
+        "thread",
+        "time",
+        "psycopg",
+        "MySQLdb",
+        "builtins",
+        "subprocess",
+    }
     # To make sure only one of them is passed here
-    assert not ('__builtin__' in on and 'builtins' in on)
+    assert not ("__builtin__" in on and "builtins" in on)
     try:
-        b = on.pop('__builtin__')
+        b = on.pop("__builtin__")
     except KeyError:
         pass
     else:
-        on['builtins'] = b
+        on["builtins"] = b
 
     default_on = on.pop("all", None)
 
     for k in on.keys():
         if k not in accepted_args:
-            raise TypeError("monkey_patch() got an unexpected "
-                            "keyword argument %r" % k)
+            raise TypeError(
+                "monkey_patch() got an unexpected " "keyword argument %r" % k
+            )
     if default_on is None:
         default_on = True not in on.values()
     for modname in accepted_args:
-        if modname == 'MySQLdb':
+        if modname == "MySQLdb":
             # MySQLdb is only on when explicitly patched for the moment
             on.setdefault(modname, False)
-        if modname == 'builtins':
+        if modname == "builtins":
             on.setdefault(modname, False)
         on.setdefault(modname, default_on)
 
     import threading
+
     original_rlock_type = type(threading.RLock())
 
     modules_to_patch = []
     for name, modules_function in [
-        ('os', _green_os_modules),
-        ('select', _green_select_modules),
-        ('socket', _green_socket_modules),
-        ('thread', _green_thread_modules),
-        ('time', _green_time_modules),
-        ('MySQLdb', _green_MySQLdb),
-        ('builtins', _green_builtins),
-        ('subprocess', _green_subprocess_modules),
+        ("os", _green_os_modules),
+        ("select", _green_select_modules),
+        ("socket", _green_socket_modules),
+        ("thread", _green_thread_modules),
+        ("time", _green_time_modules),
+        ("MySQLdb", _green_MySQLdb),
+        ("builtins", _green_builtins),
+        ("subprocess", _green_subprocess_modules),
     ]:
         if on[name] and not already_patched.get(name):
             modules_to_patch += modules_function()
             already_patched[name] = True
 
-    if on['psycopg'] and not already_patched.get('psycopg'):
+    if on["psycopg"] and not already_patched.get("psycopg"):
         try:
             from eventlet.support import psycopg2_patcher
+
             psycopg2_patcher.make_psycopg_green()
-            already_patched['psycopg'] = True
+            already_patched["psycopg"] = True
         except ImportError:
             # note that if we get an importerror from trying to
             # monkeypatch psycopg, we will continually retry it
@@ -305,7 +416,7 @@ def monkey_patch(**on):
             # tell us whether or not we succeeded
             pass
 
-    _threading = original('threading')
+    _threading = original("threading")
     imp.acquire_lock()
     try:
         for name, mod in modules_to_patch:
@@ -316,13 +427,14 @@ def monkey_patch(**on):
                 patched_attr = getattr(mod, attr_name, None)
                 if patched_attr is not None:
                     setattr(orig_mod, attr_name, patched_attr)
-            deleted = getattr(mod, '__deleted__', [])
+            deleted = getattr(mod, "__deleted__", [])
             for attr_name in deleted:
                 if hasattr(orig_mod, attr_name):
                     delattr(orig_mod, attr_name)
 
             # https://github.com/eventlet/eventlet/issues/592
-            if name == 'threading' and register_at_fork:
+            if name == "threading" and register_at_fork:
+
                 def fix_threading_active(
                     _global_dict=_threading.current_thread.__globals__,
                     # alias orig_mod as patched to reflect its new state
@@ -332,21 +444,21 @@ def monkey_patch(**on):
                     _prefork_active = [None]
 
                     def before_fork():
-                        _prefork_active[0] = _global_dict['_active']
-                        _global_dict['_active'] = _patched._active
+                        _prefork_active[0] = _global_dict["_active"]
+                        _global_dict["_active"] = _patched._active
 
                     def after_fork():
-                        _global_dict['_active'] = _prefork_active[0]
+                        _global_dict["_active"] = _prefork_active[0]
 
-                    register_at_fork(
-                        before=before_fork,
-                        after_in_parent=after_fork)
+                    register_at_fork(before=before_fork, after_in_parent=after_fork)
+
                 fix_threading_active()
     finally:
         imp.release_lock()
 
     import importlib._bootstrap
-    thread = original('_thread')
+
+    thread = original("_thread")
     # importlib must use real thread locks, not eventlet.Semaphore
     importlib._bootstrap._thread = thread
 
@@ -355,16 +467,20 @@ def monkey_patch(**on):
     # threading.get_ident(). Force the Python implementation of RLock which
     # calls threading.get_ident() and so is compatible with eventlet.
     import threading
+
     threading.RLock = threading._PyRLock
 
     # Issue #508: Since Python 3.7 queue.SimpleQueue is implemented in C,
     # causing a deadlock.  Replace the C implementation with the Python one.
     import queue
+
     queue.SimpleQueue = queue._PySimpleQueue
 
     # Green existing locks _after_ patching modules, since patching modules
     # might involve imports that create new locks:
-    _green_existing_locks(original_rlock_type)
+    for name, _ in modules_to_patch:
+        if name == "threading":
+            _green_existing_locks(original_rlock_type)
 
 
 def is_monkey_patched(module):
@@ -375,8 +491,10 @@ def is_monkey_patched(module):
     module some other way than with the import keyword (including
     import_patched), this might not be correct about that particular
     module."""
-    return module in already_patched or \
-        getattr(module, '__name__', None) in already_patched
+    return (
+        module in already_patched
+        or getattr(module, "__name__", None) in already_patched
+    )
 
 
 def _green_existing_locks(rlock_type):
@@ -428,10 +546,13 @@ def _green_existing_locks(rlock_type):
 
     if remaining_rlocks:
         import logging
+
         logger = logging.Logger("eventlet")
-        logger.error("{} RLock(s) were not greened,".format(remaining_rlocks) +
-                     " to fix this error make sure you run eventlet.monkey_patch() " +
-                     "before importing any other modules.")
+        logger.error(
+            "{} RLock(s) were not greened,".format(remaining_rlocks)
+            + " to fix this error make sure you run eventlet.monkey_patch() "
+            + "before importing any other modules."
+        )
 
 
 def _upgrade_instances(container, klass, upgrade, visited=None, old_to_new=None):
@@ -492,10 +613,14 @@ def _upgrade_instances(container, klass, upgrade, visited=None, old_to_new=None)
                     setattr(container, k, new)
         except:
             import logging
+
             logger = logging.Logger("eventlet")
-            logger.exception("An exception was thrown while monkey_patching for eventlet. "
-                             "to fix this error make sure you run eventlet.monkey_patch() "
-                             "before importing any other modules.", exc_info=True)
+            logger.exception(
+                "An exception was thrown while monkey_patching for eventlet. "
+                "to fix this error make sure you run eventlet.monkey_patch() "
+                "before importing any other modules.",
+                exc_info=True,
+            )
 
 
 def _convert_py3_rlock(old, tid):
@@ -508,14 +633,16 @@ def _convert_py3_rlock(old, tid):
     """
     import threading
     from eventlet.green.thread import allocate_lock
+
     new = threading._PyRLock()
     if not hasattr(new, "_block") or not hasattr(new, "_owner"):
         # These will only fail if Python changes its internal implementation of
         # _PyRLock:
         raise RuntimeError(
-            "INTERNAL BUG. Perhaps you are using a major version " +
-            "of Python that is unsupported by eventlet? Please file a bug " +
-            "at https://github.com/eventlet/eventlet/issues/new")
+            "INTERNAL BUG. Perhaps you are using a major version "
+            + "of Python that is unsupported by eventlet? Please file a bug "
+            + "at https://github.com/eventlet/eventlet/issues/new"
+        )
     new._block = allocate_lock()
     acquired = False
     while old._is_owned():
@@ -532,49 +659,58 @@ def _convert_py3_rlock(old, tid):
 
 def _green_os_modules():
     from eventlet.green import os
-    return [('os', os)]
+
+    return [("os", os)]
 
 
 def _green_select_modules():
     from eventlet.green import select
-    modules = [('select', select)]
+
+    modules = [("select", select)]
 
     from eventlet.green import selectors
-    modules.append(('selectors', selectors))
+
+    modules.append(("selectors", selectors))
 
     return modules
 
 
 def _green_socket_modules():
     from eventlet.green import socket
+
     try:
         from eventlet.green import ssl
-        return [('socket', socket), ('ssl', ssl)]
+
+        return [("socket", socket), ("ssl", ssl)]
     except ImportError:
-        return [('socket', socket)]
+        return [("socket", socket)]
 
 
 def _green_subprocess_modules():
     from eventlet.green import subprocess
-    return [('subprocess', subprocess)]
+
+    return [("subprocess", subprocess)]
 
 
 def _green_thread_modules():
     from eventlet.green import Queue
     from eventlet.green import thread
     from eventlet.green import threading
-    return [('queue', Queue), ('_thread', thread), ('threading', threading)]
+
+    return [("queue", Queue), ("_thread", thread), ("threading", threading)]
 
 
 def _green_time_modules():
     from eventlet.green import time
-    return [('time', time)]
+
+    return [("time", time)]
 
 
 def _green_MySQLdb():
     try:
         from eventlet.green import MySQLdb
-        return [('MySQLdb', MySQLdb)]
+
+        return [("MySQLdb", MySQLdb)]
     except ImportError:
         return []
 
@@ -582,7 +718,8 @@ def _green_MySQLdb():
 def _green_builtins():
     try:
         from eventlet.green import builtin
-        return [('builtins', builtin)]
+
+        return [("builtins", builtin)]
     except ImportError:
         return []
 
@@ -597,16 +734,18 @@ def slurp_properties(source, destination, ignore=[], srckeys=None):
     """
     if srckeys is None:
         srckeys = source.__all__
-    destination.update({
-        name: getattr(source, name)
-        for name in srckeys
-        if not (name.startswith('__') or name in ignore)
-    })
+    destination.update(
+        {
+            name: getattr(source, name)
+            for name in srckeys
+            if not (name.startswith("__") or name in ignore)
+        }
+    )
 
 
 if __name__ == "__main__":
     sys.argv.pop(0)
     monkey_patch()
     with open(sys.argv[0]) as f:
-        code = compile(f.read(), sys.argv[0], 'exec')
+        code = compile(f.read(), sys.argv[0], "exec")
         exec(code)
