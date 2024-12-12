@@ -320,6 +320,7 @@ def _unmonkey_patch_asyncio_all():
         _green_subprocess_modules(),
     ], []):
         _unmonkey_patch_asyncio(module_name)
+    original("selectors").select = original("select")
 
 
 def monkey_patch(**on):
