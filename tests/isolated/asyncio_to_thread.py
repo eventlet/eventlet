@@ -1,8 +1,9 @@
 import eventlet
+eventlet.monkey_patch()
+
 from eventlet.patcher import original
 from eventlet.asyncio import spawn_for_awaitable
 
-eventlet.monkey_patch()
 import asyncio
 
 

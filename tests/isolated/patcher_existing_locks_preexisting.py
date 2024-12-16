@@ -31,6 +31,10 @@ if __name__ == '__main__':
     if sys.version_info[:2] > (3, 9):
         print(unittest.mock.NonCallableMock._lock)
     print(NS.lock)
+    # unittest.mock imports asyncio, so clear out asyncio.
+    for name in list(sys.modules.keys()):
+        if name.startswith("asyncio"):
+            del sys.modules[name]
     eventlet.monkey_patch()
     ensure_upgraded(NS.lock)
     ensure_upgraded(NS.NS2.lock)
