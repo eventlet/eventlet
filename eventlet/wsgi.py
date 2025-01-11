@@ -353,6 +353,11 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         self.client_address = conn_state[0]
         self.conn_state = conn_state
         self.server = server
+        # Want to allow some overrides from the server before running setup
+        if server.minimum_chunk_size is not None:
+            self.minimum_chunk_size = server.minimum_chunk_size
+        self.capitalize_response_headers = server.capitalize_response_headers
+
         self.setup()
         try:
             self.handle()
@@ -894,15 +899,10 @@ class Server(BaseHTTPServer.HTTPServer):
         return d
 
     def process_request(self, conn_state):
-        # The actual request handling takes place in __init__, so we need to
-        # set minimum_chunk_size before __init__ executes and we don't want to modify
-        # class variable
-        proto = new(self.protocol)
-        if self.minimum_chunk_size is not None:
-            proto.minimum_chunk_size = self.minimum_chunk_size
-        proto.capitalize_response_headers = self.capitalize_response_headers
         try:
-            proto.__init__(conn_state, self)
+            # protocol is responsible for pulling out any overrides it needs itself
+            # before it starts processing
+            self.protocol(conn_state, self)
         except socket.timeout:
             # Expected exceptions are not exceptional
             conn_state[1].close()
@@ -913,12 +913,6 @@ class Server(BaseHTTPServer.HTTPServer):
         raise AttributeError('''\
 eventlet.wsgi.server.log_message was deprecated and deleted.
 Please use server.log.info instead.''')
-
-
-try:
-    new = types.InstanceType
-except AttributeError:
-    new = lambda cls: cls.__new__(cls)
 
 
 try:
