@@ -1,4 +1,5 @@
 import eventlet
+
 eventlet.sleep(0)
 eventlet.monkey_patch()
 
@@ -7,6 +8,7 @@ import time
 
 FAILURES = []
 
+
 def zero_second_sleep():
     try:
         eventlet.sleep(0)
@@ -14,6 +16,7 @@ def zero_second_sleep():
     except RuntimeError:
         FAILURES.append(1)
         raise
+
 
 # Simulate sleep(0) being called from a trampoline function. Or try to, anyway,
 # not really sure if this matches the original reported bug but it does at
