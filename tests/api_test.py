@@ -184,3 +184,7 @@ def test_timeouterror_deprecated():
     code = '''import eventlet; eventlet.Timeout(1).cancel(); print('pass')'''
     args = ['-Werror:eventlet.Timeout:DeprecationWarning', '-c', code]
     tests.run_python(path=None, args=args, expect_pass=True)
+
+
+def test_zero_second_sleep():
+    tests.run_isolated("zero_second_sleep.py")
