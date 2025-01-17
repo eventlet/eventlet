@@ -4,9 +4,10 @@ from eventlet.green import thread
 from eventlet.green import time
 from eventlet.support import greenlets as greenlet
 
-__patched__ = ['_start_new_thread', '_allocate_lock',
-               '_sleep', 'local', 'stack_size', 'Lock', 'currentThread',
-               'current_thread', '_after_fork', '_shutdown']
+__patched__ = ['Lock', '_after_fork', '_allocate_lock', '_get_main_thread_ident',
+               '_make_thread_handle', '_shutdown', '_sleep',
+               '_start_joinable_thread', '_start_new_thread', '_ThreadHandle',
+               'currentThread', 'current_thread', 'local', 'stack_size']
 
 __patched__ += ['get_ident', '_set_sentinel']
 

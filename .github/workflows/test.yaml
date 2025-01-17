@@ -33,31 +33,36 @@ jobs:
           - { py: 3.8, toxenv: py38-openssl, ignore-error: false, os: ubuntu-latest }
           - { py: 3.8, toxenv: py38-poll, ignore-error: false, os: ubuntu-latest }
           - { py: 3.8, toxenv: py38-selects, ignore-error: false, os: ubuntu-latest }
+          - { py: 3.8, toxenv: py38-asyncio, ignore-error: false, os: ubuntu-latest }
           - { py: 3.9, toxenv: py39-epolls, ignore-error: false, os: ubuntu-latest }
           - { py: 3.9, toxenv: py39-poll, ignore-error: false, os: ubuntu-latest }
           - { py: 3.9, toxenv: py39-selects, ignore-error: false, os: ubuntu-latest }
           - { py: 3.9, toxenv: py39-dnspython1, ignore-error: false, os: ubuntu-latest }
+          - { py: 3.9, toxenv: py39-asyncio, ignore-error: false, os: ubuntu-latest }
           - { py: "3.10", toxenv: py310-epolls, ignore-error: false, os: ubuntu-latest }
           - { py: "3.10", toxenv: py310-poll, ignore-error: false, os: ubuntu-latest }
           - { py: "3.10", toxenv: py310-selects, ignore-error: false, os: ubuntu-latest }
           - { py: "3.10", toxenv: ipv6, ignore-error: false, os: ubuntu-latest }
           - { py: "3.11", toxenv: py311-epolls, ignore-error: false, os: ubuntu-latest }
           - { py: "3.12", toxenv: py312-epolls, ignore-error: false, os: ubuntu-latest }
-          - { py: "3.7", toxenv: py37-asyncio, ignore-error: false, os: ubuntu-latest }
           - { py: "3.8", toxenv: py38-asyncio, ignore-error: false, os: ubuntu-latest }
           - { py: "3.9", toxenv: py39-asyncio, ignore-error: false, os: ubuntu-latest }
           - { py: "3.10", toxenv: py310-asyncio, ignore-error: false, os: ubuntu-latest }
+          - { py: "3.11", toxenv: py311-epolls, ignore-error: false, os: ubuntu-latest }
           - { py: "3.11", toxenv: py311-asyncio, ignore-error: false, os: ubuntu-latest }
+          - { py: "3.12", toxenv: py312-epolls, ignore-error: false, os: ubuntu-latest }
           - { py: "3.12", toxenv: py312-asyncio, ignore-error: false, os: ubuntu-latest }
+          - { py: "3.13", toxenv: py313-epolls, ignore-error: false, os: ubuntu-24.04 }
+          - { py: "3.13", toxenv: py313-asyncio, ignore-error: false, os: ubuntu-24.04 }
           - { py: pypy3.9, toxenv: pypy3-epolls, ignore-error: true, os: ubuntu-20.04 }
 
     steps:
       - name: install system packages
         run: sudo apt install -y --no-install-recommends ccache libffi-dev default-libmysqlclient-dev libpq-dev libssl-dev libzmq3-dev
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: cache pip
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ matrix.toxenv }}-${{ hashFiles('.github/workflows/test.yaml', 'setup.py') }}
@@ -65,7 +70,7 @@ jobs:
             ${{ runner.os }}-pip-
             ${{ runner.os }}-
       - name: cache tox
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: .tox
           key: ${{ runner.os }}-tox-${{ matrix.toxenv }}-${{ hashFiles('tox.ini') }}
@@ -74,7 +79,7 @@ jobs:
             ${{ runner.os }}-
 
       - name: setup python ${{ matrix.py }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.py }}
       - name: install codecov, tox
@@ -97,13 +102,14 @@ jobs:
       matrix:
         include:
           - { py: "3.12", toxenv: py312-asyncio, ignore-error: false, os: macos-latest }
+          - { py: "3.13", toxenv: py313-asyncio, ignore-error: false, os: macos-latest }
           # This isn't working very well at the moment, but that might just be
           # tox config? In any case main focus is on asyncio so someone can
           # revisit separately.
           #- { py: "3.12", toxenv: py312-kqueue, ignore-error: false, os: macos-latest }
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: install codecov, tox
         run: pip install codecov tox
       - run: env
