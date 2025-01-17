@@ -1,6 +1,12 @@
 Unreleased
 ==========
 
+0.38.3
+======
+
+* [fix] eventlet.sleep(0) no longer blows up in some edge cases (#1015)
+* Drop support for Python 3.7.
+
 0.38.2
 ======
 
