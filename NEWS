@@ -1,6 +1,19 @@
 Unreleased
 ==========
 
+0.38.2
+======
+
+* [fix] fix the monkey patching with the asyncio hub
+* [feature] introduce the unmonkeypatching feature
+
+0.38.1
+======
+
+* [fix] Python 3.13: Use greenthread's dead state where possible (#1000)
+* [env] bump github Actions (#996)
+* [fix] Fix bug where asyncio hub didn't support multiple os threads (#995)
+
 0.38.0
 ======
 

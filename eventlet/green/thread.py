@@ -59,6 +59,8 @@ class _ThreadHandle:
         self._done = True
 
     def is_done(self):
+        if self._greenthread is not None:
+            return self._greenthread.dead
         return self._done
 
     @property

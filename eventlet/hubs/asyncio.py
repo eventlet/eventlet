@@ -14,7 +14,7 @@ import os
 import sys
 
 from eventlet.hubs import hub
-from eventlet.patcher import original, _original_patch_function
+from eventlet.patcher import _unmonkey_patch_asyncio_all
 
 
 def is_available():
@@ -33,46 +33,8 @@ class Hub(hub.BaseHub):
     def __init__(self):
         super().__init__()
 
-        # Make sure select/poll/epoll/kqueue are usable by asyncio, original
-        # socket.socketpair is used by asyncio, real thread pools are used,
-        # etc:
-        def import_with_original_dependencies():
-            # This gets imported super-early so random attributes point at
-            # monkey-patched select, let's try to fix that.
-            import selectors as old_selectors
-
-            del sys.modules["selectors"]
-            import selectors
-
-            # Fix old module for those who have it. Doesn't fix "from selectors
-            # import whatevs" though...
-            for attr, value in selectors.__dict__.items():
-                setattr(old_selectors, attr, value)
-
-            import asyncio
-
-            try:
-                import concurrent.futures.thread
-            except RuntimeError:
-                # This happens in weird edge cases where asyncio hub is started at
-                # shutdown. Not much we can do if this happens.
-                pass
-            else:
-                concurrent.futures.thread.threading = original("threading")
-                concurrent.futures.thread.queue = original("queue")
-            import asyncio.base_events
-            import asyncio.selector_events
-
-            asyncio.base_events.socket = original("socket")
-
-        _original_patch_function(
-            import_with_original_dependencies,
-            "select",
-            "socket",
-            "os",
-            "threading",
-            "queue",
-        )()
+        # Pre-emptively make sure we're using the right modules:
+        _unmonkey_patch_asyncio_all()
 
         # The presumption is that eventlet is driving the event loop, so we
         # want a new one we control.
