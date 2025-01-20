@@ -41,7 +41,6 @@ dynamic = ["version"]
 dependencies = [
     'dnspython >= 1.15.0',
     'greenlet >= 1.0',
-    'monotonic >= 1.4;python_version<"3.5"',
 ]
 
 [project.urls]
