@@ -127,13 +127,6 @@ def start_new_thread(function, args=(), kwargs=None):
 start_new = start_new_thread
 
 
-def _get_main_thread_ident():
-    greenthread = greenlet.getcurrent()
-    while greenthread.parent is not None:
-        greenthread = greenthread.parent
-    return get_ident(greenthread)
-
-
 def allocate_lock(*a):
     return LockType(1)
 
@@ -171,8 +164,47 @@ if hasattr(__thread, 'stack_size'):
 
 from eventlet.corolocal import local as _local
 
-if hasattr(__thread, 'daemon_threads_allowed'):
-    daemon_threads_allowed = __thread.daemon_threads_allowed
+if sys.version_info >= (3, 13):
+    daemon_threads_allowed = getattr(__thread, 'daemon_threads_allowed', True)
 
-if hasattr(__thread, '_shutdown'):
-    _shutdown = __thread._shutdown
+    class _ThreadHandle:
+        def __init__(self, greenthread=None):
+            self._greenthread = greenthread
+
+        def join(self, timeout=None):
+            if self._greenthread is not None:
+                if timeout is not None:
+                    return with_timeout(timeout, self._greenthread.wait)
+                else:
+                    return self._greenthread.wait()
+
+        def is_done(self):
+            return self._greenthread is None or self._greenthread.dead
+
+        @property
+        def ident(self):
+            return get_ident(self._greenthread)
+
+    def _make_thread_handle(ident):
+        current_greenlet = greenlet.getcurrent()
+        # Don't check for ident match - this accommodates the main thread initialization
+        # where the thread's ident from the original threading module doesn't match our
+        # greenlet ident.
+        # This issue is related to the GIL and PEP 703 because Python 3.13 introduced
+        # internal thread handles and joinable threads to support the no-GIL mode,
+        # changing how thread identifiers are managed: instead of simple values,
+        # they are now internal native identifiers handled at the C level, tied to
+        # OS-level threads or new CPython thread structures.
+        # Fixing this would surely require a more complex solution, potentially involving a
+        # significantly more complex and beyond the scope of a simple compatibility patch
+        return _ThreadHandle(current_greenlet)
+
+    def start_joinable_thread(function, handle=None, daemon=True):
+        gt = greenthread.spawn(function)
+        return _ThreadHandle(gt)
+
+    if hasattr(__thread, '_shutdown'):
+        _shutdown = __thread._shutdown
+
+    if hasattr(__thread, '_get_main_thread_ident'):
+        _get_main_thread_ident = __thread._get_main_thread_ident
