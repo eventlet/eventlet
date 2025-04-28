@@ -32,6 +32,13 @@ def sleep(seconds=0):
     hub = hubs.get_hub()
     current = getcurrent()
     if hub.greenlet is current:
+        if seconds <= 0:
+            # In this case, sleep(0) got called in the event loop threadlet.
+            # This isn't blocking, so it's not harmful. And it will not be
+            # possible to switch in this situation. So not much we can do other
+            # than just keep running. This does get triggered in real code,
+            # unfortunately.
+            return
         raise RuntimeError('do not call blocking functions from the mainloop')
     timer = hub.schedule_call_global(seconds, current.switch)
     try:

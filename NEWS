@@ -1,6 +1,50 @@
 Unreleased
 ==========
 
+0.39.1
+======
+
+* [fix] Make LightQueue and derivatives subscriptable (#1027)
+
+0.39.0
+======
+
+* [fix] Remove monotonic from requirements (#1018)
+* [fix] wsgi: Clean up some override logic (#999)
+* [fix] Correct line lookup from inspect.getsourcelines() (#990)
+* Drop support of Python 3.7 (#967)
+* [fix] Calling eventlet.sleep(0) isn't really blocking, so don't blow up (#1015)
+
+
+0.38.2
+======
+
+* [fix] fix the monkey patching with the asyncio hub
+* [feature] introduce the unmonkeypatching feature
+
+0.38.1
+======
+
+* [fix] Python 3.13: Use greenthread's dead state where possible (#1000)
+* [env] bump github Actions (#996)
+* [fix] Fix bug where asyncio hub didn't support multiple os threads (#995)
+
+0.38.0
+======
+
+* Python 3.13 Support (#988)
+* [fix] wsgi: server MUST NOT send Content-Length/Transfer-Encoding header in response with a status code of 1xx, 204 or (2xx to CONNECT request) (#747)
+* [fix] wsgi: No request Content-Length nor Transfer-Encoding implies no body (#985)
+
+
+0.37.0
+======
+
+* [fix] os.read/write waits until file descriptor is ready. https://github.com/eventlet/eventlet/pull/975
+* [fix] Upgrade RLocks as last thing we do https://github.com/eventlet/eventlet/pull/970
+* [security] drop header keys with underscores https://github.com/eventlet/eventlet/pull/959
+* [doc] Various doc updates (Migration Guide, repair links, warns...)
+
 0.36.1
 ======
 

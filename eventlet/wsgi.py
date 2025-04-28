@@ -142,8 +142,7 @@ class Input:
             # 100 Continue response
             self.send_hundred_continue_response()
             self.is_hundred_continue_response_sent = True
-        if (self.content_length is not None) and (
-                length is None or length > self.content_length - self.position):
+        if length is None or length > self.content_length - self.position:
             length = self.content_length - self.position
         if not length:
             return b''
@@ -354,6 +353,11 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         self.client_address = conn_state[0]
         self.conn_state = conn_state
         self.server = server
+        # Want to allow some overrides from the server before running setup
+        if server.minimum_chunk_size is not None:
+            self.minimum_chunk_size = server.minimum_chunk_size
+        self.capitalize_response_headers = server.capitalize_response_headers
+
         self.setup()
         try:
             self.handle()
@@ -508,6 +512,9 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
         use_chunked = [False]
         length = [0]
         status_code = [200]
+        # Status code of 1xx or 204 or 2xx to CONNECT request MUST NOT send body and related headers
+        # https://httpwg.org/specs/rfc7230.html#rfc.section.3.3.1
+        bodyless = [False]
 
         def write(data):
             towrite = []
@@ -539,10 +546,12 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                     self.close_connection = 1
 
                 if 'content-length' not in header_list:
-                    if self.request_version == 'HTTP/1.1':
+                    if bodyless[0]:
+                        pass  # client didn't expect a body anyway
+                    elif self.request_version == 'HTTP/1.1':
                         use_chunked[0] = True
                         towrite.append(b'Transfer-Encoding: chunked\r\n')
-                    elif 'content-length' not in header_list:
+                    else:
                         # client is 1.0 and therefore must read to EOF
                         self.close_connection = 1
 
@@ -567,7 +576,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             length[0] = length[0] + sum(map(len, towrite))
 
         def start_response(status, response_headers, exc_info=None):
-            status_code[0] = status.split()[0]
+            status_code[0] = int(status.split(" ", 1)[0])
             if exc_info:
                 try:
                     if headers_sent:
@@ -576,6 +585,13 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 finally:
                     # Avoid dangling circular ref
                     exc_info = None
+
+            bodyless[0] = (
+                status_code[0] in (204, 304)
+                or self.command == "HEAD"
+                or (100 <= status_code[0] < 200)
+                or (self.command == "CONNECT" and 200 <= status_code[0] < 300)
+            )
 
             # Response headers capitalization
             # CONTent-TYpe: TExt/PlaiN -> Content-Type: TExt/PlaiN
@@ -600,7 +616,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 # Set content-length if possible
                 if headers_set and not headers_sent and hasattr(result, '__len__'):
                     # We've got a complete final response
-                    if 'Content-Length' not in [h for h, _v in headers_set[1]]:
+                    if not bodyless[0] and 'Content-Length' not in [h for h, _v in headers_set[1]]:
                         headers_set[1].append(('Content-Length', str(sum(map(len, result)))))
                     if request_input.should_send_hundred_continue:
                         # We've got a complete final response, and never sent a 100 Continue.
@@ -785,6 +801,11 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
             wfile = None
             wfile_line = None
         chunked = env.get('HTTP_TRANSFER_ENCODING', '').lower() == 'chunked'
+        if not chunked and length is None:
+            # https://www.rfc-editor.org/rfc/rfc9112#section-6.3-2.7
+            # "If this is a request message and none of the above are true, then
+            # the message body length is zero (no message body is present)."
+            length = '0'
         env['wsgi.input'] = env['eventlet.input'] = Input(
             self.rfile, length, self.connection, wfile=wfile, wfile_line=wfile_line,
             chunked_input=chunked)
@@ -878,15 +899,10 @@ class Server(BaseHTTPServer.HTTPServer):
         return d
 
     def process_request(self, conn_state):
-        # The actual request handling takes place in __init__, so we need to
-        # set minimum_chunk_size before __init__ executes and we don't want to modify
-        # class variable
-        proto = new(self.protocol)
-        if self.minimum_chunk_size is not None:
-            proto.minimum_chunk_size = self.minimum_chunk_size
-        proto.capitalize_response_headers = self.capitalize_response_headers
         try:
-            proto.__init__(conn_state, self)
+            # protocol is responsible for pulling out any overrides it needs itself
+            # before it starts processing
+            self.protocol(conn_state, self)
         except socket.timeout:
             # Expected exceptions are not exceptional
             conn_state[1].close()
@@ -897,12 +913,6 @@ class Server(BaseHTTPServer.HTTPServer):
         raise AttributeError('''\
 eventlet.wsgi.server.log_message was deprecated and deleted.
 Please use server.log.info instead.''')
-
-
-try:
-    new = types.InstanceType
-except AttributeError:
-    new = lambda cls: cls.__new__(cls)
 
 
 try:

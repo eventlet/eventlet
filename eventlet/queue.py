@@ -40,10 +40,11 @@ and :meth:`Queue.putting` report on the number of greenthreads blocking
 in :meth:`put <Queue.put>` or :meth:`get <Queue.get>` respectively.
 """
 
-import sys
-import heapq
 import collections
+import heapq
+import sys
 import traceback
+import types
 
 from eventlet.event import Event
 from eventlet.greenthread import getcurrent
@@ -385,6 +386,11 @@ class LightQueue:
     def _schedule_unlock(self):
         if self._event_unlock is None:
             self._event_unlock = get_hub().schedule_call_global(0, self._unlock)
+
+    # TODO(stephenfin): Remove conditional when we bump the minimum Python
+    # version
+    if sys.version_info >= (3, 9):
+        __class_getitem__ = classmethod(types.GenericAlias)
 
 
 class ItemWaiter(Waiter):

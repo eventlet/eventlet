@@ -536,3 +536,7 @@ def test_patcher_existing_locks():
 
 def test_patcher_existing_locks_exception():
     tests.run_isolated("patcher_existing_locks_exception.py")
+
+
+def test_patcher_threading_subclass_done():
+    tests.run_isolated("patcher_threading_subclass_done.py")
