@@ -81,19 +81,6 @@ jobs:
       - name: codecov
         run: codecov --flags=$(echo ${{ matrix.toxenv }} |tr -d -- '-.')
 
-  # Optional tests
-  optional-tests:
-    name: "Optional Test: ${{ matrix.toxenv }}"
-    continue-on-error: true
-    runs-on: ${{ matrix.os }}
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != 'eventlet/eventlet'
-    timeout-minutes: 10
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - { py: pypy3.9, toxenv: pypy3-epolls, os: ubuntu-20.04 }
-
     steps:
       - name: install system packages
         run: sudo apt install -y --no-install-recommends ccache libffi-dev default-libmysqlclient-dev libpq-dev libssl-dev libzmq3-dev
