@@ -426,13 +426,6 @@ class GreenSocket:
     def __exit__(self, *args):
         self.close()
 
-    if "__pypy__" in sys.builtin_module_names:
-        def _reuse(self):
-            getattr(self.fd, '_sock', self.fd)._reuse()
-
-        def _drop(self):
-            getattr(self.fd, '_sock', self.fd)._drop()
-
 
 def _operation_on_closed_file(*args, **kwargs):
     raise ValueError("I/O operation on closed file")
