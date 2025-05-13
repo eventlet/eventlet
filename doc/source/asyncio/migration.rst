@@ -108,9 +108,27 @@ Depending on your Eventlet usage, during your migration, you may have to
 deprecate CLI options that are related to Eventlet, we invite the reader
 to take a look to :ref:`manage-your-deprecations`.
 
-The `awesome-asyncio <https://github.com/timofurrer/awesome-asyncio>`_ github
-repository propose a curated list of awesome Python asyncio frameworks,
-libraries, software and resources. Do not hesitate to take a look at it.
+For a more comprehensive migration guide, please visit the
+Eventlet migration guide available here: 
+`https://removal.eventlet.org/ <https://removal.eventlet.org/>`_.
+
+This guide provides:
+
+* **Detailed migration steps** to transition from Eventlet to modern alternatives.
+* **Multiple alternatives** to Eventlet, including ``asyncio`` for asynchronous
+  programming and Python's native ``threading`` module for multithreading.
+* **Advanced migration paradigms** to help you refactor your code incrementally
+  and minimize disruptions during the transition.
+
+For example, the section `Preparing for Migration
+<https://removal.eventlet.org/guide/preparing-for-migration/>`_
+introduces strategies to prepare your codebase for migration.
+It covers topics such as identifying blocking APIs, isolating Eventlet-specific
+code, and gradually replacing it with ``asyncio`` or other alternatives.
+
+The `awesome-asyncio <https://github.com/timofurrer/awesome-asyncio>`_ GitHub
+repository proposes a curated list of awesome Python asyncio frameworks,
+libraries, software, and resources. Do not hesitate to take a look at it.
 You may find candidates compatible with asyncio that can allow you to replace
 some of your actual underlying libraries.
 
