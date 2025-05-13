@@ -44,8 +44,8 @@ jobs:
           - { py: "3.11", toxenv: py311-asyncio, os: ubuntu-latest }
           - { py: "3.12", toxenv: py312-epolls, os: ubuntu-latest }
           - { py: "3.12", toxenv: py312-asyncio, os: ubuntu-latest }
-          - { py: "3.13", toxenv: py313-epolls, os: ubuntu-24.04 }
-          - { py: "3.13", toxenv: py313-asyncio, os: ubuntu-24.04 }
+          - { py: "3.13", toxenv: py313-epolls, os: ubuntu-latest }
+          - { py: "3.13", toxenv: py313-asyncio, os: ubuntu-latest }
 
     steps:
       - name: install system packages
