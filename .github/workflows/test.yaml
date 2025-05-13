@@ -29,12 +29,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { py: 3.8, toxenv: py38-epolls, os: ubuntu-latest }
-          - { py: 3.8, toxenv: py38-openssl, os: ubuntu-latest }
-          - { py: 3.8, toxenv: py38-poll, os: ubuntu-latest }
-          - { py: 3.8, toxenv: py38-selects, os: ubuntu-latest }
-          - { py: 3.8, toxenv: py38-asyncio, os: ubuntu-latest }
           - { py: 3.9, toxenv: py39-epolls, os: ubuntu-latest }
+          - { py: 3.9, toxenv: py39-openssl, os: ubuntu-latest }
           - { py: 3.9, toxenv: py39-poll, os: ubuntu-latest }
           - { py: 3.9, toxenv: py39-selects, os: ubuntu-latest }
           - { py: 3.9, toxenv: py39-dnspython1, os: ubuntu-latest }
