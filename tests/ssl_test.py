@@ -80,7 +80,8 @@ class SSLTest(tests.LimitedTestCase):
             sock.recv(8192)
             try:
                 self.assertEqual(b'', sock.recv(8192))
-            except greenio.SSL.ZeroReturnError:
+            except (greenio.SSL.ZeroReturnError,
+                    BrokenPipeError):
                 pass
 
         sock = listen_ssl_socket()
