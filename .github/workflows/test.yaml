@@ -14,7 +14,7 @@ jobs:
     timeout-minutes: 10
     services:
       mysql:
-        image: mysql:5.7
+        image: mysql:8.0
         env: { MYSQL_ALLOW_EMPTY_PASSWORD: yes }
         ports: ["3306:3306"]
         options: --health-cmd="mysqladmin ping" --health-timeout=5s --health-retries=5 --health-interval=5s
@@ -44,8 +44,8 @@ jobs:
           - { py: "3.11", toxenv: py311-asyncio, os: ubuntu-latest }
           - { py: "3.12", toxenv: py312-epolls, os: ubuntu-latest }
           - { py: "3.12", toxenv: py312-asyncio, os: ubuntu-latest }
-          - { py: "3.13", toxenv: py313-epolls, os: ubuntu-24.04 }
-          - { py: "3.13", toxenv: py313-asyncio, os: ubuntu-24.04 }
+          - { py: "3.13", toxenv: py313-epolls, os: ubuntu-latest }
+          - { py: "3.13", toxenv: py313-asyncio, os: ubuntu-latest }
 
     steps:
       - name: install system packages
