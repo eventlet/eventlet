@@ -14,7 +14,7 @@ jobs:
     timeout-minutes: 10
     services:
       mysql:
-        image: mysql:5.7
+        image: mysql:8.0
         env: { MYSQL_ALLOW_EMPTY_PASSWORD: yes }
         ports: ["3306:3306"]
         options: --health-cmd="mysqladmin ping" --health-timeout=5s --health-retries=5 --health-interval=5s
