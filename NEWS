@@ -1,6 +1,14 @@
 Unreleased
 ==========
 
+0.40.0
+======
+
+* [fix] Fix ssl test when linking against openssl 3.5 (#1034)
+* Drop support Python 3.8 (#1021)
+* [doc] Various doc updates (#981, #1033)
+* [env] Drop PyPy support (#1035 #1037)
+
 0.39.1
 ======
 
