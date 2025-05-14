@@ -18,7 +18,7 @@ Concurrency
 
 **Concurrency** is when two or more tasks can start, run, and complete in
 overlapping time **periods**. It doesn't necessarily mean they'll ever both be
-running **at the same instant**. For example, _multitasking_ on a single-core
+running **at the same instant**. For example, *multitasking* on a single-core
 machine.
 
 .. _glossary-cooperative-multitasking:
@@ -106,7 +106,7 @@ Python offers to switch among threads only between bytecode instructions (see
 Parallelism
 -----------
 
-**Parallelism** is when tasks _literally_ run at the same time, e.g., on a
+**Parallelism** is when tasks *literally* run at the same time, e.g., on a
 multicore processor. A condition that arises when at least two threads are
 executing simultaneously.
 
@@ -129,7 +129,7 @@ suspends the currently executing process and invokes a scheduler to determine
 which process should execute next. Therefore, all processes will get some
 amount of CPU time at any given time.
 
-CPython also has _preemptive multitasking_: If a thread runs
+CPython also has **preemptive multitasking**: If a thread runs
 uninterrupted for 1000 bytecode instructions in Python 2, or runs 15
 milliseconds in Python 3, then it gives up the GIL and another thread may run.
 
