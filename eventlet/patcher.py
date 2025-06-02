@@ -528,7 +528,13 @@ def _green_existing_locks(rlock_type):
     # it's a useful warning, so we try to do it anyway for the benefit of those
     # users on 3.10 or later.
     gc.collect()
-    remaining_rlocks = len({o for o in gc.get_objects() if isinstance(o, rlock_type)})
+    remaining_rlocks=0
+    for o in gc.get_objects():
+        try:
+            if isinstance(o, rlock_type):
+                remaining_rlocks+=1
+        except ReferenceError:
+            pass
     if remaining_rlocks:
         try:
             import _frozen_importlib
@@ -538,8 +544,11 @@ def _green_existing_locks(rlock_type):
             for o in gc.get_objects():
                 # This can happen in Python 3.12, at least, if monkey patch
                 # happened as side-effect of importing a module.
-                if not isinstance(o, rlock_type):
-                    continue
+                try:
+                    if not isinstance(o, rlock_type):
+                        continue
+                except ReferenceError:
+                    pass
                 if _frozen_importlib._ModuleLock in map(type, gc.get_referrers(o)):
                     remaining_rlocks -= 1
                 del o
