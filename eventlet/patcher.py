@@ -533,8 +533,16 @@ def _green_existing_locks(rlock_type):
         try:
             if isinstance(o, rlock_type):
                 remaining_rlocks+=1
-        except ReferenceError:
-            pass
+        except ReferenceError as exc:
+            import logging
+
+            logger = logging.Logger("eventlet")
+            logger.error(
+                "Not increase rlock count, an exception of type "
+                + type(exc).__name__ + "occurred with the message '"
+                + str(exc) + "'. Traceback details: "
+                + exc.__traceback__
+            )
     if remaining_rlocks:
         try:
             import _frozen_importlib
@@ -547,8 +555,17 @@ def _green_existing_locks(rlock_type):
                 try:
                     if not isinstance(o, rlock_type):
                         continue
-                except ReferenceError:
-                    pass
+                except ReferenceError as exc:
+                    import logging
+
+                    logger = logging.Logger("eventlet")
+                    logger.error(
+                        "No decrease rlock count, an exception of type "
+                        + type(exc).__name__ + "occurred with the message '"
+                        + str(exc) + "'. Traceback details: "
+                        + exc.__traceback__
+                    )
+                    continue # if ReferenceError, skip this object and continue with the next one.
                 if _frozen_importlib._ModuleLock in map(type, gc.get_referrers(o)):
                     remaining_rlocks -= 1
                 del o
