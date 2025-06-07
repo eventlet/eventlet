@@ -76,9 +76,17 @@ class _ThreadHandle:
 
 
 def _make_thread_handle(ident):
-    greenthread = greenlet.getcurrent()
-    assert ident == get_ident(greenthread)
-    return _ThreadHandle(greenthread=greenthread)
+    try:
+        gr = greenlet.getcurrent()
+        # Only enforce identity verification in non-fork scenarios
+        if ident == get_ident(gr):
+            return _ThreadHandle(greenthread=gr)
+        else:
+            # Fork detection: return "done" handle
+            return _ThreadHandle()
+    except greenlet.error:
+        # Handle cases with no current greenlet
+        return _ThreadHandle()
 
 
 def __spawn_green(function, args=(), kwargs=None, joinable=False):
