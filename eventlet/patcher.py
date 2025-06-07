@@ -535,13 +535,14 @@ def _green_existing_locks(rlock_type):
                 remaining_rlocks += 1
         except ReferenceError as exc:
             import logging
+            import traceback
 
             logger = logging.Logger("eventlet")
             logger.error(
                 "Not increase rlock count, an exception of type "
                 + type(exc).__name__ + "occurred with the message '"
                 + str(exc) + "'. Traceback details: "
-                + exc.__traceback__
+                + traceback.format_exc()
             )
     if remaining_rlocks:
         try:
@@ -557,13 +558,14 @@ def _green_existing_locks(rlock_type):
                         continue
                 except ReferenceError as exc:
                     import logging
+                    import traceback
 
                     logger = logging.Logger("eventlet")
                     logger.error(
                         "No decrease rlock count, an exception of type "
                         + type(exc).__name__ + "occurred with the message '"
                         + str(exc) + "'. Traceback details: "
-                        + exc.__traceback__
+                        + traceback.format_exc()
                     )
                     continue # if ReferenceError, skip this object and continue with the next one.
                 if _frozen_importlib._ModuleLock in map(type, gc.get_referrers(o)):
