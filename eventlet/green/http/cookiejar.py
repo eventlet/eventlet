@@ -153,7 +153,7 @@ def time2isoz(t=None):
 
     """
     if t is None:
-        dt = datetime.datetime.utcnow()
+        dt = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
     else:
         dt = datetime.datetime.utcfromtimestamp(t)
     return "%04d-%02d-%02d %02d:%02d:%02dZ" % (
@@ -171,7 +171,7 @@ def time2netscape(t=None):
 
     """
     if t is None:
-        dt = datetime.datetime.utcnow()
+        dt = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
     else:
         dt = datetime.datetime.utcfromtimestamp(t)
     return "%s %02d-%s-%04d %02d:%02d:%02d GMT" % (
