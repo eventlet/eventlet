@@ -422,6 +422,7 @@ def monkey_patch(**on):
         for name, mod in modules_to_patch:
             orig_mod = sys.modules.get(name)
             if orig_mod is None:
+                print("IMPORTING", name)
                 orig_mod = __import__(name)
             for attr_name in mod.__patched__:
                 patched_attr = getattr(mod, attr_name, None)
@@ -432,10 +433,13 @@ def monkey_patch(**on):
                 if hasattr(orig_mod, attr_name):
                     delattr(orig_mod, attr_name)
 
+            if name == "threading":
+                orig_mod._MainThread = _threading._MainThread
+
             # https://github.com/eventlet/eventlet/issues/592
             if name == "threading" and register_at_fork:
 
-                def fix_threading_active(
+                def fix_threading_active_parent(
                     _global_dict=_threading.current_thread.__globals__,
                     # alias orig_mod as patched to reflect its new state
                     # https://github.com/eventlet/eventlet/pull/661#discussion_r509877481
@@ -452,7 +456,24 @@ def monkey_patch(**on):
 
                     register_at_fork(before=before_fork, after_in_parent=after_fork)
 
-                fix_threading_active()
+                # TODO might still need in older Python
+                #fix_threading_active_parent()
+
+                # def fix_threading_active_child(_patched=orig_mod):
+                #     _prefork_active = [None]
+
+                #     def before_fork():
+                #         _prefork_active[0] = _patched._active
+                #         main_thread = _patched.main_thread()
+                #         _patched._active = {main_thread.ident: main_thread}
+
+                #     def after_fork():
+                #         _patched._active = _prefork_active[0]
+
+                #     register_at_fork(before=before_fork, after_in_child=after_fork, after_in_parent=after_fork)
+
+                # # TODO might still need in older Python
+                # fix_threading_active_child()
     finally:
         imp.release_lock()
 
