@@ -5,7 +5,7 @@ import os
 import time
 import threading
 
-results = []
+results = set()
 parent = True
 
 def check_current():
@@ -15,7 +15,7 @@ def check_current():
 def background():
     time.sleep(1)
     check_current()
-    results.append(True)
+    results.add("background")
 
 def forker():
     pid = os.fork()
@@ -29,7 +29,7 @@ def forker():
     else:
         global parent
         parent = False
-    results.append(True)
+    results.add("forker")
 
 t = threading.Thread(target=background)
 t.start()
@@ -37,6 +37,6 @@ forker()
 t.join()
 
 check_current()
-assert results == [True, True]
+assert results == {"background", "forker"}, results
 if parent:
     print("pass")
