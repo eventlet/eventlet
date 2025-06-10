@@ -422,7 +422,6 @@ def monkey_patch(**on):
         for name, mod in modules_to_patch:
             orig_mod = sys.modules.get(name)
             if orig_mod is None:
-                print("IMPORTING", name)
                 orig_mod = __import__(name)
             for attr_name in mod.__patched__:
                 patched_attr = getattr(mod, attr_name, None)
@@ -444,7 +443,10 @@ def monkey_patch(**on):
                 # So, we wipe out _after_fork()'s code so it does nothing. We
                 # can't just override it because it has already been registered
                 # with os.register_after_fork().
-                orig_mod._after_fork.__code__ = (lambda: None).__code__
+                def noop():
+                    pass
+                orig_mod._after_fork.__code__ = noop.__code__
+                inject("threading", {})._after_fork.__code__ = noop.__code__
 
                 # https://github.com/eventlet/eventlet/issues/592
                 def fix_threading_active_parent(
