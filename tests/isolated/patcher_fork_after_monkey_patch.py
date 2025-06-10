@@ -31,23 +31,23 @@ if __name__ == '__main__':
     for t in threads:
         t.start()
 
-    check(2, threading, 'pre-fork patched')
+    check(5, threading, 'pre-fork patched')
     check(3, _threading, 'pre-fork original')
-    check(4, eventlet.green.threading, 'pre-fork green')
+    check(5, eventlet.green.threading, 'pre-fork green')
 
     if os.fork() == 0:
         # Inside the child, we should only have a main thread,
         # but old pythons make it difficult to ensure
-        check(1, threading, 'child post-fork patched')
+        check(5, threading, 'child post-fork patched')
         check(1, _threading, 'child post-fork original')
-        check(1, eventlet.green.threading, 'child post-fork green')
+        check(5, eventlet.green.threading, 'child post-fork green')
         sys.exit()
     else:
         os.wait()
 
-    check(2, threading, 'post-fork patched')
+    check(5, threading, 'post-fork patched')
     check(3, _threading, 'post-fork original')
-    check(4, eventlet.green.threading, 'post-fork green')
+    check(5, eventlet.green.threading, 'post-fork green')
 
     for t in threads:
         t.join()
