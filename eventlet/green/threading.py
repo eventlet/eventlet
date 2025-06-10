@@ -7,7 +7,8 @@ from eventlet.support import greenlets as greenlet
 __patched__ = ['Lock', '_allocate_lock', '_get_main_thread_ident',
                '_make_thread_handle', '_shutdown', '_sleep',
                '_start_joinable_thread', '_start_new_thread', '_ThreadHandle',
-               'currentThread', 'current_thread', 'local', 'stack_size']
+               'currentThread', 'current_thread', 'local', 'stack_size',
+               "_active", "_limbo"]
 
 __patched__ += ['get_ident', '_set_sentinel']
 
