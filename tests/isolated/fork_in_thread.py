@@ -29,6 +29,7 @@ def forker():
     else:
         global parent
         parent = False
+    results.append(True)
 
 t = threading.Thread(target=background)
 t.start()
@@ -38,6 +39,6 @@ t2.join()
 t.join()
 
 check_current()
-assert results == [True]
+assert results == [True, True]
 if parent:
     print("pass")
