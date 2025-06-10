@@ -76,14 +76,8 @@ class _ThreadHandle:
 
 
 def _make_thread_handle(ident):
-    # In some cases this will be used to create _MainThread, which might not be
-    # the current thread if we're post-fork(). So check for that case.
     greenthread = greenlet.getcurrent()
-    while greenthread is not None:
-        if ident == get_ident(greenthread):
-            break
-        greenthread = greenthread.parent
-    assert greenthread is not None, "_make_thread_handle() should only be used for current thread or main thread"
+    assert ident == get_ident(greenthread)
     return _ThreadHandle(greenthread=greenthread)
 
 

@@ -433,12 +433,20 @@ def monkey_patch(**on):
                 if hasattr(orig_mod, attr_name):
                     delattr(orig_mod, attr_name)
 
-            if name == "threading":
-                orig_mod._MainThread = _threading._MainThread
-
-            # https://github.com/eventlet/eventlet/issues/592
             if name == "threading" and register_at_fork:
+                # The whole post-fork processing in stdlib threading.py,
+                # implemented in _after_fork(), is based on the assumption that
+                # threads don't survive fork(). However, green threads do
+                # survive fork, and that's what threading.py is tracking when
+                # using eventlet, so there's no need to do any post-fork
+                # cleanup in this case.
+                #
+                # So, we wipe out _after_fork()'s code so it does nothing. We
+                # can't just override it because it has already been registered
+                # with os.register_after_fork().
+                orig_mod._after_fork.__code__ = (lambda: None).__code__
 
+                # https://github.com/eventlet/eventlet/issues/592
                 def fix_threading_active_parent(
                     _global_dict=_threading.current_thread.__globals__,
                     # alias orig_mod as patched to reflect its new state
@@ -456,24 +464,9 @@ def monkey_patch(**on):
 
                     register_at_fork(before=before_fork, after_in_parent=after_fork)
 
-                # TODO might still need in older Python
-                #fix_threading_active_parent()
-
-                # def fix_threading_active_child(_patched=orig_mod):
-                #     _prefork_active = [None]
-
-                #     def before_fork():
-                #         _prefork_active[0] = _patched._active
-                #         main_thread = _patched.main_thread()
-                #         _patched._active = {main_thread.ident: main_thread}
-
-                #     def after_fork():
-                #         _patched._active = _prefork_active[0]
-
-                #     register_at_fork(before=before_fork, after_in_child=after_fork, after_in_parent=after_fork)
-
-                # # TODO might still need in older Python
-                # fix_threading_active_child()
+                # On Python 3.13 this breaks, and ... seems unnecessary?
+                if sys.version_info[:2] < (3, 13):
+                    fix_threading_active_parent()
     finally:
         imp.release_lock()
 
