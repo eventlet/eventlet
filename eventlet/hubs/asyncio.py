@@ -43,7 +43,8 @@ class Hub(hub.BaseHub):
         # Allow post-fork() child to continue using the same event loop. This
         # is a terrible idea.
         import asyncio.events
-        asyncio.events.on_fork.__code__ = (lambda: None).__code__
+        if hasattr(asyncio.events, "on_fork"):
+            asyncio.events.on_fork.__code__ = (lambda: None).__code__
 
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
