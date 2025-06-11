@@ -81,40 +81,6 @@ jobs:
       - name: codecov
         run: codecov --flags=$(echo ${{ matrix.toxenv }} |tr -d -- '-.')
 
-    steps:
-      - name: install system packages
-        run: sudo apt install -y --no-install-recommends ccache libffi-dev default-libmysqlclient-dev libpq-dev libssl-dev libzmq3-dev
-
-      - uses: actions/checkout@v4
-      - name: cache pip
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ matrix.toxenv }}-${{ hashFiles('.github/workflows/test.yaml', 'setup.py') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-            ${{ runner.os }}-
-      - name: cache tox
-        uses: actions/cache@v4
-        with:
-          path: .tox
-          key: ${{ runner.os }}-tox-${{ matrix.toxenv }}-${{ hashFiles('tox.ini') }}
-          restore-keys: |
-            ${{ runner.os }}-tox-
-            ${{ runner.os }}-
-
-      - name: setup python ${{ matrix.py }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.py }}
-      - name: install codecov, tox
-        run: pip install codecov tox
-      - run: env
-      - name: run tests
-        run: tox --verbose --verbose -e ${{ matrix.toxenv }}
-      - name: codecov
-        run: codecov --flags=$(echo ${{ matrix.toxenv }} |tr -d -- '-.')
-
   tox-macos:
     name: "macOS tox ${{ matrix.toxenv }}"
     continue-on-error: ${{ matrix.ignore-error }}
