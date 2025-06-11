@@ -1,4 +1,5 @@
 import eventlet
+
 eventlet.monkey_patch()
 
 import os
@@ -8,14 +9,17 @@ import threading
 results = set()
 parent = True
 
+
 def check_current():
     if threading.current_thread() not in threading.enumerate():
         raise SystemExit(17)
+
 
 def background():
     time.sleep(1)
     check_current()
     results.add("background")
+
 
 def forker():
     pid = os.fork()
@@ -30,6 +34,7 @@ def forker():
         global parent
         parent = False
     results.add("forker")
+
 
 t = threading.Thread(target=background)
 t.start()

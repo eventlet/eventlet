@@ -516,6 +516,7 @@ def test_threadpoolexecutor():
 
 FORK_REASON = "fork() doesn't work well on macOS, and definitely doesn't work on Windows"
 
+
 @pytest.mark.skipif(
     not sys.platform.startswith("linux"),
     reason=FORK_REASON
