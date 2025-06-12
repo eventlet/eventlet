@@ -6,6 +6,7 @@ __test__ = False
 def check(n, mod, tag):
     assert len(mod._active) == n, 'Expected {} {} threads, got {}'.format(n, tag, mod._active)
 
+
 if __name__ == '__main__':
     import eventlet
     import eventlet.patcher
@@ -38,7 +39,8 @@ if __name__ == '__main__':
     check(3, _threading, 'pre-fork original')
     check(5, eventlet.green.threading, 'pre-fork green')
 
-    if (pid := os.fork()) == 0:
+    pid = os.fork()
+    if pid == 0:
         # Inside the child, we should only have a main _OS_ thread,
         # but green threads should survive.
         check(5, threading, 'child post-fork patched')
