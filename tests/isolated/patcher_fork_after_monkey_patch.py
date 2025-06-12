@@ -17,8 +17,12 @@ if __name__ == '__main__':
     _threading = eventlet.patcher.original('threading')
     import eventlet.green.threading
 
+    global threads_keep_running
+    threads_keep_running = True
+
     def target():
-        eventlet.sleep(0.1)
+        while threads_keep_running:
+            eventlet.sleep(0.001)
 
     threads = [
         threading.Thread(target=target, name='patched'),
@@ -31,23 +35,31 @@ if __name__ == '__main__':
     for t in threads:
         t.start()
 
-    check(2, threading, 'pre-fork patched')
+    check(5, threading, 'pre-fork patched')
     check(3, _threading, 'pre-fork original')
-    check(4, eventlet.green.threading, 'pre-fork green')
+    check(5, eventlet.green.threading, 'pre-fork green')
 
-    if os.fork() == 0:
-        # Inside the child, we should only have a main thread,
-        # but old pythons make it difficult to ensure
-        check(1, threading, 'child post-fork patched')
+    pid = os.fork()
+    if pid == 0:
+        # Inside the child, we should only have a main _OS_ thread,
+        # but green threads should survive.
+        check(5, threading, 'child post-fork patched')
         check(1, _threading, 'child post-fork original')
-        check(1, eventlet.green.threading, 'child post-fork green')
+        check(5, eventlet.green.threading, 'child post-fork green')
+        threads_keep_running = False
         sys.exit()
     else:
-        os.wait()
+        wait_pid, status = os.wait()
+        exit_code = os.waitstatus_to_exitcode(status)
+        assert wait_pid == pid
+        assert exit_code == 0, exit_code
 
-    check(2, threading, 'post-fork patched')
+    # We're in the parent now; all threads should survive:
+    check(5, threading, 'post-fork patched')
     check(3, _threading, 'post-fork original')
-    check(4, eventlet.green.threading, 'post-fork green')
+    check(5, eventlet.green.threading, 'post-fork green')
+
+    threads_keep_running = False
 
     for t in threads:
         t.join()
