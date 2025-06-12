@@ -36,8 +36,8 @@ if __name__ == '__main__':
     check(5, eventlet.green.threading, 'pre-fork green')
 
     if os.fork() == 0:
-        # Inside the child, we should only have a main thread,
-        # but old pythons make it difficult to ensure
+        # Inside the child, we should only have a main _OS_ thread,
+        # but green threads should survive.
         check(5, threading, 'child post-fork patched')
         check(1, _threading, 'child post-fork original')
         check(5, eventlet.green.threading, 'child post-fork green')
