@@ -4,6 +4,7 @@ fork() without execve()
 ``fork()`` is a way to make a clone of a process.
 Most subprocesses replace the child process with a new executable, wiping out all memory from the parent process.
 A ``fork()ed`` subprocess can choose not to do this, and preserve data from the parent process.
+(Technically this is ``fork()`` without ``execve()``.)
 
 This is a terrible idea, as it can cause deadlocks, memory corruption, and crashes.
 
