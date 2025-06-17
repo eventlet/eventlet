@@ -432,27 +432,21 @@ def monkey_patch(**on):
                 if hasattr(orig_mod, attr_name):
                     delattr(orig_mod, attr_name)
 
-            # https://github.com/eventlet/eventlet/issues/592
             if name == "threading" and register_at_fork:
-
-                def fix_threading_active(
-                    _global_dict=_threading.current_thread.__globals__,
-                    # alias orig_mod as patched to reflect its new state
-                    # https://github.com/eventlet/eventlet/pull/661#discussion_r509877481
-                    _patched=orig_mod,
-                ):
-                    _prefork_active = [None]
-
-                    def before_fork():
-                        _prefork_active[0] = _global_dict["_active"]
-                        _global_dict["_active"] = _patched._active
-
-                    def after_fork():
-                        _global_dict["_active"] = _prefork_active[0]
-
-                    register_at_fork(before=before_fork, after_in_parent=after_fork)
-
-                fix_threading_active()
+                # The whole post-fork processing in stdlib threading.py,
+                # implemented in threading._after_fork(), is based on the
+                # assumption that threads don't survive fork(). However, green
+                # threads do survive fork, and that's what threading.py is
+                # tracking when using eventlet, so there's no need to do any
+                # post-fork cleanup in this case.
+                #
+                # So, we wipe out _after_fork()'s code so it does nothing. We
+                # can't just override it because it has already been registered
+                # with os.register_after_fork().
+                def noop():
+                    pass
+                orig_mod._after_fork.__code__ = noop.__code__
+                inject("threading", {})._after_fork.__code__ = noop.__code__
     finally:
         imp.release_lock()
 
