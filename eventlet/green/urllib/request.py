@@ -1,3 +1,5 @@
+import sys
+
 from eventlet import patcher
 from eventlet.green import ftplib, http, os, socket, time
 from eventlet.green.http import client as http_client
@@ -37,7 +39,12 @@ to_patch_in_functions = [('ftplib', ftplib)]
 del ftplib
 
 FTPHandler.ftp_open = patcher.patch_function(FTPHandler.ftp_open, *to_patch_in_functions)
-URLopener.open_ftp = patcher.patch_function(URLopener.open_ftp, *to_patch_in_functions)
+
+if sys.version_info < (3, 14):
+    URLopener.open_ftp = patcher.patch_function(URLopener.open_ftp, *to_patch_in_functions)
+else:
+    # Removed in python3.14+, nothing to do
+    pass
 
 ftperrors = patcher.patch_function(ftperrors, *to_patch_in_functions)
 
