@@ -44,6 +44,19 @@ class Hub(hub.BaseHub):
         asyncio.set_event_loop(self.loop)
         self.sleep_event = asyncio.Event()
 
+        import asyncio.events
+        if hasattr(asyncio.events, "on_fork"):
+            # Allow post-fork() child to continue using the same event loop.
+            # This is a terrible idea.
+            asyncio.events.on_fork.__code__ = (lambda: None).__code__
+        else:
+            # On Python 3.9-3.11, there's a thread local we need to reset.
+            # Also a terrible idea.
+            def re_register_loop(loop=self.loop):
+                asyncio.events._set_running_loop(loop)
+
+            os.register_at_fork(after_in_child=re_register_loop)
+
     def add_timer(self, timer):
         """
         Register a ``Timer``.

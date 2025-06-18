@@ -76,4 +76,13 @@ TimeoutError, exc_after, call_after_global = (
         ('call_after_global', 'greenthread.call_after_global', greenthread.call_after_global),
     ))
 
-os
+
+if hasattr(os, "register_at_fork"):
+    def _warn_on_fork():
+        import warnings
+        warnings.warn(
+            "Using fork() is a bad idea, and there is no guarantee eventlet will work." +
+            " See https://eventlet.readthedocs.io/en/latest/fork.html for more details.",
+            DeprecationWarning
+        )
+    os.register_at_fork(before=_warn_on_fork)
