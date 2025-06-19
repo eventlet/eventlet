@@ -1,6 +1,18 @@
 Unreleased
 ==========
 
+0.40.1
+======
+
+* [fix] "Fix" fork() so it "works" on Python 3.13, and "works" better on older Python versions (#1047)
+  * Behavior change: threads created by eventlet.green.threading.Thread and threading.Thead will be visible across both modules if monkey patching was used. Previously each module would only list threads created in that module.
+  * Bug fix: after fork(), greenlet threads are correctly listed in threading.enumerate() if monkey patching was used. You should not use fork()-without-execve().
+* [fix] Fix patching of removed URLopener class in Python 3.14 (#1053)
+* [fix] ReferenceError except while count rlock (#1042)
+* [fix] Replace deprecated datetime.utcfromtimestamp (#1050)
+* [fix][env] Remove duplicate steps (#1049)
+* [fix] Replace deprecated datetime.datetime.utcnow (#1046)
+
 0.40.0
 ======
 
