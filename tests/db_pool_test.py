@@ -489,7 +489,7 @@ class MysqlConnectionPool:
 
     def drop_db(self):
         db = self._dbmodule.connect(**self._auth).cursor()
-        db.execute("drop database " + self._auth['db'])
+        db.execute("drop database IF EXISTS " + self._auth['db'])
         db.close()
         del db
 
@@ -560,7 +560,7 @@ class Psycopg2ConnectionPool:
         conn = self._dbmodule.connect(**auth)
         conn.set_isolation_level(0)
         db = conn.cursor()
-        db.execute("drop database " + self._auth['database'])
+        db.execute("drop database IF EXISTS " + self._auth['database'])
         db.close()
         conn.close()
 
