@@ -73,7 +73,7 @@ class TestMySQLdb(tests.LimitedTestCase):
 
     def drop_db(self):
         db = MySQLdb.connect(**self._auth).cursor()
-        db.execute("drop database " + self._auth['db'])
+        db.execute("drop database IF EXISTS " + self._auth['db'])
         db.close()
         del db
 
