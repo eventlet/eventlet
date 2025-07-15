@@ -91,9 +91,7 @@ class GreenPool:
                 if DEBUG:
                     traceback.print_exc()
         finally:
-            if coro is None:
-                return
-            else:
+            if coro is not None:
                 coro = eventlet.getcurrent()
                 self._spawn_done(coro)
 

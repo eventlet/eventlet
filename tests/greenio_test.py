@@ -776,13 +776,17 @@ class TestGreenPipe(tests.LimitedTestCase):
 
         r = greenio.GreenPipe(r, 'rb')
         w = greenio.GreenPipe(w, 'wb')
+        data = b'abcd' * (DEFAULT_BUFFER_SIZE // 2)
 
-        w.write(b'c' * DEFAULT_BUFFER_SIZE * 2)
-        w.close()
+        # We can't just write lots of data, it might "block", so run in a
+        # greenlet:
+        def write():
+            w.write(data)
+            w.close()
+        eventlet.spawn(write)
 
         buf = r.read()  # no chunk size specified; read until end
-        self.assertEqual(len(buf), 2 * DEFAULT_BUFFER_SIZE)
-        self.assertEqual(buf[:3], b'ccc')
+        self.assertEqual(buf, data)
 
     def test_pipe_read_unbuffered(self):
         # Ensure that seting the buffer size works properly on GreenPipes,

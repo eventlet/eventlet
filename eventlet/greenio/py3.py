@@ -31,6 +31,9 @@ _fileobject = _original_socket.SocketIO
 
 
 class GreenFileIO(_OriginalIOBase):
+
+    _blksize = 128 * 1024
+
     def __init__(self, name, mode='r', closefd=True, opener=None):
         if isinstance(name, int):
             fileno = name
@@ -112,6 +115,11 @@ class GreenFileIO(_OriginalIOBase):
             return _original_os.isatty(self.fileno())
         except OSError as e:
             raise OSError(*e.args)
+
+    def _isatty_open_only(self):
+        # Python does an optimization here, not going to bother and just do the
+        # slow path.
+        return self.isatty()
 
     def _trampoline(self, fd, read=False, write=False, timeout=None, timeout_exc=None):
         if self._closed:
