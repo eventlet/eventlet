@@ -1,6 +1,13 @@
 Unreleased
 ==========
 
+0.40.2
+======
+
+* Fix compatibility issues identified with Python 3.14 on Linux (#1058)
+* Make database removal safer with IF EXISTS (#1056)
+* Prepare jobs and CI/CD for python 3.14 (#1055)
+
 0.40.1
 ======
 
