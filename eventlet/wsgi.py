@@ -152,6 +152,12 @@ class Input:
             read = b''
         self.position += len(read)
         return read
+    
+    def _discard_trailers(self, rfile):
+        while True:
+            line = rfile.readline()
+            if not line or line in (b'\r\n', b'\n', b''):
+                break
 
     def _chunked_read(self, rfile, length=None, use_readline=False):
         if self.should_send_hundred_continue:
@@ -202,7 +208,7 @@ class Input:
                         raise ChunkReadError(err)
                     self.position = 0
                     if self.chunk_length == 0:
-                        rfile.readline()
+                        self._discard_trailers(rfile)
         except greenio.SSL.ZeroReturnError:
             pass
         return b''.join(response)
