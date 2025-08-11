@@ -1,6 +1,11 @@
 Unreleased
 ==========
 
+0.40.3
+======
+
+* [SECURITY] Fix request smuggling vulnerability by discarding trailers (#1062)
+
 0.40.2
 ======
 
