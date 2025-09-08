@@ -104,7 +104,10 @@ jobs:
           #- { py: "3.12", toxenv: py312-kqueue, ignore-error: false, os: macos-latest }
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.py }}
       - name: install codecov, tox
         run: pip install codecov tox
       - run: env
