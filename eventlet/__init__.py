@@ -86,3 +86,17 @@ if hasattr(os, "register_at_fork"):
             DeprecationWarning
         )
     os.register_at_fork(before=_warn_on_fork)
+
+
+_DEPRECATED = \
+"""
+Eventlet is deprecated. It is currently being maintained in bugfix mode, and
+we strongly recommend against using it for new projects.
+
+If you are already using Eventlet, we recommend migrating to a different
+framework.  For more detail see
+https://eventlet.readthedocs.io/en/latest/asyncio/migration.html
+"""
+
+
+warnings.warn(_DEPRECATED, DeprecationWarning, stacklevel=2)
