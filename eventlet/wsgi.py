@@ -152,7 +152,7 @@ class Input:
             read = b''
         self.position += len(read)
         return read
-    
+
     def _discard_trailers(self, rfile):
         while True:
             line = rfile.readline()

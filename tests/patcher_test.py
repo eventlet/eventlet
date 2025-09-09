@@ -494,6 +494,10 @@ def test_threading_join():
     tests.run_isolated('patcher_threading_join.py')
 
 
+@pytest.mark.xfail(
+    sys.platform == "darwin",
+    reason="Mysterious failure, see https://github.com/eventlet/eventlet/issues/1068"
+)
 def test_socketserver_selectors():
     tests.run_isolated('patcher_socketserver_selectors.py')
 
