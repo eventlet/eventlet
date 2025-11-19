@@ -1,6 +1,15 @@
 Unreleased
 ==========
 
+0.40.4
+======
+
+* Remove legacy setuptools configuration files (#1072)
+* add 3.14 to supported versions (#1070)
+* Emit warning on startup that eventlet is deprecated (#1065)
+* Fix Python 3.14 on macOS (#1067)
+* Workaround for #1068 (#1069)
+
 0.40.3
 ======
 
