@@ -98,6 +98,11 @@ framework.  For more detail see
 https://eventlet.readthedocs.io/en/latest/asyncio/migration.html
 """
 
+class EventletDeprecationWarning(Warning):
+    """
+    A DeprecationWarning that is more visible than the built-in one.
+    """
+
 # If we're running tests this adds extra output that messes up some assertions.
 if os.environ.get("EVENTLET_TESTS") is None:
-    warnings.warn(_DEPRECATED, DeprecationWarning, stacklevel=2)
+    warnings.warn(_DEPRECATED, EventletDeprecationWarning, stacklevel=2)
