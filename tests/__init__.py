@@ -257,17 +257,6 @@ def find_command(command):
     raise OSError(errno.ENOENT, 'Command not found: %r' % command)
 
 
-def silence_warnings(func):
-    def wrapper(*args, **kw):
-        warnings.simplefilter('ignore', DeprecationWarning)
-        try:
-            return func(*args, **kw)
-        finally:
-            warnings.simplefilter('default', DeprecationWarning)
-    wrapper.__name__ = func.__name__
-    return wrapper
-
-
 def get_database_auth():
     """Retrieves a dict of connection parameters for connecting to test databases.
 
