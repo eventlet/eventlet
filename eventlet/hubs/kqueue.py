@@ -106,5 +106,5 @@ class Hub(hub.BaseHub):
                     writers.get(fileno, hub.noop).cb(fileno)
             except SYSTEM_EXCEPTIONS:
                 raise
-            except:
+            except Exception:
                 self.squelch_exception(fileno, sys.exc_info())

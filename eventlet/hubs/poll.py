@@ -111,7 +111,7 @@ class Hub(hub.BaseHub):
                 listener.cb(fileno)
             except SYSTEM_EXCEPTIONS:
                 raise
-            except:
+            except Exception:
                 self.squelch_exception(fileno, sys.exc_info())
 
         if self.debug_blocking:

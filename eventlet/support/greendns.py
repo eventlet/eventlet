@@ -761,7 +761,7 @@ def udp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
     if af is None:
         try:
             af = dns.inet.af_for_address(where)
-        except:
+        except Exception:
             af = dns.inet.AF_INET
     if af == dns.inet.AF_INET:
         destination = (where, port)
@@ -901,7 +901,7 @@ def tcp(q, where, timeout=DNS_QUERY_TIMEOUT, port=53,
     if af is None:
         try:
             af = dns.inet.af_for_address(where)
-        except:
+        except Exception:
             af = dns.inet.AF_INET
     if af == dns.inet.AF_INET:
         destination = (where, port)

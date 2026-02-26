@@ -87,7 +87,7 @@ class GreenPool:
                 func(*args, **kwargs)
             except (KeyboardInterrupt, SystemExit, greenlet.GreenletExit):
                 raise
-            except:
+            except Exception:
                 if DEBUG:
                     traceback.print_exc()
         finally:
@@ -212,7 +212,7 @@ class GreenPile:
         try:
             gt = self.pool.spawn(func, *args, **kw)
             self.waiters.put(gt)
-        except:
+        except Exception:
             self.counter -= 1
             raise
 

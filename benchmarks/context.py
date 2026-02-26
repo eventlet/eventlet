@@ -67,7 +67,7 @@ try:
     start = time.time()
     test_eventlet()
     print("epoll:     %.02f seconds" % (time.time() - start))
-except:
+except Exception:
     print("epoll hub unavailable")
 
 try:
@@ -75,7 +75,7 @@ try:
     start = time.time()
     test_eventlet()
     print("kqueue:    %.02f seconds" % (time.time() - start))
-except:
+except Exception:
     print("kqueue hub unavailable")
 
 try:
@@ -83,7 +83,7 @@ try:
     start = time.time()
     test_eventlet()
     print("poll:      %.02f seconds" % (time.time() - start))
-except:
+except Exception:
     print("poll hub unavailable")
 
 try:
@@ -91,5 +91,5 @@ try:
     start = time.time()
     test_eventlet()
     print("select:    %.02f seconds" % (time.time() - start))
-except:
+except Exception:
     print("select hub unavailable")

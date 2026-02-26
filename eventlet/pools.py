@@ -84,7 +84,7 @@ class Pool:
         if self.current_size <= self.max_size:
             try:
                 created = self.create()
-            except:
+            except Exception:
                 self.current_size -= 1
                 raise
             return created

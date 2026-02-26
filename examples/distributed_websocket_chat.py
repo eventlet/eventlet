@@ -62,7 +62,7 @@ def subscribe_and_distribute(sub_socket):
             if to_send:
                 try:
                     ws.send(to_send)
-                except:
+                except Exception:
                     del participants[ws]
 
 
@@ -122,7 +122,7 @@ if __name__ == "__main__":
         sub_socket.connect(sub_addr)
         sub_socket.setsockopt(zmq.SUBSCRIBE, "")
         print("Subscribing to %s" % sub_addr)
-    except:
+    except Exception:
         print("Couldn't create sockets\n", usage)
         sys.exit(1)
 

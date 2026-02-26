@@ -270,7 +270,7 @@ class GreenThread(greenlet.greenlet):
     def main(self, function, args, kwargs):
         try:
             result = function(*args, **kwargs)
-        except:
+        except Exception:
             self._exit_event.send_exception(*sys.exc_info())
             self._resolve_links()
             raise
@@ -343,7 +343,7 @@ def kill(g, *throw_args):
             # method to take advantage of the notification
             try:
                 g.main(just_raise, (), {})
-            except:
+            except Exception:
                 pass
     current = getcurrent()
     if current is not hub.greenlet:

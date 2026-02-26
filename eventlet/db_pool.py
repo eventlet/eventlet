@@ -220,7 +220,7 @@ class BaseConnectionPool(Pool):
                 # connection is dead
                 print("WARNING: cleanup %s raised: %s" % (cleanup, e))
                 conn = None
-            except:
+            except Exception:
                 conn = None
                 raise
 

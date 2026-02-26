@@ -303,7 +303,7 @@ class TestWebSocket(tests.wsgi_test._TestBase):
             try:
                 try:
                     return site(environ, start_response)
-                except:
+                except Exception:
                     error_detected[0] = True
                     raise
             finally:
@@ -334,7 +334,7 @@ class TestWebSocket(tests.wsgi_test._TestBase):
             try:
                 try:
                     return site(environ, start_response)
-                except:
+                except Exception:
                     error_detected[0] = True
                     raise
             finally:
@@ -367,7 +367,7 @@ class TestWebSocket(tests.wsgi_test._TestBase):
             try:
                 try:
                     return site(environ, start_response)
-                except:
+                except Exception:
                     error_detected[0] = True
                     raise
             finally:
@@ -400,7 +400,7 @@ class TestWebSocket(tests.wsgi_test._TestBase):
             try:
                 try:
                     return site(environ, start_response)
-                except:
+                except Exception:
                     error_detected[0] = True
                     raise
             finally:
@@ -451,7 +451,7 @@ class TestWebSocket(tests.wsgi_test._TestBase):
             try:
                 try:
                     return site(environ, start_response)
-                except:
+                except Exception:
                     error_detected[0] = True
                     raise
             finally:
@@ -481,7 +481,7 @@ class TestWebSocket(tests.wsgi_test._TestBase):
             try:
                 try:
                     return site(environ, start_response)
-                except:
+                except Exception:
                     error_detected[0] = True
                     raise
             finally:

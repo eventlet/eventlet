@@ -69,7 +69,7 @@ class Test(LimitedTestCase):
     def test_raising_exc_tuple(self):
         try:
             1 // 0
-        except:
+        except Exception:
             try:
                 with Timeout(DELAY, sys.exc_info()[0]):
                     sleep(DELAY * 2)

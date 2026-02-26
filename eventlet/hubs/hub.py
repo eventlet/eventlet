@@ -299,7 +299,7 @@ class BaseHub:
         if switch_out is not None:
             try:
                 switch_out()
-            except:
+            except Exception:
                 self.squelch_generic_exception(sys.exc_info())
         self.ensure_greenlet()
         try:
@@ -471,7 +471,7 @@ class BaseHub:
                     timer()
             except self.SYSTEM_EXCEPTIONS:
                 raise
-            except:
+            except Exception:
                 self.squelch_timer_exception(timer, sys.exc_info())
 
     # for debugging:

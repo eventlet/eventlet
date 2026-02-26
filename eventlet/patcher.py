@@ -633,7 +633,7 @@ def _upgrade_instances(container, klass, upgrade, visited=None, old_to_new=None)
                 new = upgrade_or_traverse(v)
                 if new is not None:
                     setattr(container, k, new)
-        except:
+        except Exception:
             import logging
 
             logger = logging.Logger("eventlet")

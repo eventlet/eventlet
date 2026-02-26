@@ -319,7 +319,7 @@ class LightQueue:
                     self._schedule_unlock()
                 try:
                     return waiter.wait()
-                except:
+                except Exception:
                     self._schedule_unlock()
                     raise
             finally:
@@ -344,7 +344,7 @@ class LightQueue:
                     if getter:
                         try:
                             item = self._get()
-                        except:
+                        except Exception:
                             getter.throw(*sys.exc_info())
                         else:
                             getter.switch(item)

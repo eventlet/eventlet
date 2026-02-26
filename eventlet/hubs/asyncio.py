@@ -74,7 +74,7 @@ class Hub(hub.BaseHub):
             cb(fileno)
         except self.SYSTEM_EXCEPTIONS:
             raise
-        except:
+        except Exception:
             self.squelch_exception(fileno, sys.exc_info())
         self.sleep_event.set()
 

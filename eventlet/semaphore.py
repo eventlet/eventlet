@@ -271,7 +271,7 @@ class CappedSemaphore:
         self.upper_bound.release()
         try:
             return self.lower_bound.acquire()
-        except:
+        except Exception:
             self.upper_bound.counter -= 1
             # using counter directly means that it can be less than zero.
             # however I certainly don't need to wait here and I don't seem to have
@@ -294,7 +294,7 @@ class CappedSemaphore:
         self.lower_bound.release()
         try:
             return self.upper_bound.acquire()
-        except:
+        except Exception:
             self.lower_bound.counter -= 1
             raise
 

@@ -142,7 +142,7 @@ class TestApi(tests.LimitedTestCase):
             try:
                 state.append('start')
                 eventlet.sleep(DELAY)
-            except:
+            except Exception:
                 state.append('except')
                 # catching GreenletExit
                 pass
