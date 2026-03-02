@@ -276,6 +276,7 @@ def _unmonkey_patch_asyncio(unmonkeypatch_refs_to_this_module):
         "asyncio.exceptions",
         "asyncio.format_helpers",
         "asyncio.futures",
+        "asyncio.graph",
         "asyncio",
         "asyncio.locks",
         "asyncio.log",
@@ -299,7 +300,7 @@ def _unmonkey_patch_asyncio(unmonkeypatch_refs_to_this_module):
         try:
             module = importlib.import_module(module_name)
         except ImportError:
-            # The list is from Python 3.13, so some modules may not be present
+            # The list includes modules through Python 3.14, so some modules may not be present
             # in older versions of Python:
             continue
         if getattr(module, to_unpatch, None) is sys.modules[to_unpatch]:
