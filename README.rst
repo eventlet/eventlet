@@ -86,3 +86,4 @@ Supported Python versions
 =========================
 
 Python 3.8-3.13 are currently supported.
+
