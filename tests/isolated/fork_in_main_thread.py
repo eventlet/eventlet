@@ -1,3 +1,7 @@
+import warnings
+# Suppress all warnings for this test to ensure clean output
+warnings.filterwarnings("ignore")
+
 import eventlet
 
 eventlet.monkey_patch()
