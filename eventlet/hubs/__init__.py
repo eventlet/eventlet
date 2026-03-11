@@ -108,7 +108,8 @@ def get_hub():
         except AttributeError:
             use_hub()
         hub = _threadlocal.hub = _threadlocal.Hub()
-
+        if hasattr(hub, "_post_initialize"):
+            hub._post_initialize()
     return hub
 
 

@@ -31,6 +31,13 @@ class Hub(hub.BaseHub):
     """An Eventlet hub implementation on top of an asyncio event loop."""
 
     def __init__(self):
+        super().__init__()
+
+    def _post_initialize(self):
+        """
+        Split off, because some of this ends up calling get_hub() again and so
+        we end up with two Hubs.
+        """
         # Pre-emptively make sure we're using the right modules:
         _unmonkey_patch_asyncio_all()
 
