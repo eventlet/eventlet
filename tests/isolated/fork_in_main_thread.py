@@ -39,6 +39,7 @@ def forker():
         parent = False
     results.add("forker")
 
+
 t = threading.Thread(target=background)
 t.start()
 forker()
