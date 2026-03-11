@@ -28,11 +28,12 @@ def test_recv_type():
     def server():
         sock = eventlet.listen(('127.0.0.1', 0))
         addr[:] = sock.getsockname()
-        eventlet.sleep(0.2)
+        eventlet.sleep(1.0)
 
     server_thread = threading.Thread(target=server)
     server_thread.start()
-    eventlet.sleep(0.1)
+    eventlet.sleep(0.5)
+    assert addr, f"{addr} wasn't set by server?"
     sock = eventlet.connect(tuple(addr))
     s = sock.recv(1)
     assert isinstance(s, bytes)
@@ -48,11 +49,12 @@ def test_recv_into_type():
     def server():
         sock = eventlet.listen(('127.0.0.1', 0))
         addr[:] = sock.getsockname()
-        eventlet.sleep(0.2)
+        eventlet.sleep(1.0)
 
     server_thread = threading.Thread(target=server)
     server_thread.start()
-    eventlet.sleep(0.1)
+    eventlet.sleep(0.5)
+    assert addr, f"{addr} wasn't set by server?"
     sock = eventlet.connect(tuple(addr))
     buf = array.array('B', b' ')
     res = sock.recv_into(buf, 1)
