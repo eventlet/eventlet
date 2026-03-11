@@ -39,7 +39,6 @@ def forker():
         parent = False
     results.add("forker")
 
-
 t = threading.Thread(target=background)
 t.start()
 forker()
@@ -47,5 +46,13 @@ t.join()
 
 check_current()
 assert results == {"background", "forker"}, results
+
+# Make sure we can launch new threadlets:
+l = []
+t = threading.Thread(target=lambda: l.append(1))
+t.start()
+t.join()
+assert l == [1]
+
 if parent:
     print("pass")
