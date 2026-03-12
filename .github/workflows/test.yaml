@@ -31,7 +31,6 @@ jobs:
       matrix:
         include:
           - { py: "3.10", toxenv: py310-openssl, os: ubuntu-latest }
-          - { py: "3.10", toxenv: py310-dnspython1, os: ubuntu-latest }
           - { py: "3.10", toxenv: py310-epolls, os: ubuntu-latest }
           - { py: "3.10", toxenv: py310-poll, os: ubuntu-latest }
           - { py: "3.10", toxenv: py310-selects, os: ubuntu-latest }
