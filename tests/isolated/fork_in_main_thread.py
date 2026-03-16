@@ -1,3 +1,7 @@
+import warnings
+# Suppress all warnings for this test to ensure clean output
+warnings.filterwarnings("ignore")
+
 import eventlet
 
 eventlet.monkey_patch()
@@ -43,5 +47,13 @@ t.join()
 
 check_current()
 assert results == {"background", "forker"}, results
+
+# Make sure we can launch new threadlets:
+l = []
+t = threading.Thread(target=lambda: l.append(1))
+t.start()
+t.join()
+assert l == [1]
+
 if parent:
     print("pass")
