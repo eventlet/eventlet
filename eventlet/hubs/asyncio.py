@@ -33,29 +33,42 @@ class Hub(hub.BaseHub):
     def __init__(self):
         super().__init__()
 
+    def _post_initialize(self):
+        """
+        Split off, because some of this ends up calling get_hub() again and so
+        we end up with two Hubs.
+        """
         # Pre-emptively make sure we're using the right modules:
         _unmonkey_patch_asyncio_all()
 
         # The presumption is that eventlet is driving the event loop, so we
         # want a new one we control.
         import asyncio
-
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
         self.sleep_event = asyncio.Event()
 
+        # Allow post-fork() child to continue using the same event loop.
+        # This is a terrible idea.
         import asyncio.events
-        if hasattr(asyncio.events, "on_fork"):
-            # Allow post-fork() child to continue using the same event loop.
-            # This is a terrible idea.
-            asyncio.events.on_fork.__code__ = (lambda: None).__code__
-        else:
-            # On Python 3.9-3.11, there's a thread local we need to reset.
-            # Also a terrible idea.
-            def re_register_loop(loop=self.loop):
-                asyncio.events._set_running_loop(loop)
 
-            os.register_at_fork(after_in_child=re_register_loop)
+        def re_register_loop(loop=self.loop):
+            asyncio.events._set_running_loop(loop)
+
+        os.register_at_fork(after_in_child=re_register_loop)
+
+        import asyncio.tasks
+        if hasattr(asyncio.tasks, "_swap_current_task"):
+            task_to_restore = []
+
+            def re_register_task(task=task_to_restore, loop=self.loop):
+                if task_to_restore:
+                    asyncio.tasks._swap_current_task(loop, task_to_restore[0])
+
+            def store_task():
+                task_to_restore.append(asyncio.tasks.current_task())
+
+            os.register_at_fork(after_in_child=re_register_task, before=store_task)
 
     def add_timer(self, timer):
         """

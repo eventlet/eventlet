@@ -42,8 +42,8 @@ jobs:
           - { py: "3.12", toxenv: py312-asyncio, os: ubuntu-latest }
           - { py: "3.13", toxenv: py313-epolls, os: ubuntu-latest }
           - { py: "3.13", toxenv: py313-asyncio, os: ubuntu-latest }
-          - { py: "3.14.0-rc.2", toxenv: py314-epolls, os: ubuntu-latest }
-          - { py: "3.14.0-rc.2", toxenv: py314-asyncio, os: ubuntu-latest }
+          - { py: "3.14", toxenv: py314-epolls, os: ubuntu-latest }
+          - { py: "3.14", toxenv: py314-asyncio, os: ubuntu-latest }
 
     steps:
       - name: install system packages
@@ -92,7 +92,7 @@ jobs:
         include:
           - { py: "3.12", toxenv: py312-asyncio, ignore-error: false, os: macos-latest }
           - { py: "3.13", toxenv: py313-asyncio, ignore-error: false, os: macos-latest }
-          - { py: "3.14.0-rc.2", toxenv: py314-asyncio, ignore-error: false, os: macos-latest }
+          - { py: "3.14", toxenv: py314-asyncio, ignore-error: false, os: macos-latest }
           # This isn't working very well at the moment, but that might just be
           # tox config? In any case main focus is on asyncio so someone can
           # revisit separately.

@@ -4,7 +4,9 @@ try:
     import _imp as imp
 except ImportError:
     import imp
+import asyncio as asyncio_module
 import importlib
+import pkgutil
 import sys
 
 try:
@@ -248,7 +250,7 @@ def _unmonkey_patch_asyncio(unmonkeypatch_refs_to_this_module):
         import asyncio.base_futures
 
         if hasattr(asyncio.base_futures, "get_ident"):
-            asyncio.base_futures = original_module.get_ident
+            asyncio.base_futures.get_ident = original_module.get_ident
 
     # Asyncio uses these for its blocking thread pool:
     if to_unpatch in ("threading", "queue"):
@@ -265,37 +267,9 @@ def _unmonkey_patch_asyncio(unmonkeypatch_refs_to_this_module):
                 concurrent.futures.thread.queue = original_module
 
     # Patch asyncio modules:
-    for module_name in [
-        "asyncio.base_events",
-        "asyncio.base_futures",
-        "asyncio.base_subprocess",
-        "asyncio.base_tasks",
-        "asyncio.constants",
-        "asyncio.coroutines",
-        "asyncio.events",
-        "asyncio.exceptions",
-        "asyncio.format_helpers",
-        "asyncio.futures",
-        "asyncio",
-        "asyncio.locks",
-        "asyncio.log",
-        "asyncio.mixins",
-        "asyncio.protocols",
-        "asyncio.queues",
-        "asyncio.runners",
-        "asyncio.selector_events",
-        "asyncio.sslproto",
-        "asyncio.staggered",
-        "asyncio.streams",
-        "asyncio.subprocess",
-        "asyncio.taskgroups",
-        "asyncio.tasks",
-        "asyncio.threads",
-        "asyncio.timeouts",
-        "asyncio.transports",
-        "asyncio.trsock",
-        "asyncio.unix_events",
-    ]:
+    modules = ["asyncio.{0}".format(name) for _, name, _ in pkgutil.walk_packages(asyncio_module.__path__)]
+    modules.append("asyncio")
+    for module_name in modules:
         try:
             module = importlib.import_module(module_name)
         except ImportError:
