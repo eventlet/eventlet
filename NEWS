@@ -1,6 +1,13 @@
 Unreleased
 ==========
 
+0.41.0
+======
+
+* Switch to 3.14 for testing (#1086)
+* Drop 3.9 support (#1085)
+* More visible deprecation (#1077)
+
 0.40.4
 ======
 
