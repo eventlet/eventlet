@@ -619,6 +619,9 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 WSGI_LOCAL.already_handled = False
                 result = self.application(self.environ, start_response)
 
+                if not headers_set:
+                    raise AssertionError("return before start_response()")
+
                 # Set content-length if possible
                 if headers_set and not headers_sent and hasattr(result, '__len__'):
                     # We've got a complete final response
