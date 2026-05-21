@@ -924,11 +924,12 @@ Please use server.log.info instead.''')
 try:
     import ssl
     ACCEPT_EXCEPTIONS = (socket.error, ssl.SSLError)
-    ACCEPT_ERRNO = {errno.EPIPE, errno.ECONNRESET,
+    ACCEPT_ERRNO = {errno.EPIPE, errno.ECONNRESET, errno.ENOTCONN,
                     errno.ESHUTDOWN, ssl.SSL_ERROR_EOF, ssl.SSL_ERROR_SSL}
 except ImportError:
     ACCEPT_EXCEPTIONS = (socket.error,)
-    ACCEPT_ERRNO = {errno.EPIPE, errno.ECONNRESET, errno.ESHUTDOWN}
+    ACCEPT_ERRNO = {errno.EPIPE, errno.ECONNRESET, errno.ENOTCONN,
+                    errno.ESHUTDOWN}
 
 
 def socket_repr(sock):
