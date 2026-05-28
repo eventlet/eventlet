@@ -401,7 +401,8 @@ class GreenSocket:
 
     def settimeout(self, howlong):
         if howlong is None or howlong == _GLOBAL_DEFAULT_TIMEOUT:
-            self.setblocking(True)
+            if not (self.act_non_blocking == False and self._timeout is None):
+                self.setblocking(True)
             return
         try:
             f = howlong.__float__
