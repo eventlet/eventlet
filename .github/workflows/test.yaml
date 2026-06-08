@@ -49,9 +49,9 @@ jobs:
       - name: install system packages
         run: sudo apt install -y --no-install-recommends ccache libffi-dev default-libmysqlclient-dev libpq-dev libssl-dev libzmq3-dev
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: cache pip
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ matrix.toxenv }}-${{ hashFiles('.github/workflows/test.yaml', 'setup.py') }}
@@ -59,7 +59,7 @@ jobs:
             ${{ runner.os }}-pip-
             ${{ runner.os }}-
       - name: cache tox
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: .tox
           key: ${{ runner.os }}-tox-${{ matrix.toxenv }}-${{ hashFiles('tox.ini') }}
@@ -68,7 +68,7 @@ jobs:
             ${{ runner.os }}-
 
       - name: setup python ${{ matrix.py }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.py }}
       - name: install codecov, tox
