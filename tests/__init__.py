@@ -317,19 +317,21 @@ def run_python(path, env=None, args=None, timeout=None, pythonpath_extend=None, 
     p = subprocess.Popen(
         new_argv,
         env=new_env,
-        stderr=subprocess.STDOUT,
+        stderr=subprocess.PIPE if expect_pass else subprocess.STDOUT,
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
     )
     if timeout is None:
         timeout = 10
     try:
-        output, _ = p.communicate(timeout=timeout)
+        output, stderr_output = p.communicate(timeout=timeout)
     except subprocess.TimeoutExpired:
         p.kill()
-        output, _ = p.communicate(timeout=timeout)
+        output, stderr_output = p.communicate(timeout=timeout)
         if expect_pass:
             sys.stderr.write('Program {} output:\n---\n{}\n---\n'.format(path, output.decode()))
+            if stderr_output:
+                sys.stderr.write('Program {} stderr:\n---\n{}\n---\n'.format(path, stderr_output.decode(errors="backslashreplace")))
             assert False, 'timed out'
         return '{}\nFAIL - timed out'.format(output).encode()
 
@@ -343,7 +345,10 @@ def run_python(path, env=None, args=None, timeout=None, pythonpath_extend=None, 
         lines = output.splitlines()
         ok = lines[-1].rstrip() == b'pass'
         if not ok or len(lines) > 1:
-            sys.stderr.write('Program {} output:\n---\n{}\n---\n'.format(path, output.decode(errors="backslashreplace")))
+            combined = output
+            if stderr_output:
+                combined += b'\n--- stderr ---\n' + stderr_output
+            sys.stderr.write('Program {} output:\n---\n{}\n---\n'.format(path, combined.decode(errors="backslashreplace")))
         assert ok, 'Expected single line "pass" in stdout'
 
     return output
