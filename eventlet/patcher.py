@@ -6,8 +6,10 @@ except ImportError:
     import imp
 import asyncio as asyncio_module
 import importlib
+import os
 import pkgutil
 import sys
+import warnings
 
 try:
     # Only for this purpose, it's irrelevant if `os` was already patched.
@@ -310,6 +312,13 @@ def monkey_patch(**on):
 
     It's safe to call monkey_patch multiple times.
     """
+
+    # If we're running tests this adds extra output that messes up some
+    # assertions.
+    if os.environ.get("EVENTLET_TESTS") is None:
+        warnings.warn(eventlet._DEPRECATED,
+                      eventlet.EventletDeprecationWarning,
+                      stacklevel=2)
 
     # Workaround for import cycle observed as following in monotonic
     # RuntimeError: no suitable implementation for this system
