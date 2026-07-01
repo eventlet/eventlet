@@ -39,7 +39,7 @@ classifiers = [
 dynamic = ["version"]
 dependencies = [
     'dnspython >= 1.15.0',
-    'greenlet >= 1.0',
+    'greenlet < 3.4',  # 3.5 is causing test failures
 ]
 
 [project.urls]
