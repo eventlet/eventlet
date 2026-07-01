@@ -1,6 +1,12 @@
 Unreleased
 ==========
 
+0.41.1
+======
+
+* Bump actions dependent on nodejs 20 (#1091)
+* wsgi: Handle ENOTCONN (#1092)
+
 0.41.0
 ======
 
