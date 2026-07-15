@@ -3,11 +3,22 @@ __test__ = False
 if __name__ == '__main__':
     import eventlet
     eventlet.monkey_patch(all=True)
+    import os
     import socket
+    import tempfile
     import time
     import dns.message
     import dns.query
     import dns.flags
+    from eventlet.support import greendns
+
+    # Ensure the global resolver proxy works even without /etc/resolv.conf
+    # (e.g. on Debian buildd servers). See https://github.com/eventlet/eventlet/issues/963
+    if not os.path.exists('/etc/resolv.conf'):
+        tmp = tempfile.NamedTemporaryFile(mode='w', suffix='.conf', delete=False)
+        tmp.write('nameserver 127.0.0.1\n')
+        tmp.close()
+        greendns.resolver._filename = tmp.name
 
     n = 10
     delay = 0.01

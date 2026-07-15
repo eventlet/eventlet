@@ -299,13 +299,17 @@ class TestUdp(tests.LimitedTestCase):
 class TestProxyResolver(tests.LimitedTestCase):
 
     def test_clear(self):
-        rp = greendns.ResolverProxy()
+        tmp = tempfile.NamedTemporaryFile(mode='w', suffix='.conf')
+        tmp.write('nameserver 127.0.0.1\n')
+        tmp.flush()
+        rp = greendns.ResolverProxy(filename=tmp.name)
         assert rp._cached_resolver is None
         resolver = rp._resolver
         assert resolver is not None
         rp.clear()
         assert rp._resolver is not None
         assert rp._resolver != resolver
+        tmp.close()
 
     def _make_mock_hostsresolver(self):
         """A mocked HostsResolver"""
@@ -916,7 +920,7 @@ class TinyDNSTests(tests.LimitedTestCase):
         # https://github.com/eventlet/eventlet/issues/499
         # None means we don't want the server to find the IP
         with tests.dns_tcp_server(None) as dnsaddr:
-            resolver = Resolver()
+            resolver = Resolver(configure=False)
             resolver.nameservers = [dnsaddr[0]]
             resolver.nameserver_ports[dnsaddr[0]] = dnsaddr[1]
 
@@ -927,7 +931,7 @@ class TinyDNSTests(tests.LimitedTestCase):
         # https://github.com/eventlet/eventlet/issues/499
         expected_ip = "192.168.1.1"
         with tests.dns_tcp_server(expected_ip) as dnsaddr:
-            resolver = Resolver()
+            resolver = Resolver(configure=False)
             resolver.nameservers = [dnsaddr[0]]
             resolver.nameserver_ports[dnsaddr[0]] = dnsaddr[1]
             response = resolver.query('host.example.com', 'a', tcp=True)
