@@ -94,7 +94,13 @@ class Semaphore:
         if not blocking and self.locked():
             return False
 
-        current_thread = eventlet.getcurrent()
+        try:
+            current_thread = eventlet.getcurrent()
+        except RuntimeError:
+            if self.counter > 0:
+                self.counter -= 1
+                return True
+            return False
 
         if self.counter <= 0 or self._waiters:
             if current_thread not in self._waiters:
