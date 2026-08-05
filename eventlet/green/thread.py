@@ -6,6 +6,8 @@ from eventlet.timeout import with_timeout
 from eventlet.lock import Lock
 import sys
 
+_real_get_ident = __thread.get_ident
+
 
 __patched__ = ['Lock', 'LockType', '_ThreadHandle', '_count',
                '_get_main_thread_ident', '_local', '_make_thread_handle',
@@ -36,7 +38,10 @@ def _count():
 
 def get_ident(gr=None):
     if gr is None:
-        return id(greenlet.getcurrent())
+        try:
+            return id(greenlet.getcurrent())
+        except RuntimeError:
+            return _real_get_ident()
     else:
         return id(gr)
 
