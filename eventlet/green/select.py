@@ -47,26 +47,46 @@ def select(read_list, write_list, error_list, timeout=None):
         ds.setdefault(get_fileno(e), {})['error'] = e
 
     listeners = []
+    rfds = []
+    wfds = []
+
+    # We need to ensure that BaseHub.run() has a chance to call self.wait()
+    # at least once before timed out.  otherwise the following code
+    # can time out erroneously.
+    #
+    # s1, s2 = socket.socketpair()
+    # print(select.select([], [s1], [], 0))
+    #
+    # Also note that even if we get an on_read or on_write callback, we
+    # still may need to hold off on returning until we're sure that
+    # BaseHub.wait() has finished issuing callbacks.  Otherwise, it
+    # could still have pending callbacks that get fired *after* we return
+    # from this function.  Removing the listeners doesn't prevent that --
+    # see issue 551.
+    #
+    # This is addressed by scheduling a "final callback" once we get
+    # any of the event callbacks.
+    def final_callback():
+        current.switch((rfds, wfds, []))
+    final_callback.triggered = False
+
+    def trigger_final_callback():
+        if not final_callback.triggered:
+            final_callback.triggered = True
+            timers.append(hub.schedule_call_global(0, final_callback))
 
     def on_read(d):
         original = ds[get_fileno(d)]['read']
-        current.switch(([original], [], []))
+        rfds.append(original)
+        trigger_final_callback()
 
     def on_write(d):
         original = ds[get_fileno(d)]['write']
-        current.switch(([], [original], []))
-
-    def on_timeout2():
-        current.switch(([], [], []))
+        wfds.append(original)
+        trigger_final_callback()
 
     def on_timeout():
-        # ensure that BaseHub.run() has a chance to call self.wait()
-        # at least once before timed out.  otherwise the following code
-        # can time out erroneously.
-        #
-        # s1, s2 = socket.socketpair()
-        # print(select.select([], [s1], [], 0))
-        timers.append(hub.schedule_call_global(0, on_timeout2))
+        trigger_final_callback()
 
     if timeout is not None:
         timers.append(hub.schedule_call_global(timeout, on_timeout))
