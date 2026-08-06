@@ -435,7 +435,24 @@ class ResolverProxy:
         return aliases
 
 
-resolver = ResolverProxy(hosts_resolver=HostsResolver())
+"""
+Some systems' default resolv.conf file is not located in /etc/resolv.conf
+
+for instance, in termux (terminal app in android) there are system configurations wich can not
+be mounted or symbolically linked to the android's /etc/ path, due to how android works
+and therefore have their own locations in a subdirectory in the app's data directory
+
+the termux environment can be identified via the $PREFIX environment variable, and so
+the following code provides a patch for this specific case, while maintaining the default 
+functionality if the system is not termux
+"""
+resolver = None
+if 'PREFIX' in os.environ and os.environ['PREFIX']=='/data/data/com.termux/files/usr':
+    print('greendns: system is termux')
+    resolver = ResolverProxy(hosts_resolver=HostsResolver(),filename=(os.environ['PREFIX']+'/etc/resolv.conf'))
+else:
+    resolver = ResolverProxy(hosts_resolver=HostsResolver())
+
 
 
 def resolve(name, family=socket.AF_INET, raises=True, _proxy=None,
