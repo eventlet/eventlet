@@ -1,6 +1,11 @@
 Unreleased
 ==========
 
+0.41.2
+======
+* Fix compatibility with greenlet >= 3.4 (#1101)
+* CI: Run apt-get update before installing system packages (#1102)
+
 0.41.1
 ======
 
