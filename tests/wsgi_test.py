@@ -10,6 +10,7 @@ import socket
 import sys
 import tempfile
 import traceback
+import warnings
 
 import eventlet
 from eventlet import debug
@@ -1865,7 +1866,16 @@ class TestHttpd(_TestBase):
 
         sock = eventlet.connect(self.server_addr)
         sock.sendall(b'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
-        result = read_http(sock)
+        with warnings.catch_warnings(record=True) as caught_warnings:
+            result = read_http(sock)
+        self.assertEqual(len(caught_warnings), 1)
+        self.assertIs(caught_warnings[0].category, DeprecationWarning)
+        self.assertEqual(str(caught_warnings[0].message).split('\n'), [
+            'capitalize_response_headers is disabled.',
+            ' Please, make sure you know what you are doing.',
+            ' HTTP headers names are case-insensitive per RFC standard.',
+            ' Most likely, you need to fix HTTP parsing in your client software.'])
+
         sock.close()
         self.assertEqual(result.status, 'HTTP/1.1 200 oK')
         self.assertEqual(result.headers_lower[random_case_header[0].lower()], random_case_header[1])
