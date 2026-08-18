@@ -404,7 +404,8 @@ class ResolverProxy:
                     return end()
 
         # Main query
-        step(self._resolver.query, qname, rdtype, rdclass, tcp, source, raise_on_no_answer=False)
+        step(self._resolver.resolve, qname, rdtype, rdclass, tcp, source,
+             raise_on_no_answer=False, search=True)
 
         # `resolv.conf` docs say unqualified names must resolve from search (or local) domain.
         # However, common OS `getaddrinfo()` implementations append trailing dot (e.g. `db -> db.`)
@@ -413,8 +414,9 @@ class ResolverProxy:
         # https://github.com/nameko/nameko/issues/392
         # https://github.com/eventlet/eventlet/issues/363
         if len(qname) == 1:
-            step(self._resolver.query, qname.concatenate(dns.name.root),
-                 rdtype, rdclass, tcp, source, raise_on_no_answer=False)
+            step(self._resolver.resolve, qname.concatenate(dns.name.root),
+                 rdtype, rdclass, tcp, source, raise_on_no_answer=False,
+                 search=True)
 
         return end()
 
@@ -627,8 +629,9 @@ def getnameinfo(sockaddr, flags):
 
     if is_ipv4_addr(host):
         try:
-            rrset = resolver.query(
-                dns.reversename.from_address(host), dns.rdatatype.PTR)
+            rrset = resolver.resolve(
+                dns.reversename.from_address(host), dns.rdatatype.PTR,
+                search=True)
             if len(rrset) > 1:
                 raise OSError('sockaddr resolved to multiple addresses')
             host = rrset[0].target.to_text(omit_final_dot=True)
@@ -640,7 +643,7 @@ def getnameinfo(sockaddr, flags):
                 _raise_new_error(EAI_NONAME_ERROR)
     else:
         try:
-            rrset = resolver.query(host)
+            rrset = resolver.resolve(host, search=True)
             if len(rrset) > 1:
                 raise OSError('sockaddr resolved to multiple addresses')
             if flags & socket.NI_NUMERICHOST:
