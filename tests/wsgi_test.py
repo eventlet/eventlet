@@ -1851,6 +1851,21 @@ class TestHttpd(_TestBase):
         self.assertIn('With-\xdf-Latin1-\xff', result.headers_original)
         self.assertEqual(result.headers_original['With-\xdf-Latin1-\xff'], 'chars')
 
+    def test_utf8_response_header_values(self):
+        def wsgi_app(environ, start_response):
+            start_response('200 OK', [
+                ('Content-Type', 'text/plain'),
+                ('X-Name', 'snowman \u2603'),
+            ])
+            return [b'ok']
+
+        self.spawn_server(site=wsgi_app)
+        sock = eventlet.connect(self.server_addr)
+        sock.sendall(b'GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
+        data = recvall(sock)
+        sock.close()
+        self.assertIn('X-Name: snowman \u2603'.encode('utf-8'), data)
+
     def test_disable_header_name_capitalization(self):
         # Disable HTTP header name capitalization
         #
