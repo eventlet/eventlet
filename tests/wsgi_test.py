@@ -1851,20 +1851,18 @@ class TestHttpd(_TestBase):
         self.assertIn('With-\xdf-Latin1-\xff', result.headers_original)
         self.assertEqual(result.headers_original['With-\xdf-Latin1-\xff'], 'chars')
 
-    def test_utf8_response_header_values(self):
-        def wsgi_app(environ, start_response):
-            start_response('200 OK', [
-                ('Content-Type', 'text/plain'),
-                ('X-Name', 'snowman \u2603'),
-            ])
-            return [b'ok']
+    def test_non_latin1_response_header_value_raises(self):
+        with self.assertRaises(UnicodeEncodeError) as raised:
+            wsgi._encode_header_line(('X-Name', 'snowman \u2603'))
+        self.assertIn('latin-1', str(raised.exception))
+        self.assertIn('RFC 8187', str(raised.exception))
 
-        self.spawn_server(site=wsgi_app)
-        sock = eventlet.connect(self.server_addr)
-        sock.sendall(b'GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
-        data = recvall(sock)
-        sock.close()
-        self.assertIn('X-Name: snowman \u2603'.encode('utf-8'), data)
+        latin1_name = wsgi._encode_header_line(('wiTH-\xdf-LATIN1-\xff', 'chars'))
+        self.assertEqual(latin1_name, b'wiTH-\xdf-LATIN1-\xff: chars\r\n')
+
+        with self.assertRaises(UnicodeEncodeError) as raised:
+            wsgi._encode_header_line(('X-\u2603', 'ok'))
+        self.assertIn('header names', str(raised.exception))
 
     def test_disable_header_name_capitalization(self):
         # Disable HTTP header name capitalization
