@@ -1851,6 +1851,19 @@ class TestHttpd(_TestBase):
         self.assertIn('With-\xdf-Latin1-\xff', result.headers_original)
         self.assertEqual(result.headers_original['With-\xdf-Latin1-\xff'], 'chars')
 
+    def test_non_latin1_response_header_value_raises(self):
+        with self.assertRaises(UnicodeEncodeError) as raised:
+            wsgi._encode_header_line(('X-Name', 'snowman \u2603'))
+        self.assertIn('latin-1', str(raised.exception))
+        self.assertIn('RFC 8187', str(raised.exception))
+
+        latin1_name = wsgi._encode_header_line(('wiTH-\xdf-LATIN1-\xff', 'chars'))
+        self.assertEqual(latin1_name, b'wiTH-\xdf-LATIN1-\xff: chars\r\n')
+
+        with self.assertRaises(UnicodeEncodeError) as raised:
+            wsgi._encode_header_line(('X-\u2603', 'ok'))
+        self.assertIn('header names', str(raised.exception))
+
     def test_disable_header_name_capitalization(self):
         # Disable HTTP header name capitalization
         #

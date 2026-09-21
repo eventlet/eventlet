@@ -35,6 +35,42 @@ STATE_CLOSE = 'close'
 
 __all__ = ['server', 'format_date_time']
 
+
+def _encode_header_line(header):
+    """Encode a WSGI header pair as latin-1 (PEP 3333).
+
+    Name and value are encoded separately so a non-latin-1 value cannot
+    smuggle the name out as UTF-8. HTTP/1.1 header values are visible ASCII
+    (RFC 9110); for text outside latin-1, encode the application value with
+    RFC 8187 or percent-encoding instead of sending raw UTF-8.
+    """
+    name, value = header
+    try:
+        encoded_name = str(name).encode('latin-1')
+    except UnicodeEncodeError as err:
+        raise UnicodeEncodeError(
+            err.encoding,
+            err.object,
+            err.start,
+            err.end,
+            "WSGI header names must be latin-1 (PEP 3333). "
+            "HTTP/1.1 field names are ASCII (RFC 9110).",
+        ) from None
+    try:
+        encoded_value = str(value).encode('latin-1')
+    except UnicodeEncodeError as err:
+        raise UnicodeEncodeError(
+            err.encoding,
+            err.object,
+            err.start,
+            err.end,
+            "WSGI response header values must be latin-1 (PEP 3333). "
+            "HTTP/1.1 field values are visible ASCII (RFC 9110). "
+            "Use RFC 8187 encoding or percent-encoding for non-latin-1 text.",
+        ) from None
+    return encoded_name + b': ' + encoded_value + b'\r\n'
+
+
 # Weekday and month names for HTTP date/time formatting; always English!
 _weekdayname = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 _monthname = [None,  # Dummy so we can use 1-based month numbers
@@ -532,7 +568,7 @@ class HttpProtocol(BaseHTTPServer.BaseHTTPRequestHandler):
                 header_list = [header[0].lower() for header in response_headers]
                 towrite.append(('%s %s\r\n' % (self.protocol_version, status)).encode())
                 for header in response_headers:
-                    towrite.append(('%s: %s\r\n' % header).encode('latin-1'))
+                    towrite.append(_encode_header_line(header))
 
                 # send Date header?
                 if 'date' not in header_list:
