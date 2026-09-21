@@ -1,5 +1,6 @@
 Unreleased
 ==========
+* Make the deprecation warning filterable without importing Eventlet first (#1089)
 
 0.41.2
 ======
