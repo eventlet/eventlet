@@ -2,6 +2,7 @@ import os
 import sys
 import warnings
 
+from eventlet_deprecation import EventletDeprecationWarning
 
 from eventlet import convenience
 from eventlet import event
@@ -88,8 +89,7 @@ if hasattr(os, "register_at_fork"):
     os.register_at_fork(before=_warn_on_fork)
 
 
-_DEPRECATED = \
-"""
+_DEPRECATED = """\
 Eventlet is deprecated. It is currently being maintained in bugfix mode, and
 we strongly recommend against using it for new projects.
 
@@ -97,11 +97,6 @@ If you are already using Eventlet, we recommend migrating to a different
 framework.  For more detail see
 https://eventlet.readthedocs.io/en/latest/asyncio/migration.html
 """
-
-class EventletDeprecationWarning(Warning):
-    """
-    A DeprecationWarning that is more visible than the built-in one.
-    """
 
 # If we're running tests this adds extra output that messes up some assertions.
 if os.environ.get("EVENTLET_TESTS") is None:
