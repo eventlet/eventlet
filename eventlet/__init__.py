@@ -105,4 +105,4 @@ class EventletDeprecationWarning(Warning):
 
 # If we're running tests this adds extra output that messes up some assertions.
 if os.environ.get("EVENTLET_TESTS") is None:
-    warnings.warn(_DEPRECATED, EventletDeprecationWarning, stacklevel=2)
+    warnings.warn(_DEPRECATED, DeprecationWarning, stacklevel=2)
