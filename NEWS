@@ -1,6 +1,8 @@
 Unreleased
 ==========
 
+* select: do not hang when timeout is 0 (#798)
+
 0.41.2
 ======
 * Fix compatibility with greenlet >= 3.4 (#1101)

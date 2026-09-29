@@ -1,3 +1,5 @@
+import os
+
 import eventlet
 from eventlet import hubs
 from eventlet.green import select
@@ -23,3 +25,46 @@ def test_select_mark_file_as_reopened():
             hubs.get_hub().mark_as_reopened(s.fileno())
             gt.wait()
         t.cancel()
+
+
+def test_select_timeout_zero_unread_fd_returns_immediately():
+    r, w = os.pipe()
+    try:
+        with eventlet.Timeout(0.5):
+            result = select.select([r], [], [], 0.0)
+        assert result == ([], [], [])
+    finally:
+        os.close(r)
+        os.close(w)
+
+
+def test_select_timeout_zero_does_not_hang_if_timer_fires_early():
+    # https://github.com/eventlet/eventlet/issues/798
+    # If the 0-timeout hub timer expires before select reaches hub.switch(),
+    # the greenthread used to wait forever. Simulate that race with a short
+    # delay before the first switch.
+    hub = hubs.get_hub()
+    orig_switch = hub.switch
+    first = [True]
+
+    def delayed_switch():
+        if first[0]:
+            first[0] = False
+            eventlet.sleep(0.01)
+        return orig_switch()
+
+    hub.switch = delayed_switch
+    r, w = os.pipe()
+    try:
+        try:
+            with eventlet.Timeout(0.5):
+                result = select.select([r], [], [], 0.0)
+        except eventlet.Timeout:
+            raise AssertionError(
+                'select(timeout=0) hung after the 0-timeout timer fired early'
+            )
+        assert result == ([], [], [])
+    finally:
+        hub.switch = orig_switch
+        os.close(r)
+        os.close(w)
