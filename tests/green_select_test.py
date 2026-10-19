@@ -38,6 +38,19 @@ def test_select_timeout_zero_unread_fd_returns_immediately():
         os.close(w)
 
 
+def test_select_positive_timeout_yields_to_other_greenthreads():
+    r, w = os.pipe()
+    writer = eventlet.spawn(os.write, w, b'x')
+    try:
+        with eventlet.Timeout(1):
+            assert select.select([r], [], [], 0.5) == ([r], [], [])
+            assert writer.wait() == 1
+    finally:
+        writer.kill()
+        os.close(r)
+        os.close(w)
+
+
 def test_select_timeout_zero_does_not_hang_if_timer_fires_early():
     # https://github.com/eventlet/eventlet/issues/798
     # If the 0-timeout hub timer expires before select reaches hub.switch(),
