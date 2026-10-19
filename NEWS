@@ -1,6 +1,10 @@
 Unreleased
 ==========
 
+0.41.3
+======
+* wsgi: Raise a clear error for non-latin-1 WSGI response headers (#1105)
+
 0.41.2
 ======
 * Fix compatibility with greenlet >= 3.4 (#1101)
