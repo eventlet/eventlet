@@ -33,6 +33,11 @@ def select(read_list, write_list, error_list, timeout=None):
             timeout = float(timeout)
         except ValueError:
             raise TypeError("Expected number for timeout")
+        # A timeout of 0 is a poll and must not block. Routing it through the
+        # hub can hang forever if the 0-timeout timer fires before hub.switch()
+        # (https://github.com/eventlet/eventlet/issues/798).
+        if timeout == 0:
+            return __select.select(read_list, write_list, error_list, 0)
     hub = get_hub()
     timers = []
     current = eventlet.getcurrent()

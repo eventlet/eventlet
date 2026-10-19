@@ -1,6 +1,8 @@
 Unreleased
 ==========
 
+* select: do not hang when timeout is 0 (#798)
+
 0.41.3
 ======
 * wsgi: Raise a clear error for non-latin-1 WSGI response headers (#1105)
