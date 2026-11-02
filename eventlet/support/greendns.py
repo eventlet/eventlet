@@ -357,7 +357,7 @@ class ResolverProxy:
 
     def query(self, qname, rdtype=dns.rdatatype.A, rdclass=dns.rdataclass.IN,
               tcp=False, source=None, raise_on_no_answer=True,
-              _hosts_rdtypes=(dns.rdatatype.A, dns.rdatatype.AAAA),
+              _hosts_rdtypes=(dns.rdatatype.A, dns.rdatatype.AAAA, dns.rdatatype.CNAME),
               use_network=True):
         """Query the resolver, using /etc/hosts if enabled.
 
