@@ -5,6 +5,7 @@ import socket
 import tempfile
 import time
 from dns.resolver import NoAnswer, Answer, Resolver
+import pytest
 
 from eventlet.support import greendns
 from eventlet.support.greendns import dns
@@ -995,6 +996,34 @@ def test_hosts_priority():
     rrs6 = greendns.resolve(name, family=socket.AF_INET6, _proxy=rp).rrset
     assert len(rrs6) == 1
     assert rrs6[0].address == 'dead:beef::1', rrs6[0].address
+
+
+@pytest.mark.parametrize('family', [socket.AF_UNSPEC, socket.AF_INET, socket.AF_INET6])
+@pytest.mark.parametrize('host', ['compute-0', 'compute-0.'])
+def test_hosts_canonname(family, host):
+    with tempfile.NamedTemporaryFile() as hosts:
+        hosts.write(b'192.0.2.1 compute-0.example compute-0\n'
+                    b'2001:db8::1 compute-0.example compute-0\n')
+        hosts.flush()
+        hr = greendns.HostsResolver(fname=hosts.name)
+        rp = greendns.ResolverProxy(hosts_resolver=hr)
+        network_resolver = tests.mock.Mock()
+        network_resolver.query.side_effect = dns.resolver.NXDOMAIN
+        rp._resolver = network_resolver
+
+        with tests.mock.patch.object(greendns, 'resolver', rp):
+            result = greendns.getaddrinfo(host, 80, family, socket.SOCK_STREAM,
+                                          flags=socket.AI_CANONNAME)
+
+        expected_addresses = {
+            socket.AF_UNSPEC: {'192.0.2.1', '2001:db8::1'},
+            socket.AF_INET: {'192.0.2.1'},
+            socket.AF_INET6: {'2001:db8::1'},
+        }
+        assert {ai[4][0] for ai in result} == expected_addresses[family]
+        assert result[0][3] == 'compute-0.example.'
+        assert all(ai[3] == '' for ai in result[1:])
+        assert not network_resolver.query.called
 
 
 def test_hosts_no_network():
