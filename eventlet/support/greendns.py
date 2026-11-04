@@ -60,6 +60,24 @@ def import_patched(module_name):
     return patcher.import_patched(module_name, **modules)
 
 
+def _preimport_trio():
+    # Some dnspython modules import trio when it is installed (dns.quic,
+    # and httpcore's trio backend via dns.query).  If trio is imported for
+    # the first time inside import_patched(), it sees eventlet.green.select,
+    # which has no epoll/kqueue, and raises NotImplementedError("unsupported
+    # platform") everywhere except Linux and Windows (e.g. FreeBSD, macOS).
+    # Import the real trio first so the greened dns modules reuse it.
+    try:
+        import dns._features
+        if dns._features.have('trio'):
+            import trio  # noqa: F401
+    except Exception:
+        pass
+
+
+_preimport_trio()
+del _preimport_trio
+
 dns = import_patched('dns')
 
 # Handle rdtypes separately; we need fully it available as we patch the rest
