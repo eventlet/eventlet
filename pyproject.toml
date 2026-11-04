@@ -59,6 +59,9 @@ version.source = "vcs"
 [tool.hatch.build.hooks.vcs]
 version-file = "eventlet/_version.py"
 
+[tool.hatch.build.targets.wheel]
+only-include = ["eventlet", "eventlet_deprecation.py"]
+
 [tool.ruff]
 # Might eventually want to add evenetlet/green/, but it's a pain...
 exclude = ["eventlet/green/", "eventlet/zipkin/_thrift", "tests/mock.py", "doc/"]
